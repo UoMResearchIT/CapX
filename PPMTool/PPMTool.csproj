@@ -10,4 +10,8 @@
     </Compile>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NodaMoney" Version="1.0.5" />
+  </ItemGroup>
+
 </Project>

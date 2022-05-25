@@ -4,16 +4,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    public partial class Capacity : ComponentBase
+    public partial class People : ComponentBase
     {
-        private WeatherForecast[] data;
+        [Inject]
+        private PersonService PersonService { get; }
+
+        private Person[] people;
 
         protected override async Task OnInitializedAsync()
         {
-            data = await ForecastService.GetForecastAsync(DateTime.Now);
         }
     }
 }

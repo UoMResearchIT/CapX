@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PPMTool.Data;
+using PPMTool.Services;
 
 namespace PPMTool
 {
@@ -28,7 +29,9 @@ namespace PPMTool
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<PersonService>();
+            services.AddSingleton<ProjectService>();
+            services.AddSingleton<SubTaskService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
