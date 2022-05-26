@@ -11,6 +11,12 @@ namespace PPMTool.Data
 {
     public class PPMToolContext : IdentityDbContext<PPMToolUser>
     {
+        public DbSet<Person> People { get; set; }
+
+        public PPMToolContext() : base()
+        {
+        }
+
         public PPMToolContext(DbContextOptions<PPMToolContext> options)
             : base(options)
         {
