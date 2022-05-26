@@ -11,7 +11,7 @@ namespace PPMTool.Pages
     public partial class AddProject : ComponentBase
     {
         [Inject]
-        private ProjectService ProjectService { get; }
+        private ProjectService ProjectService { get; set; }
 
         protected override async Task OnInitializedAsync()
         {

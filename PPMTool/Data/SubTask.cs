@@ -20,6 +20,11 @@ namespace PPMTool.Data
 
         public IList<SubTask> Predecessors { get; set; }
 
+        /// <summary>
+        /// Basically a simplified constraint type of "Start No Earlier Than" otherwise will be "As Soon As Possible" based on the predecessor end dates
+        /// </summary>        
+        public bool HasFixedStart { get; set; }
+
         public void Schedule()
         {
             // TODO: Update the duration, work or units given the known constraints

@@ -32,6 +32,7 @@ namespace PPMTool
             services.AddSingleton<PersonService>();
             services.AddSingleton<ProjectService>();
             services.AddSingleton<SubTaskService>();
+            services.AddSingleton<TagService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

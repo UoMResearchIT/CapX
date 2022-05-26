@@ -11,7 +11,7 @@ namespace PPMTool.Pages
     public partial class Projects : ComponentBase
     {
         [Inject]
-        private ProjectService ProjectService { get; }
+        private ProjectService ProjectService { get; set; }
 
         private Project[] projects;
 

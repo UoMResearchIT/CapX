@@ -1,36 +1,40 @@
 ﻿@page "/people"
 
-<h1>Research Software Engineers</h1>
-
-@if (people == null)
-{
-    <p><em>No data to show</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Short Name</th>
-                <th>Hourly Rate</th>
-                <th>Maximum FTE</th>
-                <th>Next Available</th>
-                <th>Skills</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in people)
-            {
-                <tr>
-                    <td>@p.Name</td>
-                    <td>@p.ShortName</td>
-                    <td>@p.HourlyRate.Amount</td>
-                    <td>@p.AvailabilityFTE</td>
-                    <td>@p.NextAvailable.ToShortDateString()</td>
-                    <td>@string.Join(',', p.SkillTags)</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+<div class="container">
+    <h1>People</h1>
+    <a class="btn btn-primary" href="/addperson">Add <i class="oi oi-plus"></i></a>
+    <div class="card">
+        @if (people == null)
+        {
+            <p class="lead">No data to show</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Short Name</th>
+                        <th>Hourly Rate</th>
+                        <th>Maximum FTE</th>
+                        <th>Next Available</th>
+                        <th>Skills</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in people)
+                    {
+                        <tr>
+                            <td>@p.Name</td>
+                            <td>@p.ShortName</td>
+                            <td>£@p.HourlyRate</td>
+                            <td>@p.AvailabilityFTE</td>
+                            <td>@p.NextAvailable.ToShortDateString()</td>
+                            <td>@string.Join(',', p.SkillTags)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

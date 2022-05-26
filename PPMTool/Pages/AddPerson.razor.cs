@@ -3,20 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Logging;
 using PPMTool.Data;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    public partial class AddPerson : ComponentBase
+    public partial class AddPerson : BasePage
     {
         [Inject]
-        private PersonService PersonService { get; }
+        private PersonService PersonService { get; set; }
 
-        private Person[] people;
+        [Inject]
+        private TagService TagService { get; set; }
 
-        protected override async Task OnInitializedAsync()
+        private Person personModel = new();
+
+        private IEnumerable<Tag> AvailableTags { get; set; }
+
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
+
+            var tags = TagService.GetAllTags();
+            var list = new List<Tag>();
+            foreach (var t in tags) list.Add(new Tag(t));
+            AvailableTags = list;
+        }
+
+        private void HandleValidSubmit()
+        {
+            Logger.LogInformation("Adding new person...");
+
+            if (!PersonService.AddPerson(personModel))
+            {
+                // TODO: Duplicate found -- do something
+            }
         }
     }
 }

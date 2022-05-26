@@ -11,12 +11,13 @@ namespace PPMTool.Pages
     public partial class People : ComponentBase
     {
         [Inject]
-        private PersonService PersonService { get; }
+        private PersonService PersonService { get; set; }
 
         private Person[] people;
 
         protected override async Task OnInitializedAsync()
         {
+            // TODO: Get people from the database
         }
     }
 }
