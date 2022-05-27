@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using NodaMoney;
 
 namespace PPMTool.Data
 {
@@ -17,9 +16,9 @@ namespace PPMTool.Data
 
         public double ActualWorkHours { get; set; }
 
-        public Money PlannedCost { get; set; }
+        public double PlannedCost { get; set; }
 
-        public Money ActualCost { get; set; }
+        public double ActualCost { get; set; }
 
         public bool IsDone { get; set; }
     }

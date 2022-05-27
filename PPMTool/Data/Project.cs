@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NodaMoney;
 using PPMTool.Enums;
 
 namespace PPMTool.Data
@@ -14,13 +13,19 @@ namespace PPMTool.Data
     {
         public int ProjectId { get; set; }
 
+        public string ProjectName { get; set; }
+
+        public string PI { get; set; }
+
         public Portfolio Portfolio { get; set; }
 
         public IList<SubTask> Tasks { get; set; }
 
-        public Money Budget { get; set; }
+        public double Budget { get; set; }
 
-        public Money FundsReceived { get; set; }
+        public double FundsReceived { get; set; }
+
+        public FundingStatus FundingStatus { get; set; }
 
     }
 }

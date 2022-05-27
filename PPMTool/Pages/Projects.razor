@@ -1,6 +1,47 @@
 ﻿@page "/projects"
 @page "/"
 
-<h1>Projects</h1>
-
-<p>This will show all the available projects and their status. Clicking on a project will open the details page and allow management of that project.</p>
+<div class="container">
+    <h1>Projects</h1>
+    <a class="btn btn-primary" href="/addproject">Add <i class="oi oi-plus"></i></a>
+    <div class="card">
+        @if (projects == null)
+        {
+            <p class="lead">No data to show</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>PI</th>
+                        <th>Portfolio</th>
+                        <th>Budget</th>
+                        <th>Actual Cost</th>
+                        <th>Funds Received</th>
+                        <th>Funding Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in projects)
+                    {
+                        <tr>
+                            <td>@p.ProjectName</td>
+                            <td>@p.PI</td>
+                            <td>@p.Portfolio</td>
+                            <td>£@p.Budget</td>
+                            <td>£@p.ActualCost</td>
+                            <td>£@p.FundsReceived</td>
+                            <td>@p.FundingStatus</td>
+                            <td>@p.StartDate</td>
+                            <td>@p.EndDate</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
