@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
@@ -13,21 +14,57 @@ namespace PPMTool.Data
     {
         public DbSet<Person> People { get; set; }
 
-        public PPMToolContext() : base()
-        {
-        }
-
+        /// <summary>
+        /// Inject options.
+        /// </summary>
+        /// <param name="options"></>
+        /// for the context
+        /// </param>
         public PPMToolContext(DbContextOptions<PPMToolContext> options)
             : base(options)
         {
+            Debug.WriteLine($"{ContextId} context created.");
         }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public PPMToolContext()
         {
-            base.OnModelCreating(builder);
-            // Customize the ASP.NET Identity model and override the defaults if needed.
-            // For example, you can rename the ASP.NET Identity table names and more.
-            // Add your customizations after calling base.OnModelCreating(builder);
+        }
+
+        /// <summary>
+        /// Override to configure context
+        /// </summary>
+        /// <param name="optionsBuilder"></param>
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlite("DataSource=PPMTool.db");
+
+        /// <summary>
+        /// Define the model.
+        /// </summary>
+        /// <param name="modelBuilder">The <see cref="ModelBuilder"/>.</param>
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+        }
+
+        /// <summary>
+        /// Dispose pattern.
+        /// </summary>
+        public override void Dispose()
+        {
+            Debug.WriteLine($"{ContextId} context disposed.");
+            base.Dispose();
+        }
+
+        /// <summary>
+        /// Dispose pattern.
+        /// </summary>
+        /// <returns>A <see cref="ValueTask"/></returns>
+        public override ValueTask DisposeAsync()
+        {
+            Debug.WriteLine($"{ContextId} context disposed async.");
+            return base.DisposeAsync();
         }
     }
 }

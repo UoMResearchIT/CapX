@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,10 +30,18 @@ namespace PPMTool
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<PersonService>();
-            services.AddSingleton<ProjectService>();
-            services.AddSingleton<SubTaskService>();
-            services.AddSingleton<TagService>();
+
+            services.AddDbContext<PPMToolContext>(options =>
+            {
+                var str = Configuration.GetConnectionString("PPMToolContextConnection");
+                options.UseSqlite(str);
+                options.EnableSensitiveDataLogging();
+            });
+
+            services.AddScoped<PersonService>();
+            services.AddScoped<ProjectService>();
+            services.AddScoped<SubTaskService>();
+            services.AddScoped<TagService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

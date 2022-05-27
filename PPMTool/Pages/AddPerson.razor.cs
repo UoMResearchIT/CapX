@@ -36,10 +36,13 @@ namespace PPMTool.Pages
         {
             Logger.LogInformation("Adding new person...");
 
-            if (!PersonService.AddPerson(personModel))
+            using var context = new PPMToolContext();
+            if (!PersonService.AddPerson(context, personModel))
             {
                 // TODO: Duplicate found -- do something
             }
+
+            Navigation.NavigateTo("people");
         }
     }
 }

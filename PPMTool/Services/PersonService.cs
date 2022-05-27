@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 
 namespace PPMTool.Services
@@ -13,9 +15,8 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="personModel"></param>
         /// <returns>False if an entry with the same name exists already.</returns>
-        internal bool AddPerson(Person personModel)
+        internal bool AddPerson(PPMToolContext context, Person personModel)
         {
-            using var context = new PPMToolContext();
             if (context.People.Any(p=> p.Name.ToLower().Trim() == personModel.Name.ToLower().Trim()))
             {
                 // Duplicate found
@@ -25,6 +26,15 @@ namespace PPMTool.Services
             context.People.Add(personModel);
             context.SaveChanges();
             return true;
+        }
+
+        /// <summary>
+        /// Get all the people
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<Person> GetAll(PPMToolContext context)
+        {
+            return context.People.ToList();
         }
     }
 }

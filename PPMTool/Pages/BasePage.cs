@@ -11,5 +11,8 @@ namespace PPMTool.Pages
     {
         [Inject]
         protected ILogger<AddPerson> Logger { get; set; }
+
+        [Inject]
+        protected NavigationManager Navigation { get; set; }
     }
 }

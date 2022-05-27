@@ -13,8 +13,14 @@ namespace PPMTool.Data
     {
         public int PersonId { get; set; }
 
+        private string name;
         [Required]
-        public string Name { get; set; }
+        public string Name
+        {
+            get => name;
+            set { name = value; ShortName = GetInitials(value); }
+        }
+
 
         public string ShortName { get; private set; }
 
@@ -30,6 +36,18 @@ namespace PPMTool.Data
         /// </summary>
         public DateTime NextAvailable { get; private set; }
 
-        public IList<SkillTag> SkillTags { get; set; }
+        public IList<SkillTag> SkillTags { get; set; } = new List<SkillTag>();
+
+        static string GetInitials(string name)
+        {
+
+            string[] nameSplit = name.Split(new string[] { ",", " " }, StringSplitOptions.RemoveEmptyEntries);
+            string initials = "";
+            foreach (string item in nameSplit)
+            {
+                initials += item.Substring(0, 1).ToUpper();
+            }
+            return initials;
+        }
     }
 }
