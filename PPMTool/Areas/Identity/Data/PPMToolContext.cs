@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Areas.Identity.Data;
+using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
     public class PPMToolContext : IdentityDbContext<PPMToolUser>
     {
         public DbSet<Person> People { get; set; }
+        public DbSet<Project> Projects { get; set; }
 
         /// <summary>
         /// Inject options.

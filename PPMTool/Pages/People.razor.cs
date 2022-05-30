@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -22,8 +23,13 @@ namespace PPMTool.Pages
 
             // Get people from the database
             using var context = new PPMToolContext();
-            people = PersonService.GetAll(context).ToList();
-            people.Sort((x, y) => x.Name.CompareTo(y.Name));
+            var peo = PersonService.GetAll(context);
+            if (peo.Count() > 0)
+            {
+                people = peo.ToList();
+                people.Sort((x, y) => x.Name.CompareTo(y.Name));
+            }
+            
         }
     }
 }

@@ -1,0 +1,78 @@
+﻿@page "/addtask/{projectID:int}"
+@inherits BasePage
+@using PPMTool.Enums
+
+<div class="container">
+    <h1>Add Task</h1>
+    <p>Add new task to @projectModel?.Name</p>
+    <div class="card">
+        <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row">
+                <div class="col">
+                    <label>Name</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="taskModel.Name" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Fixed Start</label>
+                </div>
+                <div class="col">
+                    <InputCheckbox @bind-Value="taskModel.HasFixedStart" />
+                </div>
+            </div>
+
+            <!-- Start date is required if fixed start otherwise driven from predecesors -->
+            @if (taskModel.HasFixedStart)
+            {
+                <div class="row">
+                    <div class="col">
+                        <label>Start Date</label>
+                    </div>
+                    <div class="col">
+                        <InputDate @bind-Value="taskModel.StartDate" />
+                    </div>
+                </div>
+            }
+
+            <!-- Choice of task type affects options -->
+            <div class="row">
+                <div class="col">
+                    <label>Task Type</label>
+                </div>
+                <div class="col">
+                    <InputSelect @bind-Value="taskModel.TaskType">
+                        @foreach (var c in (TaskType[])Enum.GetValues(typeof(TaskType)))
+                        {
+                            <option value="@c">@c.ToNiceString()</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <!-- If fixed work task then Work becomes required -->
+            @if (taskModel.TaskType == TaskType.FixedWork)
+            {
+                <div class="row">
+                    <div class="col">
+                        <label>Work (Hours)</label>
+                    </div>
+                    <div class="col">
+                        <InputNumber min="0" step="1" placeholder="0" @bind-Value="projectModel.PlannedWorkHours" />
+                    </div>
+                </div>
+            }
+
+            <!-- If fixed duration then end date becomes required -->
+
+            <!-- If fixed units then at least one resource needs to be assigned -->
+
+            <button class="btn btn-primary" type="button">Update <i class="oi oi-reload"></i></button>
+            <button class="btn btn-primary" type="submit">Submit</button>
+        </EditForm>
+    </div>
+</div>

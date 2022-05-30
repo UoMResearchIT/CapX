@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,11 +11,13 @@ namespace PPMTool.Enums
         /// <summary>
         /// Projects that are in preparation but the funding has not been submitted yet
         /// </summary>
+        [Description("Awaiting Submission")]
         AwaitingSubmission,
 
         /// <summary>
         /// Grant proposals have gone in and we are awaiting the outcome
         /// </summary>
+        [Description("Awaiting Outcome")]
         AwaitingOutcome,
 
         /// <summary>

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Pages

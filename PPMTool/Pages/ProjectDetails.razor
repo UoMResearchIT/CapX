@@ -1,5 +1,101 @@
-﻿@page "/projectdetails/{id}"
+﻿@page "/projectdetails/{ProjectId:int}"
+@using PPMTool.Enums
 
-<h1>Project Details</h1>
+<div class="container">
 
-<p>This page will show the Gantt for the partciluar project and will be the main page for managing the details of a project.</p>
+    @if (projectModel == null)
+    {
+        <h1>Unkown Project</h1>
+    }
+    else
+    {
+        <h1>@projectModel.Name</h1>
+    }
+    <div class="card">
+        @if (projectModel == null)
+        {
+            <p class="lead">No data to show</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>PI</th>
+                        <th>Portfolio</th>
+                        <th>Budget</th>
+                        <th>Actual Cost</th>
+                        <th>Funds Received</th>
+                        <th>Funding Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@projectModel.Name</td>
+                        <td>@projectModel.PI</td>
+                        <td>@projectModel.Portfolio.ToNiceString()</td>
+                        <td>£@projectModel.Budget</td>
+                        <td>£@projectModel.ActualCost</td>
+                        <td>£@projectModel.FundsReceived</td>
+                        <td>@projectModel.FundingStatus.ToNiceString()</td>
+                        <td>@projectModel.StartDate</td>
+                        <td>@projectModel.EndDate</td>
+                    </tr>
+                </tbody>
+            </table>
+        }
+    </div>
+    <h2>Tasks</h2>
+    <a class="btn btn-primary" href="/addtask/@ProjectID">Add <i class="oi oi-plus"></i></a>
+    <div class="card">
+        @if (projectModel?.Tasks == null)
+        {
+            <p class="lead">No data to show</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Done?</th>
+                        <th>Fixed Start?</th>
+                        <th>Name</th>
+                        <th>Work</th>
+                        <th>Actual Work</th>
+                        <th>Budget</th>
+                        <th>Actual Cost</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Task Type</th>
+                        <th>Resources</th>
+                        <th>Predecessors</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in projectModel.Tasks)
+                    {
+                        <tr>
+                            <td><input type="checkbox" @bind="t.IsDone" /></td>
+                            <td><input type="checkbox" @bind="t.HasFixedStart" /></td>
+                            <td>@t.Name</td>
+                            <td>@t.PlannedWorkHours</td>
+                            <td>£@t.ActualWorkHours</td>
+                            <td>£@t.PlannedCost</td>
+                            <td>£@t.ActualCost</td>
+                            <td>@t.StartDate</td>
+                            <td>@t.EndDate</td>
+                            <td>@t.TaskType.ToNiceString()</td>
+                            <td>@string.Join(',', t.AssignedResources.Select(x => $"{x.Person.ShortName}[{(int)(x.Percentage * 100)}]"))</td>
+                            <td>@string.Join(',', t.Predecessors)</td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        }
+    </div>
+
+</div>

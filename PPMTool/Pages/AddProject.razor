@@ -13,7 +13,7 @@
                     <label for="Name">Name</label>
                 </div>
                 <div class="col">
-                    <InputText @bind-Value="projectModel.ProjectName" />
+                    <InputText @bind-Value="projectModel.Name" />
                 </div>
             </div>
             <div class="row">
@@ -30,9 +30,9 @@
                 </div>
                 <div class="col">
                     <InputSelect @bind-Value="projectModel.Portfolio">
-                        @foreach (var c in Enum.GetValues(typeof(Portfolio)))
+                        @foreach (var c in (Portfolio[])Enum.GetValues(typeof(Portfolio)))
                         {
-                            <option value="@c">@c.ToString()</option>
+                            <option value="@c">@c.ToNiceString()</option>
                         }
                     </InputSelect>
                 </div>
@@ -42,7 +42,7 @@
                     <label for="Budget">Agreed Budget (£)</label>
                 </div>
                 <div class="col">
-                    <InputNumber min="0.0" step="0.01" placeholder="0.00" @bind-Value="projectModel.Budget" />
+                    <InputNumber type="currency" min="0.0" step="0.01" placeholder="0.00" @bind-Value="projectModel.Budget" />
                 </div>
             </div>
             <div class="row">
@@ -59,9 +59,9 @@
                 </div>
                 <div class="col">
                     <InputSelect @bind-Value="projectModel.FundingStatus">
-                        @foreach (var c in Enum.GetValues(typeof(FundingStatus)))
+                        @foreach (var c in (FundingStatus[])Enum.GetValues(typeof(FundingStatus)))
                         {
-                            <option value="@c">@c.ToString()</option>
+                            <option value="@c">@c.ToNiceString()</option>
                         }
                     </InputSelect>
                 </div>

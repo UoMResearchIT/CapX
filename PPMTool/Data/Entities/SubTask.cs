@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PPMTool.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Entities
 {
     /// <summary>
     /// Represents an individual activity or phase of a project

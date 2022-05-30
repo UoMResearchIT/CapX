@@ -1,5 +1,6 @@
 ﻿@page "/projects"
 @page "/"
+@using PPMTool.Enums
 
 <div class="container">
     <h1>Projects</h1>
@@ -23,21 +24,23 @@
                         <th>Funding Status</th>
                         <th>Start Date</th>
                         <th>End Date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var p in projects)
                     {
                         <tr>
-                            <td>@p.ProjectName</td>
+                            <td>@p.Name</td>
                             <td>@p.PI</td>
-                            <td>@p.Portfolio</td>
+                            <td>@p.Portfolio.ToNiceString()</td>
                             <td>£@p.Budget</td>
                             <td>£@p.ActualCost</td>
                             <td>£@p.FundsReceived</td>
-                            <td>@p.FundingStatus</td>
+                            <td>@p.FundingStatus.ToNiceString()</td>
                             <td>@p.StartDate</td>
                             <td>@p.EndDate</td>
+                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId">Details<i class="oi oi-info"></i></a></td>
                         </tr>
                     }
                 </tbody>

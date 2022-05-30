@@ -4,10 +4,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Entities
 {
     public abstract class BaseTask
     {
+        [Required]
+        public string Name { get; set; }
         public DateTime StartDate { get; set; }
 
         public DateTime EndDate { get; set; }

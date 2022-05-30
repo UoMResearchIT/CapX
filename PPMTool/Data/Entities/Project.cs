@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using PPMTool.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Entities
 {
     /// <summary>
     /// Represents a group of subtask that form a project
@@ -13,18 +14,21 @@ namespace PPMTool.Data
     {
         public int ProjectId { get; set; }
 
-        public string ProjectName { get; set; }
-
+        [Required]
         public string PI { get; set; }
 
+        [Required]
         public Portfolio Portfolio { get; set; }
 
         public IList<SubTask> Tasks { get; set; }
 
+        [Required]
         public double Budget { get; set; }
 
+        [Required]
         public double FundsReceived { get; set; }
 
+        [Required]
         public FundingStatus FundingStatus { get; set; }
 
     }

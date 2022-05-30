@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -13,10 +14,20 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        private Project project;
+        private Project projectModel;
 
-        protected override async Task OnInitializedAsync()
+        [Parameter]
+        public int? ProjectID { get; set; }
+
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
+
+            if (ProjectID != null)
+            {
+                using var context = new PPMToolContext();
+                projectModel = ProjectService.GetById(context, ProjectID);
+            }
         }
     }
 }
