@@ -51,7 +51,7 @@
     <h2>Tasks</h2>
     <a class="btn btn-primary" href="/addtask/@ProjectID">Add <i class="oi oi-plus"></i></a>
     <div class="card">
-        @if (projectModel?.Tasks == null)
+        @if (projectModel?.SubTasks == null)
         {
             <p class="lead">No data to show</p>
         }
@@ -75,7 +75,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var t in projectModel.Tasks)
+                    @foreach (var t in projectModel.SubTasks)
                     {
                         <tr>
                             <td><input type="checkbox" @bind="t.IsDone" /></td>

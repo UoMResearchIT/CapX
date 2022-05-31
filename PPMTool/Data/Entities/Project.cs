@@ -20,7 +20,7 @@ namespace PPMTool.Data.Entities
         [Required]
         public Portfolio Portfolio { get; set; }
 
-        public IList<SubTask> Tasks { get; set; } = new List<SubTask>();
+        public virtual IList<SubTask> SubTasks { get; set; } = new List<SubTask>();
 
         [Required]
         public double Budget { get; set; }

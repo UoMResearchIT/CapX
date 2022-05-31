@@ -17,10 +17,10 @@ namespace PPMTool.Data.Entities
         private TaskType taskType;
         public TaskType TaskType { get => taskType; set { if (taskType != value) { taskType = value; OnTaskTypeChanged(new EventArgs()); } } }
 
-        public IList<Resource> AssignedResources { get; set; }
+        public virtual IList<Resource> AssignedResources { get; set; }
 
         /// <summary>
-        /// For now, restricted to a singel predecessor task and an "finish-to-start" contraint
+        /// For now, restricted to a single predecessor task and an "finish-to-start" contraint
         /// </summary>
         public SubTask Predecessor { get; set; }
 
@@ -68,6 +68,8 @@ namespace PPMTool.Data.Entities
                 {
                     units += r.Percentage / 100;
                 }
+
+                // TODO: Update cost
 
                 // Update core parameters
                 if (TaskType == TaskType.FixedUnits)

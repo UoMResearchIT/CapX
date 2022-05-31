@@ -17,9 +17,6 @@ namespace PPMTool.Pages
         private ProjectService ProjectService { get; set; }
 
         [Inject]
-        private SubTaskService SubTaskService { get; set; }
-
-        [Inject]
         private PersonService PersonService { get; set; }
 
         [Parameter]
@@ -94,8 +91,9 @@ namespace PPMTool.Pages
                 if (isValid)
                 {
                     using var context = new PPMToolContext();
-                    SubTaskService.AddSubTask(context, taskModel);
-                    projectModel.Tasks.Add(taskModel);
+
+                    // Add the new sub task to the task list
+                    projectModel.SubTasks.Add(taskModel);
                     ProjectService.Update(context, projectModel);
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }

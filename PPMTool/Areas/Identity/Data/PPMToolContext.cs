@@ -15,6 +15,7 @@ namespace PPMTool.Data
     {
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
+        public DbSet<SubTask> SubTasks { get; set; }
 
         /// <summary>
         /// Inject options.
