@@ -40,6 +40,17 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Update an existing project
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectModel"></param>
+        internal void Update(PPMToolContext context, Project projectModel)
+        {
+            context.Projects.Update(projectModel);
+            context.SaveChanges();
+        }
+
+        /// <summary>
         /// Gets all the projects
         /// </summary>
         /// <param name="context"></param>

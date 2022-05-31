@@ -38,9 +38,9 @@
                             <td>£@p.ActualCost</td>
                             <td>£@p.FundsReceived</td>
                             <td>@p.FundingStatus.ToNiceString()</td>
-                            <td>@p.StartDate</td>
-                            <td>@p.EndDate</td>
-                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId">Details<i class="oi oi-info"></i></a></td>
+                            <td>@p.StartDate.ToShortDateString()</td>
+                            <td>@p.EndDate.ToShortDateString()</td>
+                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId">Details <i class="oi oi-info"></i></a></td>
                         </tr>
                     }
                 </tbody>

@@ -41,8 +41,8 @@
                         <td>£@projectModel.ActualCost</td>
                         <td>£@projectModel.FundsReceived</td>
                         <td>@projectModel.FundingStatus.ToNiceString()</td>
-                        <td>@projectModel.StartDate</td>
-                        <td>@projectModel.EndDate</td>
+                        <td>@projectModel.StartDate.ToShortDateString()</td>
+                        <td>@projectModel.EndDate.ToShortDateString()</td>
                     </tr>
                 </tbody>
             </table>
@@ -89,7 +89,7 @@
                             <td>@t.EndDate</td>
                             <td>@t.TaskType.ToNiceString()</td>
                             <td>@string.Join(',', t.AssignedResources.Select(x => $"{x.Person.ShortName}[{(int)(x.Percentage * 100)}]"))</td>
-                            <td>@string.Join(',', t.Predecessors)</td>
+                            <td>@string.Join(',', t.Predecessor)</td>
                         </tr>
                     }
 

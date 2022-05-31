@@ -38,7 +38,10 @@
                 {
                     <div class="row">
                         <div class="col-auto">
-                            <InputCheckbox @bind-Value="@t.Checked" />
+                            <label class="switch">
+                                <input type="checkbox" @bind-value="t.Checked">
+                                <span class="slider round"></span>
+                            </label>
                         </div>
                         <div class="col">
                             @t.Name
@@ -47,7 +50,7 @@
                     </div>
                 }
             </div>
-            <button class="btn btn-primary" type="submit">Submit</button>
+            <button class="btn btn-primary" type="submit">Submit <i class="oi oi-check"/></button>
         </EditForm>
     </div>
 </div>
