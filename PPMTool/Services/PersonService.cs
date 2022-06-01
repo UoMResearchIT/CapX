@@ -35,7 +35,9 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Person> GetAll(PPMToolContext context)
         {
-            return context.People.ToList();
+            return context.People
+                .Include(p => p.SkillTags)
+                .ToList();
         }
     }
 }

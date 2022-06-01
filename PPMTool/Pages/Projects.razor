@@ -4,7 +4,7 @@
 
 <div class="container">
     <h1>Projects</h1>
-    <a class="btn btn-primary" href="/addproject">Add <i class="oi oi-plus"></i></a>
+    <a class="btn btn-primary" href="/addproject"><i class="oi oi-plus"/></a>
     <div class="card">
         @if (projects == null)
         {
@@ -12,7 +12,7 @@
         }
         else
         {
-            <table class="table">
+            <table class="table table-responsive table-striped">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -34,13 +34,13 @@
                             <td>@p.Name</td>
                             <td>@p.PI</td>
                             <td>@p.Portfolio.ToNiceString()</td>
-                            <td>£@p.Budget</td>
-                            <td>£@p.ActualCost</td>
-                            <td>£@p.FundsReceived</td>
+                            <td>@p.Budget.ToString("C0")</td>
+                            <td>@p.ActualCost.ToString("C0")</td>
+                            <td>@p.FundsReceived.ToString("C0")</td>
                             <td>@p.FundingStatus.ToNiceString()</td>
                             <td>@p.StartDate.ToShortDateString()</td>
                             <td>@p.EndDate.ToShortDateString()</td>
-                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId">Details <i class="oi oi-info"></i></a></td>
+                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId"><i class="oi oi-info"/></a></td>
                         </tr>
                     }
                 </tbody>

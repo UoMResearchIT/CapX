@@ -18,7 +18,7 @@
         }
         else
         {
-            <table class="table">
+            <table class="table table-responsive table-striped">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -37,9 +37,9 @@
                         <td>@projectModel.Name</td>
                         <td>@projectModel.PI</td>
                         <td>@projectModel.Portfolio.ToNiceString()</td>
-                        <td>£@projectModel.Budget</td>
-                        <td>£@projectModel.ActualCost</td>
-                        <td>£@projectModel.FundsReceived</td>
+                        <td>@projectModel.Budget.ToString("C0")</td>
+                        <td>@projectModel.ActualCost.ToString("C0")</td>
+                        <td>@projectModel.FundsReceived.ToString("C0")</td>
                         <td>@projectModel.FundingStatus.ToNiceString()</td>
                         <td>@projectModel.StartDate.ToShortDateString()</td>
                         <td>@projectModel.EndDate.ToShortDateString()</td>
@@ -49,7 +49,7 @@
         }
     </div>
     <h2>Tasks</h2>
-    <a class="btn btn-primary" href="/addtask/@ProjectID">Add <i class="oi oi-plus"></i></a>
+    <a class="btn btn-primary" href="/addtask/@ProjectID"><i class="oi oi-plus"/></a>
     <div class="card">
         @if (projectModel?.SubTasks == null)
         {
@@ -57,13 +57,14 @@
         }
         else
         {
-            <table class="table">
+            <table class="table table-responsive table-striped">
                 <thead>
                     <tr>
                         <th>Done?</th>
                         <th>Fixed Start?</th>
                         <th>Name</th>
-                        <th>Work</th>
+                        <th>Duration (hrs)</th>
+                        <th>Work (hrs)</th>
                         <th>Actual Work</th>
                         <th>Budget</th>
                         <th>Actual Cost</th>
@@ -78,18 +79,34 @@
                     @foreach (var t in projectModel.SubTasks)
                     {
                         <tr>
-                            <td><input type="checkbox" @bind="t.IsDone" /></td>
-                            <td><input type="checkbox" @bind="t.HasFixedStart" /></td>
+                            <td><input type="checkbox" @bind="t.IsDone" disabled /></td>
+                            <td><input type="checkbox" @bind="t.HasFixedStart" disabled /></td>
                             <td>@t.Name</td>
+                            <td>@t.DurationHours</td>
                             <td>@t.PlannedWorkHours</td>
-                            <td>£@t.ActualWorkHours</td>
-                            <td>£@t.PlannedCost</td>
-                            <td>£@t.ActualCost</td>
-                            <td>@t.StartDate</td>
-                            <td>@t.EndDate</td>
+                            <td>@t.ActualWorkHours</td>
+                            <td>@t.PlannedCost.ToString("C0")</td>
+                            <td>@t.ActualCost.ToString("C0")</td>
+                            <td>@t.StartDate.ToShortDateString()</td>
+                            <td>@t.EndDate.ToShortDateString()</td>
                             <td>@t.TaskType.ToNiceString()</td>
-                            <td>@string.Join(',', t.AssignedResources.Select(x => $"{x.Person.ShortName}[{(int)(x.Percentage * 100)}]"))</td>
-                            <td>@string.Join(',', t.Predecessor)</td>
+                            @if (t.AssignedResources == null)
+                            {
+                                <td></td>
+                            }
+                            else
+                            {
+                                <td>@string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))</td>
+                            }
+
+                            @if (t.Predecessor == null)
+                            {
+                                <td></td>
+                            }
+                            else
+                            {
+                                <td>@t.Predecessor.Name</td>
+                            }
                         </tr>
                     }
 

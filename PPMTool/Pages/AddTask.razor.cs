@@ -19,22 +19,28 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
+
+        public string PredecessorId { get; set; }
 
         private Project projectModel;
         private SubTask taskModel = new SubTask();
         private IList<Resource> resources = new List<Resource>();
         private bool isValid = true;
-        private bool StartDateDisabled { get; set; }
-        private bool WorkDisabled { get; set; }
-        private bool DurationDisabled { get; set; }
+        private bool startDateDisabled;
+        private bool workDisabled;
+        private bool durationDisabled;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             using var context = new PPMToolContext();
             projectModel = ProjectService.GetById(context, ProjectId);
+            if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
             foreach (var p in PersonService.GetAll(context))
             {
                 resources.Add(new Resource
@@ -56,16 +62,19 @@ namespace PPMTool.Pages
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            StartDateDisabled = !taskModel.HasFixedStart;
-            WorkDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven);
-            DurationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven);
+            startDateDisabled = !taskModel.HasFixedStart;
+            workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven);
+            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven);
         }
 
+        /// <summary>
+        /// Update the sub task properties
+        /// </summary>
         public void OnUpdate()
         {
             Logger.LogInformation("Updating sub task configuration...");
 
-            // Refresh resources on task
+            // Create resources on the sub task
             taskModel.AssignedResources = new List<Resource>();
             foreach (var r in resources)
             {
@@ -73,6 +82,13 @@ namespace PPMTool.Pages
                 {
                     taskModel.AssignedResources.Add(r);
                 }
+            }
+
+            // Create predecessor on the sub task
+            if (int.TryParse(PredecessorId, out var id))
+            {
+                using var context = new PPMToolContext();
+                taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
             }
 
             // Schedule
@@ -90,9 +106,8 @@ namespace PPMTool.Pages
                 OnUpdate();
                 if (isValid)
                 {
-                    using var context = new PPMToolContext();
-
                     // Add the new sub task to the task list
+                    using var context = new PPMToolContext();
                     projectModel.SubTasks.Add(taskModel);
                     ProjectService.Update(context, projectModel);
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");

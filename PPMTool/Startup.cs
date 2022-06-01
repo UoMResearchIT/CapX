@@ -40,6 +40,7 @@ namespace PPMTool
 
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
+            services.AddScoped<SubTaskService>();
             services.AddScoped<TagService>();
         }
 

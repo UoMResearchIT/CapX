@@ -36,7 +36,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public DateTime NextAvailable { get; private set; }
 
-        public IList<SkillTag> SkillTags { get; set; } = new List<SkillTag>();
+        public IList<SkillTag> SkillTags { get; set; }
 
         static string GetInitials(string name)
         {

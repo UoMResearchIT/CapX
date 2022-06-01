@@ -15,7 +15,18 @@ namespace PPMTool.Data.Entities
         public int SubTaskId { get; set; }
 
         private TaskType taskType;
-        public TaskType TaskType { get => taskType; set { if (taskType != value) { taskType = value; OnTaskTypeChanged(new EventArgs()); } } }
+        public TaskType TaskType
+        {
+            get => taskType;
+            set
+            {
+                if (taskType != value)
+                {
+                    taskType = value;
+                    OnTaskTypeChanged(new EventArgs());
+                }
+            }
+        }
 
         public virtual IList<Resource> AssignedResources { get; set; }
 
@@ -28,7 +39,18 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Basically a simplified constraint type of "Start No Earlier Than" otherwise will be "As Soon As Possible" based on the predecessor end dates
         /// </summary>
-        public bool HasFixedStart { get => hasFixedStart; set { if (hasFixedStart != value) { hasFixedStart = value; OnFixedStartChanged(new EventArgs()); } } }
+        public bool HasFixedStart
+        {
+            get => hasFixedStart;
+            set
+            {
+                if (hasFixedStart != value)
+                {
+                    hasFixedStart = value;
+                    OnFixedStartChanged(new EventArgs());
+                }
+            }
+        }
 
 
         /// <summary>
@@ -40,7 +62,18 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// For fixed unit tasks indicates whether the work should be used to drive the duration or the other way round
         /// </summary>
-        public bool IsWorkDriven { get => isWorkDriven; set { if (isWorkDriven != value) { isWorkDriven = value; OnWorkDrivenChanged(new EventArgs()); } } }
+        public bool IsWorkDriven
+        {
+            get => isWorkDriven;
+            set
+            {
+                if (isWorkDriven != value)
+                {
+                    isWorkDriven = value;
+                    OnWorkDrivenChanged(new EventArgs());
+                }
+            }
+        }
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
@@ -69,8 +102,6 @@ namespace PPMTool.Data.Entities
                     units += r.Percentage / 100;
                 }
 
-                // TODO: Update cost
-
                 // Update core parameters
                 if (TaskType == TaskType.FixedUnits)
                 {
@@ -94,6 +125,13 @@ namespace PPMTool.Data.Entities
                 {
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
+                }
+
+                // Update cost
+                PlannedCost = 0d;
+                foreach (var res in AssignedResources)
+                {
+                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * res.Person.HourlyRate;
                 }
 
                 // Set end date

@@ -3,7 +3,7 @@
 
 <div class="container">
     <h1>People</h1>
-    <a class="btn btn-primary" href="/addperson">Add <i class="oi oi-plus"></i></a>
+    <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus"/></a>
     <div class="card">
         @if (people == null)
         {
@@ -11,7 +11,7 @@
         }
         else
         {
-            <table class="table">
+            <table class="table table-responsive table-striped">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -31,7 +31,7 @@
                             <td>£@p.HourlyRate</td>
                             <td>@p.AvailabilityFTE</td>
                             <td>@p.NextAvailable.ToShortDateString()</td>
-                            <td>@string.Join(',', p.SkillTags)</td>
+                            <td>@string.Join(',', p.SkillTags.Select(t => t.Name))</td>
                         </tr>
                     }
                 </tbody>

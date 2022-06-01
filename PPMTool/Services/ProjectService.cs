@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 
@@ -36,7 +37,11 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal Project GetById(PPMToolContext context, int? projectID)
         {
-            return context.Projects.FirstOrDefault(p => p.ProjectId == projectID);
+            return context.Projects
+                .Include(p => p.SubTasks)
+                .ThenInclude(s => s.AssignedResources)
+                .ThenInclude(r => r.Person)
+                .FirstOrDefault(p => p.ProjectId == projectID);
         }
 
         /// <summary>
@@ -57,7 +62,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Project> GetAll(PPMToolContext context)
         {
-            return context.Projects.ToList();
+            return context.Projects
+                .Include(p => p.SubTasks)
+                .ThenInclude(s => s.AssignedResources)
+                .ToList();
         }
     }
 }

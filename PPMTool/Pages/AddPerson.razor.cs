@@ -37,6 +37,16 @@ namespace PPMTool.Pages
         {
             Logger.LogInformation("Adding new person...");
 
+            // Add tags to person model
+            personModel.SkillTags = new List<SkillTag>();
+            foreach (var t in AvailableTags)
+            {
+                personModel.SkillTags.Add(new SkillTag
+                {
+                    Name = t.Name
+                });
+            }
+
             using var context = new PPMToolContext();
             if (!PersonService.AddPerson(context, personModel))
             {
