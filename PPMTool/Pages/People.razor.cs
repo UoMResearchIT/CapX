@@ -17,71 +17,46 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         private List<Person> people;
-        private PeopleSortAndFilter[] sortAndFilterOptions = Enum.GetValues<PeopleSortAndFilter>();
+        private bool isSortedAscending;
+        private string activeSortColumn;
 
-        private PeopleSortAndFilter sortingOption;
-        public PeopleSortAndFilter SortingOption
+        private string SetSortIcon(string columnName)
         {
-            get => sortingOption;
-            set
+            if (activeSortColumn != columnName)
             {
-                if (sortingOption != value)
-                {
-                    sortingOption = value;
-                    UpdateSource();
-                }
+                return string.Empty;
+            }
+            if (isSortedAscending)
+            {
+                return "oi oi-sort-ascending";
+            }
+            else
+            {
+                return "oi oi-sort-descending";
             }
         }
 
-        private PeopleSortAndFilter filterOption;
-        public PeopleSortAndFilter FilterOption
+        private void SortTable(string columnName)
         {
-            get => filterOption;
-            set
+            if (columnName != activeSortColumn)
             {
-                if (filterOption != value)
-                {
-                    filterOption = value;
-                    UpdateSource();
-                }
+                people = people.OrderBy(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
+                isSortedAscending = true;
+                activeSortColumn = columnName;
+
             }
-        }
-
-        /// <summary>
-        /// Method to update the people list based on the chosen filter/sorting combination
-        /// </summary>
-        private void UpdateSource()
-        {
-            // Get people from the database
-            using var context = new PPMToolContext();
-            var peo = PersonService.GetAll(context);
-            if (peo.Count() > 0)
+            else
             {
-                people = peo.ToList();
-
-                // Apply sort
-                switch (SortingOption)
+                if (isSortedAscending)
                 {
-                    case PeopleSortAndFilter.ShortName:
-                        people.Sort((x, y) => x.ShortName.CompareTo(y.ShortName));
-                        break;
-
-                    case PeopleSortAndFilter.FTE:
-                        people.Sort((x, y) => x.AvailabilityFTE.CompareTo(y.AvailabilityFTE));
-                        break;
-
-                    case PeopleSortAndFilter.HourlyRate:
-                        people.Sort((x, y) => x.HourlyRate.CompareTo(y.HourlyRate));
-                        break;
-
-                    case PeopleSortAndFilter.NextAvailable:
-                        people.Sort((x, y) => x.NextAvailable.CompareTo(y.NextAvailable));
-                        break;
-
-                    default:
-                        people.Sort((x, y) => x.Name.CompareTo(y.Name));
-                        break;
+                    people = people.OrderByDescending(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
                 }
+                else
+                {
+                    people = people.OrderBy(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
+                }
+
+                isSortedAscending = !isSortedAscending;
             }
         }
 
@@ -89,7 +64,13 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            UpdateSource();
+            // Get people from the database
+            using var context = new PPMToolContext();
+            var peo = PersonService.GetAll(context);
+            if (peo.Count() > 0)
+            {
+                people = peo.ToList();
+            }
         }
     }
 }

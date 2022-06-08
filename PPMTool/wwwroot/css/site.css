@@ -114,3 +114,11 @@ input:checked + .slider:before {
     .slider.round:before {
         border-radius: 50%;
     }
+
+.sort-th {
+    cursor: pointer;
+}
+
+.fa {
+    float: right;
+}

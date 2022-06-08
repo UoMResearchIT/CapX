@@ -6,30 +6,36 @@
     <h1>People</h1>
     <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus" /></a>
     <div class="card">
-        <label>Sort By:</label>
-        <select class="form-select form-select-sm" @bind="@SortingOption">
-            @foreach (var item in sortAndFilterOptions)
-            {
-                <option value="@item">@item.ToNiceString()</option>
-            }
-        </select>
-    </div>
-    <div class="card">
         @if (people == null)
         {
             <p class="lead">No data to show</p>
         }
         else
         {
-            <table class="table table-responsive table-striped">
+            <table class="table table-responsive table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Short Name</th>
-                        <th>Hourly Rate</th>
-                        <th>Maximum FTE</th>
-                        <th>Next Available</th>
-                        <th>Skills</th>
+                        <th class="sort-th" @onclick="@(() => SortTable("Name"))">
+                            Name
+                            <span class="fa @(SetSortIcon("Name"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("ShortName"))">
+                            Short Name
+                            <span class="fa @(SetSortIcon("ShortName"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("HourlyRate"))">
+                            Hourly Rate
+                            <span class="fa @(SetSortIcon("HourlyRate"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("AvailabilityFTE"))">
+                            Maximum FTE
+                            <span class="fa @(SetSortIcon("AvailabilityFTE"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("NextAvailable"))">
+                            Next Available
+                            <span class="fa @(SetSortIcon("NextAvailable"))"></span>
+                        </th>
+                        <th class="sort-th">Skills</th>
                     </tr>
                 </thead>
                 <tbody>
