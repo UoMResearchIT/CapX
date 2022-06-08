@@ -1,9 +1,19 @@
 ﻿@page "/people"
 @inherits BasePage
+@using PPMTool.Enums
 
 <div class="container">
     <h1>People</h1>
-    <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus"/></a>
+    <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus" /></a>
+    <div class="card">
+        <label>Sort By:</label>
+        <select class="form-select form-select-sm" @bind="@SortingOption">
+            @foreach (var item in sortAndFilterOptions)
+            {
+                <option value="@item">@item.ToNiceString()</option>
+            }
+        </select>
+    </div>
     <div class="card">
         @if (people == null)
         {

@@ -22,5 +22,10 @@ namespace PPMTool.Enums
         {
             return me.GetDescription() ?? me.ToString();
         }
+
+        public static string ToNiceString(this PeopleSortAndFilter me)
+        {
+            return me.GetDescription() ?? me.ToString();
+        }
     }
 }
