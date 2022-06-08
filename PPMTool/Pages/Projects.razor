@@ -4,7 +4,7 @@
 
 <div class="container">
     <h1>Projects</h1>
-    <a class="btn btn-primary" href="/addproject"><i class="oi oi-plus"/></a>
+    <a class="btn btn-primary" href="/addproject"><i class="oi oi-plus" /></a>
     <div class="card">
         @if (projects == null)
         {
@@ -15,15 +15,42 @@
             <table class="table table-responsive table-striped">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>PI</th>
-                        <th>Portfolio</th>
-                        <th>Budget</th>
-                        <th>Actual Cost</th>
-                        <th>Funds Received</th>
-                        <th>Funding Status</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
+                        <th class="sort-th" @onclick="@(() => SortTable("Name"))">
+                            Name
+                            <span class="fa @(SetSortIcon("Name"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("PI"))">
+                            PI
+                            <span class="fa @(SetSortIcon("PI"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("Portfolio"))">
+                            Portfolio
+                            <span class="fa @(SetSortIcon("Portfolio"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("Budget"))">
+                            Budget
+                            <span class="fa @(SetSortIcon("Budget"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("ActualCost"))">
+                            Actual Cost
+                            <span class="fa @(SetSortIcon("ActualCost"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("FundsReceived"))">
+                            Funds Received
+                            <span class="fa @(SetSortIcon("FundsReceived"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("FundingStatus"))">
+                            Funding Status
+                            <span class="fa @(SetSortIcon("FundingStatus"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("StartDate"))">
+                            Start Date
+                            <span class="fa @(SetSortIcon("StartDate"))"></span>
+                        </th>
+                        <th class="sort-th" @onclick="@(() => SortTable("EndDate"))">
+                            End Date
+                            <span class="fa @(SetSortIcon("EndDate"))"></span>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -40,7 +67,7 @@
                             <td>@p.FundingStatus.ToNiceString()</td>
                             <td>@p.StartDate.ToShortDateString()</td>
                             <td>@p.EndDate.ToShortDateString()</td>
-                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId"><i class="oi oi-info"/></a></td>
+                            <td><a class="btn btn-primary" href="/projectdetails/@p.ProjectId"><i class="oi oi-info" /></a></td>
                         </tr>
                     }
                 </tbody>

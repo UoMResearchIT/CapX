@@ -22,10 +22,5 @@ namespace PPMTool.Enums
         {
             return me.GetDescription() ?? me.ToString();
         }
-
-        public static string ToNiceString(this ProjectFilterOptions me)
-        {
-            return me.GetDescription() ?? me.ToString();
-        }
     }
 }
