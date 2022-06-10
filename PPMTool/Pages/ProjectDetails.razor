@@ -18,38 +18,45 @@
         }
         else
         {
-            <table class="table table-responsive table-striped">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>PI</th>
-                        <th>Portfolio</th>
-                        <th>Budget</th>
-                        <th>Actual Cost</th>
-                        <th>Funds Received</th>
-                        <th>Funding Status</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>@projectModel.Name</td>
-                        <td>@projectModel.PI</td>
-                        <td>@projectModel.Portfolio.ToNiceString()</td>
-                        <td>@projectModel.Budget.ToString("C0")</td>
-                        <td>@projectModel.ActualCost.ToString("C0")</td>
-                        <td>@projectModel.FundsReceived.ToString("C0")</td>
-                        <td>@projectModel.FundingStatus.ToNiceString()</td>
-                        <td>@projectModel.StartDate.ToShortDateString()</td>
-                        <td>@projectModel.EndDate.ToShortDateString()</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>PI</th>
+                            <th>Portfolio</th>
+                            <th>Budget</th>
+                            <th>Actual Cost</th>
+                            <th>Funds Received</th>
+                            <th>Funding Status</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@projectModel.PI</td>
+                            <td>@projectModel.Portfolio.ToNiceString()</td>
+                            <td>@projectModel.Budget.ToString("C0")</td>
+                            <td>@projectModel.ActualCost.ToString("C0")</td>
+                            <td>@projectModel.FundsReceived.ToString("C0")</td>
+                            <td>@projectModel.FundingStatus.ToNiceString()</td>
+                            <td>@projectModel.StartDate.ToShortDateString()</td>
+                            <td>@projectModel.EndDate.ToShortDateString()</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
-    <h2>Tasks</h2>
-    <a class="btn btn-primary" href="/addtask/@ProjectID"><i class="oi oi-plus"/></a>
+    <br />
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h2>Tasks</h2>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-primary" href="/addtask/@ProjectID"><i class="oi oi-plus" /></a>
+        </div>
+    </div>
     <div class="card">
         @if (projectModel?.SubTasks == null)
         {
@@ -57,62 +64,73 @@
         }
         else
         {
-            <table class="table table-responsive table-striped">
-                <thead>
-                    <tr>
-                        <th>Done?</th>
-                        <th>Fixed Start?</th>
-                        <th>Name</th>
-                        <th>Duration (hrs)</th>
-                        <th>Work (hrs)</th>
-                        <th>Actual Work</th>
-                        <th>Budget</th>
-                        <th>Actual Cost</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Task Type</th>
-                        <th>Resources</th>
-                        <th>Predecessors</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var t in projectModel.SubTasks)
-                    {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td><input type="checkbox" @bind="t.IsDone" disabled /></td>
-                            <td><input type="checkbox" @bind="t.HasFixedStart" disabled /></td>
-                            <td>@t.Name</td>
-                            <td>@t.DurationHours</td>
-                            <td>@t.PlannedWorkHours</td>
-                            <td>@t.ActualWorkHours</td>
-                            <td>@t.PlannedCost.ToString("C0")</td>
-                            <td>@t.ActualCost.ToString("C0")</td>
-                            <td>@t.StartDate.ToShortDateString()</td>
-                            <td>@t.EndDate.ToShortDateString()</td>
-                            <td>@t.TaskType.ToNiceString()</td>
-                            @if (t.AssignedResources == null)
-                            {
-                                <td></td>
-                            }
-                            else
-                            {
-                                <td>@string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))</td>
-                            }
-
-                            @if (t.Predecessor == null)
-                            {
-                                <td></td>
-                            }
-                            else
-                            {
-                                <td>@t.Predecessor.Name</td>
-                            }
+                            <th><i class="oi oi-check" /></th>
+                            <th>Fixed Start</th>
+                            <th>Name</th>
+                            <th>Duration (hrs)</th>
+                            <th>Work (hrs)</th>
+                            <th>Actual Work</th>
+                            <th>Budget</th>
+                            <th>Actual Cost</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Task Type</th>
+                            <th>Resources</th>
+                            <th>Predecessors</th>
                         </tr>
-                    }
+                    </thead>
+                    <tbody>
+                        @foreach (var t in projectModel.SubTasks)
+                        {
+                            <tr>
+                                <td>
+                                    @if (t.IsDone)
+                                    {
+                                        <i class="oi oi-check" />
+                                    }
+                                </td>
+                                <td>
+                                    <label class="switch">
+                                        <input type="checkbox" @bind-value="t.HasFixedStart" disabled>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </td>
+                                <td>@t.Name</td>
+                                <td>@t.DurationHours</td>
+                                <td>@t.PlannedWorkHours</td>
+                                <td>@t.ActualWorkHours</td>
+                                <td>@t.PlannedCost.ToString("C0")</td>
+                                <td>@t.ActualCost.ToString("C0")</td>
+                                <td>@t.StartDate.ToShortDateString()</td>
+                                <td>@t.EndDate.ToShortDateString()</td>
+                                <td>@t.TaskType.ToNiceString()</td>
+                                @if (t.AssignedResources == null)
+                                {
+                                    <td></td>
+                                }
+                                else
+                                {
+                                    <td>@string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))</td>
+                                }
 
-                </tbody>
-            </table>
+                                @if (t.Predecessor == null)
+                                {
+                                    <td></td>
+                                }
+                                else
+                                {
+                                    <td>@t.Predecessor.Name</td>
+                                }
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
-
 </div>

@@ -15,6 +15,9 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Inject]
+        private NavigationManager NavigationManager { get; set; }
+
         private List<Project> projects;
 
         private bool isSortedAscending;
@@ -71,6 +74,11 @@ namespace PPMTool.Pages
             {
                 projects = proj.ToList();
             }
+        }
+
+        private void ProjectClicked(int id)
+        {
+            NavigationManager.NavigateTo($"/projectdetails/{id}");
         }
     }
 }
