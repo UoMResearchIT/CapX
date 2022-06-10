@@ -109,6 +109,7 @@ namespace PPMTool.Pages
                     // Add the new sub task to the task list
                     using var context = new PPMToolContext();
                     projectModel.SubTasks.Add(taskModel);
+                    projectModel.UpdateProjectSummary();
                     ProjectService.Update(context, projectModel);
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }

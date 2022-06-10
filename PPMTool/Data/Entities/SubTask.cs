@@ -86,13 +86,13 @@ namespace PPMTool.Data.Entities
             try
             {
                 // Update start date from predecessor if necessary
-                if (!HasFixedStart && Predecessor != null)
+                if (!HasFixedStart)
                 {
-                    StartDate = Predecessor.EndDate;
-                }
-                else
-                {
-                    StartDate = DateTime.Now.Date;
+                    // From predecessor
+                    if (Predecessor != null) StartDate = Predecessor.EndDate;
+
+                    // Set to today
+                    else StartDate = DateTime.Now.Date;
                 }
 
                 // Sum up assigned resources
