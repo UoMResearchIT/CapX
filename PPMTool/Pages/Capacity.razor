@@ -1,7 +1,50 @@
 ﻿@page "/capacity"
+@inherits BasePage
 
 @using PPMTool.Data
 
-<h1>Capacity</h1>
+<div class="container">
+    @if (IsLoading)
+    {
+        <div class="spinner"></div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <h1>Capacity</h1>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus" /></a>
+            </div>
+        </div>
+        <div class="card">
+            @if (data == null)
+            {
+                <p class="lead">No data to show</p>
+            }
+            else
+            {
+                @*<ApexChart TItem="CapacityProfile"
+                           Title="Capacity"
+                           Options=options>
+                    
+                    <ApexRangeSeries TItem="CapacityProfile"
+                                     Items="data"
+                                     XValue="@(e => e.Person.Name)"
+                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
+                                     Name="Main Incidents" />
 
-<p>Need to put a Gantt here with dates along the top and then RSEs down the left. We should display each person as a kind of summary task and then their assignments listed underneath. We can use the Gantt control to display this information.</p>
+                    <ApexRangeSeries TItem="CapacityProfile"
+                                     Items="data"
+                                     XValue="@(e => e.Person.Name)"
+                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
+                                     Name="Test Incidents" />
+
+                </ApexChart>*@
+            }
+        </div>
+    }
+</div>

@@ -31,11 +31,6 @@ namespace PPMTool.Data.Entities
         [Required]
         public double AvailabilityFTE { get; set; } = 1.0;
 
-        /// <summary>
-        /// When this person is next available for assigned calculated from their project assignments
-        /// </summary>
-        public DateTime NextAvailable { get; private set; }
-
         public IList<SkillTag> SkillTags { get; set; }
 
         static string GetInitials(string name)

@@ -110,7 +110,7 @@
 
                     <ApexRangeSeries TItem="SubTask"
                                      Items="Data"
-                                     XValue="@(e => e.Name.ToString())"
+                                     XValue="@(e => e.Name)"
                                      YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
                                      YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
 

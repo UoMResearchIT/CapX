@@ -43,7 +43,6 @@
                         <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" />
                         <RadzenDataGridColumn TItem="Person" Property="HourlyRate" Title="Hourly Rate" FormatString="{0:C0}" />
                         <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="FTE" />
-                        <RadzenDataGridColumn TItem="Person" Property="NextAvailable" Title="Next Available" />
                         <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills">
                             <Template Context="p">
                                 @string.Join(',', p.SkillTags.Select(t => t.Name))
@@ -54,6 +53,4 @@
             }
         </div>
     }
-
-
 </div>
