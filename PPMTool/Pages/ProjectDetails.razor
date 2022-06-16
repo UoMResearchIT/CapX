@@ -80,7 +80,7 @@
                             LogicalFilterOperator="LogicalFilterOperator.Or">
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Property="IsDone" Title="Done" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true"/>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" />
                     <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start" />
                     <RadzenDataGridColumn TItem="SubTask" Property="DurationHours" Title="Duration (hrs)" FormatString="{0:F1}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
@@ -102,6 +102,20 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
                 </Columns>
             </RadzenDataGrid>
+            <div class="card">
+                <ApexChart TItem="SubTask"
+                           Title="Schedule"
+                           XAxisType="XAxisType.Datetime"
+                           Options=options>
+
+                    <ApexRangeSeries TItem="SubTask"
+                                     Items="Data"
+                                     XValue="@(e => e.Name.ToString())"
+                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
+
+                </ApexChart>
+            </div>
         }
     </div>
 </div>

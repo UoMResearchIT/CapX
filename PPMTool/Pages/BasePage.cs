@@ -14,5 +14,7 @@ namespace PPMTool.Pages
 
         [Inject]
         protected NavigationManager Navigation { get; set; }
+
+        protected bool IsLoading { get; set; }
     }
 }

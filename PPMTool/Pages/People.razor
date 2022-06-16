@@ -4,47 +4,56 @@
 @using PPMTool.Data.Entities
 
 <div class="container">
-    <div class="row">
-        <div class="col-auto mr-auto">
-            <h1>People</h1>
+    @if (IsLoading)
+    {
+        <div class="spinner"></div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <h1>People</h1>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus" /></a>
+            </div>
         </div>
-        <div class="col-auto">
-            <a class="btn btn-primary" href="/addperson"><i class="oi oi-plus" /></a>
+        <div class="card">
+            @if (people == null)
+            {
+                <p class="lead">No data to show</p>
+            }
+            else
+            {
+                <RadzenDataGrid AllowFiltering="true"
+                                AllowColumnResize="true"
+                                FilterMode="FilterMode.Advanced"
+                                AllowSorting="true"
+                                PageSize="10"
+                                AllowPaging="true"
+                                PagerHorizontalAlign="HorizontalAlign.Left"
+                                ShowPagingSummary="true"
+                                Data="@people"
+                                TItem="Person"
+                                ColumnWidth="150px"
+                                SelectionMode="DataGridSelectionMode.Single"
+                                LogicalFilterOperator="LogicalFilterOperator.Or">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" />
+                        <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" />
+                        <RadzenDataGridColumn TItem="Person" Property="HourlyRate" Title="Hourly Rate" FormatString="{0:C0}" />
+                        <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="FTE" />
+                        <RadzenDataGridColumn TItem="Person" Property="NextAvailable" Title="Next Available" />
+                        <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills">
+                            <Template Context="p">
+                                @string.Join(',', p.SkillTags.Select(t => t.Name))
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
         </div>
-    </div>
-    <div class="card">
-        @if (people == null)
-        {
-            <p class="lead">No data to show</p>
-        }
-        else
-        {
-            <RadzenDataGrid AllowFiltering="true"
-                            AllowColumnResize="true"
-                            FilterMode="FilterMode.Advanced"
-                            AllowSorting="true"
-                            PageSize="10"
-                            AllowPaging="true"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
-                            ShowPagingSummary="true"
-                            Data="@people"
-                            TItem="Person"
-                            ColumnWidth="150px"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            LogicalFilterOperator="LogicalFilterOperator.Or">
-                <Columns>
-                    <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" />
-                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" />
-                    <RadzenDataGridColumn TItem="Person" Property="HourlyRate" Title="Hourly Rate" FormatString="{0:C0}" />
-                    <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="FTE" />
-                    <RadzenDataGridColumn TItem="Person" Property="NextAvailable" Title="Next Available" />
-                    <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills">
-                        <Template Context="p">
-                            @string.Join(',', p.SkillTags.Select(t => t.Name))
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        }
-    </div>
+    }
+
+
 </div>

@@ -18,17 +18,32 @@ namespace PPMTool.Pages
 
         private IEnumerable<Person> people;
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
+        private bool IsLoading { get; set; }
 
-            // Get people from the database
-            using var context = new PPMToolContext();
-            var peo = PersonService.GetAll(context);
-            if (peo.Count() > 0)
+        protected override async Task OnInitializedAsync()
+        {
+            IsLoading = true;
+
+            await Task.Run(async () =>
             {
-                people = peo;
-            }
+                // Get people from the database
+                using var context = new PPMToolContext();
+                var peo = PersonService.GetAll(context);
+                if (peo.Count() > 0)
+                {
+                    // Update all the next available dates of the people
+                    await Task.Delay(2000);
+
+
+
+                    people = peo;
+                }
+            }).ContinueWith(t =>
+            {
+                IsLoading = false;
+                StateHasChanged();
+            });
+            
         }
     }
 }
