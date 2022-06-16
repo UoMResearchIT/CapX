@@ -1,6 +1,7 @@
 ﻿@page "/projects"
 @page "/"
 @using PPMTool.Enums
+@using PPMTool.Data.Entities
 
 <div class="container">
     <div class="row">
@@ -18,66 +19,40 @@
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th class="clickable" @onclick="@(() => SortTable("Name"))">
-                                Name
-                                <span class="fa @(SetSortIcon("Name"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("PI"))">
-                                PI
-                                <span class="fa @(SetSortIcon("PI"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("Portfolio"))">
-                                Portfolio
-                                <span class="fa @(SetSortIcon("Portfolio"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("Budget"))">
-                                Budget
-                                <span class="fa @(SetSortIcon("Budget"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("ActualCost"))">
-                                Actual Cost
-                                <span class="fa @(SetSortIcon("ActualCost"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("FundsReceived"))">
-                                Funds Received
-                                <span class="fa @(SetSortIcon("FundsReceived"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("FundingStatus"))">
-                                Funding Status
-                                <span class="fa @(SetSortIcon("FundingStatus"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("StartDate"))">
-                                Start Date
-                                <span class="fa @(SetSortIcon("StartDate"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("EndDate"))">
-                                End Date
-                                <span class="fa @(SetSortIcon("EndDate"))"></span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in projects)
-                        {
-                            <tr class="clickable" @onclick="@(e => ProjectClicked(p.ProjectId))">
-                                <td>@p.Name</td>
-                                <td>@p.PI</td>
-                                <td>@p.Portfolio.ToNiceString()</td>
-                                <td>@p.Budget.ToString("C0")</td>
-                                <td>@p.ActualCost.ToString("C0")</td>
-                                <td>@p.FundsReceived.ToString("C0")</td>
-                                <td>@p.FundingStatus.ToNiceString()</td>
-                                <td>@p.StartDate.ToShortDateString()</td>
-                                <td>@p.EndDate.ToShortDateString()</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <RadzenDataGrid AllowFiltering="true"
+                            AllowColumnResize="true"
+                            FilterMode="FilterMode.Advanced"
+                            AllowSorting="true"
+                            PageSize="10"
+                            AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            Data="@projects"
+                            TItem="Project"
+                            ColumnWidth="150px"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            LogicalFilterOperator="LogicalFilterOperator.Or"
+                            RowClick="@(e => ProjectClicked(e.Data.ProjectId))">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" />
+                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" />
+                    <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">
+                        <Template Context="proj">
+                            @proj.Portfolio.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="Project" Property="FundingStatus" Title="Funding Status">
+                        <Template Context="proj">
+                            @proj.FundingStatus.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
+                </Columns>
+            </RadzenDataGrid>
         }
     </div>
 </div>

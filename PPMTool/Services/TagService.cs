@@ -2,20 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PPMTool.Data;
+using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
     public class TagService
     {
-        internal IEnumerable<string> GetAllTags()
+        /// <summary>
+        /// Returns all skill tags in the DB
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal IEnumerable<SkillTag> GetAllTags(PPMToolContext context)
         {
-            // TODO: This is mocked
-            return new List<string>
-            {
-                "C#",
-                "MATLAB",
-                "GPU"
-            };
+            return context.SkillTags;
         }
     }
 }

@@ -17,6 +17,7 @@ namespace PPMTool.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<SubTask> SubTasks { get; set; }
         public DbSet<Resource> Resources { get; set; }
+        public DbSet<SkillTag> SkillTags { get; set; }
 
         /// <summary>
         /// Inject options.

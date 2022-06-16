@@ -16,49 +16,7 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
-        private List<Person> people;
-        private bool isSortedAscending;
-        private string activeSortColumn;
-
-        private string SetSortIcon(string columnName)
-        {
-            if (activeSortColumn != columnName)
-            {
-                return string.Empty;
-            }
-            if (isSortedAscending)
-            {
-                return "oi oi-sort-ascending";
-            }
-            else
-            {
-                return "oi oi-sort-descending";
-            }
-        }
-
-        private void SortTable(string columnName)
-        {
-            if (columnName != activeSortColumn)
-            {
-                people = people.OrderBy(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
-                isSortedAscending = true;
-                activeSortColumn = columnName;
-
-            }
-            else
-            {
-                if (isSortedAscending)
-                {
-                    people = people.OrderByDescending(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
-                }
-                else
-                {
-                    people = people.OrderBy(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
-                }
-
-                isSortedAscending = !isSortedAscending;
-            }
-        }
+        private IEnumerable<Person> people;
 
         protected override void OnInitialized()
         {
@@ -69,7 +27,7 @@ namespace PPMTool.Pages
             var peo = PersonService.GetAll(context);
             if (peo.Count() > 0)
             {
-                people = peo.ToList();
+                people = peo;
             }
         }
     }

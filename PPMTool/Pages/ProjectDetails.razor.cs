@@ -14,7 +14,7 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        private Project projectModel;
+        private Project project;
 
         [Parameter]
         public int? ProjectID { get; set; }
@@ -26,7 +26,7 @@ namespace PPMTool.Pages
             if (ProjectID != null)
             {
                 using var context = new PPMToolContext();
-                projectModel = ProjectService.GetById(context, ProjectID);
+                project = ProjectService.GetById(context, ProjectID);
             }
         }
     }

@@ -21,11 +21,8 @@
                 <div class="col">
                     <label>Fixed Start</label>
                 </div>
-                <div class="col">
-                    <label class="switch">
-                        <input type="checkbox" @bind-value="taskModel.HasFixedStart">
-                        <span class="slider round"></span>
-                    </label>
+                <div class="col" style="display: flex">
+                    <RadzenSwitch @bind-value="taskModel.HasFixedStart" />
                 </div>
             </div>
 
@@ -79,10 +76,7 @@
                         <label>Work Driven?</label>
                     </div>
                     <div class="col">
-                        <label class="switch">
-                            <input type="checkbox" @bind-value="taskModel.IsWorkDriven">
-                            <span class="slider round"></span>
-                        </label>
+                        <RadzenSwitch @bind-value="taskModel.IsWorkDriven" />
                     </div>
                 </div>
             }
@@ -106,6 +100,7 @@
             }
 
             <!-- If fixed units then at least one resource needs to be assigned -->
+            <hr />
             <h3>Resources</h3>
             @foreach (var r in resources)
             {

@@ -1,18 +1,19 @@
 ﻿@page "/projectdetails/{ProjectId:int}"
 @using PPMTool.Enums
+@using PPMTool.Data.Entities
 
 <div class="container">
 
-    @if (projectModel == null)
+    @if (project == null)
     {
         <h1>Unkown Project</h1>
     }
     else
     {
-        <h1>@projectModel.Name</h1>
+        <h1>@project.Name</h1>
     }
     <div class="card">
-        @if (projectModel == null)
+        @if (project == null)
         {
             <p class="lead">No data to show</p>
         }
@@ -34,14 +35,14 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>@projectModel.PI</td>
-                            <td>@projectModel.Portfolio.ToNiceString()</td>
-                            <td>@projectModel.Budget.ToString("C0")</td>
-                            <td>@projectModel.ActualCost.ToString("C0")</td>
-                            <td>@projectModel.FundsReceived.ToString("C0")</td>
-                            <td>@projectModel.FundingStatus.ToNiceString()</td>
-                            <td>@projectModel.StartDate.ToShortDateString()</td>
-                            <td>@projectModel.EndDate.ToShortDateString()</td>
+                            <td>@project.PI</td>
+                            <td>@project.Portfolio.ToNiceString()</td>
+                            <td>@project.Budget.ToString("C0")</td>
+                            <td>@project.ActualCost.ToString("C0")</td>
+                            <td>@project.FundsReceived.ToString("C0")</td>
+                            <td>@project.FundingStatus.ToNiceString()</td>
+                            <td>@project.StartDate.ToShortDateString()</td>
+                            <td>@project.EndDate.ToShortDateString()</td>
                         </tr>
                     </tbody>
                 </table>
@@ -58,79 +59,49 @@
         </div>
     </div>
     <div class="card">
-        @if (projectModel?.SubTasks == null)
+        @if (project?.SubTasks == null)
         {
             <p class="lead">No data to show</p>
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th><i class="oi oi-check" /></th>
-                            <th>Fixed Start</th>
-                            <th>Name</th>
-                            <th>Duration (hrs)</th>
-                            <th>Work (hrs)</th>
-                            <th>Actual Work</th>
-                            <th>Budget</th>
-                            <th>Actual Cost</th>
-                            <th>Start</th>
-                            <th>End</th>
-                            <th>Task Type</th>
-                            <th>Resources</th>
-                            <th>Predecessors</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var t in projectModel.SubTasks)
-                        {
-                            <tr>
-                                <td>
-                                    @if (t.IsDone)
-                                    {
-                                        <i class="oi oi-check" />
-                                    }
-                                </td>
-                                <td>
-                                    <label class="switch">
-                                        <input type="checkbox" @bind-value="t.HasFixedStart" disabled>
-                                        <span class="slider round"></span>
-                                    </label>
-                                </td>
-                                <td>@t.Name</td>
-                                <td>@t.DurationHours</td>
-                                <td>@t.PlannedWorkHours</td>
-                                <td>@t.ActualWorkHours</td>
-                                <td>@t.PlannedCost.ToString("C0")</td>
-                                <td>@t.ActualCost.ToString("C0")</td>
-                                <td>@t.StartDate.ToShortDateString()</td>
-                                <td>@t.EndDate.ToShortDateString()</td>
-                                <td>@t.TaskType.ToNiceString()</td>
-                                @if (t.AssignedResources == null)
-                                {
-                                    <td></td>
-                                }
-                                else
-                                {
-                                    <td>@string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))</td>
-                                }
-
-                                @if (t.Predecessor == null)
-                                {
-                                    <td></td>
-                                }
-                                else
-                                {
-                                    <td>@t.Predecessor.Name</td>
-                                }
-                            </tr>
-                        }
-
-                    </tbody>
-                </table>
-            </div>
+            <RadzenDataGrid AllowFiltering="true"
+                            AllowColumnResize="true"
+                            FilterMode="FilterMode.Advanced"
+                            AllowSorting="true"
+                            PageSize="10"
+                            AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            Data="@project.SubTasks"
+                            TItem="SubTask"
+                            ColumnWidth="100px"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            LogicalFilterOperator="LogicalFilterOperator.Or">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SubTask" Property="IsDone" Title="Done" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true"/>
+                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="DurationHours" Title="Duration (hrs)" FormatString="{0:F1}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type">
+                        <Template Context="t">
+                            @t.TaskType.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources">
+                        <Template Context="t">
+                            @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
+                </Columns>
+            </RadzenDataGrid>
         }
     </div>
 </div>

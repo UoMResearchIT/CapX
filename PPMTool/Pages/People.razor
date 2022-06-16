@@ -1,6 +1,7 @@
 ﻿@page "/people"
 @inherits BasePage
 @using PPMTool.Enums
+@using PPMTool.Data.Entities
 
 <div class="container">
     <div class="row">
@@ -18,48 +19,32 @@
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th class="clickable" @onclick="@(() => SortTable("Name"))">
-                                Name
-                                <span class="fa @(SetSortIcon("Name"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("ShortName"))">
-                                Short Name
-                                <span class="fa @(SetSortIcon("ShortName"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("HourlyRate"))">
-                                Hourly Rate
-                                <span class="fa @(SetSortIcon("HourlyRate"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("AvailabilityFTE"))">
-                                Maximum FTE
-                                <span class="fa @(SetSortIcon("AvailabilityFTE"))"></span>
-                            </th>
-                            <th class="clickable" @onclick="@(() => SortTable("NextAvailable"))">
-                                Next Available
-                                <span class="fa @(SetSortIcon("NextAvailable"))"></span>
-                            </th>
-                            <th>Skills</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in people)
-                        {
-                            <tr>
-                                <td>@p.Name</td>
-                                <td>@p.ShortName</td>
-                                <td>£@p.HourlyRate</td>
-                                <td>@p.AvailabilityFTE</td>
-                                <td>@p.NextAvailable.ToShortDateString()</td>
-                                <td>@string.Join(',', p.SkillTags.Select(t => t.Name))</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <RadzenDataGrid AllowFiltering="true"
+                            AllowColumnResize="true"
+                            FilterMode="FilterMode.Advanced"
+                            AllowSorting="true"
+                            PageSize="10"
+                            AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            Data="@people"
+                            TItem="Person"
+                            ColumnWidth="150px"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            LogicalFilterOperator="LogicalFilterOperator.Or">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" />
+                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" />
+                    <RadzenDataGridColumn TItem="Person" Property="HourlyRate" Title="Hourly Rate" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="FTE" />
+                    <RadzenDataGridColumn TItem="Person" Property="NextAvailable" Title="Next Available" />
+                    <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills">
+                        <Template Context="p">
+                            @string.Join(',', p.SkillTags.Select(t => t.Name))
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
         }
     </div>
 </div>
