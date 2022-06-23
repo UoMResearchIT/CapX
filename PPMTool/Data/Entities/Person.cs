@@ -29,6 +29,9 @@ namespace PPMTool.Data.Entities
         public double HourlyRate { get; set; } = 35.72;
 
         [Required]
+        public DateTime StartDate { get; set; } = DateTime.Now.Date;
+
+        [Required]
         public double AvailabilityFTE { get; set; } = 1.0;
 
         public IList<SkillTag> SkillTags { get; set; }
