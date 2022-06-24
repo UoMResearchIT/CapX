@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic.CompilerServices;
@@ -79,28 +80,61 @@ namespace PPMTool.Data.Entities
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units / 100
         /// Units = Sum of Resource Percentage
-        /// Returns false if unable to configure with current data
+        /// Returns null if successful otherwise error message
         /// </summary>
-        public bool Schedule()
+        public string Schedule()
         {
             try
             {
-                // Update start date from predecessor if necessary
-                if (!HasFixedStart)
-                {
-                    // From predecessor
-                    if (Predecessor != null) StartDate = Predecessor.EndDate;
-
-                    // Set to today
-                    else StartDate = DateTime.Now.Date;
-                }
-
-                // Sum up assigned resources
+                // Sum up assigned resources and determine latest start date of assigned resources
                 double units = 0d;
+                DateTime latestStart = default;
+                string latestStarter = string.Empty;
                 foreach (var r in AssignedResources)
                 {
                     units += r.Percentage / 100;
+                    if (r.Person.StartDate > latestStart)
+                    {
+                        latestStarter = r.Person.Name;
+                        latestStart = r.Person.StartDate;
+                    }
                 }
+
+                // Start date is fixed
+                if (HasFixedStart)
+                {
+                    // If we assign someone who doesn't start until after the date then error
+                    if (units > 0d && latestStart > StartDate)
+                    {
+                        return $"This task has a fixed start date of {StartDate}. " +
+                            $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
+                    }
+                }
+
+                // Start date driven by predecessor, resources or just make today
+                else
+                {
+                    // From predecessor
+                    if (Predecessor != null)
+                    {
+                        StartDate = Predecessor.EndDate;
+                    }
+
+                    // Set to today
+                    else
+                    {
+                        StartDate = DateTime.Now.Date;
+                    }
+
+                    // Check whether we need to drive from resources
+                    if (units > 0d && latestStart > StartDate)
+                    {
+                        Debug.WriteLine($"Start date being changed to {latestStart}, driven by resource {latestStarter}");
+                        StartDate = latestStart.Date;
+                    }
+                }
+
+
 
                 // Update core parameters
                 if (TaskType == TaskType.FixedUnits)
@@ -137,13 +171,12 @@ namespace PPMTool.Data.Entities
                 // Set end date
                 EndDate = StartDate.AddDays(Math.Ceiling(DurationHours / 7));
 
-                return true;
+                return null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // TODO: Should log the exception and pass something useful back to the user
+                return e.Message;
             }
-            return false;
         }
 
         private void UpdateDuration(double units)

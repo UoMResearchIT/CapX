@@ -89,7 +89,8 @@ namespace PPMTool.Pages
             }
 
             // Schedule
-            isValid = taskModel.Schedule();
+            var error = taskModel.Schedule();
+            isValid = error == null;
 
             // Update UI
             StateHasChanged();
