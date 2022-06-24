@@ -16,31 +16,27 @@
             </div>
         </div>
         <div class="card">
-            @if (data == null)
+            @if (teamCapacityProfiles == null)
             {
                 <p class="lead">No data to show</p>
             }
             else
             {
-                @*<ApexChart TItem="CapacityProfile"
-                           Title="Capacity"
-                           Options=options>
-                    
-                    <ApexRangeSeries TItem="CapacityProfile"
-                                     Items="data"
-                                     XValue="@(e => e.Person.Name)"
-                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
-                                     Name="Main Incidents" />
-
-                    <ApexRangeSeries TItem="CapacityProfile"
-                                     Items="data"
-                                     XValue="@(e => e.Person.Name)"
-                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
-                                     Name="Test Incidents" />
-
-                </ApexChart>*@
+                <ApexChart TItem="CapacityItem"
+                           Title="Load"
+                           Options=options
+                           XAxisType="XAxisType.Datetime">
+                    @foreach (CapacityItem item in chartSource)
+                    {
+                        <ApexRangeSeries TItem="CapacityItem"
+                                         Items="chartSource"
+                                         XValue="@(e => e.PersonName)"
+                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                         Color="@item.GetColourString()"
+                                         Name="@item.FTE.ToString("F0")" />
+                    }
+                </ApexChart>
             }
         </div>
     }

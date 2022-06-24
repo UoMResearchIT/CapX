@@ -28,7 +28,7 @@ namespace PPMTool.Data
         public PPMToolContext(DbContextOptions<PPMToolContext> options)
             : base(options)
         {
-            Debug.WriteLine($"{ContextId} context created.");
+            Debug.WriteLine($"** {ContextId} context created.");
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace PPMTool.Data
         /// </summary>
         public override void Dispose()
         {
-            Debug.WriteLine($"{ContextId} context disposed.");
+            Debug.WriteLine($"** {ContextId} context disposed.");
             base.Dispose();
         }
 
@@ -68,7 +68,7 @@ namespace PPMTool.Data
         /// <returns>A <see cref="ValueTask"/></returns>
         public override ValueTask DisposeAsync()
         {
-            Debug.WriteLine($"{ContextId} context disposed async.");
+            Debug.WriteLine($"** {ContextId} context disposed async.");
             return base.DisposeAsync();
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -19,21 +20,30 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        private IEnumerable<CapacityProfile> data;
-        private ApexChartOptions<CapacityProfile> options;
+        // This is the profile of the team after processing
+        private IEnumerable<CapacityProfile> teamCapacityProfiles;
+
+        // This is the flattened version of the above required by the charting library
+        private IEnumerable<CapacityItem> chartSource;
+        private ApexChartOptions<CapacityItem> options;
 
         protected override async Task OnInitializedAsync()
         {
             IsLoading = true;
 
-            options = new ApexChartOptions<CapacityProfile>
+            options = new ApexChartOptions<CapacityItem>
             {
                 PlotOptions = new PlotOptions
                 {
                     Bar = new PlotOptionsBar
                     {
-                        Horizontal = true
+                        Horizontal = true,
+                        RangeBarOverlap = true
                     }
+                },
+                Legend = new Legend
+                {
+                    Show = false
                 }
             };
 
@@ -47,27 +57,25 @@ namespace PPMTool.Pages
                     var temp = new List<CapacityProfile>();
                     foreach (var p in peo)
                     {
-                        // Pull all projects on which they are assigned into a flattened dictionary
-                        var proj = ProjectService.GetAll(context).SelectMany(x =>
+                        // Pull all projects which contain subtasks to which that person is assigned
+                        var assignedSubTasks = ProjectService.GetAll(context).SelectMany(x =>
                         {
-                            return x.SubTasks.Select(y =>
-                            {
-                                return new KeyValuePair<string, SubTask>
-                                (
-                                    x.Name,
-                                    y
-                                );
-                            });
+                            return x.SubTasks.Where(y => y.AssignedResources.Any(z => z.Person == p));
                         });
 
-                        // Sort by start date
-                        proj.ToList().Sort((x, y) => x.Value.StartDate.CompareTo(y.Value.StartDate));
+                        // Generate capacity profile for this person from their assignments
+                        var capProf = new CapacityProfile(p, assignedSubTasks);
 
-                        // Add to the data source
-                        //temp.Add(new CapacityProfile(p, proj));
+                        // Add to the team profile list
+                        temp.Add(capProf);
                     }
 
-                    data = temp;
+                    teamCapacityProfiles = temp;
+
+                    // Flatten the team capacity to format required by chart source for the default view
+                    chartSource = teamCapacityProfiles.SelectMany(x => x.GetWeekByWeekLoad());
+
+                    Debug.WriteLine($"** ChartSource has {chartSource.Count()} entries!");
                 }
             }).ContinueWith(t =>
             {

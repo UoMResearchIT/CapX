@@ -53,6 +53,17 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        /// <summary>
+        /// Method to determine whether a date [startDate endDate).
+        /// If end date and start date are the same evaluates against start date.
+        /// </summary>
+        /// <param name="testDate">Date to test</param>
+        /// <returns></returns>
+        internal bool IsWithin(DateTime testDate)
+        {
+            return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate < EndDate;
+        }
+
 
         /// <summary>
         /// Used to drive the end date from the start date assuming 7 hour days
@@ -129,7 +140,7 @@ namespace PPMTool.Data.Entities
                     // Check whether we need to drive from resources
                     if (units > 0d && latestStart > StartDate)
                     {
-                        Debug.WriteLine($"Start date being changed to {latestStart}, driven by resource {latestStarter}");
+                        Debug.WriteLine($"** Start date being changed to {latestStart}, driven by resource {latestStarter}");
                         StartDate = latestStart.Date;
                     }
                 }
