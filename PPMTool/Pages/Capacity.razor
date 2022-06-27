@@ -26,16 +26,11 @@
                            Title="Load"
                            Options=options
                            XAxisType="XAxisType.Datetime">
-                    @foreach (CapacityItem item in chartSource)
-                    {
-                        <ApexRangeSeries TItem="CapacityItem"
-                                         Items="chartSource"
-                                         XValue="@(e => e.PersonName)"
-                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                         Color="@item.GetColourString()"
-                                         Name="@item.FTE.ToString("F0")" />
-                    }
+                    <ApexRangeSeries TItem="CapacityItem"
+                                     Items="chartSource"
+                                     XValue="@(e => e.PersonName)"
+                                     YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
                 </ApexChart>
             }
         </div>

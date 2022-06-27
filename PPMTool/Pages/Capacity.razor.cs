@@ -75,6 +75,13 @@ namespace PPMTool.Pages
                     // Flatten the team capacity to format required by chart source for the default view
                     chartSource = teamCapacityProfiles.SelectMany(x => x.GetWeekByWeekLoad());
 
+                    //chartSource = new List<CapacityItem>()
+                    //{
+                    //    new CapacityItem("Joe Bloggs", DateTime.Now, DateTime.Now.AddDays(7), 35),
+                    //    new CapacityItem("Jane Doe", DateTime.Now, DateTime.Now.AddDays(14), 66),
+                    //    new CapacityItem("Jane Doe", DateTime.Now.AddDays(21), DateTime.Now.AddDays(28), 74)
+                    //};
+
                     Debug.WriteLine($"** ChartSource has {chartSource.Count()} entries!");
                 }
             }).ContinueWith(t =>
