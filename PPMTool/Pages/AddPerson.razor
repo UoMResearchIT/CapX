@@ -1,14 +1,14 @@
 ﻿@page "/addperson"
 @inherits BasePage
 
-<div class="container">
+<div class="container" style="max-width: none; width: 80%">
     <h1>Add Person</h1>
     <div class="card">
         <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="Name">Name</label>
                 </div>
                 <div class="col">
@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="HourlyRate">Hourly Cost (£ / hour)</label>
                 </div>
                 <div class="col">
@@ -24,7 +24,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="AvailabilityFTE">Availability (FTE)</label>
                 </div>
                 <div class="col">
@@ -32,7 +32,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="StartDate">Start Date</label>
                 </div>
                 <div class="col">
@@ -44,10 +44,10 @@
             @foreach (var t in AvailableTags)
             {
                 <div class="row">
-                    <div class="col">
+                    <div class="col-1">
                         @t.Name
                     </div>
-                    <div class="col">
+                    <div class="col" style="display: flex">
                         <RadzenSwitch @bind-Value="t.Checked" />
                     </div>
                     <br />

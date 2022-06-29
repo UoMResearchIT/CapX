@@ -3,18 +3,41 @@
 
 @using PPMTool.Data
 
-<div class="container">
+<div class="container" style="max-width: none; width: 80%">
     @if (IsLoading)
     {
         <div class="spinner"></div>
     }
     else
     {
-        <div class="row">
-            <div class="col-auto mr-auto">
-                <h1>Capacity</h1>
+        <h1>Capacity</h1>
+        <div class="card">
+            <div class="row">
+                <div class="col-auto">
+                    Choose RSE:
+                </div>
+                <div class="col-auto mr-auto">
+                    <EditForm Model="this">
+                        <InputSelect @bind-Value="ChosenPerson">
+                            <option value="All">All</option>
+                            @foreach (var c in nameOptions)
+                            {
+                            <option value="@c">@c</option>
+                            }
+                    </InputSelect>
+                </EditForm>
+            </div>
+            <div class="col-auto">
+                Include Unfunded:
+            </div>
+            <div class="col" style="display: flex">
+                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+            </div>
+            <div class="col-auto">
+                @tooltipText
             </div>
         </div>
+    </div>
         <div class="card">
             @if (teamCapacityProfiles == null)
             {
@@ -22,16 +45,23 @@
             }
             else
             {
-                <ApexChart TItem="CapacityItem"
-                           Title="Load"
-                           Options=options
-                           XAxisType="XAxisType.Datetime">
-                    <ApexRangeSeries TItem="CapacityItem"
-                                     Items="chartSource"
-                                     XValue="@(e => e.PersonName)"
-                                     YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+                <ApexChart @ref="chart"
+                   TItem="CapacityItem"
+                   Title="@chartTitle"
+                   Options=options
+                   XAxisType="XAxisType.Datetime"
+                   OnDataPointEnter="@OnDataPointHover"
+                   OnDataPointLeave="@OnDataPointHoverLeave">
+                    <ChildContent>
+                        <ApexRangeSeries TItem="CapacityItem"
+                                 Items="chartSource"
+                                 XValue="@(e => e.ProjectName == null ? e.PersonName : e.ProjectName)"
+                                 YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                 YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                 PointColor="@(e => e.GetColourString())" />
+                    </ChildContent>
                 </ApexChart>
+
             }
         </div>
     }

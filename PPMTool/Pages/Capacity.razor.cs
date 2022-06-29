@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -8,7 +9,9 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
+using static PPMTool.Data.CapacityProfile;
 
 namespace PPMTool.Pages
 {
@@ -20,17 +23,53 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        // This is the profile of the team after processing
         private IEnumerable<CapacityProfile> teamCapacityProfiles;
-
-        // This is the flattened version of the above required by the charting library
+        private ApexChart<CapacityItem> chart;
         private IEnumerable<CapacityItem> chartSource;
         private ApexChartOptions<CapacityItem> options;
+        private List<string> nameOptions;
+        private string chartTitle;
+        private string tooltipText;
+
+        private string chosenPerson;
+        private string ChosenPerson
+        {
+            get => chosenPerson;
+            set
+            {
+                if (chosenPerson != value)
+                {
+                    chosenPerson = value;
+
+                    // Update the chart source
+                    Task.Run(async () => await ConfigureSourceAsync());
+                }
+            }
+        }
+
+        private bool includeUnFunded = true;
+        public bool IncludeUnFunded
+        {
+            get => includeUnFunded;
+            set
+            {
+                if (includeUnFunded != value)
+                {
+                    includeUnFunded = value;
+                    
+                    // Update the chart source
+                    Task.Run(async () =>
+                    {
+                        UpdateCapacityProfiles();
+                        await ConfigureSourceAsync();
+                        await chart?.UpdateSeriesAsync();
+                    });
+                }
+            }
+        }
 
         protected override async Task OnInitializedAsync()
         {
-            IsLoading = true;
-
             options = new ApexChartOptions<CapacityItem>
             {
                 PlotOptions = new PlotOptions
@@ -47,49 +86,96 @@ namespace PPMTool.Pages
                 }
             };
 
-            await Task.Run(() =>
+            // Get dropdown options
+            using var context = new PPMToolContext();
+            nameOptions = PersonService.GetAll(context).Select(p => p.Name).ToList();
+            nameOptions.Sort();
+
+            // Get data for chart
+            UpdateCapacityProfiles();
+            await ConfigureSourceAsync();
+            StateHasChanged();
+        }
+
+        private void OnDataPointHover(HoverData<CapacityItem> e)
+        {
+            // HACK: This shouldn't be necessary but since the chart I see and the data behind it seem to be out of sync then I have no choice here.
+            try
             {
-                // Get people from the database
-                using var context = new PPMToolContext();
-                var peo = PersonService.GetAll(context);
-                if (peo.Count() > 0)
+                var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
+                tooltipText = $"FTE: {item.FTE}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
+            }
+            catch { }
+        }
+
+        private void OnDataPointHoverLeave(HoverData<CapacityItem> e)
+        {
+            tooltipText = null;
+        }
+
+        private void UpdateCapacityProfiles()
+        {
+            // Get people from the database
+            using var context = new PPMToolContext();
+            var peo = PersonService.GetAll(context);
+            if (peo.Count() > 0)
+            {
+                var temp = new List<CapacityProfile>();
+                foreach (var p in peo)
                 {
-                    var temp = new List<CapacityProfile>();
-                    foreach (var p in peo)
+                    // Pull all projects which contain subtasks to which that person is assigned
+                    var projects = ProjectService.GetAll(context);
+                    if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != FundingStatus.AwaitingSubmission && p.FundingStatus != FundingStatus.AwaitingOutcome);
+                    Debug.WriteLine($"** {p.Name} has {projects?.Count()} projects to consider!");
+
+                    // Create a list of assignments
+                    var assignments = new List<Assignment>();
+                    foreach (var project in projects)
                     {
-                        // Pull all projects which contain subtasks to which that person is assigned
-                        var assignedSubTasks = ProjectService.GetAll(context).SelectMany(x =>
+                        foreach (var subTask in project.SubTasks)
                         {
-                            return x.SubTasks.Where(y => y.AssignedResources.Any(z => z.Person == p));
-                        });
-
-                        // Generate capacity profile for this person from their assignments
-                        var capProf = new CapacityProfile(p, assignedSubTasks);
-
-                        // Add to the team profile list
-                        temp.Add(capProf);
+                            if (subTask.AssignedResources.Any(z => z.Person == p))
+                            {
+                                assignments.Add(new Assignment(project.Name, subTask));
+                            }
+                        }
                     }
 
-                    teamCapacityProfiles = temp;
+                    // Generate capacity profile for this person from their assignments
+                    var capProf = new CapacityProfile(p, assignments);
 
-                    // Flatten the team capacity to format required by chart source for the default view
-                    chartSource = teamCapacityProfiles.SelectMany(x => x.GetWeekByWeekLoad());
-
-                    //chartSource = new List<CapacityItem>()
-                    //{
-                    //    new CapacityItem("Joe Bloggs", DateTime.Now, DateTime.Now.AddDays(7), 35),
-                    //    new CapacityItem("Jane Doe", DateTime.Now, DateTime.Now.AddDays(14), 66),
-                    //    new CapacityItem("Jane Doe", DateTime.Now.AddDays(21), DateTime.Now.AddDays(28), 74)
-                    //};
-
-                    Debug.WriteLine($"** ChartSource has {chartSource.Count()} entries!");
+                    // Add to the team profile list
+                    temp.Add(capProf);
                 }
-            }).ContinueWith(t =>
-            {
-                IsLoading = false;
-                InvokeAsync(StateHasChanged);
-            });
 
+                teamCapacityProfiles = temp;
+            }
+        }
+
+        /// <summary>
+        /// Repackages the capacity profile information into appropriate chart source
+        /// </summary>
+        private async Task ConfigureSourceAsync()
+        {
+            // Flatten the team capacity to format required by chart source
+            if (ChosenPerson == "All" || ChosenPerson == null)
+            {
+                chartSource = teamCapacityProfiles.SelectMany(x => x.GetWeekByWeekLoad());
+            }
+            else
+            {
+                chartSource = teamCapacityProfiles.FirstOrDefault(x => x.Person.Name == ChosenPerson)?.GetProjectByProjectLoad();
+            }
+            chartTitle = $"Load for {ChosenPerson ?? "All"}";
+            Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
+
+            // First time this is called, there is no reference to the chart
+            if (chart != null)
+            {
+                Debug.WriteLine($"** Re-renderering chart!");
+                await chart?.RenderAsync();
+            }
+            Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
         }
     }
 }

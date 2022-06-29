@@ -18,18 +18,25 @@ namespace PPMTool.Data
 
         public string PersonName { get; }
 
-        public CapacityItem(string personName, DateTime start, DateTime end, double fte)
+        /// <summary>
+        /// This is not used when this capacity item represents a sum of projects. Otherwise the project the capacity item corresponds to.
+        /// </summary>
+        public string ProjectName { get; }
+
+        public CapacityItem(string personName, DateTime start, DateTime end, double fte, string projectName = null)
         {
             PersonName = personName;
             StartDate = start;
             EndDate = end;
             FTE = fte;
+            ProjectName = projectName;
         }
 
         public string GetColourString()
         {
             if (FTE == 100) return "#00783c";
             if (FTE > 100) return "#e3001b";
+            if (FTE > 50) return "#fc9803";
             return "#ffd500";
         }
     }

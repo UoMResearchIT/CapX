@@ -2,14 +2,14 @@
 @inherits BasePage
 @using PPMTool.Enums 
 
-<div class="container">
+<div class="container" style="max-width: none; width: 80%">
     <h1>Add Project</h1>
     <div class="card">
         <EditForm Model="@projectModel" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="Name">Name</label>
                 </div>
                 <div class="col">
@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="PI">Principal Investigator</label>
                 </div>
                 <div class="col">
@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="Portfolio">Portfolio</label>
                 </div>
                 <div class="col">
@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="Budget">Agreed Budget (£)</label>
                 </div>
                 <div class="col">
@@ -46,7 +46,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="FundsReceived">Funds Received (£)</label>
                 </div>
                 <div class="col">
@@ -54,7 +54,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label for="FundingStatus">Funding Status</label>
                 </div>
                 <div class="col">

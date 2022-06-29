@@ -2,7 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 
-<div class="container">
+<div class="container" style="max-width: none; width: 80%">
     <h1>Add Task</h1>
     <p>Add new task to @projectModel?.Name</p>
     <div class="card">
@@ -10,7 +10,7 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label>Name</label>
                 </div>
                 <div class="col">
@@ -18,7 +18,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label>Fixed Start</label>
                 </div>
                 <div class="col" style="display: flex">
@@ -28,7 +28,7 @@
 
             <!-- Start date is required if fixed start otherwise driven from predecesors -->
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label>Start Date</label>
                 </div>
                 <div class="col">
@@ -38,7 +38,7 @@
 
             <!-- Choice of task type affects options -->
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label>Task Type</label>
                 </div>
                 <div class="col">
@@ -52,7 +52,7 @@
             </div>
 
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label>Work (Hours)</label>
                 </div>
                 <div class="col">
@@ -61,7 +61,7 @@
             </div>
 
             <div class="row">
-                <div class="col">
+                <div class="col-3">
                     <label>Duration (hrs)</label>
                 </div>
                 <div class="col">
@@ -72,7 +72,7 @@
             @if (taskModel.TaskType == TaskType.FixedUnits)
             {
                 <div class="row">
-                    <div class="col">
+                    <div class="col-3">
                         <label>Work Driven?</label>
                     </div>
                     <div class="col">
@@ -84,7 +84,7 @@
             @if (projectModel?.SubTasks?.Count > 0)
             {
                 <div class="row">
-                    <div class="col">
+                    <div class="col-3">
                         <label>Predecessor</label>
                     </div>
                     <div class="col">
@@ -105,7 +105,7 @@
             @foreach (var r in resources)
             {
                 <div class="row">
-                    <div class="col">
+                    <div class="col-3">
                         @r.Person.Name
                     </div>
                     <div class="col">
