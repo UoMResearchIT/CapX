@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using NuGet.Packaging;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -19,6 +21,8 @@ namespace PPMTool.Pages
         private NavigationManager NavigationManager { get; set; }
 
         private IEnumerable<Project> projects;
+        private IList<CapacityItem> projectData = new List<CapacityItem>();
+        private ApexChartOptions<CapacityItem> options;
 
         protected override void OnInitialized()
         {
@@ -30,7 +34,29 @@ namespace PPMTool.Pages
             if (proj.Count() > 0)
             {
                 projects = proj;
+
+                // Organise the project data so it is plottable
+                foreach (var p in proj)
+                {
+                    foreach (var subTask in p.SubTasks)
+                    {
+                        projectData.Add(new CapacityItem(null, subTask.StartDate, subTask.EndDate, 0d, p.Name));
+                    }
+                    
+                }
             }
+
+            options = new ApexChartOptions<CapacityItem>
+            {
+                PlotOptions = new PlotOptions
+                {
+                    Bar = new PlotOptionsBar
+                    {
+                        Horizontal = true,
+                        RangeBarGroupRows = false
+                    }
+                }
+            };
         }
 
         private void ProjectClicked(int id)
