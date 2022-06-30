@@ -21,19 +21,19 @@
         else
         {
             <RadzenDataGrid AllowFiltering="true"
-                            AllowColumnResize="true"
-                            FilterMode="FilterMode.Advanced"
-                            AllowSorting="true"
-                            PageSize="10"
-                            AllowPaging="true"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
-                            ShowPagingSummary="true"
-                            Data="@projects"
-                            TItem="Project"
-                            ColumnWidth="150px"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            LogicalFilterOperator="LogicalFilterOperator.Or"
-                            RowSelect="@(e => ProjectClicked(e.ProjectId))">
+                        AllowColumnResize="true"
+                        FilterMode="FilterMode.Advanced"
+                        AllowSorting="true"
+                        PageSize="10"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left"
+                        ShowPagingSummary="true"
+                        Data="@projects"
+                        TItem="Project"
+                        ColumnWidth="150px"
+                        SelectionMode="DataGridSelectionMode.Single"
+                        LogicalFilterOperator="LogicalFilterOperator.Or"
+                        RowSelect="@(e => ProjectClicked(e.ProjectId))">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" />
                     <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" />
@@ -55,16 +55,23 @@
                 </Columns>
             </RadzenDataGrid>
             <div class="card">
-                <ApexChart TItem="CapacityItem"
-                           Title="Schedule"
-                           XAxisType="XAxisType.Datetime"
-                           Options=options>
+                <div class="row">
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#e3001b"></rect> </svg> &gt;35hrs/week</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#00783c"></rect> </svg> =35hrs/week</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#fc9803"></rect> </svg> &gt;17.5hrs/week</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#ffd500"></rect> </svg> &le;17.5hrs/week</div>
+                </div>
+                <ApexChart TItem="ChartItem"
+                       Title="Schedule"
+                       XAxisType="XAxisType.Datetime"
+                       Options=options>
 
-                    <ApexRangeSeries TItem="CapacityItem"
-                                     Items="projectData"
-                                     XValue="@(e => e.ProjectName)"
-                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
+                    <ApexRangeSeries TItem="ChartItem"
+                                 Items="chartSource"
+                                 XValue="@(e => e.Label)"
+                                 YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                 YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
+                                 PointColor="@(e => e.GetColourStringWork())" />
 
                 </ApexChart>
             </div>

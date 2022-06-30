@@ -6,12 +6,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Options;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
-using static PPMTool.Data.CapacityProfile;
 
 namespace PPMTool.Pages
 {
@@ -23,10 +21,10 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        private IEnumerable<CapacityProfile> teamCapacityProfiles;
-        private ApexChart<CapacityItem> chart;
-        private IEnumerable<CapacityItem> chartSource;
-        private ApexChartOptions<CapacityItem> options;
+        private IDictionary<string, IEnumerable<SubTask>> groupedSubTasks;
+        private ApexChart<ChartItem> chart;
+        private List<ChartItem> chartSource;
+        private ApexChartOptions<ChartItem> options;
         private List<string> nameOptions;
         private string chartTitle;
         private string tooltipText;
@@ -42,7 +40,7 @@ namespace PPMTool.Pages
                     chosenPerson = value;
 
                     // Update the chart source
-                    Task.Run(async () => await ConfigureSourceAsync());
+                    InvokeAsync(async () => await ConfigureSourceAsync());
                 }
             }
         }
@@ -56,21 +54,16 @@ namespace PPMTool.Pages
                 if (includeUnFunded != value)
                 {
                     includeUnFunded = value;
-                    
+
                     // Update the chart source
-                    Task.Run(async () =>
-                    {
-                        UpdateCapacityProfiles();
-                        await ConfigureSourceAsync();
-                        await chart?.UpdateSeriesAsync();
-                    });
+                    InvokeAsync(async () => await ConfigureSourceAsync());
                 }
             }
         }
 
         protected override async Task OnInitializedAsync()
         {
-            options = new ApexChartOptions<CapacityItem>
+            options = new ApexChartOptions<ChartItem>
             {
                 PlotOptions = new PlotOptions
                 {
@@ -92,90 +85,113 @@ namespace PPMTool.Pages
             nameOptions.Sort();
 
             // Get data for chart
-            UpdateCapacityProfiles();
             await ConfigureSourceAsync();
             StateHasChanged();
         }
 
-        private void OnDataPointHover(HoverData<CapacityItem> e)
+        private void OnDataPointHover(HoverData<ChartItem> e)
         {
             // HACK: This shouldn't be necessary but since the chart I see and the data behind it seem to be out of sync then I have no choice here.
             try
             {
                 var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
-                tooltipText = $"FTE: {item.FTE}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
+                tooltipText = $"FTE: {item.Value}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
             }
             catch { }
         }
 
-        private void OnDataPointHoverLeave(HoverData<CapacityItem> e)
+        private void OnDataPointHoverLeave(HoverData<ChartItem> e)
         {
             tooltipText = null;
         }
 
-        private void UpdateCapacityProfiles()
+        /// <summary>
+        /// Pulls project info from the DB and packages the data into a plottable format
+        /// </summary>
+        private async Task ConfigureSourceAsync()
         {
+            // Reset source
+            chartSource = new List<ChartItem>();
+
             // Get people from the database
             using var context = new PPMToolContext();
             var peo = PersonService.GetAll(context);
             if (peo.Count() > 0)
             {
-                var temp = new List<CapacityProfile>();
-                foreach (var p in peo)
-                {
-                    // Pull all projects which contain subtasks to which that person is assigned
-                    var projects = ProjectService.GetAll(context);
-                    if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != FundingStatus.AwaitingSubmission && p.FundingStatus != FundingStatus.AwaitingOutcome);
-                    Debug.WriteLine($"** {p.Name} has {projects?.Count()} projects to consider!");
+                // Get projects from the database
+                var projects = ProjectService.GetAll(context);
+                if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != FundingStatus.AwaitingSubmission && p.FundingStatus != FundingStatus.AwaitingOutcome);
 
-                    // Create a list of assignments
-                    var assignments = new List<Assignment>();
-                    foreach (var project in projects)
+                // Reinitialise dictionary
+                groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();
+
+                // Flatten subtasks and group by person
+                if (ChosenPerson == "All" || ChosenPerson == null)
+                {
+                    foreach (var p in peo)
                     {
-                        foreach (var subTask in project.SubTasks)
+                        // Create a list of subtasks to which this person is assigned
+                        var assignments = new List<SubTask>();
+                        foreach (var project in projects)
                         {
-                            if (subTask.AssignedResources.Any(z => z.Person == p))
+                            foreach (var subTask in project.SubTasks)
                             {
-                                assignments.Add(new Assignment(project.Name, subTask));
+                                if (subTask.AssignedResources.Any(z => z.Person == p))
+                                {
+                                    assignments.Add(subTask);
+                                }
                             }
                         }
+
+                        // Add dictionary entry with person name as key
+                        if (assignments.Count > 0) groupedSubTasks.Add(p.Name, assignments);
                     }
 
-                    // Generate capacity profile for this person from their assignments
-                    var capProf = new CapacityProfile(p, assignments);
-
-                    // Add to the team profile list
-                    temp.Add(capProf);
+                    // Build chart source from the grouped data
+                    foreach (var group in groupedSubTasks)
+                    {
+                        chartSource.AddRange(ChartHelper.AggregateByWeek(group.Value, x => x.AssignedResources.First(x => x.Person.Name == group.Key).Percentage, group.Key));
+                    }
                 }
 
-                teamCapacityProfiles = temp;
-            }
-        }
+                // Filter by person and flatten and group by project
+                else
+                {
+                    // Create a list of subtasks for each project this person is assigned to
+                    foreach (var project in projects)
+                    {
+                        var assignments = new List<SubTask>();
+                        foreach (var subTask in project.SubTasks)
+                        {
+                            if (subTask.AssignedResources.Any(z => z.Person.Name == ChosenPerson))
+                            {
+                                assignments.Add(subTask);
+                            }
+                        }
 
-        /// <summary>
-        /// Repackages the capacity profile information into appropriate chart source
-        /// </summary>
-        private async Task ConfigureSourceAsync()
-        {
-            // Flatten the team capacity to format required by chart source
-            if (ChosenPerson == "All" || ChosenPerson == null)
-            {
-                chartSource = teamCapacityProfiles.SelectMany(x => x.GetWeekByWeekLoad());
-            }
-            else
-            {
-                chartSource = teamCapacityProfiles.FirstOrDefault(x => x.Person.Name == ChosenPerson)?.GetProjectByProjectLoad();
-            }
-            chartTitle = $"Load for {ChosenPerson ?? "All"}";
-            Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
+                        // Add dictionary entry with project name as key
+                        if (assignments.Count > 0) groupedSubTasks.Add(project.Name, assignments);
+                    }
 
-            // First time this is called, there is no reference to the chart
-            if (chart != null)
-            {
-                Debug.WriteLine($"** Re-renderering chart!");
-                await chart?.RenderAsync();
+                    // Build chart source from the grouped data
+                    foreach (var group in groupedSubTasks)
+                    {
+                        chartSource.AddRange(ChartHelper.AggregateByWeek(group.Value, x => x.AssignedResources.First(x => x.Person.Name == ChosenPerson).Percentage, group.Key));
+                    }
+                }
+                
+                chartTitle = $"Load for {ChosenPerson ?? "All"}";
+                Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
+
+                // First time this is called, there is no reference to the chart
+                if (chart != null)
+                {
+                    Debug.WriteLine($"** Re-renderering chart!");
+                    await chart?.UpdateSeriesAsync();
+                    //await chart?.RenderAsync();
+                }
+                Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
             }
-            Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
         }
     }
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
-using NuGet.Packaging;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -21,8 +20,8 @@ namespace PPMTool.Pages
         private NavigationManager NavigationManager { get; set; }
 
         private IEnumerable<Project> projects;
-        private IList<CapacityItem> projectData = new List<CapacityItem>();
-        private ApexChartOptions<CapacityItem> options;
+        private List<ChartItem> chartSource = new List<ChartItem>();
+        private ApexChartOptions<ChartItem> options;
 
         protected override void OnInitialized()
         {
@@ -38,15 +37,16 @@ namespace PPMTool.Pages
                 // Organise the project data so it is plottable
                 foreach (var p in proj)
                 {
-                    foreach (var subTask in p.SubTasks)
+                    chartSource.AddRange(ChartHelper.AggregateByWeek(p.SubTasks, x =>
                     {
-                        projectData.Add(new CapacityItem(null, subTask.StartDate, subTask.EndDate, 0d, p.Name));
-                    }
-                    
+                        // Value summed is the average contruibution of the task for that week
+                        var durationWeeks = x.DurationHours / (7 * 7);
+                        return x.PlannedWorkHours / durationWeeks;
+                    }, p.Name));
                 }
             }
 
-            options = new ApexChartOptions<CapacityItem>
+            options = new ApexChartOptions<ChartItem>
             {
                 PlotOptions = new PlotOptions
                 {
