@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -20,8 +22,11 @@ namespace PPMTool.Pages
         private NavigationManager NavigationManager { get; set; }
 
         private IEnumerable<Project> projects;
+        RadzenDataGrid<Project> projectGrid;
         private List<ChartItem> chartSource = new List<ChartItem>();
         private ApexChartOptions<ChartItem> options;
+        private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
+        private IEnumerable<FundingStatus> fundingOptions = (FundingStatus[])Enum.GetValues(typeof(FundingStatus));
 
         protected override void OnInitialized()
         {
@@ -62,6 +67,30 @@ namespace PPMTool.Pages
         private void ProjectClicked(int id)
         {
             NavigationManager.NavigateTo($"/projectdetails/{id}");
+        }
+
+        async Task EditRow(Project project)
+        {
+            await projectGrid.EditRow(project);
+        }
+
+        void OnUpdateRow(Project project)
+        {
+            var context = new PPMToolContext();
+            ProjectService.Update(context, project);
+        }
+
+        async Task SaveRow(Project project)
+        {
+            await projectGrid.UpdateRow(project);
+        }
+
+        void CancelEdit(Project project)
+        {
+            projectGrid.CancelEditRow(project);
+            var context = new PPMToolContext();
+            ProjectService.RevertChanges(context, project);
+            projects = ProjectService.GetAll(context).ToArray();
         }
     }
 }
