@@ -15,16 +15,40 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Parameter]
+        public int? ProjectId { get; set; }
+
         private Project projectModel = new Project();
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+
+            if (ProjectId != null)
+            {
+                using var context = new PPMToolContext();
+                projectModel = ProjectService.GetById(context, ProjectId);
+            }
+        }
 
         private void HandleValidSubmit()
         {
-            Logger.LogInformation("Adding new project...");
-
-            using var context = new PPMToolContext();
-            if (!ProjectService.AddProject(context, projectModel))
+            using (var context = new PPMToolContext())
             {
-                // TODO: Duplicate found -- do something
+                if (ProjectId != null)
+                {
+                    Logger.LogInformation($"Edit project {ProjectId} saved...");
+                    ProjectService.Update(context, projectModel);
+                }
+                else
+                {
+                    Logger.LogInformation("Adding new project...");
+
+                    if (!ProjectService.AddProject(context, projectModel))
+                    {
+                        // TODO: Duplicate found -- do something
+                    }
+                }
             }
 
             Navigation.NavigateTo("projects");

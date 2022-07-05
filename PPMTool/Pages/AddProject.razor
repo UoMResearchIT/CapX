@@ -1,9 +1,16 @@
-﻿@page "/addproject"
+﻿@page "/addproject/{ProjectId:int}"
 @inherits BasePage
-@using PPMTool.Enums 
+@using PPMTool.Enums
 
 <div class="container" style="max-width: none; width: 80%">
-    <h1>Add Project</h1>
+    @if (ProjectId == null)
+    {
+        <h1>Add Project</h1>
+    }
+    else
+    {
+        <h1>Edit Project</h1>
+    }
     <div class="card">
         <EditForm Model="@projectModel" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
@@ -67,7 +74,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" type="submit"><i class="oi oi-check"/></button>
+            <button class="btn btn-primary" type="submit"><i class="oi oi-check" /></button>
         </EditForm>
     </div>
 </div>

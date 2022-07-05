@@ -69,28 +69,9 @@ namespace PPMTool.Pages
             NavigationManager.NavigateTo($"/projectdetails/{id}");
         }
 
-        async Task EditRow(Project project)
+        private void EditProject(Project project)
         {
-            await projectGrid.EditRow(project);
-        }
-
-        void OnUpdateRow(Project project)
-        {
-            var context = new PPMToolContext();
-            ProjectService.Update(context, project);
-        }
-
-        async Task SaveRow(Project project)
-        {
-            await projectGrid.UpdateRow(project);
-        }
-
-        void CancelEdit(Project project)
-        {
-            projectGrid.CancelEditRow(project);
-            var context = new PPMToolContext();
-            ProjectService.RevertChanges(context, project);
-            projects = ProjectService.GetAll(context).ToArray();
+            NavigationManager.NavigateTo($"/addproject/{project.ProjectId}");
         }
     }
 }

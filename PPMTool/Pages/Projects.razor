@@ -34,63 +34,31 @@
                         ColumnWidth="150px"
                         SelectionMode="DataGridSelectionMode.Single"
                         LogicalFilterOperator="LogicalFilterOperator.Or"
-                        RowUpdate="@OnUpdateRow">
+                        RowSelect="@(e => ProjectClicked(e.ProjectId))">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true">
-                        <EditTemplate Context="proj">
-                            <RadzenTextBox @bind-Value="proj.Name" Name="Name" Style="width:100%; display: block;" />
-                            <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="true" />
-                        </EditTemplate>
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" />
+                    <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                        <Template Context="proj">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditProject(proj))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI">
-                        <EditTemplate Context="proj">
-                            <RadzenTextBox @bind-Value="proj.PI" Name="PI" Style="width:100%; display: block;" />
-                            <RadzenRequiredValidator Text="PI is required" Component="PI" Popup="true" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" />
                     <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">
                         <Template Context="proj">
                             @proj.Portfolio.ToNiceString()
                         </Template>
-                        <EditTemplate Context="proj">
-                            <RadzenDropDown @bind-Value="proj.Portfolio" Data="@portfolioOptions" ValueProperty="Portfolio" />
-                        </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}">
-                        <EditTemplate Context="proj">
-                            <RadzenNumeric TValue="double" Format="c" @bind-Value=@proj.PlannedCost />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" />
                     <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" />
-                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}">
-                        <EditTemplate Context="proj">
-                            <RadzenNumeric TValue="double" Format="c" @bind-Value=@proj.FundsReceived />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" />
                     <RadzenDataGridColumn TItem="Project" Property="FundingStatus" Title="Funding Status">
                         <Template Context="proj">
                             @proj.FundingStatus.ToNiceString()
                         </Template>
-                        <EditTemplate Context="proj">
-                            <RadzenDropDown @bind-Value="proj.FundingStatus" Data="@fundingOptions" ValueProperty="FundingStatus" />
-                        </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
-                        <Template Context="proj">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(proj))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                            <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => ProjectClicked(proj.ProjectId))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                        </Template>
-                        <EditTemplate Context="proj">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => SaveRow(proj))">
-                            </RadzenButton>
-                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(proj))">
-                            </RadzenButton>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
             <div class="card">
