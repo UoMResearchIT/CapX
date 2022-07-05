@@ -28,5 +28,10 @@ namespace PPMTool.Pages
                 people = peo;
             }
         }
+
+        private void EditPerson(Person person)
+        {
+            Navigation.NavigateTo($"addperson/{person.PersonId}");
+        }
     }
 }

@@ -39,5 +39,16 @@ namespace PPMTool.Services
                 .Include(p => p.SkillTags)
                 .ToList();
         }
+        /// <summary>
+        /// Update an exist person in the DB
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        internal void Update(PPMToolContext context, Person person)
+        {
+            context.People.Update(person);
+            context.SaveChanges();
+        }
     }
 }

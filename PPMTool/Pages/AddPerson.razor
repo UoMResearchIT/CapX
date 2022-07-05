@@ -1,7 +1,7 @@
-﻿@page "/addperson"
+﻿@page "/addperson/{PersonId:int}"
 @inherits BasePage
 
-<div class="container" style="max-width: none; width: 80%">
+<div class="container">
     <h1>Add Person</h1>
     <div class="card">
         <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">

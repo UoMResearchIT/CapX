@@ -19,6 +19,9 @@ namespace PPMTool.Pages
         [Inject]
         private TagService TagService { get; set; }
 
+        [Parameter]
+        public int? PersonId { get; set; }
+
         private Person personModel = new();
 
         private IEnumerable<Tag> AvailableTags { get; set; }
@@ -28,11 +31,29 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            using var context = new PPMToolContext();
-            AvailableEntities = TagService.GetAllTags(context);
-            var list = new List<Tag>();
-            foreach (var t in AvailableEntities) list.Add(new Tag(t.Name));
-            AvailableTags = list;
+            using (var context = new PPMToolContext())
+            {
+                AvailableEntities = TagService.GetAllTags(context);
+                var list = new List<Tag>();
+                foreach (var t in AvailableEntities) list.Add(new Tag(t.Name));
+                AvailableTags = list;
+
+                // Load the person model if necessary
+                if (PersonId != null)
+                {
+                    personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
+
+                    // Update the available tags state
+                    if (personModel != null)
+                    {
+                        foreach(var tag in personModel.SkillTags)
+                        {
+                            var item = AvailableTags.FirstOrDefault(x => x.Name == tag.Name);
+                            if (item != null) item.Checked = true;
+                        }
+                    }
+                }
+            }
         }
 
         private void HandleValidSubmit()
@@ -49,9 +70,18 @@ namespace PPMTool.Pages
             }
 
             using var context = new PPMToolContext();
-            if (!PersonService.AddPerson(context, personModel))
+            if (PersonId != null)
             {
-                // TODO: Duplicate found -- do something
+                // Edit
+                PersonService.Update(context, personModel);
+            }
+            else
+            {
+                // Add new
+                if (!PersonService.AddPerson(context, personModel))
+                {
+                    // TODO: Duplicate found -- do something
+                }
             }
 
             Navigation.NavigateTo("people");
