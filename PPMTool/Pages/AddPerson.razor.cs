@@ -25,7 +25,6 @@ namespace PPMTool.Pages
         private Person personModel = new();
 
         private IEnumerable<Tag> AvailableTags { get; set; }
-        private IEnumerable<SkillTag> AvailableEntities { get; set; }
 
         protected override void OnInitialized()
         {
@@ -33,9 +32,10 @@ namespace PPMTool.Pages
 
             using (var context = new PPMToolContext())
             {
-                AvailableEntities = TagService.GetAllTags(context);
+                // Map entities to checkbox list items
+                var entities = TagService.GetAllTags(context).ToList();
                 var list = new List<Tag>();
-                foreach (var t in AvailableEntities) list.Add(new Tag(t.Name));
+                foreach (var t in entities) list.Add(new Tag(t.Name));
                 AvailableTags = list;
 
                 // Load the person model if necessary
@@ -46,7 +46,7 @@ namespace PPMTool.Pages
                     // Update the available tags state
                     if (personModel != null)
                     {
-                        foreach(var tag in personModel.SkillTags)
+                        foreach (var tag in personModel.SkillTags)
                         {
                             var item = AvailableTags.FirstOrDefault(x => x.Name == tag.Name);
                             if (item != null) item.Checked = true;
@@ -58,29 +58,35 @@ namespace PPMTool.Pages
 
         private void HandleValidSubmit()
         {
-            Logger.LogInformation("Adding new person...");
+            Logger.LogInformation("Adding / editing person...");
 
-            // Add tags to person model
-            personModel.SkillTags = new List<SkillTag>();
-            foreach (var t in AvailableTags)
+            using (var context = new PPMToolContext())
             {
-                var skillTag = AvailableEntities.FirstOrDefault(x => x.Name == t.Name);
-                if (skillTag != null)
-                    personModel.SkillTags.Add(skillTag);
-            }
-
-            using var context = new PPMToolContext();
-            if (PersonId != null)
-            {
-                // Edit
-                PersonService.Update(context, personModel);
-            }
-            else
-            {
-                // Add new
-                if (!PersonService.AddPerson(context, personModel))
+                // Add tags to person model
+                personModel.SkillTags = new List<SkillTag>();
+                foreach (var t in AvailableTags)
                 {
-                    // TODO: Duplicate found -- do something
+                    if (t.Checked)
+                    {
+                        var skillTagEntity = TagService.GetAllTags(context).FirstOrDefault(x => x.Name == t.Name);
+
+                        if (skillTagEntity != null)
+                            personModel.SkillTags.Add(skillTagEntity);
+                    }
+                }
+
+                if (PersonId != null)
+                {
+                    // Edit
+                    PersonService.Update(context, personModel);
+                }
+                else
+                {
+                    // Add new
+                    if (!PersonService.AddPerson(context, personModel))
+                    {
+                        // TODO: Duplicate found -- do something
+                    }
                 }
             }
 

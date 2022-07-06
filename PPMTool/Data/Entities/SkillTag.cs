@@ -10,5 +10,7 @@ namespace PPMTool.Data.Entities
         public int SkillTagId { get; set; }
 
         public string Name { get; set; }
+
+        public ICollection<Person> People { get; set; }
     }
 }

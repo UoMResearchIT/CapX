@@ -44,7 +44,6 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="person"></param>
-        /// <exception cref="NotImplementedException"></exception>
         internal void Update(PPMToolContext context, Person person)
         {
             context.People.Update(person);
