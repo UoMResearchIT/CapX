@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentDateTime;
 using Microsoft.VisualBasic.CompilerServices;
 using PPMTool.Enums;
 
@@ -66,9 +67,14 @@ namespace PPMTool.Data.Entities
 
 
         /// <summary>
-        /// Used to drive the end date from the start date assuming 7 hour days
+        /// Used to drive the end date from the start date assuming 7 hour days. This is includes weekends.
         /// </summary>
-        public double DurationHours { get; set; }
+        public int DurationDays { get; set; }
+
+        /// <summary>
+        /// Used to drive the work assuming 7 hour days. This is excludes weekends.
+        /// </summary>
+        public int DurationBusinessDays { get; set; }
 
         private bool isWorkDriven;
         /// <summary>
@@ -180,7 +186,7 @@ namespace PPMTool.Data.Entities
                 }
 
                 // Set end date
-                EndDate = StartDate.AddDays(Math.Ceiling(DurationHours / 7));
+                EndDate = StartDate.Date.AddDays(DurationDays).Date;
 
                 return null;
             }
@@ -194,17 +200,66 @@ namespace PPMTool.Data.Entities
         {
             if (units == 0)
             {
-                DurationHours = 0;
+                DurationDays = 0;
+                DurationBusinessDays = 0;
             }
             else
             {
-                DurationHours = PlannedWorkHours / units;
+                DurationBusinessDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units));
+                var estimatedEndDate = StartDate.AddBusinessDays(DurationBusinessDays);
+                DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays);
             }
         }
 
         private void UpdateWork(double units)
         {
-            PlannedWorkHours = DurationHours * units;
+            // Duration input is calendar days so need to compute business days
+            var endDate = StartDate.AddDays(DurationDays);
+            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
+            PlannedWorkHours = DurationBusinessDays * 7 * units;
+        }
+
+
+        private int GetNumberOfBusinessDays(DateTime startDate, DateTime endDate)
+        {
+            // Same day returns zero
+            if (startDate.Date == endDate.Date)
+            {
+                return 0;
+            }
+
+            // Cannot start a task on a weekend
+            if (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday) throw new Exception("Cannot start a task on a weekend!");
+
+            // If end date is a weekend day then move on to the following Monday
+            if (endDate.DayOfWeek == DayOfWeek.Saturday) endDate = endDate.AddDays(2);
+            else if (endDate.DayOfWeek == DayOfWeek.Sunday) endDate = endDate.AddDays(1);
+
+            // Work out the number of normal days
+            int normalDays = (int)Math.Round(endDate.Date.Subtract(startDate.Date).TotalDays);
+
+            // Best guess at business days is to take 2 days off for every week
+            int guess = normalDays - (normalDays / 7) * 2;
+            int lastGuess = guess;
+
+            // Iterate
+            int error = int.MaxValue;
+            while (error > 0 && guess != 0)
+            {
+                // Compute error
+                var guessedEndDate = startDate.Date.AddBusinessDays(guess);
+                error = (int)Math.Round(guessedEndDate.Date.Subtract(endDate.Date).TotalDays);
+
+                // Break out early if found the answer
+                if (error == 0) return guess;
+
+                // Update guess by 1 day in the correct direction
+                lastGuess = guess;
+                guess = lastGuess - (error / Math.Abs(error));
+            }
+
+            // Shouldn't end up here
+            return lastGuess;
         }
 
         /// <summary>

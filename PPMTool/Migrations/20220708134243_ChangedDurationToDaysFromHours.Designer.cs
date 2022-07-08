@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data;
 
@@ -10,9 +11,10 @@ using PPMTool.Data;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20220708134243_ChangedDurationToDaysFromHours")]
+    partial class ChangedDurationToDaysFromHours
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.6");
@@ -357,11 +359,8 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("DurationBusinessDays")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DurationDays")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("DurationDays")
+                        .HasColumnType("REAL");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");

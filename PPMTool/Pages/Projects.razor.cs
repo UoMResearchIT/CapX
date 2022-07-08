@@ -10,6 +10,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen.Blazor;
+using FluentDate;
 
 namespace PPMTool.Pages
 {
@@ -44,8 +45,9 @@ namespace PPMTool.Pages
                 {
                     chartSource.AddRange(ChartHelper.AggregateByWeek(p.SubTasks, x =>
                     {
-                        // Value summed is the average contruibution of the task for that week
-                        var durationWeeks = x.DurationHours / (7 * 7);
+                        // Value summed is the average contribution of the task for that week
+                        // Duration includes weekends by default
+                        var durationWeeks = x.DurationDays / 7f;
                         return x.PlannedWorkHours / durationWeeks;
                     }, p.Name));
                 }

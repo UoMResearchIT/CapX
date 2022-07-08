@@ -31,6 +31,7 @@ namespace PPMTool.Pages
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
+        private string error;
 
         protected override void OnInitialized()
         {
@@ -89,7 +90,7 @@ namespace PPMTool.Pages
             }
 
             // Schedule
-            var error = taskModel.Schedule();
+            error = taskModel.Schedule();
             isValid = error == null;
 
             // Update UI
