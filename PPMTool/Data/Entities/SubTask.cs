@@ -14,6 +14,12 @@ namespace PPMTool.Data.Entities
     /// </summary>
     public class SubTask : BaseTask
     {
+        public SubTask()
+        {
+            // Set default value
+            StartDate = DateTime.Now;
+        }
+
         public int SubTaskId { get; set; }
 
         private TaskType taskType;
@@ -128,25 +134,21 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
-                // Start date driven by predecessor, resources or just make today
+                // Start date driven by predecessor, resources or just leave at default
                 else
                 {
                     // From predecessor
                     if (Predecessor != null)
                     {
-                        StartDate = Predecessor.EndDate;
-                    }
-
-                    // Set to today
-                    else
-                    {
-                        StartDate = DateTime.Now.Date;
+                        // Correct the end date to start on the next working day if necessary
+                        StartDate = GetNextWorkingDay(Predecessor.EndDate);
                     }
 
                     // Check whether we need to drive from resources
                     if (units > 0d && latestStart > StartDate)
                     {
-                        Debug.WriteLine($"** Start date being changed to {latestStart}, driven by resource {latestStarter}");
+                        latestStart = GetNextWorkingDay(latestStart);
+                        Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
                         StartDate = latestStart.Date;
                     }
                 }
@@ -219,6 +221,13 @@ namespace PPMTool.Data.Entities
             PlannedWorkHours = DurationBusinessDays * 7 * units;
         }
 
+        private DateTime GetNextWorkingDay(DateTime date)
+        {
+            if (date.DayOfWeek == DayOfWeek.Saturday) date = date.AddDays(2);
+            else if (date.DayOfWeek == DayOfWeek.Sunday) date = date.AddDays(1);
+            return date;
+        }
+
 
         private int GetNumberOfBusinessDays(DateTime startDate, DateTime endDate)
         {
@@ -232,8 +241,7 @@ namespace PPMTool.Data.Entities
             if (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday) throw new Exception("Cannot start a task on a weekend!");
 
             // If end date is a weekend day then move on to the following Monday
-            if (endDate.DayOfWeek == DayOfWeek.Saturday) endDate = endDate.AddDays(2);
-            else if (endDate.DayOfWeek == DayOfWeek.Sunday) endDate = endDate.AddDays(1);
+            endDate = GetNextWorkingDay(endDate);
 
             // Work out the number of normal days
             int normalDays = (int)Math.Round(endDate.Date.Subtract(startDate.Date).TotalDays);

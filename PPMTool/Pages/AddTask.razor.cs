@@ -20,7 +20,10 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Parameter]
-        public int ProjectId { get; set; }
+        public int? ProjectId { get; set; }
+
+        [Parameter]
+        public int TaskId { get; set; }
 
         public string PredecessorId { get; set; }
 
@@ -51,6 +54,12 @@ namespace PPMTool.Pages
             taskModel.FixedStartChanged += UpdateUIState;
             taskModel.WorkDrivenChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
+
+            // Load task
+            if (TaskId > -1)
+            {
+                taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+            }
         }
 
         /// <summary>
@@ -105,13 +114,18 @@ namespace PPMTool.Pages
                 OnUpdate();
                 if (isValid)
                 {
-                    // Add the new sub task to the task list
-                    using var context = new PPMToolContext();
-                    projectModel.SubTasks.Add(taskModel);
+                    using (var context = new PPMToolContext())
+                    {
+                        // Add new new to task list for project if it is a new one
+                        if (TaskId < 0)
+                        {
+                            projectModel.SubTasks.Add(taskModel);
+                        }
 
-                    // Update the project summary values
-                    projectModel.UpdateProjectSummary();
-                    ProjectService.Update(context, projectModel);
+                        // Update the project summary values
+                        projectModel.UpdateProjectSummary();
+                        ProjectService.Update(context, projectModel);
+                    }
 
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }

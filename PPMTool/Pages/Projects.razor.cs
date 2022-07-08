@@ -14,13 +14,10 @@ using FluentDate;
 
 namespace PPMTool.Pages
 {
-    public partial class Projects : ComponentBase
+    public partial class Projects : BasePage
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
-
-        [Inject]
-        private NavigationManager NavigationManager { get; set; }
 
         private IEnumerable<Project> projects;
         RadzenDataGrid<Project> projectGrid;
@@ -68,12 +65,12 @@ namespace PPMTool.Pages
 
         private void ProjectClicked(int id)
         {
-            NavigationManager.NavigateTo($"/projectdetails/{id}");
+            Navigation.NavigateTo($"/projectdetails/{id}");
         }
 
         private void EditProject(Project project)
         {
-            NavigationManager.NavigateTo($"/addproject/{project.ProjectId}");
+            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
         }
     }
 }

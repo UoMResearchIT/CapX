@@ -1,4 +1,5 @@
 ﻿@page "/projectdetails/{ProjectId:int}"
+@inherits PPMTool.Pages.BasePage
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 
@@ -55,7 +56,7 @@
             <h2>Tasks</h2>
         </div>
         <div class="col-auto">
-            <a class="btn btn-primary" href="/addtask/@ProjectID"><i class="oi oi-plus" /></a>
+            <button class="btn btn-primary" @onclick=@AddTask><i class="oi oi-plus" /></button>
         </div>
     </div>
 
@@ -83,6 +84,12 @@
                         LogicalFilterOperator="LogicalFilterOperator.Or">
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" />
+                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                        <Template Context="task">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start">
                         <Template Context="t">
                             <RadzenSwitch @bind-Value=@t.HasFixedStart Disabled="true" />

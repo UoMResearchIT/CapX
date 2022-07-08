@@ -10,7 +10,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    public partial class ProjectDetails : ComponentBase
+    public partial class ProjectDetails : BasePage
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
@@ -44,6 +44,16 @@ namespace PPMTool.Pages
                     }
                 };
             }
+        }
+
+        void EditTask(SubTask task)
+        {
+            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}");
+        }
+
+        void AddTask()
+        {
+            Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
         }
     }
 }

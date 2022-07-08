@@ -1,10 +1,17 @@
-﻿@page "/addtask/{projectID:int}"
+﻿@page "/addtask/{projectID:int}/{taskId:int}"
 @inherits BasePage
 @using PPMTool.Enums
 
-<div class="container" style="max-width: none; width: 80%">
-    <h1>Add Task</h1>
-    <p>Add new task to @projectModel?.Name</p>
+<div class="container">
+    @if (TaskId < 0)
+    {
+        <h1>Add Task</h1>
+        <p>Add new task to @projectModel?.Name</p>
+    }
+    else
+    {
+        <h1>Edit @taskModel.Name</h1>
+    }
     <div class="card">
         <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
@@ -33,6 +40,16 @@
                 </div>
                 <div class="col">
                     <InputDate @bind-Value="taskModel.StartDate" disabled="@startDateDisabled" />
+                </div>
+            </div>
+
+            <!-- End date is driven so always disabled -->
+            <div class="row">
+                <div class="col-3">
+                    <label>End Date</label>
+                </div>
+                <div class="col" style="margin-left: 5px">
+                    <p>@taskModel.EndDate.ToShortDateString()</p>
                 </div>
             </div>
 
