@@ -58,30 +58,36 @@
             <a class="btn btn-primary" href="/addtask/@ProjectID"><i class="oi oi-plus" /></a>
         </div>
     </div>
-    <div class="card">
-        @if (project?.SubTasks == null)
-        {
+
+    @if (project?.SubTasks == null)
+    {
+        <div class="card">
             <p class="lead">No data to show</p>
-        }
-        else
-        {
+        </div>
+    }
+    else
+    {
+        <div class="card">
             <RadzenDataGrid AllowFiltering="true"
-                            AllowColumnResize="true"
-                            FilterMode="FilterMode.Advanced"
-                            AllowSorting="true"
-                            PageSize="10"
-                            AllowPaging="true"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
-                            ShowPagingSummary="true"
-                            Data="@project.SubTasks"
-                            TItem="SubTask"
-                            ColumnWidth="100px"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            LogicalFilterOperator="LogicalFilterOperator.Or">
+                        AllowColumnResize="true"
+                        FilterMode="FilterMode.Advanced"
+                        AllowSorting="true"
+                        PageSize="10"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left"
+                        ShowPagingSummary="true"
+                        Data="@project.SubTasks"
+                        TItem="SubTask"
+                        ColumnWidth="100px"
+                        SelectionMode="DataGridSelectionMode.Single"
+                        LogicalFilterOperator="LogicalFilterOperator.Or">
                 <Columns>
-                    <RadzenDataGridColumn TItem="SubTask" Property="IsDone" Title="Done" />
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start">
+                        <Template Context="t">
+                            <RadzenSwitch @bind-Value=@t.HasFixedStart Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" />
@@ -102,20 +108,25 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
                 </Columns>
             </RadzenDataGrid>
-            <div class="card">
-                <ApexChart TItem="SubTask"
-                           Title="Schedule"
-                           XAxisType="XAxisType.Datetime"
-                           Options=options>
+        </div>
+        <div class="row">
+        <div class="col-auto mr-auto">
+            <h2>Schedule</h2>
+        </div>
+        </div>
+        <div class="card">
+            <ApexChart TItem="SubTask"
+                   Title="All Tasks"
+                   XAxisType="XAxisType.Datetime"
+                   Options=options>
 
-                    <ApexRangeSeries TItem="SubTask"
-                                     Items="Data"
-                                     XValue="@(e => e.Name)"
-                                     YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
+                <ApexRangeSeries TItem="SubTask"
+                             Items="Data"
+                             XValue="@(e => e.Name)"
+                             YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                             YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
 
-                </ApexChart>
-            </div>
-        }
-    </div>
+            </ApexChart>
+        </div>
+    }
 </div>

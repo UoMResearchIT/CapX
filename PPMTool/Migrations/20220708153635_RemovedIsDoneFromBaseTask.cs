@@ -1,0 +1,37 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace PPMTool.Migrations
+{
+    public partial class RemovedIsDoneFromBaseTask : Migration
+    {
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "IsDone",
+                table: "SubTasks");
+
+            migrationBuilder.DropColumn(
+                name: "IsDone",
+                table: "Projects");
+        }
+
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDone",
+                table: "SubTasks",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDone",
+                table: "Projects",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: false);
+        }
+    }
+}

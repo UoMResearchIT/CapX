@@ -25,7 +25,5 @@ namespace PPMTool.Data.Entities
         public double PlannedCost { get; set; }
 
         public double ActualCost { get; set; }
-
-        public bool IsDone { get; set; }
     }
 }
