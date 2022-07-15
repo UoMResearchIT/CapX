@@ -11,7 +11,7 @@
             <h1>Projects</h1>
         </div>
         <div class="col-auto">
-            <a class="btn btn-primary" href="/addproject"><i class="oi oi-plus" /></a>
+            <button class="btn btn-primary" @onclick=@AddProject><i class="oi oi-plus" /></button>
         </div>
     </div>
     <div class="card">
@@ -32,11 +32,47 @@
                         ShowPagingSummary="true"
                         Data="@projects"
                         TItem="Project"
-                        ColumnWidth="150px"
+                        ColumnWidth="120px"
                         SelectionMode="DataGridSelectionMode.Single"
                         LogicalFilterOperator="LogicalFilterOperator.Or"
                         RowSelect="@(e => ProjectClicked(e.ProjectId))">
                 <Columns>
+                    <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
+                        <Template Context="proj">
+                            @if (proj.ScheduleStatus == ScheduleStatus.OnSchedule)
+                            {
+                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="Project On Schedule" />
+                            }
+                            else if (proj.ScheduleStatus == ScheduleStatus.Ahead)
+                            {
+                                <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title="Project Ahead" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Project Late"/>    
+                            }
+                            @if (proj.BudgetStatus == BudgetStatus.OnBudget)
+                            {
+                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="On Budget" />
+                            }
+                            else if (proj.BudgetStatus == BudgetStatus.Underspend)
+                            {
+                                <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title="Underspent" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Overspent"/>    
+                            }
+                            @if(proj.FundsReceived < proj.Budget)
+                            {
+                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Funding Shortfall"/>    
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="Fully Funded" />    
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" />
                     <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">

@@ -17,11 +17,12 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         private IEnumerable<Person> people;
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
             // Get people from the database
-            using var context = new PPMToolContext();
+            context = new PPMToolContext();
             var peo = PersonService.GetAll(context);
             if (peo.Count() > 0)
             {

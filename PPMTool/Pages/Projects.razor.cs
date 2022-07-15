@@ -25,13 +25,14 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> options;
         private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
         private IEnumerable<FundingStatus> fundingOptions = (FundingStatus[])Enum.GetValues(typeof(FundingStatus));
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             // Get people from the database
-            using var context = new PPMToolContext();
+            context = new PPMToolContext();
             var proj = ProjectService.GetAll(context).ToArray();
             if (proj.Count() > 0)
             {
@@ -40,6 +41,11 @@ namespace PPMTool.Pages
                 // Organise the project data so it is plottable
                 foreach (var p in proj)
                 {
+                    // Update the summary of the project and save back to DB
+                    p.UpdateProjectSummary();
+                    ProjectService.Update(context, p);
+
+                    // Add to chart source
                     chartSource.AddRange(ChartHelper.AggregateByWeek(p.SubTasks, x =>
                     {
                         // Value summed is the average contribution of the task for that week
@@ -66,6 +72,11 @@ namespace PPMTool.Pages
         private void ProjectClicked(int id)
         {
             Navigation.NavigateTo($"/projectdetails/{id}");
+        }
+
+        private void AddProject()
+        {
+            Navigation.NavigateTo($"/addproject/-1");
         }
 
         private void EditProject(Project project)

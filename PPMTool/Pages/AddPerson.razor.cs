@@ -23,34 +23,32 @@ namespace PPMTool.Pages
         public int? PersonId { get; set; }
 
         private Person personModel = new();
+        private PPMToolContext context;
 
         private IEnumerable<Tag> AvailableTags { get; set; }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            context = new PPMToolContext();
+            // Map entities to checkbox list items
+            var entities = TagService.GetAllTags(context).ToList();
+            var list = new List<Tag>();
+            foreach (var t in entities) list.Add(new Tag(t.Name));
+            AvailableTags = list;
 
-            using (var context = new PPMToolContext())
+            // Load the person model if necessary
+            if (PersonId != null)
             {
-                // Map entities to checkbox list items
-                var entities = TagService.GetAllTags(context).ToList();
-                var list = new List<Tag>();
-                foreach (var t in entities) list.Add(new Tag(t.Name));
-                AvailableTags = list;
+                personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
 
-                // Load the person model if necessary
-                if (PersonId != null)
+                // Update the available tags state
+                if (personModel != null)
                 {
-                    personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
-
-                    // Update the available tags state
-                    if (personModel != null)
+                    foreach (var tag in personModel.SkillTags)
                     {
-                        foreach (var tag in personModel.SkillTags)
-                        {
-                            var item = AvailableTags.FirstOrDefault(x => x.Name == tag.Name);
-                            if (item != null) item.Checked = true;
-                        }
+                        var item = AvailableTags.FirstOrDefault(x => x.Name == tag.Name);
+                        if (item != null) item.Checked = true;
                     }
                 }
             }
@@ -60,33 +58,30 @@ namespace PPMTool.Pages
         {
             Logger.LogInformation("Adding / editing person...");
 
-            using (var context = new PPMToolContext())
+            // Add tags to person model
+            personModel.SkillTags = new List<SkillTag>();
+            foreach (var t in AvailableTags)
             {
-                // Add tags to person model
-                personModel.SkillTags = new List<SkillTag>();
-                foreach (var t in AvailableTags)
+                if (t.Checked)
                 {
-                    if (t.Checked)
-                    {
-                        var skillTagEntity = TagService.GetAllTags(context).FirstOrDefault(x => x.Name == t.Name);
+                    var skillTagEntity = TagService.GetAllTags(context).FirstOrDefault(x => x.Name == t.Name);
 
-                        if (skillTagEntity != null)
-                            personModel.SkillTags.Add(skillTagEntity);
-                    }
+                    if (skillTagEntity != null)
+                        personModel.SkillTags.Add(skillTagEntity);
                 }
+            }
 
-                if (PersonId != null)
+            if (PersonId != null)
+            {
+                // Edit
+                PersonService.Update(context, personModel);
+            }
+            else
+            {
+                // Add new
+                if (!PersonService.AddPerson(context, personModel))
                 {
-                    // Edit
-                    PersonService.Update(context, personModel);
-                }
-                else
-                {
-                    // Add new
-                    if (!PersonService.AddPerson(context, personModel))
-                    {
-                        // TODO: Duplicate found -- do something
-                    }
+                    // TODO: Duplicate found -- do something
                 }
             }
 

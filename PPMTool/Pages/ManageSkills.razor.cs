@@ -24,11 +24,12 @@ namespace PPMTool.Pages
         RadzenDataGrid<SkillTag> skillTagGrid;
         IList<SkillTag> skillTags;
         SkillTag tagToInsert;
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            using var context = new PPMToolContext();
+            context = new PPMToolContext();
             skillTags = TagService.GetAllTags(context).ToList();
         }
 
@@ -43,7 +44,6 @@ namespace PPMTool.Pages
             {
                 tagToInsert = null;
             }
-            using var context = new PPMToolContext();
             TagService.Update(context, tag);
         }
 
@@ -66,7 +66,6 @@ namespace PPMTool.Pages
 
             skillTagGrid.CancelEditRow(tag);
 
-            using var context = new PPMToolContext();
             var tagEntry = TagService.GetEntry(context, tag);
             if (tagEntry.State == EntityState.Modified)
             {
@@ -86,19 +85,17 @@ namespace PPMTool.Pages
 
             if (skillTags.Contains(tag))
             {
-                using (var context = new PPMToolContext())
-                {
-                    // Remove the tag from all the people to whom it is attached
-                    var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(tag));
-                    foreach (var person in people)
-                    {
-                        person.SkillTags.Remove(tag);
-                        PersonService.Update(context, person);
-                    }
 
-                    // Remove tag
-                    TagService.Delete(context, tag);
+                // Remove the tag from all the people to whom it is attached
+                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(tag));
+                foreach (var person in people)
+                {
+                    person.SkillTags.Remove(tag);
+                    PersonService.Update(context, person);
                 }
+
+                // Remove tag
+                TagService.Delete(context, tag);
 
                 await skillTagGrid.Reload();
             }
@@ -116,7 +113,6 @@ namespace PPMTool.Pages
 
         void OnCreateRow(SkillTag tag)
         {
-            using var context = new PPMToolContext();
             TagService.Add(context, tag);
         }
     }

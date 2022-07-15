@@ -8,17 +8,7 @@ namespace PPMTool.Enums
 {
     public static class Extensions
     {
-        public static string ToNiceString(this FundingStatus me)
-        {
-            return me.GetDescription() ?? me.ToString();
-        }
-
-        public static string ToNiceString(this Portfolio me)
-        {
-            return me.GetDescription() ?? me.ToString();
-        }
-
-        public static string ToNiceString(this TaskType me)
+        public static string ToNiceString(this Enum me)
         {
             return me.GetDescription() ?? me.ToString();
         }

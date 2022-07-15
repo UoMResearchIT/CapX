@@ -28,6 +28,7 @@ namespace PPMTool.Pages
         private List<string> nameOptions;
         private string chartTitle;
         private string tooltipText;
+        private PPMToolContext context;
 
         private string chosenPerson;
         private string ChosenPerson
@@ -63,6 +64,7 @@ namespace PPMTool.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            context = new PPMToolContext();
             options = new ApexChartOptions<ChartItem>
             {
                 PlotOptions = new PlotOptions
@@ -80,7 +82,6 @@ namespace PPMTool.Pages
             };
 
             // Get dropdown options
-            using var context = new PPMToolContext();
             nameOptions = PersonService.GetAll(context).Select(p => p.Name).ToList();
             nameOptions.Sort();
 
@@ -114,7 +115,6 @@ namespace PPMTool.Pages
             chartSource = new List<ChartItem>();
 
             // Get people from the database
-            using var context = new PPMToolContext();
             var peo = PersonService.GetAll(context);
             if (peo.Count() > 0)
             {

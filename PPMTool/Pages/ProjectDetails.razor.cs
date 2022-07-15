@@ -22,6 +22,7 @@ namespace PPMTool.Pages
 
         private List<SubTask> Data { get; set; }
         private ApexChartOptions<SubTask> options;
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
@@ -29,7 +30,7 @@ namespace PPMTool.Pages
 
             if (ProjectID != null)
             {
-                using var context = new PPMToolContext();
+                context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
                 Data = project.SubTasks.ToList();
 

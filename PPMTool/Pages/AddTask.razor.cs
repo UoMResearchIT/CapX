@@ -43,20 +43,22 @@ namespace PPMTool.Pages
             context = new PPMToolContext();
             projectModel = ProjectService.GetById(context, ProjectId);
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
-            foreach (var p in PersonService.GetAll(context))
-            {
-                resources.Add(new Resource
-                {
-                    Person = p,
-                    Percentage = 0
-                });
-            };
 
             // Load task
             if (TaskId > -1)
             {
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
             }
+
+            // Update the resources
+            foreach (var p in PersonService.GetAll(context))
+            {
+                resources.Add(new Resource
+                {
+                    Person = p,
+                    Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0
+                });
+            };
 
             // Subscribe listeners
             taskModel.TaskTypeChanged += UpdateUIState;

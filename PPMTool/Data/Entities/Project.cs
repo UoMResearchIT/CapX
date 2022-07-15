@@ -39,21 +39,37 @@ namespace PPMTool.Data.Entities
             // Set initial values
             DateTime startDate = DateTime.MaxValue;
             DateTime endDate = DateTime.MinValue;
-            double cost = 0d;
+            double actualCost = 0d;
+            double plannedCost = 0d;
 
             // Loop over all the subtasks
             foreach (var task in SubTasks)
             {
-                // Check start date
+                // Update the flags on this task
+                task.UpdateStatusFlags();
+
+                // Update the project start and end dates
                 if (task.StartDate < startDate) startDate = task.StartDate;
                 if (task.EndDate > endDate) endDate = task.EndDate;
-                cost += task.ActualCost;
+                actualCost += task.ActualCost;
+                plannedCost += task.PlannedCost;
             }
 
             // Update project
             StartDate = startDate;
             EndDate = endDate;
-            ActualCost = cost;
+            ActualCost = actualCost;
+            PlannedCost = plannedCost;
+
+            // Update schedule status from the sub task flags
+            if (SubTasks.Any(x => x.ScheduleStatus == ScheduleStatus.Late)) ScheduleStatus = ScheduleStatus.Late;
+            else if (SubTasks.Any(x => x.ScheduleStatus == ScheduleStatus.Ahead)) ScheduleStatus = ScheduleStatus.Ahead;
+            else ScheduleStatus = ScheduleStatus.OnSchedule;
+
+            // Budget status
+            if (SubTasks.Any(x => x.BudgetStatus == BudgetStatus.Underspend)) BudgetStatus = BudgetStatus.Underspend;
+            else if (ActualCost > Budget) BudgetStatus = BudgetStatus.Overspend;
+            else BudgetStatus = BudgetStatus.OnBudget;
         }
 
     }
