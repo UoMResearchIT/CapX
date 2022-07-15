@@ -35,11 +35,12 @@ namespace PPMTool.Pages
         private bool workDisabled;
         private bool durationDisabled;
         private string error;
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            using var context = new PPMToolContext();
+            context = new PPMToolContext();
             projectModel = ProjectService.GetById(context, ProjectId);
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
             foreach (var p in PersonService.GetAll(context))
@@ -50,16 +51,18 @@ namespace PPMTool.Pages
                     Percentage = 0
                 });
             };
-            taskModel.TaskTypeChanged += UpdateUIState;
-            taskModel.FixedStartChanged += UpdateUIState;
-            taskModel.WorkDrivenChanged += UpdateUIState;
-            UpdateUIState(taskModel, new EventArgs());
 
             // Load task
             if (TaskId > -1)
             {
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
             }
+
+            // Subscribe listeners
+            taskModel.TaskTypeChanged += UpdateUIState;
+            taskModel.FixedStartChanged += UpdateUIState;
+            taskModel.WorkDrivenChanged += UpdateUIState;
+            UpdateUIState(taskModel, new EventArgs());
         }
 
         /// <summary>
@@ -94,13 +97,14 @@ namespace PPMTool.Pages
             // Create predecessor on the sub task
             if (int.TryParse(PredecessorId, out var id))
             {
-                using var context = new PPMToolContext();
                 taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
             }
 
             // Schedule
             error = taskModel.Schedule();
             isValid = error == null;
+
+            // TODO: Need to call schedule() on the subtask that this is a predecssor for too. Should naturally forward propagate.
 
             // Update UI
             StateHasChanged();
@@ -114,18 +118,15 @@ namespace PPMTool.Pages
                 OnUpdate();
                 if (isValid)
                 {
-                    using (var context = new PPMToolContext())
+                    // Add new new to task list for project if it is a new one
+                    if (TaskId < 0)
                     {
-                        // Add new new to task list for project if it is a new one
-                        if (TaskId < 0)
-                        {
-                            projectModel.SubTasks.Add(taskModel);
-                        }
-
-                        // Update the project summary values
-                        projectModel.UpdateProjectSummary();
-                        ProjectService.Update(context, projectModel);
+                        projectModel.SubTasks.Add(taskModel);
                     }
+
+                    // Update the project summary values
+                    projectModel.UpdateProjectSummary();
+                    ProjectService.Update(context, projectModel);
 
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }

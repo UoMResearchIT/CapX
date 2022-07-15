@@ -44,8 +44,6 @@ namespace PPMTool.Data.Entities
             // Loop over all the subtasks
             foreach (var task in SubTasks)
             {
-                // TODO: When we introduce edit then this will need to call schedule on every sub task and somehow report back any errors.
-
                 // Check start date
                 if (task.StartDate < startDate) startDate = task.StartDate;
                 if (task.EndDate > endDate) endDate = task.EndDate;

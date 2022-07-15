@@ -67,20 +67,5 @@ namespace PPMTool.Services
                 .ThenInclude(s => s.AssignedResources)
                 .ToList();
         }
-
-        /// <summary>
-        /// Reverts any changes to the object using the change tracking information
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="project"></param>
-        internal void RevertChanges(PPMToolContext context, Project project)
-        {
-            var projectEntry = context.Entry(project);
-            if (projectEntry.State == EntityState.Modified)
-            {
-                projectEntry.CurrentValues.SetValues(projectEntry.OriginalValues);
-                projectEntry.State = EntityState.Unchanged;
-            }
-        }
     }
 }

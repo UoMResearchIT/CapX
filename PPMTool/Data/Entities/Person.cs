@@ -34,7 +34,7 @@ namespace PPMTool.Data.Entities
         [Required]
         public double AvailabilityFTE { get; set; } = 1.0;
 
-        public IList<SkillTag> SkillTags { get; set; }
+        public ICollection<SkillTag> SkillTags { get; set; }
 
         static string GetInitials(string name)
         {
