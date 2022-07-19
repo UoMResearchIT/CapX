@@ -19,6 +19,9 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -124,8 +127,13 @@ namespace PPMTool.Pages
             error = taskModel.Schedule();
             isValid = error == null;
 
-            // TODO: Need to call schedule() on the subtask that this is a predecssor for too. Should naturally forward propagate.
-            // The actual saving and updating of the project summary can then be done in the HandleValidSubmit like usual.
+            // Call schedule() on the subtask that this is a predecssor for
+            var error2 = SubTaskService.UpdateFollowerTasks(taskModel, projectModel.SubTasks);
+            if (error2 != null)
+            {
+                error = $"{error2.Item1}: {error2.Item2}";
+                isValid = false;
+            }
 
             // Update UI
             StateHasChanged();
@@ -142,8 +150,15 @@ namespace PPMTool.Pages
                     // Add new new to task list for project if it is a new one
                     if (TaskId < 0)
                     {
+                        // Add the subtask to the database
+                        SubTaskService.Add(context, taskModel);
+                        
+                        // Add reference to the project
                         projectModel.SubTasks.Add(taskModel);
                     }
+
+                    // Update the sub task in the database
+                    SubTaskService.Update(context, taskModel);
 
                     // Update the project summary values
                     projectModel.UpdateProjectSummary();
