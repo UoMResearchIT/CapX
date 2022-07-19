@@ -12,6 +12,50 @@
     {
         <h1>Capacity</h1>
         <div class="card">
+            <EditForm Model="this">
+                <div class="row">
+                    <div class="col-auto">
+                        Who is available?
+                    </div>
+                    <div class="col-auto">
+                        <RadzenDatePicker @bind-Value="QueryStartDate" DateFormat="d" />
+                    </div>
+                    <div class="col-auto">
+                        to
+                    </div>
+                    <div class="col-auto">
+                        <RadzenDatePicker @bind-Value="QueryEndDate" DateFormat="d" />
+                    </div>
+                    <div class="col-auto">
+                        Include Unfunded:
+                    </div>
+                    <div class="col-auto" style="display: flex">
+                        <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary" @onclick=@RunQuery> <i class="oi oi-check"/></button>
+                    </div>
+                </div>
+            </EditForm>
+            @if (QueryResults != null)
+            {
+                @foreach (var p in QueryResults)
+                {
+                    <div class="row">
+                        <div class="col-lg-2">@p.Name</div>
+                        <div class="col">@string.Join(",", p.SkillTags.Select(x => x.Name.ToString()))</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="lead">No results to show</p>
+            }
+        </div>
+        <hr />
+        <div class="card">
             <div class="row">
                 <div class="col-auto">
                     Choose RSE:
@@ -38,6 +82,7 @@
             </div>
         </div>
     </div>
+        <hr />
         <div class="card">
             @if (chartSource == null || chartSource.Count < 1)
             {

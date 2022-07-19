@@ -21,6 +21,9 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
         private IDictionary<string, IEnumerable<SubTask>> groupedSubTasks;
         private ApexChart<ChartItem> chart;
         private List<ChartItem> chartSource;
@@ -62,6 +65,10 @@ namespace PPMTool.Pages
             }
         }
 
+        public DateTime QueryStartDate { get; set; } = DateTime.Now.Date;
+        public DateTime QueryEndDate { get; set; } = DateTime.Now.Date.AddDays(7);
+        public IEnumerable<Person> QueryResults { get; private set; }
+
         protected override async Task OnInitializedAsync()
         {
             context = new PPMToolContext();
@@ -90,9 +97,54 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        private void RunQuery()
+        {
+            // Reset
+            QueryResults = null;
+
+            // Get all people
+            var people = PersonService.GetAll(context);
+
+            // Get all subtasks which run within the window
+            var tasks = SubTaskService.GetAll(context).Where(x =>
+            {
+                return
+                // Tasks that start in the window
+                (x.StartDate >= QueryStartDate && x.StartDate < QueryEndDate) ||
+
+                // Tasks that end in the window
+                (x.EndDate > QueryStartDate && x.EndDate < QueryEndDate) ||
+
+                // Tasks that span over the window
+                (x.StartDate < QueryStartDate && x.EndDate >= QueryEndDate);
+            });
+
+            // Filter based on project status
+            if (!IncludeUnFunded)
+            {
+                // Get tasks which ought to be excluded from the query
+                var exemptTasks = ProjectService
+                    .GetAll(context)
+                    .Where(p => p.FundingStatus == FundingStatus.AwaitingSubmission || p.FundingStatus == FundingStatus.AwaitingOutcome)
+                    .SelectMany(x => x.SubTasks);
+
+                // Exclude tasks found in the exempt list
+                tasks = tasks.Where(x => !exemptTasks.Contains(x));
+            }
+
+            // Map tasks to assigned resources
+            var resources = tasks.SelectMany(x => x.AssignedResources);
+
+            // Remove people who are assigned resources on those tasks
+            QueryResults = people.Where(x => !resources.Any(y => y.Person == x));
+
+            // Update the UI
+            StateHasChanged();
+        }
+
         private void OnDataPointHover(HoverData<ChartItem> e)
         {
-            // HACK: This shouldn't be necessary but since the chart I see and the data behind it seem to be out of sync then I have no choice here.
+            // HACK: This try-catch shouldn't be necessary but since the chart I see and the data behind it seem to be out of sync then I have no choice here.
             try
             {
                 var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
@@ -119,7 +171,7 @@ namespace PPMTool.Pages
             if (peo.Count() > 0)
             {
                 // Get projects from the database
-                var projects = ProjectService.GetAll(context);
+                var projects = ProjectService.GetAll(context).Where(x => x.FundingStatus != FundingStatus.Finished);
                 if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != FundingStatus.AwaitingSubmission && p.FundingStatus != FundingStatus.AwaitingOutcome);
 
                 // Reinitialise dictionary
