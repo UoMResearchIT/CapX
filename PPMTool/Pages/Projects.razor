@@ -14,13 +14,16 @@
             <button class="btn btn-primary" @onclick=@AddProject><i class="oi oi-plus" /></button>
         </div>
     </div>
-    <div class="card">
+    
         @if (projects == null)
         {
+            <div class="card">
             <p class="lead">No data to show</p>
+            </div>
         }
         else
         {
+            <div class="card">
             <RadzenDataGrid @ref="projectGrid"
                         AllowFiltering="true"
                         AllowColumnResize="true"
@@ -98,6 +101,8 @@
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
                 </Columns>
             </RadzenDataGrid>
+            </div>
+            <hr />
             <div class="card">
                 <div class="row">
                     <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#e3001b"></rect> </svg> &gt;35hrs/week</div>
@@ -120,5 +125,4 @@
                 </ApexChart>
             </div>
         }
-    </div>
 </div>
