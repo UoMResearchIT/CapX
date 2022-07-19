@@ -67,8 +67,8 @@ namespace PPMTool.Data.Entities
             else ScheduleStatus = ScheduleStatus.OnSchedule;
 
             // Budget status
-            if (SubTasks.Any(x => x.BudgetStatus == BudgetStatus.Underspend)) BudgetStatus = BudgetStatus.Underspend;
-            else if (ActualCost > Budget) BudgetStatus = BudgetStatus.Overspend;
+            if (ActualCost > Budget) BudgetStatus = BudgetStatus.Overspend;
+            else if (SubTasks.Any(x => x.BudgetStatus == BudgetStatus.Underspend)) BudgetStatus = BudgetStatus.Underspend;
             else BudgetStatus = BudgetStatus.OnBudget;
         }
 

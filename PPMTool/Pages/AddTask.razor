@@ -111,10 +111,32 @@
                         <InputSelect @bind-Value="PredecessorId">
                             <option value="">None</option>
                             @foreach (var t in projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId))
-                                {
-                                <option value="@t.SubTaskId">[@t.SubTaskId] @t.Name</option>
-                                }
-                        </InputSelect>
+                            {
+                            <option value="@t.SubTaskId">[@t.SubTaskId] @t.Name</option>
+                            }
+                    </InputSelect>
+                </div>
+            </div>
+            }
+
+            @if (TaskId > -1)
+            {
+                <hr />
+                <h3>Actuals</h3>
+                <div class="row">
+                    <div class="col-3">
+                        <label>Actual Hours</label>
+                    </div>
+                    <div class="col">
+                        <InputNumber min="0" step="1" placeholder="0" @bind-Value="taskModel.ActualWorkHours" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        <label>Actual Cost (£)</label>
+                    </div>
+                    <div class="col">
+                        <InputNumber type="currency" min="0.0" step="0.01" placeholder="0.00" @bind-Value="taskModel.ActualCost" disabled="True" />
                     </div>
                 </div>
             }
@@ -135,7 +157,7 @@
                 </div>
             }
 
-            <button class="btn btn-primary" type="button" @onclick="OnUpdate"><i class="oi oi-reload" /></button>
+            <button class="btn btn-primary" type="button" @onclick="UpdateSubTask"><i class="oi oi-reload" /></button>
             <button class="btn btn-primary" type="submit"><i class="oi oi-check" /></button>
             @if (!isValid)
             {

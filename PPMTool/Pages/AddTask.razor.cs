@@ -80,21 +80,39 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Update the sub task properties
+        /// Update the sub task properties but doesn't save to the database
         /// </summary>
-        public void OnUpdate()
+        public void UpdateSubTask()
         {
             Logger.LogInformation("Updating sub task configuration...");
 
-            // Create resources on the sub task
+            // Create resources on the sub task and track total proportion of effort
             taskModel.AssignedResources = new List<Resource>();
+            double totalResourcePerDayHours = 0;
             foreach (var r in resources)
             {
                 if (r.Percentage > 0)
                 {
                     taskModel.AssignedResources.Add(r);
+
+                    // Update the total resource assigned
+                    totalResourcePerDayHours += r.Percentage * 7 / 100;
                 }
             }
+
+            // Compute the average hourly cost across the resources from their hourly rate
+            // scaled by the proportion to which they are assigned to the task
+            var people = PersonService.GetAll(context);
+            double averageCostPerHourOfResources = 0;            
+            foreach (var r in taskModel.AssignedResources)
+            {
+                var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
+                averageCostPerHourOfResources += (r.Percentage * 7 * person?.HourlyRate ?? 0) / (100 * totalResourcePerDayHours);
+            }
+            averageCostPerHourOfResources /= taskModel.AssignedResources.Count;
+
+            // Update the actual cost for the sub task
+            taskModel.ActualCost = taskModel.ActualWorkHours * averageCostPerHourOfResources;
 
             // Create predecessor on the sub task
             if (int.TryParse(PredecessorId, out var id))
@@ -107,6 +125,7 @@ namespace PPMTool.Pages
             isValid = error == null;
 
             // TODO: Need to call schedule() on the subtask that this is a predecssor for too. Should naturally forward propagate.
+            // The actual saving and updating of the project summary can then be done in the HandleValidSubmit like usual.
 
             // Update UI
             StateHasChanged();
@@ -117,7 +136,7 @@ namespace PPMTool.Pages
             Logger.LogInformation("Adding new sub task...");
             if (projectModel != null)
             {
-                OnUpdate();
+                UpdateSubTask();
                 if (isValid)
                 {
                     // Add new new to task list for project if it is a new one
@@ -128,8 +147,11 @@ namespace PPMTool.Pages
 
                     // Update the project summary values
                     projectModel.UpdateProjectSummary();
+
+                    // Update the project in the database
                     ProjectService.Update(context, projectModel);
 
+                    // Return to the project details page
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }
             }
