@@ -239,8 +239,11 @@ namespace PPMTool.Pages
                 if (chart != null)
                 {
                     Debug.WriteLine($"** Re-renderering chart!");
+
+                    // HACK: Not sure why we have to call this twice but we do!
                     await chart?.UpdateSeriesAsync();
-                    //await chart?.RenderAsync();
+                    await chart?.UpdateSeriesAsync();
+                    await InvokeAsync(StateHasChanged);
                 }
                 Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
             }

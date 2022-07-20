@@ -14,16 +14,16 @@
             <button class="btn btn-primary" @onclick=@AddProject><i class="oi oi-plus" /></button>
         </div>
     </div>
-    
-        @if (projects == null)
-        {
-            <div class="card">
+
+    @if (projects == null)
+    {
+        <div class="card">
             <p class="lead">No data to show</p>
-            </div>
-        }
-        else
-        {
-            <div class="card">
+        </div>
+    }
+    else
+    {
+        <div class="card">
             <RadzenDataGrid @ref="projectGrid"
                         AllowFiltering="true"
                         AllowColumnResize="true"
@@ -52,7 +52,7 @@
                             }
                             else
                             {
-                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Project Late"/>    
+                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Project Late" />
                             }
                             @if (proj.BudgetStatus == BudgetStatus.OnBudget)
                             {
@@ -64,15 +64,15 @@
                             }
                             else
                             {
-                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Overspent"/>    
+                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Overspent" />
                             }
-                            @if(proj.FundsReceived < proj.Budget)
+                            @if (proj.FundsReceived < proj.Budget)
                             {
-                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Funding Shortfall"/>    
+                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Funding Shortfall" />
                             }
                             else
                             {
-                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="Fully Funded" />    
+                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="Fully Funded" />
                             }
                         </Template>
                     </RadzenDataGridColumn>
@@ -101,28 +101,40 @@
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
                 </Columns>
             </RadzenDataGrid>
+        </div>
+        <hr />
+        <h2>Charts</h2>
+        <div class="card">
+            <div class="row">
+                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#e3001b"></rect> </svg> &gt;35hrs/week</div>
+                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#00783c"></rect> </svg> =35hrs/week</div>
+                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#fc9803"></rect> </svg> &gt;17.5hrs/week</div>
+                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#ffd500"></rect> </svg> &le;17.5hrs/week</div>
             </div>
-            <hr />
-            <div class="card">
-                <div class="row">
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#e3001b"></rect> </svg> &gt;35hrs/week</div>
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#00783c"></rect> </svg> =35hrs/week</div>
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#fc9803"></rect> </svg> &gt;17.5hrs/week</div>
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#ffd500"></rect> </svg> &le;17.5hrs/week</div>
-                </div>
-                <ApexChart TItem="ChartItem"
-                       Title="Schedule"
-                       XAxisType="XAxisType.Datetime"
-                       Options=options>
+        </div>
+        <div class="contianer-fluid">
+            <div class="row" >
+                @foreach (var cs in chartSource)
+                {
+                    <div class="col-xs-12 col-sm-6 col-lg-3">
+                        <div class="card">
+                            <ApexChart TItem="ChartItem"
+                               Title="Schedule"
+                               XAxisType="XAxisType.Datetime"
+                               Options=options>
 
-                    <ApexRangeSeries TItem="ChartItem"
-                                 Items="chartSource"
-                                 XValue="@(e => e.Label)"
-                                 YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                 YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
-                                 PointColor="@(e => e.GetColourStringWork())" />
+                                <ApexRangeSeries TItem="ChartItem"
+                                         Items="cs"
+                                         XValue="@(e => e.Label)"
+                                         YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                         YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
+                                         PointColor="@(e => e.GetColourStringWork())" />
 
-                </ApexChart>
+                            </ApexChart>
+                        </div>
+                    </div>
+                }
             </div>
-        }
+        </div>
+    }
 </div>

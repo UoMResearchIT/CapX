@@ -21,7 +21,7 @@ namespace PPMTool.Pages
 
         private IEnumerable<Project> projects;
         RadzenDataGrid<Project> projectGrid;
-        private List<ChartItem> chartSource = new List<ChartItem>();
+        private List<List<ChartItem>> chartSource = new List<List<ChartItem>>();
         private ApexChartOptions<ChartItem> options;
         private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
         private IEnumerable<FundingStatus> fundingOptions = (FundingStatus[])Enum.GetValues(typeof(FundingStatus));
@@ -38,21 +38,27 @@ namespace PPMTool.Pages
             {
                 projects = proj;
 
-                // Organise the project data so it is plottable
-                foreach (var p in proj)
+                for (int i = 0; i < 5; ++i)
                 {
-                    // Update the summary of the project and save back to DB
-                    p.UpdateProjectSummary();
-                    ProjectService.Update(context, p);
+                    // Create list of chart items for this sub plot
+                    chartSource.Add(new List<ChartItem>());
 
-                    // Add to chart source
-                    chartSource.AddRange(ChartHelper.AggregateByWeek(p.SubTasks, x =>
+                    // Organise the project data so it is plottable
+                    foreach (var p in proj)
                     {
+                        // Update the summary of the project and save back to DB
+                        p.UpdateProjectSummary();
+                        ProjectService.Update(context, p);
+
+                        // Add to chart source
+                        chartSource[i].AddRange(ChartHelper.AggregateByWeek(p.SubTasks, x =>
+                        {
                         // Value summed is the average contribution of the task for that week
                         // Duration includes weekends by default
-                        var durationWeeks = x.DurationDays / 7f;
-                        return x.PlannedWorkHours / durationWeeks;
-                    }, p.Name));
+                            var durationWeeks = x.DurationDays / 7f;
+                            return x.PlannedWorkHours / durationWeeks;
+                        }, p.Name));
+                    }
                 }
             }
 

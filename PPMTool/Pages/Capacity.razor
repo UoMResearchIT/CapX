@@ -39,6 +39,8 @@
                     </div>
                 </div>
             </EditForm>
+            <hr />
+            <h3>Query Results</h3>
             @if (QueryResults != null)
             {
                 @foreach (var p in QueryResults)
@@ -51,10 +53,11 @@
             }
             else
             {
-                <p class="lead">No results to show</p>
+                <p>No results to show</p>
             }
         </div>
         <hr />
+        <h2>Charts</h2>
         <div class="card">
             <div class="row">
                 <div class="col-auto">
@@ -68,20 +71,20 @@
                             {
                             <option value="@c">@c</option>
                             }
-                    </InputSelect>
-                </EditForm>
-            </div>
-            <div class="col-auto">
-                Include Unfunded:
-            </div>
-            <div class="col" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
-            </div>
-            <div class="col-auto">
-                @tooltipText
+                        </InputSelect>
+                    </EditForm>
+                </div>
+                <div class="col-auto">
+                    Include Unfunded:
+                </div>
+                <div class="col" style="display: flex">
+                    <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                </div>
+                <div class="col-auto">
+                    @tooltipText
+                </div>
             </div>
         </div>
-    </div>
         <div class="card">
             @if (chartSource == null || chartSource.Count < 1)
             {
@@ -97,7 +100,6 @@
                 </div>
                 <ApexChart @ref="chart"
                    TItem="ChartItem"
-                   Title="@chartTitle"
                    Options=options
                    XAxisType="XAxisType.Datetime"
                    OnDataPointEnter="@OnDataPointHover"

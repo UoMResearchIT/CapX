@@ -20,7 +20,7 @@ namespace PPMTool.Pages
         private TagService TagService { get; set; }
 
         [Parameter]
-        public int? PersonId { get; set; }
+        public int PersonId { get; set; }
 
         private Person personModel = new();
         private PPMToolContext context;
@@ -31,6 +31,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             context = new PPMToolContext();
+
             // Map entities to checkbox list items
             var entities = TagService.GetAllTags(context).ToList();
             var list = new List<Tag>();
@@ -38,7 +39,7 @@ namespace PPMTool.Pages
             AvailableTags = list;
 
             // Load the person model if necessary
-            if (PersonId != null)
+            if (PersonId > -1)
             {
                 personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
 
@@ -71,7 +72,7 @@ namespace PPMTool.Pages
                 }
             }
 
-            if (PersonId != null)
+            if (PersonId > -1)
             {
                 // Edit
                 PersonService.Update(context, personModel);
