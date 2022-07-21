@@ -110,7 +110,7 @@
                                  XValue="@(e => e.Label)"
                                  YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                                  YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                 PointColor="@(e => e.GetColourStringFTE())" />
+                                 PointColor="@(e => e.GetColourStringFTE(e.Value1))" />
                     </ChildContent>
                 </ApexChart>
 

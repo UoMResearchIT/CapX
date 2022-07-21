@@ -31,35 +31,48 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            // Get people from the database
+            // Get projects from the database
             context = new PPMToolContext();
             var proj = ProjectService.GetAll(context).ToArray();
             if (proj.Count() > 0)
             {
-                projects = proj;
-
-                for (int i = 0; i < 5; ++i)
+                // Build the burn-up charts week by week
+                for (int i = 0; i < proj.Count(); ++i)
                 {
-                    // Create list of chart items for this sub plot
-                    chartSource.Add(new List<ChartItem>());
+                    // Update the summary of the project and save back to DB
+                    var p = proj[i];
+                    p.UpdateProjectSummary();
+                    ProjectService.Update(context, p);
 
-                    // Organise the project data so it is plottable
-                    foreach (var p in proj)
-                    {
-                        // Update the summary of the project and save back to DB
-                        p.UpdateProjectSummary();
-                        ProjectService.Update(context, p);
-
-                        // Add to chart source
-                        chartSource[i].AddRange(ChartHelper.AggregateByWeek(p.SubTasks, x =>
+                    // Create the chart items
+                    var listOfChartItems = ChartHelper.AggregateByWeek(
+                        p.Name,
+                        p.SubTasks,
+                        x =>
                         {
-                        // Value summed is the average contribution of the task for that week
-                        // Duration includes weekends by default
+                            // Value summed is the average contribution of the task for that week
+                            // Duration includes weekends by default so only approximate
                             var durationWeeks = x.DurationDays / 7f;
                             return x.PlannedWorkHours / durationWeeks;
-                        }, p.Name));
-                    }
+                        },
+                        x =>
+                        {
+                            // Same for actuals
+                            var durationWeeks = x.DurationDays / 7f;
+                            return x.ActualWorkHours / durationWeeks;
+                        }
+                    );
+
+                    // Wrap in a list
+                    var list = new List<ChartItem>();
+                    list.AddRange(listOfChartItems);
+
+                    // Add to chart source
+                    chartSource.Add(list);
                 }
+
+                // Assign data for the data grid
+                projects = proj;
             }
 
             options = new ApexChartOptions<ChartItem>

@@ -14,31 +14,34 @@ namespace PPMTool.Data
 
         public DateTime EndDate { get; }
 
-        public double Value { get; }
+        public double Value1 { get; }
+
+        public double Value2 { get; }
 
         public string Label { get; }
 
-        public ChartItem(string label, DateTime start, DateTime end, double value)
+        public ChartItem(string label, DateTime start, DateTime end, double value1, double value2)
         {
             StartDate = start;
             EndDate = end;
-            Value = value;
+            Value1 = value1;
+            Value2 = value2;
             Label = label;
         }
 
-        public string GetColourStringFTE()
+        public string GetColourStringFTE(double value)
         {
-            if (Value == 100) return "#00783c";
-            if (Value > 100) return "#e3001b";
-            if (Value > 50) return "#fc9803";
+            if (value == 100) return "#00783c";
+            if (value > 100) return "#e3001b";
+            if (value > 50) return "#fc9803";
             return "#ffd500";
         }
 
-        public string GetColourStringWork()
+        public string GetColourStringWork(double value)
         {
-            if (Value == 35) return "#00783c";
-            if (Value > 35) return "#e3001b";
-            if (Value > 17.5) return "#fc9803";
+            if (value == 35) return "#00783c";
+            if (value > 35) return "#e3001b";
+            if (value > 17.5) return "#fc9803";
             return "#ffd500";
         }
     }

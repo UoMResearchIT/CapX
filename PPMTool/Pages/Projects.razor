@@ -104,31 +104,31 @@
         </div>
         <hr />
         <h2>Charts</h2>
-        <div class="card">
-            <div class="row">
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#e3001b"></rect> </svg> &gt;35hrs/week</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#00783c"></rect> </svg> =35hrs/week</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#fc9803"></rect> </svg> &gt;17.5hrs/week</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#ffd500"></rect> </svg> &le;17.5hrs/week</div>
-            </div>
-        </div>
         <div class="contianer-fluid">
-            <div class="row" >
+            <div class="row">
                 @foreach (var cs in chartSource)
                 {
                     <div class="col-xs-12 col-sm-6 col-lg-3">
                         <div class="card">
                             <ApexChart TItem="ChartItem"
-                               Title="Schedule"
                                XAxisType="XAxisType.Datetime"
                                Options=options>
 
-                                <ApexRangeSeries TItem="ChartItem"
+                                <ApexPointSeries TItem="ChartItem"
                                          Items="cs"
-                                         XValue="@(e => e.Label)"
-                                         YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                         YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())"
-                                         PointColor="@(e => e.GetColourStringWork())" />
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work"
+                                         XValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.Value1)))"
+                                         OrderByDescending="e=>e.Y" />
+
+                                <ApexPointSeries TItem="ChartItem"
+                                         Items="cs"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Actual Work"
+                                         XValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.Value2)))"
+                                         OrderByDescending="e=>e.Y" />
 
                             </ApexChart>
                         </div>

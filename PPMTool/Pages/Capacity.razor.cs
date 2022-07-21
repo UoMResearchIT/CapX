@@ -148,7 +148,7 @@ namespace PPMTool.Pages
             try
             {
                 var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
-                tooltipText = $"FTE: {item.Value}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
+                tooltipText = $"FTE: {item.Value1}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
             }
             catch { }
         }
@@ -202,7 +202,7 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeek(group.Value, x => x.AssignedResources.First(x => x.Person.Name == group.Key).Percentage, group.Key));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == group.Key).Percentage, group.Key));
                     }
                 }
 
@@ -228,7 +228,7 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeek(group.Value, x => x.AssignedResources.First(x => x.Person.Name == ChosenPerson).Percentage, group.Key));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == ChosenPerson).Percentage, group.Key));
                     }
                 }
                 
