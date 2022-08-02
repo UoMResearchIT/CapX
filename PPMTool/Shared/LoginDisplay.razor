@@ -1,0 +1,18 @@
+﻿@using Areas.Identity.Data;
+@using Microsoft.AspNetCore.Identity;
+@inject UserManager<PPMToolUser> UserManager
+<AuthorizeView>
+    <Authorized>
+        <a href="Identity/Account/Manage">Hello, @UserManager.GetUserAsync(context.User).Result.Name!</a>
+        <form method="post" action="Identity/Account/LogOut">
+            <button type="submit" class="nav-link btn btn-link">Log out</button>
+        </form>
+        @if (UserManager.GetUserAsync(context.User).Result.Role != RoleType.Developer)
+        {
+            <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <a href="Identity/Account/Login">Log in</a>
+    </NotAuthorized>
+</AuthorizeView>

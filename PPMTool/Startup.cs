@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PPMTool.Areas.Identity.Data;
 using PPMTool.Data;
 using PPMTool.Services;
 
@@ -38,6 +40,7 @@ namespace PPMTool
                 options.EnableSensitiveDataLogging();
             });
 
+            services.AddTransient<IdentitySeed>();
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
@@ -45,7 +48,10 @@ namespace PPMTool
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(
+            IApplicationBuilder app,
+            IWebHostEnvironment env,
+            IdentitySeed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -62,12 +68,15 @@ namespace PPMTool
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
+
+            // Seed the superuser
+            seeder.SeedSuperUserAsync().GetAwaiter().GetResult();
         }
     }
 }
