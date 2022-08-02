@@ -107,13 +107,15 @@ namespace PPMTool.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
 
-
             /// <summary>
             /// Role Type for this user
             /// </summary>
             [Required]
             [Display(Name = "Role Type")]
             public RoleType Role { get; set; }
+
+            [Required]
+            public string Name { get; set; }
         }
 
         /// <summary>
@@ -135,6 +137,10 @@ namespace PPMTool.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
+
+                // Set extra fields
+                user.Name = Input.Name;
+                user.Role = Input.Role;
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);

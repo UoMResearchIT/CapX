@@ -12,6 +12,7 @@ namespace PPMTool.Areas.Identity.Data
         // Add custom role field
         public RoleType Role { get; set; }
 
+        // Add friendly name field
         public string Name { get; set; }
     }
 }
