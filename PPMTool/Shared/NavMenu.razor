@@ -1,5 +1,8 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">BALEX</a>
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration configuration
+
+<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="" title="Version @configuration["VersionNumber"]">BALEX</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>

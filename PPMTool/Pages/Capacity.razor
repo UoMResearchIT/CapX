@@ -13,7 +13,7 @@
         <h1>Capacity</h1>
         <div class="card">
             <EditForm Model="this">
-                <div class="row">
+                <div class="row align-items-center">
                     <div class="col-auto">
                         Who is available?
                     </div>
@@ -32,9 +32,7 @@
                     <div class="col-auto" style="display: flex">
                         <RadzenSwitch @bind-Value="@IncludeUnFunded" />
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col">
+                    <div class="col align-items-right">
                         <button type="submit" class="btn btn-primary" @onclick=@RunQuery> <i class="oi oi-check" /></button>
                     </div>
                 </div>
@@ -47,7 +45,7 @@
                 {
                     <div class="row">
                         <div class="col-lg-2">@p.Name</div>
-                        <div class="col">@string.Join(",", p.SkillTags.Select(x => x.Name.ToString()))</div>
+                        <div class="col-lg-2">@string.Join(",", p.SkillTags.Select(x => x.Name.ToString()))</div>
                     </div>
                 }
             }
