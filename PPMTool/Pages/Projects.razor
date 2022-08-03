@@ -77,14 +77,14 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" />
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
                     <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditProject(proj))" @onclick:stopPropagation="true">
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" />
+                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px"/>
                     <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">
                         <Template Context="proj">
                             @proj.Portfolio.ToNiceString()

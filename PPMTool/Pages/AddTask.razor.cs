@@ -112,7 +112,6 @@ namespace PPMTool.Pages
                 var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
                 averageCostPerHourOfResources += (r.Percentage * 7 * person?.HourlyRate ?? 0) / (100 * totalResourcePerDayHours);
             }
-            averageCostPerHourOfResources /= taskModel.AssignedResources.Count;
 
             // Update the actual cost for the sub task
             taskModel.ActualCost = taskModel.ActualWorkHours * averageCostPerHourOfResources;

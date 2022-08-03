@@ -44,10 +44,10 @@
             @foreach (var t in AvailableTags)
             {
                 <div class="row">
-                    <div class="col-1">
+                    <div class="col-2">
                         @t.Name
                     </div>
-                    <div class="col" style="display: flex">
+                    <div class="col my-1" style="display: flex">
                         <RadzenSwitch @bind-Value="t.Checked" />
                     </div>
                     <br />
