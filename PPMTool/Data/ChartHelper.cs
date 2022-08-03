@@ -9,13 +9,15 @@ namespace PPMTool.Data
     {
         /// <summary>
         /// Time-marching method for summing up the contribution week-by-week based on the value function provided.
-        /// The results are arragned into irregular blocks of the same contrinuous value.
+        /// The results are arragned into irregular blocks of the same continuous value.
         /// </summary>
         /// <param name="label"></param>
         /// <param name="subTasks">Assignments to aggregate</param>
         /// <param name="valueFunction"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> AggregateByWeekIntoBlocks(IEnumerable<SubTask> subTasks, Func<SubTask, double> valueFunction, string label)
+        public static IEnumerable<ChartItem> AggregateByWeekIntoBlocks(IEnumerable<SubTask> subTasks, Func<SubTask, double> valueFunction, string label, DateTime? startDate = null, DateTime? endDate = null)
         {
             // Each block for a person is considered an element of a series (block).
             // We must define an element as a block of the same FTE value.
@@ -26,10 +28,10 @@ namespace PPMTool.Data
             if (subTasks.Count() < 1) return temp;
 
             // Get earliest assignment to get start date for marching
-            DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
+            DateTime start = startDate ?? subTasks.MinBy(x => x.StartDate).StartDate;
 
             // Get latest assignment finish so we know when to stop
-            DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate;
+            DateTime end = endDate ?? subTasks.MaxBy(x => x.EndDate).EndDate;
 
             // Start marching at a 1 week resolution
             DateTime currentWeek = start;

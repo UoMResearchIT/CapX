@@ -32,22 +32,45 @@
                     <div class="col-auto" style="display: flex">
                         <RadzenSwitch @bind-Value="@IncludeUnFunded" />
                     </div>
-                    <div class="col align-items-right">
-                        <button type="submit" class="btn btn-primary" @onclick=@RunQuery> <i class="oi oi-check" /></button>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary" @onclick=@RunQueryAsync> <i class="oi oi-check" /></button>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-outline-danger" @onclick=@ClearQueryAsync> <i class="oi oi-x"/></button>
                     </div>
                 </div>
             </EditForm>
             <hr />
             <h3>Query Results</h3>
+            @if (!string.IsNullOrEmpty(QueryErrorMessage))
+            {
+                <p class="text-danger">@QueryErrorMessage</p>
+            }
             @if (QueryResults != null)
             {
-                @foreach (var p in QueryResults)
-                {
-                    <div class="row">
-                        <div class="col-lg-2">@p.Name</div>
-                        <div class="col-lg-2">@string.Join(",", p.SkillTags.Select(x => x.Name.ToString()))</div>
-                    </div>
-                }
+                <table class="table table-sm table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Skills</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Availability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var res in QueryResults)
+                        {
+                            <tr>
+                                <td>@res.Person.Name</td>
+                                <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                                <td>@res.StartDate.ToShortDateString()</td>
+                                <td>@res.EndDate.ToShortDateString()</td>
+                                <td>@(res.AvailabilityPercent)%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             }
             else
             {

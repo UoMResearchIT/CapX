@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -66,6 +67,12 @@ namespace PPMTool.Services
                 .Include(p => p.SubTasks)
                 .ThenInclude(s => s.AssignedResources)
                 .ToList();
+        }
+
+        internal IEnumerable<Project> GetUnfundedProjects(PPMToolContext context)
+        {
+            return GetAll(context)
+                .Where(p => p.FundingStatus == FundingStatus.AwaitingSubmission || p.FundingStatus == FundingStatus.AwaitingOutcome);
         }
     }
 }

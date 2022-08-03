@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Build.Framework;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -67,7 +68,9 @@ namespace PPMTool.Pages
 
         public DateTime QueryStartDate { get; set; } = DateTime.Now.Date;
         public DateTime QueryEndDate { get; set; } = DateTime.Now.Date.AddDays(7);
-        public IEnumerable<Person> QueryResults { get; private set; }
+        public IEnumerable<CapacityQueryItem> QueryResults { get; private set; }
+
+        public string QueryErrorMessage { get; private set; }
 
         protected override async Task OnInitializedAsync()
         {
@@ -97,16 +100,76 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-        private void RunQuery()
+        private async void ClearQueryAsync()
         {
-            // Reset
             QueryResults = null;
+            QueryErrorMessage = null;
+            await ConfigureSourceAsync();
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Runs the capacity query and updates the query result property
+        /// </summary>
+        private async void RunQueryAsync()
+        {
+            // Add error
+            if (QueryStartDate >= QueryEndDate)
+            {
+                QueryErrorMessage = "End date must be after the start date!";
+                return;
+            }
+
+            // Reset query results
+            QueryResults = null;
+            var results = new List<CapacityQueryItem>();
+
+            // Update the chart source
+            await ConfigureSourceAsync(QueryStartDate, QueryEndDate);
+            StateHasChanged();
 
             // Get all people
             var people = PersonService.GetAll(context);
 
-            // Get all subtasks which run within the window
-            var tasks = SubTaskService.GetAll(context).Where(x =>
+            // Get all the subtasks within the query window
+            var tasks = GetSubTasksWithinQueryWindow(SubTaskService.GetAll(context));
+
+            // Get all the resources who are not assigned to any subtasks and add them to the query results
+            var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
+            foreach (var person in unassigned)
+            {
+                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, 100));
+            }
+
+            // Invert the chart results and add to array
+            foreach (var item in chartSource)
+            {
+                if ((int)item.Value1 < 100)
+                {
+                    // Get person from name
+                    var person = people.FirstOrDefault(p => p.Name == item.Label);
+                    if (person == null)
+                    {
+                        Debug.WriteLine($"** Couldn't find person {item.Label}");
+                        continue;
+                    }
+
+                    // Add to range
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, 100 - (int)item.Value1));
+                }
+            }
+
+            // Assign results
+            QueryResults = results;
+
+            // Update the UI
+            StateHasChanged();
+        }
+
+        private IEnumerable<SubTask> GetSubTasksWithinQueryWindow(IEnumerable<SubTask> source)
+        {
+            // Filter all the tasks based on the window of the query
+            var tasks = source.Where(x =>
             {
                 return
                 // Tasks that start in the window
@@ -124,22 +187,14 @@ namespace PPMTool.Pages
             {
                 // Get tasks which ought to be excluded from the query
                 var exemptTasks = ProjectService
-                    .GetAll(context)
-                    .Where(p => p.FundingStatus == FundingStatus.AwaitingSubmission || p.FundingStatus == FundingStatus.AwaitingOutcome)
+                    .GetUnfundedProjects(context)
                     .SelectMany(x => x.SubTasks);
 
                 // Exclude tasks found in the exempt list
                 tasks = tasks.Where(x => !exemptTasks.Contains(x));
             }
 
-            // Map tasks to assigned resources
-            var resources = tasks.SelectMany(x => x.AssignedResources);
-
-            // Remove people who are assigned resources on those tasks
-            QueryResults = people.Where(x => !resources.Any(y => y.Person == x));
-
-            // Update the UI
-            StateHasChanged();
+            return tasks;
         }
 
         private void OnDataPointHover(HoverData<ChartItem> e)
@@ -160,8 +215,9 @@ namespace PPMTool.Pages
 
         /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
+        /// Can specific a start and end date to restrict the data window
         /// </summary>
-        private async Task ConfigureSourceAsync()
+        private async Task ConfigureSourceAsync(DateTime? startDate = null, DateTime? endDate = null)
         {
             // Reset source
             chartSource = new List<ChartItem>();
@@ -202,7 +258,7 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == group.Key).Percentage, group.Key));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == group.Key).Percentage, group.Key, startDate, endDate));
                     }
                 }
 
@@ -228,7 +284,7 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == ChosenPerson).Percentage, group.Key));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == ChosenPerson).Percentage, group.Key, startDate, endDate));
                     }
                 }
                 
