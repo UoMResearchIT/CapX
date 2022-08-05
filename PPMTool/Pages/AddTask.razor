@@ -110,7 +110,7 @@
                     <div class="col">
                         <InputSelect @bind-Value="PredecessorId">
                             <option value="">None</option>
-                            @foreach (var t in projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId))
+                            @foreach (var t in projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor.SubTaskId != taskModel.SubTaskId))
                             {
                             <option value="@t.SubTaskId">[@t.SubTaskId] @t.Name</option>
                             }

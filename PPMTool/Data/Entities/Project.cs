@@ -40,6 +40,7 @@ namespace PPMTool.Data.Entities
             DateTime startDate = DateTime.MaxValue;
             DateTime endDate = DateTime.MinValue;
             double actualCost = 0d;
+            double actualHours = 0d;
             double plannedCost = 0d;
 
             // Loop over all the subtasks
@@ -51,8 +52,11 @@ namespace PPMTool.Data.Entities
                 // Update the project start and end dates
                 if (task.StartDate < startDate) startDate = task.StartDate;
                 if (task.EndDate > endDate) endDate = task.EndDate;
+
+                // Sum costs and hours
                 actualCost += task.ActualCost;
                 plannedCost += task.PlannedCost;
+                actualHours += task.ActualWorkHours;
             }
 
             // Update project
@@ -60,6 +64,7 @@ namespace PPMTool.Data.Entities
             EndDate = endDate;
             ActualCost = actualCost;
             PlannedCost = plannedCost;
+            ActualWorkHours = actualHours;
 
             // Update schedule status from the sub task flags
             if (SubTasks.Any(x => x.ScheduleStatus == ScheduleStatus.Late)) ScheduleStatus = ScheduleStatus.Late;

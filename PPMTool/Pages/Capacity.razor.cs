@@ -88,6 +88,10 @@ namespace PPMTool.Pages
                 Legend = new Legend
                 {
                     Show = false
+                },
+                Xaxis = new XAxis
+                {
+                    Min = DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds()
                 }
             };
 
@@ -203,7 +207,7 @@ namespace PPMTool.Pages
             try
             {
                 var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
-                tooltipText = $"FTE: {item.Value1}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
+                tooltipText = $"Usage: {item.Value1}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
             }
             catch { }
         }
@@ -258,7 +262,12 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == group.Key).Percentage, group.Key, startDate, endDate));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x =>
+                        {
+                            var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
+                            return Math.Round(person.Percentage / person.Person.AvailabilityFTE);
+                        },
+                        group.Key, startDate, endDate));
                     }
                 }
 
@@ -284,10 +293,15 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x => x.AssignedResources.First(x => x.Person.Name == ChosenPerson).Percentage, group.Key, startDate, endDate));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x =>
+                        {
+                            var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
+                            return Math.Round(person.Percentage / person.Person.AvailabilityFTE);
+                        },
+                        group.Key, startDate, endDate));
                     }
                 }
-                
+
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
 
@@ -295,14 +309,20 @@ namespace PPMTool.Pages
                 if (chart != null)
                 {
                     Debug.WriteLine($"** Re-renderering chart!");
-
-                    // HACK: Not sure why we have to call this twice but we do!
-                    await chart?.UpdateSeriesAsync();
-                    await chart?.UpdateSeriesAsync();
-                    await InvokeAsync(StateHasChanged);
+                    await RefreshChartAsync();
                 }
                 Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
             }
+        }
+
+        private async Task RefreshChartAsync()
+        {
+            // HACK: Not sure why we have to call this twice but we do!
+            await chart?.UpdateSeriesAsync();
+            await chart?.UpdateSeriesAsync();
+
+            // Force blazor redraw
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

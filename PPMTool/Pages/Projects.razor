@@ -31,7 +31,7 @@
                         FilterMode="FilterMode.Advanced"
                         EditMode="DataGridEditMode.Single"
                         AllowSorting="true"
-                        PageSize="10"
+                        PageSize="7"
                         AllowPaging="true"
                         ShowPagingSummary="true"
                         Data="@projects"
@@ -85,6 +85,11 @@
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px"/>
+                    <RadzenDataGridColumn TItem="Project" Property="FundingStatus" Title="Funding Status">
+                        <Template Context="proj">
+                            @proj.FundingStatus.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">
                         <Template Context="proj">
                             @proj.Portfolio.ToNiceString()
@@ -93,11 +98,7 @@
                     <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" />
                     <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" />
                     <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" />
-                    <RadzenDataGridColumn TItem="Project" Property="FundingStatus" Title="Funding Status">
-                        <Template Context="proj">
-                            @proj.FundingStatus.ToNiceString()
-                        </Template>
-                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" />
                     <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
                 </Columns>
@@ -105,7 +106,8 @@
         </div>
         <hr />
         <h2>Charts</h2>
-        <div class="contianer-fluid">
+        <p>** Burn-Up Charts for each project are a work in progress **</p>
+        @*<div class="contianer-fluid">
             <div class="row">
                 @foreach (var cs in chartSource)
                 {
@@ -120,7 +122,7 @@
                                          SeriesType="@SeriesType.Area"
                                          Name="Planned Work"
                                          XValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.Value1)))"
+                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => (int)e.Value1)))"
                                          OrderByDescending="e=>e.Y" />
 
                                 <ApexPointSeries TItem="ChartItem"
@@ -128,7 +130,7 @@
                                          SeriesType="@SeriesType.Area"
                                          Name="Actual Work"
                                          XValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.Value2)))"
+                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => (int)e.Value2)))"
                                          OrderByDescending="e=>e.Y" />
 
                             </ApexChart>
@@ -136,6 +138,6 @@
                     </div>
                 }
             </div>
-        </div>
+        </div>*@
     }
 </div>

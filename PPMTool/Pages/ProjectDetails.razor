@@ -29,6 +29,7 @@
                             <th>Budget</th>
                             <th>Actual Cost</th>
                             <th>Funds Received</th>
+                            <th>Actual Hours</th>
                             <th>Funding Status</th>
                             <th>Start Date</th>
                             <th>End Date</th>
@@ -41,6 +42,7 @@
                             <td>@project.Budget.ToString("C0")</td>
                             <td>@project.ActualCost.ToString("C0")</td>
                             <td>@project.FundsReceived.ToString("C0")</td>
+                            <td>@project.SubTasks.Sum(x => x.ActualWorkHours)</td>
                             <td>@project.FundingStatus.ToNiceString()</td>
                             <td>@project.StartDate.ToShortDateString()</td>
                             <td>@project.EndDate.ToShortDateString()</td>

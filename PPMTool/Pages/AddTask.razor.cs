@@ -114,7 +114,8 @@ namespace PPMTool.Pages
             }
 
             // Update the actual cost for the sub task
-            taskModel.ActualCost = taskModel.ActualWorkHours * averageCostPerHourOfResources;
+            // Truncate to 2 dp
+            taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerHourOfResources * 100) / 100;
 
             // Create predecessor on the sub task
             if (int.TryParse(PredecessorId, out var id))
