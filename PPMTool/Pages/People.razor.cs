@@ -1,0 +1,38 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
+using PPMTool.Data.Entities;
+using PPMTool.Enums;
+using PPMTool.Services;
+
+namespace PPMTool.Pages
+{
+    public partial class People : BasePage
+    {
+        [Inject]
+        private PersonService PersonService { get; set; }
+
+        private IEnumerable<Person> people;
+        private PPMToolContext context;
+
+        protected override void OnInitialized()
+        {
+            // Get people from the database
+            context = new PPMToolContext();
+            var peo = PersonService.GetAll(context);
+            if (peo.Count() > 0)
+            {
+                people = peo;
+            }
+        }
+
+        private void EditPerson(Person person)
+        {
+            Navigation.NavigateTo($"addperson/{person.PersonId}");
+        }
+    }
+}

@@ -1,0 +1,142 @@
+﻿@page "/projectdetails/{ProjectId:int}"
+@inherits PPMTool.Pages.BasePage
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+
+<div class="container">
+
+    @if (project == null)
+    {
+        <h1>Unkown Project</h1>
+    }
+    else
+    {
+        <h1>@project.Name</h1>
+    }
+    <div class="card">
+        @if (project == null)
+        {
+            <p class="lead">No data to show</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>PI</th>
+                            <th>Portfolio</th>
+                            <th>Budget</th>
+                            <th>Actual Cost</th>
+                            <th>Funds Received</th>
+                            <th>Actual Hours</th>
+                            <th>Funding Status</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@project.PI</td>
+                            <td>@project.Portfolio.ToNiceString()</td>
+                            <td>@project.Budget.ToString("C0")</td>
+                            <td>@project.ActualCost.ToString("C0")</td>
+                            <td>@project.FundsReceived.ToString("C0")</td>
+                            <td>@project.SubTasks.Sum(x => x.ActualWorkHours)</td>
+                            <td>@project.FundingStatus.ToNiceString()</td>
+                            <td>@project.StartDate.ToShortDateString()</td>
+                            <td>@project.EndDate.ToShortDateString()</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h2>Tasks</h2>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick=@AddTask><i class="oi oi-plus" /></button>
+        </div>
+    </div>
+
+    @if (project?.SubTasks == null)
+    {
+        <div class="card">
+            <p class="lead">No data to show</p>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <RadzenDataGrid AllowFiltering="true"
+                        AllowColumnResize="true"
+                        FilterMode="FilterMode.Advanced"
+                        AllowSorting="true"
+                        PageSize="10"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left"
+                        ShowPagingSummary="true"
+                        Data="@project.SubTasks"
+                        TItem="SubTask"
+                        ColumnWidth="100px"
+                        SelectionMode="DataGridSelectionMode.Single"
+                        LogicalFilterOperator="LogicalFilterOperator.Or">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" />
+                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                        <Template Context="task">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start">
+                        <Template Context="t">
+                            <RadzenSwitch @bind-Value=@t.HasFixedStart Disabled="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type">
+                        <Template Context="t">
+                            @t.TaskType.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources">
+                        <Template Context="t">
+                            @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <h2>Schedule</h2>
+            </div>
+        </div>
+        <div class="card">
+            <ApexChart TItem="SubTask"
+                   Title="All Tasks"
+                   XAxisType="XAxisType.Datetime"
+                   Options=options>
+
+                <ApexRangeSeries TItem="SubTask"
+                             Items="Data"
+                             XValue="@(e => e.Name)"
+                             YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
+                             YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
+
+            </ApexChart>
+        </div>
+    }
+</div>

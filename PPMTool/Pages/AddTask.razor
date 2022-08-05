@@ -1,0 +1,168 @@
+﻿@page "/addtask/{projectID:int}/{taskId:int}"
+@inherits BasePage
+@using PPMTool.Enums
+
+<div class="container">
+    @if (TaskId < 0)
+    {
+        <h1>Add Task</h1>
+        <p>Add new task to @projectModel?.Name</p>
+    }
+    else
+    {
+        <h1>Edit @taskModel.Name</h1>
+    }
+    <div class="card">
+        <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row">
+                <div class="col-3">
+                    <label>Name</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="taskModel.Name" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label>Fixed Start</label>
+                </div>
+                <div class="col" style="display: flex">
+                    <RadzenSwitch @bind-value="taskModel.HasFixedStart" />
+                </div>
+            </div>
+
+            <!-- Start date is required if fixed start otherwise driven from predecesors -->
+            <div class="row">
+                <div class="col-3">
+                    <label>Start Date</label>
+                </div>
+                <div class="col">
+                    <InputDate @bind-Value="taskModel.StartDate" disabled="@startDateDisabled" />
+                </div>
+            </div>
+
+            <!-- End date is driven so always disabled -->
+            <div class="row">
+                <div class="col-3">
+                    <label>End Date</label>
+                </div>
+                <div class="col" style="margin-left: 5px">
+                    <p>@taskModel.EndDate.ToShortDateString()</p>
+                </div>
+            </div>
+
+            <!-- Choice of task type affects options -->
+            <div class="row">
+                <div class="col-3">
+                    <label>Task Type</label>
+                </div>
+                <div class="col">
+                    <InputSelect @bind-Value="taskModel.TaskType">
+                        @foreach (var c in (TaskType[])Enum.GetValues(typeof(TaskType)))
+                        {
+                            <option value="@c">@c.ToNiceString()</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-3">
+                    <label>Work (Hours)</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0" step="1" placeholder="0" @bind-Value="taskModel.PlannedWorkHours" disabled="@workDisabled" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-3">
+                    <label>Duration (Days)</label>
+                </div>
+                <div class="col-auto">
+                    <InputNumber min="0" step="1" @bind-Value="taskModel.DurationDays" disabled="@durationDisabled" />
+                </div>
+                <div class="col-auto float-left">
+                    <p>(@(taskModel.DurationBusinessDays) Business Days)</p>
+                </div>
+            </div>
+
+            @if (taskModel.TaskType == TaskType.FixedUnits)
+            {
+                <div class="row">
+                    <div class="col-3">
+                        <label>Work Driven?</label>
+                    </div>
+                    <div class="col">
+                        <RadzenSwitch @bind-value="taskModel.IsWorkDriven" />
+                    </div>
+                </div>
+            }
+
+            @if (projectModel?.SubTasks?.Count > 0)
+            {
+                <div class="row">
+                    <div class="col-3">
+                        <label>Predecessor</label>
+                    </div>
+                    <div class="col">
+                        <InputSelect @bind-Value="PredecessorId">
+                            <option value="">None</option>
+                            @foreach (var t in projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor.SubTaskId != taskModel.SubTaskId))
+                            {
+                            <option value="@t.SubTaskId">[@t.SubTaskId] @t.Name</option>
+                            }
+                    </InputSelect>
+                </div>
+            </div>
+            }
+
+            @if (TaskId > -1)
+            {
+                <hr />
+                <h3>Actuals</h3>
+                <div class="row">
+                    <div class="col-3">
+                        <label>Actual Hours</label>
+                    </div>
+                    <div class="col">
+                        <InputNumber min="0" step="1" placeholder="0" @bind-Value="taskModel.ActualWorkHours" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        <label>Actual Cost (£)</label>
+                    </div>
+                    <div class="col">
+                        <InputNumber type="currency" min="0.0" step="0.01" placeholder="0.00" @bind-Value="taskModel.ActualCost" disabled="True" />
+                    </div>
+                </div>
+            }
+
+            <!-- If fixed units then at least one resource needs to be assigned -->
+            <hr />
+            <h3>Resources</h3>
+            @foreach (var r in resources)
+            {
+                <div class="row">
+                    <div class="col-3">
+                        @r.Person.Name
+                    </div>
+                    <div class="col">
+                        <InputNumber step="10" min="0" max="100" @bind-Value="@r.Percentage" />%
+                    </div>
+                    <br />
+                </div>
+            }
+
+            <button class="btn btn-primary" type="button" @onclick="UpdateSubTask"><i class="oi oi-reload" /></button>
+            <button class="btn btn-primary" type="submit"><i class="oi oi-check" /></button>
+            @if (!isValid)
+            {
+                <p style="color: red">Task configuration insufficent for scheduling. Please correct and update again: @error</p>
+            }
+        </EditForm>
+    </div>
+</div>

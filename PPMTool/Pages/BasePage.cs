@@ -1,0 +1,22 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
+
+namespace PPMTool.Pages
+{
+    [Authorize]
+    public class BasePage : ComponentBase
+    {
+        [Inject]
+        protected ILogger<AddPerson> Logger { get; set; }
+
+        [Inject]
+        protected NavigationManager Navigation { get; set; }
+
+        protected bool IsLoading { get; set; }
+    }
+}

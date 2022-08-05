@@ -1,0 +1,80 @@
+﻿@page "/addproject/{ProjectId:int}"
+@inherits BasePage
+@using PPMTool.Enums
+
+<div class="container">
+    @if (ProjectId < 0)
+    {
+        <h1>Add Project</h1>
+    }
+    else
+    {
+        <h1>Edit Project</h1>
+    }
+    <div class="card">
+        <EditForm Model="@projectModel" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row">
+                <div class="col-3">
+                    <label for="Name">Name</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="projectModel.Name" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="PI">Principal Investigator</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="projectModel.PI" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="Portfolio">Portfolio</label>
+                </div>
+                <div class="col">
+                    <InputSelect @bind-Value="projectModel.Portfolio">
+                        @foreach (var c in (Portfolio[])Enum.GetValues(typeof(Portfolio)))
+                        {
+                            <option value="@c">@c.ToNiceString()</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="Budget">Agreed Budget (£)</label>
+                </div>
+                <div class="col">
+                    <InputNumber type="currency" min="0.0" step="0.01" placeholder="0.00" @bind-Value="projectModel.Budget" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="FundsReceived">Funds Received (£)</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0.0" step="0.01" placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="FundingStatus">Funding Status</label>
+                </div>
+                <div class="col">
+                    <InputSelect @bind-Value="projectModel.FundingStatus">
+                        @foreach (var c in (FundingStatus[])Enum.GetValues(typeof(FundingStatus)))
+                        {
+                            <option value="@c">@c.ToNiceString()</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit"><i class="oi oi-check" /></button>
+        </EditForm>
+    </div>
+</div>
