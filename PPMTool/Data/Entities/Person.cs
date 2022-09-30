@@ -38,7 +38,6 @@ namespace PPMTool.Data.Entities
 
         static string GetInitials(string name)
         {
-
             string[] nameSplit = name.Split(new string[] { ",", " " }, StringSplitOptions.RemoveEmptyEntries);
             string initials = "";
             foreach (string item in nameSplit)
