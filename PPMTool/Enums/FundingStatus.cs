@@ -6,22 +6,18 @@ using System.Threading.Tasks;
 
 namespace PPMTool.Enums
 {
-    public enum FundingStatus
+    /// <summary>
+    /// These are just broad scoped statuses of a project
+    /// </summary>
+    public enum ProjectStatus
     {
         /// <summary>
-        /// Projects that are in preparation but the funding has not been submitted yet
+        /// Projects that are in preparation and have not had any confirmed funding
         /// </summary>
-        [Description("Awaiting Submission")]
-        AwaitingSubmission,
+        Unfunded,
 
         /// <summary>
-        /// Grant proposals have gone in and we are awaiting the outcome
-        /// </summary>
-        [Description("Awaiting Outcome")]
-        AwaitingOutcome,
-
-        /// <summary>
-        /// Funding has been successfully secured and project is scheduled
+        /// Projects that have had their funding confirmed and are going ahead but not yet started
         /// </summary>
         Funded,
 
@@ -29,6 +25,11 @@ namespace PPMTool.Enums
         /// Project is currently underway
         /// </summary>
         Active,
+
+        /// <summary>
+        /// Projects that have been started but are currently paused for whatever reason
+        /// </summary>
+        Paused,
 
         /// <summary>
         /// Project is in maintenance phase and not under active development but is still live

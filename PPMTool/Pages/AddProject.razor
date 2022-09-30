@@ -66,7 +66,7 @@
                 </div>
                 <div class="col">
                     <InputSelect @bind-Value="projectModel.FundingStatus">
-                        @foreach (var c in (FundingStatus[])Enum.GetValues(typeof(FundingStatus)))
+                        @foreach (var c in (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus)))
                         {
                             <option value="@c">@c.ToNiceString()</option>
                         }

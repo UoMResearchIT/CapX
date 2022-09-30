@@ -24,7 +24,7 @@ namespace PPMTool.Pages
         private List<List<ChartItem>> chartSource = new List<List<ChartItem>>();
         private ApexChartOptions<ChartItem> options;
         private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
-        private IEnumerable<FundingStatus> fundingOptions = (FundingStatus[])Enum.GetValues(typeof(FundingStatus));
+        private IEnumerable<ProjectStatus> fundingOptions = (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus));
         private PPMToolContext context;
 
         protected override void OnInitialized()

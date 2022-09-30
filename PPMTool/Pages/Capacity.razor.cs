@@ -231,8 +231,8 @@ namespace PPMTool.Pages
             if (peo.Count() > 0)
             {
                 // Get projects from the database
-                var projects = ProjectService.GetAll(context).Where(x => x.FundingStatus != FundingStatus.Finished);
-                if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != FundingStatus.AwaitingSubmission && p.FundingStatus != FundingStatus.AwaitingOutcome);
+                var projects = ProjectService.GetAll(context).Where(x => x.FundingStatus != ProjectStatus.Finished);
+                if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != ProjectStatus.Unfunded);
 
                 // Reinitialise dictionary
                 groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();
