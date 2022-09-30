@@ -22,7 +22,7 @@ namespace PPMTool.Data.Entities
         }
 
 
-        public string ShortName { get; private set; }
+        public string ShortName { get; set; }
 
         [Required]
         [DataType(DataType.Currency)]
