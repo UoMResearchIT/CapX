@@ -73,17 +73,18 @@
         <div class="card">
             <RadzenDataGrid AllowFiltering="true"
                         AllowColumnResize="true"
-                        FilterMode="FilterMode.Advanced"
+                        FilterMode="FilterMode.Simple"
                         AllowSorting="true"
                         PageSize="10"
                         AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left"
                         ShowPagingSummary="true"
-                        Data="@project.SubTasks"
+                        Data="@Data"
                         TItem="SubTask"
                         ColumnWidth="100px"
                         SelectionMode="DataGridSelectionMode.Single"
-                        LogicalFilterOperator="LogicalFilterOperator.Or">
+                        Count="@count"
+                        LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" />
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
@@ -109,7 +110,7 @@
                             @t.TaskType.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false">
                         <Template Context="t">
                             @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))
                         </Template>
