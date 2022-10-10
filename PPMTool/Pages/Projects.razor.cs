@@ -11,6 +11,7 @@ using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen.Blazor;
 using FluentDate;
+using System.Diagnostics;
 
 namespace PPMTool.Pages
 {
@@ -27,20 +28,47 @@ namespace PPMTool.Pages
         private IEnumerable<ProjectStatus> fundingOptions = (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus));
         private PPMToolContext context;
 
+        private bool ShowActiveOnly { get; set; } = true;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            LoadProjectData();
+
+            options = new ApexChartOptions<ChartItem>
+            {
+                PlotOptions = new PlotOptions
+                {
+                    Bar = new PlotOptionsBar
+                    {
+                        Horizontal = true,
+                        RangeBarGroupRows = false
+                    }
+                }
+            };
+        }
+
+        private void OnChange(bool? value)
+        {
+            LoadProjectData();
+        }
+
+        private void LoadProjectData()
+        {
             // Get projects from the database
             context = new PPMToolContext();
-            var proj = ProjectService.GetAll(context).ToArray();
+            var proj = ProjectService.GetAll(context);
+
+            if (ShowActiveOnly) proj = proj.Where(x => x.FundingStatus == ProjectStatus.Active || x.FundingStatus == ProjectStatus.Maintenance);
+
             if (proj.Count() > 0)
             {
                 // Build the burn-up charts week by week
                 for (int i = 0; i < proj.Count(); ++i)
                 {
                     // Update the summary of the project and save back to DB
-                    var p = proj[i];
+                    var p = proj.ElementAt(i);
                     p.UpdateProjectSummary();
                     ProjectService.Update(context, p);
 
@@ -75,17 +103,7 @@ namespace PPMTool.Pages
                 projects = proj;
             }
 
-            options = new ApexChartOptions<ChartItem>
-            {
-                PlotOptions = new PlotOptions
-                {
-                    Bar = new PlotOptionsBar
-                    {
-                        Horizontal = true,
-                        RangeBarGroupRows = false
-                    }
-                }
-            };
+            Debug.WriteLine($"{proj.Count()} projects loaded.");
         }
 
         private void ProjectClicked(int id)

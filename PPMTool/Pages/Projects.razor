@@ -25,13 +25,21 @@
     else
     {
         <div class="card">
+            <div class="row align-items-center mb-3">
+                <div class="col-auto">
+                    Show Only Active?:
+                </div>
+                <div class="col-auto" style="display: flex">
+                    <RadzenSwitch @bind-Value="@ShowActiveOnly" Change=@(args => OnChange(args)) />
+                </div>
+            </div>
             <RadzenDataGrid @ref="projectGrid"
                         AllowFiltering="true"
                         AllowColumnResize="true"
-                        FilterMode="FilterMode.Advanced"
+                        FilterMode="FilterMode.Simple"
                         EditMode="DataGridEditMode.Single"
                         AllowSorting="true"
-                        PageSize="7"
+                        PageSize="10"
                         AllowPaging="true"
                         ShowPagingSummary="true"
                         Data="@projects"
@@ -77,13 +85,13 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
                     <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditProject(proj))" @onclick:stopPropagation="true">
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
                     <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px"/>
                     <RadzenDataGridColumn TItem="Project" Property="FundingStatus" Title="Funding Status">
                         <Template Context="proj">

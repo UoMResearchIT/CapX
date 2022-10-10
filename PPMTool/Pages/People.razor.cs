@@ -74,6 +74,8 @@ namespace PPMTool.Pages
 
             // Perform paging via Skip and Take.
             people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+
+            Debug.WriteLine($"{people.Count()} people loaded!");
         }
     }
 }
