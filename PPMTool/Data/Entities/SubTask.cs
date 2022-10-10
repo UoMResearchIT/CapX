@@ -99,13 +99,32 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        private bool isEndDateDriven = true;
+        /// <summary>
+        /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round
+        /// </summary>
+        public bool IsEndDateDriven
+        {
+            get => isEndDateDriven;
+            set
+            {
+                if (isEndDateDriven != value)
+                {
+                    isEndDateDriven = value;
+                    OnEndDateDrivenChanged(new EventArgs());
+                }
+            }
+        }
+
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units / 100
         /// Units = Sum of Resource Percentage
-        /// Returns null if successful otherwise error message
         /// </summary>
-        public string Schedule()
+        /// <param name="permitUndrivenEndToMove">Whether we can move the end date to maintain 
+        /// the duration if the end date is not driven. Only applies to fixed duration tasks.</param>
+        /// <returns>Returns null if successful otherwise error message</returns>
+        public string Schedule(bool permitUndrivenEndToMove)
         {
             try
             {
@@ -153,11 +172,12 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
-
-
                 // Update core parameters
                 if (TaskType == TaskType.FixedUnits)
                 {
+                    // End date must be driven
+                    IsEndDateDriven = true;
+
                     // Which one is updated based on preference
                     if (IsWorkDriven)
                     {
@@ -171,11 +191,23 @@ namespace PPMTool.Data.Entities
                 }
                 else if (TaskType == TaskType.FixedWork)
                 {
+                    // End Date must be driven
+                    IsEndDateDriven = true;
+
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
                 }
                 else
                 {
+                    // Make sure the duration is at least zero or greater
+                    if (EndDate < StartDate) EndDate = StartDate.Date;
+
+                    // If we are allowed to move the end date to maintain the current duration then set the end date now
+                    if (!IsEndDateDriven && permitUndrivenEndToMove) EndDate = StartDate.Date.AddDays(DurationDays).Date;
+
+                    // If the end date is not driven then set duration here from the start and end dates
+                    if (!IsEndDateDriven) UpdateDurationFromEndDate();
+
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
                 }
@@ -187,8 +219,8 @@ namespace PPMTool.Data.Entities
                     PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * res.Person.HourlyRate;
                 }
 
-                // Set end date
-                EndDate = StartDate.Date.AddDays(DurationDays).Date;
+                // Set end date from the duration
+                if (IsEndDateDriven) EndDate = StartDate.Date.AddDays(DurationDays).Date;
 
                 return null;
             }
@@ -196,6 +228,12 @@ namespace PPMTool.Data.Entities
             {
                 return e.Message;
             }
+        }
+
+        private void UpdateDurationFromEndDate()
+        {
+            DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays);
+            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, EndDate);
         }
 
         private void UpdateDuration(double units)
@@ -215,7 +253,7 @@ namespace PPMTool.Data.Entities
 
         private void UpdateWork(double units)
         {
-            // Duration input is calendar days so need to compute business days
+            // Duration input is calendar days so need to compute business days to get work
             var endDate = StartDate.AddDays(DurationDays);
             DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
             PlannedWorkHours = DurationBusinessDays * 7 * units;
@@ -297,6 +335,16 @@ namespace PPMTool.Data.Entities
         protected virtual void OnWorkDrivenChanged(EventArgs e)
         {
             EventHandler handler = WorkDrivenChanged;
+            handler?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Event invoked when the end date driven setting is changed
+        /// </summary>
+        public event EventHandler EndDateDrivenChanged;
+        protected virtual void OnEndDateDrivenChanged(EventArgs e)
+        {
+            EventHandler handler = EndDateDrivenChanged;
             handler?.Invoke(this, e);
         }
 

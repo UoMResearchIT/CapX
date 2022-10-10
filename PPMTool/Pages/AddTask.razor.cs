@@ -67,6 +67,7 @@ namespace PPMTool.Pages
             taskModel.TaskTypeChanged += UpdateUIState;
             taskModel.FixedStartChanged += UpdateUIState;
             taskModel.WorkDrivenChanged += UpdateUIState;
+            taskModel.EndDateDrivenChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
         }
 
@@ -79,7 +80,7 @@ namespace PPMTool.Pages
         {
             startDateDisabled = !taskModel.HasFixedStart;
             workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven);
-            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven);
+            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && !taskModel.IsEndDateDriven;
         }
 
         /// <summary>
@@ -124,7 +125,7 @@ namespace PPMTool.Pages
             }
 
             // Schedule
-            error = taskModel.Schedule();
+            error = taskModel.Schedule(false);
             isValid = error == null;
 
             // Call schedule() on the subtask that this is a predecssor for

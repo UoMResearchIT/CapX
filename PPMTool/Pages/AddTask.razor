@@ -43,13 +43,13 @@
                 </div>
             </div>
 
-            <!-- End date is driven so always disabled -->
+            <!-- End date is can be driven by duration or chosen which will then drive the duration -->
             <div class="row">
                 <div class="col-3">
                     <label>End Date</label>
                 </div>
-                <div class="col" style="margin-left: 5px">
-                    <p>@taskModel.EndDate.ToShortDateString()</p>
+                <div class="col">
+                    <InputDate @bind-Value="taskModel.EndDate" disabled="@taskModel.IsEndDateDriven" />
                 </div>
             </div>
 
@@ -67,6 +67,19 @@
                     </InputSelect>
                 </div>
             </div>
+
+            <!-- Choice of whether the end drive should be picked or driven -->
+            @if (taskModel.TaskType == TaskType.FixedDuration)
+            {
+                <div class="row">
+                    <div class="col-3">
+                        <label>End Date Driven</label>
+                    </div>
+                    <div class="col" style="display: flex">
+                        <RadzenSwitch @bind-value="taskModel.IsEndDateDriven" />
+                    </div>
+                </div>
+            }
 
             <div class="row">
                 <div class="col-3">

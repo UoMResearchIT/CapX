@@ -14,10 +14,7 @@ namespace PPMTool.Data.Entities
 
         public DateTime StartDate { get; set; } = DateTime.Now.Date;
 
-        /// <summary>
-        /// End date is always a driven quantity in forward scheduling
-        /// </summary>
-        public DateTime EndDate { get; protected set; }
+        public DateTime EndDate { get; set; }
 
         public double PlannedWorkHours { get; set; }
 
