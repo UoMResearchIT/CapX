@@ -104,14 +104,14 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Compute the average hourly cost across the resources from their hourly rate
+            // Compute the average hourly cost across the resources from their day rate
             // scaled by the proportion to which they are assigned to the task
             var people = PersonService.GetAll(context);
             double averageCostPerHourOfResources = 0;            
             foreach (var r in taskModel.AssignedResources)
             {
                 var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
-                averageCostPerHourOfResources += (r.Percentage * 7 * person?.HourlyRate ?? 0) / (100 * totalResourcePerDayHours);
+                averageCostPerHourOfResources += (r.Percentage * person?.DayRate ?? 0) / (100 * totalResourcePerDayHours);
             }
 
             // Update the actual cost for the sub task

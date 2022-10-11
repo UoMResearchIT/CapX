@@ -26,7 +26,7 @@ namespace PPMTool.Data.Entities
 
         [Required]
         [DataType(DataType.Currency)]
-        public double HourlyRate { get; set; } = 35.72;
+        public double DayRate { get; set; } = 312;
 
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Now.Date;

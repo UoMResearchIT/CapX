@@ -216,7 +216,8 @@ namespace PPMTool.Data.Entities
                 PlannedCost = 0d;
                 foreach (var res in AssignedResources)
                 {
-                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * res.Person.HourlyRate;
+                    // Assume 7 hours in a day
+                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * (res.Person.DayRate / 7f);
                 }
 
                 // Set end date from the duration
