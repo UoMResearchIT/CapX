@@ -157,6 +157,21 @@
             <!-- If fixed units then at least one resource needs to be assigned -->
             <hr />
             <h3>Resources</h3>
+                <div class="row">
+                    <div class="col-3">
+                        Person
+                    </div>
+                    <div class="col">
+                        Percentage Assigned
+                    </div>
+                    <div class="col">
+                        Use Default Day Rate
+                    </div>
+                    <div class="col">
+                        Day Rate (£)
+                    </div>
+                    <br />
+                </div>
             @foreach (var r in resources)
             {
                 <div class="row">
@@ -165,6 +180,12 @@
                     </div>
                     <div class="col">
                         <InputNumber step="1" min="0" max="100" @bind-Value="@r.Percentage" />%
+                    </div>
+                    <div class="col">
+                        <RadzenSwitch @bind-Value="@r.UseDefaultDayRate" />
+                    </div>
+                    <div class="col">
+                        <InputNumber step="1" min="0" @bind-Value="@r.DayRate" disabled="@r.UseDefaultDayRate" />
                     </div>
                     <br />
                 </div>

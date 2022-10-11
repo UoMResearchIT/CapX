@@ -59,7 +59,9 @@ namespace PPMTool.Pages
                 resources.Add(new Resource
                 {
                     Person = p,
-                    Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0
+                    Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
+                    UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
+                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null
                 });
             };
 
@@ -111,7 +113,9 @@ namespace PPMTool.Pages
             foreach (var r in taskModel.AssignedResources)
             {
                 var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
-                averageCostPerHourOfResources += (r.Percentage * person?.DayRate ?? 0) / (100 * totalResourcePerDayHours);
+                if (person == null) continue;
+                // User the default day rate for the person if the assigned day rate is null
+                averageCostPerHourOfResources += (r.Percentage * r.DayRate ?? person.DayRate) / (100 * totalResourcePerDayHours);
             }
 
             // Update the actual cost for the sub task
