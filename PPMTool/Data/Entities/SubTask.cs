@@ -217,7 +217,7 @@ namespace PPMTool.Data.Entities
                 foreach (var res in AssignedResources)
                 {
                     // Assume 7 hours in a day; fallback on default day rate if resource day rate is null
-                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * (res.DayRate ?? res.Person.DayRate / 7f);
+                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
                 }
 
                 // Set end date from the duration

@@ -94,7 +94,7 @@ namespace PPMTool.Pages
 
             // Create resources on the sub task and track total proportion of effort
             taskModel.AssignedResources = new List<Resource>();
-            double totalResourcePerDayHours = 0;
+            double totalResourceDaysPerDay = 0;
             foreach (var r in resources)
             {
                 if (r.Percentage > 0)
@@ -102,25 +102,27 @@ namespace PPMTool.Pages
                     taskModel.AssignedResources.Add(r);
 
                     // Update the total resource assigned
-                    totalResourcePerDayHours += r.Percentage * 7 / 100;
+                    totalResourceDaysPerDay += r.Percentage / 100;
                 }
             }
 
             // Compute the average hourly cost across the resources from their day rate
             // scaled by the proportion to which they are assigned to the task
+            // This only works if every is the same cost. If we change this then we would
+            // need actuals entering per person.
             var people = PersonService.GetAll(context);
-            double averageCostPerHourOfResources = 0;            
+            double averageCostPerDayOfResources = 0;            
             foreach (var r in taskModel.AssignedResources)
             {
                 var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
                 if (person == null) continue;
                 // User the default day rate for the person if the assigned day rate is null
-                averageCostPerHourOfResources += (r.Percentage * r.DayRate ?? person.DayRate) / (100 * totalResourcePerDayHours);
+                averageCostPerDayOfResources += (r.Percentage * (r.DayRate ?? person.DayRate)) / (100 * totalResourceDaysPerDay);
             }
 
             // Update the actual cost for the sub task
             // Truncate to 2 dp
-            taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerHourOfResources * 100) / 100;
+            taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100) / (100 * 7);
 
             // Create predecessor on the sub task
             if (int.TryParse(PredecessorId, out var id))
