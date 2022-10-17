@@ -21,7 +21,7 @@
                     <label>Name</label>
                 </div>
                 <div class="col">
-                    <InputText @bind-Value="taskModel.Name" />
+                    <InputText class="wide-input" @bind-Value="taskModel.Name" />
                 </div>
             </div>
             <div class="row">
@@ -29,7 +29,7 @@
                     <label>Fixed Start</label>
                 </div>
                 <div class="col" style="display: flex">
-                    <RadzenSwitch @bind-value="taskModel.HasFixedStart" />
+                    <RadzenSwitch class="switch-align" @bind-value="taskModel.HasFixedStart" />
                 </div>
             </div>
 
@@ -76,7 +76,7 @@
                         <label>End Date Driven</label>
                     </div>
                     <div class="col" style="display: flex">
-                        <RadzenSwitch @bind-value="taskModel.IsEndDateDriven" />
+                        <RadzenSwitch class="switch-align" @bind-value="taskModel.IsEndDateDriven" />
                     </div>
                 </div>
             }
@@ -108,8 +108,8 @@
                     <div class="col-3">
                         <label>Work Driven?</label>
                     </div>
-                    <div class="col">
-                        <RadzenSwitch @bind-value="taskModel.IsWorkDriven" />
+                    <div class="col" style="display: flex">
+                        <RadzenSwitch class="switch-align" @bind-value="taskModel.IsWorkDriven" />
                     </div>
                 </div>
             }
@@ -159,16 +159,16 @@
             <h3>Resources</h3>
                 <div class="row">
                     <div class="col-3">
-                        Person
+                        <b>Person</b>
                     </div>
                     <div class="col">
-                        Percentage Assigned
+                        <b>Percentage Assigned (%)</b>
+                    </div>
+                    <div class="col-md-2">
+                        <b>Use Default Day Rate</b>
                     </div>
                     <div class="col">
-                        Use Default Day Rate
-                    </div>
-                    <div class="col">
-                        Day Rate (£)
+                        <b>Day Rate (£)</b>
                     </div>
                     <br />
                 </div>
@@ -179,10 +179,10 @@
                         @r.Person.Name
                     </div>
                     <div class="col">
-                        <InputNumber step="1" min="0" max="100" @bind-Value="@r.Percentage" />%
+                        <InputNumber step="1" min="0" max="1000" @bind-Value="@r.Percentage" />
                     </div>
-                    <div class="col">
-                        <RadzenSwitch @bind-Value="@r.UseDefaultDayRate" />
+                    <div class="col-md-2" style="display: flex">
+                        <RadzenSwitch class="switch-align" @bind-Value="@r.UseDefaultDayRate" />
                     </div>
                     <div class="col">
                         <InputNumber step="1" min="0" @bind-Value="@r.DayRate" disabled="@r.UseDefaultDayRate" />
