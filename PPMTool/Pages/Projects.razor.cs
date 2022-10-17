@@ -58,17 +58,17 @@ namespace PPMTool.Pages
         {
             // Get projects from the database
             context = new PPMToolContext();
-            var proj = ProjectService.GetAll(context);
+            var proj = ProjectService.GetAll(context).OrderBy(x => x.Name).ToList();
 
-            if (ShowActiveOnly) proj = proj.Where(x => x.FundingStatus == ProjectStatus.Active || x.FundingStatus == ProjectStatus.Maintenance);
+            if (ShowActiveOnly) proj = proj.Where(x => x.FundingStatus == ProjectStatus.Active || x.FundingStatus == ProjectStatus.Maintenance).ToList();
 
-            if (proj.Count() > 0)
+            if (proj.Count > 0)
             {
                 // Build the burn-up charts week by week
-                for (int i = 0; i < proj.Count(); ++i)
+                for (int i = 0; i < proj.Count; ++i)
                 {
                     // Update the summary of the project and save back to DB
-                    var p = proj.ElementAt(i);
+                    var p = proj[i];
                     p.UpdateProjectSummary();
                     ProjectService.Update(context, p);
 

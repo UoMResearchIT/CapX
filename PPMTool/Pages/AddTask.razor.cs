@@ -54,7 +54,7 @@ namespace PPMTool.Pages
             }
 
             // Update the resources
-            foreach (var p in PersonService.GetAll(context))
+            foreach (var p in PersonService.GetAll(context).OrderBy(x => x.Name))
             {
                 resources.Add(new Resource
                 {

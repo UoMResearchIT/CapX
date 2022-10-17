@@ -28,7 +28,7 @@ namespace PPMTool.Pages
         {
             // Get people from the database
             context = new PPMToolContext();
-            var peo = PersonService.GetAll(context);
+            var peo = PersonService.GetAll(context).OrderBy(x => x.Name);
             if (peo.Count() > 0)
             {
                 people = peo;
@@ -44,7 +44,8 @@ namespace PPMTool.Pages
         // Necessary to ensure that we can filter the skills tags on the fly
         private void LoadData(LoadDataArgs args)
         {
-            var query = PersonService.GetAll(context).AsQueryable();
+            // Order by name by default
+            var query = PersonService.GetAll(context).OrderBy(x => x.Name).AsQueryable();
 
             if (!string.IsNullOrEmpty(args.Filter))
             {
