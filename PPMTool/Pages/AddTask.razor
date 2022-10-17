@@ -6,11 +6,12 @@
     @if (TaskId < 0)
     {
         <h1>Add Task</h1>
-        <p>Add new task to @projectModel?.Name</p>
+        <p>Add new task to <b>@projectModel?.Name</b></p>
     }
     else
     {
         <h1>Edit @taskModel.Name</h1>
+        <p>Edit existing task in <b>@projectModel?.Name</b></p>
     }
     <div class="card">
         <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
