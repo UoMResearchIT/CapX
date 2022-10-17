@@ -13,7 +13,7 @@
     </div>
 
     <RadzenDataGrid @ref="skillTagGrid" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                    Data="@skillTags" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow">
+                    Data="@skillTags" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
             <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px">
                 <EditTemplate Context="tag">

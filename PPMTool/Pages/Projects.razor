@@ -46,6 +46,7 @@
                         TItem="Project"
                         ColumnWidth="120px"
                         SelectionMode="DataGridSelectionMode.Single"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                         LogicalFilterOperator="LogicalFilterOperator.Or"
                         RowSelect="@(e => ProjectClicked(e.ProjectId))">
                 <Columns>
