@@ -74,9 +74,18 @@
                 </div>
             </div>
 
+            <div>
             <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = false; })"><i class="oi oi-check" /> Save</button>
-            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = false; })"><i class="oi oi-info" /> Save and See Details</button>
-            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = true; })"><i class="oi oi-info" /> Discard and See Details</button>
+            <button class="btn btn-outline-danger" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = true; })"><i class="oi oi-x" /> Discard</button>
+            </div>
+
+            <div>
+            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = false; })"><i class="oi oi-check" /> Save and See Details</button>
+            @if (ProjectId > -1)
+            {
+                <button class="btn btn-outline-danger" style="margin-left: 5px" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = true; })"><i class="oi oi-x" /> Discard and See Details</button>
+            }
+            </div>
         </EditForm>
     </div>
 </div>
