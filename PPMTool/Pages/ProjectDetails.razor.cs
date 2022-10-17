@@ -61,6 +61,11 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
         }
 
+        void EditProject()
+        {
+            Navigation.NavigateTo($"addproject/{project.ProjectId}");
+        }
+
         // Necessary to ensure that we can filter the resources on the fly
         private void LoadData(LoadDataArgs args)
         {
