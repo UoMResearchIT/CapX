@@ -51,6 +51,9 @@ namespace PPMTool.Pages
             if (TaskId > -1)
             {
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+
+                // Assign the predecessor option
+                if (taskModel.Predecessor != null) PredecessorId = taskModel.Predecessor.SubTaskId.ToString();
             }
 
             // Update the resources
