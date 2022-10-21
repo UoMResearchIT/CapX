@@ -388,9 +388,12 @@ namespace PPMTool.Data.Entities
             var expectedWorkToDate = (PlannedWorkHours / DurationDays) * daysIntoTask;
             var maxWork = expectedWorkToDate * 1.1;
             var minWork = expectedWorkToDate * 0.9;
+
+            // If a task is done, it can be regarded as being on schedule regardless on when it was actually completed.
+            if (IsDone) ScheduleStatus = ScheduleStatus.OnSchedule;
             
             // Simple condition for late
-            if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
+            else if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
             
             // Can't be ahead if you have done all the planned work already
             else if (ActualWorkHours > maxWork && ActualWorkHours < PlannedWorkHours) ScheduleStatus = ScheduleStatus.Ahead;
