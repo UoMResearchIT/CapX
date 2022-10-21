@@ -36,6 +36,24 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        private bool isDone;
+        /// <summary>
+        /// Represents whether a task is complete or not. It can be marked as complete any time whether the full budget for 
+        /// the task has been used or not. It will then allow tasks to be completed early without it affecting the definition of "Late".
+        /// </summary>
+        public bool IsDone
+        {
+            get => isDone;
+            set
+            {
+                if (isDone != value)
+                {
+                    isDone = value;
+                    OnDoneChanged(new EventArgs());
+                }
+            }
+        }
+
         public virtual IList<Resource> AssignedResources { get; set; }
 
         /// <summary>
@@ -346,6 +364,16 @@ namespace PPMTool.Data.Entities
         protected virtual void OnEndDateDrivenChanged(EventArgs e)
         {
             EventHandler handler = EndDateDrivenChanged;
+            handler?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Event invoked when the is done setting is changed
+        /// </summary>
+        public event EventHandler DoneChanged;
+        protected virtual void OnDoneChanged(EventArgs e)
+        {
+            EventHandler handler = DoneChanged;
             handler?.Invoke(this, e);
         }
 
