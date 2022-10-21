@@ -4,9 +4,24 @@
 @using PPMTool.Enums
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 @attribute [Authorize]
 
 <div class="container">
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h1>At a Glance</h1>
+        </div>
+    </div>
+    <div class="row-auto" style="display:flex; flex-direction:row; overflow-x:scroll; overflow-y:hidden">
+        @foreach(var d in summaryData)
+        {
+            <div class="col">
+                <ProjectSummaryWidget Data="@d" />
+            </div>
+        }
+    </div>
+    <hr />
     <div class="row">
         <div class="col-auto mr-auto">
             <h1>Projects</h1>

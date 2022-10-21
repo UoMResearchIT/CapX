@@ -12,6 +12,7 @@ using PPMTool.Services;
 using Radzen.Blazor;
 using FluentDate;
 using System.Diagnostics;
+using PPMTool.Pages.Components;
 
 namespace PPMTool.Pages
 {
@@ -26,6 +27,7 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> options;
         private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
         private IEnumerable<ProjectStatus> fundingOptions = (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus));
+        private List<ProjectSummaryWidget.ProjectSummaryData> summaryData = new List<ProjectSummaryWidget.ProjectSummaryData>();
         private PPMToolContext context;
 
         private bool ShowActiveOnly { get; set; } = true;
@@ -60,8 +62,24 @@ namespace PPMTool.Pages
             context = new PPMToolContext();
             var proj = ProjectService.GetAll(context).OrderBy(x => x.Name).ToList();
 
+            // Build the summary widget data and sort by total
+            foreach (var p in portfolioOptions)
+            {
+                summaryData.Add(new ProjectSummaryWidget.ProjectSummaryData
+                {
+                    Portfolio = p,
+                    Active = proj.Where(x => x.Portfolio == p && (x.ProjectStatus == ProjectStatus.Active || x.ProjectStatus == ProjectStatus.Paused || x.ProjectStatus == ProjectStatus.Maintenance)).Count(),
+                    Incoming = proj.Where(x => x.Portfolio == p && (x.ProjectStatus == ProjectStatus.Unfunded || x.ProjectStatus == ProjectStatus.Funded)).Count(),
+                    Complete = proj.Where(x => x.Portfolio == p && x.ProjectStatus == ProjectStatus.Finished).Count()
+                });
+            }
+            summaryData = summaryData.OrderByDescending(x=>x.GetTotal()).ToList();
+            
+
+            // Remove the ones that are not active for the data grid if necessary
             if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus == ProjectStatus.Active || x.ProjectStatus == ProjectStatus.Maintenance).ToList();
 
+            // If we have any left then build the rest
             if (proj.Count > 0)
             {
                 // Build the burn-up charts week by week
