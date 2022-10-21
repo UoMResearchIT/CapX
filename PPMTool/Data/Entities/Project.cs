@@ -29,7 +29,7 @@ namespace PPMTool.Data.Entities
         public double FundsReceived { get; set; }
 
         [Required]
-        public ProjectStatus FundingStatus { get; set; }
+        public ProjectStatus ProjectStatus { get; set; }
 
         /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database

@@ -94,9 +94,9 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
                     <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px"/>
-                    <RadzenDataGridColumn TItem="Project" Property="FundingStatus" Title="Funding Status">
+                    <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status">
                         <Template Context="proj">
-                            @proj.FundingStatus.ToNiceString()
+                            @proj.ProjectStatus.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">

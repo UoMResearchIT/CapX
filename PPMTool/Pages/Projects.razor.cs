@@ -60,7 +60,7 @@ namespace PPMTool.Pages
             context = new PPMToolContext();
             var proj = ProjectService.GetAll(context).OrderBy(x => x.Name).ToList();
 
-            if (ShowActiveOnly) proj = proj.Where(x => x.FundingStatus == ProjectStatus.Active || x.FundingStatus == ProjectStatus.Maintenance).ToList();
+            if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus == ProjectStatus.Active || x.ProjectStatus == ProjectStatus.Maintenance).ToList();
 
             if (proj.Count > 0)
             {

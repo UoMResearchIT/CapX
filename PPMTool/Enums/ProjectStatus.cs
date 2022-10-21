@@ -37,7 +37,7 @@ namespace PPMTool.Enums
         Maintenance,
 
         /// <summary>
-        /// Project is finished and not something we are working on anymore
+        /// Project is finished / cancelled and not something we are working on anymore
         /// </summary>
         Finished
     }
