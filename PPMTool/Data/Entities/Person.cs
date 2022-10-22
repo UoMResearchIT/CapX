@@ -22,11 +22,11 @@ namespace PPMTool.Data.Entities
         }
 
 
-        public string ShortName { get; private set; }
+        public string ShortName { get; set; }
 
         [Required]
         [DataType(DataType.Currency)]
-        public double HourlyRate { get; set; } = 35.72;
+        public double DayRate { get; set; } = 312;
 
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Now.Date;
@@ -38,7 +38,6 @@ namespace PPMTool.Data.Entities
 
         static string GetInitials(string name)
         {
-
             string[] nameSplit = name.Split(new string[] { ",", " " }, StringSplitOptions.RemoveEmptyEntries);
             string initials = "";
             foreach (string item in nameSplit)

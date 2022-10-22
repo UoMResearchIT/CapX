@@ -77,3 +77,19 @@ a, .btn-link {
         transform: rotate(360deg)
     }
 }
+
+input {
+    width: 100%;
+    margin: 5px
+}
+
+select {
+    width: 100%;
+    margin: 5px;
+    height: 28px
+}
+
+switch-align {
+    vertical-align: middle;
+    margin: 5px
+}

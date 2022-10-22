@@ -96,7 +96,7 @@ namespace PPMTool.Pages
             };
 
             // Get dropdown options
-            nameOptions = PersonService.GetAll(context).Select(p => p.Name).ToList();
+            nameOptions = PersonService.GetAll(context).OrderBy(x => x.Name).Select(p => p.Name).ToList();
             nameOptions.Sort();
 
             // Get data for chart
@@ -133,7 +133,7 @@ namespace PPMTool.Pages
             StateHasChanged();
 
             // Get all people
-            var people = PersonService.GetAll(context);
+            var people = PersonService.GetAll(context).OrderBy(x => x.Name);
 
             // Get all the subtasks within the query window
             var tasks = GetSubTasksWithinQueryWindow(SubTaskService.GetAll(context));
@@ -227,12 +227,12 @@ namespace PPMTool.Pages
             chartSource = new List<ChartItem>();
 
             // Get people from the database
-            var peo = PersonService.GetAll(context);
+            var peo = PersonService.GetAll(context).OrderBy(x => x.Name);
             if (peo.Count() > 0)
             {
                 // Get projects from the database
-                var projects = ProjectService.GetAll(context).Where(x => x.FundingStatus != FundingStatus.Finished);
-                if (!IncludeUnFunded) projects = projects.Where(p => p.FundingStatus != FundingStatus.AwaitingSubmission && p.FundingStatus != FundingStatus.AwaitingOutcome);
+                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                if (!IncludeUnFunded) projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
 
                 // Reinitialise dictionary
                 groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();

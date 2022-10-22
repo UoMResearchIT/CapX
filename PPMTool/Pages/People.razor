@@ -15,10 +15,10 @@
                 <h1>People</h1>
             </div>
             <div class="col-auto">
-                <a class="btn btn-primary" href="/addperson/-1" title="Add Person"><i class="oi oi-plus" /></a>
+                <a class="btn btn-primary" href="/addperson/-1" title="Add Person"><i class="oi oi-plus" /> Add</a>
             </div>
             <div class="col-auto">
-                <a class="btn btn-primary" href="/manageskills" title="Skills Tags"><i class="oi oi-tags" /></a>
+                <a class="btn btn-primary" href="/manageskills" title="Skills Tags"><i class="oi oi-tags" /> Tags</a>
             </div>
         </div>
         <div class="card">
@@ -30,7 +30,7 @@
             {
                 <RadzenDataGrid AllowFiltering="true"
                         AllowColumnResize="true"
-                        FilterMode="FilterMode.Advanced"
+                        FilterMode="FilterMode.Simple"
                         AllowSorting="true"
                         PageSize="10"
                         AllowPaging="true"
@@ -40,20 +40,22 @@
                         TItem="Person"
                         ColumnWidth="150px"
                         SelectionMode="DataGridSelectionMode.Single"
-                        LogicalFilterOperator="LogicalFilterOperator.Or">
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        Count="@count"
+                        LoadData="@LoadData">
                     <Columns>
-                        <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" />
                         <RadzenDataGridColumn TItem="Person" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                             <Template Context="person">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditPerson(person))" @onclick:stopPropagation="true">
                                 </RadzenButton>
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" />
-                        <RadzenDataGridColumn TItem="Person" Property="HourlyRate" Title="Hourly Rate" FormatString="{0:C0}" />
-                        <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="FTE" />
-                        <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:D}" />
-                        <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills">
+                        <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.StartsWith" />
+                        <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" FilterOperator="FilterOperator.StartsWith" />
+                        <RadzenDataGridColumn TItem="Person" Property="DayRate" Title="Day Rate" FormatString="{0:C0}" Filterable="false" />
+                        <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="FTE"/>
+                        <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" />
+                        <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false">
                             <Template Context="p">
                                 @string.Join(',', p.SkillTags.Select(t => t.Name))
                             </Template>

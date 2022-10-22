@@ -22,6 +22,8 @@ namespace PPMTool.Enums
         [Description("Data Science & AI")]
         DataScienceAI,
         [Description("Digital Solutions")]
-        DigitalSolutions
+        DigitalSolutions,
+        [Description("Research Lifecycle Programme")]
+        RLP
     }
 }

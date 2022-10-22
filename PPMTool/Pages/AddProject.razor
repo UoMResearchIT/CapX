@@ -62,11 +62,11 @@
             </div>
             <div class="row">
                 <div class="col-3">
-                    <label for="FundingStatus">Funding Status</label>
+                    <label for="ProjectStatus">Project Status</label>
                 </div>
                 <div class="col">
-                    <InputSelect @bind-Value="projectModel.FundingStatus">
-                        @foreach (var c in (FundingStatus[])Enum.GetValues(typeof(FundingStatus)))
+                    <InputSelect @bind-Value="projectModel.ProjectStatus">
+                        @foreach (var c in (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus)))
                         {
                             <option value="@c">@c.ToNiceString()</option>
                         }
@@ -74,7 +74,18 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" type="submit"><i class="oi oi-check" /></button>
+            <div>
+            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = false; })"><i class="oi oi-check" /> Save</button>
+            <button class="btn btn-outline-danger" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = true; })"><i class="oi oi-x" /> Discard</button>
+            </div>
+
+            <div>
+            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = false; })"><i class="oi oi-check" /> Save and See Details</button>
+            @if (ProjectId > -1)
+            {
+                <button class="btn btn-outline-danger" style="margin-left: 5px" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = true; })"><i class="oi oi-x" /> Discard and See Details</button>
+            }
+            </div>
         </EditForm>
     </div>
 </div>
