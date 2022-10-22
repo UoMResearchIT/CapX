@@ -51,15 +51,20 @@ namespace PPMTool.Pages
             if (TaskId > -1)
             {
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+
+                // Assign the predecessor option
+                if (taskModel.Predecessor != null) PredecessorId = taskModel.Predecessor.SubTaskId.ToString();
             }
 
             // Update the resources
-            foreach (var p in PersonService.GetAll(context))
+            foreach (var p in PersonService.GetAll(context).OrderBy(x => x.Name))
             {
                 resources.Add(new Resource
                 {
                     Person = p,
-                    Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0
+                    Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
+                    UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
+                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null
                 });
             };
 
@@ -67,6 +72,8 @@ namespace PPMTool.Pages
             taskModel.TaskTypeChanged += UpdateUIState;
             taskModel.FixedStartChanged += UpdateUIState;
             taskModel.WorkDrivenChanged += UpdateUIState;
+            taskModel.EndDateDrivenChanged += UpdateUIState;
+            taskModel.DoneChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
         }
 
@@ -77,9 +84,14 @@ namespace PPMTool.Pages
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            startDateDisabled = !taskModel.HasFixedStart;
-            workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven);
-            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven);
+            startDateDisabled = !taskModel.HasFixedStart || taskModel.IsDone;
+            workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven) || taskModel.IsDone;
+            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && !taskModel.IsEndDateDriven || taskModel.IsDone;
+        }
+
+        private void DiscardChanges()
+        {
+            Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
         }
 
         /// <summary>
@@ -87,52 +99,64 @@ namespace PPMTool.Pages
         /// </summary>
         public void UpdateSubTask()
         {
-            Logger.LogInformation("Updating sub task configuration...");
-
-            // Create resources on the sub task and track total proportion of effort
-            taskModel.AssignedResources = new List<Resource>();
-            double totalResourcePerDayHours = 0;
-            foreach (var r in resources)
+            // Don't update the scheduling if the task is done
+            if (taskModel.IsDone)
             {
-                if (r.Percentage > 0)
+                Logger.LogInformation("Not updating sub task as it is marked as Done...");
+            }
+            else
+            {
+                Logger.LogInformation("Updating sub task configuration...");
+
+                // Create resources on the sub task and track total proportion of effort
+                taskModel.AssignedResources = new List<Resource>();
+                double totalResourceDaysPerDay = 0;
+                foreach (var r in resources)
                 {
-                    taskModel.AssignedResources.Add(r);
+                    if (r.Percentage > 0)
+                    {
+                        taskModel.AssignedResources.Add(r);
 
-                    // Update the total resource assigned
-                    totalResourcePerDayHours += r.Percentage * 7 / 100;
+                        // Update the total resource assigned
+                        totalResourceDaysPerDay += r.Percentage / 100;
+                    }
                 }
-            }
 
-            // Compute the average hourly cost across the resources from their hourly rate
-            // scaled by the proportion to which they are assigned to the task
-            var people = PersonService.GetAll(context);
-            double averageCostPerHourOfResources = 0;            
-            foreach (var r in taskModel.AssignedResources)
-            {
-                var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
-                averageCostPerHourOfResources += (r.Percentage * 7 * person?.HourlyRate ?? 0) / (100 * totalResourcePerDayHours);
-            }
+                // Compute the average hourly cost across the resources from their day rate
+                // scaled by the proportion to which they are assigned to the task
+                // This only works if every is the same cost. If we change this then we would
+                // need actuals entering per person.
+                var people = PersonService.GetAll(context);
+                double averageCostPerDayOfResources = 0;
+                foreach (var r in taskModel.AssignedResources)
+                {
+                    var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
+                    if (person == null) continue;
+                    // User the default day rate for the person if the assigned day rate is null
+                    averageCostPerDayOfResources += (r.Percentage * (r.DayRate ?? person.DayRate)) / (100 * totalResourceDaysPerDay);
+                }
 
-            // Update the actual cost for the sub task
-            // Truncate to 2 dp
-            taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerHourOfResources * 100) / 100;
+                // Update the actual cost for the sub task
+                // Truncate to 2 dp
+                taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100) / (100 * 7);
 
-            // Create predecessor on the sub task
-            if (int.TryParse(PredecessorId, out var id))
-            {
-                taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
-            }
+                // Create predecessor on the sub task
+                if (int.TryParse(PredecessorId, out var id))
+                {
+                    taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
+                }
 
-            // Schedule
-            error = taskModel.Schedule();
-            isValid = error == null;
+                // Schedule
+                error = taskModel.Schedule(false);
+                isValid = error == null;
 
-            // Call schedule() on the subtask that this is a predecssor for
-            var error2 = SubTaskService.UpdateFollowerTasks(taskModel, projectModel.SubTasks);
-            if (error2 != null)
-            {
-                error = $"{error2.Item1}: {error2.Item2}";
-                isValid = false;
+                // Call schedule() on the subtask that this is a predecssor for
+                var error2 = SubTaskService.UpdateFollowerTasks(taskModel, projectModel.SubTasks);
+                if (error2 != null)
+                {
+                    error = $"{error2.Item1}: {error2.Item2}";
+                    isValid = false;
+                }
             }
 
             // Update UI

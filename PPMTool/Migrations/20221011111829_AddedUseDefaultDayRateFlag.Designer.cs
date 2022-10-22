@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data;
 
@@ -10,9 +11,10 @@ using PPMTool.Data;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20221011111829_AddedUseDefaultDayRateFlag")]
+    partial class AddedUseDefaultDayRateFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.7");
@@ -282,6 +284,9 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("FundingStatus")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("FundsReceived")
                         .HasColumnType("REAL");
 
@@ -300,9 +305,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<int>("Portfolio")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ProjectStatus")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("ScheduleStatus")
@@ -385,9 +387,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("HasFixedStart")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsDone")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsEndDateDriven")

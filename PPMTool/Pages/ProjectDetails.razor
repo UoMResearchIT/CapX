@@ -5,14 +5,22 @@
 
 <div class="container">
 
-    @if (project == null)
-    {
-        <h1>Unkown Project</h1>
-    }
-    else
-    {
-        <h1>@project.Name</h1>
-    }
+    
+    <div class="row">
+        <div class="col-auto mr-auto">
+            @if (project == null)
+            {
+                <h1>Unkown Project</h1>
+            }
+            else
+            {
+                <h1>@project.Name</h1>
+            }
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick=@EditProject><i class="oi oi-pencil" /> Edit</button>
+        </div>
+    </div>
     <div class="card">
         @if (project == null)
         {
@@ -43,7 +51,7 @@
                             <td>@project.ActualCost.ToString("C0")</td>
                             <td>@project.FundsReceived.ToString("C0")</td>
                             <td>@project.SubTasks.Sum(x => x.ActualWorkHours)</td>
-                            <td>@project.FundingStatus.ToNiceString()</td>
+                            <td>@project.ProjectStatus.ToNiceString()</td>
                             <td>@project.StartDate.ToShortDateString()</td>
                             <td>@project.EndDate.ToShortDateString()</td>
                         </tr>
@@ -58,7 +66,7 @@
             <h2>Tasks</h2>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" @onclick=@AddTask><i class="oi oi-plus" /></button>
+            <button class="btn btn-primary" @onclick=@AddTask><i class="oi oi-plus" /> Add</button>
         </div>
     </div>
 
@@ -73,17 +81,19 @@
         <div class="card">
             <RadzenDataGrid AllowFiltering="true"
                         AllowColumnResize="true"
-                        FilterMode="FilterMode.Advanced"
+                        FilterMode="FilterMode.Simple"
                         AllowSorting="true"
                         PageSize="10"
                         AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left"
                         ShowPagingSummary="true"
-                        Data="@project.SubTasks"
+                        Data="@Data"
                         TItem="SubTask"
                         ColumnWidth="100px"
                         SelectionMode="DataGridSelectionMode.Single"
-                        LogicalFilterOperator="LogicalFilterOperator.Or">
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        Count="@count"
+                        LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" />
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
@@ -100,8 +110,8 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" Filterable="false" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false"/>
                     <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type">
@@ -109,7 +119,7 @@
                             @t.TaskType.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false">
                         <Template Context="t">
                             @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))
                         </Template>

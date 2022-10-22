@@ -20,6 +20,8 @@ namespace PPMTool.Pages
 
         private Project projectModel = new Project();
         private PPMToolContext context;
+        private bool gotoDetails = false;
+        private bool discardChanges = true;
 
         protected override void OnInitialized()
         {
@@ -34,22 +36,32 @@ namespace PPMTool.Pages
 
         private void HandleValidSubmit()
         {
-            if (ProjectId > -1)
+            if (ProjectId > -1 && !discardChanges)
             {
                 Logger.LogInformation($"Edit project {ProjectId} saved...");
                 ProjectService.Update(context, projectModel);
             }
             else
             {
-                Logger.LogInformation("Adding new project...");
-
-                if (!ProjectService.AddProject(context, projectModel))
+                if (!discardChanges)
                 {
-                    // TODO: Duplicate found -- do something
+                    Logger.LogInformation("Adding new project...");
+
+                    if (!ProjectService.AddProject(context, projectModel))
+                    {
+                        // TODO: Duplicate found -- do something
+                    }
                 }
             }
 
-            Navigation.NavigateTo("projects");
+            if (gotoDetails)
+            {
+                Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
+            }
+            else
+            {
+                Navigation.NavigateTo("projects");
+            }
         }
     }
 }

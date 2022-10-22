@@ -36,6 +36,24 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        private bool isDone;
+        /// <summary>
+        /// Represents whether a task is complete or not. It can be marked as complete any time whether the full budget for 
+        /// the task has been used or not. It will then allow tasks to be completed early without it affecting the definition of "Late".
+        /// </summary>
+        public bool IsDone
+        {
+            get => isDone;
+            set
+            {
+                if (isDone != value)
+                {
+                    isDone = value;
+                    OnDoneChanged(new EventArgs());
+                }
+            }
+        }
+
         public virtual IList<Resource> AssignedResources { get; set; }
 
         /// <summary>
@@ -99,13 +117,32 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        private bool isEndDateDriven = true;
+        /// <summary>
+        /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round
+        /// </summary>
+        public bool IsEndDateDriven
+        {
+            get => isEndDateDriven;
+            set
+            {
+                if (isEndDateDriven != value)
+                {
+                    isEndDateDriven = value;
+                    OnEndDateDrivenChanged(new EventArgs());
+                }
+            }
+        }
+
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units / 100
         /// Units = Sum of Resource Percentage
-        /// Returns null if successful otherwise error message
         /// </summary>
-        public string Schedule()
+        /// <param name="permitUndrivenEndToMove">Whether we can move the end date to maintain 
+        /// the duration if the end date is not driven. Only applies to fixed duration tasks.</param>
+        /// <returns>Returns null if successful otherwise error message</returns>
+        public string Schedule(bool permitUndrivenEndToMove)
         {
             try
             {
@@ -153,11 +190,12 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
-
-
                 // Update core parameters
                 if (TaskType == TaskType.FixedUnits)
                 {
+                    // End date must be driven
+                    IsEndDateDriven = true;
+
                     // Which one is updated based on preference
                     if (IsWorkDriven)
                     {
@@ -171,11 +209,23 @@ namespace PPMTool.Data.Entities
                 }
                 else if (TaskType == TaskType.FixedWork)
                 {
+                    // End Date must be driven
+                    IsEndDateDriven = true;
+
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
                 }
                 else
                 {
+                    // Make sure the duration is at least zero or greater
+                    if (EndDate < StartDate) EndDate = StartDate.Date;
+
+                    // If we are allowed to move the end date to maintain the current duration then set the end date now
+                    if (!IsEndDateDriven && permitUndrivenEndToMove) EndDate = StartDate.Date.AddDays(DurationDays).Date;
+
+                    // If the end date is not driven then set duration here from the start and end dates
+                    if (!IsEndDateDriven) UpdateDurationFromEndDate();
+
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
                 }
@@ -184,11 +234,12 @@ namespace PPMTool.Data.Entities
                 PlannedCost = 0d;
                 foreach (var res in AssignedResources)
                 {
-                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * res.Person.HourlyRate;
+                    // Assume 7 hours in a day; fallback on default day rate if resource day rate is null
+                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
                 }
 
-                // Set end date
-                EndDate = StartDate.Date.AddDays(DurationDays).Date;
+                // Set end date from the duration
+                if (IsEndDateDriven) EndDate = StartDate.Date.AddDays(DurationDays).Date;
 
                 return null;
             }
@@ -196,6 +247,12 @@ namespace PPMTool.Data.Entities
             {
                 return e.Message;
             }
+        }
+
+        private void UpdateDurationFromEndDate()
+        {
+            DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays);
+            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, EndDate);
         }
 
         private void UpdateDuration(double units)
@@ -215,7 +272,7 @@ namespace PPMTool.Data.Entities
 
         private void UpdateWork(double units)
         {
-            // Duration input is calendar days so need to compute business days
+            // Duration input is calendar days so need to compute business days to get work
             var endDate = StartDate.AddDays(DurationDays);
             DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
             PlannedWorkHours = DurationBusinessDays * 7 * units;
@@ -301,6 +358,26 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Event invoked when the end date driven setting is changed
+        /// </summary>
+        public event EventHandler EndDateDrivenChanged;
+        protected virtual void OnEndDateDrivenChanged(EventArgs e)
+        {
+            EventHandler handler = EndDateDrivenChanged;
+            handler?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Event invoked when the is done setting is changed
+        /// </summary>
+        public event EventHandler DoneChanged;
+        protected virtual void OnDoneChanged(EventArgs e)
+        {
+            EventHandler handler = DoneChanged;
+            handler?.Invoke(this, e);
+        }
+
+        /// <summary>
         /// Method to update the budget and schedule status flags for this task
         /// </summary>
         public void UpdateStatusFlags()
@@ -311,9 +388,12 @@ namespace PPMTool.Data.Entities
             var expectedWorkToDate = (PlannedWorkHours / DurationDays) * daysIntoTask;
             var maxWork = expectedWorkToDate * 1.1;
             var minWork = expectedWorkToDate * 0.9;
+
+            // If a task is done, it can be regarded as being on schedule regardless on when it was actually completed.
+            if (IsDone) ScheduleStatus = ScheduleStatus.OnSchedule;
             
             // Simple condition for late
-            if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
+            else if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
             
             // Can't be ahead if you have done all the planned work already
             else if (ActualWorkHours > maxWork && ActualWorkHours < PlannedWorkHours) ScheduleStatus = ScheduleStatus.Ahead;
