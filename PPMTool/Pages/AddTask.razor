@@ -188,13 +188,13 @@
                         @r.Person.Name
                     </div>
                     <div class="col">
-                        <InputNumber step="1" min="0" max="1000" @bind-Value="@r.Percentage" disabled="@taskModel.IsDone" />
+                        <InputNumber step="0.1" min="0" max="1000" @bind-Value="@r.Percentage" disabled="@taskModel.IsDone" />
                     </div>
                     <div class="col-md-2" style="display: flex">
                         <RadzenSwitch class="switch-align" @bind-Value="@r.UseDefaultDayRate" disabled="@taskModel.IsDone"/>
                     </div>
                     <div class="col">
-                        <InputNumber step="1" min="0" @bind-Value="@r.DayRate" disabled="@(r.UseDefaultDayRate || taskModel.IsDone)" />
+                        <InputNumber step=".01" min="0" @bind-Value="@r.DayRate" disabled="@(r.UseDefaultDayRate || taskModel.IsDone)" />
                     </div>
                     <br />
                 </div>
