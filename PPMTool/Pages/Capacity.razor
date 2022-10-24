@@ -32,11 +32,13 @@
                     <div class="col-auto" style="display: flex">
                         <RadzenSwitch @bind-Value="@IncludeUnFunded" />
                     </div>
+                </div>
+                <div class="row align-items-center">
                     <div class="col-auto">
                         <button type="submit" class="btn btn-primary" @onclick=@RunQueryAsync> <i class="oi oi-check" /> Run</button>
                     </div>
                     <div class="col-auto">
-                        <button class="btn btn-outline-danger" @onclick=@ClearQueryAsync> <i class="oi oi-x"/> Clear</button>
+                        <button class="btn btn-outline-danger" @onclick=@ClearQueryAsync> <i class="oi oi-x" /> Clear</button>
                     </div>
                 </div>
             </EditForm>
@@ -80,7 +82,7 @@
         <hr />
         <h2>Charts</h2>
         <div class="card">
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-auto">
                     Choose RSE:
                 </div>
