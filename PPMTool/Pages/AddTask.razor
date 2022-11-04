@@ -150,7 +150,7 @@
                         <label>Actual Hours</label>
                     </div>
                     <div class="col">
-                        <InputNumber min="0" step="1" placeholder="0" @bind-Value="taskModel.ActualWorkHours" disabled="@taskModel.IsDone" />
+                        <InputNumber min="0" step=".5" placeholder="0" @bind-Value="taskModel.ActualWorkHours" disabled="@taskModel.IsDone" />
                     </div>
                 </div>
                 <div class="row">
