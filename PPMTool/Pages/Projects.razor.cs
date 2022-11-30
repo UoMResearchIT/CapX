@@ -79,7 +79,7 @@ namespace PPMTool.Pages
             
 
             // Remove the ones that are not active for the data grid if necessary
-            if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished).ToList();
+            if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished || x.ProjectStatus != ProjectStatus.Cancelled).ToList();
 
             // If we have any left then build the rest
             if (proj.Count > 0)
