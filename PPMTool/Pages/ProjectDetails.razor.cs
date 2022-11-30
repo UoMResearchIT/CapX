@@ -35,7 +35,7 @@ namespace PPMTool.Pages
             {
                 context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
-                Data = project.SubTasks.ToList();
+                Data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
                 count = Data.Count;
 
                 options = new ApexChartOptions<SubTask>
