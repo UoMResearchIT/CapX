@@ -30,7 +30,7 @@ namespace PPMTool.Pages
         private List<ProjectSummaryWidget.ProjectSummaryData> summaryData;
         private PPMToolContext context;
 
-        private bool ShowActiveOnly { get; set; }
+        private bool ShowActiveOnly { get; set; } = true;
 
         protected override void OnInitialized()
         {
