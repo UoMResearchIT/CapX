@@ -127,6 +127,7 @@ namespace PPMTool.Pages
             // Reset query results
             QueryResults = null;
             var results = new List<CapacityQueryItem>();
+            ChosenPerson = "All";
 
             // Update the chart source
             await ConfigureSourceAsync(QueryStartDate, QueryEndDate);
@@ -164,7 +165,7 @@ namespace PPMTool.Pages
             }
 
             // Assign results
-            QueryResults = results;
+            QueryResults = results.OrderByDescending(x => x.AvailabilityPercent);
 
             // Update the UI
             StateHasChanged();
