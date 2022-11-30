@@ -20,29 +20,33 @@ namespace PPMTool.Data
 
         public string Label { get; }
 
-        public ChartItem(string label, DateTime start, DateTime end, double value1, double value2)
+        public string Colour { get; }
+
+        public ChartItem(string colour, string label, DateTime start, DateTime end, double value1, double value2)
         {
             StartDate = start;
             EndDate = end;
             Value1 = value1;
             Value2 = value2;
             Label = label;
+            Colour = colour;
         }
 
-        public string GetColourStringFTE(double value)
+        public static string GetColourStringFTE(double value, double capacity)
         {
-            if (value == 100) return "#00783c";
-            if (value > 100) return "#e3001b";
-            if (value > 50) return "#fc9803";
-            return "#ffd500";
+            var percent = (int)Math.Round(value / capacity);
+            return GetColourStringPercentage(percent);
         }
 
-        public string GetColourStringWork(double value)
+        public static string GetColourStringPercentage(double percent)
         {
-            if (value == 35) return "#00783c";
-            if (value > 35) return "#e3001b";
-            if (value > 17.5) return "#fc9803";
-            return "#ffd500";
+            if (percent < 50) return "#488f31";
+            if (percent < 75) return "#76a263";
+            if (percent < 100) return "#9fb494";
+            if (percent == 100) return "#c6c6c6";
+            if (percent < 125) return "#d69fa1";
+            if (percent < 150) return "#dd757d";
+            return "#de425b";
         }
     }
 }

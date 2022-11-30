@@ -116,10 +116,13 @@
             else
             {
                 <div class="row">
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#e3001b"></rect> </svg> &gt;100%</div>
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#00783c"></rect> </svg> =100%</div>
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#fc9803"></rect> </svg> &gt;50%</div>
-                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="#ffd500"></rect> </svg> &le;50%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(49)"></rect> </svg> &lt;50%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(74)"></rect> </svg> &lt;75%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(99)"></rect> </svg> &lt;100%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(100)"></rect> </svg> =100%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(101)"></rect> </svg> &gt;100%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(126)"></rect> </svg> &gt;125%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(151)"></rect> </svg> &gt;150%</div>
                 </div>
                 <ApexChart @ref="chart"
                    TItem="ChartItem"
@@ -133,7 +136,7 @@
                                  XValue="@(e => e.Label)"
                                  YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                                  YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                 PointColor="@(e => e.GetColourStringFTE(e.Value1))" />
+                                 PointColor="@(e => e.Colour)" />
                     </ChildContent>
                 </ApexChart>
 

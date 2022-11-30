@@ -143,24 +143,26 @@ namespace PPMTool.Pages
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
-                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, 100));
+                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, (int)(person.AvailabilityFTE * 100 / .84)));
             }
 
             // Invert the chart results and add to array
             foreach (var item in chartSource)
             {
-                if ((int)item.Value1 < 100)
+                // Get person from name of item
+                var person = people.FirstOrDefault(p => p.Name == item.Label);
+                if (person == null)
                 {
-                    // Get person from name
-                    var person = people.FirstOrDefault(p => p.Name == item.Label);
-                    if (person == null)
-                    {
-                        Debug.WriteLine($"** Couldn't find person {item.Label}");
-                        continue;
-                    }
+                    Debug.WriteLine($"** Couldn't find person {item.Label}");
+                    continue;
+                }
 
+                var availability = (int)(person.AvailabilityFTE * 100 / .84);
+
+                if ((int)item.Value1 < availability)
+                {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, 100 - (int)item.Value1));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, availability - (int)item.Value1));
                 }
             }
 
@@ -263,12 +265,18 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x =>
-                        {
-                            var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
-                            return Math.Round(person.Percentage / person.Person.AvailabilityFTE);
-                        },
-                        group.Key, startDate, endDate));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                            x =>
+                            {
+                                var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
+                                return Math.Round(person.Percentage / .84);
+                            },
+                            x =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name== group.Key);
+                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                            },
+                            group.Key, startDate, endDate));
                     }
                 }
 
@@ -294,12 +302,18 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x =>
-                        {
-                            var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
-                            return Math.Round(person.Percentage / person.Person.AvailabilityFTE);
-                        },
-                        group.Key, startDate, endDate));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                            x =>
+                            {
+                                var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
+                                return Math.Round(person.Percentage / .84);
+                            },
+                            x =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
+                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                            },
+                            group.Key, startDate, endDate));
                     }
                 }
 
@@ -312,6 +326,17 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Re-renderering chart!");
                     await RefreshChartAsync();
                 }
+
+                // TODO: Set date range -- NOT WORKING as always seems to be null
+                if (options.Yaxis != null)
+                {
+                    foreach (var y in options.Yaxis)
+                    {
+                        if (startDate != null) y.Min = startDate.Value.ToUnixTimeMilliseconds();
+                        if (endDate != null) y.Max = endDate.Value.ToUnixTimeMilliseconds();
+                    }
+                }
+
                 Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
             }
         }
