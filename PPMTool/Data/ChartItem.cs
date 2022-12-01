@@ -22,7 +22,9 @@ namespace PPMTool.Data
 
         public string Colour { get; }
 
-        public ChartItem(string colour, string label, DateTime start, DateTime end, double value1, double value2)
+        public bool IsHatched { get; }
+
+        public ChartItem(string colour, string label, DateTime start, DateTime end, double value1, double value2, bool isHatched)
         {
             StartDate = start;
             EndDate = end;
@@ -30,6 +32,7 @@ namespace PPMTool.Data
             Value2 = value2;
             Label = label;
             Colour = colour;
+            IsHatched = isHatched;
         }
 
         public static string GetColourStringFTE(double value, double capacity)
