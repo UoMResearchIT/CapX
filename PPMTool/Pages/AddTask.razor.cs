@@ -66,7 +66,8 @@ namespace PPMTool.Pages
                     Person = p,
                     Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
                     UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
-                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null
+                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null,
+                    IsProvisional = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.IsProvisional ?? false : false
                 });
             };
 
@@ -131,6 +132,7 @@ namespace PPMTool.Pages
                         existing.Percentage = act.Percentage;
                         existing.DayRate = act.DayRate;
                         existing.UseDefaultDayRate = act.UseDefaultDayRate;
+                        existing.IsProvisional = act.IsProvisional;
                     }
                     else
                     {
