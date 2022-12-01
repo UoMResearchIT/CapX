@@ -79,7 +79,7 @@ namespace PPMTool.Pages
             
 
             // Remove the ones that are not active for the data grid if necessary
-            if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished || x.ProjectStatus != ProjectStatus.Cancelled).ToList();
+            if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled).ToList();
 
             // If we have any left then build the rest
             if (proj.Count > 0)
@@ -94,30 +94,30 @@ namespace PPMTool.Pages
                     ProjectService.Update(context, p);
 
                     // Create the chart items
-                    var listOfChartItems = ChartHelper.AggregateByWeek(
-                        p.Name,
-                        p.SubTasks,
-                        x =>
-                        {
-                            // Value summed is the average contribution of the task for that week
-                            // Duration includes weekends by default so only approximate
-                            var durationWeeks = x.DurationDays / 7f;
-                            return x.PlannedWorkHours / durationWeeks;
-                        },
-                        x =>
-                        {
-                            // Same for actuals
-                            var durationWeeks = x.DurationDays / 7f;
-                            return x.ActualWorkHours / durationWeeks;
-                        }
-                    );
+                    //var listOfChartItems = ChartHelper.AggregateByWeek(
+                    //    p.Name,
+                    //    p.SubTasks,
+                    //    x =>
+                    //    {
+                    //        // Value summed is the average contribution of the task for that week
+                    //        // Duration includes weekends by default so only approximate
+                    //        var durationWeeks = x.DurationDays / 7f;
+                    //        return x.PlannedWorkHours / durationWeeks;
+                    //    },
+                    //    x =>
+                    //    {
+                    //        // Same for actuals
+                    //        var durationWeeks = x.DurationDays / 7f;
+                    //        return x.ActualWorkHours / durationWeeks;
+                    //    }
+                    //);
 
-                    // Wrap in a list
-                    var list = new List<ChartItem>();
-                    list.AddRange(listOfChartItems);
+                    //// Wrap in a list
+                    //var list = new List<ChartItem>();
+                    //list.AddRange(listOfChartItems);
 
-                    // Add to chart source
-                    chartSource.Add(list);
+                    //// Add to chart source
+                    //chartSource.Add(list);
                 }
 
                 // Assign data for the data grid

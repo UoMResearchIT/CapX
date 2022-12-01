@@ -219,7 +219,7 @@ namespace PPMTool.Pages
             if (peo.Count() > 0)
             {
                 // Get projects from the database
-                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished || x.ProjectStatus != ProjectStatus.Cancelled);
+                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled);
                 if (!IncludeUnFunded) projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
 
                 // Reinitialise dictionary
