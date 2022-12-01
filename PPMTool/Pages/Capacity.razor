@@ -103,9 +103,6 @@
                 <div class="col" style="display: flex">
                     <RadzenSwitch @bind-Value="@IncludeUnFunded" />
                 </div>
-                <div class="col-auto">
-                    @tooltipText
-                </div>
             </div>
         </div>
         <div class="card">
@@ -127,9 +124,7 @@
                 <ApexChart @ref="chart"
                    TItem="ChartItem"
                    Options=options
-                   XAxisType="XAxisType.Datetime"
-                   OnDataPointEnter="@OnDataPointHover"
-                   OnDataPointLeave="@OnDataPointHoverLeave">
+                   XAxisType="XAxisType.Datetime">
                     <ChildContent>
                         <ApexRangeSeries TItem="ChartItem"
                                  Items="chartSource"
@@ -138,6 +133,16 @@
                                  YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
                                  PointColor="@(e => e.Colour)" />
                     </ChildContent>
+                    <ApexPointTooltip>
+                        <div class="m-2">
+                            @{
+                                var point = (ListPoint<ChartItem>)context.DataPoint;
+                                <h3>@context.Series.ApexSeries.Items.ElementAt(context.DataPointIndex).Value1%</h3>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM") - </span>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM")</span>
+                            }
+                        </div>
+                    </ApexPointTooltip>
                 </ApexChart>
 
             }

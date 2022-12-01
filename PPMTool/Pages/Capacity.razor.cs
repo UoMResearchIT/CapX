@@ -31,7 +31,6 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> options;
         private List<string> nameOptions;
         private string chartTitle;
-        private string tooltipText;
         private PPMToolContext context;
 
         private string chosenPerson;
@@ -168,6 +167,8 @@ namespace PPMTool.Pages
 
             // Assign results
             QueryResults = results.OrderByDescending(x => x.AvailabilityPercent);
+            options.Xaxis.Min = QueryStartDate.ToUnixTimeMilliseconds();
+            await chart?.UpdateOptionsAsync(true, true, true);
 
             // Update the UI
             StateHasChanged();
@@ -202,22 +203,6 @@ namespace PPMTool.Pages
             }
 
             return tasks;
-        }
-
-        private void OnDataPointHover(HoverData<ChartItem> e)
-        {
-            // HACK: This try-catch shouldn't be necessary but since the chart I see and the data behind it seem to be out of sync then I have no choice here.
-            try
-            {
-                var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
-                tooltipText = $"Usage: {item.Value1}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
-            }
-            catch { }
-        }
-
-        private void OnDataPointHoverLeave(HoverData<ChartItem> e)
-        {
-            tooltipText = null;
         }
 
         /// <summary>
@@ -325,16 +310,6 @@ namespace PPMTool.Pages
                 {
                     Debug.WriteLine($"** Re-renderering chart!");
                     await RefreshChartAsync();
-                }
-
-                // TODO: Set date range -- NOT WORKING as always seems to be null
-                if (options.Yaxis != null)
-                {
-                    foreach (var y in options.Yaxis)
-                    {
-                        if (startDate != null) y.Min = startDate.Value.ToUnixTimeMilliseconds();
-                        if (endDate != null) y.Max = endDate.Value.ToUnixTimeMilliseconds();
-                    }
                 }
 
                 Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
