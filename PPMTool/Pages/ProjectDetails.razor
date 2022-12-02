@@ -139,12 +139,26 @@
                    Title="All Tasks"
                    XAxisType="XAxisType.Datetime"
                    Options=options>
-
-                <ApexRangeSeries TItem="SubTask"
-                             Items="Data"
-                             XValue="@(e => e.Name)"
-                             YMinValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                             YMaxValue="@(e =>e.EndDate.ToUnixTimeMilliseconds())" />
+                <ChildContent>
+                    <ApexRangeSeries TItem="SubTask"
+                                 Items="Data"
+                                 XValue="@(e => e.Name)"
+                                 YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                 YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                 PointColor="@(e => e.AssignedResources.Any(x => x.IsProvisional) ? "#ffc107" : "#007bff")" />
+                </ChildContent>
+                <ApexPointTooltip>
+                    <div class="m-2">
+                        @{
+                            var point = (ListPoint<SubTask>)context.DataPoint;
+                            <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false ? "bg-warning" : "bg-transparent")">
+                                <h3>@point.Items.FirstOrDefault()?.Name</h3>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM") - </span>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM")</span>
+                            </div>
+                        }
+                    </div>
+                </ApexPointTooltip>
 
             </ApexChart>
         </div>
