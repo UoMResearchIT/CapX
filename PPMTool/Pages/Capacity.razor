@@ -137,9 +137,11 @@
                         <div class="m-2">
                             @{
                                 var point = (ListPoint<ChartItem>)context.DataPoint;
-                                <h3>@context.Series.ApexSeries.Items.ElementAt(context.DataPointIndex).Value1%</h3>
+                                <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
+                                <h3>@point.Items.FirstOrDefault()?.Value1%</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM") - </span>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM")</span>
+                                </div>
                             }
                         </div>
                     </ApexPointTooltip>

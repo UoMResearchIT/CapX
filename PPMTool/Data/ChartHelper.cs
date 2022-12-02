@@ -58,8 +58,11 @@ namespace PPMTool.Data
                 // Sum value for the current week
                 valueSumWeek = within.Sum(x => valueFunction(x));
 
+                // Set hatched for the current week
+                hatchedWeek = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
+
                 // Set hatched state for the first time
-                if (hatchedTracked == null) hatchedTracked = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
+                if (hatchedTracked == null) hatchedTracked = hatchedWeek;
 
                 // Set the value for the first element
                 if (valueTracked == -1d) valueTracked = valueSumWeek;
@@ -83,6 +86,7 @@ namespace PPMTool.Data
                     }
                     currentSeriesStart = currentWeek;
                     valueTracked = valueSumWeek;
+                    hatchedTracked = hatchedWeek;
                 }
 
                 // Increment by 1 week

@@ -71,6 +71,8 @@ namespace PPMTool.Pages
 
         public string QueryErrorMessage { get; private set; }
 
+        public bool QueryActive { get; private set; }
+
         protected override async Task OnInitializedAsync()
         {
             context = new PPMToolContext();
@@ -88,9 +90,13 @@ namespace PPMTool.Pages
                 {
                     Show = false
                 },
-                Xaxis = new XAxis
+                Xaxis = new XAxis { },
+                Fill = new Fill
                 {
-                    Min = DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds()
+                    Pattern = new FillPattern
+                    {
+                        Style = FillPatternStyle.SlantedLines
+                    }
                 }
             };
 
@@ -107,6 +113,7 @@ namespace PPMTool.Pages
         {
             QueryResults = null;
             QueryErrorMessage = null;
+            QueryActive = false;
             await ConfigureSourceAsync();
             StateHasChanged();
         }
@@ -125,11 +132,12 @@ namespace PPMTool.Pages
 
             // Reset query results
             QueryResults = null;
+            QueryActive = true;
             var results = new List<CapacityQueryItem>();
             ChosenPerson = "All";
 
             // Update the chart source
-            await ConfigureSourceAsync(QueryStartDate, QueryEndDate);
+            await ConfigureSourceAsync();
             StateHasChanged();
 
             // Get all people
@@ -167,8 +175,6 @@ namespace PPMTool.Pages
 
             // Assign results
             QueryResults = results.OrderByDescending(x => x.AvailabilityPercent);
-            options.Xaxis.Min = QueryStartDate.ToUnixTimeMilliseconds();
-            await chart?.UpdateOptionsAsync(true, true, true);
 
             // Update the UI
             StateHasChanged();
@@ -209,7 +215,7 @@ namespace PPMTool.Pages
         /// Pulls project info from the DB and packages the data into a plottable format
         /// Can specific a start and end date to restrict the data window
         /// </summary>
-        private async Task ConfigureSourceAsync(DateTime? startDate = null, DateTime? endDate = null)
+        private async Task ConfigureSourceAsync()
         {
             // Reset source
             chartSource = new List<ChartItem>();
@@ -261,7 +267,13 @@ namespace PPMTool.Pages
                                 var person = peo.FirstOrDefault(y => y.Name== group.Key);
                                 return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
                             },
-                            group.Key, startDate, endDate));
+                            group.Key,
+                            QueryActive ? QueryStartDate : null,
+                            QueryActive ? QueryEndDate : null,
+                            x =>
+                            {
+                                return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
+                            }));
                     }
                 }
 
@@ -298,17 +310,27 @@ namespace PPMTool.Pages
                                 var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
                                 return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
                             },
-                            group.Key, startDate, endDate));
+                            group.Key,
+                            QueryActive ? QueryStartDate : null,
+                            QueryActive ? QueryEndDate : null,
+                            x =>
+                            {
+                                return x.AssignedResources.First(x => x.Person.Name == ChosenPerson).IsProvisional;
+                            }));
                     }
                 }
 
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
 
+                options.Xaxis.Min = !QueryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+                options.Xaxis.Max = !QueryActive ? null : QueryEndDate.ToUnixTimeMilliseconds();
+
                 // First time this is called, there is no reference to the chart
                 if (chart != null)
                 {
                     Debug.WriteLine($"** Re-renderering chart!");
+                    await chart.UpdateOptionsAsync(true, true, false);
                     await RefreshChartAsync();
                 }
 
