@@ -23,8 +23,6 @@ namespace PPMTool.Pages
 
         private IEnumerable<Project> projects;
         RadzenDataGrid<Project> projectGrid;
-        private List<List<ChartItem>> chartSource;
-        private ApexChartOptions<ChartItem> options;
         private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
         private IEnumerable<ProjectStatus> fundingOptions = (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus));
         private List<ProjectSummaryWidget.ProjectSummaryData> summaryData;
@@ -37,18 +35,6 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             LoadProjectData();
-
-            options = new ApexChartOptions<ChartItem>
-            {
-                PlotOptions = new PlotOptions
-                {
-                    Bar = new PlotOptionsBar
-                    {
-                        Horizontal = true,
-                        RangeBarGroupRows = false
-                    }
-                }
-            };
         }
 
         private void OnChange(bool? value)
@@ -75,55 +61,25 @@ namespace PPMTool.Pages
                     Complete = proj.Where(x => x.Portfolio == p && x.ProjectStatus == ProjectStatus.Finished).Count()
                 });
             }
-            summaryData = summaryData.OrderByDescending(x=>x.GetTotal()).ToList();
-            
+            summaryData = summaryData.OrderByDescending(x => x.GetTotal()).ToList();
+
 
             // Remove the ones that are not active for the data grid if necessary
             if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled).ToList();
 
-            // If we have any left then build the rest
+            // Update the summary of each project and save back to DB
             if (proj.Count > 0)
             {
-                // Build the burn-up charts week by week
-                chartSource = new List<List<ChartItem>>();
                 for (int i = 0; i < proj.Count; ++i)
                 {
-                    // Update the summary of the project and save back to DB
                     var p = proj[i];
                     p.UpdateProjectSummary();
                     ProjectService.Update(context, p);
-
-                    // Create the chart items
-                    //var listOfChartItems = ChartHelper.AggregateByWeek(
-                    //    p.Name,
-                    //    p.SubTasks,
-                    //    x =>
-                    //    {
-                    //        // Value summed is the average contribution of the task for that week
-                    //        // Duration includes weekends by default so only approximate
-                    //        var durationWeeks = x.DurationDays / 7f;
-                    //        return x.PlannedWorkHours / durationWeeks;
-                    //    },
-                    //    x =>
-                    //    {
-                    //        // Same for actuals
-                    //        var durationWeeks = x.DurationDays / 7f;
-                    //        return x.ActualWorkHours / durationWeeks;
-                    //    }
-                    //);
-
-                    //// Wrap in a list
-                    //var list = new List<ChartItem>();
-                    //list.AddRange(listOfChartItems);
-
-                    //// Add to chart source
-                    //chartSource.Add(list);
                 }
-
-                // Assign data for the data grid
-                projects = proj;
             }
 
+            // Assign data for the data grid
+            projects = proj;
             Debug.WriteLine($"{proj.Count()} projects loaded.");
         }
 

@@ -1,11 +1,10 @@
 ﻿@page "/projectdetails/{ProjectId:int}"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data;
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 
 <div class="container">
-
-    
     <div class="row">
         <div class="col-auto mr-auto">
             @if (project == null)
@@ -63,6 +62,26 @@
     <hr />
     <div class="row">
         <div class="col-auto mr-auto">
+            <h2>Burn-Up Chart</h2>
+        </div>
+    </div>
+    <div class="card">
+        <ApexChart @ref="chart" 
+            TItem="ChartItem"
+                   XAxisType="XAxisType.Datetime"
+                   Options=options2>
+
+            <ApexPointSeries TItem="ChartItem"
+                             Items="chartSource"
+                             SeriesType="@SeriesType.Area"
+                             Name="Planned Work"
+                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                             YValue="@(e => Convert.ToDecimal(e.Value1))" />
+        </ApexChart>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-auto mr-auto">
             <h2>Tasks</h2>
         </div>
         <div class="col-auto">
@@ -111,7 +130,7 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false"/>
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" />
                     <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" />
                     <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type">
