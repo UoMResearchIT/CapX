@@ -28,7 +28,6 @@ namespace PPMTool.Pages
         private List<ChartItem> chartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> options;
         private ApexChartOptions<ChartItem> options2;
-        ApexChart<ChartItem> chart;
         private PPMToolContext context;
         private int count;
 
@@ -54,19 +53,6 @@ namespace PPMTool.Pages
                     }
                 };
 
-                options2 = new ApexChartOptions<ChartItem>
-                {
-                    PlotOptions = new PlotOptions
-                    {
-                        Bar = new PlotOptionsBar
-                        {
-                            Horizontal = true,
-                            RangeBarGroupRows = false
-                        }
-                    },
-                    Annotations = new Annotations()
-                };
-
                 // Only show a burn-up chart if the project is actually happening
                 if (project.ProjectStatus != Enums.ProjectStatus.Finished && project.ProjectStatus != Enums.ProjectStatus.Cancelled)
                 {
@@ -78,7 +64,7 @@ namespace PPMTool.Pages
                         {
                             // Value summed is the average contribution of the task for that week
                             // Duration includes weekends by default so only approximate
-                            var durationWeeks = task.DurationDays / 7f <  1 ? 1 : task.DurationDays / 7f;
+                            var durationWeeks = task.DurationDays / 7f < 1 ? 1 : task.DurationDays / 7f;
                             return task.PlannedWorkHours / durationWeeks;
                         }
                     ).ToList();
@@ -91,43 +77,44 @@ namespace PPMTool.Pages
                         chartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulative), 0, false));
                     }
 
-                    // Create an annotation to indicate progress
+                    // Create a new data point to indicate progress
                     var seriesStart = chartSource.Min(x => x.StartDate);
                     var seriesEnd = chartSource.Max(x => x.EndDate);
-                    DateTime annotationX = DateTime.Now.Date;
-                    double annotationY = project.SubTasks.Sum(x => x.ActualWorkHours);
-
+                    var actualsX = DateTime.Now.Date;
+                    var actualsY = project.SubTasks.Sum(x => x.ActualWorkHours);
+                    
                     // If the task has started yet or has already finished then x coordinate is the limits of the series
-                    if (DateTime.Now.Date < seriesStart) annotationX = seriesStart;
-                    else if (DateTime.Now.Date > seriesEnd) annotationX = seriesEnd;
+                    if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
+                    else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
 
-                    // Add annotation
-                    if (options2.Annotations.Points == null) options2.Annotations.Points = new List<AnnotationsPoint>();
-                    else options2.Annotations.Points.Clear();
-                    options2.Annotations.Points.Add(new AnnotationsPoint
+                    // Set options
+                    options2 = new ApexChartOptions<ChartItem>
                     {
-                        X = annotationX,
-                        Y = annotationY,
-                        Marker = new AnnotationMarker
+                        Annotations = new Annotations
                         {
-                            Size = 6,
-                            FillColor = "#fff",
-                            StrokeColor = "#2698FF",
-                            Radius = 2
-                        },
-                        Label = new Label
-                        {
-                            BorderColor = "#FF4560",
-                            OffsetY = 0,
-                            Style = new Style
+                            Yaxis = new List<AnnotationsYAxis>
                             {
-                                Color = "#fff",
-                                Background = "#FF4560"
+                                new AnnotationsYAxis()
+                                {
+                                    Y = actualsY,
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red"
+                                }
                             },
-                            Text = $"Actual Work: {project.SubTasks.Sum(x => x.ActualWorkHours)} hours"
+                            Xaxis = new List<AnnotationsXAxis>
+                            {
+                                new AnnotationsXAxis()
+                                {
+                                    X = actualsX.ToUnixTimeMilliseconds(),
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red"
+                                }
+                            }
                         }
-                    });
-                    InvokeAsync(async () => await chart?.UpdateOptionsAsync(true, true, true));
+                    };
+                    InvokeAsync(StateHasChanged);
                 }
             }
         }
@@ -180,6 +167,18 @@ namespace PPMTool.Pages
 
             // Perform paging via Skip and Take.
             Data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+        }
+
+        public class ActualPoint
+        {
+            public DateTime X { get; set; }
+            public double Y { get; set; }
+
+            public ActualPoint(DateTime x, double y)
+            {
+                X = x;
+                Y = y;
+            }
         }
     }
 }

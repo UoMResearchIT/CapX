@@ -66,10 +66,9 @@
         </div>
     </div>
     <div class="card">
-        <ApexChart @ref="chart" 
-            TItem="ChartItem"
+        <ApexChart TItem="ChartItem"
                    XAxisType="XAxisType.Datetime"
-                   Options=options2>
+                   Options="options2">
 
             <ApexPointSeries TItem="ChartItem"
                              Items="chartSource"
@@ -77,6 +76,7 @@
                              Name="Planned Work"
                              XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                              YValue="@(e => Convert.ToDecimal(e.Value1))" />
+
         </ApexChart>
     </div>
     <hr />
