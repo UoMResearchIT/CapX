@@ -250,13 +250,13 @@ namespace PPMTool.Pages
                         }
 
                         // Add dictionary entry with person name as key
-                        if (assignments.Count > 0) groupedSubTasks.Add(p.Name, assignments);
+                        groupedSubTasks.Add(p.Name, assignments);
                     }
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                        var items = ChartHelper.AggregateByWeekIntoBlocks(group.Value,
                             x =>
                             {
                                 var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
@@ -264,7 +264,7 @@ namespace PPMTool.Pages
                             },
                             x =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name== group.Key);
+                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
                                 return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
                             },
                             group.Key,
@@ -273,7 +273,19 @@ namespace PPMTool.Pages
                             x =>
                             {
                                 return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
-                            }));
+                            }
+                        ).ToList();
+
+                        // If this person has no assignments then create a dummy chart item based on their start date
+                        // to ensure they show up in the capacity sheet
+                        if (items.Count() < 1)
+                        {
+                            var person = peo.First(x => x.Name == group.Key);
+                            items.Add(new ChartItem(null, group.Key, person.StartDate, person.StartDate, 0, 0, false));
+                        }
+
+                        // Add the range
+                        chartSource.AddRange(items);
                     }
                 }
 

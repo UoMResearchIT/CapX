@@ -35,7 +35,12 @@ namespace PPMTool.Data
 
             // Initialise
             var temp = new List<ChartItem>();
-            if (subTasks.Count() < 1) return temp;
+            
+            // If this person has no assignments return a empty list
+            if (subTasks.Count() < 1)
+            {
+                return temp;
+            }
 
             // Get earliest assignment to get start date for marching
             DateTime start = startDate ?? subTasks.MinBy(x => x.StartDate).StartDate;
