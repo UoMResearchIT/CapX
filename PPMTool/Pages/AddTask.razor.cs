@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Build.Framework;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -22,6 +24,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private IJSRuntime JsRuntime { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -90,6 +95,31 @@ namespace PPMTool.Pages
             startDateDisabled = !taskModel.HasFixedStart || taskModel.IsDone;
             workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven) || taskModel.IsDone;
             durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && !taskModel.IsEndDateDriven || taskModel.IsDone;
+        }
+
+        private async void DeleteSubTask()
+        {
+            if (TaskId > -1)
+            {
+                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.Name}");
+                if (confirmed)
+                {
+                    // Call delete on the subtask service and let it remove the resources
+                    SubTaskService.DeleteTask(context, taskModel);
+
+                    // Remove the sub-task from the project model
+                    projectModel.SubTasks.Remove(taskModel);
+
+                    // Update the project summary values
+                    projectModel.UpdateProjectSummary();
+
+                    // Update the project in the database
+                    ProjectService.Update(context, projectModel);
+
+                    // Return to the project details page
+                    Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                }
+            }
         }
 
         private void DiscardChanges()
