@@ -74,5 +74,25 @@ namespace PPMTool.Services
             // Reached the end so all scheduled OK
             return null;
         }
+
+        /// <summary>
+        /// Delete a sub task from the database removing all the resources at the same time.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="subTask"></param>
+        internal void DeleteTask(PPMToolContext context, SubTask subTask)
+        {
+            // Remove resources
+            foreach (var res in subTask.AssignedResources)
+            {
+                context.Resources.Remove(res);
+            }
+
+            // Remove sub task
+            context.SubTasks.Remove(subTask);
+            
+            // Update database
+            context.SaveChanges();
+        }
     }
 }

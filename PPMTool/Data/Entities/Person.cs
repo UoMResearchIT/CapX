@@ -32,7 +32,7 @@ namespace PPMTool.Data.Entities
         public DateTime StartDate { get; set; } = DateTime.Now.Date;
 
         [Required]
-        public double AvailabilityFTE { get; set; } = 1.0;
+        public double AvailabilityFTE { get; set; } = 0.84;
 
         public ICollection<SkillTag> SkillTags { get; set; }
 
