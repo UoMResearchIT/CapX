@@ -10,8 +10,16 @@
     }
     else
     {
-        <h1>Edit @taskModel.Name</h1>
-        <p>Edit existing task in <b>@projectModel?.Name</b></p>
+        <div class="row">
+            <div class="col">
+                <h1>Edit @taskModel.Name</h1>
+            </div>
+            <div class="col-auto" style="align-content: center">
+                <button class="btn btn-danger" type="button" @onclick="DeleteSubTask"><i class="oi oi-trash" /> Delete</button>
+            </div>
+        </div>
+        <p>Edit existing task in <b>@projectModel?.Name</b></p>    
+        
     }
     <div class="card">
         <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
@@ -150,7 +158,7 @@
                         <label>Actual Hours</label>
                     </div>
                     <div class="col">
-                        <InputNumber min="0" step="1" placeholder="0" @bind-Value="taskModel.ActualWorkHours" disabled="@taskModel.IsDone" />
+                        <InputNumber min="0" step=".5" placeholder="0" @bind-Value="taskModel.ActualWorkHours" disabled="@taskModel.IsDone" />
                     </div>
                 </div>
                 <div class="row">
@@ -174,6 +182,9 @@
                         <b>Percentage Assigned (%)</b>
                     </div>
                     <div class="col-md-2">
+                        <b>Provisional?</b>
+                    </div>
+                    <div class="col-md-2">
                         <b>Use Default Day Rate</b>
                     </div>
                     <div class="col">
@@ -191,6 +202,9 @@
                         <InputNumber step="0.1" min="0" max="1000" @bind-Value="@r.Percentage" disabled="@taskModel.IsDone" />
                     </div>
                     <div class="col-md-2" style="display: flex">
+                        <RadzenSwitch class="switch-align" @bind-Value="@r.IsProvisional" disabled="@taskModel.IsDone" />
+                    </div>
+                    <div class="col-md-2" style="display: flex">
                         <RadzenSwitch class="switch-align" @bind-Value="@r.UseDefaultDayRate" disabled="@taskModel.IsDone"/>
                     </div>
                     <div class="col">
@@ -199,10 +213,13 @@
                     <br />
                 </div>
             }
-
-            <button class="btn btn-primary" type="button" @onclick="UpdateSubTask"><i class="oi oi-reload" /> Update</button>
-            <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Update and Save</button>
-            <button class="btn btn-outline-danger" type="button" @onclick="DiscardChanges"><i class="oi oi-x" /> Discard</button>
+            <div class="row">
+                <div class="col">
+                    <button class="btn btn-primary" type="button" @onclick="UpdateSubTask"><i class="oi oi-reload" /> Update</button>
+                    <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Update and Save</button>
+                    <button class="btn btn-outline-danger" type="button" @onclick="DiscardChanges"><i class="oi oi-x" /> Discard</button>
+                </div>
+            </div>
             @if (!isValid)
             {
                 <p style="color: red">Task configuration insufficent for scheduling. Please correct and update again: @error</p>

@@ -25,6 +25,7 @@ namespace PPMTool.Data.Entities
 
         public double Percentage { get; set; }
 
+        public bool IsProvisional { get; set; }
 
         private bool useDefaultDayRate;
         public bool UseDefaultDayRate
