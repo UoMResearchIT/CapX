@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Build.Framework;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -21,6 +24,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private IJSRuntime JsRuntime { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -61,10 +67,12 @@ namespace PPMTool.Pages
             {
                 resources.Add(new Resource
                 {
+                    ResourceId = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.ResourceId ?? 0 : 0,
                     Person = p,
                     Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
                     UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
-                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null
+                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null,
+                    IsProvisional = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.IsProvisional ?? false : false
                 });
             };
 
@@ -89,6 +97,31 @@ namespace PPMTool.Pages
             durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && !taskModel.IsEndDateDriven || taskModel.IsDone;
         }
 
+        private async void DeleteSubTask()
+        {
+            if (TaskId > -1)
+            {
+                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.Name}");
+                if (confirmed)
+                {
+                    // Call delete on the subtask service and let it remove the resources
+                    SubTaskService.DeleteTask(context, taskModel);
+
+                    // Remove the sub-task from the project model
+                    projectModel.SubTasks.Remove(taskModel);
+
+                    // Update the project summary values
+                    projectModel.UpdateProjectSummary();
+
+                    // Update the project in the database
+                    ProjectService.Update(context, projectModel);
+
+                    // Return to the project details page
+                    Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                }
+            }
+        }
+
         private void DiscardChanges()
         {
             Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
@@ -108,18 +141,41 @@ namespace PPMTool.Pages
             {
                 Logger.LogInformation("Updating sub task configuration...");
 
-                // Create resources on the sub task and track total proportion of effort
-                taskModel.AssignedResources = new List<Resource>();
+                // Get all the non-zero percentage resources
+                var activeRes = resources.Where(x => x.Percentage > 0);
+
+                // Remove resources that are no-longer active
+                var toRemove = taskModel.AssignedResources.Where(x => !activeRes.Any(y => x.ResourceId == y.ResourceId));
+                foreach (var r in toRemove.ToList())
+                {
+                    taskModel.AssignedResources.Remove(r);
+                }
+
+                // Update/Add the active resources
+                foreach (var act in activeRes)
+                {
+                    Debug.WriteLine($"** ResId: {act.ResourceId} | PersonId: {act.Person.PersonId} | Percent: {act.Percentage}");
+                    var existing = taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == act.ResourceId);
+                    if (existing != null)
+                    {
+                        // Don't know why I have to update every individual property to get this to work
+                        existing.Percentage = act.Percentage;
+                        existing.DayRate = act.DayRate;
+                        existing.UseDefaultDayRate = act.UseDefaultDayRate;
+                        existing.IsProvisional = act.IsProvisional;
+                    }
+                    else
+                    {
+                        taskModel.AssignedResources.Add(act);
+                    }
+                }
+
+                // Track total proportion of effort
                 double totalResourceDaysPerDay = 0;
                 foreach (var r in resources)
                 {
-                    if (r.Percentage > 0)
-                    {
-                        taskModel.AssignedResources.Add(r);
-
-                        // Update the total resource assigned
-                        totalResourceDaysPerDay += r.Percentage / 100;
-                    }
+                    // Update the total resource assigned
+                    totalResourceDaysPerDay += r.Percentage / 100;
                 }
 
                 // Compute the average hourly cost across the resources from their day rate
@@ -130,7 +186,7 @@ namespace PPMTool.Pages
                 double averageCostPerDayOfResources = 0;
                 foreach (var r in taskModel.AssignedResources)
                 {
-                    var person = people.FirstOrDefault(x => x.Name == r.Person.Name);
+                    var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
                     if (person == null) continue;
                     // User the default day rate for the person if the assigned day rate is null
                     averageCostPerDayOfResources += (r.Percentage * (r.DayRate ?? person.DayRate)) / (100 * totalResourceDaysPerDay);
@@ -138,7 +194,7 @@ namespace PPMTool.Pages
 
                 // Update the actual cost for the sub task
                 // Truncate to 2 dp
-                taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100) / (100 * 7);
+                taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
                 // Create predecessor on the sub task
                 if (int.TryParse(PredecessorId, out var id))

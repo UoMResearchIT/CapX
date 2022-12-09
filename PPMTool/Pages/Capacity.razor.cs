@@ -31,7 +31,6 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> options;
         private List<string> nameOptions;
         private string chartTitle;
-        private string tooltipText;
         private PPMToolContext context;
 
         private string chosenPerson;
@@ -72,6 +71,8 @@ namespace PPMTool.Pages
 
         public string QueryErrorMessage { get; private set; }
 
+        public bool QueryActive { get; private set; }
+
         protected override async Task OnInitializedAsync()
         {
             context = new PPMToolContext();
@@ -89,9 +90,13 @@ namespace PPMTool.Pages
                 {
                     Show = false
                 },
-                Xaxis = new XAxis
+                Xaxis = new XAxis { },
+                Fill = new Fill
                 {
-                    Min = DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds()
+                    Pattern = new FillPattern
+                    {
+                        Style = FillPatternStyle.SlantedLines
+                    }
                 }
             };
 
@@ -108,6 +113,7 @@ namespace PPMTool.Pages
         {
             QueryResults = null;
             QueryErrorMessage = null;
+            QueryActive = false;
             await ConfigureSourceAsync();
             StateHasChanged();
         }
@@ -126,10 +132,12 @@ namespace PPMTool.Pages
 
             // Reset query results
             QueryResults = null;
+            QueryActive = true;
             var results = new List<CapacityQueryItem>();
+            ChosenPerson = "All";
 
             // Update the chart source
-            await ConfigureSourceAsync(QueryStartDate, QueryEndDate);
+            await ConfigureSourceAsync();
             StateHasChanged();
 
             // Get all people
@@ -142,29 +150,31 @@ namespace PPMTool.Pages
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
-                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, 100));
+                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, (int)(person.AvailabilityFTE * 100 / .84)));
             }
 
             // Invert the chart results and add to array
             foreach (var item in chartSource)
             {
-                if ((int)item.Value1 < 100)
+                // Get person from name of item
+                var person = people.FirstOrDefault(p => p.Name == item.Label);
+                if (person == null)
                 {
-                    // Get person from name
-                    var person = people.FirstOrDefault(p => p.Name == item.Label);
-                    if (person == null)
-                    {
-                        Debug.WriteLine($"** Couldn't find person {item.Label}");
-                        continue;
-                    }
+                    Debug.WriteLine($"** Couldn't find person {item.Label}");
+                    continue;
+                }
 
+                var availability = (int)(person.AvailabilityFTE * 100 / .84);
+
+                if ((int)item.Value1 < availability)
+                {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, 100 - (int)item.Value1));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, availability - (int)item.Value1));
                 }
             }
 
             // Assign results
-            QueryResults = results;
+            QueryResults = results.OrderByDescending(x => x.AvailabilityPercent);
 
             // Update the UI
             StateHasChanged();
@@ -201,27 +211,11 @@ namespace PPMTool.Pages
             return tasks;
         }
 
-        private void OnDataPointHover(HoverData<ChartItem> e)
-        {
-            // HACK: This try-catch shouldn't be necessary but since the chart I see and the data behind it seem to be out of sync then I have no choice here.
-            try
-            {
-                var item = e.Series.ApexSeries.Items.ElementAt(e.DataPointIndex);
-                tooltipText = $"Usage: {item.Value1}% | {item.StartDate.ToShortDateString()} - {item.EndDate.ToShortDateString()}";
-            }
-            catch { }
-        }
-
-        private void OnDataPointHoverLeave(HoverData<ChartItem> e)
-        {
-            tooltipText = null;
-        }
-
         /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
         /// Can specific a start and end date to restrict the data window
         /// </summary>
-        private async Task ConfigureSourceAsync(DateTime? startDate = null, DateTime? endDate = null)
+        private async Task ConfigureSourceAsync()
         {
             // Reset source
             chartSource = new List<ChartItem>();
@@ -231,7 +225,7 @@ namespace PPMTool.Pages
             if (peo.Count() > 0)
             {
                 // Get projects from the database
-                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled);
                 if (!IncludeUnFunded) projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
 
                 // Reinitialise dictionary
@@ -256,18 +250,42 @@ namespace PPMTool.Pages
                         }
 
                         // Add dictionary entry with person name as key
-                        if (assignments.Count > 0) groupedSubTasks.Add(p.Name, assignments);
+                        groupedSubTasks.Add(p.Name, assignments);
                     }
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x =>
+                        var items = ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                            x =>
+                            {
+                                var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
+                                return Math.Round(person.Percentage / .84);
+                            },
+                            x =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
+                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                            },
+                            group.Key,
+                            QueryActive ? QueryStartDate : null,
+                            QueryActive ? QueryEndDate : null,
+                            x =>
+                            {
+                                return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
+                            }
+                        ).ToList();
+
+                        // If this person has no assignments then create a dummy chart item based on their start date
+                        // to ensure they show up in the capacity sheet
+                        if (items.Count() < 1)
                         {
-                            var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
-                            return Math.Round(person.Percentage / person.Person.AvailabilityFTE);
-                        },
-                        group.Key, startDate, endDate));
+                            var person = peo.First(x => x.Name == group.Key);
+                            items.Add(new ChartItem(null, group.Key, person.StartDate, person.StartDate, 0, 0, false));
+                        }
+
+                        // Add the range
+                        chartSource.AddRange(items);
                     }
                 }
 
@@ -293,24 +311,41 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value, x =>
-                        {
-                            var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
-                            return Math.Round(person.Percentage / person.Person.AvailabilityFTE);
-                        },
-                        group.Key, startDate, endDate));
+                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                            x =>
+                            {
+                                var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
+                                return Math.Round(person.Percentage / .84);
+                            },
+                            x =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
+                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                            },
+                            group.Key,
+                            QueryActive ? QueryStartDate : null,
+                            QueryActive ? QueryEndDate : null,
+                            x =>
+                            {
+                                return x.AssignedResources.First(x => x.Person.Name == ChosenPerson).IsProvisional;
+                            }));
                     }
                 }
 
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
 
+                options.Xaxis.Min = !QueryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+                options.Xaxis.Max = !QueryActive ? null : QueryEndDate.ToUnixTimeMilliseconds();
+
                 // First time this is called, there is no reference to the chart
                 if (chart != null)
                 {
                     Debug.WriteLine($"** Re-renderering chart!");
+                    await chart.UpdateOptionsAsync(true, true, false);
                     await RefreshChartAsync();
                 }
+
                 Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
             }
         }

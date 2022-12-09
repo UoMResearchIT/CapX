@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -23,7 +25,9 @@ namespace PPMTool.Pages
         public int? ProjectID { get; set; }
 
         private List<SubTask> Data { get; set; }
+        private List<ChartItem> chartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> options;
+        private ApexChartOptions<ChartItem> options2;
         private PPMToolContext context;
         private int count;
 
@@ -35,7 +39,7 @@ namespace PPMTool.Pages
             {
                 context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
-                Data = project.SubTasks.ToList();
+                Data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
                 count = Data.Count;
 
                 options = new ApexChartOptions<SubTask>
@@ -48,6 +52,70 @@ namespace PPMTool.Pages
                         }
                     }
                 };
+
+                // Only show a burn-up chart if the project is actually happening
+                if (project.ProjectStatus != Enums.ProjectStatus.Finished && project.ProjectStatus != Enums.ProjectStatus.Cancelled)
+                {
+                    // Create the chart items
+                    var temp = ChartHelper.AggregateByWeek(
+                        project.Name,
+                        project.SubTasks,
+                        task =>
+                        {
+                            // Value summed is the average contribution of the task for that week
+                            // Duration includes weekends by default so only approximate
+                            var durationWeeks = task.DurationDays / 7f < 1 ? 1 : task.DurationDays / 7f;
+                            return task.PlannedWorkHours / durationWeeks;
+                        }
+                    ).ToList();
+
+                    // Generate series by aggregating the values
+                    double cumulative = 0;
+                    foreach (var week in temp)
+                    {
+                        cumulative += week.Value1;
+                        chartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulative), 0, false));
+                    }
+
+                    // Create a new data point to indicate progress
+                    var seriesStart = chartSource.Min(x => x.StartDate);
+                    var seriesEnd = chartSource.Max(x => x.EndDate);
+                    var actualsX = DateTime.Now.Date;
+                    var actualsY = project.SubTasks.Sum(x => x.ActualWorkHours);
+                    
+                    // If the task has started yet or has already finished then x coordinate is the limits of the series
+                    if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
+                    else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
+
+                    // Set options
+                    options2 = new ApexChartOptions<ChartItem>
+                    {
+                        Annotations = new Annotations
+                        {
+                            Yaxis = new List<AnnotationsYAxis>
+                            {
+                                new AnnotationsYAxis()
+                                {
+                                    Y = actualsY,
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red"
+                                }
+                            },
+                            Xaxis = new List<AnnotationsXAxis>
+                            {
+                                new AnnotationsXAxis()
+                                {
+                                    X = actualsX.ToUnixTimeMilliseconds(),
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red"
+                                }
+                            }
+                        }
+                    };
+                    InvokeAsync(StateHasChanged);
+                }
             }
         }
 
@@ -99,6 +167,18 @@ namespace PPMTool.Pages
 
             // Perform paging via Skip and Take.
             Data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+        }
+
+        public class ActualPoint
+        {
+            public DateTime X { get; set; }
+            public double Y { get; set; }
+
+            public ActualPoint(DateTime x, double y)
+            {
+                X = x;
+                Y = y;
+            }
         }
     }
 }

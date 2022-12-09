@@ -62,12 +62,13 @@ namespace PPMTool.Data.Entities
             // Update project
             StartDate = startDate;
             EndDate = endDate;
-            ActualWorkHours = actualHours;
+
+            // Truncate to 1 DP
+            ActualWorkHours = Math.Round(10 * actualHours) / 10;
 
             // Truncate the cost to 2 DP as it is currency
             ActualCost = Math.Round(100 * actualCost) / 100;
             PlannedCost = Math.Round(100 * plannedCost) / 100;
-            
 
             // Update schedule status from the sub task flags
             if (SubTasks.Any(x => x.ScheduleStatus == ScheduleStatus.Late)) ScheduleStatus = ScheduleStatus.Late;

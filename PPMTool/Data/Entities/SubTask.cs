@@ -54,7 +54,7 @@ namespace PPMTool.Data.Entities
             }
         }
 
-        public virtual IList<Resource> AssignedResources { get; set; }
+        public virtual IList<Resource> AssignedResources { get; set; } = new List<Resource>();
 
         /// <summary>
         /// For now, restricted to a single predecessor task and an "finish-to-start" contraint

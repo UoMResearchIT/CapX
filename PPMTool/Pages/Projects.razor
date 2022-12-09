@@ -42,7 +42,7 @@
         <div class="card">
             <div class="row align-items-center mb-3">
                 <div class="col-auto">
-                    Show Only Active?:
+                    Exclude Completed?:
                 </div>
                 <div class="col-auto" style="display: flex">
                     <RadzenSwitch @bind-Value="@ShowActiveOnly" Change=@(args => OnChange(args)) />
@@ -128,40 +128,5 @@
                 </Columns>
             </RadzenDataGrid>
         </div>
-        <hr />
-        @*<h2>Charts</h2>
-        <p>** Burn-Up Charts for each project are a work in progress **</p>
-        <div class="contianer-fluid">
-            <div class="row">
-                @foreach (var cs in chartSource)
-                {
-                    <div class="col-xs-12 col-sm-6 col-lg-3">
-                        <div class="card">
-                            <ApexChart TItem="ChartItem"
-                               XAxisType="XAxisType.Datetime"
-                               Options=options>
-
-                                <ApexPointSeries TItem="ChartItem"
-                                         Items="cs"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Planned Work"
-                                         XValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => (int)e.Value1)))"
-                                         OrderByDescending="e=>e.Y" />
-
-                                <ApexPointSeries TItem="ChartItem"
-                                         Items="cs"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Actual Work"
-                                         XValue="@(e =>e.StartDate.ToUnixTimeMilliseconds())"
-                                         YAggregate="@(e => Convert.ToDecimal(e.Sum(e => (int)e.Value2)))"
-                                         OrderByDescending="e=>e.Y" />
-
-                            </ApexChart>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>*@
     }
 </div>
