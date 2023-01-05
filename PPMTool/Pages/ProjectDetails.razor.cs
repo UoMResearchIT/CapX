@@ -77,6 +77,9 @@ namespace PPMTool.Pages
                         chartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulative), 0, false));
                     }
 
+                    // Early exit if chartSource has no data
+                    if (chartSource.Count < 1) return;
+
                     // Create a new data point to indicate progress
                     var seriesStart = chartSource.Min(x => x.StartDate);
                     var seriesEnd = chartSource.Max(x => x.EndDate);
