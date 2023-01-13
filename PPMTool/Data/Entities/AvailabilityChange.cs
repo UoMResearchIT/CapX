@@ -8,6 +8,7 @@ namespace PPMTool.Data.Entities
     /// </summary>
     public class AvailabilityChange
     {
+        public int AvailabilityChangeId { get; set; }
 
         [Required]
         public DateTime ChangeDate { get; set; }
