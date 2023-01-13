@@ -48,19 +48,39 @@
                 </div>
             </div>
             <hr />
-            <h3>Skill Tags</h3>
-            @foreach (var t in AvailableTags)
-            {
-                <div class="row">
-                    <div class="col-2">
-                        @t.Name
-                    </div>
-                    <div class="col my-1" style="display: flex">
-                        <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
-                    </div>
-                    <br />
+            <div class="row">
+                <div class="col">
+                    <h3>Skill Tags</h3>
+                        @foreach (var t in AvailableTags)
+                        {
+                            <div class="row">
+                                <div class="col-2">
+                                    @t.Name
+                                </div>
+                                <div class="col my-1" style="display: flex">
+                                    <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
+                                </div>
+                                <br />
+                            </div>
+                        }
                 </div>
-            }
+                <div class="col">
+                    <h3>Availability Changes</h3>
+                    @foreach (var d in personModel.AvailabilityChanges)
+                    {
+                        <div class="row">
+                            <div class="col-2">
+                                @d.ChangeDate.ToShortDateString()
+                            </div>
+                            <div class="col-2">
+                                @d.AvailabilityFTE
+                            </div>
+                            <br />
+                        </div>
+                    }
+                </div>
+            </div>
+            
             <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Save</button>
         </EditForm>
     </div>

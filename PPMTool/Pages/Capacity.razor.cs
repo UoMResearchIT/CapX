@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Build.Framework;
+using Microsoft.EntityFrameworkCore;
+using NuGet.DependencyResolver;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -150,10 +152,36 @@ namespace PPMTool.Pages
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
-                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, (int)(person.AvailabilityFTE * 100 / .84)));
+                // Get any changes ordered by date
+                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate >= QueryStartDate && x.ChangeDate < QueryEndDate).OrderBy(x => x.ChangeDate).ToList();
+
+                // If no changes then use default availability
+                if (changes.Count == 0)
+                {
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, (int)(person.AvailabilityFTE * 100 / .84)));
+                }
+                else
+                {
+                    // First period uses the default availability up to the first change
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.AvailabilityFTE * 100 / .84)));
+
+                    // Subsequent ones use the new settings
+                    for (int i = 1; i < changes.Count; ++i)
+                    {
+                        // If the last change then use query end date
+                        if (i == changes.Count - 1)
+                        {
+                            results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, QueryEndDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                        }
+                        else
+                        {
+                            results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, changes[i + 1].ChangeDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                        }
+                    }
+                }
             }
 
-            // Invert the chart results and add to array
+            // Invert the chart results and add to results array
             foreach (var item in chartSource)
             {
                 // Get person from name of item
@@ -163,6 +191,10 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Couldn't find person {item.Label}");
                     continue;
                 }
+
+
+                // TODO: This is not so simple now as their availabilty will vary here! //
+
 
                 var availability = (int)(person.AvailabilityFTE * 100 / .84);
 
@@ -262,10 +294,11 @@ namespace PPMTool.Pages
                                 var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
                                 return Math.Round(person.Percentage / .84);
                             },
-                            x =>
+                            (x, w) =>
                             {
                                 var person = peo.FirstOrDefault(y => y.Name == group.Key);
-                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                                var availability = person?.GetAvailability(w);
+                                return ChartItem.GetColourStringFTE(x,  availability * 100 / 84 ?? 100);
                             },
                             group.Key,
                             QueryActive ? QueryStartDate : null,
@@ -317,10 +350,11 @@ namespace PPMTool.Pages
                                 var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
                                 return Math.Round(person.Percentage / .84);
                             },
-                            x =>
+                            (x, w) =>
                             {
                                 var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
-                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                                var availability = person?.GetAvailability(w);
+                                return ChartItem.GetColourStringFTE(x, availability * 100 / 84 ?? 100);
                             },
                             group.Key,
                             QueryActive ? QueryStartDate : null,

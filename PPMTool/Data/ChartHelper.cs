@@ -14,7 +14,7 @@ namespace PPMTool.Data
         /// <param name="label"></param>
         /// <param name="subTasks">Assignments to aggregate</param>
         /// <param name="valueFunction">Function used to generate the value for the block by summing the value returned by the function over the sub tasks</param>
-        /// <param name="colourFunction">Function used to generate the colour for the block based on its value</param>
+        /// <param name="colourFunction">Function used to generate the colour for the block based on its value and the week beginning of the block</param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
@@ -22,7 +22,7 @@ namespace PPMTool.Data
         public static IEnumerable<ChartItem> AggregateByWeekIntoBlocks(
             IEnumerable<SubTask> subTasks,
             Func<SubTask, double> valueFunction,
-            Func<double, string> colourFunction,
+            Func<double, DateTime, string> colourFunction,
             string label,
             DateTime? startDate = null,
             DateTime? endDate = null,
@@ -50,11 +50,17 @@ namespace PPMTool.Data
 
             // Start marching at a 1 week resolution
             DateTime currentWeek = start;
-            DateTime currentSeriesStart = start;
+            DateTime currentBlockStart = start;
+
+            // Parameters used to determine when a block should be completed and a new block started
             double valueTracked = -1d;    // Initialise to something unique so we can detect the first pass through
             double valueSumWeek = 0d;
             bool? hatchedTracked = null;
             bool hatchedWeek = false;
+            string colourTracked = string.Empty;
+            string colourWeek = string.Empty;
+
+            // March through 1 week at a time
             while (currentWeek < end)
             {
                 // Find assignments within current week
@@ -66,32 +72,39 @@ namespace PPMTool.Data
                 // Set hatched for the current week
                 hatchedWeek = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
 
+                // Set colour for the current week
+                colourWeek = colourFunction(valueSumWeek, currentWeek);
+
+                // Set colour state for the first time
+                if (colourTracked == string.Empty) colourTracked = colourWeek;
+
                 // Set hatched state for the first time
                 if (hatchedTracked == null) hatchedTracked = hatchedWeek;
 
-                // Set the value for the first element
+                // Set the value for the first block
                 if (valueTracked == -1d) valueTracked = valueSumWeek;
 
-                // If value changed or hatched flag has changed then save and reset tracking params
-                if (valueSumWeek != valueTracked || hatchedWeek != hatchedTracked)
+                // If value changed or hatched flag has changed then complete block and reset tracking params
+                if (valueSumWeek != valueTracked || hatchedWeek != hatchedTracked || colourWeek != colourTracked)
                 {
                     // Only add an element if the value is non-zero
                     if (valueTracked != 0d)
                     {
                         // Decide on labelling
                         temp.Add(new ChartItem(
-                            colourFunction(valueTracked),
+                            colourTracked,
                             label,
-                            currentSeriesStart,
+                            currentBlockStart,
                             currentWeek,
                             valueTracked,
                             0,
                             hatchedTracked ?? false
                         ));
                     }
-                    currentSeriesStart = currentWeek;
+                    currentBlockStart = currentWeek;
                     valueTracked = valueSumWeek;
                     hatchedTracked = hatchedWeek;
+                    colourTracked= colourWeek;
                 }
 
                 // Increment by 1 week
@@ -102,13 +115,13 @@ namespace PPMTool.Data
             if (valueTracked != 0d)
             {
                 temp.Add(new ChartItem(
-                    colourFunction(valueSumWeek),
+                    colourWeek,
                     label,
-                    currentSeriesStart,
+                    currentBlockStart,
                     currentWeek,
                     valueSumWeek,
                     0,
-                    hatchedTracked ?? false
+                    hatchedWeek
                 ));
             }
             return temp;
