@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 namespace PPMTool.Data
 {
     /// <summary>
-    /// Represents an aggregation of the assignments of a particular person for the purposes of plotting
+    /// Represents an aggregation of the assignments of a particular person for the purposes of plotting.
+    /// Can hold a couple of values that can vary in menaing depending on the chart being used.
     /// </summary>
     public class ChartItem
     {
@@ -35,12 +36,23 @@ namespace PPMTool.Data
             IsHatched = isHatched;
         }
 
+        /// <summary>
+        /// Helper method to get the colour string from an occpuancy
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="capacity"></param>
+        /// <returns></returns>
         public static string GetColourStringFTE(double value, double capacity)
         {
             var percent = (int)Math.Round(value / capacity);
             return GetColourStringPercentage(percent);
         }
 
+        /// <summary>
+        /// Helper method to get the colour string from a percentage
+        /// </summary>
+        /// <param name="percent"></param>
+        /// <returns></returns>
         public static string GetColourStringPercentage(double percent)
         {
             if (percent < 50) return "#488f31";

@@ -56,7 +56,7 @@
                         <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="Default FTE" />
                         <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="FTE Changes" Sortable="false">
                             <Template Context="p">
-                                @string.Join('\n', p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} @ {d.AvailabilityFTE}"))
+                                @string.Join(" | ", p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.AvailabilityFTE}"))
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" />

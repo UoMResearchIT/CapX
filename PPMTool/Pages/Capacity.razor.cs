@@ -209,16 +209,17 @@ namespace PPMTool.Pages
                     continue;
                 }
 
+                // Availability is value 2 in the chart item
+                var availability = (int)(item.Value2 * 100 / .84);
 
-                // TODO: This is not so simple now as their availabilty will vary here! //
+                // Invert value
+                var inv = availability - (int)item.Value1;
 
-
-                var availability = (int)(person.AvailabilityFTE * 100 / .84);
-
-                if ((int)item.Value1 < availability)
+                // Only add if it has some relevance...
+                if ((int)item.Value1 < availability && item.StartDate != item.EndDate && inv > 0)
                 {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, availability - (int)item.Value1));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, inv));
                 }
             }
 
@@ -311,11 +312,9 @@ namespace PPMTool.Pages
                                 var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
                                 return Math.Round(person.Percentage / .84);
                             },
-                            (x, w) =>
+                            (x, y) =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
-                                var availability = person?.GetAvailability(w);
-                                return ChartItem.GetColourStringFTE(x,  availability * 100 / 84 ?? 100);
+                                return ChartItem.GetColourStringFTE(x,  y * 100 / 84);
                             },
                             group.Key,
                             QueryActive ? QueryStartDate : null,
@@ -323,6 +322,11 @@ namespace PPMTool.Pages
                             x =>
                             {
                                 return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
+                            },
+                            (x, w) =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
+                                return person?.GetAvailability(w) ?? 0.84;
                             }
                         ).ToList();
 
@@ -367,11 +371,9 @@ namespace PPMTool.Pages
                                 var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
                                 return Math.Round(person.Percentage / .84);
                             },
-                            (x, w) =>
+                            (x, y) =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
-                                var availability = person?.GetAvailability(w);
-                                return ChartItem.GetColourStringFTE(x, availability * 100 / 84 ?? 100);
+                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
                             group.Key,
                             QueryActive ? QueryStartDate : null,
@@ -379,7 +381,13 @@ namespace PPMTool.Pages
                             x =>
                             {
                                 return x.AssignedResources.First(x => x.Person.Name == ChosenPerson).IsProvisional;
-                            }));
+                            },
+                            (x, w) =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
+                                return person?.GetAvailability(w) ?? 0.84;
+                            }
+                        ));
                     }
                 }
 

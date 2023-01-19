@@ -523,9 +523,11 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.AvailabilityChange", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.Person", null)
+                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
                         .WithMany("AvailabilityChanges")
                         .HasForeignKey("PersonId");
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Resource", b =>

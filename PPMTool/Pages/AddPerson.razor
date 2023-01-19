@@ -54,10 +54,10 @@
                         @foreach (var t in AvailableTags)
                         {
                             <div class="row">
-                                <div class="col-2">
+                                <div class="col-6">
                                     @t.Name
                                 </div>
-                                <div class="col my-1" style="display: flex">
+                                <div class="col-3 my-1" style="display: flex">
                                     <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
                                 </div>
                                 <br />
@@ -65,14 +65,21 @@
                         }
                 </div>
                 <div class="col">
-                    <h3>Availability Changes</h3>
+                    <div class="row">
+                        <div class="col-auto mr-auto">
+                            <h3>Availability Changes</h3>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" type="button" @onclick="@(args => EditAvailability())"><i class="oi oi-pencil" /> Edit</button>
+                        </div>
+                    </div>
                     @foreach (var d in personModel.AvailabilityChanges)
                     {
                         <div class="row">
-                            <div class="col-2">
+                            <div class="col-6">
                                 @d.ChangeDate.ToShortDateString()
                             </div>
-                            <div class="col-2">
+                            <div class="col-3">
                                 @d.AvailabilityFTE
                             </div>
                             <br />

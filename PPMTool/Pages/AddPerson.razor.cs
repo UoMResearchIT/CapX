@@ -55,6 +55,12 @@ namespace PPMTool.Pages
             }
         }
 
+        private void EditAvailability()
+        {
+            Logger.LogInformation("Editing availability changes...");
+            Navigation.NavigateTo($"/addavailabilitychange/{PersonId}");
+        }
+
         private void HandleValidSubmit()
         {
             Logger.LogInformation("Adding / editing person...");

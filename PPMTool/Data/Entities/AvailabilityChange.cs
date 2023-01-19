@@ -15,5 +15,7 @@ namespace PPMTool.Data.Entities
 
         [Required]
         public double AvailabilityFTE { get; set; }
+
+        public Person Person { get; set; }
     }
 }
