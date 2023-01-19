@@ -129,6 +129,12 @@ namespace PPMTool.Data.Entities
                 if (isEndDateDriven != value)
                 {
                     isEndDateDriven = value;
+                    
+                    // Update the end date to match the start date
+                    if (!isEndDateDriven && EndDate < StartDate)
+                    {
+                        EndDate= StartDate;
+                    }
                     OnEndDateDrivenChanged(new EventArgs());
                 }
             }
