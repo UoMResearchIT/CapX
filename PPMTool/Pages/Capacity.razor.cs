@@ -67,7 +67,16 @@ namespace PPMTool.Pages
             }
         }
 
-        public DateTime QueryStartDate { get; set; } = DateTime.Now.Date;
+        private DateTime queryStartDate = DateTime.Now.Date;
+        public DateTime QueryStartDate
+        {
+            get => queryStartDate;
+            set
+            {
+                queryStartDate = value;
+                if (QueryEndDate < queryStartDate) QueryEndDate = queryStartDate.AddDays(7);
+            }
+        }
         public DateTime QueryEndDate { get; set; } = DateTime.Now.Date.AddDays(7);
         public IEnumerable<CapacityQueryItem> QueryResults { get; private set; }
 
@@ -171,11 +180,19 @@ namespace PPMTool.Pages
                         // If the last change then use query end date
                         if (i == changes.Count - 1)
                         {
-                            results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, QueryEndDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                            // Filter out availability of less than a day or 0%
+                            if (QueryEndDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            {
+                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, QueryEndDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                            }
                         }
                         else
                         {
-                            results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, changes[i + 1].ChangeDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                            // Filter out availability of less than a day or 0%
+                            if (changes[i + 1].ChangeDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            {
+                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, changes[i + 1].ChangeDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                            }
                         }
                     }
                 }
