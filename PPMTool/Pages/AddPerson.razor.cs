@@ -24,8 +24,7 @@ namespace PPMTool.Pages
 
         private Person personModel = new();
         private PPMToolContext context;
-
-        private IEnumerable<Tag> AvailableTags { get; set; }
+        private IEnumerable<Tag> availableTags;
 
         protected override void OnInitialized()
         {
@@ -36,7 +35,7 @@ namespace PPMTool.Pages
             var entities = TagService.GetAllTags(context).ToList();
             var list = new List<Tag>();
             foreach (var t in entities) list.Add(new Tag(t.Name));
-            AvailableTags = list;
+            availableTags = list;
 
             // Load the person model if necessary
             if (PersonId > -1)
@@ -48,7 +47,7 @@ namespace PPMTool.Pages
                 {
                     foreach (var tag in personModel.SkillTags)
                     {
-                        var item = AvailableTags.FirstOrDefault(x => x.Name == tag.Name);
+                        var item = availableTags.FirstOrDefault(x => x.Name == tag.Name);
                         if (item != null) item.Checked = true;
                     }
                 }
@@ -67,7 +66,7 @@ namespace PPMTool.Pages
 
             // Add tags to person model
             personModel.SkillTags = new List<SkillTag>();
-            foreach (var t in AvailableTags)
+            foreach (var t in availableTags)
             {
                 if (t.Checked)
                 {

@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Build.Framework;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -34,8 +32,7 @@ namespace PPMTool.Pages
         [Parameter]
         public int TaskId { get; set; }
 
-        public string PredecessorId { get; set; }
-
+        private string predecessorId;
         private Project projectModel;
         private SubTask taskModel = new SubTask();
         private IList<Resource> resources = new List<Resource>();
@@ -59,7 +56,7 @@ namespace PPMTool.Pages
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
 
                 // Assign the predecessor option
-                if (taskModel.Predecessor != null) PredecessorId = taskModel.Predecessor.SubTaskId.ToString();
+                if (taskModel.Predecessor != null) predecessorId = taskModel.Predecessor.SubTaskId.ToString();
             }
 
             // Update the resources
@@ -197,7 +194,7 @@ namespace PPMTool.Pages
                 taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
                 // Create predecessor on the sub task
-                if (int.TryParse(PredecessorId, out var id))
+                if (int.TryParse(predecessorId, out var id))
                 {
                     taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
                 }
@@ -232,7 +229,7 @@ namespace PPMTool.Pages
                     {
                         // Add the subtask to the database
                         SubTaskService.Add(context, taskModel);
-                        
+
                         // Add reference to the project
                         projectModel.SubTasks.Add(taskModel);
                     }

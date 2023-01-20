@@ -3,15 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace PPMTool.Pages
 {

@@ -138,7 +138,7 @@
                         <label>Predecessor</label>
                     </div>
                     <div class="col">
-                        <InputSelect @bind-Value="PredecessorId" disabled="@taskModel.IsDone">
+                        <InputSelect @bind-Value="predecessorId" disabled="@taskModel.IsDone">
                             <option value="">None</option>
                             @foreach (var t in projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor?.SubTaskId != taskModel.SubTaskId))
                             {
