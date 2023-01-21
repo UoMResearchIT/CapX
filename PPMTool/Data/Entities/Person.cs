@@ -32,7 +32,12 @@ namespace PPMTool.Data.Entities
         public DateTime StartDate { get; set; } = DateTime.Now.Date;
 
         [Required]
-        public double AvailabilityFTE { get; set; } = 0.84;
+        public double DefaultAvailabilityFTE { get; set; } = 0.84;
+
+        /// <summary>
+        /// Notes on their baseline activities or whether they are part time etc. to explain their default availability
+        /// </summary>
+        public string BaselineActivities { get; set; }
 
         public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
 
@@ -62,7 +67,7 @@ namespace PPMTool.Data.Entities
         internal double GetAvailability(DateTime date)
         {
             // Set as default availability initially
-            var availability = AvailabilityFTE;
+            var availability = DefaultAvailabilityFTE;
 
             // If there are changes then check them
             if (AvailabilityChanges.Count > 0)

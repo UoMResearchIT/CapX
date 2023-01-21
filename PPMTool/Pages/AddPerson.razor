@@ -25,6 +25,14 @@
             </div>
             <div class="row">
                 <div class="col-3">
+                    <label for="StartDate">Start Date</label>
+                </div>
+                <div class="col">
+                    <InputDate @bind-Value="personModel.StartDate" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label for="DayRate">Default Day Rate (£)</label>
                 </div>
                 <div class="col">
@@ -33,18 +41,18 @@
             </div>
             <div class="row">
                 <div class="col-3">
-                    <label for="AvailabilityFTE">Availability (FTE)</label>
+                    <label for="DefaultAvailabilityFTE">Default Availability (FTE)</label>
                 </div>
                 <div class="col">
-                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.AvailabilityFTE" />
+                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.DefaultAvailabilityFTE" />
                 </div>
             </div>
             <div class="row">
                 <div class="col-3">
-                    <label for="StartDate">Start Date</label>
+                    <label for="BaselineActivities">Availability Notes</label>
                 </div>
                 <div class="col">
-                    <InputDate @bind-Value="personModel.StartDate" />
+                    <InputText @bind-Value="personModel.BaselineActivities" />
                 </div>
             </div>
             <hr />
@@ -76,11 +84,14 @@
                     @foreach (var d in personModel.AvailabilityChanges)
                     {
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-3">
                                 @d.ChangeDate.ToShortDateString()
                             </div>
                             <div class="col-3">
                                 @d.AvailabilityFTE
+                            </div>
+                            <div class="col-6">
+                                <p>@d.BaselineActivities</p>
                             </div>
                             <br />
                         </div>

@@ -16,6 +16,11 @@ namespace PPMTool.Data.Entities
         [Required]
         public double AvailabilityFTE { get; set; }
 
+        /// <summary>
+        /// Notes on their baseline activities or whether they are part time to explain the change
+        /// </summary>
+        public string BaselineActivities { get; set; }
+
         public Person Person { get; set; }
     }
 }

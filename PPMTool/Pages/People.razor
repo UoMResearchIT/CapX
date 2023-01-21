@@ -45,21 +45,22 @@
                         LoadData="@LoadData">
                     <Columns>
                         <RadzenDataGridColumn TItem="Person" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
-                            <Template Context="person">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditPerson(person))" @onclick:stopPropagation="true">
+                            <Template Context="p">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true">
                                 </RadzenButton>
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.StartsWith" />
                         <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" FilterOperator="FilterOperator.StartsWith" />
                         <RadzenDataGridColumn TItem="Person" Property="DayRate" Title="Day Rate" FormatString="{0:C0}" Filterable="false" />
-                        <RadzenDataGridColumn TItem="Person" Property="AvailabilityFTE" Title="Default FTE" />
+                        <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" />
+                        <RadzenDataGridColumn TItem="Person" Property="DefaultAvailabilityFTE" Title="Default FTE" />
                         <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="FTE Changes" Sortable="false">
                             <Template Context="p">
                                 @string.Join(" | ", p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.AvailabilityFTE}"))
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" />
+                        <RadzenDataGridColumn TItem="Person" Property="BaselineActivities" Title="Availability Notes" Sortable="false" />
                         <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false">
                             <Template Context="p">
                                 @string.Join(',', p.SkillTags.Select(t => t.Name))

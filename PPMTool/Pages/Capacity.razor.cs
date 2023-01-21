@@ -168,12 +168,12 @@ namespace PPMTool.Pages
                 // If no changes then use default availability
                 if (changes.Count == 0)
                 {
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.AvailabilityFTE * 100 / .84)));
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.DefaultAvailabilityFTE * 100 / .84)));
                 }
                 else
                 {
                     // First period uses the default availability up to the first change
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.AvailabilityFTE * 100 / .84)));
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.DefaultAvailabilityFTE * 100 / .84)));
 
                     // Subsequent ones use the new settings
                     for (int i = 1; i < changes.Count; ++i)

@@ -26,6 +26,14 @@
                         <InputNumber min="0.0" step="0.001" @bind-Value="changeModel.AvailabilityFTE" />
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-3">
+                        <label for="BaselineActivities">Availability Notes</label>
+                    </div>
+                    <div class="col">
+                        <InputText @bind-Value="changeModel.BaselineActivities" />
+                    </div>
+                </div>
                 <div>
                     <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Add</button>
                 </div>
@@ -41,6 +49,7 @@
                         <tr>
                             <th>Change Date</th>
                             <th>New FTE</th>
+                            <th>Notes</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -50,6 +59,7 @@
                             <tr>
                                 <td>@change.ChangeDate.ToShortDateString()</td>
                                 <td>@change.AvailabilityFTE</td>
+                                <td>@change.BaselineActivities</td>
                                 <td><button class="btn btn-danger" @onclick=@(args => DeleteChange(change.AvailabilityChangeId))><i class="oi oi-trash" /> Delete</button></td>
                             </tr>
                         }
