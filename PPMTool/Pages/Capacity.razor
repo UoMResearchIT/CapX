@@ -124,7 +124,8 @@
                 <ApexChart @ref="chart"
                    TItem="ChartItem"
                    Options=options
-                   XAxisType="XAxisType.Datetime">
+                   XAxisType="XAxisType.Datetime"
+                   OnDataPointSelection=DataPointsSelected>
                     <ChildContent>
                         <ApexRangeSeries TItem="ChartItem"
                                  Items="chartSource"

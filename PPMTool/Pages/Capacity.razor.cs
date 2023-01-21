@@ -119,6 +119,27 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Method to handle when a series element on the chart is selected
+        /// </summary>
+        /// <param name="dataPoint"></param>
+        private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
+        {
+            // Only so the navigation when in project view mode
+            if (dataPoint.IsSelected && ChosenPerson != "All" && ChosenPerson != null)
+            {
+                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
+
+                // Use the title of the task to find its projectID then navigate to the details page
+                var project = ProjectService.GetAll(context).FirstOrDefault(x => x.Name == projectName);
+                if (project != null)
+                {
+                    Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");
+                }
+            }
+        }
+
+        /// <summary>
         /// Resets the page to its initial state
         /// </summary>
         private async void ClearQueryAsync()
@@ -400,6 +421,7 @@ namespace PPMTool.Pages
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
 
+                // Format X Axis range
                 options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
                 options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
 
