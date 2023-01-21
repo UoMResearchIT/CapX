@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -34,6 +35,16 @@ namespace PPMTool.Pages
         {
             if (ProjectId > -1 && !discardChanges)
             {
+                // Check to see if the project is marked as cancelled as then we need to remove resources.
+                // Leave resources on completed projects so we have a historical record.
+                if (projectModel.ProjectStatus == Enums.ProjectStatus.Cancelled)
+                {
+                    foreach (SubTask t in projectModel.SubTasks)
+                    {
+                        t.AssignedResources.Clear();
+                    }
+                }
+
                 Logger.LogInformation($"Edit project {ProjectId} saved...");
                 ProjectService.Update(context, projectModel);
             }
