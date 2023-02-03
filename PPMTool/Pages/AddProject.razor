@@ -80,6 +80,14 @@
                     </InputSelect>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="InnateActivityCode">Innate Activity Code</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="projectModel.InnateActivityCode" />
+                </div>
+            </div>
 
             <div>
             <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = false; })"><i class="oi oi-check" /> Save</button>
