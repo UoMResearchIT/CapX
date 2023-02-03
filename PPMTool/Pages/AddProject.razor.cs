@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -11,6 +11,9 @@ namespace PPMTool.Pages
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private IJSRuntime JsRuntime { get; set; }
 
         [Parameter]
         public int ProjectId { get; set; }
@@ -68,6 +71,27 @@ namespace PPMTool.Pages
             else
             {
                 Navigation.NavigateTo("projects");
+            }
+        }
+
+        private async void DeleteProject()
+        {
+            if (ProjectId > -1)
+            {
+                // Prompt
+                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete project {projectModel.Name}. " +
+                    $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.");
+                if (confirmed)
+                {
+                    Logger.LogInformation($"Deleting project {projectModel.Name}");
+
+                    // Delete the project from the database
+                    // EF will automatically remove the subtasks and resources too
+                    ProjectService.DeleteProject(context, projectModel);
+
+                    // Navigate back to the projects list
+                    Navigation.NavigateTo("projects");
+                }
             }
         }
     }

@@ -9,7 +9,14 @@
     }
     else
     {
-        <h1>Edit Project</h1>
+        <div class="row">
+            <div class="col">
+                <h1>Edit @projectModel.Name</h1>
+            </div>
+            <div class="col-auto" style="align-content: center">
+                <button class="btn btn-danger" type="button" @onclick="DeleteProject"><i class="oi oi-trash" /> Delete</button>
+            </div>
+        </div>
     }
     <div class="card">
         <EditForm Model="@projectModel" OnValidSubmit="@HandleValidSubmit">
