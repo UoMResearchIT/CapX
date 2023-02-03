@@ -450,5 +450,13 @@ namespace PPMTool.Pages
             // Force blazor redraw
             await InvokeAsync(StateHasChanged);
         }
+
+        /// <summary>
+        /// Method to export the capacity information in a format suitable for ITS GaDMO reporting
+        /// </summary>
+        private void ExportCapacityData()
+        {
+            // TODO
+        }
     }
 }
