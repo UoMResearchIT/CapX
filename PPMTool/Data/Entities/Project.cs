@@ -30,9 +30,6 @@ namespace PPMTool.Data.Entities
         [Required]
         public ProjectStatus ProjectStatus { get; set; }
 
-        [Required]
-        public string InnateActivityCode { get; set; }
-
         /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database
         /// </summary>

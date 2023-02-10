@@ -12,7 +12,8 @@ namespace PPMTool.Migrations
                 name: "InnateActivity",
                 table: "SubTasks",
                 type: "TEXT",
-                nullable: true);
+                nullable: false,
+                defaultValue: "RCS04 - Research Software & Data Engineering (RSDE) Support");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
