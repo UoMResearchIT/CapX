@@ -35,6 +35,14 @@
             </div>
             <div class="row">
                 <div class="col-3">
+                    <label>Innate Activity</label>
+                </div>
+                <div class="col">
+                    <InputText class="wide-input" @bind-Value="taskModel.InnateActivity" disabled="@taskModel.IsDone" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label>Done?</label>
                 </div>
                 <div class="col" style="display: flex">

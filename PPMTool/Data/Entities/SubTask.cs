@@ -141,6 +141,11 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// The Innate Activity Code to which this work is booked on the timesheeting system
+        /// </summary>
+        public string InnateActivity { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units / 100
         /// Units = Sum of Resource Percentage
