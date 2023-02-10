@@ -456,7 +456,13 @@ namespace PPMTool.Pages
         /// </summary>
         private void ExportCapacityData()
         {
-            // TODO
+            // TODO: Get all the people
+
+            // Get data for each person
+
+            // Reformat to rows and write file
+
+
         }
     }
 }
