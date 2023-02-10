@@ -19,17 +19,13 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private PPMToolContext context;
         private int count;
+        private int pageCount = 10;
 
         protected override void OnInitialized()
         {
             // Get people from the database
             context = new PPMToolContext();
-            var peo = PersonService.GetAll(context).OrderBy(x => x.Name);
-            if (peo.Count() > 0)
-            {
-                people = peo;
-                count = people.Count();
-            }
+            LoadData(new LoadDataArgs());
         }
 
         private void EditPerson(Person person)
@@ -70,7 +66,14 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging via Skip and Take.
-            people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            if (args.Skip == null)
+            {
+                people = query.Take(pageCount).ToList();
+            }
+            else
+            {
+                people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            }
 
             Debug.WriteLine($"{people.Count()} people loaded!");
         }
