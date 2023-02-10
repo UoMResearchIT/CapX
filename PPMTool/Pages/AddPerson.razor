@@ -33,6 +33,14 @@
             </div>
             <div class="row">
                 <div class="col-3">
+                    <label for="FTE">FTE (i.e. full-time or part-time)</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.FTE" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label for="DayRate">Default Day Rate (£)</label>
                 </div>
                 <div class="col">
@@ -41,7 +49,7 @@
             </div>
             <div class="row">
                 <div class="col-3">
-                    <label for="DefaultAvailabilityFTE">Default Availability (FTE)</label>
+                    <label for="DefaultAvailabilityFTE">Default Project Availability (FTE)</label>
                 </div>
                 <div class="col">
                     <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.DefaultAvailabilityFTE" />

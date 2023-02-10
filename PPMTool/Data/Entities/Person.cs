@@ -32,6 +32,9 @@ namespace PPMTool.Data.Entities
         public DateTime StartDate { get; set; } = DateTime.Now.Date;
 
         [Required]
+        public double FTE { get; set; } = 0.84;
+
+        [Required]
         public double DefaultAvailabilityFTE { get; set; } = 0.84;
 
         /// <summary>
