@@ -1,95 +1,158 @@
-﻿using PPMTool.Data.Entities;
+﻿using Microsoft.AspNetCore.Components;
+using PPMTool.Data.Entities;
+using PPMTool.Services;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PPMTool.Data
 {
     public class ExportHelper
     {
         /// <summary>
-        /// Represents a task whose load is stored for 6 months
+        /// Represents a task (row on the export sheet)
         /// </summary>
         public class TaskData
         {
-            public bool IsBaseline { get; }
+            public bool IsBaseline { get; set; }
 
-            // Hardcoded to 6 months. Could make it generic?
-            float[] values = new float[6];
+            public string EmployeeNumber { get; set; }
 
-            string Name { get; }
+            public string RRAR { get; set; }
 
-            public TaskData(bool isBaseline, string name)
+            public string Domain { get; set; } = "RIT";
+
+            public string EmployeeName { get; set; }
+
+            public double FTE { get; set; }
+
+            public string Manager { get; set; }
+
+            public string TaskDescription { get; set; }
+
+            public string InnateActivity { get; set; }
+
+
+            private Dictionary<int, int?> dataByMonth = new Dictionary<int, int?>();
+
+            public int? Get(int month)
             {
-                IsBaseline = isBaseline;
-                Name = name;
+                if (dataByMonth.TryGetValue(month, out var data))
+                {
+                    return data;
+                }
+                return 0;
             }
 
-            public double Get(int month)
+            public void Set(int month, int? value)
             {
-                return values[month];
-            }
-
-            public void Set(int month, float value)
-            {
-                values[month] = value;
+                if (dataByMonth.ContainsKey(month))
+                {
+                    dataByMonth[month] = value;
+                }
+                else
+                {
+                    dataByMonth.Add(month, value);
+                }
             }
         }
 
         /// <summary>
-        /// Represents the collective data to be exported for an individual
+        /// Given a person, prepare data from database with a monthly granularity
         /// </summary>
-        public class ExportData
+        /// <param name="person">Person who is being exported</param>
+        /// <param name="subTasks">All subtasks as retireved from the subtask service</param>
+        /// <param name="numMonthsIntoFuture">Number of months into the future we want data for</param>
+        /// <returns>List of data items</returns>
+        public IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, int numMonthsIntoFuture)
         {
-            IEnumerable<TaskData> TaskData { get; }
-
-            string Name { get; }
-
-            double FTE { get; }
-
-            public ExportData(string personName, float fte)
-            {
-                TaskData = new List<TaskData>();
-                Name = personName;
-                FTE = fte;
-            }
-
-        }
-
-        /// <summary>
-        /// Given a person, prepare data
-        /// </summary>
-        /// <param name="person"></param>
-        /// <returns></returns>
-        public ExportData GetExportDataForPerson(Person person)
-        {
-            // Setup the data structure for this person
-            var data = new ExportData(person.Name, ((int)Math.Round(person.FTE * 100 / .84)) / 100f);
+            // New list
+            var data = new List<TaskData>();
 
             // Set reference months
             var now = DateTime.Now.Date;
-            var startMonth = new DateTime(now.Year, now.Month, 1);
+            var startDate = new DateTime(now.Year, now.Month, 1);
             var monthNum = 0;
-            var endMonth = startMonth.AddMonths(7);
+            var endDate = startDate.AddMonths(numMonthsIntoFuture + 1);
+            var currentDate = startDate.AddMonths(1).Date;
 
             // March forward month by month
-            while (startMonth.AddMonths(monthNum).Date < endMonth)
+            while (currentDate < endDate)
             {
-                // TODO: Check for baseline tasks based on availability and FTE of the post
+                // If there is an availability change this month then update their baseline
+                var availabilityChanges = person.AvailabilityChanges.Where(x => x.ChangeDate.Month == currentDate.Month).ToList();
+                if (availabilityChanges.Count > 0)
+                {
+                    // Get the lowest availability for the month as the focus for the month
+                    var focus = availabilityChanges.OrderByDescending(x => x.AvailabilityFTE).FirstOrDefault();
 
+                    // Find existing baseline task if exists
+                    var existing = data.FirstOrDefault(x => x.IsBaseline);
+                    if (existing != null)
+                    {
+                        // Update description and add value for this month
+                        existing.InnateActivity = focus.BaselineActivities;
+                        existing.Set(currentDate.Month, (int)Math.Round(100 * focus.AvailabilityFTE / .84));
+                    }
+                    else
+                    {
+                        // Add a new baseline task and value
+                        var task = new TaskData
+                        {
+                            EmployeeName = person.Name,
+                            FTE = (int)Math.Round(person.FTE / 0.84),
+                            IsBaseline = true,
+                            InnateActivity = focus.BaselineActivities
+                        };
+                        existing.Set(currentDate.Month, (int)Math.Round(100 * focus.AvailabilityFTE / .84));
+                        data.Add(task);
+                    }
+                }
 
-                // Create a baseline task if their default availability is lower than their FTE
+                // If person hasn't started yet in this month then set value of all tasks for this month to blank
+                if (person.EndDate != null && person.EndDate.Value.Date.Month > currentDate.Date.Month)
+                {
+                    foreach (var task in data)
+                    {
+                        task.Set(currentDate.Month, null);
+                    }
+                }
+                else
+                {
+                    // Assume load is whatever is running on the 1st of the month
+                    var tasksOnFirst = subTasks.Where(x => x.StartDate <= currentDate && x.EndDate >= currentDate);
 
-                // Create a baseline task any time a person's availablity changes and remains below their baseline availability
+                    foreach (var t in tasksOnFirst)
+                    {
 
-                // Get all the subtasks
+                        // Add / update a row for every task running on the first of the month
+                        var existing = data.FirstOrDefault(x => x.TaskDescription == t.Name);
+                        if (existing != null)
+                        {
+                            // Add new month entry
+                            existing.Set(currentDate.Month, (int)t.AssignedResources.First(x => x.Person == person).Percentage);
+                        }
+                        else
+                        {
+                            // Add new task
+                            var task = new TaskData
+                            {
+                                EmployeeName = person.Name,
+                                FTE = (int)Math.Round(person.FTE / 0.84),
+                                TaskDescription = t.Name,
+                                InnateActivity = t.InnateActivity
+                            };
+                            existing.Set(currentDate.Month, (int)t.AssignedResources.First(x => x.Person == person).Percentage);
+                            data.Add(task);
+                        }
 
-
-
+                    }
+                }
                 monthNum++;
             }
 
-
+            return data;
             
         }
 

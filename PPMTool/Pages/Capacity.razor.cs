@@ -10,6 +10,7 @@ using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -186,15 +187,15 @@ namespace PPMTool.Pages
                 // Get any changes ordered by date
                 var changes = person.AvailabilityChanges.Where(x => x.ChangeDate >= QueryStartDate && x.ChangeDate < queryEndDate).OrderBy(x => x.ChangeDate).ToList();
 
-                // If no changes then use default availability
+                // If no changes then use post FTE
                 if (changes.Count == 0)
                 {
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.DefaultAvailabilityFTE * 100 / .84)));
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
                 }
                 else
                 {
-                    // First period uses the default availability up to the first change
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.DefaultAvailabilityFTE * 100 / .84)));
+                    // First period uses the post FTE up to the first change
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.FTE * 100 / .84)));
 
                     // Subsequent ones use the new settings
                     for (int i = 1; i < changes.Count; ++i)
@@ -353,7 +354,7 @@ namespace PPMTool.Pages
                             (x, w) =>
                             {
                                 var person = peo.FirstOrDefault(y => y.Name == group.Key);
-                                return person?.GetAvailability(w) ?? 0.84;
+                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
                             }
                         ).ToList();
 
@@ -412,7 +413,7 @@ namespace PPMTool.Pages
                             (x, w) =>
                             {
                                 var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
-                                return person?.GetAvailability(w) ?? 0.84;
+                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
                             }
                         ));
                     }
@@ -456,11 +457,23 @@ namespace PPMTool.Pages
         /// </summary>
         private void ExportCapacityData()
         {
-            // TODO: Get all the people
+            // Get all the people
+            var people = PersonService.GetAll(context);
+
+            // Create blank list of data
+            var allData = new List<ExportHelper.TaskData>();
 
             // Get data for each person
+            var helper = new ExportHelper();
+            foreach (var p in people)
+            {
+                // Assume 6 months for now
+                var data = helper.GetExportDataForPerson(p, SubTaskService.GetAll(context), 6);
+                allData.AddRange(data);
+            }
 
-            // Reformat to rows and write file
+            // TODO: Reformat to rows and write file
+
 
 
         }

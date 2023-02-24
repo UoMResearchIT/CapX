@@ -33,6 +33,14 @@
             </div>
             <div class="row">
                 <div class="col-3">
+                    <label for="EndDate">End Date</label>
+                </div>
+                <div class="col">
+                    <InputDate @bind-Value="personModel.EndDate" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label for="FTE">FTE (i.e. full-time or part-time)</label>
                 </div>
                 <div class="col">
@@ -45,22 +53,6 @@
                 </div>
                 <div class="col">
                     <InputNumber min="0" step="1" placeholder="0" @bind-Value="personModel.DayRate" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="DefaultAvailabilityFTE">Default Project Availability (FTE)</label>
-                </div>
-                <div class="col">
-                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.DefaultAvailabilityFTE" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="BaselineActivities">Availability Notes</label>
-                </div>
-                <div class="col">
-                    <InputText @bind-Value="personModel.BaselineActivities" />
                 </div>
             </div>
             <hr />

@@ -54,14 +54,13 @@
                         <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" FilterOperator="FilterOperator.StartsWith" />
                         <RadzenDataGridColumn TItem="Person" Property="DayRate" Title="Day Rate" FormatString="{0:C0}" Filterable="false" />
                         <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" />
+                        <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" FormatString="{0:d}" />
                         <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" />
-                        <RadzenDataGridColumn TItem="Person" Property="DefaultAvailabilityFTE" Title="Default Project Availability" />
                         <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="Availability Changes" Sortable="false">
                             <Template Context="p">
                                 @string.Join(" | ", p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.AvailabilityFTE}"))
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Person" Property="BaselineActivities" Title="Availability Notes" Sortable="false" />
                         <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false">
                             <Template Context="p">
                                 @string.Join(',', p.SkillTags.Select(t => t.Name))

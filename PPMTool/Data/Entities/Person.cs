@@ -31,17 +31,14 @@ namespace PPMTool.Data.Entities
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Now.Date;
 
+        public DateTime? EndDate { get; set; }
+
         [Required]
         public double FTE { get; set; } = 0.84;
 
-        [Required]
-        public double DefaultAvailabilityFTE { get; set; } = 0.84;
-
         /// <summary>
-        /// Notes on their baseline activities or whether they are part time etc. to explain their default availability
+        /// Any changes to their availability which includes the undertaking of baseline activities
         /// </summary>
-        public string BaselineActivities { get; set; }
-
         public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
 
         public ICollection<SkillTag> SkillTags { get; set; }
@@ -67,10 +64,10 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal double GetAvailability(DateTime date)
+        internal double GetAvailabilityOnDate(DateTime date)
         {
-            // Set as default availability initially
-            var availability = DefaultAvailabilityFTE;
+            // Set as post availability initially
+            var availability = FTE;
 
             // If there are changes then check them
             if (AvailabilityChanges.Count > 0)
