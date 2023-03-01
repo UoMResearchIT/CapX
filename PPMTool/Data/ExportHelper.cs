@@ -190,7 +190,7 @@ namespace PPMTool.Data
                 currentDate = currentDate.AddMonths(1).Date;
             }
 
-            Debug.WriteLine($"Exported {data.Count} rows for {person.Name}");
+            Debug.WriteLine($"** Exported {data.Count} rows for {person.Name}");
             return data;
             
         }

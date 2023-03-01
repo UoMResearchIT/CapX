@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -10,6 +11,8 @@ using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -28,6 +31,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private IJSRuntime JS { get; set; }
 
         private string ChosenPerson
         {
@@ -85,7 +91,7 @@ namespace PPMTool.Pages
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
-        
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -346,7 +352,7 @@ namespace PPMTool.Pages
                             },
                             (x, y) =>
                             {
-                                return ChartItem.GetColourStringFTE(x,  y * 100 / 84);
+                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
                             group.Key,
                             queryActive ? QueryStartDate : null,
@@ -459,7 +465,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to export the capacity information in a format suitable for ITS GaDMO reporting
         /// </summary>
-        private void ExportCapacityData()
+        private async void ExportCapacityData()
         {
             // Get all the people
             var people = PersonService.GetAll(context).OrderBy(x => x.Name);
@@ -484,59 +490,76 @@ namespace PPMTool.Pages
                 allData.AddRange(data);
             }
 
-            // Write to CSV file
-            var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), filename);
-            using (var writer = new StreamWriter(path))
+            try
             {
 
-                // Get all public properties
-                var props = typeof(ExportHelper.TaskData).GetProperties();
-                var propNames = props.Select(x => x.Name);
-
-                // Create header row
-                var headers = propNames.ToList();
-                var startDate = DateTime.Now.Date;
-                var d = startDate;
-                while (d < startDate.AddMonths(numMonths))
+                // Write to CSV file
+                var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                Directory.CreateDirectory(folder);
+                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
+                using (var writer = new StreamWriter(path))
                 {
-                    // Convert month number to name for the column heading
-                    headers.Add($"{d.ToString("MMM", CultureInfo.InvariantCulture)} %");
 
-                    // Increment month
-                    d = d.AddMonths(1);
-                }
+                    // Get all public properties
+                    var props = typeof(ExportHelper.TaskData).GetProperties();
+                    var propNames = props.Select(x => x.Name);
 
-                // Write header row
-                writer.WriteLine(string.Join(",", headers));
-
-                // Write rows one at a time
-                foreach (var record in allData)
-                {
-                    // Write properties
-                    var valuesAsStrings = new List<string>();
-                    foreach (var name in propNames)
-                    {
-                        string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-                        valuesAsStrings.Add(value.Replace(",",";"));
-                    }
-
-                    // Write expanded values for months
-                    d = startDate;
+                    // Create header row
+                    var headers = propNames.ToList();
+                    var startDate = DateTime.Now.Date;
+                    var d = startDate;
                     while (d < startDate.AddMonths(numMonths))
                     {
-                        // Add the monthly value
-                        valuesAsStrings.Add(record.GetMonthlyValue(d.Month)?.ToString() ?? string.Empty);
+                        // Convert month number to name for the column heading
+                        headers.Add($"{d.ToString("MMM", CultureInfo.InvariantCulture)} %");
 
                         // Increment month
                         d = d.AddMonths(1);
                     }
 
-                    // Write the row
-                    writer.WriteLine(string.Join(",", valuesAsStrings));
+                    // Write header row
+                    writer.WriteLine(string.Join(",", headers));
+
+                    // Write rows one at a time
+                    foreach (var record in allData)
+                    {
+                        // Write properties
+                        var valuesAsStrings = new List<string>();
+                        foreach (var name in propNames)
+                        {
+                            string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+                            valuesAsStrings.Add(value.Replace(",", ";"));
+                        }
+
+                        // Write expanded values for months
+                        d = startDate;
+                        while (d < startDate.AddMonths(numMonths))
+                        {
+                            // Add the monthly value
+                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month)?.ToString() ?? string.Empty);
+
+                            // Increment month
+                            d = d.AddMonths(1);
+                        }
+
+                        // Write the row
+                        writer.WriteLine(string.Join(",", valuesAsStrings));
+                    }
                 }
+                Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+
+                // Get file stream
+                using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                // Invoke JS on the client to download the file
+                await JS.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
             }
-            Debug.WriteLine($"Exported {allData.Count} rows to {path}");
+            catch (Exception ex)
+            {
+                Logger.LogError($"Could not download file: {ex}");
+            }
         }
     }
 }
