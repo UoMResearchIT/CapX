@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Formats.Asn1;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using ApexCharts;
-using CsvHelper;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
@@ -462,28 +462,81 @@ namespace PPMTool.Pages
         private void ExportCapacityData()
         {
             // Get all the people
-            var people = PersonService.GetAll(context);
+            var people = PersonService.GetAll(context).OrderBy(x => x.Name);
 
             // Create blank list of data
             var allData = new List<ExportHelper.TaskData>();
+
+            // Set the report length
+            const int numMonths = 6;
 
             // Get data for each person
             var helper = new ExportHelper();
             foreach (var p in people)
             {
                 // Assume 6 months for now
-                var data = helper.GetExportDataForPerson(p, SubTaskService.GetAll(context), 6);
+                var data = helper.GetExportDataForPerson(
+                    p,
+                    SubTaskService.GetAll(context).Where(x => x.AssignedResources.Any(x => x.Person == p)),
+                    ProjectService.GetAll(context),
+                    numMonths
+                );
                 allData.AddRange(data);
             }
 
             // Write to CSV file
-            using (var writer = new StreamWriter(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), $"Capacity_{DateTime.Now.Ticks}.csv")))
+            var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), filename);
+            using (var writer = new StreamWriter(path))
             {
-                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+
+                // Get all public properties
+                var props = typeof(ExportHelper.TaskData).GetProperties();
+                var propNames = props.Select(x => x.Name);
+
+                // Create header row
+                var headers = propNames.ToList();
+                var startDate = DateTime.Now.Date;
+                var d = startDate;
+                while (d < startDate.AddMonths(numMonths))
                 {
-                    csv.WriteRecords(allData);
+                    // Convert month number to name for the column heading
+                    headers.Add($"{d.ToString("MMM", CultureInfo.InvariantCulture)} %");
+
+                    // Increment month
+                    d = d.AddMonths(1);
+                }
+
+                // Write header row
+                writer.WriteLine(string.Join(",", headers));
+
+                // Write rows one at a time
+                foreach (var record in allData)
+                {
+                    // Write properties
+                    var valuesAsStrings = new List<string>();
+                    foreach (var name in propNames)
+                    {
+                        string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+                        valuesAsStrings.Add(value.Replace(",",";"));
+                    }
+
+                    // Write expanded values for months
+                    d = startDate;
+                    while (d < startDate.AddMonths(numMonths))
+                    {
+                        // Add the monthly value
+                        valuesAsStrings.Add(record.GetMonthlyValue(d.Month)?.ToString() ?? string.Empty);
+
+                        // Increment month
+                        d = d.AddMonths(1);
+                    }
+
+                    // Write the row
+                    writer.WriteLine(string.Join(",", valuesAsStrings));
                 }
             }
+            Debug.WriteLine($"Exported {allData.Count} rows to {path}");
         }
     }
 }
