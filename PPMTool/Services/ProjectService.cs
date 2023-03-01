@@ -69,9 +69,25 @@ namespace PPMTool.Services
                 .ToList();
         }
 
+        /// <summary>
+        /// Get all the projects but pre-filter to only unfunded ones.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         internal IEnumerable<Project> GetUnfundedProjects(PPMToolContext context)
         {
             return GetAll(context).Where(p => p.ProjectStatus == ProjectStatus.Unfunded);
+        }
+
+        /// <summary>
+        /// Delete the project from the database.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectModel"></param>
+        internal void DeleteProject(PPMToolContext context, Project projectModel)
+        {
+            context.Projects.Remove(projectModel);
+            context.SaveChanges();
         }
     }
 }

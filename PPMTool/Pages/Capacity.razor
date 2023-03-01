@@ -4,13 +4,20 @@
 @using PPMTool.Data
 
 <div class="container">
-    @if (IsLoading)
+    @if (isLoading)
     {
         <div class="spinner"></div>
     }
     else
     {
-        <h1>Capacity</h1>
+        <div class="row">
+            <div class="col">
+                <h1>Capacity</h1>
+            </div>
+            <div class="col-auto" style="align-content: center">
+                <button class="btn btn-primary" type="button" @onclick="ExportCapacityData"><i class="oi oi-data-transfer-download" /> Export</button>
+            </div>
+        </div>
         <div class="card">
             <EditForm Model="this">
                 <div class="row align-items-center">
@@ -24,7 +31,7 @@
                         to
                     </div>
                     <div class="col-auto">
-                        <RadzenDatePicker @bind-Value="QueryEndDate" DateFormat="d" />
+                        <RadzenDatePicker @bind-Value="queryEndDate" DateFormat="d" />
                     </div>
                     <div class="col-auto">
                         Include Unfunded:
@@ -44,11 +51,11 @@
             </EditForm>
             <hr />
             <h3>Query Results</h3>
-            @if (!string.IsNullOrEmpty(QueryErrorMessage))
+            @if (!string.IsNullOrEmpty(queryErrorMessage))
             {
-                <p class="text-danger">@QueryErrorMessage</p>
+                <p class="text-danger">@queryErrorMessage</p>
             }
-            @if (QueryResults != null)
+            @if (queryResults != null)
             {
                 <table class="table table-sm table-striped table-bordered">
                     <thead>
@@ -61,7 +68,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var res in QueryResults)
+                        @foreach (var res in queryResults)
                         {
                             <tr>
                                 <td>@res.Person.Name</td>
@@ -124,7 +131,8 @@
                 <ApexChart @ref="chart"
                    TItem="ChartItem"
                    Options=options
-                   XAxisType="XAxisType.Datetime">
+                   XAxisType="XAxisType.Datetime"
+                   OnDataPointSelection=DataPointsSelected>
                     <ChildContent>
                         <ApexRangeSeries TItem="ChartItem"
                                  Items="chartSource"

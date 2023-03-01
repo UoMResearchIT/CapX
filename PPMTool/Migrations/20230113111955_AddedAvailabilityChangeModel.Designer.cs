@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data;
 
@@ -10,9 +11,10 @@ using PPMTool.Data;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20230113111955_AddedAvailabilityChangeModel")]
+    partial class AddedAvailabilityChangeModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.7");
@@ -243,9 +245,6 @@ namespace PPMTool.Migrations
                     b.Property<double>("AvailabilityFTE")
                         .HasColumnType("REAL");
 
-                    b.Property<string>("BaselineActivities")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("ChangeDate")
                         .HasColumnType("TEXT");
 
@@ -265,13 +264,10 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("DayRate")
+                    b.Property<double>("AvailabilityFTE")
                         .HasColumnType("REAL");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("FTE")
+                    b.Property<double>("DayRate")
                         .HasColumnType("REAL");
 
                     b.Property<string>("Name")
@@ -418,9 +414,6 @@ namespace PPMTool.Migrations
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("InnateActivity")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsDone")
                         .HasColumnType("INTEGER");
 
@@ -532,11 +525,9 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.AvailabilityChange", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
+                    b.HasOne("PPMTool.Data.Entities.Person", null)
                         .WithMany("AvailabilityChanges")
                         .HasForeignKey("PersonId");
-
-                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Resource", b =>
