@@ -106,7 +106,7 @@
                         AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left"
                         ShowPagingSummary="true"
-                        Data="@Data"
+                        Data="@data"
                         TItem="SubTask"
                         ColumnWidth="100px"
                         SelectionMode="DataGridSelectionMode.Single"
@@ -160,7 +160,7 @@
                    Options=options>
                 <ChildContent>
                     <ApexRangeSeries TItem="SubTask"
-                                 Items="Data"
+                                 Items="data"
                                  XValue="@(e => e.Name)"
                                  YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                                  YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"

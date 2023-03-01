@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
+using System.Globalization;
+using System.IO;
+using System.IO.Pipes;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Build.Framework;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -25,15 +32,9 @@ namespace PPMTool.Pages
         [Inject]
         private SubTaskService SubTaskService { get; set; }
 
-        private IDictionary<string, IEnumerable<SubTask>> groupedSubTasks;
-        private ApexChart<ChartItem> chart;
-        private List<ChartItem> chartSource;
-        private ApexChartOptions<ChartItem> options;
-        private List<string> nameOptions;
-        private string chartTitle;
-        private PPMToolContext context;
+        [Inject]
+        private IJSRuntime JS { get; set; }
 
-        private string chosenPerson;
         private string ChosenPerson
         {
             get => chosenPerson;
@@ -49,7 +50,6 @@ namespace PPMTool.Pages
             }
         }
 
-        private bool includeUnFunded = true;
         public bool IncludeUnFunded
         {
             get => includeUnFunded;
@@ -65,13 +65,33 @@ namespace PPMTool.Pages
             }
         }
 
-        public DateTime QueryStartDate { get; set; } = DateTime.Now.Date;
-        public DateTime QueryEndDate { get; set; } = DateTime.Now.Date.AddDays(7);
-        public IEnumerable<CapacityQueryItem> QueryResults { get; private set; }
+        public DateTime QueryStartDate
+        {
+            get => queryStartDate;
+            set
+            {
+                queryStartDate = value;
 
-        public string QueryErrorMessage { get; private set; }
+                // Update the end date to be a week ahead of the start date by default if it is behind
+                if (queryEndDate < queryStartDate) queryEndDate = queryStartDate.AddDays(7);
+            }
+        }
 
-        public bool QueryActive { get; private set; }
+        private IDictionary<string, IEnumerable<SubTask>> groupedSubTasks;
+        private ApexChart<ChartItem> chart;
+        private List<ChartItem> chartSource;
+        private ApexChartOptions<ChartItem> options;
+        private List<string> nameOptions;
+        private string chartTitle;
+        private PPMToolContext context;
+        private string chosenPerson;
+        private bool includeUnFunded = true;
+        private DateTime queryStartDate = DateTime.Now.Date;
+        private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
+        private IEnumerable<CapacityQueryItem> queryResults;
+        private string queryErrorMessage;
+        private bool queryActive;
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -109,11 +129,35 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Method to handle when a series element on the chart is selected
+        /// </summary>
+        /// <param name="dataPoint"></param>
+        private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
+        {
+            // Only so the navigation when in project view mode
+            if (dataPoint.IsSelected && ChosenPerson != "All" && ChosenPerson != null)
+            {
+                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
+
+                // Use the title of the task to find its projectID then navigate to the details page
+                var project = ProjectService.GetAll(context).FirstOrDefault(x => x.Name == projectName);
+                if (project != null)
+                {
+                    Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resets the page to its initial state
+        /// </summary>
         private async void ClearQueryAsync()
         {
-            QueryResults = null;
-            QueryErrorMessage = null;
-            QueryActive = false;
+            queryResults = null;
+            queryErrorMessage = null;
+            queryActive = false;
             await ConfigureSourceAsync();
             StateHasChanged();
         }
@@ -124,15 +168,15 @@ namespace PPMTool.Pages
         private async void RunQueryAsync()
         {
             // Add error
-            if (QueryStartDate >= QueryEndDate)
+            if (QueryStartDate >= queryEndDate)
             {
-                QueryErrorMessage = "End date must be after the start date!";
+                queryErrorMessage = "End date must be after the start date!";
                 return;
             }
 
             // Reset query results
-            QueryResults = null;
-            QueryActive = true;
+            queryResults = null;
+            queryActive = true;
             var results = new List<CapacityQueryItem>();
             ChosenPerson = "All";
 
@@ -150,10 +194,44 @@ namespace PPMTool.Pages
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
-                results.Add(new CapacityQueryItem(person, QueryStartDate, QueryEndDate, (int)(person.AvailabilityFTE * 100 / .84)));
+                // Get any changes ordered by date
+                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate >= QueryStartDate && x.ChangeDate < queryEndDate).OrderBy(x => x.ChangeDate).ToList();
+
+                // If no changes then use post FTE
+                if (changes.Count == 0)
+                {
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
+                }
+                else
+                {
+                    // First period uses the post FTE up to the first change
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.FTE * 100 / .84)));
+
+                    // Subsequent ones use the new settings
+                    for (int i = 1; i < changes.Count; ++i)
+                    {
+                        // If the last change then use query end date
+                        if (i == changes.Count - 1)
+                        {
+                            // Filter out availability of less than a day or 0%
+                            if (queryEndDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            {
+                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, queryEndDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                            }
+                        }
+                        else
+                        {
+                            // Filter out availability of less than a day or 0%
+                            if (changes[i + 1].ChangeDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            {
+                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, changes[i + 1].ChangeDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                            }
+                        }
+                    }
+                }
             }
 
-            // Invert the chart results and add to array
+            // Invert the chart results and add to results array
             foreach (var item in chartSource)
             {
                 // Get person from name of item
@@ -164,22 +242,32 @@ namespace PPMTool.Pages
                     continue;
                 }
 
-                var availability = (int)(person.AvailabilityFTE * 100 / .84);
+                // Availability is value 2 in the chart item
+                var availability = (int)(item.Value2 * 100 / .84);
 
-                if ((int)item.Value1 < availability)
+                // Invert value
+                var inv = availability - (int)item.Value1;
+
+                // Only add if it has some relevance...
+                if ((int)item.Value1 < availability && item.StartDate != item.EndDate && inv > 0)
                 {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, availability - (int)item.Value1));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, inv));
                 }
             }
 
             // Assign results
-            QueryResults = results.OrderByDescending(x => x.AvailabilityPercent);
+            queryResults = results.OrderByDescending(x => x.AvailabilityPercent);
 
             // Update the UI
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Gets all the sub tasks within the query date window
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
         private IEnumerable<SubTask> GetSubTasksWithinQueryWindow(IEnumerable<SubTask> source)
         {
             // Filter all the tasks based on the window of the query
@@ -187,13 +275,13 @@ namespace PPMTool.Pages
             {
                 return
                 // Tasks that start in the window
-                (x.StartDate >= QueryStartDate && x.StartDate < QueryEndDate) ||
+                (x.StartDate >= QueryStartDate && x.StartDate < queryEndDate) ||
 
                 // Tasks that end in the window
-                (x.EndDate > QueryStartDate && x.EndDate < QueryEndDate) ||
+                (x.EndDate > QueryStartDate && x.EndDate < queryEndDate) ||
 
                 // Tasks that span over the window
-                (x.StartDate < QueryStartDate && x.EndDate >= QueryEndDate);
+                (x.StartDate < QueryStartDate && x.EndDate >= queryEndDate);
             });
 
             // Filter based on project status
@@ -262,17 +350,21 @@ namespace PPMTool.Pages
                                 var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
                                 return Math.Round(person.Percentage / .84);
                             },
-                            x =>
+                            (x, y) =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
-                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
                             group.Key,
-                            QueryActive ? QueryStartDate : null,
-                            QueryActive ? QueryEndDate : null,
+                            queryActive ? QueryStartDate : null,
+                            queryActive ? queryEndDate : null,
                             x =>
                             {
                                 return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
+                            },
+                            (x, w) =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
+                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
                             }
                         ).ToList();
 
@@ -317,26 +409,32 @@ namespace PPMTool.Pages
                                 var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
                                 return Math.Round(person.Percentage / .84);
                             },
-                            x =>
+                            (x, y) =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
-                                return ChartItem.GetColourStringFTE(x, person?.AvailabilityFTE * 100 / 84 ?? 100);
+                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
                             group.Key,
-                            QueryActive ? QueryStartDate : null,
-                            QueryActive ? QueryEndDate : null,
+                            queryActive ? QueryStartDate : null,
+                            queryActive ? queryEndDate : null,
                             x =>
                             {
                                 return x.AssignedResources.First(x => x.Person.Name == ChosenPerson).IsProvisional;
-                            }));
+                            },
+                            (x, w) =>
+                            {
+                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
+                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
+                            }
+                        ));
                     }
                 }
 
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
 
-                options.Xaxis.Min = !QueryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-                options.Xaxis.Max = !QueryActive ? null : QueryEndDate.ToUnixTimeMilliseconds();
+                // Format X Axis range
+                options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+                options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
 
                 // First time this is called, there is no reference to the chart
                 if (chart != null)
@@ -350,6 +448,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method to force the chart to update
+        /// </summary>
+        /// <returns></returns>
         private async Task RefreshChartAsync()
         {
             // HACK: Not sure why we have to call this twice but we do!
@@ -358,6 +460,106 @@ namespace PPMTool.Pages
 
             // Force blazor redraw
             await InvokeAsync(StateHasChanged);
+        }
+
+        /// <summary>
+        /// Method to export the capacity information in a format suitable for ITS GaDMO reporting
+        /// </summary>
+        private async void ExportCapacityData()
+        {
+            // Get all the people
+            var people = PersonService.GetAll(context).OrderBy(x => x.Name);
+
+            // Create blank list of data
+            var allData = new List<ExportHelper.TaskData>();
+
+            // Set the report length
+            const int numMonths = 6;
+
+            // Get data for each person
+            var helper = new ExportHelper();
+            foreach (var p in people)
+            {
+                // Assume 6 months for now
+                var data = helper.GetExportDataForPerson(
+                    p,
+                    SubTaskService.GetAll(context).Where(x => x.AssignedResources.Any(x => x.Person == p)),
+                    ProjectService.GetAll(context),
+                    numMonths
+                );
+                allData.AddRange(data);
+            }
+
+            try
+            {
+
+                // Write to CSV file
+                var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                Directory.CreateDirectory(folder);
+                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
+                using (var writer = new StreamWriter(path))
+                {
+
+                    // Get all public properties
+                    var props = typeof(ExportHelper.TaskData).GetProperties();
+                    var propNames = props.Select(x => x.Name);
+
+                    // Create header row
+                    var headers = propNames.ToList();
+                    var startDate = DateTime.Now.Date;
+                    var d = startDate;
+                    while (d < startDate.AddMonths(numMonths))
+                    {
+                        // Convert month number to name for the column heading
+                        headers.Add($"{d.ToString("MMM", CultureInfo.InvariantCulture)} %");
+
+                        // Increment month
+                        d = d.AddMonths(1);
+                    }
+
+                    // Write header row
+                    writer.WriteLine(string.Join(",", headers));
+
+                    // Write rows one at a time
+                    foreach (var record in allData)
+                    {
+                        // Write properties
+                        var valuesAsStrings = new List<string>();
+                        foreach (var name in propNames)
+                        {
+                            string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+                            valuesAsStrings.Add(value.Replace(",", ";"));
+                        }
+
+                        // Write expanded values for months
+                        d = startDate;
+                        while (d < startDate.AddMonths(numMonths))
+                        {
+                            // Add the monthly value
+                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month)?.ToString() ?? string.Empty);
+
+                            // Increment month
+                            d = d.AddMonths(1);
+                        }
+
+                        // Write the row
+                        writer.WriteLine(string.Join(",", valuesAsStrings));
+                    }
+                }
+                Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+
+                // Get file stream
+                using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                // Invoke JS on the client to download the file
+                await JS.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Could not download file: {ex}");
+            }
         }
     }
 }

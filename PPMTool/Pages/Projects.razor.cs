@@ -27,8 +27,7 @@ namespace PPMTool.Pages
         private IEnumerable<ProjectStatus> fundingOptions = (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus));
         private List<ProjectSummaryWidget.ProjectSummaryData> summaryData;
         private PPMToolContext context;
-
-        private bool ShowActiveOnly { get; set; } = true;
+        private bool showActiveOnly = true;
 
         protected override void OnInitialized()
         {
@@ -65,7 +64,7 @@ namespace PPMTool.Pages
 
 
             // Remove the ones that are not active for the data grid if necessary
-            if (ShowActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled).ToList();
+            if (showActiveOnly) proj = proj.Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled).ToList();
 
             // Update the summary of each project and save back to DB
             if (proj.Count > 0)
