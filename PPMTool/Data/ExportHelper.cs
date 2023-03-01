@@ -80,7 +80,7 @@ namespace PPMTool.Data
             // March forward month by month
             while (currentDate < endDate)
             {
-                // If there is an availability change this month then update their baseline
+                // If there is an availability change this month then update their baseline task
                 var availabilityChanges = person.AvailabilityChanges.Where(x => x.ChangeDate.Month == currentDate.Month).ToList();
                 if (availabilityChanges.Count > 0)
                 {
@@ -110,7 +110,7 @@ namespace PPMTool.Data
                     }
                 }
 
-                // If person hasn't started yet in this month then set value of all tasks for this month to blank
+                // If person hasn't started yet in this month then set value of all existing tasks for this month to blank
                 if (person.EndDate != null && person.EndDate.Value.Date.Month > currentDate.Date.Month)
                 {
                     foreach (var task in data)
@@ -120,17 +120,20 @@ namespace PPMTool.Data
                 }
                 else
                 {
-                    // Assume load is whatever is running on the 1st of the month
-                    var tasksOnFirst = subTasks.Where(x => x.StartDate <= currentDate && x.EndDate >= currentDate);
+                    // Find all subtasks that run in this month based on the following conditions:
+                    // 1. Starts before month and finishes after month
+                    // 2. Starts this month
+                    // 3. Ends this month
+                    var tasksThisMonth = subTasks.Where(x => (x.StartDate <= currentDate && x.EndDate >= currentDate) || x.StartDate.Month == currentDate.Month || x.EndDate.Month == currentDate.Month);
 
-                    foreach (var t in tasksOnFirst)
+                    foreach (var t in tasksThisMonth)
                     {
 
                         // Add / update a row for every task running on the first of the month
                         var existing = data.FirstOrDefault(x => x.TaskDescription == t.Name);
                         if (existing != null)
                         {
-                            // Add new month entry
+                            // Add new month entry for existing task
                             existing.Set(currentDate.Month, (int)t.AssignedResources.First(x => x.Person == person).Percentage);
                         }
                         else
@@ -146,7 +149,6 @@ namespace PPMTool.Data
                             existing.Set(currentDate.Month, (int)t.AssignedResources.First(x => x.Person == person).Percentage);
                             data.Add(task);
                         }
-
                     }
                 }
                 monthNum++;

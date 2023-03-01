@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Formats.Asn1;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
+using CsvHelper;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
@@ -472,10 +476,14 @@ namespace PPMTool.Pages
                 allData.AddRange(data);
             }
 
-            // TODO: Reformat to rows and write file
-
-
-
+            // Write to CSV file
+            using (var writer = new StreamWriter(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), $"Capacity_{DateTime.Now.Ticks}.csv")))
+            {
+                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                {
+                    csv.WriteRecords(allData);
+                }
+            }
         }
     }
 }
