@@ -35,6 +35,14 @@
             </div>
             <div class="row">
                 <div class="col-3">
+                    <label>Innate Activity</label>
+                </div>
+                <div class="col">
+                    <InputText class="wide-input" @bind-Value="taskModel.InnateActivity" disabled="@taskModel.IsDone" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label>Done?</label>
                 </div>
                 <div class="col" style="display: flex">
@@ -138,7 +146,7 @@
                         <label>Predecessor</label>
                     </div>
                     <div class="col">
-                        <InputSelect @bind-Value="PredecessorId" disabled="@taskModel.IsDone">
+                        <InputSelect @bind-Value="predecessorId" disabled="@taskModel.IsDone">
                             <option value="">None</option>
                             @foreach (var t in projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor?.SubTaskId != taskModel.SubTaskId))
                             {

@@ -25,42 +25,80 @@
             </div>
             <div class="row">
                 <div class="col-3">
-                    <label for="DayRate">Default Day Rate (£)</label>
-                </div>
-                <div class="col">
-                    <InputNumber min="0" step="1" placeholder="0" @bind-Value="personModel.DayRate" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="AvailabilityFTE">Availability (FTE)</label>
-                </div>
-                <div class="col">
-                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.AvailabilityFTE" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
                     <label for="StartDate">Start Date</label>
                 </div>
                 <div class="col">
                     <InputDate @bind-Value="personModel.StartDate" />
                 </div>
             </div>
-            <hr />
-            <h3>Skill Tags</h3>
-            @foreach (var t in AvailableTags)
-            {
-                <div class="row">
-                    <div class="col-2">
-                        @t.Name
-                    </div>
-                    <div class="col my-1" style="display: flex">
-                        <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
-                    </div>
-                    <br />
+            <div class="row">
+                <div class="col-3">
+                    <label for="EndDate">End Date</label>
                 </div>
-            }
+                <div class="col">
+                    <InputDate @bind-Value="personModel.EndDate" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="FTE">Post FTE</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.FTE" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="DayRate">Default Day Rate (£)</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0" step="1" placeholder="0" @bind-Value="personModel.DayRate" />
+                </div>
+            </div>
+            <hr />
+            <div class="row">
+                <div class="col">
+                    <h3>Skill Tags</h3>
+                        @foreach (var t in availableTags)
+                        {
+                            <div class="row">
+                                <div class="col-6">
+                                    @t.Name
+                                </div>
+                                <div class="col-3 my-1" style="display: flex">
+                                    <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
+                                </div>
+                                <br />
+                            </div>
+                        }
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col-auto mr-auto">
+                            <h3>Availability Changes</h3>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" type="button" @onclick="@(args => EditAvailability())"><i class="oi oi-pencil" /> Edit</button>
+                        </div>
+                    </div>
+                    @foreach (var d in personModel.AvailabilityChanges)
+                    {
+                        <div class="row">
+                            <div class="col-3">
+                                @d.ChangeDate.ToShortDateString()
+                            </div>
+                            <div class="col-3">
+                                @d.AvailabilityFTE
+                            </div>
+                            <div class="col-6">
+                                <p>@d.BaselineActivities</p>
+                            </div>
+                            <br />
+                        </div>
+                    }
+                </div>
+            </div>
+            
             <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Save</button>
         </EditForm>
     </div>

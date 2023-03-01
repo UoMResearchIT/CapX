@@ -129,10 +129,21 @@ namespace PPMTool.Data.Entities
                 if (isEndDateDriven != value)
                 {
                     isEndDateDriven = value;
+                    
+                    // Update the end date to match the start date
+                    if (!isEndDateDriven && EndDate < StartDate)
+                    {
+                        EndDate= StartDate;
+                    }
                     OnEndDateDrivenChanged(new EventArgs());
                 }
             }
         }
+
+        /// <summary>
+        /// The Innate Activity Code to which this work is booked on the timesheeting system
+        /// </summary>
+        public string InnateActivity { get; set; }
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task

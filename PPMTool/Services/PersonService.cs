@@ -37,8 +37,21 @@ namespace PPMTool.Services
         {
             return context.People
                 .Include(p => p.SkillTags)
+                .Include(p => p.AvailabilityChanges)
                 .ToList();
         }
+
+        /// <summary>
+        /// Get a person based on their ID
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        internal Person GetById(PPMToolContext context, int personId)
+        {
+            return GetAll(context).FirstOrDefault(x => x.PersonId== personId);
+        }
+
         /// <summary>
         /// Update an exist person in the DB
         /// </summary>

@@ -12,6 +12,9 @@ You can add an RSE through the "People" page. CapX does not take into account ba
 ## Assigning RSEs to Tasks
 When assigning an RSE to a task, due to the above, they can only work to a maximum of 84% (see above). The capacity planner will show how much capacity they have spare out of the time they are available. If you want an RSE to work on a project "at 50%" i.e. 2.5 days per week then you will need to assign them to the task at 42% (half of 84%). This will mean that the duration of a fixed work task will be scheduled assuming that they only work 2.1 days per week with 0.4 days spent on leave or on a closure day. In practice, they may book more hours per week to a task initially and the task will show as being ahead of schedule, but as soon as they take leave, this buffer will be eaten up and bring it back in line with the schedule. This is preferrable than having to constantly adjust the schedule every time some takes a day off, or projects being shown as constantly behind.
 
+## Baseline Activity
+Some of the activities RSEs do does not fall under the category of a project either because it is a continuous duty or it is covered by the baseline. Examples may include people management and leading communities such as the R User Group. To take these into account in an RSE's load, we simply reduce their availability accordingly. Newer versions of the software will provide a notes field so an explanation for any availability reduction below the standard 0.84 FTE can be recorded.
+
 ## Task Type and Billing
 CapX offers three types of task "Fixed Units", "Fixed Duration" and "Fixed Work". The "Fixed Units" task is still requires either duration or work to be fixed so it a sort of meta task type and will be rarely necessary to use. Instead, we will focus on the other two.
 
@@ -24,3 +27,6 @@ These types of tasks can be useful you want to precisely specify how long the en
 For example, one week's work at 84% is 29.4 hours. Assuming the RSE is paid at the standard day rate this gives a cost of £9,172,80. But the PCM will cover 100% as it includes an allowance for holidays / closure / leave, which means it in calculated for 35 hours per week giving a cost of £10,920. So the rate we should use to calculate the correct cost for PCM billing would need to be 312 / .84 = £371.43 per day. This gives a cost for the 29.4 hours scheduled in CapX for the task as £10,920.04 which is close enough.
 
 Of course, each financial year the spine points increase as presumably the PCM collection increases too. We can split long-running tasks at the financial year end and assign the same RSE again for the next financial year but at an increased day rate to ensure the budget remains correct. **This is why I want to get rid of the PCM method of paying people if we can!**
+
+## Additional Funding
+If a project that is already in the system gains an additional tranche of funding for a new phase and we have decided that it ought not to be treated as a separate project, we can extend the funding of an existing project by first updating the "Budget" field for the project with the new funding total and then adding a new Task in the task list to allow the scheduling of the extension.

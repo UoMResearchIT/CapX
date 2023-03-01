@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Options;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -19,12 +16,11 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        private Project project;
-
         [Parameter]
         public int? ProjectID { get; set; }
 
-        private List<SubTask> Data { get; set; }
+        private List<SubTask> data;
+        private Project project;
         private List<ChartItem> chartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> options;
         private ApexChartOptions<ChartItem> options2;
@@ -39,8 +35,8 @@ namespace PPMTool.Pages
             {
                 context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
-                Data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
-                count = Data.Count;
+                data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                count = data.Count;
 
                 options = new ApexChartOptions<SubTask>
                 {
@@ -169,7 +165,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging via Skip and Take.
-            Data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
         }
 
         public class ActualPoint

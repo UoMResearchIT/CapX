@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data;
 
@@ -10,9 +11,10 @@ using PPMTool.Data;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20230210145816_RemovedInnateCodeFromProject")]
+    partial class RemovedInnateCodeFromProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.7");
@@ -265,11 +267,14 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BaselineActivities")
+                        .HasColumnType("TEXT");
+
                     b.Property<double>("DayRate")
                         .HasColumnType("REAL");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
+                    b.Property<double>("DefaultAvailabilityFTE")
+                        .HasColumnType("REAL");
 
                     b.Property<double>("FTE")
                         .HasColumnType("REAL");
