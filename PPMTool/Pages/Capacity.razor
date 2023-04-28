@@ -119,6 +119,7 @@
             }
             else
             {
+                <!-- Legend -->
                 <div class="row">
                     <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(49)"></rect> </svg> &lt;50%</div>
                     <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(74)"></rect> </svg> &lt;75%</div>
@@ -128,6 +129,8 @@
                     <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(126)"></rect> </svg> &gt;125%</div>
                     <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(151)"></rect> </svg> &gt;150%</div>
                 </div>
+
+                <!-- Chart -->
                 <ApexChart @ref="chart"
                    TItem="ChartItem"
                    Options=options
@@ -146,9 +149,9 @@
                             @{
                                 var point = (ListPoint<ChartItem>)context.DataPoint;
                                 <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@point.Items.FirstOrDefault()?.Value1%</h3>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM") - </span>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM")</span>
+                                <h3>@point.Items.FirstOrDefault()?.Value1% @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
                                 </div>
                             }
                         </div>
