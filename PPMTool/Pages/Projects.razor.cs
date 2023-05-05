@@ -70,7 +70,7 @@ namespace PPMTool.Pages
         {
             // Get projects from the database
             context = new PPMToolContext();
-            var proj = ProjectService.GetAll(context).OrderBy(x => x.Name).ToList();
+            var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
 
             // Build the summary widget data and sort by total
             summaryData = new List<ProjectSummaryWidget.ProjectSummaryData>();
