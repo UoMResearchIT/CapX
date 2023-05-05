@@ -34,10 +34,22 @@
                         <RadzenDatePicker @bind-Value="queryEndDate" DateFormat="d" />
                     </div>
                     <div class="col-auto">
-                        Include Unfunded:
-                    </div>
-                    <div class="col-auto" style="display: flex">
-                        <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                        <div class="row align-items-center p-1">
+                            <div class="col">
+                                Include Unfunded:
+                            </div>
+                            <div class="col-auto" style="display: flex">
+                                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                            </div>
+                        </div>
+                        <div class="row align-items-center p-1">
+                            <div class="col">
+                                Include Leavers:
+                            </div>
+                            <div class="col-auto" style="display: flex">
+                                <RadzenSwitch @bind-Value="@IncludeLeavers" />
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="row align-items-center">
@@ -99,7 +111,7 @@
                             <option value="All">All</option>
                             @foreach (var c in nameOptions)
                             {
-                            <option value="@c">@c</option>
+                                <option value="@c">@c</option>
                             }
                         </InputSelect>
                     </EditForm>
@@ -109,6 +121,12 @@
                 </div>
                 <div class="col" style="display: flex">
                     <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                </div>
+                <div class="col-auto">
+                    Include Leavers:
+                </div>
+                <div class="col" style="display: flex">
+                    <RadzenSwitch @bind-Value="@IncludeLeavers" />
                 </div>
             </div>
         </div>
@@ -149,9 +167,9 @@
                             @{
                                 var point = (ListPoint<ChartItem>)context.DataPoint;
                                 <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@point.Items.FirstOrDefault()?.Value1% @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
+                                    <h3>@point.Items.FirstOrDefault()?.Value1% @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
+                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
                                 </div>
                             }
                         </div>

@@ -35,6 +35,7 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JS { get; set; }
 
+        private string chosenPerson;
         private string ChosenPerson
         {
             get => chosenPerson;
@@ -50,6 +51,7 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool includeUnFunded = true;
         public bool IncludeUnFunded
         {
             get => includeUnFunded;
@@ -65,6 +67,23 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool includeLeavers = false;
+        public bool IncludeLeavers
+        {
+            get => includeLeavers;
+            set
+            {
+                if (includeLeavers != value)
+                {
+                    includeLeavers = value;
+
+                    // Update the chart source
+                    InvokeAsync(async () => await ConfigureSourceAsync());
+                }
+            }
+        }
+
+        private DateTime queryStartDate = DateTime.Now.Date;
         public DateTime QueryStartDate
         {
             get => queryStartDate;
@@ -84,14 +103,10 @@ namespace PPMTool.Pages
         private List<string> nameOptions;
         private string chartTitle;
         private PPMToolContext context;
-        private string chosenPerson;
-        private bool includeUnFunded = true;
-        private DateTime queryStartDate = DateTime.Now.Date;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
-
 
         protected override async Task OnInitializedAsync()
         {
@@ -308,13 +323,25 @@ namespace PPMTool.Pages
             // Reset source
             chartSource = new List<ChartItem>();
 
+            if (chart != null) await RefreshChartAsync();
+
             // Get people from the database
             var peo = PersonService.GetAll(context).OrderBy(x => x.Name);
+
+            // Remove people who have left if necessary
+            if (!IncludeLeavers)
+            {
+                peo = peo.Where(p => p.EndDate == null || p.EndDate >= DateTime.Today).OrderBy(x => x.Name);
+            }
+
             if (peo.Count() > 0)
             {
-                // Get projects from the database
+                // Get projects from the database ignoring finished or cancelled projects
                 var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled);
-                if (!IncludeUnFunded) projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+                if (!IncludeUnFunded)
+                {
+                    projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+                }
 
                 // Reinitialise dictionary
                 groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();
@@ -430,7 +457,7 @@ namespace PPMTool.Pages
                 }
 
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
-                Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
+                Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
                 // Format X Axis range
                 options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
@@ -440,7 +467,6 @@ namespace PPMTool.Pages
                 if (chart != null)
                 {
                     Debug.WriteLine($"** Re-renderering chart!");
-                    await chart.UpdateOptionsAsync(true, true, false);
                     await RefreshChartAsync();
                 }
 
@@ -454,9 +480,12 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task RefreshChartAsync()
         {
+            // Update the options
+            await chart.UpdateOptionsAsync(true, false, false);
+
             // HACK: Not sure why we have to call this twice but we do!
-            await chart?.UpdateSeriesAsync();
-            await chart?.UpdateSeriesAsync();
+            await chart.UpdateSeriesAsync(false);
+            await chart.UpdateSeriesAsync(false);
 
             // Force blazor redraw
             await InvokeAsync(StateHasChanged);
