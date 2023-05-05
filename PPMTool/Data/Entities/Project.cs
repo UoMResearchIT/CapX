@@ -31,6 +31,12 @@ namespace PPMTool.Data.Entities
         public ProjectStatus ProjectStatus { get; set; }
 
         /// <summary>
+        /// The Innate Activity Code to which this work is booked on the timesheeting system
+        /// </summary>
+        [Required]
+        public string InnateActivity { get; set; }
+
+        /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database
         /// </summary>
         public void UpdateProjectSummary()

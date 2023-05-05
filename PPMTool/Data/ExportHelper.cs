@@ -185,7 +185,7 @@ namespace PPMTool.Data
                                 EmployeeName = person.Name,
                                 FTE = (int)Math.Round(person.FTE / 0.84),
                                 ProjectAndTaskName = name,
-                                InnateActivity = t.InnateActivity,
+                                InnateActivity = proj.InnateActivity,
                             };
                             task.SetMonthlyValue(currentDate.Month, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).Percentage / .84));
                             data.Add(task);
