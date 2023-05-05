@@ -29,6 +29,10 @@
         <div class="col-auto">
             <button class="btn btn-primary" @onclick=@AddProject><i class="oi oi-plus" /> Add</button>
         </div>
+        <!-- This is a temporary button to be used one time to migrate the RTP codes from the names -->
+        @*<div class="col-auto">
+            <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
+        </div>*@
     </div>
 
     @if (projects == null)
@@ -62,7 +66,7 @@
                         ColumnWidth="120px"
                         SelectionMode="DataGridSelectionMode.Single"
                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        LogicalFilterOperator="LogicalFilterOperator.Or"
+                        LogicalFilterOperator="LogicalFilterOperator.And"
                         RowSelect="@(e => ProjectClicked(e.ProjectId))">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
@@ -107,6 +111,7 @@
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="60px" />
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
                     <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px" />
                     <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status">

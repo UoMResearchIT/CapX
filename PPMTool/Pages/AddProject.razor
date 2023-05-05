@@ -25,6 +25,14 @@
             <ValidationSummary />
             <div class="row">
                 <div class="col-3">
+                    <label for="RTP">RTP-</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0" step="1" @bind-Value="projectModel.RTP" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label for="Name">Name</label>
                 </div>
                 <div class="col">

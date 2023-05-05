@@ -14,6 +14,9 @@ namespace PPMTool.Data.Entities
         public int ProjectId { get; set; }
 
         [Required]
+        public int RTP { get; set; }
+
+        [Required]
         public string PI { get; set; }
 
         [Required]

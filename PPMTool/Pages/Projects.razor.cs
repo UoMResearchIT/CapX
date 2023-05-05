@@ -13,6 +13,7 @@ using Radzen.Blazor;
 using FluentDate;
 using System.Diagnostics;
 using PPMTool.Pages.Components;
+using System.Text.RegularExpressions;
 
 namespace PPMTool.Pages
 {
@@ -39,6 +40,29 @@ namespace PPMTool.Pages
         private void OnChange(bool? value)
         {
             Debug.WriteLine("Change detected. Reloading data...");
+            LoadProjectData();
+        }
+
+        /// <summary>
+        /// Temporary method for migrating the RTP code from the name to the new RTP field as an integer using RegEx matching
+        /// </summary>
+        private void Migrate()
+        {
+            foreach (var p in projects)
+            {
+                var match = Regex.Match(p.Name, "(RTP-)(\\d+)");
+                try
+                {
+                    var remain = p.Name.Remove(match.Index, match.Length).Trim();
+                    p.Name = remain;
+                    p.RTP = int.Parse(match.ToString().Split('-').Last());
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{ex.Message}");
+                }
+                ProjectService.Update(context, p);
+            }
             LoadProjectData();
         }
 
