@@ -205,48 +205,73 @@ namespace PPMTool.Pages
             // Get all the subtasks within the query window
             var tasks = GetSubTasksWithinQueryWindow(SubTaskService.GetAll(context));
 
-            // Get all the resources who are not assigned to any subtasks and add them to the query results
+            // Part 1: Get all the resources who are not assigned to any subtasks and add them to the query results
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
-                // Get any changes ordered by date
-                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate >= QueryStartDate && x.ChangeDate < queryEndDate).OrderBy(x => x.ChangeDate).ToList();
+                // Get any availability changes in force at the beginning of the query or during it
+                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < queryEndDate).ToList();
 
-                // If no changes then use post FTE
+                // Add to the changes any leaving date as a zero availability
+                if (person.EndDate != null)
+                {
+                    changes.Add(new AvailabilityChange()
+                    {
+                        Person = person,
+                        ChangeDate = person.EndDate ?? DateTime.Now,
+                        AvailabilityFTE = 0
+                    });
+
+                    // Remove all availability changes after the leaving date as these are unnecessary
+                    changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
+                }
+
+                // Sort by date
+                changes = changes.OrderBy(x => x.ChangeDate).ToList();
+
+                // If no changes then use post FTE in a single result
                 if (changes.Count == 0)
                 {
                     results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
                 }
                 else
                 {
-                    // First period uses the post FTE up to the first change
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.FTE * 100 / .84)));
+                    // We need to establish the availability at the beginning of the query window which will be post FTE by default
+                    double initialFTE = person.FTE;
 
-                    // Subsequent ones use the new settings
-                    for (int i = 1; i < changes.Count; ++i)
+                    // Find the change immediately before the query window or on day one if there is one
+                    var changeBefore = changes.Where(x => x.ChangeDate <= QueryStartDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                    if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
+                    var changesAfter = changes.Where(x => x.ChangeDate > QueryStartDate).OrderBy(x => x.ChangeDate).ToList();
+
+                    // First period uses the initial FTE up to the first change after the window begins or the end of the window if there isn't any changes after
+                    results.Add(new CapacityQueryItem(person, QueryStartDate, changesAfter.FirstOrDefault()?.ChangeDate ?? queryEndDate, (int)(initialFTE * 100 / .84)));
+
+                    // Subsequent ones use the latest change information
+                    for (int i = 0; i < changesAfter.Count; ++i)
                     {
-                        // If the last change then use query end date
-                        if (i == changes.Count - 1)
+                        // If the last change then use query end date for result
+                        if (i == changesAfter.Count - 1)
                         {
                             // Filter out availability of less than a day or 0%
-                            if (queryEndDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            if (queryEndDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
                             {
-                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, queryEndDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                                results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, queryEndDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
                             }
                         }
                         else
                         {
                             // Filter out availability of less than a day or 0%
-                            if (changes[i + 1].ChangeDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            if (changesAfter[i + 1].ChangeDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
                             {
-                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, changes[i + 1].ChangeDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                                results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, changesAfter[i + 1].ChangeDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
                             }
                         }
                     }
                 }
             }
 
-            // Invert the chart results and add to results array
+            // Part 2: Invert the chart data and add to results array
             foreach (var item in chartSource)
             {
                 // Get person from name of item
@@ -270,6 +295,9 @@ namespace PPMTool.Pages
                     results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, inv));
                 }
             }
+
+            // TODO: Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
+
 
             // Assign results
             queryResults = results.OrderByDescending(x => x.AvailabilityPercent);
