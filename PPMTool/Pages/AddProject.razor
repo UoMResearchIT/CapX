@@ -1,6 +1,7 @@
 ﻿@page "/addproject/{ProjectId:int}"
 @inherits BasePage
 @using PPMTool.Enums
+@using PPMTool.Data
 
 <div class="container">
     @if (ProjectId < 0)
@@ -24,6 +25,14 @@
             <ValidationSummary />
             <div class="row">
                 <div class="col-3">
+                    <label for="RTP">RTP-</label>
+                </div>
+                <div class="col">
+                    <InputNumber min="0" step="1" @bind-Value="projectModel.RTP" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
                     <label for="Name">Name</label>
                 </div>
                 <div class="col">
@@ -36,6 +45,19 @@
                 </div>
                 <div class="col">
                     <InputText @bind-Value="projectModel.PI" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <label for="InnateActivity">Innate Activity</label>
+                </div>
+                <div class="col">
+                    <InputSelect @bind-Value="projectModel.InnateActivity">
+                        @foreach (var c in ResourceHelper.AvailableInnateActivities)
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    </InputSelect>
                 </div>
             </div>
             <div class="row">

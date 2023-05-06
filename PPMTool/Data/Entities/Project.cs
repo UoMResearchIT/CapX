@@ -14,6 +14,9 @@ namespace PPMTool.Data.Entities
         public int ProjectId { get; set; }
 
         [Required]
+        public int RTP { get; set; }
+
+        [Required]
         public string PI { get; set; }
 
         [Required]
@@ -29,6 +32,12 @@ namespace PPMTool.Data.Entities
 
         [Required]
         public ProjectStatus ProjectStatus { get; set; }
+
+        /// <summary>
+        /// The Innate Activity Code to which this work is booked on the timesheeting system
+        /// </summary>
+        [Required]
+        public string InnateActivity { get; set; } = ResourceHelper.GetDefaultInnateActivity();
 
         /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database
