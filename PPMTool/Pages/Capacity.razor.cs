@@ -170,11 +170,15 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task ClearQueryAsync()
         {
+            Debug.WriteLine("** Clearing Query...");
             queryResults = null;
             queryErrorMessage = null;
             queryActive = false;
+
+            // Reset the person filter but don't trigger the refresh.
+            // Do it manually so we can force synchronisation.
+            chosenPerson = "All";
             await ConfigureSourceAsync();
-            StateHasChanged();
         }
 
         /// <summary>
@@ -192,12 +196,12 @@ namespace PPMTool.Pages
             }
 
             // Reset query results
-            queryResults = null;
+            await ClearQueryAsync();
             queryActive = true;
+            queryErrorMessage = null;
             var results = new List<CapacityQueryItem>();
-            ChosenPerson = "All";
 
-            // Update the chart source
+            // Update the chart source as this is used
             await ConfigureSourceAsync();
             StateHasChanged();
 
@@ -353,6 +357,8 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task ConfigureSourceAsync()
         {
+            Debug.WriteLine("** Configuring Chart Source...");
+
             // Reset source
             chartSource = new List<ChartItem>();
 
@@ -499,7 +505,7 @@ namespace PPMTool.Pages
                 // First time this is called, there is no reference to the chart
                 if (chart != null)
                 {
-                    Debug.WriteLine($"** Re-renderering chart!");
+                    Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
                     await RefreshChartAsync();
                 }
 
