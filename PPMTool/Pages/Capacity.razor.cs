@@ -107,6 +107,11 @@ namespace PPMTool.Pages
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
+        private int requiredFTE = 50;
+        private List<CapacityQueryItem> fullMatch;
+        private List<CapacityQueryItem> partialMatchPercent;
+        private List<CapacityQueryItem> partialMatchDuration;
+        private List<CapacityQueryItem> partialMatchBoth;
 
         protected override async Task OnInitializedAsync()
         {
@@ -305,8 +310,11 @@ namespace PPMTool.Pages
                 }
             }
 
-            // TODO: Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
-
+            // Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
+            fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
+            partialMatchPercent = results.Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)).ToList();
+            partialMatchDuration = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
+            partialMatchBoth = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate != queryEndDate && x.StartDate != queryStartDate).ToList();
 
             // Assign results
             queryResults = results.OrderByDescending(x => x.AvailabilityPercent);

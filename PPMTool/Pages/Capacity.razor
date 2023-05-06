@@ -34,6 +34,15 @@
                         <RadzenDatePicker @bind-Value="queryEndDate" DateFormat="d" />
                     </div>
                     <div class="col-auto">
+                        at
+                    </div>
+                    <div class="col-auto">
+                        <InputNumber min="0" step="1" max="100" @bind-Value="requiredFTE" />
+                    </div>
+                    <div class="col-auto">
+                        %
+                    </div>
+                    <div class="col-auto">
                         <div class="row align-items-center p-1">
                             <div class="col">
                                 Include Unfunded:
@@ -69,29 +78,117 @@
             }
             @if (queryResults != null)
             {
-                <table class="table table-sm table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Skills</th>
-                            <th>Start</th>
-                            <th>End</th>
-                            <th>Availability</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var res in queryResults)
-                        {
+                @if (fullMatch.Count > 0)
+                {
+                    <b>Full Match</b>
+                    <table class="table table-sm table-striped table-bordered">
+                        <thead>
                             <tr>
-                                <td>@res.Person.Name</td>
-                                <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                <td>@res.StartDate.ToShortDateString()</td>
-                                <td>@res.EndDate.ToShortDateString()</td>
-                                <td>@(res.AvailabilityPercent)%</td>
+                                <th>Name</th>
+                                <th>Skills</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Availability</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var res in fullMatch)
+                            {
+                                <tr>
+                                    <td>@res.Person.Name</td>
+                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                                    <td>@res.StartDate.ToShortDateString()</td>
+                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@(res.AvailabilityPercent)%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                @if (partialMatchPercent.Count > 0)
+                {
+                    <b>Partial Match (%)</b>
+                    <table class="table table-sm table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Skills</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Availability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var res in partialMatchPercent)
+                            {
+                                <tr>
+                                    <td>@res.Person.Name</td>
+                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                                    <td>@res.StartDate.ToShortDateString()</td>
+                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@(res.AvailabilityPercent)%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                @if (partialMatchDuration.Count > 0)
+                {
+                    <b>Partial Match (Duration)</b>
+                    <table class="table table-sm table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Skills</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Availability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var res in partialMatchDuration)
+                            {
+                                <tr>
+                                    <td>@res.Person.Name</td>
+                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                                    <td>@res.StartDate.ToShortDateString()</td>
+                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@(res.AvailabilityPercent)%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                @if (partialMatchBoth.Count> 0)
+                {
+                    <b>Partial Match (% and Duration)</b>
+                    <table class="table table-sm table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Skills</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Availability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var res in partialMatchBoth)
+                            {
+                                <tr>
+                                    <td>@res.Person.Name</td>
+                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                                    <td>@res.StartDate.ToShortDateString()</td>
+                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@(res.AvailabilityPercent)%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
             }
             else
             {
