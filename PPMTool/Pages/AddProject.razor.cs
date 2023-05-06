@@ -4,6 +4,7 @@ using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using System.Linq;
 
 namespace PPMTool.Pages
 {
@@ -11,6 +12,9 @@ namespace PPMTool.Pages
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
 
         [Inject]
         private IJSRuntime JsRuntime { get; set; }
@@ -83,10 +87,21 @@ namespace PPMTool.Pages
                     $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.");
                 if (confirmed)
                 {
-                    Logger.LogInformation($"Deleting project {projectModel.Name}");
+                    // Delete all the subtasks for the project
+                    var numToDelete = projectModel.SubTasks.Count;
+                    for (int i = 0; i < numToDelete; ++i)
+                    {
+                        if (projectModel.SubTasks.Count > 0)
+                        {
+                            Logger.LogInformation($"Deleting subtask ID {projectModel.SubTasks.First()?.SubTaskId}");
+
+                            SubTaskService.DeleteTask(context, projectModel.SubTasks.First());
+                        }
+                    }
+
+                    Logger.LogInformation($"Deleting project {projectModel.Name}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
-                    // EF will automatically remove the subtasks and resources too
                     ProjectService.DeleteProject(context, projectModel);
 
                     // Navigate back to the projects list

@@ -35,6 +35,7 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JS { get; set; }
 
+        private string chosenPerson;
         private string ChosenPerson
         {
             get => chosenPerson;
@@ -50,6 +51,7 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool includeUnFunded = true;
         public bool IncludeUnFunded
         {
             get => includeUnFunded;
@@ -65,6 +67,23 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool includeLeavers = false;
+        public bool IncludeLeavers
+        {
+            get => includeLeavers;
+            set
+            {
+                if (includeLeavers != value)
+                {
+                    includeLeavers = value;
+
+                    // Update the chart source
+                    InvokeAsync(async () => await ConfigureSourceAsync());
+                }
+            }
+        }
+
+        private DateTime queryStartDate = DateTime.Now.Date;
         public DateTime QueryStartDate
         {
             get => queryStartDate;
@@ -84,14 +103,15 @@ namespace PPMTool.Pages
         private List<string> nameOptions;
         private string chartTitle;
         private PPMToolContext context;
-        private string chosenPerson;
-        private bool includeUnFunded = true;
-        private DateTime queryStartDate = DateTime.Now.Date;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
-
+        private int requiredFTE = 50;
+        private List<CapacityQueryItem> fullMatch;
+        private List<CapacityQueryItem> partialMatchPercent;
+        private List<CapacityQueryItem> partialMatchDuration;
+        private List<CapacityQueryItem> partialMatchBoth;
 
         protected override async Task OnInitializedAsync()
         {
@@ -153,13 +173,17 @@ namespace PPMTool.Pages
         /// <summary>
         /// Resets the page to its initial state
         /// </summary>
-        private async void ClearQueryAsync()
+        private async Task ClearQueryAsync()
         {
+            Debug.WriteLine("** Clearing Query...");
             queryResults = null;
             queryErrorMessage = null;
             queryActive = false;
+
+            // Reset the person filter but don't trigger the refresh.
+            // Do it manually so we can force synchronisation.
+            chosenPerson = "All";
             await ConfigureSourceAsync();
-            StateHasChanged();
         }
 
         /// <summary>
@@ -167,6 +191,8 @@ namespace PPMTool.Pages
         /// </summary>
         private async void RunQueryAsync()
         {
+            Debug.WriteLine("** Running query...");
+
             // Add error
             if (QueryStartDate >= queryEndDate)
             {
@@ -175,12 +201,12 @@ namespace PPMTool.Pages
             }
 
             // Reset query results
-            queryResults = null;
+            await ClearQueryAsync();
             queryActive = true;
+            queryErrorMessage = null;
             var results = new List<CapacityQueryItem>();
-            ChosenPerson = "All";
 
-            // Update the chart source
+            // Update the chart source as this is used
             await ConfigureSourceAsync();
             StateHasChanged();
 
@@ -190,51 +216,79 @@ namespace PPMTool.Pages
             // Get all the subtasks within the query window
             var tasks = GetSubTasksWithinQueryWindow(SubTaskService.GetAll(context));
 
-            // Get all the resources who are not assigned to any subtasks and add them to the query results
+            // Part 1: Get all the resources who are not assigned to any subtasks and add them to the query results
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
-                // Get any changes ordered by date
-                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate >= QueryStartDate && x.ChangeDate < queryEndDate).OrderBy(x => x.ChangeDate).ToList();
+                // Get any availability changes in force at the beginning of the query or during it
+                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < queryEndDate).ToList();
 
-                // If no changes then use post FTE
+                // Add to the changes any leaving date as a zero availability
+                if (person.EndDate != null)
+                {
+                    changes.Add(new AvailabilityChange()
+                    {
+                        Person = person,
+                        ChangeDate = person.EndDate ?? DateTime.Now,
+                        AvailabilityFTE = 0
+                    });
+
+                    // Remove all availability changes after the leaving date as these are unnecessary
+                    changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
+                }
+
+                // Sort by date
+                changes = changes.OrderBy(x => x.ChangeDate).ToList();
+
+                // If no changes then use post FTE in a single result
                 if (changes.Count == 0)
                 {
                     results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
                 }
                 else
                 {
-                    // First period uses the post FTE up to the first change
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, changes.First().ChangeDate, (int)(person.FTE * 100 / .84)));
+                    // We need to establish the availability at the beginning of the query window which will be post FTE by default
+                    double initialFTE = person.FTE;
 
-                    // Subsequent ones use the new settings
-                    for (int i = 1; i < changes.Count; ++i)
+                    // Find the change immediately before the query window or on day one if there is one
+                    var changeBefore = changes.Where(x => x.ChangeDate <= QueryStartDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                    if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
+                    var changesAfter = changes.Where(x => x.ChangeDate > QueryStartDate).OrderBy(x => x.ChangeDate).ToList();
+
+                    // First period uses the initial FTE up to the first change after the window begins or the end of the window if there isn't any changes after
+                    if (initialFTE > 0)
                     {
-                        // If the last change then use query end date
-                        if (i == changes.Count - 1)
+                        results.Add(new CapacityQueryItem(person, QueryStartDate, changesAfter.FirstOrDefault()?.ChangeDate ?? queryEndDate, (int)(initialFTE * 100 / .84)));
+                    }
+
+                    // Subsequent ones use the latest change information
+                    for (int i = 0; i < changesAfter.Count; ++i)
+                    {
+                        // If the last change then use query end date for result
+                        if (i == changesAfter.Count - 1)
                         {
                             // Filter out availability of less than a day or 0%
-                            if (queryEndDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            if (queryEndDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
                             {
-                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, queryEndDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                                results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, queryEndDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
                             }
                         }
                         else
                         {
                             // Filter out availability of less than a day or 0%
-                            if (changes[i + 1].ChangeDate != changes[i].ChangeDate && changes[i].AvailabilityFTE != 0)
+                            if (changesAfter[i + 1].ChangeDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
                             {
-                                results.Add(new CapacityQueryItem(person, changes[i].ChangeDate, changes[i + 1].ChangeDate, (int)(changes[i].AvailabilityFTE * 100 / .84)));
+                                results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, changesAfter[i + 1].ChangeDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
                             }
                         }
                     }
                 }
             }
 
-            // Invert the chart results and add to results array
+            // Part 2: Invert the chart data and add to results array
             foreach (var item in chartSource)
             {
-                // Get person from name of item
+                // Get person from item label
                 var person = people.FirstOrDefault(p => p.Name == item.Label);
                 if (person == null)
                 {
@@ -242,19 +296,25 @@ namespace PPMTool.Pages
                     continue;
                 }
 
-                // Availability is value 2 in the chart item
-                var availability = (int)(item.Value2 * 100 / .84);
+                // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
+                var availabilityPercentage = (int)(item.Value2 * 100 / .84);
 
-                // Invert value
-                var inv = availability - (int)item.Value1;
+                // Invert value (value 1 here is the assignment value as a percentage)
+                var unassignedPercentage = availabilityPercentage - (int)item.Value1;
 
-                // Only add if it has some relevance...
-                if ((int)item.Value1 < availability && item.StartDate != item.EndDate && inv > 0)
+                // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
+                if (item.StartDate != item.EndDate && unassignedPercentage > 0)
                 {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, inv));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
                 }
             }
+
+            // Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
+            fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
+            partialMatchPercent = results.Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)).ToList();
+            partialMatchDuration = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
+            partialMatchBoth = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate != queryEndDate && x.StartDate != queryStartDate).ToList();
 
             // Assign results
             queryResults = results.OrderByDescending(x => x.AvailabilityPercent);
@@ -305,16 +365,30 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task ConfigureSourceAsync()
         {
+            Debug.WriteLine("** Configuring Chart Source...");
+
             // Reset source
             chartSource = new List<ChartItem>();
 
+            if (chart != null) await RefreshChartAsync();
+
             // Get people from the database
             var peo = PersonService.GetAll(context).OrderBy(x => x.Name);
+
+            // Remove people who have left if necessary
+            if (!IncludeLeavers)
+            {
+                peo = peo.Where(p => p.EndDate == null || p.EndDate >= DateTime.Today).OrderBy(x => x.Name);
+            }
+
             if (peo.Count() > 0)
             {
-                // Get projects from the database
+                // Get projects from the database ignoring finished or cancelled projects
                 var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled);
-                if (!IncludeUnFunded) projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+                if (!IncludeUnFunded)
+                {
+                    projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+                }
 
                 // Reinitialise dictionary
                 groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();
@@ -430,7 +504,7 @@ namespace PPMTool.Pages
                 }
 
                 chartTitle = $"Load for {ChosenPerson ?? "All"}";
-                Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}!");
+                Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
                 // Format X Axis range
                 options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
@@ -439,8 +513,7 @@ namespace PPMTool.Pages
                 // First time this is called, there is no reference to the chart
                 if (chart != null)
                 {
-                    Debug.WriteLine($"** Re-renderering chart!");
-                    await chart.UpdateOptionsAsync(true, true, false);
+                    Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
                     await RefreshChartAsync();
                 }
 
@@ -454,9 +527,12 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task RefreshChartAsync()
         {
+            // Update the options
+            await chart.UpdateOptionsAsync(true, false, false);
+
             // HACK: Not sure why we have to call this twice but we do!
-            await chart?.UpdateSeriesAsync();
-            await chart?.UpdateSeriesAsync();
+            await chart.UpdateSeriesAsync(false);
+            await chart.UpdateSeriesAsync(false);
 
             // Force blazor redraw
             await InvokeAsync(StateHasChanged);

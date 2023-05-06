@@ -46,6 +46,9 @@ namespace PPMTool
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
             services.AddScoped<TagService>();
+
+            // Initialise the Resource Helper
+            ResourceHelper.Initialise();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

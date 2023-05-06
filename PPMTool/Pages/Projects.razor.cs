@@ -13,6 +13,7 @@ using Radzen.Blazor;
 using FluentDate;
 using System.Diagnostics;
 using PPMTool.Pages.Components;
+using System.Text.RegularExpressions;
 
 namespace PPMTool.Pages
 {
@@ -42,11 +43,34 @@ namespace PPMTool.Pages
             LoadProjectData();
         }
 
+        /// <summary>
+        /// Temporary method for migrating the RTP code from the name to the new RTP field as an integer using RegEx matching
+        /// </summary>
+        private void Migrate()
+        {
+            foreach (var p in projects)
+            {
+                var match = Regex.Match(p.Name, "(RTP-)(\\d+)");
+                try
+                {
+                    var remain = p.Name.Remove(match.Index, match.Length).Trim();
+                    p.Name = remain;
+                    p.RTP = int.Parse(match.ToString().Split('-').Last());
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{ex.Message}");
+                }
+                ProjectService.Update(context, p);
+            }
+            LoadProjectData();
+        }
+
         private void LoadProjectData()
         {
             // Get projects from the database
             context = new PPMToolContext();
-            var proj = ProjectService.GetAll(context).OrderBy(x => x.Name).ToList();
+            var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
 
             // Build the summary widget data and sort by total
             summaryData = new List<ProjectSummaryWidget.ProjectSummaryData>();

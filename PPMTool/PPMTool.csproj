@@ -5,6 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="InnateActivityList.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="InnateActivityList.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Pages\Capacity - Copy.razor.cs">
       <DependentUpon>Capacity.razor.cs</DependentUpon>
     </Compile>
