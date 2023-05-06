@@ -168,7 +168,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Resets the page to its initial state
         /// </summary>
-        private async void ClearQueryAsync()
+        private async Task ClearQueryAsync()
         {
             queryResults = null;
             queryErrorMessage = null;
@@ -182,6 +182,8 @@ namespace PPMTool.Pages
         /// </summary>
         private async void RunQueryAsync()
         {
+            Debug.WriteLine("** Running query...");
+
             // Add error
             if (QueryStartDate >= queryEndDate)
             {
@@ -245,7 +247,10 @@ namespace PPMTool.Pages
                     var changesAfter = changes.Where(x => x.ChangeDate > QueryStartDate).OrderBy(x => x.ChangeDate).ToList();
 
                     // First period uses the initial FTE up to the first change after the window begins or the end of the window if there isn't any changes after
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, changesAfter.FirstOrDefault()?.ChangeDate ?? queryEndDate, (int)(initialFTE * 100 / .84)));
+                    if (initialFTE > 0)
+                    {
+                        results.Add(new CapacityQueryItem(person, QueryStartDate, changesAfter.FirstOrDefault()?.ChangeDate ?? queryEndDate, (int)(initialFTE * 100 / .84)));
+                    }
 
                     // Subsequent ones use the latest change information
                     for (int i = 0; i < changesAfter.Count; ++i)
@@ -274,7 +279,7 @@ namespace PPMTool.Pages
             // Part 2: Invert the chart data and add to results array
             foreach (var item in chartSource)
             {
-                // Get person from name of item
+                // Get person from item label
                 var person = people.FirstOrDefault(p => p.Name == item.Label);
                 if (person == null)
                 {
@@ -282,17 +287,17 @@ namespace PPMTool.Pages
                     continue;
                 }
 
-                // Availability is value 2 in the chart item
-                var availability = (int)(item.Value2 * 100 / .84);
+                // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
+                var availabilityPercentage = (int)(item.Value2 * 100 / .84);
 
-                // Invert value
-                var inv = availability - (int)item.Value1;
+                // Invert value (value 1 here is the assignment value as a percentage)
+                var unassignedPercentage = availabilityPercentage - (int)item.Value1;
 
-                // Only add if it has some relevance...
-                if ((int)item.Value1 < availability && item.StartDate != item.EndDate && inv > 0)
+                // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
+                if (item.StartDate != item.EndDate && unassignedPercentage > 0)
                 {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, inv));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
                 }
             }
 
