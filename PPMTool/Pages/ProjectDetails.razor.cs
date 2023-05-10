@@ -54,7 +54,7 @@ namespace PPMTool.Pages
                 {
                     // Create the chart items
                     var temp = ChartHelper.AggregateByWeek(
-                        project.Name,
+                        project.GetFullName(),
                         project.SubTasks,
                         task =>
                         {

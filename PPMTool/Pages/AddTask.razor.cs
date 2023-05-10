@@ -98,7 +98,7 @@ namespace PPMTool.Pages
         {
             if (TaskId > -1)
             {
-                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.Name}");
+                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.GetFullName()}");
                 if (confirmed)
                 {
                     // Call delete on the subtask service and let it remove the resources
