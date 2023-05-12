@@ -79,14 +79,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to determine whether a date [startDate endDate).
+        /// Method to determine whether a date [startDate endDate].
         /// If end date and start date are the same evaluates against start date.
+        /// The end date is assumed to be a working day for the task so it included in the test.
         /// </summary>
         /// <param name="testDate">Date to test</param>
         /// <returns></returns>
         internal bool IsWithin(DateTime testDate)
         {
-            return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate < EndDate;
+            return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate <= EndDate;
         }
 
 
@@ -130,10 +131,10 @@ namespace PPMTool.Data.Entities
                 {
                     isEndDateDriven = value;
                     
-                    // Update the end date to match the start date
-                    if (!isEndDateDriven && EndDate < StartDate)
+                    // Update the end date to match the start date plus a day
+                    if (!isEndDateDriven && EndDate <= StartDate)
                     {
-                        EndDate= StartDate;
+                        EndDate = StartDate.AddDays(1);
                     }
                     OnEndDateDrivenChanged(new EventArgs());
                 }
@@ -184,13 +185,13 @@ namespace PPMTool.Data.Entities
                     if (Predecessor != null)
                     {
                         // Correct the end date to start on the next working day if necessary
-                        StartDate = GetNextWorkingDay(Predecessor.EndDate);
+                        StartDate = TaskType == TaskType.FixedWork ? GetNextWorkingDay(Predecessor.EndDate) : Predecessor.EndDate.AddDays(1);
                     }
 
                     // Check whether we need to drive from resources
                     if (units > 0d && latestStart > StartDate)
                     {
-                        latestStart = GetNextWorkingDay(latestStart);
+                        latestStart = TaskType == TaskType.FixedWork ? GetNextWorkingDay(latestStart) : Predecessor.EndDate.AddDays(1);
                         Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
                         StartDate = latestStart.Date;
                     }
@@ -227,7 +228,7 @@ namespace PPMTool.Data.Entities
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
                     // If we are allowed to move the end date to maintain the current duration then set the end date now
-                    if (!IsEndDateDriven && permitUndrivenEndToMove) EndDate = StartDate.Date.AddDays(DurationDays).Date;
+                    if (!IsEndDateDriven && permitUndrivenEndToMove) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
                     // If the end date is not driven then set duration here from the start and end dates
                     if (!IsEndDateDriven) UpdateDurationFromEndDate();
@@ -245,7 +246,7 @@ namespace PPMTool.Data.Entities
                 }
 
                 // Set end date from the duration
-                if (IsEndDateDriven) EndDate = StartDate.Date.AddDays(DurationDays).Date;
+                if (IsEndDateDriven) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
                 return null;
             }
@@ -257,7 +258,8 @@ namespace PPMTool.Data.Entities
 
         private void UpdateDurationFromEndDate()
         {
-            DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays);
+            // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
+            DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
             DurationBusinessDays = GetNumberOfBusinessDays(StartDate, EndDate);
         }
 
@@ -272,7 +274,9 @@ namespace PPMTool.Data.Entities
             {
                 DurationBusinessDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units));
                 var estimatedEndDate = StartDate.AddBusinessDays(DurationBusinessDays);
-                DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays);
+
+                // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
+                DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
             }
         }
 
@@ -286,9 +290,9 @@ namespace PPMTool.Data.Entities
 
         private DateTime GetNextWorkingDay(DateTime date)
         {
-            if (date.DayOfWeek == DayOfWeek.Saturday) date = date.AddDays(2);
-            else if (date.DayOfWeek == DayOfWeek.Sunday) date = date.AddDays(1);
-            return date;
+            if (date.DayOfWeek == DayOfWeek.Saturday) return date.AddDays(2);
+            else if (date.DayOfWeek == DayOfWeek.Friday) return date.AddDays(3);
+            return date.AddDays(1);
         }
 
 
@@ -304,7 +308,7 @@ namespace PPMTool.Data.Entities
             if (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday) throw new Exception("Cannot start a task on a weekend!");
 
             // If end date is a weekend day then move on to the following Monday
-            endDate = GetNextWorkingDay(endDate);
+            if (endDate.DayOfWeek == DayOfWeek.Saturday || endDate.DayOfWeek == DayOfWeek.Sunday) endDate = GetNextWorkingDay(endDate);
 
             // Work out the number of normal days
             int normalDays = (int)Math.Round(endDate.Date.Subtract(startDate.Date).TotalDays);

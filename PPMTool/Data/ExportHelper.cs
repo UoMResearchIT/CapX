@@ -168,7 +168,7 @@ namespace PPMTool.Data
                             Debug.WriteLine($"** We have a task without a project that has a resource! Task ID = {t.SubTaskId}, Task Name = {t.Name}, Person = {person.Name}!");
                             continue;
                         }
-                        var name = $"{proj.Name} : {t.Name}";
+                        var name = $"{proj.GetFullName()} : {t.Name}";
 
                         // Add / update a row for every task running in the month
                         var existing = data.FirstOrDefault(x => x.ProjectAndTaskName == name);

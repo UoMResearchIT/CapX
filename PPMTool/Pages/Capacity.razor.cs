@@ -162,7 +162,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
 
                 // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(context).FirstOrDefault(x => x.Name == projectName);
+                var project = ProjectService.GetAll(context).FirstOrDefault(x => x.GetFullName() == projectName);
                 if (project != null)
                 {
                     Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");
@@ -471,7 +471,7 @@ namespace PPMTool.Pages
                         }
 
                         // Add dictionary entry with project name as key
-                        if (assignments.Count > 0) groupedSubTasks.Add(project.Name, assignments);
+                        if (assignments.Count > 0) groupedSubTasks.Add(project.GetFullName(), assignments);
                     }
 
                     // Build chart source from the grouped data

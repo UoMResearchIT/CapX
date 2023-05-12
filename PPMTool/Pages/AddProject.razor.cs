@@ -83,7 +83,7 @@ namespace PPMTool.Pages
             if (ProjectId > -1)
             {
                 // Prompt
-                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete project {projectModel.Name}. " +
+                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete project {projectModel.GetFullName()}. " +
                     $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.");
                 if (confirmed)
                 {
@@ -99,7 +99,7 @@ namespace PPMTool.Pages
                         }
                     }
 
-                    Logger.LogInformation($"Deleting project {projectModel.Name}, ID {projectModel.ProjectId}");
+                    Logger.LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
                     ProjectService.DeleteProject(context, projectModel);

@@ -19,7 +19,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal bool AddProject(PPMToolContext context, Project projectModel)
         {
-            if (context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim()))
+            if (context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim()) || context.Projects.Any(x => x.RTP == projectModel.RTP))
             {
                 // Duplicate found
                 return false;

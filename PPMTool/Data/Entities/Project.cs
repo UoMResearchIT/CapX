@@ -89,5 +89,13 @@ namespace PPMTool.Data.Entities
             else BudgetStatus = BudgetStatus.OnBudget;
         }
 
+        /// <summary>
+        /// Method which returns the project name prefixed by the RTP code
+        /// </summary>
+        /// <returns></returns>
+        internal string GetFullName()
+        {
+            return $"RTP-{RTP} {Name}";
+        }
     }
 }
