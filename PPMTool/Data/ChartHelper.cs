@@ -31,7 +31,7 @@ namespace PPMTool.Data
             Func<double, DateTime, double> value2Function = null
         )
         {
-            // Each block for a person is considered an element of a series (block).
+            // Each block for a person is considered an element of a series.
             // We must define an element as a block of the same FTE value.
             // Marching through at the chosen resolution, we can then save an element and start a new one when the FTE changes.
 
@@ -111,7 +111,7 @@ namespace PPMTool.Data
                 }
 
                 // Increment by 1 week
-                currentWeek = currentWeek.AddDays(7);
+                currentWeek = currentWeek.AddDays(1);
             }
 
             // Add the final block if it had a non-zero value
