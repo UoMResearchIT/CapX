@@ -256,7 +256,7 @@
                                  Items="chartSource"
                                  XValue="@(e => e.Label)"
                                  YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                 YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                 YMaxValue="@(e => e.EndDate.AddDays(-1).ToUnixTimeMilliseconds())"
                                  PointColor="@(e => e.Colour)" />
                     </ChildContent>
                     <ApexPointTooltip>

@@ -110,7 +110,7 @@ namespace PPMTool.Data
                     value2Tracked = value2Week;
                 }
 
-                // Increment by 1 week
+                // Increment by 1 day
                 currentWeek = currentWeek.AddDays(1);
             }
 
