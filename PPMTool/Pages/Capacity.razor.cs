@@ -384,7 +384,7 @@ namespace PPMTool.Pages
             if (peo.Count() > 0)
             {
                 // Get projects from the database ignoring finished or cancelled projects
-                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled);
+                var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled());
                 if (!IncludeUnFunded)
                 {
                     projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);

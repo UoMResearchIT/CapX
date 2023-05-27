@@ -42,8 +42,38 @@ namespace PPMTool.Enums
         Finished,
 
         /// <summary>
-        /// Project is cancelled, bid failed or we weren't able to resource it
+        /// Project cancelled by customer
         /// </summary>
-        Cancelled
+        CancelledByCustomer,
+
+        /// <summary>
+        /// project cancelled due to funding failure
+        /// </summary>
+        CancelledBidFailed,
+
+        /// <summary>
+        /// Project cancelled because we couldn't resource it
+        /// </summary>
+        CancelledNoResource
+    }
+
+    static class ProjectStatusExtensions
+    {
+        public static bool IsProjectFinishedOrCancelled(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.Finished ||
+                status == ProjectStatus.CancelledByCustomer ||
+                status == ProjectStatus.CancelledBidFailed ||
+                status == ProjectStatus.CancelledNoResource;
+        }
+
+        public static bool IsProjectCancelled(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.CancelledByCustomer ||
+                status == ProjectStatus.CancelledBidFailed ||
+                status == ProjectStatus.CancelledNoResource;
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using System.Linq;
 
@@ -44,7 +45,7 @@ namespace PPMTool.Pages
             {
                 // Check to see if the project is marked as cancelled as then we need to remove resources.
                 // Leave resources on completed projects so we have a historical record.
-                if (projectModel.ProjectStatus == Enums.ProjectStatus.Cancelled)
+                if (projectModel.ProjectStatus.IsProjectCancelled())
                 {
                     foreach (SubTask t in projectModel.SubTasks)
                     {
