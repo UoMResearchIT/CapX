@@ -248,7 +248,7 @@ namespace PPMTool.Pages
                     changes.Add(new AvailabilityChange()
                     {
                         Person = person,
-                        ChangeDate = person.EndDate ?? DateTime.Now,
+                        ChangeDate = person.EndDate ?? DateTime.Now.Date,
                         AvailabilityFTE = 0
                     });
 

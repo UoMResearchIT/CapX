@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
         public SubTask()
         {
             // Set default value
-            StartDate = DateTime.Now;
+            StartDate = DateTime.Now.Date;
         }
 
         public int SubTaskId { get; set; }
