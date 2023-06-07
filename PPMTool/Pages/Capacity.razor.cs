@@ -242,7 +242,7 @@ namespace PPMTool.Pages
                 // Get any availability changes in force at the beginning of the query or during it
                 var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < queryEndDate).ToList();
 
-                // Add to the changes any leaving date as a zero availability
+                // Add to the changes any leaving date within the window as a zero availability
                 if (person.EndDate != null)
                 {
                     changes.Add(new AvailabilityChange()
@@ -256,6 +256,28 @@ namespace PPMTool.Pages
                     changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
                 }
 
+                // Add to the changes any start date withing the window as post FTE (if no availablity change on the start date)
+                if (person.StartDate > QueryStartDate && !changes.Any(x => x.ChangeDate == person.StartDate))
+                {
+                    changes.Add(new AvailabilityChange()
+                    {
+                        Person = person,
+                        ChangeDate = person.StartDate,
+                        AvailabilityFTE = person.FTE
+                    });
+
+                    // Remove all availability changes before the starting date as these are unnecessary
+                    changes = changes.Where(x => x.ChangeDate > person.StartDate).ToList();
+
+                    // Enforce a zero availability before they start
+                    changes.Add(new AvailabilityChange()
+                    {
+                        Person = person,
+                        ChangeDate = QueryStartDate,
+                        AvailabilityFTE = 0
+                    });
+                }
+
                 // Sort by date
                 changes = changes.OrderBy(x => x.ChangeDate).ToList();
 
@@ -264,12 +286,14 @@ namespace PPMTool.Pages
                 {
                     results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
                 }
+
+                // Work through the avaialbility changes to establish blocks of availability
                 else
                 {
                     // We need to establish the availability at the beginning of the query window which will be post FTE by default
                     double initialFTE = person.FTE;
 
-                    // Find the change immediately before the query window or on day one if there is one
+                    // Find the change immediately before the query window or on day one if there is one on the first day fo the query window
                     var changeBefore = changes.Where(x => x.ChangeDate <= QueryStartDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
                     if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
                     var changesAfter = changes.Where(x => x.ChangeDate > QueryStartDate).OrderBy(x => x.ChangeDate).ToList();
@@ -314,6 +338,10 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Couldn't find person {item.Label}");
                     continue;
                 }
+
+                // TODO: What about people who are free at the beginning of the window? There will be no chart block to invert?
+
+                // TODO: Take into account their starting and leaving dates
 
                 // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
                 var availabilityPercentage = (int)(item.Value2 * 100 / .84);
