@@ -7,7 +7,20 @@ namespace PPMTool.Data
 {
     public class ChartHelper
     {
-        public static IEnumerable<ChartItem> ConvertSubTasksToChartDataForPerson(
+        /// <summary>
+        /// For a given person, convert subtasks into an aggregated set of blocks for the timeline graph
+        /// </summary>
+        /// <param name="person">Person of interest</param>
+        /// <param name="subTasks">Set of subtasks to aggregate</param>
+        /// <param name="valueFunction">Function to define the primary value of a given block</param>
+        /// <param name="colourFunction">Function to define the colour of a given block</param>
+        /// <param name="label">Chart axis label for the data</param>
+        /// <param name="startDate">Start of aggregation window</param>
+        /// <param name="endDate">End of aggregation window</param>
+        /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
+        /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <returns></returns>
+        public static IEnumerable<ChartItem> ConvertSubTasksToChartItemsForPerson(
             Person person,
             IEnumerable<SubTask> subTasks,
             Func<SubTask, double> valueFunction,
@@ -19,17 +32,170 @@ namespace PPMTool.Data
             Func<double, DateTime, double> value2Function = null
         )
         {
-            // TODO: If person starts after the start date then reset the start date to that date
+            // If person starts after the start date then reset the start date to that date
+            if (person.StartDate > startDate)
+            {
+                startDate = person.StartDate;
+            }
 
-            // TODO: If person leaves before the end date then reset the end date to that date
+            // If person leaves before the end date then reset the end date to that date
+            if (person.EndDate != null && person.EndDate > endDate)
+            {
+                endDate = person.EndDate ?? DateTime.Now.Date;
+            }
 
-            // TODO: Get the chart items
+            // Get the chart items
+            var chartItems = AggregateSubTasksIntoBlocks(
+                subTasks, valueFunction, colourFunction, label, startDate,
+                endDate, hatchedFunction, value2Function
+            ).OrderBy(x => x.StartDate).ToList();
 
-            // TODO: If the first chart item starts after the (correct) start date then fill in with "zero items" based on availability profile
+            // Create an empty list
+            var extraItems = new List<ChartItem>();
+
+            // If no items or if the first chart item starts after the (corrected) start date
+            // then fill in with "zero items" based on availability profile
+            if (chartItems.Count() < 1 || chartItems.First().StartDate > startDate)
+            {
+                // Define fill region end date
+                var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
+
+                // Generate the items
+                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));             
+            }
+
+            // If there is a gap after the last chart item and the end date then fill in
+            if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
+            {
+                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate.AddDays(1), endDate));
+            }
 
             // TODO: If there are any gaps in the chart items where they are free then fill in
 
-            // TODO: If there is a gap after the last chart item and the end date then fill in
+
+
+
+            // Add the extra items to the chart data
+            if (extraItems.Count > 0)
+            {
+                // Add the items to the chart items list and reorder
+                chartItems.AddRange(extraItems);
+                chartItems.OrderBy(x => x.StartDate);
+            }
+
+            return chartItems;
+        }
+
+        /// <summary>
+        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private static IEnumerable<ChartItem> ConvertAvailabilityProfileToChartItems(Person person, DateTime startDate, DateTime endDate)
+        {
+            var blocks = new List<ChartItem>();
+
+            // Get any availability changes in force at the beginning of the query or during it
+            var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < endDate).ToList();
+
+            // Add to the changes any leaving date within the window as a zero availability
+            if (person.EndDate != null)
+            {
+                changes.Add(new AvailabilityChange()
+                {
+                    Person = person,
+                    ChangeDate = person.EndDate ?? DateTime.Now.Date,
+                    AvailabilityFTE = 0
+                });
+
+                // Remove all availability changes after the leaving date as these are unnecessary
+                changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
+            }
+
+            // Add to the changes any start date withing the window as post FTE (if no availablity change on the start date)
+            if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
+            {
+                changes.Add(new AvailabilityChange()
+                {
+                    Person = person,
+                    ChangeDate = person.StartDate,
+                    AvailabilityFTE = person.FTE
+                });
+
+                // Remove all availability changes before the starting date as these are unnecessary
+                changes = changes.Where(x => x.ChangeDate > person.StartDate).ToList();
+
+                // Enforce a zero availability before they start
+                changes.Add(new AvailabilityChange()
+                {
+                    Person = person,
+                    ChangeDate = startDate,
+                    AvailabilityFTE = 0
+                });
+            }
+
+            // Sort by date
+            changes = changes.OrderBy(x => x.ChangeDate).ToList();
+
+            // If no changes then use post FTE in a single block
+            if (changes.Count == 0)
+            {
+                blocks.Add(
+                    new ChartItem("#609", person.Name, startDate, endDate,
+                        0, (int)(person.FTE * 100 / .84), false
+                    )
+                );
+            }
+
+            // Work through the avaialbility changes to establish blocks of availability
+            else
+            {
+                // We need to establish the availability at the beginning of the query window which will be post FTE by default
+                double initialFTE = person.FTE;
+
+                // Find the change immediately before the query window or on day one
+                // if there is one on the first day of the query window
+                var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
+                var changesAfter = changes.Where(x => x.ChangeDate > startDate).OrderBy(x => x.ChangeDate).ToList();
+
+                // First period uses the initial FTE up to the first change after the window begins or the end
+                // of the window if there isn't any changes after
+                if (initialFTE > 0)
+                {
+                    blocks.Add(
+                        new ChartItem("#609", person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
+                            0, (int)(initialFTE * 100 / .84), false
+                        )
+                    );
+                }
+
+                // Subsequent ones use the latest change information
+                for (int i = 0; i < changesAfter.Count; ++i)
+                {
+                    // If the last change then use query end date for block end
+                    if (i == changesAfter.Count - 1)
+                    {
+                        blocks.Add(
+                            new ChartItem("#609", person.Name, changesAfter[i].ChangeDate, endDate,
+                                0, (int)(changesAfter[i].AvailabilityFTE * 100 / .84), false
+                            )
+                        );
+                    }
+                    else
+                    {
+                        blocks.Add(
+                            new ChartItem("#609", person.Name, changesAfter[i].ChangeDate, changesAfter[i + 1].ChangeDate,
+                                0, (int)(changesAfter[i].AvailabilityFTE * 100 / .84), false
+                            )
+                        );
+                    }
+                }
+            }
+
+            return blocks;
         }
 
         /// <summary>
@@ -63,7 +229,7 @@ namespace PPMTool.Data
             // Initialise
             var temp = new List<ChartItem>();
             
-            // If this person has no assignments then return "zero blocks" based on availability
+            // If this person has no assignments
             if (subTasks.Count() < 1)
             {
                 // Return empty list

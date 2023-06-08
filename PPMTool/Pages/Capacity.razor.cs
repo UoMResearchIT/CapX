@@ -80,7 +80,7 @@ namespace PPMTool.Pages
             }
         }
 
-        private IDictionary<string, IEnumerable<SubTask>> groupedSubTasks;
+        private IDictionary<object, IEnumerable<SubTask>> groupedSubTasks;
         private ApexChart<ChartItem> chart;
         private List<ChartItem> chartSource;
         private ApexChartOptions<ChartItem> options;
@@ -229,6 +229,14 @@ namespace PPMTool.Pages
             await ConfigureSourceAsync();
             StateHasChanged();
 
+            // TODO: Get the chart data for the query window using the new helper
+
+            // TODO: Invert it to get the avaiability of people
+
+
+            // ----------------- CAN PROBABLY BE DELETED ----------------- //
+
+
             // Get all people
             var people = PersonService.GetAll(context).OrderBy(x => x.Name);
 
@@ -239,6 +247,7 @@ namespace PPMTool.Pages
             var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
             foreach (var person in unassigned)
             {
+
                 // Get any availability changes in force at the beginning of the query or during it
                 var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < queryEndDate).ToList();
 
@@ -348,16 +357,8 @@ namespace PPMTool.Pages
                     // If start date is after window start but before first change
                 }
 
-                
-
-
 
             }
-
-
-
-
-
 
                 // Part 2: Invert the chart data and add to results array
                 foreach (var item in chartSource)
@@ -373,9 +374,9 @@ namespace PPMTool.Pages
                 // Identify the blocks in the window where there is no assignment
 
 
-                // TODO: What about people who are free at the beginning of the window? There will be no chart block to invert?
+                // What about people who are free at the beginning of the window? There will be no chart block to invert?
 
-                // TODO: Take into account their starting and leaving dates
+                // Take into account their starting and leaving dates
 
                 // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
                 var availabilityPercentage = (int)(item.Value2 * 100 / .84);
@@ -390,6 +391,9 @@ namespace PPMTool.Pages
                     results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
                 }
             }
+
+
+            // ----------------- END: CAN PROBABLY BE DELETED ----------------- //
 
             // Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
             fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
@@ -462,8 +466,13 @@ namespace PPMTool.Pages
                     projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
                 }
 
+                // Get the window from the start and end dates
+                var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
+                var startDate = safeProjects.Min(x => x.StartDate);
+                var endDate = safeProjects.Max(x => x.EndDate);
+
                 // Reinitialise dictionary
-                groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();
+                groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
 
                 // Flatten subtasks and group by person
                 if (chosenPeople == null || chosenPeople.Count() == 0)
@@ -483,34 +492,35 @@ namespace PPMTool.Pages
                             }
                         }
 
-                        // Add dictionary entry with person name as key
-                        groupedSubTasks.Add(p.Name, assignments);
+                        // Add dictionary entry with person as key
+                        groupedSubTasks.Add(p, assignments);
                     }
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        var items = ChartHelper.AggregateSubTasksIntoBlocks(group.Value,
+                        var items = ChartHelper.ConvertSubTasksToChartItemsForPerson(
+                            group.Key as Person,
+                            group.Value,
                             x =>
                             {
-                                var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
-                                return Math.Round(person.Percentage / .84);
+                                var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
+                                return Math.Round(resource.Percentage / .84);
                             },
                             (x, y) =>
                             {
                                 return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
-                            group.Key,
-                            queryActive ? QueryStartDate : null,
-                            queryActive ? queryEndDate : null,
+                            (group.Key as Person).Name,
+                            queryActive ? QueryStartDate : startDate,
+                            queryActive ? queryEndDate : endDate,
                             x =>
                             {
-                                return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
+                                return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
                             },
                             (x, w) =>
                             {
-                                var person = people.FirstOrDefault(y => y.Name == group.Key);
-                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
+                                return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 0.84;
                             }
                         ).ToList();
 
@@ -518,8 +528,8 @@ namespace PPMTool.Pages
                         // to ensure they show up in the capacity sheet
                         if (items.Count() < 1)
                         {
-                            var person = people.First(x => x.Name == group.Key);
-                            items.Add(new ChartItem(null, group.Key, person.StartDate, person.StartDate, 0, 0, false));
+                            var person = group.Key as Person;
+                            items.Add(new ChartItem(null, person.Name, person.StartDate, person.StartDate, 0, 0, false));
                         }
 
                         // Add the range
@@ -549,7 +559,11 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateSubTasksIntoBlocks(group.Value,
+                        // TODO: Need a new helper here like the previous one...
+
+
+                        chartSource.AddRange(ChartHelper.AggregateSubTasksIntoBlocks(
+                            group.Value,
                             // Value 1 for each block is the sum of the effort across all chosen people
                             x =>
                             {
