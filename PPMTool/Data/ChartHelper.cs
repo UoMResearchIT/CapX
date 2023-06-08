@@ -7,8 +7,33 @@ namespace PPMTool.Data
 {
     public class ChartHelper
     {
+        public static IEnumerable<ChartItem> ConvertSubTasksToChartDataForPerson(
+            Person person,
+            IEnumerable<SubTask> subTasks,
+            Func<SubTask, double> valueFunction,
+            Func<double, double, string> colourFunction,
+            string label,
+            DateTime startDate,
+            DateTime endDate,
+            Func<SubTask, bool> hatchedFunction = null,
+            Func<double, DateTime, double> value2Function = null
+        )
+        {
+            // TODO: If person starts after the start date then reset the start date to that date
+
+            // TODO: If person leaves before the end date then reset the end date to that date
+
+            // TODO: Get the chart items
+
+            // TODO: If the first chart item starts after the (correct) start date then fill in with "zero items" based on availability profile
+
+            // TODO: If there are any gaps in the chart items where they are free then fill in
+
+            // TODO: If there is a gap after the last chart item and the end date then fill in
+        }
+
         /// <summary>
-        /// Time-marching method for summing up the contribution week-by-week based on the value function provided.
+        /// Time-marching method for summing up the contribution across sub tasks based on the value function provided.
         /// The results are arranged into irregular blocks of the same continuous value.
         /// </summary>
         /// <param name="label"></param>
@@ -20,13 +45,13 @@ namespace PPMTool.Data
         /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> AggregateByWeekIntoBlocks(
+        private static IEnumerable<ChartItem> AggregateSubTasksIntoBlocks(
             IEnumerable<SubTask> subTasks,
             Func<SubTask, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
-            DateTime? startDate = null,
-            DateTime? endDate = null,
+            DateTime startDate,
+            DateTime endDate,
             Func<SubTask, bool> hatchedFunction = null,
             Func<double, DateTime, double> value2Function = null
         )
@@ -38,21 +63,16 @@ namespace PPMTool.Data
             // Initialise
             var temp = new List<ChartItem>();
             
-            // If this person has no assignments return a empty list
+            // If this person has no assignments then return "zero blocks" based on availability
             if (subTasks.Count() < 1)
             {
+                // Return empty list
                 return temp;
             }
 
-            // Get earliest assignment to get start date for marching
-            DateTime start = startDate ?? subTasks.MinBy(x => x.StartDate).StartDate;
-
-            // Get latest assignment finish so we know when to stop
-            DateTime end = endDate ?? subTasks.MaxBy(x => x.EndDate).EndDate;
-
             // Start marching at a 1 week resolution
-            DateTime currentWeek = start;
-            DateTime currentBlockStart = start;
+            DateTime currentWeek = startDate;
+            DateTime currentBlockStart = startDate;
 
             // Parameters used to determine when a block should be completed and a new block started
             // Initialise tracked values to something unique so we can detect the first pass through
@@ -64,7 +84,7 @@ namespace PPMTool.Data
             double value2Week = 0d;
 
             // March through 1 week at a time
-            while (currentWeek < end)
+            while (currentWeek < endDate)
             {
                 // Find assignments within current week
                 var within = subTasks.Where(x => x.IsWithin(currentWeek));
@@ -140,7 +160,7 @@ namespace PPMTool.Data
         /// <param name="value2Function">Function to determine a second value summed over subtasks in the current week></param>
         /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> AggregateByWeek(
+        public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
             string label,
             IEnumerable<SubTask> subTasks,
             Func<SubTask, double> value1Function,

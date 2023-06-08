@@ -328,8 +328,39 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Part 2: Invert the chart data and add to results array
-            foreach (var item in chartSource)
+            // Part 2: Invert the chart data for the remaining people
+            var assigned = people.Where(p => tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
+            foreach (var person in unassigned)
+            {
+                // Get their blocks from the chart data
+                var chartBlocks = chartSource.Where(x => x.Label == person.Name).OrderBy(x => x.StartDate);
+
+                // Identify any gap at the start of the query window until the first task
+                if (chartBlocks.First().StartDate > QueryStartDate)
+                {
+                    // TODO: Add dummy block(s) to represent start date and availability changes
+
+                    // Get availability changes after start date
+                    var changesInWindow = person.AvailabilityChanges.Where(x =>
+                        x.ChangeDate >= QueryStartDate && x.ChangeDate < queryEndDate
+                    );
+
+                    // If start date is after window start but before first change
+                }
+
+                
+
+
+
+            }
+
+
+
+
+
+
+                // Part 2: Invert the chart data and add to results array
+                foreach (var item in chartSource)
             {
                 // Get person from item label
                 var person = people.FirstOrDefault(p => p.Name == item.Label);
@@ -338,6 +369,9 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Couldn't find person {item.Label}");
                     continue;
                 }
+
+                // Identify the blocks in the window where there is no assignment
+
 
                 // TODO: What about people who are free at the beginning of the window? There will be no chart block to invert?
 
@@ -456,7 +490,7 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        var items = ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                        var items = ChartHelper.AggregateSubTasksIntoBlocks(group.Value,
                             x =>
                             {
                                 var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
@@ -515,8 +549,8 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value,
-                            // Value 1 for each block is the sum of the effort across all chosen
+                        chartSource.AddRange(ChartHelper.AggregateSubTasksIntoBlocks(group.Value,
+                            // Value 1 for each block is the sum of the effort across all chosen people
                             x =>
                             {
                                 var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
@@ -536,7 +570,7 @@ namespace PPMTool.Pages
                                 var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
                                 return resources.Any(x => x.IsProvisional);
                             },
-                            // Value 2 for each block is based on the sum of the availability of all chosen
+                            // Value 2 for each block is based on the sum of the availability of all chosen people
                             (x, w) =>
                             {
                                 var peo = people.Where(y => chosenPeople.Contains(y.Name));
