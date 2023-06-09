@@ -550,42 +550,41 @@ namespace PPMTool.Pages
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        // TODO: Need a new helper here like the previous one...
 
-
-                        //chartSource.AddRange(ChartHelper.ConvertSubTasksToChartItemsForProject(
-                        //    group.Value,
-                        //    // Value 1 for each block is the sum of the effort across all chosen people
-                        //    x =>
-                        //    {
-                        //        var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                        //        return Math.Round(resources.Sum(x => x.Percentage) / .84);
-                        //    },
-                        //    // Shading function based on value 1 and value 2
-                        //    (x, y) =>
-                        //    {
-                        //        return ChartItem.GetColourStringFTE(x, y * 100 / 84);
-                        //    },
-                        //    (group.Key as Project).GetFullName(),
-                        //    queryActive ? QueryStartDate : startDate,
-                        //    queryActive ? queryEndDate : endDate,
-                        //    // Hatched value is whether any assignee is provisional
-                        //    x =>
-                        //    {
-                        //        var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                        //        return resources.Any(x => x.IsProvisional);
-                        //    },
-                        //    // Value 2 for each block is based on the sum of the availability of all chosen people
-                        //    (x, w) =>
-                        //    {
-                        //        var peo = people.Where(y => chosenPeople.Contains(y.Name));
-                        //        return peo.Sum(y => y.GetAvailabilityOnDate(w));
-                        //    }
-                        //));
+                        chartSource.AddRange(ChartHelper.ConvertSubTasksToChartItemsForProject(
+                            group.Key as Project,
+                            group.Value,
+                            // Value 1 for each block is the sum of the effort across all chosen people
+                            x =>
+                            {
+                                var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                                return Math.Round(resources.Sum(x => x.Percentage) / .84);
+                            },
+                            // Shading function based on value 1 and value 2
+                            (x, y) =>
+                            {
+                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                            },
+                            (group.Key as Project).GetFullName(),
+                            queryActive ? QueryStartDate : startDate,
+                            queryActive ? queryEndDate : endDate,
+                            // Hatched value is whether any assignee is provisional
+                            x =>
+                            {
+                                var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                                return resources.Any(x => x.IsProvisional);
+                            },
+                            // Value 2 for each block is based on the sum of the availability of all chosen people
+                            (x, w) =>
+                            {
+                                var peo = people.Where(y => chosenPeople.Contains(y.Name));
+                                return peo.Sum(y => y.GetAvailabilityOnDate(w));
+                            }
+                        ));
                     }
                 }
 
-                chartTitle = $"Load for {(chosenPeople.Count() > 0 ? string.Join(",", chosenPeople) : "All")}";
+                chartTitle = $"Load for {(chosenPeople != null && chosenPeople.Count() > 0 ? string.Join(",", chosenPeople) : "All")}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
                 // Format X Axis range

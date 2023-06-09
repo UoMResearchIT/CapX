@@ -111,13 +111,44 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+        /// For a given project, convert subtasks into an aggregated set of blocks for the timeline graph
         /// </summary>
-        /// <param name="person"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
+        /// <param name="project">Project of interest</param>
+        /// <param name="subTasks">Set of subtasks to aggregate</param>
+        /// <param name="valueFunction">Function to define the primary value of a given block</param>
+        /// <param name="colourFunction">Function to define the colour of a given block</param>
+        /// <param name="label">Chart axis label for the data</param>
+        /// <param name="startDate">Start of aggregation window</param>
+        /// <param name="endDate">End of aggregation window</param>
+        /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
+        /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <returns></returns>
-        private static IEnumerable<ChartItem> ConvertAvailabilityProfileToChartItems(Person person, DateTime startDate, DateTime endDate)
+        public static IEnumerable<ChartItem> ConvertSubTasksToChartItemsForProject(
+            Project project,
+            IEnumerable<SubTask> subTasks,
+            Func<SubTask, double> valueFunction,
+            Func<double, double, string> colourFunction,
+            string label,
+            DateTime startDate,
+            DateTime endDate,
+            Func<SubTask, bool> hatchedFunction = null,
+            Func<double, DateTime, double> value2Function = null
+        )
+        {
+            return AggregateSubTasksIntoBlocks(
+                subTasks, valueFunction, colourFunction, label, startDate,
+                endDate, hatchedFunction, value2Function
+            ).OrderBy(x => x.StartDate).ToList();
+        }
+
+            /// <summary>
+            /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+            /// </summary>
+            /// <param name="person"></param>
+            /// <param name="startDate"></param>
+            /// <param name="endDate"></param>
+            /// <returns></returns>
+            private static IEnumerable<ChartItem> ConvertAvailabilityProfileToChartItems(Person person, DateTime startDate, DateTime endDate)
         {
             var blocks = new List<ChartItem>();
 
