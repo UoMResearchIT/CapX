@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.Diagnostics;
 
 namespace PPMTool.Data
 {
@@ -39,9 +40,9 @@ namespace PPMTool.Data
             }
 
             // If person leaves before the end date then reset the end date to that date
-            if (person.EndDate != null && person.EndDate > endDate)
+            if (person.EndDate != null && person.EndDate < endDate)
             {
-                endDate = person.EndDate ?? DateTime.Now.Date;
+                endDate = person.EndDate?.AddDays(1) ?? DateTime.Now.Date;
             }
 
             // Get the chart items
@@ -49,6 +50,7 @@ namespace PPMTool.Data
                 subTasks, valueFunction, colourFunction, label, startDate,
                 endDate, hatchedFunction, value2Function
             ).OrderBy(x => x.StartDate).ToList();
+            Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
 
             // Create an empty list
             var extraItems = new List<ChartItem>();
@@ -61,19 +63,41 @@ namespace PPMTool.Data
                 var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
 
                 // Generate the items
+                Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));             
             }
 
             // If there is a gap after the last chart item and the end date then fill in
             if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
             {
-                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate.AddDays(1), endDate));
+                Debug.WriteLine($"** Generating extra items at the end for {person.Name}");
+                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate, endDate));
             }
 
-            // TODO: If there are any gaps in the chart items where they are free then fill in
+            // Add the extra items to the chart data
+            if (extraItems.Count > 0)
+            {
+                // Add the items to the chart items list and reorder
+                chartItems.AddRange(extraItems);
+                chartItems.OrderBy(x => x.StartDate);
+            }
 
-
-
+            // If there are any gaps in the chart items where they are free then fill in
+            extraItems.Clear();
+            //for (int i = 0 ; i < chartItems.Count(); ++i)
+            //{
+            //    // Ignore the last item in the list
+            //    if (i < chartItems.Count() - 1)
+            //    {
+            //        // If there is a gap
+            //        if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
+            //        {
+            //            // Generate chart items from availability to fill the gap
+            //            Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
+            //            extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
+            //        }
+            //    }
+            //}
 
             // Add the extra items to the chart data
             if (extraItems.Count > 0)
@@ -106,15 +130,15 @@ namespace PPMTool.Data
                 changes.Add(new AvailabilityChange()
                 {
                     Person = person,
-                    ChangeDate = person.EndDate ?? DateTime.Now.Date,
+                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Now.Date,
                     AvailabilityFTE = 0
                 });
 
-                // Remove all availability changes after the leaving date as these are unnecessary
-                changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
+                // Keep only changes on or before the end date
+                changes = changes.Where(x => x.ChangeDate <= person.EndDate?.AddDays(1)).ToList();
             }
 
-            // Add to the changes any start date withing the window as post FTE (if no availablity change on the start date)
+            // Add to the changes any start date within the window as post FTE (if no availablity change on the start date)
             if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
             {
                 changes.Add(new AvailabilityChange()
@@ -124,8 +148,8 @@ namespace PPMTool.Data
                     AvailabilityFTE = person.FTE
                 });
 
-                // Remove all availability changes before the starting date as these are unnecessary
-                changes = changes.Where(x => x.ChangeDate > person.StartDate).ToList();
+                // Keep only changes on or after the start date
+                changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
 
                 // Enforce a zero availability before they start
                 changes.Add(new AvailabilityChange()
@@ -149,7 +173,7 @@ namespace PPMTool.Data
                 );
             }
 
-            // Work through the avaialbility changes to establish blocks of availability
+            // Work through the availability changes to establish blocks of availability
             else
             {
                 // We need to establish the availability at the beginning of the query window which will be post FTE by default
@@ -159,18 +183,17 @@ namespace PPMTool.Data
                 // if there is one on the first day of the query window
                 var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
                 if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
-                var changesAfter = changes.Where(x => x.ChangeDate > startDate).OrderBy(x => x.ChangeDate).ToList();
+
+                // Any relevant changes after must be after the start of the window but before the end
+                var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
 
                 // First period uses the initial FTE up to the first change after the window begins or the end
                 // of the window if there isn't any changes after
-                if (initialFTE > 0)
-                {
-                    blocks.Add(
-                        new ChartItem("#609", person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
-                            0, (int)(initialFTE * 100 / .84), false
-                        )
-                    );
-                }
+                blocks.Add(
+                    new ChartItem("#609", person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
+                        0, (int)(initialFTE * 100 / .84), false
+                    )
+                );
 
                 // Subsequent ones use the latest change information
                 for (int i = 0; i < changesAfter.Count; ++i)
@@ -222,59 +245,59 @@ namespace PPMTool.Data
             Func<double, DateTime, double> value2Function = null
         )
         {
-            // Each block for a person is considered an element of a series.
+            // Each block is considered an element of a series.
             // We must define an element as a block of the same FTE value.
             // Marching through at the chosen resolution, we can then save an element and start a new one when the FTE changes.
 
             // Initialise
             var temp = new List<ChartItem>();
             
-            // If this person has no assignments
+            // If no subtasks in the list
             if (subTasks.Count() < 1)
             {
-                // Return empty list
+                // Return no blocks
                 return temp;
             }
 
-            // Start marching at a 1 week resolution
-            DateTime currentWeek = startDate;
-            DateTime currentBlockStart = startDate;
+            // Start marching
+            DateTime currentDay = startDate;
+            DateTime currentBlockStartDay = startDate;
 
             // Parameters used to determine when a block should be completed and a new block started
             // Initialise tracked values to something unique so we can detect the first pass through
             double valueTracked = -1d;
-            double valueWeek = 0d;
+            double valueDay = 0d;
             bool? hatchedTracked = null;
-            bool hatchedWeek = false;
+            bool hatchedDay = false;
             double value2Tracked = -1d;
-            double value2Week = 0d;
+            double value2Day = 0d;
 
-            // March through 1 week at a time
-            while (currentWeek < endDate)
+            // March through
+            while (currentDay < endDate)
             {
-                // Find assignments within current week
-                var within = subTasks.Where(x => x.IsWithin(currentWeek));
+                // Find assignments running on current day
+                var within = subTasks.Where(x => x.IsWithin(currentDay));
 
-                // Sum value for the current week
-                valueWeek = within.Sum(x => valueFunction(x));
+                // Sum value for the current day
+                valueDay = within.Sum(x => valueFunction(x));
 
-                // Set hatched for the current week
-                hatchedWeek = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
+                // Set hatched for the current day
+                hatchedDay = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
 
-                // Set value2 for the current week
-                value2Week = value2Function != null ? value2Function(valueWeek, currentWeek) : 0;
+                // Set value2 for the current day
+                value2Day = value2Function != null ? value2Function(valueDay, currentDay) : 0;
 
                 // Set colour state for the first time
-                if (value2Tracked == -1d) value2Tracked= value2Week;
+                if (value2Tracked == -1d) value2Tracked= value2Day;
 
                 // Set hatched state for the first time
-                if (hatchedTracked == null) hatchedTracked = hatchedWeek;
+                if (hatchedTracked == null) hatchedTracked = hatchedDay;
 
                 // Set the value for the first block
-                if (valueTracked == -1d) valueTracked = valueWeek;
+                if (valueTracked == -1d) valueTracked = valueDay;
 
                 // If any of the tracked parameters have changed then complete block and reset tracking params
-                if (valueWeek != valueTracked || hatchedWeek != hatchedTracked || value2Week != value2Tracked)
+                if (valueDay != valueTracked || hatchedDay != hatchedTracked || value2Day != value2Tracked)
                 {
                     // Only add a block if its value is non-zero
                     if (valueTracked != 0d)
@@ -283,34 +306,34 @@ namespace PPMTool.Data
                         temp.Add(new ChartItem(
                             colourFunction(valueTracked, value2Tracked),
                             label,
-                            currentBlockStart,
-                            currentWeek,
+                            currentBlockStartDay,
+                            currentDay,
                             valueTracked,
                             value2Tracked,
                             hatchedTracked ?? false
                         ));
                     }
-                    currentBlockStart = currentWeek;
-                    valueTracked = valueWeek;
-                    hatchedTracked = hatchedWeek;
-                    value2Tracked = value2Week;
+                    currentBlockStartDay = currentDay;
+                    valueTracked = valueDay;
+                    hatchedTracked = hatchedDay;
+                    value2Tracked = value2Day;
                 }
 
                 // Increment by 1 day
-                currentWeek = currentWeek.AddDays(1);
+                currentDay = currentDay.AddDays(1);
             }
 
             // Add the final block if it had a non-zero value
             if (valueTracked != 0d)
             {
                 temp.Add(new ChartItem(
-                    colourFunction(valueWeek, value2Week),
+                    colourFunction(valueDay, value2Day),
                     label,
-                    currentBlockStart,
-                    currentWeek,
-                    valueWeek,
-                    value2Week,
-                    hatchedWeek
+                    currentBlockStartDay,
+                    currentDay,
+                    valueDay,
+                    value2Day,
+                    hatchedDay
                 ));
             }
             return temp;
