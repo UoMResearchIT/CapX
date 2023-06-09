@@ -79,32 +79,32 @@ namespace PPMTool.Data
             {
                 // Add the items to the chart items list and reorder
                 chartItems.AddRange(extraItems);
-                chartItems.OrderBy(x => x.StartDate);
+                chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
             }
 
             // If there are any gaps in the chart items where they are free then fill in
             extraItems.Clear();
-            //for (int i = 0 ; i < chartItems.Count(); ++i)
-            //{
-            //    // Ignore the last item in the list
-            //    if (i < chartItems.Count() - 1)
-            //    {
-            //        // If there is a gap
-            //        if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
-            //        {
-            //            // Generate chart items from availability to fill the gap
-            //            Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
-            //            extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
-            //        }
-            //    }
-            //}
+            for (int i = 0; i < chartItems.Count(); ++i)
+            {
+                // Ignore the last item in the list
+                if (i < chartItems.Count() - 1)
+                {
+                    // If there is a gap
+                    if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
+                    {
+                        // Generate chart items from availability to fill the gap
+                        Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
+                        extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
+                    }
+                }
+            }
 
             // Add the extra items to the chart data
             if (extraItems.Count > 0)
             {
                 // Add the items to the chart items list and reorder
                 chartItems.AddRange(extraItems);
-                chartItems.OrderBy(x => x.StartDate);
+                chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
             }
 
             return chartItems;
@@ -167,7 +167,7 @@ namespace PPMTool.Data
             if (changes.Count == 0)
             {
                 blocks.Add(
-                    new ChartItem("#609", person.Name, startDate, endDate,
+                    new ChartItem(ChartItem.GetColourStringFTE(0, person.FTE), person.Name, startDate, endDate,
                         0, (int)(person.FTE * 100 / .84), false
                     )
                 );
@@ -190,7 +190,7 @@ namespace PPMTool.Data
                 // First period uses the initial FTE up to the first change after the window begins or the end
                 // of the window if there isn't any changes after
                 blocks.Add(
-                    new ChartItem("#609", person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
+                    new ChartItem(ChartItem.GetColourStringFTE(0, initialFTE), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
                         0, (int)(initialFTE * 100 / .84), false
                     )
                 );
@@ -198,23 +198,13 @@ namespace PPMTool.Data
                 // Subsequent ones use the latest change information
                 for (int i = 0; i < changesAfter.Count; ++i)
                 {
-                    // If the last change then use query end date for block end
-                    if (i == changesAfter.Count - 1)
-                    {
-                        blocks.Add(
-                            new ChartItem("#609", person.Name, changesAfter[i].ChangeDate, endDate,
-                                0, (int)(changesAfter[i].AvailabilityFTE * 100 / .84), false
-                            )
-                        );
-                    }
-                    else
-                    {
-                        blocks.Add(
-                            new ChartItem("#609", person.Name, changesAfter[i].ChangeDate, changesAfter[i + 1].ChangeDate,
-                                0, (int)(changesAfter[i].AvailabilityFTE * 100 / .84), false
-                            )
-                        );
-                    }
+                    // If the last change then use query end date for block end otherwise it is date of next change
+                    blocks.Add(
+                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate, 
+                            i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
+                            0, (int)(changesAfter[i].AvailabilityFTE * 100 / .84), false
+                        )
+                    );
                 }
             }
 
