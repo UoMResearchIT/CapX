@@ -229,170 +229,30 @@ namespace PPMTool.Pages
             await ConfigureSourceAsync();
             StateHasChanged();
 
-            // TODO: Get the chart data for the query window using the new helper
+            // Convert the chart results to capcity query results
+            foreach (var item in chartSource)
+            {
+                // Get person from item label
+                var person = people.FirstOrDefault(p => p.Name == item.Label);
+                if (person == null)
+                {
+                    Debug.WriteLine($"** Couldn't find person {item.Label}");
+                    continue;
+                }
 
-            // TODO: Invert it to get the avaiability of people
+                // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
+                var availabilityPercentage = (int)(item.Value2 * 100 / .84);
 
+                // Invert value (value 1 here is the assignment value as a percentage)
+                var unassignedPercentage = (int)availabilityPercentage - (int)item.Value1;
 
-            // ----------------- CAN PROBABLY BE DELETED ----------------- //
-
-
-            //// Get all people
-            //var people = PersonService.GetAll(context).OrderBy(x => x.Name);
-
-            //// Get all the subtasks within the query window
-            //var tasks = GetSubTasksWithinQueryWindow(SubTaskService.GetAll(context));
-
-            //// Part 1: Get all the resources who are not assigned to any subtasks and add them to the query results
-            //var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
-            //foreach (var person in unassigned)
-            //{
-
-            //    // Get any availability changes in force at the beginning of the query or during it
-            //    var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < queryEndDate).ToList();
-
-            //    // Add to the changes any leaving date within the window as a zero availability
-            //    if (person.EndDate != null)
-            //    {
-            //        changes.Add(new AvailabilityChange()
-            //        {
-            //            Person = person,
-            //            ChangeDate = person.EndDate ?? DateTime.Now.Date,
-            //            AvailabilityFTE = 0
-            //        });
-
-            //        // Remove all availability changes after the leaving date as these are unnecessary
-            //        changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
-            //    }
-
-            //    // Add to the changes any start date withing the window as post FTE (if no availablity change on the start date)
-            //    if (person.StartDate > QueryStartDate && !changes.Any(x => x.ChangeDate == person.StartDate))
-            //    {
-            //        changes.Add(new AvailabilityChange()
-            //        {
-            //            Person = person,
-            //            ChangeDate = person.StartDate,
-            //            AvailabilityFTE = person.FTE
-            //        });
-
-            //        // Remove all availability changes before the starting date as these are unnecessary
-            //        changes = changes.Where(x => x.ChangeDate > person.StartDate).ToList();
-
-            //        // Enforce a zero availability before they start
-            //        changes.Add(new AvailabilityChange()
-            //        {
-            //            Person = person,
-            //            ChangeDate = QueryStartDate,
-            //            AvailabilityFTE = 0
-            //        });
-            //    }
-
-            //    // Sort by date
-            //    changes = changes.OrderBy(x => x.ChangeDate).ToList();
-
-            //    // If no changes then use post FTE in a single result
-            //    if (changes.Count == 0)
-            //    {
-            //        results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
-            //    }
-
-            //    // Work through the avaialbility changes to establish blocks of availability
-            //    else
-            //    {
-            //        // We need to establish the availability at the beginning of the query window which will be post FTE by default
-            //        double initialFTE = person.FTE;
-
-            //        // Find the change immediately before the query window or on day one if there is one on the first day fo the query window
-            //        var changeBefore = changes.Where(x => x.ChangeDate <= QueryStartDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-            //        if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
-            //        var changesAfter = changes.Where(x => x.ChangeDate > QueryStartDate).OrderBy(x => x.ChangeDate).ToList();
-
-            //        // First period uses the initial FTE up to the first change after the window begins or the end of the window if there isn't any changes after
-            //        if (initialFTE > 0)
-            //        {
-            //            results.Add(new CapacityQueryItem(person, QueryStartDate, changesAfter.FirstOrDefault()?.ChangeDate ?? queryEndDate, (int)(initialFTE * 100 / .84)));
-            //        }
-
-            //        // Subsequent ones use the latest change information
-            //        for (int i = 0; i < changesAfter.Count; ++i)
-            //        {
-            //            // If the last change then use query end date for result
-            //            if (i == changesAfter.Count - 1)
-            //            {
-            //                // Filter out availability of less than a day or 0%
-            //                if (queryEndDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
-            //                {
-            //                    results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, queryEndDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
-            //                }
-            //            }
-            //            else
-            //            {
-            //                // Filter out availability of less than a day or 0%
-            //                if (changesAfter[i + 1].ChangeDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
-            //                {
-            //                    results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, changesAfter[i + 1].ChangeDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            //// Part 2: Invert the chart data for the remaining people
-            //var assigned = people.Where(p => tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
-            //foreach (var person in unassigned)
-            //{
-            //    // Get their blocks from the chart data
-            //    var chartBlocks = chartSource.Where(x => x.Label == person.Name).OrderBy(x => x.StartDate);
-
-            //    // Identify any gap at the start of the query window until the first task
-            //    if (chartBlocks.First().StartDate > QueryStartDate)
-            //    {
-            //        // TODO: Add dummy block(s) to represent start date and availability changes
-
-            //        // Get availability changes after start date
-            //        var changesInWindow = person.AvailabilityChanges.Where(x =>
-            //            x.ChangeDate >= QueryStartDate && x.ChangeDate < queryEndDate
-            //        );
-
-            //        // If start date is after window start but before first change
-            //    }
-
-
-            //}
-
-            //    // Part 2: Invert the chart data and add to results array
-            //    foreach (var item in chartSource)
-            //{
-            //    // Get person from item label
-            //    var person = people.FirstOrDefault(p => p.Name == item.Label);
-            //    if (person == null)
-            //    {
-            //        Debug.WriteLine($"** Couldn't find person {item.Label}");
-            //        continue;
-            //    }
-
-            //    // Identify the blocks in the window where there is no assignment
-
-            //    // What about people who are free at the beginning of the window? There will be no chart block to invert?
-
-            //    // Take into account their starting and leaving dates
-
-            //    // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
-            //    var availabilityPercentage = (int)(item.Value2 * 100 / .84);
-
-            //    // Invert value (value 1 here is the assignment value as a percentage)
-            //    var unassignedPercentage = availabilityPercentage - (int)item.Value1;
-
-            //    // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-            //    if (item.StartDate != item.EndDate && unassignedPercentage > 0)
-            //    {
-            //        // Add to range
-            //        results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
-            //    }
-            //}
-
-
-            // ----------------- END: CAN PROBABLY BE DELETED ----------------- //
+                // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
+                if (item.StartDate != item.EndDate && unassignedPercentage > 0)
+                {
+                    // Add to range
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
+                }
+            }
 
             // Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
             fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
@@ -405,42 +265,6 @@ namespace PPMTool.Pages
 
             // Update the UI
             StateHasChanged();
-        }
-
-        /// <summary>
-        /// Gets all the sub tasks within the query date window
-        /// </summary>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        private IEnumerable<SubTask> GetSubTasksWithinQueryWindow(IEnumerable<SubTask> source)
-        {
-            // Filter all the tasks based on the window of the query
-            var tasks = source.Where(x =>
-            {
-                return
-                // Tasks that start in the window
-                (x.StartDate >= QueryStartDate && x.StartDate < queryEndDate) ||
-
-                // Tasks that end in the window
-                (x.EndDate > QueryStartDate && x.EndDate < queryEndDate) ||
-
-                // Tasks that span over the window
-                (x.StartDate < QueryStartDate && x.EndDate >= queryEndDate);
-            });
-
-            // Filter based on project status
-            if (!IncludeUnFunded)
-            {
-                // Get tasks which ought to be excluded from the query
-                var exemptTasks = ProjectService
-                    .GetUnfundedProjects(context)
-                    .SelectMany(x => x.SubTasks);
-
-                // Exclude tasks found in the exempt list
-                tasks = tasks.Where(x => !exemptTasks.Contains(x));
-            }
-
-            return tasks;
         }
 
         /// <summary>

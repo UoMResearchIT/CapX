@@ -199,7 +199,7 @@ namespace PPMTool.Data
             {
                 blocks.Add(
                     new ChartItem(ChartItem.GetColourStringFTE(0, person.FTE), person.Name, startDate, endDate,
-                        0, (int)(person.FTE * 100 / .84), false
+                        0, person.FTE, false
                     )
                 );
             }
@@ -222,7 +222,7 @@ namespace PPMTool.Data
                 // of the window if there isn't any changes after
                 blocks.Add(
                     new ChartItem(ChartItem.GetColourStringFTE(0, initialFTE), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
-                        0, (int)(initialFTE * 100 / .84), false
+                        0, initialFTE, false
                     )
                 );
 
@@ -233,7 +233,7 @@ namespace PPMTool.Data
                     blocks.Add(
                         new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate, 
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            0, (int)(changesAfter[i].AvailabilityFTE * 100 / .84), false
+                            0, changesAfter[i].AvailabilityFTE, false
                         )
                     );
                 }
