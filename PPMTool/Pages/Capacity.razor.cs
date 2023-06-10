@@ -694,7 +694,7 @@ namespace PPMTool.Pages
                         while (d < startDate.AddMonths(numMonths))
                         {
                             // Add the monthly value
-                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month)?.ToString() ?? string.Empty);
+                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month, d.Year)?.ToString() ?? string.Empty);
 
                             // Increment month
                             d = d.AddMonths(1);
