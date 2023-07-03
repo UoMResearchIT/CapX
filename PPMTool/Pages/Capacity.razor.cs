@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.IO.Pipes;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using ApexCharts;
+﻿using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,6 +8,13 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PPMTool.Pages
 {
@@ -34,22 +31,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private IJSRuntime JS { get; set; }
-
-        private string chosenPerson;
-        private string ChosenPerson
-        {
-            get => chosenPerson;
-            set
-            {
-                if (chosenPerson != value)
-                {
-                    chosenPerson = value;
-
-                    // Update the chart source
-                    InvokeAsync(async () => await ConfigureSourceAsync());
-                }
-            }
-        }
 
         private bool includeUnFunded = true;
         public bool IncludeUnFunded
@@ -77,6 +58,9 @@ namespace PPMTool.Pages
                 {
                     includeLeavers = value;
 
+                    // Refresh the people source
+                    ReloadPeople();
+
                     // Update the chart source
                     InvokeAsync(async () => await ConfigureSourceAsync());
                 }
@@ -96,14 +80,15 @@ namespace PPMTool.Pages
             }
         }
 
-        private IDictionary<string, IEnumerable<SubTask>> groupedSubTasks;
+        private IDictionary<object, IEnumerable<SubTask>> groupedSubTasks;
         private ApexChart<ChartItem> chart;
         private List<ChartItem> chartSource;
         private ApexChartOptions<ChartItem> options;
-        private List<string> nameOptions;
+        private List<Person> people;
         private string chartTitle;
         private PPMToolContext context;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
+        private IEnumerable<string> chosenPeople = new List<string>();
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
@@ -140,13 +125,30 @@ namespace PPMTool.Pages
                 }
             };
 
-            // Get dropdown options
-            nameOptions = PersonService.GetAll(context).OrderBy(x => x.Name).Select(p => p.Name).ToList();
-            nameOptions.Sort();
+            // Refresh the dropdown
+            ReloadPeople();
 
             // Get data for chart
             await ConfigureSourceAsync();
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Method to setup the people source for the dropdown
+        /// </summary>
+        private void ReloadPeople()
+        {
+            // Get dropdown options
+            people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+
+            // Filter out leavers if necessary
+            if (!includeLeavers)
+            {
+                people = people
+                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now.Date)
+                    .OrderBy(x => x.Name)
+                    .ToList();
+            }
         }
 
         /// <summary>
@@ -156,7 +158,7 @@ namespace PPMTool.Pages
         private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
         {
             // Only so the navigation when in project view mode
-            if (dataPoint.IsSelected && ChosenPerson != "All" && ChosenPerson != null)
+            if (dataPoint.IsSelected && chosenPeople != null && chosenPeople.Count() > 0)
             {
                 var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
@@ -171,6 +173,26 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Fire and forget when selection of the multi-drop down changes
+        /// </summary>
+        /// <param name="selectedOptions"></param>
+        private async void SelectionChanged(object selectedOptions)
+        {
+            var items = selectedOptions as IEnumerable<string>;
+            Debug.WriteLine("Selected:");
+            if (items != null)
+            {
+                foreach (var i in items)
+                {
+                    Debug.WriteLine(i);
+                }
+            }
+
+            // Regenerate the chart data
+            await ConfigureSourceAsync();
+        }
+
+        /// <summary>
         /// Resets the page to its initial state
         /// </summary>
         private async Task ClearQueryAsync()
@@ -179,10 +201,7 @@ namespace PPMTool.Pages
             queryResults = null;
             queryErrorMessage = null;
             queryActive = false;
-
-            // Reset the person filter but don't trigger the refresh.
-            // Do it manually so we can force synchronisation.
-            chosenPerson = "All";
+            chosenPeople = new List<string>();
             await ConfigureSourceAsync();
         }
 
@@ -210,82 +229,7 @@ namespace PPMTool.Pages
             await ConfigureSourceAsync();
             StateHasChanged();
 
-            // Get all people
-            var people = PersonService.GetAll(context).OrderBy(x => x.Name);
-
-            // Get all the subtasks within the query window
-            var tasks = GetSubTasksWithinQueryWindow(SubTaskService.GetAll(context));
-
-            // Part 1: Get all the resources who are not assigned to any subtasks and add them to the query results
-            var unassigned = people.Where(p => !tasks.Any(t => t.AssignedResources.Any(r => r.Person == p)));
-            foreach (var person in unassigned)
-            {
-                // Get any availability changes in force at the beginning of the query or during it
-                var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < queryEndDate).ToList();
-
-                // Add to the changes any leaving date as a zero availability
-                if (person.EndDate != null)
-                {
-                    changes.Add(new AvailabilityChange()
-                    {
-                        Person = person,
-                        ChangeDate = person.EndDate ?? DateTime.Now,
-                        AvailabilityFTE = 0
-                    });
-
-                    // Remove all availability changes after the leaving date as these are unnecessary
-                    changes = changes.Where(x => x.ChangeDate <= person.EndDate).ToList();
-                }
-
-                // Sort by date
-                changes = changes.OrderBy(x => x.ChangeDate).ToList();
-
-                // If no changes then use post FTE in a single result
-                if (changes.Count == 0)
-                {
-                    results.Add(new CapacityQueryItem(person, QueryStartDate, queryEndDate, (int)(person.FTE * 100 / .84)));
-                }
-                else
-                {
-                    // We need to establish the availability at the beginning of the query window which will be post FTE by default
-                    double initialFTE = person.FTE;
-
-                    // Find the change immediately before the query window or on day one if there is one
-                    var changeBefore = changes.Where(x => x.ChangeDate <= QueryStartDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                    if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
-                    var changesAfter = changes.Where(x => x.ChangeDate > QueryStartDate).OrderBy(x => x.ChangeDate).ToList();
-
-                    // First period uses the initial FTE up to the first change after the window begins or the end of the window if there isn't any changes after
-                    if (initialFTE > 0)
-                    {
-                        results.Add(new CapacityQueryItem(person, QueryStartDate, changesAfter.FirstOrDefault()?.ChangeDate ?? queryEndDate, (int)(initialFTE * 100 / .84)));
-                    }
-
-                    // Subsequent ones use the latest change information
-                    for (int i = 0; i < changesAfter.Count; ++i)
-                    {
-                        // If the last change then use query end date for result
-                        if (i == changesAfter.Count - 1)
-                        {
-                            // Filter out availability of less than a day or 0%
-                            if (queryEndDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
-                            {
-                                results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, queryEndDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
-                            }
-                        }
-                        else
-                        {
-                            // Filter out availability of less than a day or 0%
-                            if (changesAfter[i + 1].ChangeDate != changesAfter[i].ChangeDate && changesAfter[i].AvailabilityFTE != 0)
-                            {
-                                results.Add(new CapacityQueryItem(person, changesAfter[i].ChangeDate, changesAfter[i + 1].ChangeDate, (int)(changesAfter[i].AvailabilityFTE * 100 / .84)));
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Part 2: Invert the chart data and add to results array
+            // Convert the chart results to capcity query results
             foreach (var item in chartSource)
             {
                 // Get person from item label
@@ -300,7 +244,7 @@ namespace PPMTool.Pages
                 var availabilityPercentage = (int)(item.Value2 * 100 / .84);
 
                 // Invert value (value 1 here is the assignment value as a percentage)
-                var unassignedPercentage = availabilityPercentage - (int)item.Value1;
+                var unassignedPercentage = (int)availabilityPercentage - (int)item.Value1;
 
                 // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
                 if (item.StartDate != item.EndDate && unassignedPercentage > 0)
@@ -324,42 +268,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Gets all the sub tasks within the query date window
-        /// </summary>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        private IEnumerable<SubTask> GetSubTasksWithinQueryWindow(IEnumerable<SubTask> source)
-        {
-            // Filter all the tasks based on the window of the query
-            var tasks = source.Where(x =>
-            {
-                return
-                // Tasks that start in the window
-                (x.StartDate >= QueryStartDate && x.StartDate < queryEndDate) ||
-
-                // Tasks that end in the window
-                (x.EndDate > QueryStartDate && x.EndDate < queryEndDate) ||
-
-                // Tasks that span over the window
-                (x.StartDate < QueryStartDate && x.EndDate >= queryEndDate);
-            });
-
-            // Filter based on project status
-            if (!IncludeUnFunded)
-            {
-                // Get tasks which ought to be excluded from the query
-                var exemptTasks = ProjectService
-                    .GetUnfundedProjects(context)
-                    .SelectMany(x => x.SubTasks);
-
-                // Exclude tasks found in the exempt list
-                tasks = tasks.Where(x => !exemptTasks.Contains(x));
-            }
-
-            return tasks;
-        }
-
-        /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
         /// Can specific a start and end date to restrict the data window
         /// </summary>
@@ -372,31 +280,27 @@ namespace PPMTool.Pages
 
             if (chart != null) await RefreshChartAsync();
 
-            // Get people from the database
-            var peo = PersonService.GetAll(context).OrderBy(x => x.Name);
-
-            // Remove people who have left if necessary
-            if (!IncludeLeavers)
-            {
-                peo = peo.Where(p => p.EndDate == null || p.EndDate >= DateTime.Today).OrderBy(x => x.Name);
-            }
-
-            if (peo.Count() > 0)
+            if (people.Count() > 0)
             {
                 // Get projects from the database ignoring finished or cancelled projects
-                var projects = ProjectService.GetAll(context).Where(x => x.ProjectStatus != ProjectStatus.Finished && x.ProjectStatus != ProjectStatus.Cancelled);
+                var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled());
                 if (!IncludeUnFunded)
                 {
                     projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
                 }
 
-                // Reinitialise dictionary
-                groupedSubTasks = new Dictionary<string, IEnumerable<SubTask>>();
+                // Get the window from the start and end dates of the projects included in the source
+                var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
+                var startDate = safeProjects.Min(x => x.StartDate);
+                var endDate = safeProjects.Max(x => x.EndDate);
 
-                // Flatten subtasks and group by person
-                if (ChosenPerson == "All" || ChosenPerson == null)
+                // Reinitialise dictionary
+                groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
+
+                // Flatten subtasks and group by person if "All" chosen
+                if (chosenPeople == null || chosenPeople.Count() == 0)
                 {
-                    foreach (var p in peo)
+                    foreach (var person in people)
                     {
                         // Create a list of subtasks to which this person is assigned
                         var assignments = new List<SubTask>();
@@ -404,106 +308,107 @@ namespace PPMTool.Pages
                         {
                             foreach (var subTask in project.SubTasks)
                             {
-                                if (subTask.AssignedResources.Any(z => z.Person == p))
+                                if (subTask.AssignedResources.Any(z => z.Person == person))
                                 {
                                     assignments.Add(subTask);
                                 }
                             }
                         }
 
-                        // Add dictionary entry with person name as key
-                        groupedSubTasks.Add(p.Name, assignments);
+                        // Add dictionary entry with person as key
+                        groupedSubTasks.Add(person, assignments);
                     }
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        var items = ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+                        var items = ChartHelper.ConvertSubTasksToChartItemsForPerson(
+                            group.Key as Person,
+                            group.Value,
                             x =>
                             {
-                                var person = x.AssignedResources.First(x => x.Person.Name == group.Key);
-                                return Math.Round(person.Percentage / .84);
+                                var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
+                                return Math.Round(resource.Percentage / .84);
                             },
                             (x, y) =>
                             {
                                 return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
-                            group.Key,
-                            queryActive ? QueryStartDate : null,
-                            queryActive ? queryEndDate : null,
+                            (group.Key as Person).Name,
+                            queryActive ? QueryStartDate : startDate,
+                            queryActive ? queryEndDate : endDate,
                             x =>
                             {
-                                return x.AssignedResources.First(x => x.Person.Name == group.Key).IsProvisional;
+                                return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
                             },
                             (x, w) =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name == group.Key);
-                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
+                                return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 0.84;
                             }
                         ).ToList();
 
-                        // If this person has no assignments then create a dummy chart item based on their start date
-                        // to ensure they show up in the capacity sheet
-                        if (items.Count() < 1)
-                        {
-                            var person = peo.First(x => x.Name == group.Key);
-                            items.Add(new ChartItem(null, group.Key, person.StartDate, person.StartDate, 0, 0, false));
-                        }
-
-                        // Add the range
+                        // Add the range for this person
                         chartSource.AddRange(items);
                     }
                 }
 
-                // Filter by person and flatten and group by project
+                // Filter by people chosen and flatten and group by project if in project mode
                 else
                 {
-                    // Create a list of subtasks for each project this person is assigned to
+                    // Create a list of subtasks for each project these people are assigned to
                     foreach (var project in projects)
                     {
                         var assignments = new List<SubTask>();
                         foreach (var subTask in project.SubTasks)
                         {
-                            if (subTask.AssignedResources.Any(z => z.Person.Name == ChosenPerson))
+                            if (subTask.AssignedResources.Any(z => chosenPeople.Contains(z.Person.Name)))
                             {
                                 assignments.Add(subTask);
                             }
                         }
 
                         // Add dictionary entry with project name as key
-                        if (assignments.Count > 0) groupedSubTasks.Add(project.GetFullName(), assignments);
+                        if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
                     }
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(ChartHelper.AggregateByWeekIntoBlocks(group.Value,
+
+                        chartSource.AddRange(ChartHelper.ConvertSubTasksToChartItemsForProject(
+                            group.Key as Project,
+                            group.Value,
+                            // Value 1 for each block is the sum of the effort across all chosen people
                             x =>
                             {
-                                var person = x.AssignedResources.First(x => x.Person.Name == ChosenPerson);
-                                return Math.Round(person.Percentage / .84);
+                                var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                                return Math.Round(resources.Sum(x => x.Percentage) / .84);
                             },
+                            // Shading function based on value 1 and value 2
                             (x, y) =>
                             {
                                 return ChartItem.GetColourStringFTE(x, y * 100 / 84);
                             },
-                            group.Key,
-                            queryActive ? QueryStartDate : null,
-                            queryActive ? queryEndDate : null,
+                            (group.Key as Project).GetFullName(),
+                            queryActive ? QueryStartDate : startDate,
+                            queryActive ? queryEndDate : endDate,
+                            // Hatched value is whether any assignee is provisional
                             x =>
                             {
-                                return x.AssignedResources.First(x => x.Person.Name == ChosenPerson).IsProvisional;
+                                var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                                return resources.Any(x => x.IsProvisional);
                             },
+                            // Value 2 for each block is based on the sum of the availability of all chosen people
                             (x, w) =>
                             {
-                                var person = peo.FirstOrDefault(y => y.Name == ChosenPerson);
-                                return person?.GetAvailabilityOnDate(w) ?? 0.84;
+                                var peo = people.Where(y => chosenPeople.Contains(y.Name));
+                                return peo.Sum(y => y.GetAvailabilityOnDate(w));
                             }
                         ));
                     }
                 }
 
-                chartTitle = $"Load for {ChosenPerson ?? "All"}";
+                chartTitle = $"Load for {(chosenPeople != null && chosenPeople.Count() > 0 ? string.Join(",", chosenPeople) : "All")}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
                 // Format X Axis range
@@ -613,7 +518,7 @@ namespace PPMTool.Pages
                         while (d < startDate.AddMonths(numMonths))
                         {
                             // Add the monthly value
-                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month)?.ToString() ?? string.Empty);
+                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month, d.Year)?.ToString() ?? string.Empty);
 
                             // Increment month
                             d = d.AddMonths(1);

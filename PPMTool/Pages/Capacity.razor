@@ -203,15 +203,9 @@
                     Choose RSE:
                 </div>
                 <div class="col-auto mr-auto">
-                    <EditForm Model="this">
-                        <InputSelect @bind-Value="ChosenPerson">
-                            <option value="All">All</option>
-                            @foreach (var c in nameOptions)
-                            {
-                                <option value="@c">@c</option>
-                            }
-                        </InputSelect>
-                    </EditForm>
+                    <RadzenDropDown @bind-Value=@chosenPeople Data=@people TextProperty="Name" ValueProperty="Name"
+                                Multiple=true AllowClear=true Placeholder="Select RSE" Chips=true
+                                Style="width: 100%; max-width: 400px;" Change="@(args => SelectionChanged(args))" />
                 </div>
                 <div class="col-auto">
                     Include Unfunded:

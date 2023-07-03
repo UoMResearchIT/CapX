@@ -44,8 +44,18 @@ namespace PPMTool.Data
         /// <returns></returns>
         public static string GetColourStringFTE(double value, double capacity)
         {
-            // If someon has zero capacity then it should be coloured red!
-            var percent = capacity == 0 ? 1000 : (int)Math.Round(value / capacity);
+            // If someone has zero capacity
+            int percent = 0;
+            if (capacity == 0)
+            {
+                // If value is zero then it can be coloured as fully allocated
+                // Otherwise should show definitely red
+                percent = value == 0 ? 100 : 1000;
+            }
+            else
+            {
+                percent = (int)Math.Round(value / capacity);
+            }
             return GetColourStringPercentage(percent);
         }
 
