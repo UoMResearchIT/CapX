@@ -145,20 +145,21 @@ namespace PPMTool.Pages
                 var toRemove = taskModel.AssignedResources.Where(x => !activeRes.Any(y => x.ResourceId == y.ResourceId));
                 foreach (var r in toRemove.ToList())
                 {
+                    Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
                     taskModel.AssignedResources.Remove(r);
                 }
 
                 // Update/Add the active resources
                 foreach (var act in activeRes)
                 {
-                    Debug.WriteLine($"** ResId: {act.ResourceId} | PersonId: {act.Person.PersonId} | Percent: {act.Percentage}");
+                    Debug.WriteLine($"** Active Resource: ResId: {act.ResourceId} | PersonId: {act.Person.PersonId} | Percent: {act.Percentage} | Rate: {act.DayRate}");
                     var existing = taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == act.ResourceId);
                     if (existing != null)
                     {
                         // Don't know why I have to update every individual property to get this to work
                         existing.Percentage = act.Percentage;
-                        existing.DayRate = act.DayRate;
                         existing.UseDefaultDayRate = act.UseDefaultDayRate;
+                        existing.DayRate = act.DayRate;
                         existing.IsProvisional = act.IsProvisional;
                     }
                     else
@@ -233,9 +234,11 @@ namespace PPMTool.Pages
                         // Add reference to the project
                         projectModel.SubTasks.Add(taskModel);
                     }
-
-                    // Update the sub task in the database
-                    SubTaskService.Update(context, taskModel);
+                    else
+                    {
+                        // Update the sub task in the database
+                        SubTaskService.Update(context, taskModel);
+                    }
 
                     // Update the project summary values
                     projectModel.UpdateProjectSummary();

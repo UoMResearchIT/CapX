@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
         public SubTask()
         {
             // Set default value
-            StartDate = DateTime.Now;
+            StartDate = DateTime.Now.Date;
         }
 
         public int SubTaskId { get; set; }
@@ -304,8 +304,11 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
-            // Cannot start a task on a weekend
-            if (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday) throw new Exception("Cannot start a task on a weekend!");
+            // Cannot start a fixed work task on a weekend
+            if (TaskType == TaskType.FixedWork && (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday))
+            {
+                throw new Exception("Cannot start a task on a weekend!");
+            }
 
             // If end date is a weekend day then move on to the following Monday
             if (endDate.DayOfWeek == DayOfWeek.Saturday || endDate.DayOfWeek == DayOfWeek.Sunday) endDate = GetNextWorkingDay(endDate);

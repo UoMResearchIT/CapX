@@ -6,6 +6,7 @@ using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -50,10 +51,10 @@ namespace PPMTool.Pages
                 };
 
                 // Only show a burn-up chart if the project is actually happening
-                if (project.ProjectStatus != Enums.ProjectStatus.Finished && project.ProjectStatus != Enums.ProjectStatus.Cancelled)
+                if (!project.ProjectStatus.IsProjectFinishedOrCancelled())
                 {
                     // Create the chart items
-                    var temp = ChartHelper.AggregateByWeek(
+                    var temp = ChartHelper.AggregateSubTasksByWeek(
                         project.GetFullName(),
                         project.SubTasks,
                         task =>
