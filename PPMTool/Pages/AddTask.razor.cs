@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -35,7 +38,11 @@ namespace PPMTool.Pages
         private string predecessorId;
         private Project projectModel;
         private SubTask taskModel = new SubTask();
+        RadzenDataGrid<Resource> resourcesGrid;
+        Resource resourceToInsert;
+        Resource resourceToUpdate;
         private IList<Resource> resources = new List<Resource>();
+        private IList<Person> people = new List<Person>();
         private bool isValid = true;
         private bool startDateDisabled;
         private bool workDisabled;
@@ -47,6 +54,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             context = new PPMToolContext();
+            people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
             projectModel = ProjectService.GetById(context, ProjectId);
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
 
@@ -59,19 +67,27 @@ namespace PPMTool.Pages
                 if (taskModel.Predecessor != null) predecessorId = taskModel.Predecessor.SubTaskId.ToString();
             }
 
-            // Update the resources
-            foreach (var p in PersonService.GetAll(context).OrderBy(x => x.Name))
+            // Populate the resources list
+            //foreach (var p in PersonService.GetAll(context).OrderBy(x => x.Name))
+            //{
+            //    resources.Add(new Resource
+            //    {
+            //        ResourceId = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.ResourceId ?? 0 : 0,
+            //        Person = p,
+            //        Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
+            //        UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
+            //        DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null,
+            //        IsProvisional = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.IsProvisional ?? false : false
+            //    });
+            //};
+
+            if (TaskId > -1)
             {
-                resources.Add(new Resource
+                foreach (var r in taskModel.AssignedResources)
                 {
-                    ResourceId = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.ResourceId ?? 0 : 0,
-                    Person = p,
-                    Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
-                    UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
-                    DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null,
-                    IsProvisional = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.IsProvisional ?? false : false
-                });
-            };
+                    resources.Add(r);
+                }
+            }
 
             // Subscribe listeners
             taskModel.TaskTypeChanged += UpdateUIState;
@@ -119,6 +135,63 @@ namespace PPMTool.Pages
             }
         }
 
+        void Reset()
+        {
+            resourceToInsert = null;
+            resourceToUpdate = null;
+        }
+
+        async Task EditResourceRow(Resource resource)
+        {
+            resourceToUpdate = resource;
+            await resourcesGrid.EditRow(resource);
+        }
+
+        void OnUpdateResourceRow(Resource resource)
+        {
+            Reset();
+        }
+
+        async Task SaveResourceRow(Resource resource)
+        {
+            await resourcesGrid.UpdateRow(resource);
+        }
+
+        void CancelEditResourceRow(Resource resource)
+        {
+            Reset();
+            resourcesGrid.CancelEditRow(resource);
+        }
+
+        async Task DeleteResourceRow(Resource resource)
+        {
+            Reset();
+
+            if (resources.Contains(resource))
+            {
+                resources.Remove(resource);
+                await resourcesGrid.Reload();
+            }
+            else
+            {
+                resourcesGrid.CancelEditRow(resource);
+                await resourcesGrid.Reload();
+            }
+        }
+
+        async Task InsertResourceRow()
+        {
+            resourceToInsert = new Resource();
+            await resourcesGrid.InsertRow(resourceToInsert);
+        }
+
+        void OnCreateResourceRow(Resource resource)
+        {
+            resources.Add(resource);
+
+            resourceToInsert = null;
+        }
+
         private void DiscardChanges()
         {
             Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
@@ -138,11 +211,8 @@ namespace PPMTool.Pages
             {
                 Logger.LogInformation("Updating sub task configuration...");
 
-                // Get all the non-zero percentage resources
-                var activeRes = resources.Where(x => x.Percentage > 0);
-
-                // Remove resources that are no-longer active
-                var toRemove = taskModel.AssignedResources.Where(x => !activeRes.Any(y => x.ResourceId == y.ResourceId));
+                // Remove resources on the task model that are no-longer active
+                var toRemove = taskModel.AssignedResources.Where(x => !resources.Any(y => x.ResourceId == y.ResourceId));
                 foreach (var r in toRemove.ToList())
                 {
                     Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
@@ -150,21 +220,23 @@ namespace PPMTool.Pages
                 }
 
                 // Update/Add the active resources
-                foreach (var act in activeRes)
+                foreach (var r in resources)
                 {
-                    Debug.WriteLine($"** Active Resource: ResId: {act.ResourceId} | PersonId: {act.Person.PersonId} | Percent: {act.Percentage} | Rate: {act.DayRate}");
-                    var existing = taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == act.ResourceId);
+                    Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
+                    var existing = r.ResourceId != 0 ? taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == r.ResourceId) : null;
                     if (existing != null)
                     {
                         // Don't know why I have to update every individual property to get this to work
-                        existing.Percentage = act.Percentage;
-                        existing.UseDefaultDayRate = act.UseDefaultDayRate;
-                        existing.DayRate = act.DayRate;
-                        existing.IsProvisional = act.IsProvisional;
+                        existing.Percentage = r.Percentage;
+                        existing.UseDefaultDayRate = r.UseDefaultDayRate;
+                        existing.DayRate = r.DayRate;
+                        existing.IsProvisional = r.IsProvisional;
+
+                        Debug.WriteLine($"** Existing Resource: ResId: {existing.ResourceId} | PersonId: {existing.Person.PersonId} | Percent: {existing.Percentage} | Rate: {existing.DayRate}");
                     }
                     else
                     {
-                        taskModel.AssignedResources.Add(act);
+                        taskModel.AssignedResources.Add(r);
                     }
                 }
 

@@ -47,6 +47,7 @@ namespace PPMTool.Pages
                 personModel.AvailabilityChanges.Remove(changeToBeDeleted);
                 PersonService.Update(context, personModel);
                 changeList = personModel.AvailabilityChanges.ToList();
+                StateHasChanged();
             }
         }
 
@@ -62,6 +63,7 @@ namespace PPMTool.Pages
                 PersonService.Update(context, personModel);
                 changeList = personModel.AvailabilityChanges.ToList();
                 changeModel = new AvailabilityChange() { ChangeDate = DateTime.Now.Date };
+                StateHasChanged();
             }
         }
     }
