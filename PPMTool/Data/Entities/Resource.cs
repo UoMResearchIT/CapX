@@ -27,7 +27,7 @@ namespace PPMTool.Data.Entities
 
         public bool IsProvisional { get; set; }
 
-        private bool useDefaultDayRate;
+        private bool useDefaultDayRate = true;
         public bool UseDefaultDayRate
         {
             get => useDefaultDayRate;
