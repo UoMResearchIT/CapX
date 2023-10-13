@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -176,6 +175,33 @@ namespace PPMTool.Pages
             resources.Add(resource);
 
             resourceToInsert = null;
+        }
+
+        private void OnResourcePersonChange(object value)
+        {
+            Person person = value as Person;
+            if (person != null)
+            {
+                Resource resourceToChange;
+                if (resourceToInsert != null)
+                {
+                    resourceToChange = resourceToInsert;
+                }
+                else if (resourceToUpdate != null)
+                {
+                    resourceToChange = resourceToUpdate;
+                }
+                else
+                {
+                    return;
+                }
+
+                // Update the day rate field if using the default
+                if (resourceToChange.UseDefaultDayRate)
+                {
+                    resourceToChange.DayRate = person.DayRate;
+                }
+            }
         }
 
         private void DiscardChanges()

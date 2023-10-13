@@ -179,7 +179,7 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px">
                         <EditTemplate Context="res">
-                            <RadzenDropDown @bind-Value="res.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;">
+                            <RadzenDropDown @bind-Value="res.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
                                 <Template Context="person">
                                     @person.Name
                                 </Template>
@@ -201,7 +201,7 @@
                             <RadzenSwitch @bind-Value="@res.UseDefaultDayRate" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="UseDefaultDayRate" Title="Day Rate (£)" Width="180px">
+                    <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate (£)" Width="180px">
                         <EditTemplate Context="res">
                             <InputNumber step=".01" min="0" @bind-Value="@res.DayRate" disabled="@(res.UseDefaultDayRate)" />
                         </EditTemplate>

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -18,6 +16,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private TagService TagService { get; set; }
+
+        [Inject]
+        private IConfiguration Configuration { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }
@@ -51,6 +52,13 @@ namespace PPMTool.Pages
                         if (item != null) item.Checked = true;
                     }
                 }
+            }
+
+            // Set the default day rate in the model if doesn't already exist
+            else
+            {
+                var success = double.TryParse(Configuration["DefaultDayRate"], out var temp);
+                if (success) personModel.DayRate = temp;
             }
         }
 
