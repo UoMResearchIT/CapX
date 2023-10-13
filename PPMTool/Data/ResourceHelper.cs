@@ -13,7 +13,7 @@ namespace PPMTool.Data
         internal static IEnumerable<string> AvailableInnateActivities { get; private set; }
 
         private static string storageUrl = "capx-9cae0.appspot.com";
-        private static string filename = "InnateActivityList.csv";
+        private static string filename = "InnateActivities.txt";
 
         /// <summary>
         /// Initialised the helper lists by reading the resource files
