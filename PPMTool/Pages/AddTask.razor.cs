@@ -106,7 +106,7 @@ namespace PPMTool.Pages
                 if (confirmed)
                 {
                     // Call delete on the subtask service and let it remove the resources
-                    SubTaskService.DeleteTask(context, taskModel);
+                    SubTaskService.Delete(context, taskModel);
 
                     // Remove the sub-task from the project model
                     projectModel.SubTasks.Remove(taskModel);
@@ -148,6 +148,7 @@ namespace PPMTool.Pages
         void CancelEditResourceRow(Resource resource)
         {
             Reset();
+            SubTaskService.RestoreModel(context, ref resource);
             resourcesGrid.CancelEditRow(resource);
         }
 

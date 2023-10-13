@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -9,7 +7,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
-    public class ProjectService
+    public class ProjectService : BaseService<Project>
     {
         /// <summary>
         /// Adds a project. If duplicate found based on name, does not add but returns false.
@@ -17,17 +15,17 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
         /// <returns></returns>
-        internal bool AddProject(PPMToolContext context, Project projectModel)
+        public override int Add(PPMToolContext context, Project projectModel)
         {
             if (context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim()) || context.Projects.Any(x => x.RTP == projectModel.RTP))
             {
                 // Duplicate found
-                return false;
+                return -1;
             }
 
             context.Projects.Add(projectModel);
             context.SaveChanges();
-            return true;
+            return projectModel.ProjectId;
         }
 
         /// <summary>
@@ -50,7 +48,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
-        internal void Update(PPMToolContext context, Project projectModel)
+        public override void Update(PPMToolContext context, Project projectModel)
         {
             context.Projects.Update(projectModel);
             context.SaveChanges();
@@ -61,7 +59,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        internal IEnumerable<Project> GetAll(PPMToolContext context)
+        public override IEnumerable<Project> GetAll(PPMToolContext context)
         {
             return context.Projects
                 .Include(p => p.SubTasks)
@@ -84,7 +82,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
-        internal void DeleteProject(PPMToolContext context, Project projectModel)
+        public override void Delete(PPMToolContext context, Project projectModel)
         {
             context.Projects.Remove(projectModel);
             context.SaveChanges();

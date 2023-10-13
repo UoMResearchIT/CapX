@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
-using System.Linq;
 
 namespace PPMTool.Pages
 {
@@ -62,7 +62,7 @@ namespace PPMTool.Pages
                 {
                     Logger.LogInformation("Adding new project...");
 
-                    if (!ProjectService.AddProject(context, projectModel))
+                    if (ProjectService.Add(context, projectModel) < 0)
                     {
                         // TODO: Duplicate found -- do something
                     }
@@ -96,14 +96,14 @@ namespace PPMTool.Pages
                         {
                             Logger.LogInformation($"Deleting subtask ID {projectModel.SubTasks.First()?.SubTaskId}");
 
-                            SubTaskService.DeleteTask(context, projectModel.SubTasks.First());
+                            SubTaskService.Delete(context, projectModel.SubTasks.First());
                         }
                     }
 
                     Logger.LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
-                    ProjectService.DeleteProject(context, projectModel);
+                    ProjectService.Delete(context, projectModel);
 
                     // Navigate back to the projects list
                     Navigation.NavigateTo("projects");

@@ -28,7 +28,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             context = new PPMToolContext();
-            skillTags = TagService.GetAllTags(context).ToList();
+            skillTags = TagService.GetAll(context).ToList();
         }
 
         async Task EditRow(SkillTag tag)

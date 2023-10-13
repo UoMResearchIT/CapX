@@ -35,7 +35,7 @@ namespace PPMTool.Pages
             context = new PPMToolContext();
 
             // Map entities to checkbox list items
-            var entities = TagService.GetAllTags(context).ToList();
+            var entities = TagService.GetAll(context).ToList();
             var list = new List<Tag>();
             foreach (var t in entities) list.Add(new Tag(t.Name));
             availableTags = list;
@@ -89,7 +89,7 @@ namespace PPMTool.Pages
             {
                 if (t.Checked)
                 {
-                    var skillTagEntity = TagService.GetAllTags(context).FirstOrDefault(x => x.Name == t.Name);
+                    var skillTagEntity = TagService.GetAll(context).FirstOrDefault(x => x.Name == t.Name);
 
                     if (skillTagEntity != null)
                         personModel.SkillTags.Add(skillTagEntity);
@@ -104,7 +104,7 @@ namespace PPMTool.Pages
             else
             {
                 // Add new
-                if (!PersonService.AddPerson(context, personModel))
+                if (PersonService.Add(context, personModel) < 0)
                 {
                     // TODO: Duplicate found -- do something
                 }
