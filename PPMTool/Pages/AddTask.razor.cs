@@ -67,20 +67,6 @@ namespace PPMTool.Pages
                 if (taskModel.Predecessor != null) predecessorId = taskModel.Predecessor.SubTaskId.ToString();
             }
 
-            // Populate the resources list
-            //foreach (var p in PersonService.GetAll(context).OrderBy(x => x.Name))
-            //{
-            //    resources.Add(new Resource
-            //    {
-            //        ResourceId = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.ResourceId ?? 0 : 0,
-            //        Person = p,
-            //        Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
-            //        UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
-            //        DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null,
-            //        IsProvisional = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.IsProvisional ?? false : false
-            //    });
-            //};
-
             if (TaskId > -1)
             {
                 foreach (var r in taskModel.AssignedResources)

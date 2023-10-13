@@ -9,10 +9,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="InnateActivityList.csv" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Pages\Capacity - Copy.razor.cs">
       <DependentUpon>Capacity.razor.cs</DependentUpon>
     </Compile>
@@ -22,6 +18,7 @@
     <PackageReference Include="Blazor-ApexCharts" Version="0.9.13-beta" />
     <PackageReference Include="Blazored.SessionStorage" Version="2.3.0" />
     <PackageReference Include="DotNetExtensions" Version="1.2.0" />
+    <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
     <PackageReference Include="FluentDateTime" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.19" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.19" />
