@@ -53,7 +53,10 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             context = new PPMToolContext();
-            people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            people = PersonService.GetAll(context)
+                .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
+                .OrderBy(x => x.Name)
+                .ToList();
             projectModel = ProjectService.GetById(context, ProjectId);
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
 
