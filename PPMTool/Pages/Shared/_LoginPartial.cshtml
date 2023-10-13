@@ -1,11 +1,7 @@
-﻿@using Microsoft.AspNetCore.Identity
-@using PPMTool.Areas.Identity.Data
-
-@inject SignInManager<PPMToolUser> SignInManager
-@inject UserManager<PPMToolUser> UserManager
-
+﻿
 <ul class="navbar-nav">
-    @if (SignInManager.IsSignedIn(User))
+    LOGIN_PARTIAL
+    @* @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item">
             <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @UserManager.GetUserAsync(User).Result?.Name!</a>
@@ -27,5 +23,5 @@
         <li class="nav-item">
             <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
         </li>
-    }
+    } *@
 </ul>

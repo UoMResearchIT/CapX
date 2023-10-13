@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-
-namespace PPMTool.Areas.Identity.Data
+﻿namespace PPMTool.Data.Context
 {
     // Add profile data for application users by adding properties to the PPMToolUser class
-    public class PPMToolUser : IdentityUser
+    public class PPMToolUser
     {
         // Add custom role field
         public RoleType Role { get; set; }

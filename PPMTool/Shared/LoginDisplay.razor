@@ -1,16 +1,14 @@
-﻿@using Areas.Identity.Data;
-@using Microsoft.AspNetCore.Identity;
-@inject UserManager<PPMToolUser> UserManager
+﻿
 <AuthorizeView>
     <Authorized>
-        <a href="Identity/Account/Manage">Hello, @UserManager.GetUserAsync(context.User).Result.Name!</a>
+        Hello, @(context.User.Identity.Name)!
         <a class="btn btn-secondary mx-2" href="Identity/Account/Logout">Log out</a>
-        @if (UserManager.GetUserAsync(context.User).Result.Role != RoleType.Developer)
+        @* @if (UserManager.GetUserAsync(context.User).Result.Role != RoleType.Developer)
         {
             <a class="btn btn-primary mx-2" href="Identity/Account/Register">Register New User</a>
-        }
+        } *@
     </Authorized>
     <NotAuthorized>
-        <a href="Identity/Account/Login">Log in</a>
+        <a class="btn btn-secondary mx-2" href="/">Log in</a>
     </NotAuthorized>
 </AuthorizeView>

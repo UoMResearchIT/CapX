@@ -1,4 +1,4 @@
-﻿namespace PPMTool.Areas.Identity.Data
+﻿namespace PPMTool.Data.Context
 {
     public enum RoleType
     {
