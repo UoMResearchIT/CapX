@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data;
@@ -26,6 +27,7 @@ namespace PPMTool.Pages
         private Person personModel = new();
         private PPMToolContext context;
         private IEnumerable<Tag> availableTags;
+        private EditContext editContext;
 
         protected override void OnInitialized()
         {
@@ -60,12 +62,21 @@ namespace PPMTool.Pages
                 var success = double.TryParse(Configuration["DefaultDayRate"], out var temp);
                 if (success) personModel.DayRate = temp;
             }
+
+            // Instantiate the edit context so we have a reference to it
+            editContext = new EditContext(personModel);
         }
 
         private void EditAvailability()
         {
-            Logger.LogInformation("Editing availability changes...");
-            Navigation.NavigateTo($"/addavailabilitychange/{PersonId}");
+            // Check the existing model is valid first
+            if (editContext.Validate())
+            {
+                HandleValidSubmit();
+
+                Logger.LogInformation("Editing availability changes...");
+                Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
+            }
         }
 
         private void HandleValidSubmit()

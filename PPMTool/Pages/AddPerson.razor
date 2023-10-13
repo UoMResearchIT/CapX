@@ -4,7 +4,7 @@
 <div class="container">
     <h1>Add Person</h1>
     <div class="card">
-        <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+        <EditForm EditContext="editContext" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="row">
