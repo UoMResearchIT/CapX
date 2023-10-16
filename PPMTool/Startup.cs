@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,20 +53,21 @@ namespace PPMTool
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
+                    options.LoginPath = new PathString("/login");
+                    options.Cookie.IsEssential = true;
+                    options.Cookie.Name = "CapXAuth";
                     options.Events = new CookieAuthenticationEvents
                     {
                         OnSigningOut = context =>
                         {
                             // Single Sign-Out
                             var casUrl = new Uri(Configuration["Authentication:CAS:ServerUrlBase"]);
-                            var links = context.HttpContext.RequestServices.GetRequiredService<LinkGenerator>();
-                            var serviceUrl = links.GetUriByPage(context.HttpContext, "/Index");
                             var redirectUri = UriHelper.BuildAbsolute(
                                 casUrl.Scheme,
                                 new HostString(casUrl.Host, casUrl.Port),
                                 casUrl.LocalPath,
                                 "/logout",
-                                QueryString.Create("service", serviceUrl!));
+                                QueryString.Create("service", Configuration["HostUrl"]));
 
                             var logoutRedirectContext = new RedirectContext<CookieAuthenticationOptions>(
                                 context.HttpContext,
@@ -84,7 +84,7 @@ namespace PPMTool
                 .AddCAS(options =>
                 {
                     options.CasServerUrlBase = Configuration["Authentication:CAS:ServerUrlBase"];
-
+                    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     var protocolVersion = Configuration.GetValue("Authentication:CAS:ProtocolVersion", 2);
                     if (protocolVersion != 3)
                     {
@@ -98,28 +98,21 @@ namespace PPMTool
 
                     options.Events = new CasEvents
                     {
-                        OnCreatingTicket = context =>
+                        OnCreatingTicket = async context =>
                         {
                             if (context.Identity == null)
                             {
-                                return Task.CompletedTask;
+                                return;
                             }
 
-                            // Map claims from assertion
-                            var assertion = context.Assertion;
-                            context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
-                            context.Identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
-                            if (assertion.Attributes.TryGetValue("display_name", out var displayName))
+                            if (context.Principal?.Identity is ClaimsIdentity identity)
                             {
-                                context.Identity.AddClaim(new Claim(ClaimTypes.Name, displayName));
+                                // Map claims from assertion and sign in
+                                var assertion = context.Assertion;
+                                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
+                                identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
+                                await context.HttpContext.SignInAsync(context.Principal);
                             }
-
-                            if (assertion.Attributes.TryGetValue("email", out var email))
-                            {
-                                context.Identity.AddClaim(new Claim(ClaimTypes.Email, email));
-                            }
-
-                            return Task.CompletedTask;
                         },
                         OnRemoteFailure = context =>
                         {
@@ -136,6 +129,8 @@ namespace PPMTool
                         },
                     };
                 });
+
+            services.AddAuthorization();
 
             // Initialise the Resource Helper
             ResourceHelper.Initialise();
