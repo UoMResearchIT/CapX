@@ -53,7 +53,8 @@ namespace PPMTool
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
-                    options.LoginPath = new PathString("/login");
+                    options.LoginPath = new PathString("/Account/Login");
+                    options.LogoutPath = new PathString("/Account/Logout");
                     options.Cookie.IsEssential = true;
                     options.Cookie.Name = "CapXAuth";
                     options.Events = new CookieAuthenticationEvents

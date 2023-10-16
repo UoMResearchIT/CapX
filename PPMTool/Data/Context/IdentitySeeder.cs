@@ -13,6 +13,8 @@ namespace PPMTool.Data.Context
 
         public async Task SeedSuperUserAsync()
         {
+            // TODO: RBAC needs to be setup here
+
             // Create superuser
             //var user = new PPMToolUser
             //{
