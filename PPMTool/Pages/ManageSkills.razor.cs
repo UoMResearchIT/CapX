@@ -29,7 +29,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             context = new PPMToolContext();
-            skillTags = TagService.GetAll(context).ToList();
+            skillTags = TagService.GetAll(context).ToList().OrderBy(x => x.Name);
         }
 
         async Task EditRow(SkillTag tag)
