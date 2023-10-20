@@ -13,7 +13,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
-        public void RestoreModel<U>(PPMToolContext context, ref U entity)
+        public virtual void RestoreModel<U>(PPMToolContext context, ref U entity)
         {
             var resEntry = context.Entry(entity);
             if (resEntry.State == EntityState.Modified)
