@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data.Context;
@@ -9,6 +10,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class AddAvailabilityChange : BasePage
     {
         [Inject]

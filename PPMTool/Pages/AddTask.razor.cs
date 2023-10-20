@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
@@ -14,6 +15,7 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class AddTask : BasePage
     {
         [Inject]

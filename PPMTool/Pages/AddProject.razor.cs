@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
@@ -9,6 +10,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class AddProject : BasePage
     {
         [Inject]

@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -11,6 +11,7 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class ManageSkills : BasePage
     {
         [Inject]

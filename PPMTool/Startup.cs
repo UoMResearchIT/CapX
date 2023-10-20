@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using GSS.Authentication.CAS.AspNetCore;
@@ -44,7 +45,7 @@ namespace PPMTool
                 options.EnableSensitiveDataLogging();
             });
 
-            services.AddTransient<IdentitySeed>();
+            services.AddScoped<RolesService>();
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
@@ -110,8 +111,20 @@ namespace PPMTool
                             {
                                 // Map claims from assertion and sign in
                                 var assertion = context.Assertion;
+
+                                // Map UoM user name to claim
                                 identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
                                 identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
+
+                                // Lookup the username in the DB and add role claim
+                                // Has to be done manually since service provider not built yet?
+                                var dbContext = new PPMToolContext();
+                                var role = dbContext.Roles.FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
+                                if (role != null)
+                                {
+                                    identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
+                                }
+
                                 await context.HttpContext.SignInAsync(context.Principal);
                             }
                         },
@@ -132,16 +145,13 @@ namespace PPMTool
                 });
 
             services.AddAuthorization();
-
-            // Initialise the Resource Helper
-            ResourceHelper.Initialise();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(
             IApplicationBuilder app,
             IWebHostEnvironment env,
-            IdentitySeed seeder)
+            RolesService roleService)
         {
             if (env.IsDevelopment())
             {
@@ -172,7 +182,10 @@ namespace PPMTool
             });
 
             // Seed the superuser
-            seeder.SeedSuperUserAsync().GetAwaiter().GetResult();
+            roleService.SeedSuperUser();
+
+            // Initialise the Resource Helper
+            ResourceHelper.Initialise();
         }
     }
 }

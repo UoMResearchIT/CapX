@@ -19,6 +19,7 @@
     height: 3.5rem;
     display: flex;
     align-items: center;
+    z-index: 20
 }
 
     .top-row ::deep a, .top-row .btn-link {
@@ -60,7 +61,6 @@
     .top-row {
         position: sticky;
         top: 0;
-        z-index: 1;
     }
 
     .main > div {
