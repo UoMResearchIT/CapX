@@ -1,0 +1,58 @@
+﻿@page "/manageaccess"
+@inherits DataGridPage<Role>
+@using PPMTool.Data.Entities
+
+<div class="container">
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h1>Manage Access</h1>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary float-right" title="Add New Tag" @onclick="@InsertRow" disabled=@(entityToInsert != null)><i class="oi oi-plus" /> Add</button>
+        </div>
+    </div>
+    <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                    Data="@dataGridEntities" TItem="Role" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+        <Columns>
+            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="280px">
+                <EditTemplate Context="role">
+                    <RadzenDropDown @bind-Value="role.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;">
+                        <Template Context="person">
+                            @person.Name
+                        </Template>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" Width="280px">
+                <EditTemplate Context="role">
+                    <RadzenTextBox @bind-Value="role.CASUserName" ValueProperty="CASUserName" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="280px">
+                <EditTemplate Context="role">
+                    <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" ValueProperty="RoleType" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+
+
+
+            <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
+                <Template Context="role">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(role))" @onclick:stopPropagation="true">
+                    </RadzenButton>
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(role))" @onclick:stopPropagation="true">
+                    </RadzenButton>
+                </Template>
+                <EditTemplate Context="role">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(role))">
+                    </RadzenButton>
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(role))">
+                    </RadzenButton>
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(role))">
+                    </RadzenButton>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+    
+</div>

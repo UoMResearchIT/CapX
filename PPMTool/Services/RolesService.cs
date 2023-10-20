@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -28,7 +29,9 @@ namespace PPMTool.Services
 
         public override IEnumerable<Role> GetAll(PPMToolContext context)
         {
-            return context.Roles.ToList();
+            return context.Roles
+                .Include(x => x.Person)
+                .ToList();
         }
 
         public override void Update(PPMToolContext context, Role entity)
