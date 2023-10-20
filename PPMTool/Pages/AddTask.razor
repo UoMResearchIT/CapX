@@ -1,5 +1,5 @@
 ﻿@page "/addtask/{projectID:int}/{taskId:int}"
-@inherits BasePage
+@inherits DataGridPage<Resource>
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 
@@ -173,9 +173,9 @@
             }
 
             <hr />
-            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" class="mt-2 mb-4" Text="Add New Resource" Click="@InsertResourceRow" Disabled=@(resourceToInsert != null || resourceToUpdate != null || taskModel.IsDone) />
-            <RadzenDataGrid @ref="resourcesGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                            Data="@resources" TItem="Resource" RowUpdate="@OnUpdateResourceRow" RowCreate="@OnCreateResourceRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" class="mt-2 mb-4" Text="Add New Resource" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || taskModel.IsDone) />
+            <RadzenDataGrid @ref="dataGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                            Data="@dataGridEntities" TItem="Resource" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
                 <Columns>
                     <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px">
                         <EditTemplate Context="res">
@@ -209,17 +209,17 @@
 
                     <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="156px">
                         <Template Context="res">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditResourceRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
                             </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteResourceRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
                             </RadzenButton>
                         </Template>
                         <EditTemplate Context="res">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveResourceRow(res))">
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(res))">
                             </RadzenButton>
-                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEditResourceRow(res))">
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(res))">
                             </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteResourceRow(res))">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))">
                             </RadzenButton>
                         </EditTemplate>
                     </RadzenDataGridColumn>

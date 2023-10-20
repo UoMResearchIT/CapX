@@ -8,10 +8,10 @@ using PPMTool.Services;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class ManageSkills : DataGridPage
+    public partial class ManageSkills : DataGridPage<SkillTag>
     {
-        //[Inject]
-        //private PersonService PersonService { get; set; }
+        [Inject]
+        private PersonService PersonService { get; set; }
 
         [Inject]
         private TagService TagService { get; set; }
@@ -21,13 +21,37 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Set up the base page
-            entityService = TagService;
-            entities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
+            dataGridEntityService = TagService;
+            dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
         }
 
-        protected override Task DeleteRow(SkillTag tag)
+        protected override async Task DeleteRow(SkillTag entity)
         {
-            return base.DeleteRow(tag);
+            if (entity == entityToInsert)
+            {
+                entityToInsert = null;
+            }
+
+            if (dataGridEntities.Contains(entity))
+            {
+
+                // Remove the tag from all the people to whom it is attached
+                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(entity));
+                foreach (var person in people)
+                {
+                    person.SkillTags.Remove(entity);
+                    PersonService.Update(context, person);
+                }
+
+                // Remove tag
+                dataGridEntityService.Delete(context, entity);
+
+                await dataGrid.Reload();
+            }
+            else
+            {
+                dataGrid.CancelEditRow(entity);
+            }
         }
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
@@ -11,12 +10,11 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class AddTask : BasePage
+    public partial class AddTask : DataGridPage<Resource>
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
@@ -39,22 +37,18 @@ namespace PPMTool.Pages
         private string predecessorId;
         private Project projectModel;
         private SubTask taskModel = new SubTask();
-        RadzenDataGrid<Resource> resourcesGrid;
-        Resource resourceToInsert;
-        Resource resourceToUpdate;
-        private IList<Resource> resources = new List<Resource>();
         private IList<Person> people = new List<Person>();
         private bool isValid = true;
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
         private string error;
-        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             context = new PPMToolContext();
+            dataGridEntities = new List<Resource>();
             people = PersonService.GetAll(context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
@@ -75,7 +69,7 @@ namespace PPMTool.Pages
             {
                 foreach (var r in taskModel.AssignedResources)
                 {
-                    resources.Add(r);
+                    dataGridEntities.Add(r);
                 }
             }
 
@@ -125,62 +119,22 @@ namespace PPMTool.Pages
             }
         }
 
-        void Reset()
-        {
-            resourceToInsert = null;
-            resourceToUpdate = null;
-        }
-
-        async Task EditResourceRow(Resource resource)
-        {
-            resourceToUpdate = resource;
-            await resourcesGrid.EditRow(resource);
-        }
-
-        void OnUpdateResourceRow(Resource resource)
-        {
-            Reset();
-        }
-
-        async Task SaveResourceRow(Resource resource)
-        {
-            await resourcesGrid.UpdateRow(resource);
-        }
-
-        void CancelEditResourceRow(Resource resource)
+        protected override void CancelEdit(Resource resource)
         {
             Reset();
             SubTaskService.RestoreModel(context, ref resource);
-            resourcesGrid.CancelEditRow(resource);
+            dataGrid.CancelEditRow(resource);
         }
 
-        async Task DeleteResourceRow(Resource resource)
+        protected override void OnCreateRow(Resource resource)
+        {
+            dataGridEntities.Add(resource);
+            entityToInsert = null;
+        }
+
+        protected override void OnUpdateRow(Resource entity)
         {
             Reset();
-
-            if (resources.Contains(resource))
-            {
-                resources.Remove(resource);
-                await resourcesGrid.Reload();
-            }
-            else
-            {
-                resourcesGrid.CancelEditRow(resource);
-                await resourcesGrid.Reload();
-            }
-        }
-
-        async Task InsertResourceRow()
-        {
-            resourceToInsert = new Resource();
-            await resourcesGrid.InsertRow(resourceToInsert);
-        }
-
-        void OnCreateResourceRow(Resource resource)
-        {
-            resources.Add(resource);
-
-            resourceToInsert = null;
         }
 
         private void OnResourcePersonChange(object value)
@@ -189,13 +143,13 @@ namespace PPMTool.Pages
             if (person != null)
             {
                 Resource resourceToChange;
-                if (resourceToInsert != null)
+                if (entityToInsert != null)
                 {
-                    resourceToChange = resourceToInsert;
+                    resourceToChange = entityToInsert;
                 }
-                else if (resourceToUpdate != null)
+                else if (entityToUpdate != null)
                 {
-                    resourceToChange = resourceToUpdate;
+                    resourceToChange = entityToUpdate;
                 }
                 else
                 {
@@ -230,7 +184,7 @@ namespace PPMTool.Pages
                 Logger.LogInformation("Updating sub task configuration...");
 
                 // Remove resources on the task model that are no-longer active
-                var toRemove = taskModel.AssignedResources.Where(x => !resources.Any(y => x.ResourceId == y.ResourceId));
+                var toRemove = taskModel.AssignedResources.Where(x => !dataGridEntities.Any(y => x.ResourceId == y.ResourceId));
                 foreach (var r in toRemove.ToList())
                 {
                     Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
@@ -238,7 +192,7 @@ namespace PPMTool.Pages
                 }
 
                 // Update/Add the active resources
-                foreach (var r in resources)
+                foreach (var r in dataGridEntities)
                 {
                     Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
                     var existing = r.ResourceId != 0 ? taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == r.ResourceId) : null;
@@ -260,7 +214,7 @@ namespace PPMTool.Pages
 
                 // Track total proportion of effort
                 double totalResourceDaysPerDay = 0;
-                foreach (var r in resources)
+                foreach (var r in dataGridEntities)
                 {
                     // Update the total resource assigned
                     totalResourceDaysPerDay += r.Percentage / 100;

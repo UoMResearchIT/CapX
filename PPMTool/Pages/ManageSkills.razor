@@ -1,5 +1,5 @@
 ﻿@page "/manageskills"
-@inherits DataGridPage
+@inherits DataGridPage<SkillTag>
 @using PPMTool.Data.Entities
 
 <div class="container">
@@ -13,7 +13,7 @@
     </div>
 
     <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                    Data="@entities" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    Data="@dataGridEntities" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
             <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px">
                 <EditTemplate Context="tag">

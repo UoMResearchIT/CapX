@@ -1,24 +1,20 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage : BasePage
+    public abstract class DataGridPage<T> : BasePage where T : class
     {
-        protected RadzenDataGrid<SkillTag> dataGrid;
-        protected IList<SkillTag> entities;
-        protected SkillTag entityToInsert;
-        protected IEntityService<SkillTag> entityService;
+        protected RadzenDataGrid<T> dataGrid;
+        protected IList<T> dataGridEntities;
+        protected T entityToInsert;
+        protected T entityToUpdate;
+        protected IEntityService<T> dataGridEntityService;
         protected PPMToolContext context;
-
-        [Inject]
-        private PersonService PersonService { get; set; }
 
         protected override void OnInitialized()
         {
@@ -26,82 +22,60 @@ namespace PPMTool.Pages
             context = new PPMToolContext();
         }
 
-        protected async virtual Task EditRow(SkillTag tag)
+        protected virtual void Reset()
         {
-            await dataGrid.EditRow(tag);
+            entityToInsert = null;
+            entityToUpdate = null;
         }
 
-        protected virtual void OnUpdateRow(SkillTag tag)
+        protected async virtual Task EditRow(T entity)
         {
-            if (tag == entityToInsert)
-            {
-                entityToInsert = null;
-            }
-            entityService.Update(context, tag);
+            entityToUpdate = entity;
+            await dataGrid.EditRow(entity);
         }
 
-        protected async virtual Task SaveRow(SkillTag tag)
+        protected async virtual Task SaveRow(T entity)
         {
-            if (tag == entityToInsert)
-            {
-                entityToInsert = null;
-            }
-
-            await dataGrid.UpdateRow(tag);
+            await dataGrid.UpdateRow(entity);
         }
 
-        protected async virtual Task CancelEdit(SkillTag tag)
+        protected virtual void CancelEdit(T entity)
         {
-            if (tag == entityToInsert)
-            {
-                entityToInsert = null;
-            }
-
-            dataGrid.CancelEditRow(tag);
-
-            entityService.RestoreModel(context, ref tag);
-
-            await dataGrid.Reload();
+            Reset();
+            dataGridEntityService.RestoreModel(context, ref entity);
+            dataGrid.CancelEditRow(entity);
         }
 
-        protected async virtual Task DeleteRow(SkillTag tag)
+        protected async virtual Task DeleteRow(T entity)
         {
-            if (tag == entityToInsert)
+            Reset();
+
+            if (dataGridEntities.Contains(entity))
             {
-                entityToInsert = null;
-            }
-
-            if (entities.Contains(tag))
-            {
-
-                // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(tag));
-                foreach (var person in people)
-                {
-                    person.SkillTags.Remove(tag);
-                    PersonService.Update(context, person);
-                }
-
-                // Remove tag
-                entityService.Delete(context, tag);
-
-                await dataGrid.Reload();
+                dataGridEntities.Remove(entity);
             }
             else
             {
-                dataGrid.CancelEditRow(tag);
+                dataGrid.CancelEditRow(entity);
             }
+            await dataGrid.Reload();
         }
 
         protected async virtual Task InsertRow()
         {
-            entityToInsert = new SkillTag();
+            entityToInsert = Activator.CreateInstance(typeof(T)) as T;
             await dataGrid.InsertRow(entityToInsert);
         }
 
-        protected virtual void OnCreateRow(SkillTag tag)
+        protected virtual void OnCreateRow(T entity)
         {
-            entityService.Add(context, tag);
+            dataGridEntityService.Add(context, entity);
+        }
+
+        protected virtual void OnUpdateRow(T entity)
+        {
+            Reset();
+            dataGridEntityService.Update(context, entity);
         }
     }
 }
