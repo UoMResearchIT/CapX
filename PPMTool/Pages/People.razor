@@ -15,10 +15,10 @@
                 <h1>People</h1>
             </div>
             <div class="col-auto">
-                <a class="btn btn-primary" href="/addperson/-1" title="Add Person"><i class="oi oi-plus" /> Add</a>
+                <RadzenButton Text="Add" Icon="add" Click="@AddPerson" />
             </div>
-            <div class="col-auto">
-                <a class="btn btn-primary" href="/manageskills" title="Skills Tags"><i class="oi oi-tags" /> Tags</a>
+            <div class="col-auto">  
+                <RadzenButton Text="Tags" Icon="style" Click="@ManageSkills" />
             </div>
         </div>
         <div class="card">
@@ -46,7 +46,7 @@
                     <Columns>
                         <RadzenDataGridColumn TItem="Person" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                             <Template Context="p">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true">
                                 </RadzenButton>
                             </Template>
                         </RadzenDataGridColumn>

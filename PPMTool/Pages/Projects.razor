@@ -26,7 +26,7 @@
             <h1>Projects</h1>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" @onclick=@AddProject><i class="oi oi-plus" /> Add</button>
+            <RadzenButton Text="Add" Icon="add" Click="@AddProject"/>
         </div>
         <!-- This is a temporary button to be used one time to migrate the RTP codes from the names -->
         @*<div class="col-auto">
@@ -105,7 +105,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>

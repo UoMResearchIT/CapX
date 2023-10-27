@@ -199,18 +199,20 @@
         <h2>Charts</h2>
         <div class="card">
             <div class="row align-items-center">
-                <div class="col-auto">
-                    Choose RSE:
-                </div>
                 <div class="col-auto mr-auto">
                     <RadzenDropDown @bind-Value=@chosenPeople Data=@people TextProperty="Name" ValueProperty="Name"
-                                Multiple=true AllowClear=true Placeholder="Select RSE" Chips=true
-                                Style="width: 100%; max-width: 400px;" Change="@(args => SelectionChanged(args))" />
+                                Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
+                                Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))" />
+                </div>
+                <div class="col-auto mr-auto">
+                    <RadzenDropDown @bind-Value=@chosenPortfolios Data=@portfolios
+                                    Multiple=true AllowClear=true Placeholder="Filter Portfolio" Chips=true
+                                    Style="width: 100%; max-width: 400px;" Change="@(args => PortfolioSelectionChanged(args))" />
                 </div>
                 <div class="col-auto">
                     Include Unfunded:
                 </div>
-                <div class="col" style="display: flex">
+                <div class="col-auto" style="display: flex">
                     <RadzenSwitch @bind-Value="@IncludeUnFunded" />
                 </div>
                 <div class="col-auto">

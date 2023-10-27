@@ -103,3 +103,13 @@ switch-align {
     display: inline;
     color: red;
 }
+
+.radzen-numeric {
+    margin-left: 4pt;
+    margin-bottom: 4pt;
+    margin-top: 4pt
+}
+
+.radzen-form-label {
+    font-weight: bold
+}

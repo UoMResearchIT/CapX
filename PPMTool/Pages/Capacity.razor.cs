@@ -60,7 +60,7 @@ namespace PPMTool.Pages
                     includeLeavers = value;
 
                     // Refresh the people source
-                    ReloadPeople();
+                    ReloadDropDownSources();
 
                     // Update the chart source
                     InvokeAsync(async () => await ConfigureSourceAsync());
@@ -86,10 +86,12 @@ namespace PPMTool.Pages
         private List<ChartItem> chartSource;
         private ApexChartOptions<ChartItem> options;
         private List<Person> people;
+        private IEnumerable<string> portfolios;
         private string chartTitle;
         private PPMToolContext context;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private IEnumerable<string> chosenPeople = new List<string>();
+        private IEnumerable<string> chosenPortfolios = new List<string>();
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
@@ -127,7 +129,7 @@ namespace PPMTool.Pages
             };
 
             // Refresh the dropdown
-            ReloadPeople();
+            ReloadDropDownSources();
 
             // Get data for chart
             await ConfigureSourceAsync();
@@ -135,12 +137,13 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method to setup the people source for the dropdown
+        /// Method to setup the dropdown sources
         /// </summary>
-        private void ReloadPeople()
+        private void ReloadDropDownSources()
         {
             // Get dropdown options
             people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            portfolios = Enum.GetValues<Portfolio>().Select(x => x.ToNiceString());
 
             // Filter out leavers if necessary
             if (!includeLeavers)
@@ -177,10 +180,26 @@ namespace PPMTool.Pages
         /// Fire and forget when selection of the multi-drop down changes
         /// </summary>
         /// <param name="selectedOptions"></param>
-        private async void SelectionChanged(object selectedOptions)
+        private async void PeopleSelectionChanged(object selectedOptions)
         {
             var items = selectedOptions as IEnumerable<string>;
-            Debug.WriteLine("Selected:");
+            Debug.WriteLine("Selected People:");
+            if (items != null)
+            {
+                foreach (var i in items)
+                {
+                    Debug.WriteLine(i);
+                }
+            }
+
+            // Regenerate the chart data
+            await ConfigureSourceAsync();
+        }
+
+        private async void PortfolioSelectionChanged(object selectedOptions)
+        {
+            var items = selectedOptions as IEnumerable<Portfolio>;
+            Debug.WriteLine("Selected Portfolios:");
             if (items != null)
             {
                 foreach (var i in items)
