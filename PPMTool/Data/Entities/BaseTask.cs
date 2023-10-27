@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -20,6 +17,9 @@ namespace PPMTool.Data.Entities
 
         public double ActualWorkHours { get; set; }
 
+        /// <summary>
+        /// The amount of the money this task / project will cost based on the planned work
+        /// </summary>
         public double PlannedCost { get; set; }
 
         public double ActualCost { get; set; }

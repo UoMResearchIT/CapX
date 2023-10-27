@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
-using ApexCharts;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen.Blazor;
-using FluentDate;
-using System.Diagnostics;
-using PPMTool.Pages.Components;
-using System.Text.RegularExpressions;
-using PPMTool.Data.Context;
 
 namespace PPMTool.Pages
 {
@@ -106,7 +102,7 @@ namespace PPMTool.Pages
             Debug.WriteLine($"{proj.Count()} projects loaded.");
         }
 
-        private void ProjectClicked(int id)
+        private void ProjectDetails(int id)
         {
             Navigation.NavigateTo($"/projectdetails/{id}");
         }
@@ -114,11 +110,6 @@ namespace PPMTool.Pages
         private void AddProject()
         {
             Navigation.NavigateTo($"/addproject/-1");
-        }
-
-        private void EditProject(Project project)
-        {
-            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
         }
     }
 }

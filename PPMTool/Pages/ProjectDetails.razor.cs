@@ -28,6 +28,9 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> options2;
         private PPMToolContext context;
         private int count;
+        private string plannedCostColour;
+        private string actualCostColour;
+        private string fundsReceivedColour;
 
         protected override void OnInitialized()
         {
@@ -38,6 +41,9 @@ namespace PPMTool.Pages
                 context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
                 data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
+                actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
+                fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
                 count = data.Count;
 
                 options = new ApexChartOptions<SubTask>
@@ -83,7 +89,7 @@ namespace PPMTool.Pages
                     var seriesEnd = chartSource.Max(x => x.EndDate);
                     var actualsX = DateTime.Now.Date;
                     var actualsY = project.SubTasks.Sum(x => x.ActualWorkHours);
-                    
+
                     // If the task has started yet or has already finished then x coordinate is the limits of the series
                     if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
                     else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;

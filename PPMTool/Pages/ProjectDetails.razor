@@ -34,6 +34,7 @@
                             <th>PI</th>
                             <th>Portfolio</th>
                             <th>Budget</th>
+                            <th>Planned Cost</th>
                             <th>Actual Cost</th>
                             <th>Funds Received</th>
                             <th>Actual Hours</th>
@@ -47,8 +48,9 @@
                             <td>@project.PI</td>
                             <td>@project.Portfolio.ToNiceString()</td>
                             <td>@project.Budget.ToString("C0")</td>
-                            <td>@project.ActualCost.ToString("C0")</td>
-                            <td>@project.FundsReceived.ToString("C0")</td>
+                            <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>
+                            <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>
+                            <td><span style="color:@fundsReceivedColour">@project.FundsReceived.ToString("C0")</span></td>
                             <td>@project.SubTasks.Sum(x => x.ActualWorkHours)</td>
                             <td>@project.ProjectStatus.ToNiceString()</td>
                             <td>@project.StartDate.ToShortDateString()</td>

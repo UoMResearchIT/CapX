@@ -24,6 +24,9 @@ namespace PPMTool.Data.Entities
 
         public IList<SubTask> SubTasks { get; set; }
 
+        /// <summary>
+        /// This is the amount of money the PI has requested from the funder
+        /// </summary>
         [Required]
         public double Budget { get; set; }
 

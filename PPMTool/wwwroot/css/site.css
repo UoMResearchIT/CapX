@@ -93,3 +93,13 @@ switch-align {
     vertical-align: middle;
     margin: 5px
 }
+
+.green {
+    display: inline;
+    color: green;
+}
+
+.red {
+    display: inline;
+    color: red;
+}

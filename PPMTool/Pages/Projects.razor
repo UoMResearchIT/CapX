@@ -65,8 +65,7 @@
                         ColumnWidth="120px"
                         SelectionMode="DataGridSelectionMode.Single"
                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        LogicalFilterOperator="LogicalFilterOperator.And"
-                        RowSelect="@(e => ProjectClicked(e.ProjectId))">
+                        LogicalFilterOperator="LogicalFilterOperator.And">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
                         <Template Context="proj">
@@ -106,7 +105,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditProject(proj))" @onclick:stopPropagation="true">
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
