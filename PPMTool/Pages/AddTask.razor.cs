@@ -34,7 +34,7 @@ namespace PPMTool.Pages
         [Parameter]
         public int TaskId { get; set; }
 
-        private string predecessorId;
+        private int? selectedPredecessorId;
         private Project projectModel;
         private SubTask taskModel = new SubTask();
         private IList<Person> people = new List<Person>();
@@ -43,6 +43,8 @@ namespace PPMTool.Pages
         private bool workDisabled;
         private bool durationDisabled;
         private string error;
+        private IEnumerable<TaskType> taskTypes = new List<TaskType>();
+        private IList<SubTask> predecessorTasks = new List<SubTask>();
 
         protected override void OnInitialized()
         {
@@ -53,6 +55,7 @@ namespace PPMTool.Pages
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
                 .ToList();
+            taskTypes = Enum.GetValues<TaskType>().ToList();
             projectModel = ProjectService.GetById(context, ProjectId);
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
 
@@ -62,7 +65,7 @@ namespace PPMTool.Pages
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
 
                 // Assign the predecessor option
-                if (taskModel.Predecessor != null) predecessorId = taskModel.Predecessor.SubTaskId.ToString();
+                if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
             }
 
             if (TaskId > -1)
@@ -73,6 +76,10 @@ namespace PPMTool.Pages
                 }
             }
 
+            // Populate predecessor dropdown source (exclude self)
+            predecessorTasks = projectModel.SubTasks
+                .Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor?.SubTaskId != taskModel.SubTaskId).ToList();
+
             // Subscribe listeners
             taskModel.TaskTypeChanged += UpdateUIState;
             taskModel.FixedStartChanged += UpdateUIState;
@@ -80,6 +87,16 @@ namespace PPMTool.Pages
             taskModel.EndDateDrivenChanged += UpdateUIState;
             taskModel.DoneChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
+        }
+
+        private string GetNiceString(Enum x)
+        {
+            return x.ToNiceString();
+        }
+
+        private void PredecessorSelected()
+        {
+
         }
 
         /// <summary>
@@ -238,11 +255,8 @@ namespace PPMTool.Pages
                 // Truncate to 2 dp
                 taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
-                // Create predecessor on the sub task
-                if (int.TryParse(predecessorId, out var id))
-                {
-                    taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
-                }
+                // Update predecessor task
+                taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
                 // Schedule
                 error = taskModel.Schedule(false);

@@ -24,20 +24,14 @@
                     <RadzenLabel class="radzen-form-label" Text="Start Date" /><br>
                     <RadzenDatePicker @bind-Value="personModel.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
-            </div>
-            <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="End Date" /><br>
                     <RadzenDatePicker @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
-            </div>
-            <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(0.84)" Step="0.001" @bind-Value="personModel.FTE" />
                 </div>
-            </div>
-            <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Default Day Rate (£)" /><br>
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="1" Placeholder="0" @bind-Value="personModel.DayRate" />

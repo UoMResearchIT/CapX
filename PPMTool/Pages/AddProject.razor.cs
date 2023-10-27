@@ -1,8 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -25,10 +29,15 @@ namespace PPMTool.Pages
         [Parameter]
         public int ProjectId { get; set; }
 
+        EditForm? ProjectForm { get; set; }
+
         private Project projectModel = new Project();
         private PPMToolContext context;
         private bool gotoDetails = false;
         private bool discardChanges = true;
+        private IEnumerable<string> innateActivities = new List<string>();
+        private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
+        private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
 
         protected override void OnInitialized()
         {
@@ -39,38 +48,65 @@ namespace PPMTool.Pages
             {
                 projectModel = ProjectService.GetById(context, ProjectId);
             }
+
+            innateActivities = ResourceHelper.AvailableInnateActivities.ToList();
+            portfolios = Enum.GetValues<Portfolio>().ToList();
+            statuses = Enum.GetValues<ProjectStatus>().ToList();
         }
 
-        private void HandleValidSubmit()
+        private string GetNiceString(Enum x)
         {
-            if (ProjectId > -1 && !discardChanges)
-            {
-                // Check to see if the project is marked as cancelled as then we need to remove resources.
-                // Leave resources on completed projects so we have a historical record.
-                if (projectModel.ProjectStatus.IsProjectCancelled())
-                {
-                    foreach (SubTask t in projectModel.SubTasks)
-                    {
-                        t.AssignedResources.Clear();
-                    }
-                }
+            return x.ToNiceString();
+        }
 
-                Logger.LogInformation($"Edit project {ProjectId} saved...");
-                ProjectService.Update(context, projectModel);
-            }
-            else
+        private void HandleSubmit()
+        {
+            // Form valid
+            if (ProjectForm.EditContext.Validate())
             {
                 if (!discardChanges)
                 {
-                    Logger.LogInformation("Adding new project...");
-
-                    if (ProjectService.Add(context, projectModel) < 0)
+                    if (ProjectId > -1)
                     {
-                        // TODO: Duplicate found -- do something
+                        // Check to see if the project is marked as cancelled as then we need to remove resources.
+                        // Leave resources on completed projects so we have a historical record.
+                        if (projectModel.ProjectStatus.IsProjectCancelled())
+                        {
+                            foreach (SubTask t in projectModel.SubTasks)
+                            {
+                                t.AssignedResources.Clear();
+                            }
+                        }
+
+                        Logger.LogInformation($"Edit project {ProjectId} saved...");
+                        ProjectService.Update(context, projectModel);
+                    }
+                    else
+                    {
+                        Logger.LogInformation("Adding new project...");
+
+                        if (ProjectService.Add(context, projectModel) < 0)
+                        {
+                            // TODO: Duplicate found -- do something
+                        }
                     }
                 }
+
+                NavigatePostSubmit();
             }
 
+            // Form invalid
+            else
+            {
+                if (discardChanges)
+                {
+                    NavigatePostSubmit();
+                }
+            }
+        }
+
+        private void NavigatePostSubmit()
+        {
             if (gotoDetails)
             {
                 Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");

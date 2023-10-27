@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
 namespace PPMTool.Enums
 {
@@ -44,16 +40,19 @@ namespace PPMTool.Enums
         /// <summary>
         /// Project cancelled by customer
         /// </summary>
+        [Description("Cancelled by Customer")]
         CancelledByCustomer,
 
         /// <summary>
         /// project cancelled due to funding failure
         /// </summary>
+        [Description("Bid Failed")]
         CancelledBidFailed,
 
         /// <summary>
         /// Project cancelled because we couldn't resource it
         /// </summary>
+        [Description("Unable to Resource")]
         CancelledNoResource
     }
 

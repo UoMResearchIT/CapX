@@ -17,7 +17,7 @@
             }
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" @onclick=@EditProject><i class="oi oi-pencil" /> Edit</button>
+            <RadzenButton Click=@EditProject Text="Edit" Icon="edit" />
         </div>
     </div>
     <div class="card">
@@ -87,7 +87,7 @@
             <h2>Tasks</h2>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" @onclick=@AddTask><i class="oi oi-plus" /> Add</button>
+            <RadzenButton Click=@AddTask Text="Add" Icon="add" />
         </div>
     </div>
 
@@ -101,31 +101,35 @@
     {
         <div class="card">
             <RadzenDataGrid AllowFiltering="true"
-                        AllowColumnResize="true"
-                        FilterMode="FilterMode.Simple"
-                        AllowSorting="true"
-                        PageSize="10"
-                        AllowPaging="true"
-                        PagerHorizontalAlign="HorizontalAlign.Left"
-                        ShowPagingSummary="true"
-                        Data="@data"
-                        TItem="SubTask"
-                        ColumnWidth="100px"
-                        SelectionMode="DataGridSelectionMode.Single"
-                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        Count="@count"
-                        LoadData="@LoadData">
+                            AllowColumnResize="true"
+                            FilterMode="FilterMode.Simple"
+                            AllowSorting="true"
+                            PageSize="10"
+                            AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            Data="@data"
+                            TItem="SubTask"
+                            ColumnWidth="100px"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            Count="@count"
+                            LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" />
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="task">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true">
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start">
                         <Template Context="t">
-                            <RadzenSwitch @bind-Value=@t.HasFixedStart Disabled="true" />
+                            <div class="align-items-center p-1">
+                                <div style="display: flex">
+                                    <RadzenSwitch @bind-Value=@t.HasFixedStart Disabled="true" />
+                                </div>
+                            </div>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" />
@@ -157,16 +161,16 @@
         </div>
         <div class="card">
             <ApexChart TItem="SubTask"
-                   Title="All Tasks"
-                   XAxisType="XAxisType.Datetime"
-                   Options=options>
+                       Title="All Tasks"
+                       XAxisType="XAxisType.Datetime"
+                       Options=options>
                 <ChildContent>
                     <ApexRangeSeries TItem="SubTask"
-                                 Items="data"
-                                 XValue="@(e => e.Name)"
-                                 YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                 YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                 PointColor="@(e => e.AssignedResources.Any(x => x.IsProvisional) ? "#ffc107" : "#007bff")" />
+                                     Items="data"
+                                     XValue="@(e => e.Name)"
+                                     YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                     PointColor="@(e => e.AssignedResources.Any(x => x.IsProvisional) ? "#ffc107" : "#1151F3")" />
                 </ChildContent>
                 <ApexPointTooltip>
                     <div class="m-2">

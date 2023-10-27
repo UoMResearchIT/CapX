@@ -113,3 +113,9 @@ switch-align {
 .radzen-form-label {
     font-weight: bold
 }
+
+.radzen-dropdown {
+    margin-left: 4pt;
+    margin-bottom: 4pt;
+    margin-top: 4pt
+}
