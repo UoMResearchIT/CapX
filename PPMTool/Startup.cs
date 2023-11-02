@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -31,6 +32,8 @@ namespace PPMTool
 
         public IConfiguration Configuration { get; }
 
+        private ILogger<Startup> Logger;
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
@@ -50,6 +53,7 @@ namespace PPMTool
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
             services.AddScoped<TagService>();
+            services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -133,6 +137,7 @@ namespace PPMTool
                                 }
 
                                 await context.HttpContext.SignInAsync(context.Principal);
+                                Logger?.LogInformation($"{context.Principal.Identity.Name} Logged In");
                             }
                         },
                         OnRemoteFailure = context =>
@@ -161,6 +166,9 @@ namespace PPMTool
             RolesService roleService,
             ILogger<Startup> logger)
         {
+            // Assign the logger for use in the ConfigureServices callbacks
+            Logger = logger;
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
