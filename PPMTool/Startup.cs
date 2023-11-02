@@ -51,6 +51,11 @@ namespace PPMTool
             services.AddScoped<SubTaskService>();
             services.AddScoped<TagService>();
 
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.Secure = CookieSecurePolicy.Always;
+            });
+
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -69,14 +74,16 @@ namespace PPMTool
                                 new HostString(casUrl.Host, casUrl.Port),
                                 casUrl.LocalPath,
                                 "/logout",
-                                QueryString.Create("service", Configuration["HostUrl"]));
+                                QueryString.Create("service", Configuration["HostUrl"])
+                            );
 
                             var logoutRedirectContext = new RedirectContext<CookieAuthenticationOptions>(
                                 context.HttpContext,
                                 context.Scheme,
                                 context.Options,
                                 context.Properties,
-                                redirectUri);
+                                redirectUri
+                            );
                             context.Response.StatusCode = 204; // Prevent RedirectToReturnUrl
                             context.Options.Events.RedirectToLogout(logoutRedirectContext);
                             return Task.CompletedTask;
@@ -151,17 +158,20 @@ namespace PPMTool
         public void Configure(
             IApplicationBuilder app,
             IWebHostEnvironment env,
-            RolesService roleService)
+            RolesService roleService,
+            ILogger<Startup> logger)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                logger.LogInformation("DEVELOPMENT ENVIRONMENT");
             }
             else
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+                logger.LogInformation("PRODUCTION ENVIRONMENT");
             }
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions

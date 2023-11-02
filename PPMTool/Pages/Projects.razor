@@ -1,37 +1,35 @@
 ﻿@page "/projects"
 @page "/"
 @inherits PPMTool.Pages.BasePage
+@inject IWebHostEnvironment Environment
+@inject IConfiguration Configuration;
+@using Microsoft.AspNetCore.Hosting;
+@using Microsoft.Extensions.Hosting;
+@using Microsoft.Extensions.Configuration;
 @using PPMTool.Enums
-@using PPMTool.Data
 @using PPMTool.Data.Entities
-@using PPMTool.Pages.Components
 
 <div class="container">
-    @* <div class="row">
-        <div class="col-auto mr-auto">
-            <h1>At a Glance</h1>
-        </div>
-    </div>
-    <div class="row-auto" style="display:flex; flex-direction:row; overflow-x:scroll; overflow-y:hidden">
-        @foreach(var d in summaryData)
-        {
-            <div class="col">
-                <ProjectSummaryWidget Data="@d" />
+    @if (Environment.IsDevelopment())
+    {
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <h1>DEVELOPMENT VERSION [v@(Configuration["VersionNumber"]))]</h1>
             </div>
-        }
-    </div>
-    <hr /> *@
+        </div>
+        <hr />
+    }
     <div class="row">
         <div class="col-auto mr-auto">
             <h1>Projects</h1>
         </div>
         <div class="col-auto">
-            <RadzenButton Text="Add" Icon="add" Click="@AddProject"/>
+            <RadzenButton Text="Add" Icon="add" Click="@AddProject" />
         </div>
         <!-- This is a temporary button to be used one time to migrate the RTP codes from the names -->
         @*<div class="col-auto">
-            <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
-        </div>*@
+                <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
+            </div>*@
     </div>
 
     @if (projects == null)
@@ -52,20 +50,20 @@
                 </div>
             </div>
             <RadzenDataGrid @ref="projectGrid"
-                        AllowFiltering="true"
-                        AllowColumnResize="true"
-                        FilterMode="FilterMode.Simple"
-                        EditMode="DataGridEditMode.Single"
-                        AllowSorting="true"
-                        PageSize="10"
-                        AllowPaging="true"
-                        ShowPagingSummary="true"
-                        Data="@projects"
-                        TItem="Project"
-                        ColumnWidth="120px"
-                        SelectionMode="DataGridSelectionMode.Single"
-                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        LogicalFilterOperator="LogicalFilterOperator.And">
+                            AllowFiltering="true"
+                            AllowColumnResize="true"
+                            FilterMode="FilterMode.Simple"
+                            EditMode="DataGridEditMode.Single"
+                            AllowSorting="true"
+                            PageSize="10"
+                            AllowPaging="true"
+                            ShowPagingSummary="true"
+                            Data="@projects"
+                            TItem="Project"
+                            ColumnWidth="120px"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            LogicalFilterOperator="LogicalFilterOperator.And">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
                         <Template Context="proj">
