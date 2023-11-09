@@ -25,13 +25,13 @@
                         Who is available?
                     </div>
                     <div class="col-auto">
-                        <RadzenDatePicker @bind-Value="QueryStartDate" DateFormat="d" />
+                        <RadzenDatePicker @bind-Value="QueryStartDate" DateFormat="dd/MM/yyyy" />
                     </div>
                     <div class="col-auto">
                         to
                     </div>
                     <div class="col-auto">
-                        <RadzenDatePicker @bind-Value="queryEndDate" DateFormat="d" />
+                        <RadzenDatePicker @bind-Value="queryEndDate" DateFormat="dd/MM/yyyy" />
                     </div>
                     <div class="col-auto">
                         at
@@ -91,8 +91,8 @@
                                 <tr>
                                     <td>@res.Person.Name</td>
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToShortDateString()</td>
-                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
                                     <td>@(res.AvailabilityPercent)%</td>
                                 </tr>
                             }
@@ -119,8 +119,8 @@
                                 <tr>
                                     <td>@res.Person.Name</td>
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToShortDateString()</td>
-                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
                                     <td>@(res.AvailabilityPercent)%</td>
                                 </tr>
                             }
@@ -147,8 +147,8 @@
                                 <tr>
                                     <td>@res.Person.Name</td>
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToShortDateString()</td>
-                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
                                     <td>@(res.AvailabilityPercent)%</td>
                                 </tr>
                             }
@@ -175,8 +175,8 @@
                                 <tr>
                                     <td>@res.Person.Name</td>
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToShortDateString()</td>
-                                    <td>@res.EndDate.ToShortDateString()</td>
+                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
+                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
                                     <td>@(res.AvailabilityPercent)%</td>
                                 </tr>
                             }
@@ -199,9 +199,9 @@
                                     Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))" />
                 </div>
                 <div class="col-auto mr-auto">
-                    <RadzenDropDown @bind-Value=@chosenPortfolios Data=@portfolios
-                                    Multiple=true AllowClear=true Placeholder="Filter Portfolio" Chips=true
-                                    Style="width: 100%; max-width: 400px;" Change="@(args => PortfolioSelectionChanged(args))" />
+                    <RadzenDropDown @bind-Value=@chosenManager Data=@managers TextProperty="Name"
+                                    Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
+                                    Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))" />
                 </div>
                 <div class="col-auto">
                     Include Unfunded:

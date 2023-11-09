@@ -33,6 +33,7 @@
                         <tr>
                             <th>PI</th>
                             <th>Portfolio</th>
+                            <th>PM</th>
                             <th>Budget</th>
                             <th>Planned Cost</th>
                             <th>Actual Cost</th>
@@ -47,6 +48,7 @@
                         <tr>
                             <td>@project.PI</td>
                             <td>@project.Portfolio.ToNiceString()</td>
+                            <td>@(project.ProjectManager?.Name ?? "Not Set")</td>
                             <td>@project.Budget.ToString("C0")</td>
                             <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>
                             <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>

@@ -26,6 +26,12 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JsRuntime { get; set; }
 
+        [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
+        private PersonService PersonService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -36,6 +42,7 @@ namespace PPMTool.Pages
         private bool gotoDetails = false;
         private bool discardChanges = true;
         private IEnumerable<string> innateActivities = new List<string>();
+        private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
 
@@ -52,6 +59,13 @@ namespace PPMTool.Pages
             innateActivities = ResourceHelper.AvailableInnateActivities.ToList();
             portfolios = Enum.GetValues<Portfolio>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
+            var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            var roles = RolesService.GetAll(context)
+                .Where(x =>
+                    (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    && x.Person != null
+                );
+            projectManagers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
         }
 
         private string GetNiceString(Enum x)

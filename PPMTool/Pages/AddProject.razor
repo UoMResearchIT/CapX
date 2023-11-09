@@ -59,6 +59,16 @@
             </div>
             <div class="row">
                 <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
+                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.ProjectManager" Data="@projectManagers">
+                        <Template Context="person">
+                            @person.Name
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Innate Activity" /><br />
                     <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" />
                 </div>

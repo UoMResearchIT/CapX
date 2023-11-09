@@ -33,6 +33,9 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JS { get; set; }
 
+        [Inject]
+        private RolesService RolesService { get; set; }
+
         private bool includeUnFunded = true;
         public bool IncludeUnFunded
         {
@@ -86,12 +89,12 @@ namespace PPMTool.Pages
         private List<ChartItem> chartSource;
         private ApexChartOptions<ChartItem> options;
         private List<Person> people;
-        private IEnumerable<string> portfolios;
+        private List<Person> managers;
         private string chartTitle;
         private PPMToolContext context;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private IEnumerable<string> chosenPeople = new List<string>();
-        private IEnumerable<string> chosenPortfolios = new List<string>();
+        private Person chosenManager;
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
@@ -143,7 +146,12 @@ namespace PPMTool.Pages
         {
             // Get dropdown options
             people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
-            portfolios = Enum.GetValues<Portfolio>().Select(x => x.ToNiceString());
+            var roles = RolesService.GetAll(context)
+                .Where(x =>
+                    (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    && x.Person != null
+                );
+            managers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
 
             // Filter out leavers if necessary
             if (!includeLeavers)
@@ -196,18 +204,15 @@ namespace PPMTool.Pages
             await ConfigureSourceAsync();
         }
 
-        private async void PortfolioSelectionChanged(object selectedOptions)
+        /// <summary>
+        /// Manager selected from the dropdown
+        /// </summary>
+        /// <param name="selectedOptions"></param>
+        private async void ManagerSelectionChanged(object selectedOptions)
         {
-            var items = selectedOptions as IEnumerable<Portfolio>;
-            Debug.WriteLine("Selected Portfolios:");
-            if (items != null)
-            {
-                foreach (var i in items)
-                {
-                    Debug.WriteLine(i);
-                }
-            }
-
+            var item = selectedOptions as Person;
+            Debug.WriteLine($"Selected Manager: {item?.Name}");
+            
             // Regenerate the chart data
             await ConfigureSourceAsync();
         }
@@ -298,8 +303,6 @@ namespace PPMTool.Pages
             // Reset source
             chartSource = new List<ChartItem>();
 
-            if (chart != null) await RefreshChartAsync();
-
             if (people.Count() > 0)
             {
                 // Get projects from the database ignoring finished or cancelled projects
@@ -309,16 +312,22 @@ namespace PPMTool.Pages
                     projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
                 }
 
+                // Filter the project source if a manager selected
+                if (chosenManager != null)
+                {
+                    projects = projects.Where(x => x.ProjectManager == chosenManager);
+                }
+
                 // Get the window from the start and end dates of the projects included in the source
                 var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
                 var startDate = safeProjects.Min(x => x.StartDate);
-                var endDate = safeProjects.Max(x => x.EndDate);
+                var endDate = safeProjects.Max(x => x.EndDate);    
 
                 // Reinitialise dictionary
                 groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
 
                 // Flatten subtasks and group by person if "All" chosen
-                if (chosenPeople == null || chosenPeople.Count() == 0)
+                if ((chosenPeople == null || chosenPeople.Count() == 0) && chosenManager == null)
                 {
                     foreach (var person in people)
                     {
@@ -375,12 +384,17 @@ namespace PPMTool.Pages
                 // Filter by people chosen and flatten and group by project if in project mode
                 else
                 {
+                    // If manager chosen but no people then assum all are selected
+                    var assumeAllPeopleSelected =
+                        chosenManager != null && (chosenPeople == null || chosenPeople.Count() == 0);
+                    
                     // Create a list of subtasks for each project these people are assigned to
                     foreach (var project in projects)
                     {
                         var assignments = new List<SubTask>();
                         foreach (var subTask in project.SubTasks)
                         {
+                            // Only include subtasks with the selected people assigned as resources
                             if (subTask.AssignedResources.Any(z => chosenPeople.Contains(z.Person.Name)))
                             {
                                 assignments.Add(subTask);
@@ -428,7 +442,8 @@ namespace PPMTool.Pages
                     }
                 }
 
-                chartTitle = $"Load for {(chosenPeople != null && chosenPeople.Count() > 0 ? string.Join(",", chosenPeople) : "All")}";
+                chartTitle = $"Load for {(chosenPeople != null && chosenPeople.Count() > 0 ? string.Join(",", chosenPeople) : "All")} " +
+                    $"{(chosenManager != null ? chosenManager.Name : "")}";
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
                 // Format X Axis range

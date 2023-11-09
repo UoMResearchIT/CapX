@@ -36,10 +36,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal Project GetById(PPMToolContext context, int? projectID)
         {
-            return context.Projects
-                .Include(p => p.SubTasks)
-                .ThenInclude(s => s.AssignedResources)
-                .ThenInclude(r => r.Person)
+            return GetAll(context)
                 .FirstOrDefault(p => p.ProjectId == projectID);
         }
 
@@ -64,6 +61,8 @@ namespace PPMTool.Services
             return context.Projects
                 .Include(p => p.SubTasks)
                 .ThenInclude(s => s.AssignedResources)
+                .ThenInclude(r => r.Person)
+                .Include(p => p.ProjectManager)
                 .ToList();
         }
 

@@ -22,6 +22,8 @@ namespace PPMTool.Data.Entities
         [Required]
         public Portfolio Portfolio { get; set; }
 
+        public Person ProjectManager { get; set; }
+
         public IList<SubTask> SubTasks { get; set; }
 
         /// <summary>
