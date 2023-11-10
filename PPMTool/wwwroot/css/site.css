@@ -119,3 +119,12 @@ switch-align {
     margin-bottom: 4pt;
     margin-top: 4pt
 }
+
+.flexbox {
+    display: flex;
+    align-items: center;
+}
+
+.radzen-autocomplete {
+    width: 100%;
+}

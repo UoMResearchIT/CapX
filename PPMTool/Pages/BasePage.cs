@@ -8,11 +8,9 @@ namespace PPMTool.Pages
     public abstract class BasePage : ComponentBase
     {
         [Inject]
-        protected ILogger<AddPerson> Logger { get; set; }
+        protected ILogger Logger { get; set; }
 
         [Inject]
         protected NavigationManager Navigation { get; set; }
-
-        protected bool isLoading;
     }
 }

@@ -1,5 +1,6 @@
 ﻿@page "/addperson/{PersonId:int}"
 @inherits BasePage
+@using PPMTool.Data.Entities
 
 <div class="container">
     <h1>Add Person</h1>
@@ -41,18 +42,44 @@
             <div class="row">
                 <div class="col">
                     <h3>Skill Tags</h3>
-                    @foreach (var t in availableTags)
-                    {
-                        <div class="row">
-                            <div class="col-6">
-                                @t.Name
-                            </div>
-                            <div class="col-3 my-1" style="display: flex">
-                                <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
-                            </div>
-                            <br />
+                    <div class="row">
+                        <div class="col-auto flexbox">
+                            <RadzenIcon Icon="search" />
                         </div>
-                    }
+                        <div class="col flexbox pr-1 pl-0">
+                        <RadzenAutoComplete
+                            @bind-Value=@autoCompleteText
+                            Placeholder="Search for Skill Tags"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            Data=@availableTags
+                            TextProperty="Name"
+                            Change=@OnChange
+                            Style="width:100%" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <RadzenDataList
+                            AllowVirtualization=true
+                            Style="height:250px; overflow:auto; width:100%"
+                            WrapItems="false"
+                            AllowPaging="false"
+                            Data="@chosenTags"
+                            TItem="SkillTag">
+                            <Template Context="tag">
+                                <div class="row flexbox p-0">
+                                    <div class="col">
+                                        @tag.Name
+                                    </div>
+                                    <div class="col">
+                                        @($"{tag.People.Count} other(s) with this tag")
+                                    </div>
+                                    <div class="col-auto">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" />
+                                    </div>
+                                </div>
+                            </Template>
+                        </RadzenDataList>
+                    </div>
                 </div>
                 <div class="col">
                     <div class="row">

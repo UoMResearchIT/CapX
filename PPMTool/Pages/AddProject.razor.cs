@@ -35,7 +35,7 @@ namespace PPMTool.Pages
         [Parameter]
         public int ProjectId { get; set; }
 
-        EditForm? ProjectForm { get; set; }
+        EditForm ProjectForm { get; set; }
 
         private Project projectModel = new Project();
         private PPMToolContext context;
