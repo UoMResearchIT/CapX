@@ -111,9 +111,8 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// For a given project, convert subtasks into an aggregated set of blocks for the timeline graph
+        /// For a given set of subtasks, convert subtasks into an aggregated set of blocks for the timeline graph
         /// </summary>
-        /// <param name="project">Project of interest</param>
         /// <param name="subTasks">Set of subtasks to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
@@ -123,8 +122,7 @@ namespace PPMTool.Data
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertSubTasksToChartItemsForProject(
-            Project project,
+        public static IEnumerable<ChartItem> ConvertSubTasksToChartItems(
             IEnumerable<SubTask> subTasks,
             Func<SubTask, double> valueFunction,
             Func<double, double, string> colourFunction,

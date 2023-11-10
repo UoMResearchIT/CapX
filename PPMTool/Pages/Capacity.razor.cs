@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using NuGet.Packaging;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -326,8 +327,14 @@ namespace PPMTool.Pages
                 // Reinitialise dictionary
                 groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
 
+                // Determine state
+                var managerChosen = chosenManager != null;
+                var peopleChosen = chosenPeople != null && chosenPeople.Count() > 0;
+
+                // -------------- PERSON MODE -------------- //
+
                 // Flatten subtasks and group by person if "All" chosen
-                if ((chosenPeople == null || chosenPeople.Count() == 0) && chosenManager == null)
+                if (!managerChosen && !peopleChosen)
                 {
                     foreach (var person in people)
                     {
@@ -381,13 +388,11 @@ namespace PPMTool.Pages
                     }
                 }
 
-                // Filter by people chosen and flatten and group by project if in project mode
-                else
+                // -------------- PROJECT MODE -------------- //
+
+                // Filter by people chosen, flatten and group by project if in project mode
+                else if (peopleChosen)
                 {
-                    // If manager chosen but no people then assum all are selected
-                    var assumeAllPeopleSelected =
-                        chosenManager != null && (chosenPeople == null || chosenPeople.Count() == 0);
-                    
                     // Create a list of subtasks for each project these people are assigned to
                     foreach (var project in projects)
                     {
@@ -409,41 +414,27 @@ namespace PPMTool.Pages
                     foreach (var group in groupedSubTasks)
                     {
 
-                        chartSource.AddRange(ChartHelper.ConvertSubTasksToChartItemsForProject(
-                            group.Key as Project,
-                            group.Value,
-                            // Value 1 for each block is the sum of the effort across all chosen people
-                            x =>
-                            {
-                                var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                                return Math.Round(resources.Sum(x => x.Percentage) / .84);
-                            },
-                            // Shading function based on value 1 and value 2
-                            (x, y) =>
-                            {
-                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
-                            },
-                            (group.Key as Project).GetFullName(),
-                            queryActive ? QueryStartDate : startDate,
-                            queryActive ? queryEndDate : endDate,
-                            // Hatched value is whether any assignee is provisional
-                            x =>
-                            {
-                                var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                                return resources.Any(x => x.IsProvisional);
-                            },
-                            // Value 2 for each block is based on the sum of the availability of all chosen people
-                            (x, w) =>
-                            {
-                                var peo = people.Where(y => chosenPeople.Contains(y.Name));
-                                return peo.Sum(y => y.GetAvailabilityOnDate(w));
-                            }
-                        ));
+                        chartSource.AddRange(
+                            GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate)
+                        );
                     }
+
+                    // Total row needs to repeat the above logic but on the whole set of subtasks
+                    var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
+                    var name = "Total";
+                    chartSource.AddRange(
+                        GetProjectModeChartItemsFromTasks(
+                            name,
+                            new KeyValuePair<object, IEnumerable<SubTask>>(name, allProjectSubTasks),
+                            startDate,
+                            endDate
+                        )
+                    );
                 }
 
-                chartTitle = $"Load for {(chosenPeople != null && chosenPeople.Count() > 0 ? string.Join(",", chosenPeople) : "All")} " +
-                    $"{(chosenManager != null ? chosenManager.Name : "")}";
+                chartTitle = $"Load for {(peopleChosen ? string.Join(",", chosenPeople) : (!managerChosen ? "All" : "None"))} " +
+                    $"{(managerChosen ? " with manager " + chosenManager.Name : "")}";
+                Debug.WriteLine(chartTitle);
                 Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
                 // Format X Axis range
@@ -459,6 +450,43 @@ namespace PPMTool.Pages
 
                 Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
             }
+        }
+
+        private IEnumerable<ChartItem> GetProjectModeChartItemsFromTasks(
+            string seriesName,
+            KeyValuePair<object, IEnumerable<SubTask>> group,
+            DateTime startDate,
+            DateTime endDate
+        )
+        {
+            return ChartHelper.ConvertSubTasksToChartItems(
+                group.Value,
+                // Value 1 for each block is the sum of the effort across all chosen people
+                x =>
+                {
+                    var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                    return Math.Round(resources.Sum(x => x.Percentage) / .84);
+                },
+                // Shading function based on value 1 and value 2
+                (x, y) =>
+                {
+                    return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                },
+                seriesName,
+                queryActive ? QueryStartDate : startDate,
+                queryActive ? queryEndDate : endDate,
+                // Hatched value is whether any assignee is provisional
+                x =>
+                {
+                    var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                    return resources.Any(x => x.IsProvisional);
+                },
+                // Value 2 for each block is based on the sum of the availability of all chosen people
+                (x, w) =>
+                {
+                    var peo = people.Where(y => chosenPeople.Contains(y.Name));
+                    return peo.Sum(y => y.GetAvailabilityOnDate(w));
+                });
         }
 
         /// <summary>
