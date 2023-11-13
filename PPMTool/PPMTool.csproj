@@ -5,6 +5,10 @@
     <Configurations>Debug;Release;Local</Configurations>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Local|AnyCPU'">
+    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Remove="InnateActivityList.csv" />
   </ItemGroup>

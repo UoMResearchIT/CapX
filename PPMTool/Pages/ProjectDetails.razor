@@ -165,7 +165,8 @@
             <ApexChart TItem="SubTask"
                        Title="All Tasks"
                        XAxisType="XAxisType.Datetime"
-                       Options=options>
+                       Options=options
+                       OnDataPointSelection="TaskSelected">
                 <ChildContent>
                     <ApexRangeSeries TItem="SubTask"
                                      Items="data"

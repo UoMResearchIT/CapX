@@ -7,10 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
-using NuGet.Packaging;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -104,6 +102,8 @@ namespace PPMTool.Pages
         private List<CapacityQueryItem> partialMatchPercent;
         private List<CapacityQueryItem> partialMatchDuration;
         private List<CapacityQueryItem> partialMatchBoth;
+        private bool managerChosen;
+        private bool peopleChosen;
 
         protected override async Task OnInitializedAsync()
         {
@@ -140,6 +140,12 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        private void UpdateSelectionState()
+        {
+            managerChosen = chosenManager != null;
+            peopleChosen = chosenPeople != null && chosenPeople.Count() > 0;
+        }
+
         /// <summary>
         /// Method to setup the dropdown sources
         /// </summary>
@@ -170,8 +176,11 @@ namespace PPMTool.Pages
         /// <param name="dataPoint"></param>
         private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
         {
-            // Only so the navigation when in project view mode
-            if (dataPoint.IsSelected && chosenPeople != null && chosenPeople.Count() > 0)
+            // Decide on state
+            UpdateSelectionState();
+
+            // When in project mode, navigate
+            if (dataPoint.IsSelected && peopleChosen)
             {
                 var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
@@ -183,6 +192,21 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");
                 }
             }
+
+            // When in people ("All") mode then add person to selection and update the chart
+            else if (dataPoint.IsSelected && !peopleChosen && !managerChosen)
+            {
+                var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {personName}. Updating selection...");
+                var match = people.FirstOrDefault(x => x.Name == personName);
+                if (match != null)
+                {
+                    var temp = peopleChosen ? new List<string>(chosenPeople) : new List<string>();
+                    temp.Add(personName);
+                    chosenPeople = temp;
+                    PeopleSelectionChanged(chosenPeople);
+                }
+            }
         }
 
         /// <summary>
@@ -192,12 +216,12 @@ namespace PPMTool.Pages
         private async void PeopleSelectionChanged(object selectedOptions)
         {
             var items = selectedOptions as IEnumerable<string>;
-            Debug.WriteLine("Selected People:");
+            Debug.WriteLine("** Selected People:");
             if (items != null)
             {
                 foreach (var i in items)
                 {
-                    Debug.WriteLine(i);
+                    Debug.WriteLine($"** {i}");
                 }
             }
 
@@ -212,8 +236,8 @@ namespace PPMTool.Pages
         private async void ManagerSelectionChanged(object selectedOptions)
         {
             var item = selectedOptions as Person;
-            Debug.WriteLine($"Selected Manager: {item?.Name}");
-            
+            Debug.WriteLine($"** Selected Manager: {item?.Name}");
+
             // Regenerate the chart data
             await ConfigureSourceAsync();
         }
@@ -304,152 +328,163 @@ namespace PPMTool.Pages
             // Reset source
             chartSource = new List<ChartItem>();
 
-            if (people.Count() > 0)
+            // Need some people for this to work
+            if (people.Count() == 0)
             {
-                // Get projects from the database ignoring finished or cancelled projects
-                var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled());
-                if (!IncludeUnFunded)
+                Logger.LogError("People database is empty!");
+                Debug.WriteLine("** No people registered in the database!");
+                return;
+            }
+
+            // Get projects from the database ignoring finished or cancelled projects
+            var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled());
+            if (!IncludeUnFunded)
+            {
+                projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+            }
+
+            // Filter the project source if a manager selected
+            if (chosenManager != null)
+            {
+                projects = projects.Where(x => x.ProjectManager == chosenManager);
+            }
+
+            // Get the window from the start and end dates of the projects included in the source
+            var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
+            if (safeProjects.Count() == 0)
+            {
+                Debug.WriteLine("** No projects found that match the chosen options!");
+                return;
+            }
+            var startDate = safeProjects.Min(x => x.StartDate);
+            var endDate = safeProjects.Max(x => x.EndDate);
+
+            // Reinitialise dictionary
+            groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
+
+            // Determine state
+            UpdateSelectionState();
+
+            // -------------- PERSON MODE -------------- //
+
+            // Flatten subtasks and group by person if "All" chosen
+            if (!managerChosen && !peopleChosen)
+            {
+                Debug.WriteLine("** Chart in PERSON MODE.");
+                foreach (var person in people)
                 {
-                    projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
-                }
-
-                // Filter the project source if a manager selected
-                if (chosenManager != null)
-                {
-                    projects = projects.Where(x => x.ProjectManager == chosenManager);
-                }
-
-                // Get the window from the start and end dates of the projects included in the source
-                var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
-                var startDate = safeProjects.Min(x => x.StartDate);
-                var endDate = safeProjects.Max(x => x.EndDate);    
-
-                // Reinitialise dictionary
-                groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
-
-                // Determine state
-                var managerChosen = chosenManager != null;
-                var peopleChosen = chosenPeople != null && chosenPeople.Count() > 0;
-
-                // -------------- PERSON MODE -------------- //
-
-                // Flatten subtasks and group by person if "All" chosen
-                if (!managerChosen && !peopleChosen)
-                {
-                    foreach (var person in people)
-                    {
-                        // Create a list of subtasks to which this person is assigned
-                        var assignments = new List<SubTask>();
-                        foreach (var project in projects)
-                        {
-                            foreach (var subTask in project.SubTasks)
-                            {
-                                if (subTask.AssignedResources.Any(z => z.Person == person))
-                                {
-                                    assignments.Add(subTask);
-                                }
-                            }
-                        }
-
-                        // Add dictionary entry with person as key
-                        groupedSubTasks.Add(person, assignments);
-                    }
-
-                    // Build chart source from the grouped data
-                    foreach (var group in groupedSubTasks)
-                    {
-                        var items = ChartHelper.ConvertSubTasksToChartItemsForPerson(
-                            group.Key as Person,
-                            group.Value,
-                            x =>
-                            {
-                                var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
-                                return Math.Round(resource.Percentage / .84);
-                            },
-                            (x, y) =>
-                            {
-                                return ChartItem.GetColourStringFTE(x, y * 100 / 84);
-                            },
-                            (group.Key as Person).Name,
-                            queryActive ? QueryStartDate : startDate,
-                            queryActive ? queryEndDate : endDate,
-                            x =>
-                            {
-                                return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
-                            },
-                            (x, w) =>
-                            {
-                                return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 0.84;
-                            }
-                        ).ToList();
-
-                        // Add the range for this person
-                        chartSource.AddRange(items);
-                    }
-                }
-
-                // -------------- PROJECT MODE -------------- //
-
-                // Filter by people chosen, flatten and group by project if in project mode
-                else if (peopleChosen)
-                {
-                    // Create a list of subtasks for each project these people are assigned to
+                    // Create a list of subtasks to which this person is assigned
+                    var assignments = new List<SubTask>();
                     foreach (var project in projects)
                     {
-                        var assignments = new List<SubTask>();
                         foreach (var subTask in project.SubTasks)
                         {
-                            // Only include subtasks with the selected people assigned as resources
-                            if (subTask.AssignedResources.Any(z => chosenPeople.Contains(z.Person.Name)))
+                            if (subTask.AssignedResources.Any(z => z.Person == person))
                             {
                                 assignments.Add(subTask);
                             }
                         }
-
-                        // Add dictionary entry with project name as key
-                        if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
                     }
 
-                    // Build chart source from the grouped data
-                    foreach (var group in groupedSubTasks)
+                    // Add dictionary entry with person as key
+                    groupedSubTasks.Add(person, assignments);
+                }
+
+                // Build chart source from the grouped data
+                foreach (var group in groupedSubTasks)
+                {
+                    var items = ChartHelper.ConvertSubTasksToChartItemsForPerson(
+                        group.Key as Person,
+                        group.Value,
+                        x =>
+                        {
+                            var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
+                            return Math.Round(resource.Percentage / .84);
+                        },
+                        (x, y) =>
+                        {
+                            return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                        },
+                        (group.Key as Person).Name,
+                        queryActive ? QueryStartDate : startDate,
+                        queryActive ? queryEndDate : endDate,
+                        x =>
+                        {
+                            return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
+                        },
+                        (x, w) =>
+                        {
+                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 0.84;
+                        }
+                    ).ToList();
+
+                    // Add the range for this person
+                    chartSource.AddRange(items);
+                }
+            }
+
+            // -------------- PROJECT MODE -------------- //
+
+            // Filter by people chosen, flatten and group by project if in project mode
+            else if (peopleChosen)
+            {
+                Debug.WriteLine("** Chart in PROJECT MODE.");
+
+                // Create a list of subtasks for each project these people are assigned to
+                foreach (var project in projects)
+                {
+                    var assignments = new List<SubTask>();
+                    foreach (var subTask in project.SubTasks)
                     {
-
-                        chartSource.AddRange(
-                            GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate)
-                        );
+                        // Only include subtasks with the selected people assigned as resources
+                        if (subTask.AssignedResources.Any(z => chosenPeople.Contains(z.Person.Name)))
+                        {
+                            assignments.Add(subTask);
+                        }
                     }
 
-                    // Total row needs to repeat the above logic but on the whole set of subtasks
-                    var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
-                    var name = "Total";
+                    // Add dictionary entry with project name as key
+                    if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
+                }
+
+                // Build chart source from the grouped data
+                foreach (var group in groupedSubTasks)
+                {
+
                     chartSource.AddRange(
-                        GetProjectModeChartItemsFromTasks(
-                            name,
-                            new KeyValuePair<object, IEnumerable<SubTask>>(name, allProjectSubTasks),
-                            startDate,
-                            endDate
-                        )
+                        GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate)
                     );
                 }
 
-                chartTitle = $"Load for {(peopleChosen ? string.Join(",", chosenPeople) : (!managerChosen ? "All" : "None"))} " +
-                    $"{(managerChosen ? " with manager " + chosenManager.Name : "")}";
-                Debug.WriteLine(chartTitle);
-                Debug.WriteLine($"** Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
-
-                // Format X Axis range
-                options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-                options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
-
-                // First time this is called, there is no reference to the chart
-                if (chart != null)
-                {
-                    Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
-                    await RefreshChartAsync();
-                }
-
-                Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
+                // Total row needs to repeat the above logic but on the whole set of subtasks
+                var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
+                var name = "Total";
+                chartSource.AddRange(
+                    GetProjectModeChartItemsFromTasks(
+                        name,
+                        new KeyValuePair<object, IEnumerable<SubTask>>(name, allProjectSubTasks),
+                        startDate,
+                        endDate
+                    )
+                );
             }
+
+            chartTitle = $"Load for {(peopleChosen ? string.Join(",", chosenPeople) : (!managerChosen ? "All" : "None"))} " +
+                $"{(managerChosen ? " with manager " + chosenManager.Name : "")}";
+            Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
+
+            // Format X Axis range
+            options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+            options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
+
+            // First time this is called, there is no reference to the chart
+            if (chart != null)
+            {
+                Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
+                await RefreshChartAsync();
+            }
+
+            Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
         }
 
         private IEnumerable<ChartItem> GetProjectModeChartItemsFromTasks(

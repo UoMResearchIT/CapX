@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using ApexCharts;
@@ -17,6 +18,9 @@ namespace PPMTool.Pages
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
 
         [Parameter]
         public int? ProjectID { get; set; }
@@ -123,6 +127,18 @@ namespace PPMTool.Pages
                     };
                     InvokeAsync(StateHasChanged);
                 }
+            }
+        }
+
+        private void TaskSelected(SelectedData<SubTask> dataPoint)
+        {
+            // Only so the navigation when in project view mode
+            if (dataPoint.IsSelected)
+            {
+                var task = dataPoint.DataPoint.Items.FirstOrDefault();
+                if (task == null) return;
+                Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
+                Navigation.NavigateTo($"/addtask/{ProjectID}/{task.SubTaskId}");
             }
         }
 

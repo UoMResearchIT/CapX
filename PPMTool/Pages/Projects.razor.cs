@@ -35,7 +35,7 @@ namespace PPMTool.Pages
 
         private void OnChange(bool? value)
         {
-            Debug.WriteLine("Change detected. Reloading data...");
+            Debug.WriteLine("** Change detected. Reloading data...");
             LoadProjectData();
         }
 
@@ -55,7 +55,7 @@ namespace PPMTool.Pages
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"{ex.Message}");
+                    Debug.WriteLine(ex);
                 }
                 ProjectService.Update(context, p);
             }
@@ -99,7 +99,7 @@ namespace PPMTool.Pages
 
             // Assign data for the data grid
             projects = proj;
-            Debug.WriteLine($"{proj.Count()} projects loaded.");
+            Debug.WriteLine($"** {proj.Count()} projects loaded.");
         }
 
         private void ProjectDetails(int id)

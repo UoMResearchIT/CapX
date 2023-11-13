@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+#if RELEASE
 using Microsoft.Extensions.Configuration;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -29,13 +28,14 @@ namespace PPMTool
             try
             {
                 return Host.CreateDefaultBuilder(args)
+#if RELEASE
                 .ConfigureLogging((context, logging) =>
                 {
                     Log.Logger = new LoggerConfiguration()
                         .WriteTo.Logger(l =>
                         {
                             l.WriteTo.Console();
-                            l.WriteTo.File(context.Configuration.GetValue<string>("Logging:LogPath"),
+                            l.WriteTo.File(context.Configuration.GetValue<string>("LogPath"),
                                 rollingInterval: RollingInterval.Day,
                                 retainedFileCountLimit: null,
                                 retainedFileTimeLimit: TimeSpan.FromDays(365));
@@ -43,6 +43,7 @@ namespace PPMTool
                         .CreateLogger();
                     logging.AddSerilog();
                 })
+#endif
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStaticWebAssets();
