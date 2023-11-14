@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using GSS.Authentication.CAS.AspNetCore;
@@ -54,11 +55,6 @@ namespace PPMTool
             services.AddScoped<TagService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                options.Secure = CookieSecurePolicy.Always;
-            });
-
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -66,6 +62,8 @@ namespace PPMTool
                     options.LogoutPath = new PathString("/Account/Logout");
                     options.Cookie.IsEssential = true;
                     options.Cookie.Name = "CapXAuth";
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.SameSite = SameSiteMode.None;
                     options.Events = new CookieAuthenticationEvents
                     {
                         OnSigningOut = context =>
@@ -170,11 +168,14 @@ namespace PPMTool
 
             var forwardedHeaderOptions = new ForwardedHeadersOptions
             {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
                 ForwardLimit = 2
             };
             forwardedHeaderOptions.KnownNetworks.Clear();
             forwardedHeaderOptions.KnownProxies.Clear();
+            forwardedHeaderOptions.KnownProxies.Add(IPAddress.Parse("10.99.96.175"));
+            forwardedHeaderOptions.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("10.99.0.0"), 16));
+
             app.UseForwardedHeaders(forwardedHeaderOptions);
 
             if (env.IsDevelopment())
