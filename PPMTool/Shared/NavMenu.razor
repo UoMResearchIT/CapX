@@ -1,8 +1,8 @@
 ﻿@using Microsoft.Extensions.Configuration
-@inject IConfiguration configuration
+@inject IConfiguration Configuration
 
 <div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="" title="Version @configuration["VersionNumber"]">CapX</a>
+    <a class="navbar-brand" href="">CapX</a><div class="p"><span>v</span><span>@Configuration["VersionNumber"]</span></div>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>
