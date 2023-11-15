@@ -58,6 +58,7 @@ namespace PPMTool
             services.Configure<CookiePolicyOptions>(options =>
             {
                 options.Secure = CookieSecurePolicy.Always;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -196,6 +197,7 @@ namespace PPMTool
                 logger.LogInformation("PRODUCTION ENVIRONMENT");
             }
 
+            app.UseCookiePolicy();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
