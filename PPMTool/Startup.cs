@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using GSS.Authentication.CAS.AspNetCore;
@@ -177,10 +176,6 @@ namespace PPMTool
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
                 ForwardLimit = 2
             };
-            forwardedHeaderOptions.KnownNetworks.Clear();
-            forwardedHeaderOptions.KnownProxies.Clear();
-            forwardedHeaderOptions.KnownProxies.Add(IPAddress.Parse("10.99.96.175"));
-            forwardedHeaderOptions.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("10.99.0.0"), 16));
 
             app.UseForwardedHeaders(forwardedHeaderOptions);
 
