@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace PPMTool.Pages
 {
-    [Authorize]
+    [Authorize(Roles = "Superuser,Manager,Developer")]
     public abstract class BasePage : ComponentBase
     {
         [Inject]

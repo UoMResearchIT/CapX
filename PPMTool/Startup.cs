@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Web;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
@@ -53,6 +54,13 @@ namespace PPMTool
             services.AddScoped<SubTaskService>();
             services.AddScoped<TagService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
+
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.ForwardLimit = 2;
+            });
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -132,7 +140,10 @@ namespace PPMTool
                                 // Lookup the username in the DB and add role claim
                                 // Has to be done manually since service provider not built yet?
                                 var dbContext = new PPMToolContext();
-                                var role = dbContext.Roles.FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
+                                var role = dbContext.Roles
+                                    .Include(x => x.Person)
+                                    .ToList()
+                                    .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
                                 if (role != null)
                                 {
                                     identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
@@ -151,7 +162,7 @@ namespace PPMTool
                                 logger.LogError(failure, "{Exception}", failure.Message);
                             }
 
-                            context.Response.Redirect("/Account/ExternalLoginFailure");
+                            context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
                             context.HandleResponse();
                             return Task.CompletedTask;
                         },
@@ -171,22 +182,16 @@ namespace PPMTool
             // Assign the logger for use in the ConfigureServices callbacks
             Logger = logger;
 
-            var forwardedHeaderOptions = new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
-                ForwardLimit = 2
-            };
-
-            app.UseForwardedHeaders(forwardedHeaderOptions);
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 logger.LogInformation("DEVELOPMENT ENVIRONMENT");
+                app.UseForwardedHeaders();
             }
             else
             {
                 app.UseExceptionHandler("/Error");
+                app.UseForwardedHeaders();
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
                 logger.LogInformation("PRODUCTION ENVIRONMENT");

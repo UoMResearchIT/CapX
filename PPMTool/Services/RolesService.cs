@@ -10,7 +10,7 @@ namespace PPMTool.Services
     {
         public override int Add(PPMToolContext context, Role entity)
         {
-            if (context.Roles.Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName()))
+            if (GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName()))
             {
                 // Duplicate found
                 return -1;
