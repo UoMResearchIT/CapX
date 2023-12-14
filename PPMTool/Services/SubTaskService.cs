@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class SubTaskService
+    public class SubTaskService : BaseService<SubTask>
     {
         /// <summary>
         /// Adds a subtask
@@ -16,10 +15,11 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="taskModel"></param>
         /// <returns></returns>
-        internal void Add(PPMToolContext context, SubTask taskModel)
+        public override int Add(PPMToolContext context, SubTask taskModel)
         {
             context.SubTasks.Add(taskModel);
             context.SaveChanges();
+            return taskModel.SubTaskId;
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="taskModel"></param>
-        internal void Update(PPMToolContext context, SubTask taskModel)
+        public override void Update(PPMToolContext context, SubTask taskModel)
         {
             context.SubTasks.Update(taskModel);
             context.SaveChanges();
@@ -38,7 +38,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        internal IEnumerable<SubTask> GetAll(PPMToolContext context)
+        public override IEnumerable<SubTask> GetAll(PPMToolContext context)
         {
             return context.SubTasks
                 .Include(s => s.AssignedResources)
@@ -80,7 +80,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="subTask"></param>
-        internal void DeleteTask(PPMToolContext context, SubTask subTask)
+        public override void Delete(PPMToolContext context, SubTask subTask)
         {
             // Remove resources
             foreach (var res in subTask.AssignedResources)
@@ -90,7 +90,7 @@ namespace PPMTool.Services
 
             // Remove sub task
             context.SubTasks.Remove(subTask);
-            
+
             // Update database
             context.SaveChanges();
         }

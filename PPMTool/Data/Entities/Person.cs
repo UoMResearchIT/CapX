@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace PPMTool.Data.Entities
 {
@@ -26,7 +25,7 @@ namespace PPMTool.Data.Entities
 
         [Required]
         [DataType(DataType.Currency)]
-        public double DayRate { get; set; } = 312;
+        public double DayRate { get; set; }
 
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Now.Date;

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
@@ -26,6 +25,16 @@ namespace PPMTool.Pages
             // Get people from the database
             context = new PPMToolContext();
             LoadData(new LoadDataArgs());
+        }
+
+        private void AddPerson()
+        {
+            Navigation.NavigateTo($"/addperson/-1");
+        }
+
+        private void ManageSkills()
+        {
+            Navigation.NavigateTo($"/manageskills");
         }
 
         private void EditPerson(Person person)

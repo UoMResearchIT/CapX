@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -17,6 +19,9 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
         [Parameter]
         public int? ProjectID { get; set; }
 
@@ -27,6 +32,9 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> options2;
         private PPMToolContext context;
         private int count;
+        private string plannedCostColour;
+        private string actualCostColour;
+        private string fundsReceivedColour;
 
         protected override void OnInitialized()
         {
@@ -37,6 +45,9 @@ namespace PPMTool.Pages
                 context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
                 data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
+                actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
+                fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
                 count = data.Count;
 
                 options = new ApexChartOptions<SubTask>
@@ -82,7 +93,7 @@ namespace PPMTool.Pages
                     var seriesEnd = chartSource.Max(x => x.EndDate);
                     var actualsX = DateTime.Now.Date;
                     var actualsY = project.SubTasks.Sum(x => x.ActualWorkHours);
-                    
+
                     // If the task has started yet or has already finished then x coordinate is the limits of the series
                     if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
                     else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
@@ -116,6 +127,18 @@ namespace PPMTool.Pages
                     };
                     InvokeAsync(StateHasChanged);
                 }
+            }
+        }
+
+        private void TaskSelected(SelectedData<SubTask> dataPoint)
+        {
+            // Only so the navigation when in project view mode
+            if (dataPoint.IsSelected)
+            {
+                var task = dataPoint.DataPoint.Items.FirstOrDefault();
+                if (task == null) return;
+                Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
+                Navigation.NavigateTo($"/addtask/{ProjectID}/{task.SubTaskId}");
             }
         }
 

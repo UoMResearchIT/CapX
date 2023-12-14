@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public partial class ManageSkills : BasePage
+    [Authorize(Roles = "Manager,Superuser")]
+    public partial class ManageSkills : DataGridPage<SkillTag>
     {
         [Inject]
         private PersonService PersonService { get; set; }
@@ -19,99 +16,42 @@ namespace PPMTool.Pages
         [Inject]
         private TagService TagService { get; set; }
 
-        RadzenDataGrid<SkillTag> skillTagGrid;
-        IList<SkillTag> skillTags;
-        SkillTag tagToInsert;
-        private PPMToolContext context;
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
-            skillTags = TagService.GetAllTags(context).ToList();
+
+            // Set up the base page
+            dataGridEntityService = TagService;
+            dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
         }
 
-        async Task EditRow(SkillTag tag)
+        protected override async Task DeleteRow(SkillTag entity)
         {
-            await skillTagGrid.EditRow(tag);
-        }
-
-        void OnUpdateRow(SkillTag tag)
-        {
-            if (tag == tagToInsert)
+            if (entity == entityToInsert)
             {
-                tagToInsert = null;
-            }
-            TagService.Update(context, tag);
-        }
-
-        async Task SaveRow(SkillTag tag)
-        {
-            if (tag == tagToInsert)
-            {
-                tagToInsert = null;
+                entityToInsert = null;
             }
 
-            await skillTagGrid.UpdateRow(tag);
-        }
-
-        async Task CancelEdit(SkillTag tag)
-        {
-            if (tag == tagToInsert)
-            {
-                tagToInsert = null;
-            }
-
-            skillTagGrid.CancelEditRow(tag);
-
-            var tagEntry = TagService.GetEntry(context, tag);
-            if (tagEntry.State == EntityState.Modified)
-            {
-                tagEntry.CurrentValues.SetValues(tagEntry.OriginalValues);
-                tagEntry.State = EntityState.Unchanged;
-            }
-
-            await skillTagGrid.Reload();
-        }
-
-        async Task DeleteRow(SkillTag tag)
-        {
-            if (tag == tagToInsert)
-            {
-                tagToInsert = null;
-            }
-
-            if (skillTags.Contains(tag))
+            if (dataGridEntities.Contains(entity))
             {
 
                 // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(tag));
+                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(entity));
                 foreach (var person in people)
                 {
-                    person.SkillTags.Remove(tag);
+                    person.SkillTags.Remove(entity);
                     PersonService.Update(context, person);
                 }
 
                 // Remove tag
-                TagService.Delete(context, tag);
+                dataGridEntityService.Delete(context, entity);
 
-                await skillTagGrid.Reload();
+                await dataGrid.Reload();
             }
             else
             {
-                skillTagGrid.CancelEditRow(tag);
+                dataGrid.CancelEditRow(entity);
             }
-        }
-
-        async Task InsertRow()
-        {
-            tagToInsert = new SkillTag();
-            await skillTagGrid.InsertRow(tagToInsert);
-        }
-
-        void OnCreateRow(SkillTag tag)
-        {
-            TagService.Add(context, tag);
         }
     }
 }

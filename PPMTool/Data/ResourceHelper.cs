@@ -1,9 +1,10 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Firebase.Storage;
 
 namespace PPMTool.Data
 {
@@ -11,48 +12,51 @@ namespace PPMTool.Data
     {
         internal static IEnumerable<string> AvailableInnateActivities { get; private set; }
 
+        private static string storageUrl = "capx-9cae0.appspot.com";
+        private static string filename = "InnateActivities.txt";
+
         /// <summary>
         /// Initialised the helper lists by reading the resource files
         /// </summary>
         internal static void Initialise()
         {
-            // Parse all the strings from the resource file
-            try
+            // Pull file from Firebase
+            Task.Run(async () =>
             {
-                var assembly = Assembly.GetExecutingAssembly();
-                using (var stream = assembly?.GetManifestResourceStream("PPMTool.InnateActivityList.csv"))
-                using (StreamReader reader = new StreamReader(stream))
+                try
                 {
-                    if (stream != null)
+                    var firebaseStorage = new FirebaseStorage(storageUrl);
+                    var filePath = await firebaseStorage
+                        .Child(filename)
+                        .GetDownloadUrlAsync();
+                    HttpClient client = new HttpClient();
+                    var serialised = await client.GetStringAsync(filePath);
+
+                    // Reformat
+                    List<string> temp = serialised.Split(Environment.NewLine).ToList();
+                    List<string> items = new List<string>();
+                    foreach (var s in temp)
                     {
-                        var items = new List<string>();
-                        while (!reader.EndOfStream)
-                        {
-                            var values = reader.ReadLine().Split('|');
-                            items.Add(string.Join(" - ", values));
-                            AvailableInnateActivities = items;
-                        }
-                    }
-                    else
-                    {
-                        throw new IOException("Could not load resource file!");
+                        var values = s.Split('|');
+                        items.Add(string.Join(" - ", values));
+                        AvailableInnateActivities = items;
                     }
                 }
-            }
-            catch (IOException e)
-            {
-                Debug.WriteLine(e);
-            }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+            });
         }
 
         /// <summary>
-        /// Gets the default Innate Activity or "None" if there are no activities
+        /// Returns the word "None"
         /// </summary>
         /// <returns></returns>
         internal static string GetDefaultInnateActivity()
         {
-            // Default is considered the first in the list
-            return AvailableInnateActivities.FirstOrDefault() ?? "None";
+            // Default is just "none"
+            return "None";
         }
     }
 }

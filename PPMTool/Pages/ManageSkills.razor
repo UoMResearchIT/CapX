@@ -1,5 +1,5 @@
 ﻿@page "/manageskills"
-@inherits BasePage
+@inherits DataGridPage<SkillTag>
 @using PPMTool.Data.Entities
 
 <div class="container">
@@ -8,12 +8,12 @@
             <h1>Manage Skills</h1>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary float-right" title="Add New Tag" @onclick="@InsertRow" disabled=@(tagToInsert != null)><i class="oi oi-plus" /> Add</button>
+            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null)" />
         </div>
     </div>
 
-    <RadzenDataGrid @ref="skillTagGrid" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                    Data="@skillTags" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+    <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                    Data="@dataGridEntities" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
             <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px">
                 <EditTemplate Context="tag">
@@ -28,7 +28,7 @@
                     </RadzenButton>
                 </Template>
                 <EditTemplate Context="tag">
-                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => SaveRow(tag))">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))">
                     </RadzenButton>
                     <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))">
                     </RadzenButton>

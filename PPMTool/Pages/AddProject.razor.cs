@@ -1,14 +1,20 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
-using System.Linq;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class AddProject : BasePage
     {
         [Inject]
@@ -20,13 +26,25 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JsRuntime { get; set; }
 
+        [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
+        private PersonService PersonService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
+
+        EditForm ProjectForm { get; set; }
 
         private Project projectModel = new Project();
         private PPMToolContext context;
         private bool gotoDetails = false;
         private bool discardChanges = true;
+        private IEnumerable<string> innateActivities = new List<string>();
+        private IEnumerable<Person> projectManagers = new List<Person>();
+        private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
+        private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
 
         protected override void OnInitialized()
         {
@@ -37,38 +55,72 @@ namespace PPMTool.Pages
             {
                 projectModel = ProjectService.GetById(context, ProjectId);
             }
+
+            innateActivities = ResourceHelper.AvailableInnateActivities.ToList();
+            portfolios = Enum.GetValues<Portfolio>().ToList();
+            statuses = Enum.GetValues<ProjectStatus>().ToList();
+            var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            var roles = RolesService.GetAll(context)
+                .Where(x =>
+                    (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    && x.Person != null
+                );
+            projectManagers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
         }
 
-        private void HandleValidSubmit()
+        private string GetNiceString(Enum x)
         {
-            if (ProjectId > -1 && !discardChanges)
-            {
-                // Check to see if the project is marked as cancelled as then we need to remove resources.
-                // Leave resources on completed projects so we have a historical record.
-                if (projectModel.ProjectStatus.IsProjectCancelled())
-                {
-                    foreach (SubTask t in projectModel.SubTasks)
-                    {
-                        t.AssignedResources.Clear();
-                    }
-                }
+            return x.ToNiceString();
+        }
 
-                Logger.LogInformation($"Edit project {ProjectId} saved...");
-                ProjectService.Update(context, projectModel);
-            }
-            else
+        private void HandleSubmit()
+        {
+            // Form valid
+            if (ProjectForm.EditContext.Validate())
             {
                 if (!discardChanges)
                 {
-                    Logger.LogInformation("Adding new project...");
-
-                    if (!ProjectService.AddProject(context, projectModel))
+                    if (ProjectId > -1)
                     {
-                        // TODO: Duplicate found -- do something
+                        // Check to see if the project is marked as cancelled as then we need to remove resources.
+                        // Leave resources on completed projects so we have a historical record.
+                        if (projectModel.ProjectStatus.IsProjectCancelled())
+                        {
+                            foreach (SubTask t in projectModel.SubTasks)
+                            {
+                                t.AssignedResources.Clear();
+                            }
+                        }
+
+                        Logger.LogInformation($"Edit project {ProjectId} saved...");
+                        ProjectService.Update(context, projectModel);
+                    }
+                    else
+                    {
+                        Logger.LogInformation("Adding new project...");
+
+                        if (ProjectService.Add(context, projectModel) < 0)
+                        {
+                            // TODO: Duplicate found -- do something
+                        }
                     }
                 }
+
+                NavigatePostSubmit();
             }
 
+            // Form invalid
+            else
+            {
+                if (discardChanges)
+                {
+                    NavigatePostSubmit();
+                }
+            }
+        }
+
+        private void NavigatePostSubmit()
+        {
             if (gotoDetails)
             {
                 Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
@@ -96,14 +148,14 @@ namespace PPMTool.Pages
                         {
                             Logger.LogInformation($"Deleting subtask ID {projectModel.SubTasks.First()?.SubTaskId}");
 
-                            SubTaskService.DeleteTask(context, projectModel.SubTasks.First());
+                            SubTaskService.Delete(context, projectModel.SubTasks.First());
                         }
                     }
 
                     Logger.LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
-                    ProjectService.DeleteProject(context, projectModel);
+                    ProjectService.Delete(context, projectModel);
 
                     // Navigate back to the projects list
                     Navigation.NavigateTo("projects");

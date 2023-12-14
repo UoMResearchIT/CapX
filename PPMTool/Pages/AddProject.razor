@@ -15,105 +15,79 @@
                 <h1>Edit @projectModel.GetFullName()</h1>
             </div>
             <div class="col-auto" style="align-content: center">
-                <button class="btn btn-danger" type="button" @onclick="DeleteProject"><i class="oi oi-trash" /> Delete</button>
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" />
             </div>
         </div>
     }
     <div class="card">
-        <EditForm Model="@projectModel" OnValidSubmit="@HandleValidSubmit">
+        <EditForm @ref="ProjectForm" Model="@projectModel" OnSubmit="HandleSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="row">
-                <div class="col-3">
-                    <label for="RTP">RTP-</label>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="RTP-" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
                 </div>
                 <div class="col">
-                    <InputNumber min="0" step="1" @bind-Value="projectModel.RTP" />
+                    <RadzenLabel class="radzen-form-label" Text="Portfolio" /><br />
+                    <RadzenDropDown class="radzen-dropdown" TValue="Portfolio" @bind-Value="projectModel.Portfolio" Data="@portfolios">
+                        <Template Context="x">
+                            @GetNiceString(x)
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Project Status" /><br />
+                    <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.ProjectStatus" Data=@statuses>
+                        <Template Context="x">
+                            @GetNiceString(x)
+                        </Template>
+                    </RadzenDropDown>
                 </div>
             </div>
             <div class="row">
-                <div class="col-3">
-                    <label for="Name">Name</label>
-                </div>
                 <div class="col">
-                    <InputText @bind-Value="projectModel.Name" />
+                    <RadzenLabel class="radzen-form-label" Text="Name" /><br />
+                    <RadzenTextBox TValue="string" @bind-Value="projectModel.Name" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-3">
-                    <label for="PI">Principal Investigator</label>
-                </div>
                 <div class="col">
-                    <InputText @bind-Value="projectModel.PI" />
+                    <RadzenLabel class="radzen-form-label" Text="Product Owner" /><br />
+                    <RadzenTextBox TValue="string" @bind-Value="projectModel.PI" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-3">
-                    <label for="InnateActivity">Innate Activity</label>
-                </div>
                 <div class="col">
-                    <InputSelect @bind-Value="projectModel.InnateActivity">
-                        @foreach (var c in ResourceHelper.AvailableInnateActivities)
-                        {
-                            <option value="@c">@c</option>
-                        }
-                    </InputSelect>
+                    <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
+                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.ProjectManager" Data="@projectManagers">
+                        <Template Context="person">
+                            @person.Name
+                        </Template>
+                    </RadzenDropDown>
                 </div>
             </div>
             <div class="row">
-                <div class="col-3">
-                    <label for="Portfolio">Portfolio</label>
-                </div>
                 <div class="col">
-                    <InputSelect @bind-Value="projectModel.Portfolio">
-                        @foreach (var c in (Portfolio[])Enum.GetValues(typeof(Portfolio)))
-                        {
-                            <option value="@c">@c.ToNiceString()</option>
-                        }
-                    </InputSelect>
+                    <RadzenLabel class="radzen-form-label" Text="Innate Activity" /><br />
+                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" />
                 </div>
             </div>
+
             <div class="row">
-                <div class="col-3">
-                    <label for="Budget">Agreed Budget (£)</label>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" />
                 </div>
                 <div class="col">
-                    <InputNumber type="currency" min="0.0" step="0.01" placeholder="0.00" @bind-Value="projectModel.Budget" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="FundsReceived">Funds Received (£)</label>
-                </div>
-                <div class="col">
-                    <InputNumber min="0.0" step="0.01" placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="ProjectStatus">Project Status</label>
-                </div>
-                <div class="col">
-                    <InputSelect @bind-Value="projectModel.ProjectStatus">
-                        @foreach (var c in (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus)))
-                        {
-                            <option value="@c">@c.ToNiceString()</option>
-                        }
-                    </InputSelect>
+                    <RadzenLabel class="radzen-form-label" Text="Funds Received (£)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
                 </div>
             </div>
 
             <div>
-            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = false; })"><i class="oi oi-check" /> Save</button>
-            <button class="btn btn-outline-danger" type="submit" @onclick="@(()=> { gotoDetails = false; discardChanges = true; })"><i class="oi oi-x" /> Discard</button>
-            </div>
-
-            <div>
-            <button class="btn btn-primary" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = false; })"><i class="oi oi-check" /> Save and See Details</button>
-            @if (ProjectId > -1)
-            {
-                <button class="btn btn-outline-danger" style="margin-left: 5px" type="submit" @onclick="@(()=> { gotoDetails = true; discardChanges = true; })"><i class="oi oi-x" /> Discard and See Details</button>
-            }
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Click="@(()=> { gotoDetails = true; discardChanges = false; })" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > -1; discardChanges = true; })" />
             </div>
         </EditForm>
     </div>

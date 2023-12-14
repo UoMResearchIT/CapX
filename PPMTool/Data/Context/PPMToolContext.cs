@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using PPMTool.Areas.Identity.Data;
 using PPMTool.Data.Entities;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Context
 {
-    public class PPMToolContext : IdentityDbContext<PPMToolUser>
+    public class PPMToolContext : DbContext
     {
+        public DbSet<Role> Roles { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<SubTask> SubTasks { get; set; }
@@ -43,7 +38,8 @@ namespace PPMTool.Data
         /// Override to configure context
         /// </summary>
         /// <param name="optionsBuilder"></param>
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlite("DataSource=PPMTool.db");
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+            => optionsBuilder.UseSqlite("DataSource=PPMTool.db");
 
         /// <summary>
         /// Define the model.

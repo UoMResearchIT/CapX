@@ -11,31 +11,23 @@
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">
-                    <div class="col-3">
-                        <label for="ChangeDate">Date of Change</label>
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Date of Change" /><br />
+                        <RadzenDatePicker @bind-Value="changeModel.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                     </div>
                     <div class="col">
-                        <InputDate @bind-Value="changeModel.ChangeDate" />
+                        <RadzenLabel class="radzen-form-label" Text="New FTE" /><br />
+                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" @bind-Value="changeModel.AvailabilityFTE" />
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-3">
-                        <label for="AvailabilityFTE">New FTE</label>
-                    </div>
                     <div class="col">
-                        <InputNumber min="0.0" step="0.001" @bind-Value="changeModel.AvailabilityFTE" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-3">
-                        <label for="BaselineActivities">Availability Notes</label>
-                    </div>
-                    <div class="col">
-                        <InputText @bind-Value="changeModel.BaselineActivities" />
+                        <RadzenLabel class="radzen-form-label" Text="Baseline Activity Description" /><br />
+                        <RadzenTextBox TValue="string" @bind-Value="changeModel.BaselineActivities" />
                     </div>
                 </div>
                 <div>
-                    <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Add</button>
+                    <RadzenButton Text="Add" Icon="check" ButtonType="ButtonType.Submit" />
                 </div>
             </EditForm>
         </div>
@@ -49,7 +41,7 @@
                         <tr>
                             <th>Change Date</th>
                             <th>New FTE</th>
-                            <th>Notes</th>
+                            <th>Baseline Activity</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -60,7 +52,7 @@
                                 <td>@change.ChangeDate.ToShortDateString()</td>
                                 <td>@change.AvailabilityFTE</td>
                                 <td>@change.BaselineActivities</td>
-                                <td><button class="btn btn-danger" @onclick=@(args => DeleteChange(change.AvailabilityChangeId))><i class="oi oi-trash" /> Delete</button></td>
+                                <td><RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@(args => DeleteChange(change.AvailabilityChangeId)) Text="Delete" Icon="delete"/></td>
                             </tr>
                         }
                     </tbody>

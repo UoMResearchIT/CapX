@@ -2,20 +2,19 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
-using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public partial class AddTask : BasePage
+    [Authorize(Roles = "Manager,Superuser")]
+    public partial class AddTask : DataGridPage<Resource>
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
@@ -35,26 +34,28 @@ namespace PPMTool.Pages
         [Parameter]
         public int TaskId { get; set; }
 
-        private string predecessorId;
+        private int? selectedPredecessorId;
         private Project projectModel;
         private SubTask taskModel = new SubTask();
-        RadzenDataGrid<Resource> resourcesGrid;
-        Resource resourceToInsert;
-        Resource resourceToUpdate;
-        private IList<Resource> resources = new List<Resource>();
         private IList<Person> people = new List<Person>();
         private bool isValid = true;
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
         private string error;
-        private PPMToolContext context;
+        private IEnumerable<TaskType> taskTypes = new List<TaskType>();
+        private IList<SubTask> predecessorTasks = new List<SubTask>();
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             context = new PPMToolContext();
-            people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            dataGridEntities = new List<Resource>();
+            people = PersonService.GetAll(context)
+                .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
+                .OrderBy(x => x.Name)
+                .ToList();
+            taskTypes = Enum.GetValues<TaskType>().ToList();
             projectModel = ProjectService.GetById(context, ProjectId);
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
 
@@ -64,30 +65,20 @@ namespace PPMTool.Pages
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
 
                 // Assign the predecessor option
-                if (taskModel.Predecessor != null) predecessorId = taskModel.Predecessor.SubTaskId.ToString();
+                if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
             }
-
-            // Populate the resources list
-            //foreach (var p in PersonService.GetAll(context).OrderBy(x => x.Name))
-            //{
-            //    resources.Add(new Resource
-            //    {
-            //        ResourceId = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.ResourceId ?? 0 : 0,
-            //        Person = p,
-            //        Percentage = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.Percentage ?? 0 : 0,
-            //        UseDefaultDayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.UseDefaultDayRate ?? true : true,
-            //        DayRate = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.DayRate ?? null : null,
-            //        IsProvisional = TaskId > -1 ? taskModel.AssignedResources.FirstOrDefault(x => x.Person == p)?.IsProvisional ?? false : false
-            //    });
-            //};
 
             if (TaskId > -1)
             {
                 foreach (var r in taskModel.AssignedResources)
                 {
-                    resources.Add(r);
+                    dataGridEntities.Add(r);
                 }
             }
+
+            // Populate predecessor dropdown source (exclude self)
+            predecessorTasks = projectModel.SubTasks
+                .Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor?.SubTaskId != taskModel.SubTaskId).ToList();
 
             // Subscribe listeners
             taskModel.TaskTypeChanged += UpdateUIState;
@@ -96,6 +87,16 @@ namespace PPMTool.Pages
             taskModel.EndDateDrivenChanged += UpdateUIState;
             taskModel.DoneChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
+        }
+
+        private string GetNiceString(Enum x)
+        {
+            return x.ToNiceString();
+        }
+
+        private void PredecessorSelected()
+        {
+
         }
 
         /// <summary>
@@ -118,7 +119,7 @@ namespace PPMTool.Pages
                 if (confirmed)
                 {
                     // Call delete on the subtask service and let it remove the resources
-                    SubTaskService.DeleteTask(context, taskModel);
+                    SubTaskService.Delete(context, taskModel);
 
                     // Remove the sub-task from the project model
                     projectModel.SubTasks.Remove(taskModel);
@@ -135,61 +136,49 @@ namespace PPMTool.Pages
             }
         }
 
-        void Reset()
+        protected override void CancelEdit(Resource resource)
         {
-            resourceToInsert = null;
-            resourceToUpdate = null;
+            Reset();
+            SubTaskService.RestoreModel(context, ref resource);
+            dataGrid.CancelEditRow(resource);
         }
 
-        async Task EditResourceRow(Resource resource)
+        protected override void OnCreateRow(Resource resource)
         {
-            resourceToUpdate = resource;
-            await resourcesGrid.EditRow(resource);
+            dataGridEntities.Add(resource);
+            entityToInsert = null;
         }
 
-        void OnUpdateResourceRow(Resource resource)
+        protected override void OnUpdateRow(Resource entity)
         {
             Reset();
         }
 
-        async Task SaveResourceRow(Resource resource)
+        private void OnResourcePersonChange(object value)
         {
-            await resourcesGrid.UpdateRow(resource);
-        }
-
-        void CancelEditResourceRow(Resource resource)
-        {
-            Reset();
-            resourcesGrid.CancelEditRow(resource);
-        }
-
-        async Task DeleteResourceRow(Resource resource)
-        {
-            Reset();
-
-            if (resources.Contains(resource))
+            Person person = value as Person;
+            if (person != null)
             {
-                resources.Remove(resource);
-                await resourcesGrid.Reload();
+                Resource resourceToChange;
+                if (entityToInsert != null)
+                {
+                    resourceToChange = entityToInsert;
+                }
+                else if (entityToUpdate != null)
+                {
+                    resourceToChange = entityToUpdate;
+                }
+                else
+                {
+                    return;
+                }
+
+                // Update the day rate field if using the default
+                if (resourceToChange.UseDefaultDayRate)
+                {
+                    resourceToChange.DayRate = person.DayRate;
+                }
             }
-            else
-            {
-                resourcesGrid.CancelEditRow(resource);
-                await resourcesGrid.Reload();
-            }
-        }
-
-        async Task InsertResourceRow()
-        {
-            resourceToInsert = new Resource();
-            await resourcesGrid.InsertRow(resourceToInsert);
-        }
-
-        void OnCreateResourceRow(Resource resource)
-        {
-            resources.Add(resource);
-
-            resourceToInsert = null;
         }
 
         private void DiscardChanges()
@@ -212,7 +201,7 @@ namespace PPMTool.Pages
                 Logger.LogInformation("Updating sub task configuration...");
 
                 // Remove resources on the task model that are no-longer active
-                var toRemove = taskModel.AssignedResources.Where(x => !resources.Any(y => x.ResourceId == y.ResourceId));
+                var toRemove = taskModel.AssignedResources.Where(x => !dataGridEntities.Any(y => x.ResourceId == y.ResourceId));
                 foreach (var r in toRemove.ToList())
                 {
                     Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
@@ -220,7 +209,7 @@ namespace PPMTool.Pages
                 }
 
                 // Update/Add the active resources
-                foreach (var r in resources)
+                foreach (var r in dataGridEntities)
                 {
                     Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | Percent: {r.Percentage} | Rate: {r.DayRate}");
                     var existing = r.ResourceId != 0 ? taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == r.ResourceId) : null;
@@ -242,7 +231,7 @@ namespace PPMTool.Pages
 
                 // Track total proportion of effort
                 double totalResourceDaysPerDay = 0;
-                foreach (var r in resources)
+                foreach (var r in dataGridEntities)
                 {
                     // Update the total resource assigned
                     totalResourceDaysPerDay += r.Percentage / 100;
@@ -266,11 +255,8 @@ namespace PPMTool.Pages
                 // Truncate to 2 dp
                 taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
-                // Create predecessor on the sub task
-                if (int.TryParse(predecessorId, out var id))
-                {
-                    taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == id);
-                }
+                // Update predecessor task
+                taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
                 // Schedule
                 error = taskModel.Schedule(false);

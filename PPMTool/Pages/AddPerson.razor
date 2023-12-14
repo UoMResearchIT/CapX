@@ -1,76 +1,85 @@
 ﻿@page "/addperson/{PersonId:int}"
 @inherits BasePage
+@using PPMTool.Data.Entities
 
 <div class="container">
     <h1>Add Person</h1>
     <div class="card">
-        <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+        <EditForm EditContext="editContext" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="row">
-                <div class="col-3">
-                    <label for="Name">Name</label>
-                </div>
                 <div class="col">
-                    <InputText @bind-Value="personModel.Name" />
+                    <RadzenLabel class="radzen-form-label" Text="Name" /><br>
+                    <RadzenTextBox TValue="string" @bind-Value="personModel.Name" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-3">
-                    <label for="ShortName">Initials</label>
-                </div>
                 <div class="col">
-                    <InputText @bind-Value="personModel.ShortName" />
+                    <RadzenLabel class="radzen-form-label" Text="Initials" /><br>
+                    <RadzenTextBox TValue="string" @bind-Value="personModel.ShortName" />
                 </div>
             </div>
             <div class="row">
-                <div class="col-3">
-                    <label for="StartDate">Start Date</label>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Start Date" /><br>
+                    <RadzenDatePicker @bind-Value="personModel.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
                 <div class="col">
-                    <InputDate @bind-Value="personModel.StartDate" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="EndDate">End Date</label>
+                    <RadzenLabel class="radzen-form-label" Text="End Date" /><br>
+                    <RadzenDatePicker @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
                 <div class="col">
-                    <InputDate @bind-Value="personModel.EndDate" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="FTE">Post FTE</label>
+                    <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(0.84)" Step="0.001" @bind-Value="personModel.FTE" />
                 </div>
                 <div class="col">
-                    <InputNumber min="0.0" max="0.84" step="0.001" @bind-Value="personModel.FTE" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-3">
-                    <label for="DayRate">Default Day Rate (£)</label>
-                </div>
-                <div class="col">
-                    <InputNumber min="0" step="1" placeholder="0" @bind-Value="personModel.DayRate" />
+                    <RadzenLabel class="radzen-form-label" Text="Default Day Rate (£)" /><br>
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="1" Placeholder="0" @bind-Value="personModel.DayRate" />
                 </div>
             </div>
             <hr />
             <div class="row">
                 <div class="col">
                     <h3>Skill Tags</h3>
-                        @foreach (var t in availableTags)
-                        {
-                            <div class="row">
-                                <div class="col-6">
-                                    @t.Name
+                    <div class="row">
+                        <div class="col-auto flexbox">
+                            <RadzenIcon Icon="search" />
+                        </div>
+                        <div class="col flexbox pr-1 pl-0">
+                        <RadzenAutoComplete
+                            @bind-Value=@autoCompleteText
+                            Placeholder="Search for Skill Tags"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            Data=@availableTags
+                            TextProperty="Name"
+                            Change=@OnChange
+                            Style="width:100%" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <RadzenDataList
+                            AllowVirtualization=true
+                            Style="height:250px; overflow:auto; width:100%"
+                            WrapItems="false"
+                            AllowPaging="false"
+                            Data="@chosenTags"
+                            TItem="SkillTag">
+                            <Template Context="tag">
+                                <div class="row flexbox p-0">
+                                    <div class="col">
+                                        @tag.Name
+                                    </div>
+                                    <div class="col">
+                                        @($"{tag.People.Count} other(s) with this tag")
+                                    </div>
+                                    <div class="col-auto">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" />
+                                    </div>
                                 </div>
-                                <div class="col-3 my-1" style="display: flex">
-                                    <RadzenSwitch class="switch-align" @bind-Value="t.Checked" />
-                                </div>
-                                <br />
-                            </div>
-                        }
+                            </Template>
+                        </RadzenDataList>
+                    </div>
                 </div>
                 <div class="col">
                     <div class="row">
@@ -78,7 +87,7 @@
                             <h3>Availability Changes</h3>
                         </div>
                         <div class="col-auto">
-                            <button class="btn btn-primary" type="button" @onclick="@(args => EditAvailability())"><i class="oi oi-pencil" /> Edit</button>
+                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" />
                         </div>
                     </div>
                     @foreach (var d in personModel.AvailabilityChanges)
@@ -98,8 +107,7 @@
                     }
                 </div>
             </div>
-            
-            <button class="btn btn-primary" type="submit"><i class="oi oi-check" /> Save</button>
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
         </EditForm>
     </div>
 </div>
