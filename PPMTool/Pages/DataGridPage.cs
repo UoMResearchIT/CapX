@@ -69,6 +69,7 @@ namespace PPMTool.Pages
 
         protected virtual void OnCreateRow(T entity)
         {
+            Reset();
             dataGridEntityService.Add(context, entity);
         }
 
