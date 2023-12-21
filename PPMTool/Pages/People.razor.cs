@@ -22,6 +22,8 @@ namespace PPMTool.Pages
 
         protected override void OnInitialized()
         {
+            base.OnInitialized();
+
             // Get people from the database
             context = new PPMToolContext();
             LoadData(new LoadDataArgs());

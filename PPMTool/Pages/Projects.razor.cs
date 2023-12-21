@@ -19,9 +19,7 @@ namespace PPMTool.Pages
         private ProjectService ProjectService { get; set; }
 
         private IEnumerable<Project> projects;
-        RadzenDataGrid<Project> projectGrid;
         private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
-        private IEnumerable<ProjectStatus> fundingOptions = (ProjectStatus[])Enum.GetValues(typeof(ProjectStatus));
         private List<ProjectSummaryWidget.ProjectSummaryData> summaryData;
         private PPMToolContext context;
         private bool showActiveOnly = true;
@@ -29,36 +27,12 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
             LoadProjectData();
         }
 
         private void OnChange(bool? value)
         {
             Debug.WriteLine("** Change detected. Reloading data...");
-            LoadProjectData();
-        }
-
-        /// <summary>
-        /// Temporary method for migrating the RTP code from the name to the new RTP field as an integer using RegEx matching
-        /// </summary>
-        private void Migrate()
-        {
-            foreach (var p in projects)
-            {
-                var match = Regex.Match(p.Name, "(RTP-)(\\d+)");
-                try
-                {
-                    var remain = p.Name.Remove(match.Index, match.Length).Trim();
-                    p.Name = remain;
-                    p.RTP = int.Parse(match.ToString().Split('-').Last());
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex);
-                }
-                ProjectService.Update(context, p);
-            }
             LoadProjectData();
         }
 

@@ -24,6 +24,9 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
+        private RolesService RoleService { get; set; }
+
+        [Inject]
         private ProjectService ProjectService { get; set; }
 
         [Inject]
@@ -105,8 +108,9 @@ namespace PPMTool.Pages
         private bool managerChosen;
         private bool peopleChosen;
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
             context = new PPMToolContext();
             options = new ApexChartOptions<ChartItem>
             {
@@ -135,9 +139,22 @@ namespace PPMTool.Pages
             // Refresh the dropdown
             ReloadDropDownSources();
 
-            // Get data for chart
-            await ConfigureSourceAsync();
-            StateHasChanged();
+            // Choose the person automatically if not a manager
+            if (!EditAuthorised)
+            {
+                // Look up the username
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+                chosenPeople = new List<string>
+                {
+                    role.Person.Name
+                };
+                PeopleSelectionChanged(chosenPeople);
+            }
+            else
+            {
+                // Get data for chart
+                ConfigureSourceAsync().ContinueWith(t => StateHasChanged());
+            }
         }
 
         private void UpdateSelectionState()

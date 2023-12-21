@@ -9,10 +9,10 @@
             <h1>People</h1>
         </div>
         <div class="col-auto">
-            <RadzenButton Text="Add" Icon="add" Click="@AddPerson" />
+            <RadzenButton Text="Add" Icon="add" Click="@AddPerson" Disabled=!EditAuthorised />
         </div>
-        <div class="col-auto">  
-            <RadzenButton Text="Tags" Icon="style" Click="@ManageSkills" />
+        <div class="col-auto">
+            <RadzenButton Text="Tags" Icon="style" Click="@ManageSkills" Disabled=!EditAuthorised />
         </div>
     </div>
     <div class="card">
@@ -23,25 +23,25 @@
         else
         {
             <RadzenDataGrid AllowFiltering="true"
-                    AllowColumnResize="true"
-                    FilterMode="FilterMode.Simple"
-                    AllowSorting="true"
-                    Data="@people"
-                    TItem="Person"
-                    ColumnWidth="150px"
-                    SelectionMode="DataGridSelectionMode.Single"
-                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                    LogicalFilterOperator="LogicalFilterOperator.And"
-                    AllowPaging="true"
-                    PageSize="@pageCount"
-                    PagerHorizontalAlign="HorizontalAlign.Left"
-                    ShowPagingSummary="true"
-                    Count="@count"
-                    LoadData="@LoadData">
+                            AllowColumnResize="true"
+                            FilterMode="FilterMode.Simple"
+                            AllowSorting="true"
+                            Data="@people"
+                            TItem="Person"
+                            ColumnWidth="150px"
+                            SelectionMode="DataGridSelectionMode.Single"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            LogicalFilterOperator="LogicalFilterOperator.And"
+                            AllowPaging="true"
+                            PageSize="@pageCount"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            Count="@count"
+                            LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="p">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>

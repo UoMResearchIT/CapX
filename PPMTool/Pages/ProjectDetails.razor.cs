@@ -132,6 +132,8 @@ namespace PPMTool.Pages
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
         {
+            if (!EditAuthorised) return;
+
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
             {

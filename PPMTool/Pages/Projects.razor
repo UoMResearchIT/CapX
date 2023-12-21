@@ -24,7 +24,7 @@
             <h1>Projects</h1>
         </div>
         <div class="col-auto">
-            <RadzenButton Text="Add" Icon="add" Click="@AddProject" />
+            <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled=!EditAuthorised />
         </div>
         <!-- This is a temporary button to be used one time to migrate the RTP codes from the names -->
         @*<div class="col-auto">
@@ -49,8 +49,7 @@
                     <RadzenSwitch @bind-Value="@showActiveOnly" Change=@(args => OnChange(args)) />
                 </div>
             </div>
-            <RadzenDataGrid @ref="projectGrid"
-                            AllowFiltering="true"
+            <RadzenDataGrid AllowFiltering="true"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             EditMode="DataGridEditMode.Single"
