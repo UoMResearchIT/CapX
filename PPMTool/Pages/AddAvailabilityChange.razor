@@ -7,57 +7,79 @@
     {
         <h1>Availability Changes</h1>
         <div class="card">
-            <h2>Current Changes to Default Availability</h2>
-            <RadzenDataGrid @ref="dataGrid"
-                            AllowFiltering="true"
-                            AllowPaging="true"
-                            PageSize="15"
-                            AllowSorting="true"
-                            ShowPagingSummary="true"
-                            EditMode="DataGridEditMode.Single"
-                            FilterMode="FilterMode.Simple"
-                            Data="@dataGridEntities"
-                            TItem="AvailabilityChange"
-                            RowUpdate="@OnUpdateRow"
-                            RowCreate="@OnCreateRow"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
-                <Columns>
-                    <RadzenDataGridColumn TItem="AvailabilityChange" Property="Person.Name" Title="Person" Width="200px">
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="AvailabilityChange" Property="ChangeDate" Title="Date of Change" Width="180px">
-                        <EditTemplate Context="c">
-                            <RadzenDatePicker @bind-Value="changeModel.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="AvailabilityChange" Property="AvailabilityFTE" Title="New FTE" Width="120px">
-                        <EditTemplate Context="c">
-                            <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" @bind-Value="c.AvailabilityFTE" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="AvailabilityChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px">
-                        <EditTemplate Context="c">
-                            <RadzenTextBox TValue="string" @bind-Value="changeModel.BaselineActivities" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
+            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="row">
+                    <div class="col">
+                        <h2>Current Changes to Default Availability</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                    </div>
+                </div>
+                <RadzenDataGrid @ref="dataGrid"
+                                AllowFiltering="true"
+                                AllowPaging="true"
+                                PageSize="15"
+                                AllowSorting="true"
+                                ShowPagingSummary="true"
+                                EditMode="DataGridEditMode.Single"
+                                FilterMode="FilterMode.Simple"
+                                Data="@dataGridEntities"
+                                TItem="AvailabilityChange"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="Person.Name" Title="Person" Width="200px">
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="ChangeDate" Title="Date of Change" Width="180px">
+                            <EditTemplate Context="c">
+                                <RadzenDatePicker @bind-Value="c.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="AvailabilityFTE" Title="New FTE" Width="120px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" @bind-Value="c.AvailabilityFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px">
+                            <EditTemplate Context="c">
+                                <RadzenTextBox TValue="string" @bind-Value="c.BaselineActivities" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
-                        <Template Context="c">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                        </Template>
-                        <EditTemplate Context="c">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))">
-                            </RadzenButton>
-                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))">
-                            </RadzenButton>
-                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))">
-                            </RadzenButton>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
+                            <Template Context="c">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                            </Template>
+                            <EditTemplate Context="c">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))">
+                                </RadzenButton>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))">
+                                </RadzenButton>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))">
+                                </RadzenButton>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                    </div>
+                </div>
+                @if (!isValid)
+                {
+                    <p style="color: red">You cannot have multiple changes in availability on the same day!</p>
+                }
+            </EditForm>
         </div>
     }
 </div>
