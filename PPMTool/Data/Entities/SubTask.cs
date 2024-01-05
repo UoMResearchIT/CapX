@@ -284,8 +284,8 @@ namespace PPMTool.Data.Entities
             var endDate = StartDate.AddDays(DurationDays);
             DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
 
-            // Correct for annual leave etc. with the 0.84
-            PlannedWorkHours = DurationBusinessDays * 7 * units * 0.84;
+            // Correct for annual leave etc. with the 0.84 and truncate to 1 DP
+            PlannedWorkHours = Math.Ceiling(10 * DurationBusinessDays * 7 * units * 0.84) / 10;
         }
 
         private DateTime GetNextWorkingDay(DateTime date)

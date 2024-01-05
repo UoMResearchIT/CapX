@@ -533,7 +533,7 @@ namespace PPMTool.Pages
                 x =>
                 {
                     var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                    return resources.Sum(x => x.Percentage);
+                    return resources.RoundedSum(x => x.Percentage);
                 },
                 // Shading function based on value 1 and value 2
                 (x, y) =>
@@ -553,7 +553,7 @@ namespace PPMTool.Pages
                 (x, w) =>
                 {
                     var peo = people.Where(y => chosenPeople.Contains(y.Name));
-                    return peo.Sum(y => y.GetAvailabilityOnDate(w));
+                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
                 });
         }
 

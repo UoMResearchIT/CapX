@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace PPMTool.Data
 {
@@ -75,6 +74,12 @@ namespace PPMTool.Data
                 }
                 return max;
             }
+        }
+
+        public static double RoundedSum<TSource>(this IEnumerable<TSource> source,
+            Func<TSource, double> selector)
+        {
+            return Math.Round(100 * source.Sum(selector)) / 100;
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using PPMTool.Data.Entities;
+﻿using System;
 using System.Collections.Generic;
-using System;
-using System.Linq;
 using System.Diagnostics;
+using System.Linq;
+using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
@@ -64,7 +64,7 @@ namespace PPMTool.Data
 
                 // Generate the items
                 Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
-                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));             
+                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));
             }
 
             // If there is a gap after the last chart item and the end date then fill in
@@ -139,14 +139,14 @@ namespace PPMTool.Data
             ).OrderBy(x => x.StartDate).ToList();
         }
 
-            /// <summary>
-            /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
-            /// </summary>
-            /// <param name="person"></param>
-            /// <param name="startDate"></param>
-            /// <param name="endDate"></param>
-            /// <returns></returns>
-            private static IEnumerable<ChartItem> ConvertAvailabilityProfileToChartItems(Person person, DateTime startDate, DateTime endDate)
+        /// <summary>
+        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private static IEnumerable<ChartItem> ConvertAvailabilityProfileToChartItems(Person person, DateTime startDate, DateTime endDate)
         {
             var blocks = new List<ChartItem>();
 
@@ -229,7 +229,7 @@ namespace PPMTool.Data
                 {
                     // If the last change then use query end date for block end otherwise it is date of next change
                     blocks.Add(
-                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate, 
+                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate,
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
                             0, changesAfter[i].AvailabilityFTE, false
                         )
@@ -270,7 +270,7 @@ namespace PPMTool.Data
 
             // Initialise
             var temp = new List<ChartItem>();
-            
+
             // If no subtasks in the list
             if (subTasks.Count() < 1)
             {
@@ -297,8 +297,8 @@ namespace PPMTool.Data
                 // Find assignments running on current day
                 var within = subTasks.Where(x => x.IsWithin(currentDay));
 
-                // Sum value for the current day
-                valueDay = within.Sum(x => valueFunction(x));
+                // Sum value for the current day -- truncate to 2 DP
+                valueDay = within.RoundedSum(x => valueFunction(x));
 
                 // Set hatched for the current day
                 hatchedDay = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
@@ -307,7 +307,7 @@ namespace PPMTool.Data
                 value2Day = value2Function != null ? value2Function(valueDay, currentDay) : 0;
 
                 // Set colour state for the first time
-                if (value2Tracked == -1d) value2Tracked= value2Day;
+                if (value2Tracked == -1d) value2Tracked = value2Day;
 
                 // Set hatched state for the first time
                 if (hatchedTracked == null) hatchedTracked = hatchedDay;
@@ -400,8 +400,8 @@ namespace PPMTool.Data
                         label,
                         currentWeek,
                         currentWeek.AddDays(7),
-                        within.Sum(x => value1Function(x)),
-                        value2Function != null ? within.Sum(x => value2Function(x)) : 0,
+                        within.RoundedSum(x => value1Function(x)),
+                        value2Function != null ? within.RoundedSum(x => value2Function(x)) : 0,
                         hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false
                     )
                 );

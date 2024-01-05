@@ -92,7 +92,7 @@ namespace PPMTool.Pages
                     var seriesStart = chartSource.Min(x => x.StartDate);
                     var seriesEnd = chartSource.Max(x => x.EndDate);
                     var actualsX = DateTime.Now.Date;
-                    var actualsY = project.SubTasks.Sum(x => x.ActualWorkHours);
+                    var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
 
                     // If the task has started yet or has already finished then x coordinate is the limits of the series
                     if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;

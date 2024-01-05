@@ -53,7 +53,7 @@
                             <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>
                             <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>
                             <td><span style="color:@fundsReceivedColour">@project.FundsReceived.ToString("C0")</span></td>
-                            <td>@project.SubTasks.Sum(x => x.ActualWorkHours)</td>
+                            <td>@project.SubTasks.RoundedSum(x => x.ActualWorkHours)</td>
                             <td>@project.ProjectStatus.ToNiceString()</td>
                             <td>@project.StartDate.ToShortDateString()</td>
                             <td>@project.EndDate.ToShortDateString()</td>
