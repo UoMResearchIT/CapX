@@ -100,7 +100,7 @@ namespace PPMTool.Pages
         private IEnumerable<CapacityQueryItem> queryResults;
         private string queryErrorMessage;
         private bool queryActive;
-        private int requiredFTE = 50;
+        private double requiredFTE = 0.5;
         private List<CapacityQueryItem> fullMatch;
         private List<CapacityQueryItem> partialMatchPercent;
         private List<CapacityQueryItem> partialMatchDuration;
@@ -294,7 +294,6 @@ namespace PPMTool.Pages
 
             // Update the chart source as this is used
             await ConfigureSourceAsync();
-            StateHasChanged();
 
             // Convert the chart results to capcity query results
             foreach (var item in chartSource)
@@ -307,11 +306,11 @@ namespace PPMTool.Pages
                     continue;
                 }
 
-                // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
-                var availabilityPercentage = (int)(item.Value2 * 100 / .84);
+                // Availability of individual is value 2 in the chart item
+                var availabilityPercentage = item.Value2;
 
-                // Invert value (value 1 here is the assignment value as a percentage)
-                var unassignedPercentage = (int)availabilityPercentage - (int)item.Value1;
+                // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
+                var unassignedPercentage = Math.Round(100 * (availabilityPercentage - item.Value1)) / 100;
 
                 // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
                 if (item.StartDate != item.EndDate && unassignedPercentage > 0)
@@ -321,7 +320,7 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
+            // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
             fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
             partialMatchPercent = results.Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)).ToList();
             partialMatchDuration = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
@@ -416,11 +415,11 @@ namespace PPMTool.Pages
                         x =>
                         {
                             var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
-                            return Math.Round(resource.Percentage / .84);
+                            return resource.Percentage;
                         },
                         (x, y) =>
                         {
-                            return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                            return ChartItem.GetColourStringFTE(x, y);
                         },
                         (group.Key as Person).Name,
                         queryActive ? QueryStartDate : startDate,
@@ -431,7 +430,7 @@ namespace PPMTool.Pages
                         },
                         (x, w) =>
                         {
-                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 0.84;
+                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 1.0;
                         }
                     ).ToList();
 
@@ -517,12 +516,12 @@ namespace PPMTool.Pages
                 x =>
                 {
                     var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                    return Math.Round(resources.Sum(x => x.Percentage) / .84);
+                    return resources.Sum(x => x.Percentage);
                 },
                 // Shading function based on value 1 and value 2
                 (x, y) =>
                 {
-                    return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                    return ChartItem.GetColourStringFTE(x, y);
                 },
                 seriesName,
                 queryActive ? QueryStartDate : startDate,

@@ -14,9 +14,9 @@ namespace PPMTool.Data
 
         public DateTime EndDate { get; }
 
-        public int AvailabilityPercent { get; }
+        public double AvailabilityPercent { get; }
 
-        public CapacityQueryItem(Person person, DateTime startDate, DateTime endDate, int availabilityPercent)
+        public CapacityQueryItem(Person person, DateTime startDate, DateTime endDate, double availabilityPercent)
         {
             Person = person;
             StartDate = startDate;

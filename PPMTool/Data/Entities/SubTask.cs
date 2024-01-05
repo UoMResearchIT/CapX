@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using FluentDateTime;
-using Microsoft.VisualBasic.CompilerServices;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -130,7 +127,7 @@ namespace PPMTool.Data.Entities
                 if (isEndDateDriven != value)
                 {
                     isEndDateDriven = value;
-                    
+
                     // Update the end date to match the start date plus a day
                     if (!isEndDateDriven && EndDate <= StartDate)
                     {
@@ -159,7 +156,7 @@ namespace PPMTool.Data.Entities
                 string latestStarter = string.Empty;
                 foreach (var r in AssignedResources)
                 {
-                    units += r.Percentage / 100;
+                    units += r.Percentage;
                     if (r.Person.StartDate > latestStart)
                     {
                         latestStarter = r.Person.Name;
@@ -242,7 +239,7 @@ namespace PPMTool.Data.Entities
                 foreach (var res in AssignedResources)
                 {
                     // Assume 7 hours in a day; fallback on default day rate if resource day rate is null
-                    PlannedCost += (res.Percentage / (100 * units)) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
+                    PlannedCost += (res.Percentage / units) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
                 }
 
                 // Set end date from the duration
@@ -272,7 +269,8 @@ namespace PPMTool.Data.Entities
             }
             else
             {
-                DurationBusinessDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units));
+                // Correct for annual leave etc. with the 0.84
+                DurationBusinessDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units * .84));
                 var estimatedEndDate = StartDate.AddBusinessDays(DurationBusinessDays);
 
                 // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
@@ -285,7 +283,9 @@ namespace PPMTool.Data.Entities
             // Duration input is calendar days so need to compute business days to get work
             var endDate = StartDate.AddDays(DurationDays);
             DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
-            PlannedWorkHours = DurationBusinessDays * 7 * units;
+
+            // Correct for annual leave etc. with the 0.84
+            PlannedWorkHours = DurationBusinessDays * 7 * units * 0.84;
         }
 
         private DateTime GetNextWorkingDay(DateTime date)
@@ -404,10 +404,10 @@ namespace PPMTool.Data.Entities
 
             // If a task is done, it can be regarded as being on schedule regardless on when it was actually completed.
             if (IsDone) ScheduleStatus = ScheduleStatus.OnSchedule;
-            
+
             // Simple condition for late
             else if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
-            
+
             // Can't be ahead if you have done all the planned work already
             else if (ActualWorkHours > maxWork && ActualWorkHours < PlannedWorkHours) ScheduleStatus = ScheduleStatus.Ahead;
 

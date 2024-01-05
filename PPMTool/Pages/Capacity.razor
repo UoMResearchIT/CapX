@@ -33,10 +33,10 @@
                         at
                     </div>
                     <div class="col-auto">
-                        <RadzenNumeric TValue="int" Min="0" Step="1" Max="100" @bind-Value="requiredFTE" />
+                        <RadzenNumeric TValue="double" Min="0" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="requiredFTE" />
                     </div>
                     <div class="col-auto">
-                        %
+                        FTE
                     </div>
                 </div>
                 <div class="row align-items-center p-1">
@@ -89,7 +89,7 @@
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
                                     <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
                                     <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent)%</td>
+                                    <td>@(res.AvailabilityPercent) FTE</td>
                                 </tr>
                             }
                         </tbody>
@@ -98,7 +98,7 @@
 
                 @if (partialMatchPercent.Count > 0)
                 {
-                    <b>Partial Match (%)</b>
+                    <b>Partial Match (FTE)</b>
                     <table class="table table-sm table-striped table-bordered">
                         <thead>
                             <tr>
@@ -117,7 +117,7 @@
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
                                     <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
                                     <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent)%</td>
+                                    <td>@(res.AvailabilityPercent) FTE</td>
                                 </tr>
                             }
                         </tbody>
@@ -145,7 +145,7 @@
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
                                     <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
                                     <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent)%</td>
+                                    <td>@(res.AvailabilityPercent) FTE</td>
                                 </tr>
                             }
                         </tbody>
@@ -154,7 +154,7 @@
 
                 @if (partialMatchBoth.Count > 0)
                 {
-                    <b>Partial Match (% and Duration)</b>
+                    <b>Partial Match (FTE and Duration)</b>
                     <table class="table table-sm table-striped table-bordered">
                         <thead>
                             <tr>
@@ -173,7 +173,7 @@
                                     <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
                                     <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
                                     <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent)%</td>
+                                    <td>@(res.AvailabilityPercent) FTE</td>
                                 </tr>
                             }
                         </tbody>
@@ -251,7 +251,7 @@
                         @{
                             var point = (ListPoint<ChartItem>)context.DataPoint;
                             <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@point.Items.FirstOrDefault()?.Value1% @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
+                                <h3>@point.Items.FirstOrDefault()?.Value1 FTE @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
                             </div>

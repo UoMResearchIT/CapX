@@ -41,7 +41,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="AvailabilityChange" Property="AvailabilityFTE" Title="New FTE" Width="120px">
                             <EditTemplate Context="c">
-                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" @bind-Value="c.AvailabilityFTE" />
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.AvailabilityFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="AvailabilityChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px">
