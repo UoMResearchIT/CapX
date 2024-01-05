@@ -97,7 +97,7 @@ namespace PPMTool.Pages
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private IEnumerable<string> chosenPeople = new List<string>();
         private Person chosenManager;
-        private IEnumerable<CapacityQueryItem> queryResults;
+        private bool queryResultsAvailable;
         private string queryErrorMessage;
         private bool queryActive;
         private double requiredFTE = 0.5;
@@ -136,6 +136,11 @@ namespace PPMTool.Pages
                 }
             };
 
+
+        }
+
+        protected override async Task OnInitializedAsync()
+        {
             // Refresh the dropdown
             ReloadDropDownSources();
 
@@ -153,7 +158,7 @@ namespace PPMTool.Pages
             else
             {
                 // Get data for chart
-                ConfigureSourceAsync().ContinueWith(t => StateHasChanged());
+                await ConfigureSourceAsync();
             }
         }
 
@@ -265,7 +270,7 @@ namespace PPMTool.Pages
         private async Task ClearQueryAsync()
         {
             Debug.WriteLine("** Clearing Query...");
-            queryResults = null;
+            queryResultsAvailable = false;
             queryErrorMessage = null;
             queryActive = false;
             chosenPeople = new List<string>();
@@ -321,16 +326,28 @@ namespace PPMTool.Pages
             }
 
             // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
-            fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
-            partialMatchPercent = results.Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)).ToList();
-            partialMatchDuration = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
-            partialMatchBoth = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate != queryEndDate && x.StartDate != queryStartDate).ToList();
+            fullMatch = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+            partialMatchPercent = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+            partialMatchDuration = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+            partialMatchBoth = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
 
-            // Assign results
-            queryResults = results.OrderByDescending(x => x.AvailabilityPercent);
+            // Results available
+            queryResultsAvailable = results.Count() > 0;
 
             // Update the UI
             StateHasChanged();
+        }
+
+        private List<CapacityQueryItem> OrganiseResults(IEnumerable<CapacityQueryItem> results)
+        {
+            return results
+                .OrderBy(x => x.Person.Name)
+                .ThenByDescending(x => x.AvailabilityPercent)
+                .ToList();
         }
 
         /// <summary>
@@ -551,7 +568,7 @@ namespace PPMTool.Pages
 
             // HACK: Not sure why we have to call this twice but we do!
             await chart.UpdateSeriesAsync(false);
-            await chart.UpdateSeriesAsync(false);
+            //await chart.UpdateSeriesAsync(false);
 
             // Force blazor redraw
             await InvokeAsync(StateHasChanged);
