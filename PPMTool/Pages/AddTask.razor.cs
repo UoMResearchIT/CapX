@@ -204,24 +204,24 @@ namespace PPMTool.Pages
                 var toRemove = taskModel.AssignedResources.Where(x => !dataGridEntities.Any(y => x.ResourceId == y.ResourceId));
                 foreach (var r in toRemove.ToList())
                 {
-                    Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.Percentage} | Rate: {r.DayRate}");
+                    Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
                     taskModel.AssignedResources.Remove(r);
                 }
 
                 // Update/Add the active resources
                 foreach (var r in dataGridEntities)
                 {
-                    Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.Percentage} | Rate: {r.DayRate}");
+                    Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
                     var existing = r.ResourceId != 0 ? taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == r.ResourceId) : null;
                     if (existing != null)
                     {
                         // Don't know why I have to update every individual property to get this to work
-                        existing.Percentage = r.Percentage;
+                        existing.AssignmentFTE = r.AssignmentFTE;
                         existing.UseDefaultDayRate = r.UseDefaultDayRate;
                         existing.DayRate = r.DayRate;
                         existing.IsProvisional = r.IsProvisional;
 
-                        Debug.WriteLine($"** Existing Resource: ResId: {existing.ResourceId} | PersonId: {existing.Person.PersonId} | FTE: {existing.Percentage} | Rate: {existing.DayRate}");
+                        Debug.WriteLine($"** Existing Resource: ResId: {existing.ResourceId} | PersonId: {existing.Person.PersonId} | FTE: {existing.AssignmentFTE} | Rate: {existing.DayRate}");
                     }
                     else
                     {
@@ -234,7 +234,7 @@ namespace PPMTool.Pages
                 foreach (var r in dataGridEntities)
                 {
                     // Update the total resource assigned
-                    totalResourceDaysPerDay += r.Percentage;
+                    totalResourceDaysPerDay += r.AssignmentFTE;
                 }
 
                 // Compute the average hourly cost across the resources from their day rate
@@ -248,7 +248,7 @@ namespace PPMTool.Pages
                     var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
                     if (person == null) continue;
                     // User the default day rate for the person if the assigned day rate is null
-                    averageCostPerDayOfResources += (r.Percentage * (r.DayRate ?? person.DayRate)) / totalResourceDaysPerDay;
+                    averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? person.DayRate)) / totalResourceDaysPerDay;
                 }
 
                 // Update the actual cost for the sub task

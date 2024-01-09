@@ -140,8 +140,8 @@ namespace PPMTool.Data.Entities
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
-        /// Work = Duration * Units / 100
-        /// Units = Sum of Resource Percentage
+        /// Work = Duration * Units
+        /// Units = Sum of Resource Assigned FTE
         /// </summary>
         /// <param name="permitUndrivenEndToMove">Whether we can move the end date to maintain 
         /// the duration if the end date is not driven. Only applies to fixed duration tasks.</param>
@@ -156,7 +156,7 @@ namespace PPMTool.Data.Entities
                 string latestStarter = string.Empty;
                 foreach (var r in AssignedResources)
                 {
-                    units += r.Percentage;
+                    units += r.AssignmentFTE;
                     if (r.Person.StartDate > latestStart)
                     {
                         latestStarter = r.Person.Name;
@@ -239,7 +239,7 @@ namespace PPMTool.Data.Entities
                 foreach (var res in AssignedResources)
                 {
                     // Assume 7 hours in a day; fallback on default day rate if resource day rate is null
-                    PlannedCost += (res.Percentage / units) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
+                    PlannedCost += (res.AssignmentFTE / units) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
                 }
 
                 // Set end date from the duration

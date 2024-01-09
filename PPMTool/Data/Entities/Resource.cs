@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -23,7 +19,7 @@ namespace PPMTool.Data.Entities
         [DataType(DataType.Currency)]
         public double? DayRate { get; set; }
 
-        public double Percentage { get; set; }
+        public double AssignmentFTE { get; set; }
 
         public bool IsProvisional { get; set; }
 

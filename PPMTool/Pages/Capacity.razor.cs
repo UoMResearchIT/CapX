@@ -312,16 +312,16 @@ namespace PPMTool.Pages
                 }
 
                 // Availability of individual is value 2 in the chart item
-                var availabilityPercentage = item.Value2;
+                var availabilityFTE = item.Value2;
 
                 // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
-                var unassignedPercentage = Math.Round(100 * (availabilityPercentage - item.Value1)) / 100;
+                var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
 
                 // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-                if (item.StartDate != item.EndDate && unassignedPercentage > 0)
+                if (item.StartDate != item.EndDate && unassignedFTE > 0)
                 {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
                 }
             }
 
@@ -432,7 +432,7 @@ namespace PPMTool.Pages
                         x =>
                         {
                             var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
-                            return resource.Percentage;
+                            return resource.AssignmentFTE;
                         },
                         (x, y) =>
                         {
@@ -533,7 +533,7 @@ namespace PPMTool.Pages
                 x =>
                 {
                     var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                    return resources.RoundedSum(x => x.Percentage);
+                    return resources.RoundedSum(x => x.AssignmentFTE);
                 },
                 // Shading function based on value 1 and value 2
                 (x, y) =>

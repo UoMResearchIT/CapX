@@ -182,7 +182,7 @@ namespace PPMTool.Data
                     if (existing != null)
                     {
                         // Add new month entry for existing task
-                        existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).Percentage * 100));
+                        existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                     }
                     else
                     {
@@ -194,7 +194,7 @@ namespace PPMTool.Data
                             ProjectAndTaskName = name,
                             InnateActivity = proj.InnateActivity,
                         };
-                        task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).Percentage * 100));
+                        task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                         data.Add(task);
                     }
                 }

@@ -148,7 +148,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false">
                         <Template Context="t">
-                            @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}]"))
+                            @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
@@ -180,7 +180,7 @@
                         @{
                             var point = (ListPoint<SubTask>)context.DataPoint;
                             <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.Percentage}]"))</h3>
+                                <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
                             </div>
