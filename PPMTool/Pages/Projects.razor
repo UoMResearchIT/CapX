@@ -1,24 +1,10 @@
 ﻿@page "/projects"
 @page "/"
 @inherits PPMTool.Pages.BasePage
-@inject IWebHostEnvironment Environment
-@inject IConfiguration Configuration;
-@using Microsoft.AspNetCore.Hosting;
-@using Microsoft.Extensions.Hosting;
-@using Microsoft.Extensions.Configuration;
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 
 <div class="container">
-    @if (Environment.IsDevelopment())
-    {
-        <div class="row">
-            <div class="col-auto mr-auto">
-                <h1>DEVELOPMENT VERSION [v@(Configuration["VersionNumber"]))]</h1>
-            </div>
-        </div>
-        <hr />
-    }
     <div class="row">
         <div class="col-auto mr-auto">
             <h1>Projects</h1>

@@ -68,3 +68,7 @@
         padding-right: 1.5rem !important;
     }
 }
+
+.spaced-header {
+    justify-content: space-between;
+}
