@@ -17,7 +17,7 @@
             }
         </div>
         <div class="col-auto">
-            <RadzenButton Click=@EditProject Text="Edit" Icon="edit" />
+            <RadzenButton Click=@EditProject Text="Edit" Icon="edit" Disabled=!EditAuthorised />
         </div>
     </div>
     <div class="card">
@@ -39,7 +39,7 @@
                             <th>Actual Cost</th>
                             <th>Funds Received</th>
                             <th>Actual Hours</th>
-                            <th>Funding Status</th>
+                            <th>Project Status</th>
                             <th>Start Date</th>
                             <th>End Date</th>
                         </tr>
@@ -53,7 +53,7 @@
                             <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>
                             <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>
                             <td><span style="color:@fundsReceivedColour">@project.FundsReceived.ToString("C0")</span></td>
-                            <td>@project.SubTasks.Sum(x => x.ActualWorkHours)</td>
+                            <td>@project.SubTasks.RoundedSum(x => x.ActualWorkHours)</td>
                             <td>@project.ProjectStatus.ToNiceString()</td>
                             <td>@project.StartDate.ToShortDateString()</td>
                             <td>@project.EndDate.ToShortDateString()</td>
@@ -89,7 +89,7 @@
             <h2>Tasks</h2>
         </div>
         <div class="col-auto">
-            <RadzenButton Click=@AddTask Text="Add" Icon="add" />
+            <RadzenButton Click=@AddTask Text="Add" Icon="add" Disabled=!EditAuthorised />
         </div>
     </div>
 
@@ -121,7 +121,7 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" />
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="task">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
@@ -148,7 +148,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false">
                         <Template Context="t">
-                            @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{(int)x.Percentage}%]"))
+                            @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
@@ -180,7 +180,7 @@
                         @{
                             var point = (ListPoint<SubTask>)context.DataPoint;
                             <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.Percentage / 0.84}%]"))</h3>
+                                <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
                             </div>

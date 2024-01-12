@@ -20,11 +20,20 @@ namespace PPMTool.Data
         /// </summary>
         internal static void Initialise()
         {
-            // Pull file from Firebase
-            Task.Run(async () =>
+            ReloadInnateActivities();
+        }
+
+        /// <summary>
+        /// Pulls file from firebase storage containing the innate activity list
+        /// </summary>
+        /// <returns>Thread pool task doing the work</returns>
+        internal static Task ReloadInnateActivities()
+        {
+            return Task.Run(async () =>
             {
                 try
                 {
+                    // Pull file from Firebase
                     var firebaseStorage = new FirebaseStorage(storageUrl);
                     var filePath = await firebaseStorage
                         .Child(filename)

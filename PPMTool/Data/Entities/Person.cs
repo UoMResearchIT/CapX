@@ -33,7 +33,7 @@ namespace PPMTool.Data.Entities
         public DateTime? EndDate { get; set; }
 
         [Required]
-        public double FTE { get; set; } = 0.84;
+        public double FTE { get; set; } = 1.0;
 
         /// <summary>
         /// Any changes to their availability which includes the undertaking of baseline activities

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PPMTool.Data
 {
@@ -54,7 +51,7 @@ namespace PPMTool.Data
             }
             else
             {
-                percent = (int)Math.Round(value / capacity);
+                percent = (int)Math.Round(value * 100 / capacity);
             }
             return GetColourStringPercentage(percent);
         }
@@ -64,7 +61,7 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="percent"></param>
         /// <returns></returns>
-        public static string GetColourStringPercentage(double percent)
+        public static string GetColourStringPercentage(int percent)
         {
             if (percent < 50) return "#488f31";
             if (percent < 75) return "#76a263";

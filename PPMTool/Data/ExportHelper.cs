@@ -1,10 +1,10 @@
-﻿using FluentDateTime;
-using PPMTool.Data.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using FluentDateTime;
+using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
@@ -118,10 +118,10 @@ namespace PPMTool.Data
                 {
                     ProjectAndTaskName = latestChange.BaselineActivities,
                     EmployeeName = person.Name,
-                    FTE = (int)(Math.Round(100 * person.FTE / 0.84)/ 100)
+                    FTE = person.FTE
                 };
                 task.SetIsBaseline(true);
-                task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * (person.FTE - latestChange.AvailabilityFTE) / .84));
+                task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * (person.FTE - latestChange.AvailabilityFTE)));
                 data.Add(task);
             }
 
@@ -134,16 +134,16 @@ namespace PPMTool.Data
                 {
                     // Get the lowest availability for the month as the focus for the month
                     var focus = currentMonthAvailabilityChanges.OrderByDescending(x => x.AvailabilityFTE).FirstOrDefault();
-                    
+
                     // Add a new baseline task and value
                     var task = new TaskData
                     {
                         ProjectAndTaskName = focus.BaselineActivities,
                         EmployeeName = person.Name,
-                        FTE = (int)(Math.Round(100 * person.FTE / 0.84) / 100)
+                        FTE = person.FTE
                     };
                     task.SetIsBaseline(true);
-                    task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * focus.AvailabilityFTE / .84));
+                    task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * focus.AvailabilityFTE));
                     data.Add(task);
                 }
 
@@ -155,14 +155,14 @@ namespace PPMTool.Data
                     existing?.SetMonthlyValue(currentDate.Month, currentDate.Year, existing?.GetMonthlyValue(currentDate.AddMonths(-1).Month, currentDate.AddMonths(-1).Year));
                 }
 
-                
+
                 // Find all subtasks that run in this month based on the following conditions:
                 // 1. Starts before month and finishes after month
                 // 2. Starts this month
                 // 3. Ends this month
-                var tasksThisMonth = subTasks.Where(x => 
-                    (x.StartDate <= currentDate && x.EndDate >= currentDate) || 
-                    (x.StartDate > currentDate && x.StartDate < currentDate.AddMonths(1)) || 
+                var tasksThisMonth = subTasks.Where(x =>
+                    (x.StartDate <= currentDate && x.EndDate >= currentDate) ||
+                    (x.StartDate > currentDate && x.StartDate < currentDate.AddMonths(1)) ||
                     (x.EndDate > currentDate && x.EndDate < currentDate.AddMonths(1))
                 );
 
@@ -182,7 +182,7 @@ namespace PPMTool.Data
                     if (existing != null)
                     {
                         // Add new month entry for existing task
-                        existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).Percentage / .84));
+                        existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                     }
                     else
                     {
@@ -190,11 +190,11 @@ namespace PPMTool.Data
                         var task = new TaskData
                         {
                             EmployeeName = person.Name,
-                            FTE = (int)Math.Round(person.FTE / 0.84),
+                            FTE = person.FTE,
                             ProjectAndTaskName = name,
                             InnateActivity = proj.InnateActivity,
                         };
-                        task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).Percentage / .84));
+                        task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                         data.Add(task);
                     }
                 }
@@ -204,7 +204,7 @@ namespace PPMTool.Data
 
             // Block out tasks after they leave or before they start
             currentDate = startDate.Date;
-            while(currentDate < endDate)
+            while (currentDate < endDate)
             {
                 // If person hasn't started yet by this month or has already left then set values of their tasks to null
                 if (person.StartDate > currentDate.EndOfMonth() || (person.EndDate != null && person.EndDate < currentDate))
@@ -219,7 +219,7 @@ namespace PPMTool.Data
 
             Debug.WriteLine($"** Exported {data.Count} rows for {person.Name}");
             return data;
-            
+
         }
 
     }

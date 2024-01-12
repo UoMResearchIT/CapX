@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240104115026_MigrateLegacyRTPNumbersToNewField")]
+    partial class MigrateLegacyRTPNumbersToNewField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.19");
@@ -160,14 +162,14 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("AssignmentFTE")
-                        .HasColumnType("REAL");
-
                     b.Property<double?>("DayRate")
                         .HasColumnType("REAL");
 
                     b.Property<bool>("IsProvisional")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("Percentage")
+                        .HasColumnType("REAL");
 
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");

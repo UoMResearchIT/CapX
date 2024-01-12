@@ -31,7 +31,7 @@
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(0.84)" Step="0.001" @bind-Value="personModel.FTE" />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Default Day Rate (£)" /><br>

@@ -24,6 +24,9 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
+        private RolesService RoleService { get; set; }
+
+        [Inject]
         private ProjectService ProjectService { get; set; }
 
         [Inject]
@@ -94,10 +97,10 @@ namespace PPMTool.Pages
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private IEnumerable<string> chosenPeople = new List<string>();
         private Person chosenManager;
-        private IEnumerable<CapacityQueryItem> queryResults;
+        private bool queryResultsAvailable;
         private string queryErrorMessage;
         private bool queryActive;
-        private int requiredFTE = 50;
+        private double requiredFTE = 0.5;
         private List<CapacityQueryItem> fullMatch;
         private List<CapacityQueryItem> partialMatchPercent;
         private List<CapacityQueryItem> partialMatchDuration;
@@ -105,8 +108,9 @@ namespace PPMTool.Pages
         private bool managerChosen;
         private bool peopleChosen;
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
             context = new PPMToolContext();
             options = new ApexChartOptions<ChartItem>
             {
@@ -132,12 +136,30 @@ namespace PPMTool.Pages
                 }
             };
 
+
+        }
+
+        protected override async Task OnInitializedAsync()
+        {
             // Refresh the dropdown
             ReloadDropDownSources();
 
-            // Get data for chart
-            await ConfigureSourceAsync();
-            StateHasChanged();
+            // Choose the person automatically if not a manager
+            if (!EditAuthorised)
+            {
+                // Look up the username
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+                chosenPeople = new List<string>
+                {
+                    role.Person.Name
+                };
+                PeopleSelectionChanged(chosenPeople);
+            }
+            else
+            {
+                // Get data for chart
+                await ConfigureSourceAsync();
+            }
         }
 
         private void UpdateSelectionState()
@@ -248,7 +270,7 @@ namespace PPMTool.Pages
         private async Task ClearQueryAsync()
         {
             Debug.WriteLine("** Clearing Query...");
-            queryResults = null;
+            queryResultsAvailable = false;
             queryErrorMessage = null;
             queryActive = false;
             chosenPeople = new List<string>();
@@ -277,7 +299,6 @@ namespace PPMTool.Pages
 
             // Update the chart source as this is used
             await ConfigureSourceAsync();
-            StateHasChanged();
 
             // Convert the chart results to capcity query results
             foreach (var item in chartSource)
@@ -290,31 +311,43 @@ namespace PPMTool.Pages
                     continue;
                 }
 
-                // Availability of individual is value 2 in the chart item (converted here to a percentage rather than an FTE)
-                var availabilityPercentage = (int)(item.Value2 * 100 / .84);
+                // Availability of individual is value 2 in the chart item
+                var availabilityFTE = item.Value2;
 
-                // Invert value (value 1 here is the assignment value as a percentage)
-                var unassignedPercentage = (int)availabilityPercentage - (int)item.Value1;
+                // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
+                var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
 
                 // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-                if (item.StartDate != item.EndDate && unassignedPercentage > 0)
+                if (item.StartDate != item.EndDate && unassignedFTE > 0)
                 {
                     // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedPercentage));
+                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
                 }
             }
 
-            // Check against the desired availabilty and sort into match, partial match %, partial match duration, partial match % and time
-            fullMatch = results.Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
-            partialMatchPercent = results.Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)).ToList();
-            partialMatchDuration = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate).ToList();
-            partialMatchBoth = results.Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate != queryEndDate && x.StartDate != queryStartDate).ToList();
+            // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
+            fullMatch = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+            partialMatchPercent = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+            partialMatchDuration = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+            partialMatchBoth = OrganiseResults(results
+                .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
 
-            // Assign results
-            queryResults = results.OrderByDescending(x => x.AvailabilityPercent);
+            // Results available
+            queryResultsAvailable = results.Count() > 0;
 
             // Update the UI
             StateHasChanged();
+        }
+
+        private List<CapacityQueryItem> OrganiseResults(IEnumerable<CapacityQueryItem> results)
+        {
+            return results
+                .OrderBy(x => x.Person.Name)
+                .ThenByDescending(x => x.AvailabilityPercent)
+                .ToList();
         }
 
         /// <summary>
@@ -399,11 +432,11 @@ namespace PPMTool.Pages
                         x =>
                         {
                             var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
-                            return Math.Round(resource.Percentage / .84);
+                            return resource.AssignmentFTE;
                         },
                         (x, y) =>
                         {
-                            return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                            return ChartItem.GetColourStringFTE(x, y);
                         },
                         (group.Key as Person).Name,
                         queryActive ? QueryStartDate : startDate,
@@ -414,7 +447,7 @@ namespace PPMTool.Pages
                         },
                         (x, w) =>
                         {
-                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 0.84;
+                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 1.0;
                         }
                     ).ToList();
 
@@ -500,12 +533,12 @@ namespace PPMTool.Pages
                 x =>
                 {
                     var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                    return Math.Round(resources.Sum(x => x.Percentage) / .84);
+                    return resources.RoundedSum(x => x.AssignmentFTE);
                 },
                 // Shading function based on value 1 and value 2
                 (x, y) =>
                 {
-                    return ChartItem.GetColourStringFTE(x, y * 100 / 84);
+                    return ChartItem.GetColourStringFTE(x, y);
                 },
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
@@ -520,7 +553,7 @@ namespace PPMTool.Pages
                 (x, w) =>
                 {
                     var peo = people.Where(y => chosenPeople.Contains(y.Name));
-                    return peo.Sum(y => y.GetAvailabilityOnDate(w));
+                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
                 });
         }
 
@@ -535,7 +568,7 @@ namespace PPMTool.Pages
 
             // HACK: Not sure why we have to call this twice but we do!
             await chart.UpdateSeriesAsync(false);
-            await chart.UpdateSeriesAsync(false);
+            //await chart.UpdateSeriesAsync(false);
 
             // Force blazor redraw
             await InvokeAsync(StateHasChanged);

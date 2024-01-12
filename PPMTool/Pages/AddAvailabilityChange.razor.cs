@@ -1,56 +1,72 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class AddAvailabilityChange : BasePage
+    public partial class AddAvailabilityChange : DataGridPage<AvailabilityChange>
     {
         [Inject]
         private PersonService PersonService { get; set; }
-
-        [Inject]
-        private IJSRuntime JsRuntime { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }
 
         private Person personModel;
-        private PPMToolContext context;
-        private AvailabilityChange changeModel = new AvailabilityChange() { ChangeDate = DateTime.Now.Date };
-        private List<AvailabilityChange> changeList = new List<AvailabilityChange>();
+        private bool isValid = true;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
 
             if (PersonId > -1)
             {
                 personModel = PersonService.GetById(context, PersonId);
-                changeList = personModel.AvailabilityChanges.ToList();
+                dataGridEntities = personModel.AvailabilityChanges.ToList();
+            }
+            else
+            {
+                dataGridEntities = new List<AvailabilityChange>();
             }
         }
 
-        private async void DeleteChange(int changeId)
+        protected override void CancelEdit(AvailabilityChange entity)
         {
-            var changeToBeDeleted = changeList.First(x => x.AvailabilityChangeId == changeId);
-            bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete availability change {changeToBeDeleted.ChangeDate.ToShortDateString()} at {changeToBeDeleted.AvailabilityFTE} FTE");
-            if (confirmed)
-            {
-                // Modify the person model, save changes and reload the change list
-                personModel.AvailabilityChanges.Remove(changeToBeDeleted);
-                PersonService.Update(context, personModel);
-                changeList = personModel.AvailabilityChanges.ToList();
-                StateHasChanged();
-            }
+            Reset();
+            PersonService.RestoreModel(context, ref entity);
+            dataGrid.CancelEditRow(entity);
+        }
+
+        protected override async Task InsertRow()
+        {
+            entityToInsert = Activator.CreateInstance(typeof(AvailabilityChange)) as AvailabilityChange;
+            entityToInsert.Person = personModel;
+            entityToInsert.ChangeDate = DateTime.Now.Date;
+            await dataGrid.InsertRow(entityToInsert);
+        }
+
+        protected override void OnCreateRow(AvailabilityChange entity)
+        {
+            entity.Person = personModel;
+            dataGridEntities.Add(entity);
+            entityToInsert = null;
+        }
+
+        protected override void OnUpdateRow(AvailabilityChange entity)
+        {
+            Reset();
+        }
+
+        private void DiscardChanges()
+        {
+            // Just navigate away as nothing will have been written to the database
+            Navigation.NavigateTo($"addperson/{PersonId}");
         }
 
         private void HandleValidSubmit()
@@ -58,14 +74,24 @@ namespace PPMTool.Pages
             if (personModel != null)
             {
                 // Check it doesn't duplicate the date, otherwise reject update
-                if (personModel.AvailabilityChanges.Any(x => x.ChangeDate.Date == changeModel.ChangeDate.Date)) { return; }
+                if (dataGridEntities.DistinctBy(x => x.ChangeDate).Count() != dataGridEntities.Count())
+                {
+                    isValid = false;
+                    return;
+                }
+                else
+                {
+                    isValid = true;
+                }
 
                 // Update the person model, save to database, refresh the list and reset the model
-                personModel.AvailabilityChanges.Add(changeModel);
+                personModel.AvailabilityChanges.Clear();
+                foreach (var avail in dataGridEntities)
+                {
+                    personModel.AvailabilityChanges.Add(avail);
+                }
                 PersonService.Update(context, personModel);
-                changeList = personModel.AvailabilityChanges.ToList();
-                changeModel = new AvailabilityChange() { ChangeDate = DateTime.Now.Date };
-                StateHasChanged();
+                Navigation.NavigateTo($"addperson/{PersonId}");
             }
         }
     }

@@ -11,8 +11,20 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null) />
         </div>
     </div>
-    <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                    Data="@dataGridEntities" TItem="Role" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+    <RadzenDataGrid
+        @ref="dataGrid"
+        AllowFiltering="true"
+        AllowPaging="true"
+        PageSize="15"
+        AllowSorting="true"
+        ShowPagingSummary="true"
+        EditMode="DataGridEditMode.Single"
+        FilterMode="FilterMode.Simple"
+        Data="@dataGridEntities"
+        TItem="Role"
+        RowUpdate="@OnUpdateRow"
+        RowCreate="@OnCreateRow"
+        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
             <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="280px">
                 <EditTemplate Context="role">
