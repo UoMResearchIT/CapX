@@ -1,8 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Hosting;
 @using Microsoft.Extensions.Hosting;
-@using Microsoft.Extensions.Configuration;
-@inject IConfiguration Configuration;
 @inject IWebHostEnvironment Environment
 
 <div class="page">
@@ -13,7 +11,10 @@
     <div class="main">
         <div class="top-row px-4 auth spaced-header">
             <div class="col-auto mr-auto">
-                <h1>&#x26A0; DEVELOPMENT VERSION &#x26A0;</h1>
+                @if (Environment.IsDevelopment())
+                {
+                    <h1>&#x26A0; DEVELOPMENT VERSION &#x26A0;</h1>
+                }
             </div>
             <LoginView />
         </div>
