@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
@@ -15,8 +14,10 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Inject]
+        private RolesService RoleService { get; set; }
+
         private IEnumerable<Project> projects;
-        private IEnumerable<Portfolio> portfolioOptions = (Portfolio[])Enum.GetValues(typeof(Portfolio));
         private PPMToolContext context;
         private bool showActiveOnly = true;
 
@@ -38,12 +39,21 @@ namespace PPMTool.Pages
             context = new PPMToolContext();
             var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
 
+            // Only show projects to developers that they are assigned to
+            if (!EditAuthorised)
+            {
+                // Look up the username
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+                proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == role.Person))).ToList();
+            }
+
             // Remove the ones that are not active for the data grid if necessary
             if (showActiveOnly) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
 
             // Update the summary of each project and save back to DB
             if (proj.Count > 0)
             {
+                Debug.WriteLine($"** Updating project summary data...");
                 for (int i = 0; i < proj.Count; ++i)
                 {
                     var p = proj[i];
