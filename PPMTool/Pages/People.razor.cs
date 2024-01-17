@@ -15,6 +15,9 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private RolesService RoleService { get; set; }
+
         private IEnumerable<Person> people;
         private PPMToolContext context;
         private int count;
@@ -48,7 +51,19 @@ namespace PPMTool.Pages
         private void LoadData(LoadDataArgs args)
         {
             // Order by name by default
-            var query = PersonService.GetAll(context).OrderBy(x => x.Name).AsQueryable();
+            var loadedPeople = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+
+            if (!EditAuthorised)
+            {
+                // Look up the username
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+
+                // Only show the person themselves if in developer view
+                loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
+            }
+
+            // Convert to queryable
+            var query = loadedPeople.AsQueryable();
 
             if (!string.IsNullOrEmpty(args.Filter))
             {

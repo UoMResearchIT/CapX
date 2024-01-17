@@ -19,9 +19,6 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        [Inject]
-        private SubTaskService SubTaskService { get; set; }
-
         [Parameter]
         public int? ProjectID { get; set; }
 
