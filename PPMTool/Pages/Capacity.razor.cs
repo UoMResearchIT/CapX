@@ -148,7 +148,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
                 chosenPeople = new List<string>
                 {
                     role.Person.Name

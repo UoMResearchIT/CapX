@@ -43,7 +43,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
                 proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == role.Person))).ToList();
             }
 
