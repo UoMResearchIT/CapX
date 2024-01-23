@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DotNetExtensions;
+//using Microsoft.Extensions;
 
 namespace PPMTool.Enums
 {
@@ -10,7 +10,8 @@ namespace PPMTool.Enums
     {
         public static string ToNiceString(this Enum me)
         {
-            return me.GetDescription() ?? me.ToString();
+            // return me.GetDescription() ?? me.ToString();
+            return me.ToString();
         }
     }
 }

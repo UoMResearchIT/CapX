@@ -22,7 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Blazor-ApexCharts" Version="0.9.13-beta" />
     <PackageReference Include="Blazored.SessionStorage" Version="2.3.0" />
-    <PackageReference Include="DotNetExtensions" Version="1.2.0" />
+    <!-- <PackageReference Include="DotNetExtensions" Version="1.2.0" /> -->
     <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
     <PackageReference Include="FluentDateTime" Version="2.1.0" />
     <PackageReference Include="GSS.Authentication.CAS.AspNetCore" Version="5.3.3" />
