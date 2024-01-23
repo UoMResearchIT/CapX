@@ -9,3 +9,10 @@ As of v1.6, the app is integrated with UoM CAS with local access to restricted p
 
 ## Documentation and User Guides
 All documentation is now available in the Wiki associated with this repository rather than the Readme as before.
+
+## Running with Docker
+To run CapX with Docker,
+```
+cd CapX/PPMTool
+docker compose up
+```
