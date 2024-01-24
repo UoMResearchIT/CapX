@@ -1,3 +1,7 @@
 services:
   ppmtool:
-    build: .
+    build:
+      context: .
+      args:
+        GITHUB_USERNAME: "$PPMTOOL_GITHUB_USERNAME"
+        GITHUB_PASSWORD: "$PPMTOOL_GITHUB_PASSWORD"
