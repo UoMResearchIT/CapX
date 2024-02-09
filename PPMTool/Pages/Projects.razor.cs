@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -43,7 +44,15 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
+                var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
+                var role = RoleService.GetByUsername(context, uname);
+
+                // Log any time there is no role returned?
+                if (role == null)
+                {
+                    Logger.LogError($"{uname}: Role is null!");
+                }
+
                 proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == role.Person))).ToList();
             }
 
