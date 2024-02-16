@@ -253,7 +253,7 @@
                             <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
                                 <h3>@point.Items.FirstOrDefault()?.Value1 FTE @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
+                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                             </div>
                         }
                     </div>
