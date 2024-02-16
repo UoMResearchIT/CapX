@@ -50,7 +50,7 @@
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             LogicalFilterOperator="LogicalFilterOperator.And">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
+                    <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
                         <Template Context="proj">
                             @if (proj.ScheduleStatus == ScheduleStatus.OnSchedule)
                             {
@@ -86,7 +86,7 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <RadzenDataGridColumn TItem="Project" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
                             <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
                             </RadzenButton>
