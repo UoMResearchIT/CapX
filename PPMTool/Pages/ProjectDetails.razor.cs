@@ -121,7 +121,11 @@ namespace PPMTool.Pages
                                     Y = actualsY,
                                     BorderWidth = 2,
                                     StrokeDashArray = 5,
-                                    BorderColor = "red"
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Actual (Hours)"
+                                    }
                                 }
                             },
                             Xaxis = new List<AnnotationsXAxis>
@@ -131,9 +135,18 @@ namespace PPMTool.Pages
                                     X = actualsX.ToUnixTimeMilliseconds(),
                                     BorderWidth = 2,
                                     StrokeDashArray = 5,
-                                    BorderColor = "red"
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Current Week"
+                                    }
                                 }
                             }
+                        },
+                        Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
+                        Yaxis = new List<YAxis>
+                        {
+                            new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
                         }
                     };
                     InvokeAsync(StateHasChanged);
