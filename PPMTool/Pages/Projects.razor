@@ -29,10 +29,10 @@
         <div class="card">
             <div class="row align-items-center mb-3">
                 <div class="col-auto">
-                    Exclude Completed?:
+                    Include Finished?:
                 </div>
                 <div class="col-auto" style="display: flex">
-                    <RadzenSwitch @bind-Value="@showActiveOnly" Change=@(args => OnChange(args)) />
+                    <RadzenSwitch @bind-Value="@IncludeFinished" />
                 </div>
             </div>
             <RadzenDataGrid AllowFiltering="true"
@@ -48,7 +48,8 @@
                             ColumnWidth="120px"
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            LogicalFilterOperator="LogicalFilterOperator.And">
+                            LogicalFilterOperator="LogicalFilterOperator.And"
+                            @bind-Settings="@Settings">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
                         <Template Context="proj">
