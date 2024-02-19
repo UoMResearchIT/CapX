@@ -32,25 +32,25 @@
                                 RowCreate="@OnCreateRow"
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="Person.Name" Title="Person" Width="200px">
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="ChangeDate" Title="Date of Change" Width="180px">
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="ChangeDate" Title="Date of Change" Width="180px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenDatePicker @bind-Value="c.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="AvailabilityFTE" Title="New FTE" Width="120px">
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="AvailabilityFTE" Title="New FTE" Width="120px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.AvailabilityFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px">
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenTextBox TValue="string" @bind-Value="c.BaselineActivities" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
                                 </RadzenButton>

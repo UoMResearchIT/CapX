@@ -26,7 +26,7 @@
         RowCreate="@OnCreateRow"
         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
-            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="280px">
+            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;">
                         <Template Context="person">
@@ -35,20 +35,17 @@
                     </RadzenDropDown>
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" Width="280px">
+            <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" Width="280px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenTextBox @bind-Value="role.CASUserName" ValueProperty="CASUserName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="280px">
+            <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="280px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" ValueProperty="RoleType" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-
-
-
-            <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
+            <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
                 <Template Context="role">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(role))" @onclick:stopPropagation="true">
                     </RadzenButton>

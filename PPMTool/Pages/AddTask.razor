@@ -159,7 +159,7 @@
             <RadzenDataGrid @ref="dataGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
                             Data="@dataGridEntities" TItem="Resource" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px">
+                    <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
                         <EditTemplate Context="res">
                             <RadzenDropDown @bind-Value="res.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
                                 <Template Context="person">
@@ -168,12 +168,12 @@
                             </RadzenDropDown>
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="80px">
+                    <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="80px" MinWidth="10px">
                         <EditTemplate Context="res">
                             <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" Width="180px">
+                    <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" Width="180px" MinWidth="10px">
                         <EditTemplate Context="res">
                             <div class="align-items-center p-1">
                                 <div style="display: flex">
@@ -182,7 +182,7 @@
                             </div>
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="UseDefaultDayRate" Title="Default Day Rate?" Width="180px">
+                    <RadzenDataGridColumn TItem="Resource" Property="UseDefaultDayRate" Title="Default Day Rate?" Width="180px" MinWidth="10px">
                         <EditTemplate Context="res">
                             <div class="align-items-center p-1">
                                 <div style="display: flex">
@@ -191,13 +191,13 @@
                             </div>
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate (£)" Width="180px">
+                    <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate (£)" Width="180px" MinWidth="10px">
                         <EditTemplate Context="res">
                             <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseDefaultDayRate)" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="156px">
+                    <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="156px" MinWidth="10px">
                         <Template Context="res">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
                             </RadzenButton>
