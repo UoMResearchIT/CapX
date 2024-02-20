@@ -63,14 +63,14 @@ namespace PPMTool.Data
                 var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
 
                 // Generate the items
-                Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
+                //Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));
             }
 
             // If there is a gap after the last chart item and the end date then fill in
             if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
             {
-                Debug.WriteLine($"** Generating extra items at the end for {person.Name}");
+                //Debug.WriteLine($"** Generating extra items at the end for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate, endDate));
             }
 
@@ -93,7 +93,7 @@ namespace PPMTool.Data
                     if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
                     {
                         // Generate chart items from availability to fill the gap
-                        Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
+                        //Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
                         extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
                     }
                 }
