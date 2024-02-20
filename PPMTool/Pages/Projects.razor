@@ -17,9 +17,13 @@
                 <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
             </div>*@
     </div>
-
-    @if (projects == null)
+    @if (loading)
     {
+        <PPMTool.Pages.Components.LoadingComponent />
+    }
+    else if (projects == null)
+    {
+        <spinner> </spinner>
         <div class="card">
             <p class="lead">No data to show</p>
         </div>

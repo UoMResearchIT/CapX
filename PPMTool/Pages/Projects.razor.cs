@@ -66,6 +66,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            loading = true;
 
             // Store the role of the user
             if (!EditAuthorised)
@@ -134,6 +135,9 @@ namespace PPMTool.Pages
 
             // Assign data for the data grid
             projects = proj;
+
+            // Disable spinner now load complete
+            loading = false;
 
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }

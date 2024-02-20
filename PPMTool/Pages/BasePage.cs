@@ -22,6 +22,8 @@ namespace PPMTool.Pages
 
         protected AuthenticationState AuthenticationState { get; private set; }
 
+        protected bool loading;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
