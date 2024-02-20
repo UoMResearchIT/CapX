@@ -111,6 +111,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            loading = true;
+
             context = new PPMToolContext();
             options = new ApexChartOptions<ChartItem>
             {
@@ -136,29 +138,33 @@ namespace PPMTool.Pages
                 }
             };
 
-
-        }
-
-        protected override async Task OnInitializedAsync()
-        {
             // Refresh the dropdown
             ReloadDropDownSources();
+        }
 
-            // Choose the person automatically if not a manager
-            if (!EditAuthorised)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
             {
-                // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
-                chosenPeople = new List<string>
+                // TODO: Load settings
+
+
+                // Choose the person automatically if not a manager
+                if (!EditAuthorised)
+                {
+                    // Look up the username
+                    var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
+                    chosenPeople = new List<string>
                 {
                     role.Person.Name
                 };
-                PeopleSelectionChanged(chosenPeople);
-            }
-            else
-            {
-                // Get data for chart
-                await ConfigureSourceAsync();
+                    PeopleSelectionChanged(chosenPeople);
+                }
+                else
+                {
+                    // Get data for chart
+                    await ConfigureSourceAsync();
+                }
             }
         }
 
@@ -357,6 +363,7 @@ namespace PPMTool.Pages
         private async Task ConfigureSourceAsync()
         {
             Debug.WriteLine("** Configuring Chart Source...");
+            loading = true;
 
             // Reset source
             chartSource = new List<ChartItem>();
@@ -366,6 +373,7 @@ namespace PPMTool.Pages
             {
                 Logger.LogError("People database is empty!");
                 Debug.WriteLine("** No people registered in the database!");
+                loading = false;
                 return;
             }
 
@@ -387,6 +395,7 @@ namespace PPMTool.Pages
             if (safeProjects.Count() == 0)
             {
                 Debug.WriteLine("** No projects found that match the chosen options!");
+                loading = false;
                 return;
             }
             var startDate = safeProjects.Min(x => x.StartDate);
@@ -510,11 +519,17 @@ namespace PPMTool.Pages
             options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
             options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
 
+            loading = false;
+
             // First time this is called, there is no reference to the chart
             if (chart != null)
             {
                 Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
                 await RefreshChartAsync();
+            }
+            else
+            {
+                await InvokeAsync(StateHasChanged);
             }
 
             Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
