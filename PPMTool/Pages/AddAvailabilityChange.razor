@@ -6,6 +6,7 @@
     @if (personModel != null)
     {
         <h1>Availability Changes</h1>
+        <hr />
         <div class="card">
             <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
                 <DataAnnotationsValidator />

@@ -22,6 +22,7 @@
         <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
 
     }
+    <hr />
     <div class="card">
         <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />

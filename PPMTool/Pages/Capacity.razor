@@ -12,8 +12,10 @@
             <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!EditAuthorised />
         </div>
     </div>
+    <hr />
     @if (EditAuthorised)
     {
+        <h2>Availability Query</h2>
         <div class="card">
             <EditForm Model="this">
                 <div class="row align-items-center">
