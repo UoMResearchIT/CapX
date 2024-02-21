@@ -12,8 +12,10 @@
             <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!EditAuthorised />
         </div>
     </div>
+    <hr />
     @if (EditAuthorised)
     {
+        <h2>Availability Query</h2>
         <div class="card">
             <EditForm Model="this">
                 <div class="row align-items-center">
@@ -188,78 +190,85 @@
     }
     <hr />
     <h2>Charts</h2>
-    <div class="card">
-        <div class="row align-items-center">
-            <div class="col-auto mr-auto">
-                <RadzenDropDown @bind-Value=@chosenPeople Data=@people TextProperty="Name" ValueProperty="Name"
-                                Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
-                                Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))" Disabled=!EditAuthorised />
-            </div>
-            <div class="col-auto mr-auto">
-                <RadzenDropDown @bind-Value=@chosenManager Data=@managers TextProperty="Name"
-                                Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
-                                Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))" Disabled=!EditAuthorised />
-            </div>
-            <div class="col-auto">
-                Include Unfunded:
-            </div>
-            <div class="col-auto" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
-            </div>
-            <div class="col-auto">
-                Include Leavers:
-            </div>
-            <div class="col" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeLeavers" />
+    @if (loading)
+    {
+        <PPMTool.Pages.Components.LoadingComponent />
+    }
+    else
+    {
+        <div class="card">
+            <div class="row align-items-center">
+                <div class="col-auto mr-auto">
+                    <RadzenDropDown @bind-Value=@chosenPeople Data=@people TextProperty="Name" ValueProperty="Name"
+                                    Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
+                                    Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))" Disabled=!EditAuthorised />
+                </div>
+                <div class="col-auto mr-auto">
+                    <RadzenDropDown @bind-Value=@chosenManager Data=@managers TextProperty="Name"
+                                    Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
+                                    Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))" Disabled=!EditAuthorised />
+                </div>
+                <div class="col-auto">
+                    Include Unfunded:
+                </div>
+                <div class="col-auto" style="display: flex">
+                    <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                </div>
+                <div class="col-auto">
+                    Include Leavers:
+                </div>
+                <div class="col" style="display: flex">
+                    <RadzenSwitch @bind-Value="@IncludeLeavers" />
+                </div>
             </div>
         </div>
-    </div>
-    <div class="card">
-        @if (chartSource == null || chartSource.Count < 1)
-        {
-            <p class="lead">No data to show</p>
-        }
-        else
-        {
-            <!-- Legend -->
-            <div class="row">
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(49)"></rect> </svg> &lt;50%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(74)"></rect> </svg> &lt;75%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(99)"></rect> </svg> &lt;100%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(100)"></rect> </svg> =100%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(101)"></rect> </svg> &gt;100%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(126)"></rect> </svg> &gt;125%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(151)"></rect> </svg> &gt;150%</div>
-            </div>
+        <div class="card">
+            @if (chartSource == null || chartSource.Count < 1)
+            {
+                <p class="lead">No data to show</p>
+            }
+            else
+            {
+                <!-- Legend -->
+                <div class="row">
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(49)"></rect> </svg> &lt;50%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(74)"></rect> </svg> &lt;75%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(99)"></rect> </svg> &lt;100%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(100)"></rect> </svg> =100%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(101)"></rect> </svg> &gt;100%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(126)"></rect> </svg> &gt;125%</div>
+                    <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(151)"></rect> </svg> &gt;150%</div>
+                </div>
 
-            <!-- Chart -->
-            <ApexChart @ref="chart"
-                        TItem="ChartItem"
-                        Options=options
-                        XAxisType="XAxisType.Datetime"
-                        OnDataPointSelection=DataPointsSelected>
-                <ChildContent>
-                    <ApexRangeSeries TItem="ChartItem"
-                                        Items="chartSource"
-                                        XValue="@(e => e.Label)"
-                                        YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                        PointColor="@(e => e.Colour)" />
-                </ChildContent>
-                <ApexPointTooltip>
-                    <div class="m-2">
-                        @{
-                            var point = (ListPoint<ChartItem>)context.DataPoint;
-                            <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@point.Items.FirstOrDefault()?.Value1 FTE @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
-                            </div>
-                        }
-                    </div>
-                </ApexPointTooltip>
-            </ApexChart>
+                <!-- Chart -->
+                <ApexChart @ref="chart"
+                            TItem="ChartItem"
+                            Options=options
+                            XAxisType="XAxisType.Datetime"
+                            OnDataPointSelection=DataPointsSelected>
+                    <ChildContent>
+                        <ApexRangeSeries TItem="ChartItem"
+                                            Items="chartSource"
+                                            XValue="@(e => e.Label)"
+                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                            PointColor="@(e => e.Colour)" />
+                    </ChildContent>
+                    <ApexPointTooltip>
+                        <div class="m-2">
+                            @{
+                                var point = (ListPoint<ChartItem>)context.DataPoint;
+                                <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
+                                    <h3>@point.Items.FirstOrDefault()?.Value1 FTE @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
+                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                                </div>
+                            }
+                        </div>
+                    </ApexPointTooltip>
+                </ApexChart>
 
-        }
-    </div>
+            }
+        </div>
+    }
 </div>

@@ -1,4 +1,5 @@
 ﻿@page "/projectdetails/{ProjectId:int}"
+@page "/projectdetails"
 @inherits PPMTool.Pages.BasePage
 @using PPMTool.Data;
 @using PPMTool.Enums
@@ -20,6 +21,7 @@
             <RadzenButton Click=@EditProject Text="Edit" Icon="edit" Disabled=!EditAuthorised />
         </div>
     </div>
+    <hr />
     <div class="card">
         @if (project == null)
         {
@@ -118,14 +120,14 @@
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" />
-                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="task">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start">
+                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start" MinWidth="10px">
                         <Template Context="t">
                             <div class="align-items-center p-1">
                                 <div style="display: flex">
@@ -134,24 +136,24 @@
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type">
+                    <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type" MinWidth="10px">
                         <Template Context="t">
                             @t.TaskType.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" MinWidth="10px">
                         <Template Context="t">
                             @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" MinWidth="10px" />
                 </Columns>
             </RadzenDataGrid>
         </div>

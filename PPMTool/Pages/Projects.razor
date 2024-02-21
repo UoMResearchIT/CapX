@@ -17,9 +17,14 @@
                 <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
             </div>*@
     </div>
-
-    @if (projects == null)
+    <hr />
+    @if (loading)
     {
+        <PPMTool.Pages.Components.LoadingComponent />
+    }
+    else if (projects == null)
+    {
+        <spinner> </spinner>
         <div class="card">
             <p class="lead">No data to show</p>
         </div>
@@ -29,10 +34,10 @@
         <div class="card">
             <div class="row align-items-center mb-3">
                 <div class="col-auto">
-                    Exclude Completed?:
+                    Include Finished?:
                 </div>
                 <div class="col-auto" style="display: flex">
-                    <RadzenSwitch @bind-Value="@showActiveOnly" Change=@(args => OnChange(args)) />
+                    <RadzenSwitch @bind-Value="@IncludeFinished" />
                 </div>
             </div>
             <RadzenDataGrid AllowFiltering="true"
@@ -48,9 +53,10 @@
                             ColumnWidth="120px"
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            LogicalFilterOperator="LogicalFilterOperator.And">
+                            LogicalFilterOperator="LogicalFilterOperator.And"
+                            @bind-Settings="@Settings">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
+                    <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
                         <Template Context="proj">
                             @if (proj.ScheduleStatus == ScheduleStatus.OnSchedule)
                             {
@@ -86,36 +92,36 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <RadzenDataGridColumn TItem="Project" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
                             <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
                             </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="100px" />
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
-                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px" />
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="150px">
+                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="100px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="150px" MinWidth="10px">
                         <Template Context="proj">
                             @(proj.ProjectManager?.Name ?? "Not Set")
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status">
+                    <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status" MinWidth="10px">
                         <Template Context="proj">
                             @proj.ProjectStatus.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">
+                    <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio" MinWidth="10px">
                         <Template Context="proj">
                             @proj.Portfolio.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
                 </Columns>
             </RadzenDataGrid>
         </div>

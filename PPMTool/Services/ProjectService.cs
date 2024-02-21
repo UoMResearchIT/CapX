@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -85,6 +86,18 @@ namespace PPMTool.Services
         {
             context.Projects.Remove(projectModel);
             context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Get the project by its RTP number
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="RTP"></param>
+        /// <returns></returns>
+        internal Project GetByRTP(PPMToolContext context, int? RTP)
+        {
+            return RTP == null ? null : GetAll(context)
+                .FirstOrDefault(p => p.RTP == RTP);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
+using Blazored.SessionStorage;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
@@ -47,6 +48,8 @@ namespace PPMTool
                 options.UseSqlite(str);
                 options.EnableSensitiveDataLogging();
             });
+
+            services.AddBlazoredSessionStorage();
 
             services.AddScoped<RolesService>();
             services.AddScoped<PersonService>();
