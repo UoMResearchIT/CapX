@@ -162,7 +162,7 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
                         <EditTemplate Context="res">
-                            <RadzenDropDown @bind-Value="res.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
+                            <RadzenDropDown @bind-Value="res.Person" Data="@people" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
                                 <Template Context="person">
                                     @person.Name
                                 </Template>
