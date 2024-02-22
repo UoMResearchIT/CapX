@@ -29,7 +29,7 @@
         <Columns>
             <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
                 <EditTemplate Context="role">
-                    <RadzenDropDown @bind-Value="role.Person" Data="@people" ValueProperty="Person" Style="width:100%; display: block;">
+                    <RadzenDropDown @bind-Value="role.Person" Data="@people" Style="width:100%; display: block;">
                         <Template Context="person">
                             @person.Name
                         </Template>
@@ -43,7 +43,7 @@
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="280px" MinWidth="10px">
                 <EditTemplate Context="role">
-                    <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" ValueProperty="RoleType" />
+                    <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" />
                 </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">

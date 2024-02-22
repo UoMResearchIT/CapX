@@ -1,5 +1,6 @@
 ﻿@page "/capacity"
 @inherits BasePage
+@using PPMTool.Pages.Components
 
 @using PPMTool.Data
 
@@ -192,7 +193,7 @@
     <h2>Charts</h2>
     @if (loading)
     {
-        <PPMTool.Pages.Components.LoadingComponent />
+        <LoadingComponent />
     }
     else
     {
