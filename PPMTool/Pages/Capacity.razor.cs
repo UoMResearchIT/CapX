@@ -419,8 +419,8 @@ namespace PPMTool.Pages
             Debug.WriteLine("** Configuring Chart Source...");
             loading = true;
 
-            // Reset source
-            chartSource = new List<ChartItem>();
+            // Create a temp source
+            var chartSourceTemp = new List<ChartItem>();
 
             // Need some people for this to work
             if (people.Count() == 0)
@@ -428,6 +428,7 @@ namespace PPMTool.Pages
                 Logger.LogError("People database is empty!");
                 Debug.WriteLine("** No people registered in the database!");
                 loading = false;
+                chartSource = new List<ChartItem>();
                 return;
             }
 
@@ -450,6 +451,7 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** No projects found that match the chosen options!");
                 loading = false;
+                chartSource = new List<ChartItem>();
                 return;
             }
             var startDate = safeProjects.Min(x => x.StartDate);
@@ -515,7 +517,7 @@ namespace PPMTool.Pages
                     ).ToList();
 
                     // Add the range for this person
-                    chartSource.AddRange(items);
+                    chartSourceTemp.AddRange(items);
                 }
             }
 
@@ -554,17 +556,20 @@ namespace PPMTool.Pages
                     }
 
                     // Build chart source from the grouped data
+                    Debug.WriteLine($"** {person.Name} has {groupedSubTasks.Count} projects");
                     foreach (var group in groupedSubTasks)
                     {
-                        chartSource.AddRange(
-                            GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate, person)
+                        // Give unique name to series when multiple people selected
+                        var seriesName = (group.Key as Project).GetFullName();
+                        chartSourceTemp.AddRange(
+                            GetProjectModeChartItemsFromTasks(ChosenPeople.Count() > 1 ? $"{seriesName} ({person.ShortName})" : seriesName, group, startDate, endDate, person)
                         );
                     }
 
                     // Total row needs to repeat the above logic but on the flattened set of subtasks
                     var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
                     var rowName = $"Total ({name})";
-                    chartSource.AddRange(
+                    chartSourceTemp.AddRange(
                         GetProjectModeChartItemsFromTasks(
                             rowName,
                             new KeyValuePair<object, IEnumerable<SubTask>>(rowName, allProjectSubTasks),
@@ -582,7 +587,7 @@ namespace PPMTool.Pages
                 {
                     // Final total row is the same logic applied to the subtasks aggregated across everyone selected
                     var totalName = $"Total (All)";
-                    chartSource.AddRange(
+                    chartSourceTemp.AddRange(
                         GetProjectModeChartItemsFromTasks(
                             totalName,
                             new KeyValuePair<object, IEnumerable<SubTask>>(totalName, subTasksAllPeople),
@@ -593,6 +598,10 @@ namespace PPMTool.Pages
                 }
             }
 
+            // Assign new source
+            loading = false;
+            chartSource = chartSourceTemp;
+
             chartTitle = $"Load for {(peopleChosen ? string.Join(",", ChosenPeople) : (!managerChosen ? "All" : "None"))} " +
                 $"{(managerChosen ? " with manager " + ChosenManager.Name : "")}";
             Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
@@ -600,8 +609,6 @@ namespace PPMTool.Pages
             // Format X Axis range
             options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
             options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
-
-            loading = false;
 
             // First time this is called, there is no reference to the chart
             if (chart != null)
