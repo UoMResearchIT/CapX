@@ -22,6 +22,10 @@ namespace PPMTool.Pages
         [Parameter]
         public int? ProjectID { get; set; }
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "rtp")]
+        public int? RTP { get; set; }
+
         private List<SubTask> data;
         private Project project;
         private List<ChartItem> chartSource = new List<ChartItem>();
@@ -37,9 +41,19 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
+            // Create context for later
+            context = new PPMToolContext();
+
+            // Query string only consulted when Project ID is not specified in URL
+            if (ProjectID == null && RTP != null)
+            {
+                // Try get the project
+                ProjectID = ProjectService.GetByRTP(context, RTP)?.ProjectId;
+            }
+
+            // Carry on and load the project details
             if (ProjectID != null)
             {
-                context = new PPMToolContext();
                 project = ProjectService.GetById(context, ProjectID);
                 data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
@@ -107,7 +121,11 @@ namespace PPMTool.Pages
                                     Y = actualsY,
                                     BorderWidth = 2,
                                     StrokeDashArray = 5,
-                                    BorderColor = "red"
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Actual (Hours)"
+                                    }
                                 }
                             },
                             Xaxis = new List<AnnotationsXAxis>
@@ -117,14 +135,31 @@ namespace PPMTool.Pages
                                     X = actualsX.ToUnixTimeMilliseconds(),
                                     BorderWidth = 2,
                                     StrokeDashArray = 5,
-                                    BorderColor = "red"
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Current Week"
+                                    }
                                 }
                             }
+                        },
+                        Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
+                        Yaxis = new List<YAxis>
+                        {
+                            new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
                         }
                     };
                     InvokeAsync(StateHasChanged);
                 }
             }
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            // If no project ID set by the time the page is renderered then navigate away
+            if (ProjectID == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)

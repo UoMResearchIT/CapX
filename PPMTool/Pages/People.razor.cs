@@ -56,7 +56,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
+                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
 
                 // Only show the person themselves if in developer view
                 loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();

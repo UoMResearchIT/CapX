@@ -11,16 +11,16 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null)" />
         </div>
     </div>
-
+    <hr />
     <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
                     Data="@dataGridEntities" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
-            <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px">
+            <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px">
                 <EditTemplate Context="tag">
                     <RadzenTextBox @bind-Value="tag.Name" ValueProperty="Name" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
+            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
                 <Template Context="tag">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true">
                     </RadzenButton>

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
@@ -38,6 +39,9 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RolesService { get; set; }
 
+        [Inject]
+        private ISessionStorageService SessionStorage { get; set; }
+
         private bool includeUnFunded = true;
         public bool IncludeUnFunded
         {
@@ -47,6 +51,7 @@ namespace PPMTool.Pages
                 if (includeUnFunded != value)
                 {
                     includeUnFunded = value;
+                    SessionStorage.SetItemAsync("capacity-include-unfunded", includeUnFunded);
 
                     // Update the chart source
                     InvokeAsync(async () => await ConfigureSourceAsync());
@@ -63,12 +68,14 @@ namespace PPMTool.Pages
                 if (includeLeavers != value)
                 {
                     includeLeavers = value;
+                    SessionStorage.SetItemAsync("capacity-include-leavers", includeLeavers);
 
                     // Refresh the people source
                     ReloadDropDownSources();
 
                     // Update the chart source
                     InvokeAsync(async () => await ConfigureSourceAsync());
+
                 }
             }
         }
@@ -86,6 +93,34 @@ namespace PPMTool.Pages
             }
         }
 
+        private Person chosenManager;
+        public Person ChosenManager
+        {
+            get => chosenManager;
+            set
+            {
+                if (chosenManager != value)
+                {
+                    chosenManager = value;
+                    SaveManagerState();
+                }
+            }
+        }
+
+        private IEnumerable<string> chosenPeople = new List<string>();
+        public IEnumerable<string> ChosenPeople
+        {
+            get => chosenPeople;
+            set
+            {
+                if (chosenPeople != value)
+                {
+                    chosenPeople = value;
+                    SavePeopleState();
+                }
+            }
+        }
+
         private IDictionary<object, IEnumerable<SubTask>> groupedSubTasks;
         private ApexChart<ChartItem> chart;
         private List<ChartItem> chartSource;
@@ -95,8 +130,6 @@ namespace PPMTool.Pages
         private string chartTitle;
         private PPMToolContext context;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
-        private IEnumerable<string> chosenPeople = new List<string>();
-        private Person chosenManager;
         private bool queryResultsAvailable;
         private string queryErrorMessage;
         private bool queryActive;
@@ -111,6 +144,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            loading = true;
+
             context = new PPMToolContext();
             options = new ApexChartOptions<ChartItem>
             {
@@ -136,36 +171,55 @@ namespace PPMTool.Pages
                 }
             };
 
-
-        }
-
-        protected override async Task OnInitializedAsync()
-        {
             // Refresh the dropdown
             ReloadDropDownSources();
+        }
 
-            // Choose the person automatically if not a manager
-            if (!EditAuthorised)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
             {
-                // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
-                chosenPeople = new List<string>
+                // Load settings
+                var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
+                ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
+                ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
+                UpdateSelectionState();
+                IncludeLeavers = await SessionStorage.GetItemAsync<bool>("capacity-include-leavers");
+                IncludeUnFunded = await SessionStorage.GetItemAsync<bool>("capacity-include-unfunded");
+
+                // Choose the person automatically if not a manager
+                if (!EditAuthorised)
                 {
-                    role.Person.Name
-                };
-                PeopleSelectionChanged(chosenPeople);
+                    // Look up the username
+                    var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
+                    ChosenPeople = new List<string>
+                    {
+                        role.Person.Name
+                    };
+                    PeopleSelectionChanged(ChosenPeople);
+                }
+                else
+                {
+                    // Get data for chart
+                    await ConfigureSourceAsync();
+                }
             }
-            else
-            {
-                // Get data for chart
-                await ConfigureSourceAsync();
-            }
+        }
+
+        private void SaveManagerState()
+        {
+            SessionStorage.SetItemAsync("capacity-chosen-manager", chosenManager == null ? null : chosenManager.Name);
+        }
+
+        private void SavePeopleState()
+        {
+            SessionStorage.SetItemAsync("capacity-chosen-people", chosenPeople);
         }
 
         private void UpdateSelectionState()
         {
-            managerChosen = chosenManager != null;
-            peopleChosen = chosenPeople != null && chosenPeople.Count() > 0;
+            managerChosen = ChosenManager != null;
+            peopleChosen = ChosenPeople != null && ChosenPeople.Count() > 0;
         }
 
         /// <summary>
@@ -223,10 +277,10 @@ namespace PPMTool.Pages
                 var match = people.FirstOrDefault(x => x.Name == personName);
                 if (match != null)
                 {
-                    var temp = peopleChosen ? new List<string>(chosenPeople) : new List<string>();
+                    var temp = peopleChosen ? new List<string>(ChosenPeople) : new List<string>();
                     temp.Add(personName);
-                    chosenPeople = temp;
-                    PeopleSelectionChanged(chosenPeople);
+                    ChosenPeople = temp;
+                    PeopleSelectionChanged(ChosenPeople);
                 }
             }
         }
@@ -247,6 +301,9 @@ namespace PPMTool.Pages
                 }
             }
 
+            // Save the new state
+            SavePeopleState();
+
             // Regenerate the chart data
             await ConfigureSourceAsync();
         }
@@ -259,6 +316,9 @@ namespace PPMTool.Pages
         {
             var item = selectedOptions as Person;
             Debug.WriteLine($"** Selected Manager: {item?.Name}");
+
+            // Save the new state
+            SaveManagerState();
 
             // Regenerate the chart data
             await ConfigureSourceAsync();
@@ -273,7 +333,7 @@ namespace PPMTool.Pages
             queryResultsAvailable = false;
             queryErrorMessage = null;
             queryActive = false;
-            chosenPeople = new List<string>();
+            ChosenPeople = new List<string>();
             await ConfigureSourceAsync();
         }
 
@@ -357,6 +417,7 @@ namespace PPMTool.Pages
         private async Task ConfigureSourceAsync()
         {
             Debug.WriteLine("** Configuring Chart Source...");
+            loading = true;
 
             // Reset source
             chartSource = new List<ChartItem>();
@@ -366,6 +427,7 @@ namespace PPMTool.Pages
             {
                 Logger.LogError("People database is empty!");
                 Debug.WriteLine("** No people registered in the database!");
+                loading = false;
                 return;
             }
 
@@ -377,9 +439,9 @@ namespace PPMTool.Pages
             }
 
             // Filter the project source if a manager selected
-            if (chosenManager != null)
+            if (ChosenManager != null)
             {
-                projects = projects.Where(x => x.ProjectManager == chosenManager);
+                projects = projects.Where(x => x.ProjectManager == ChosenManager);
             }
 
             // Get the window from the start and end dates of the projects included in the source
@@ -387,6 +449,7 @@ namespace PPMTool.Pages
             if (safeProjects.Count() == 0)
             {
                 Debug.WriteLine("** No projects found that match the chosen options!");
+                loading = false;
                 return;
             }
             var startDate = safeProjects.Min(x => x.StartDate);
@@ -463,58 +526,92 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Chart in PROJECT MODE.");
 
-                // Create a list of subtasks for each project these people are assigned to
-                foreach (var project in projects)
+                // For each person selected
+                List<SubTask> subTasksAllPeople = new List<SubTask>();
+                foreach (var name in ChosenPeople)
                 {
-                    var assignments = new List<SubTask>();
-                    foreach (var subTask in project.SubTasks)
+                    // Get person object
+                    var person = people.First(x => x.Name == name);
+
+                    // Reset the grouped subtasks list for the next person
+                    groupedSubTasks.Clear();
+
+                    // Create a list of subtasks for each project this person is assigned to
+                    foreach (var project in projects)
                     {
-                        // Only include subtasks with the selected people assigned as resources
-                        if (subTask.AssignedResources.Any(z => chosenPeople.Contains(z.Person.Name)))
+                        var assignments = new List<SubTask>();
+                        foreach (var subTask in project.SubTasks)
                         {
-                            assignments.Add(subTask);
+                            // Only include subtasks with this person assigned aa resource
+                            if (subTask.AssignedResources.Any(z => name == z.Person.Name))
+                            {
+                                assignments.Add(subTask);
+                            }
                         }
+
+                        // Add dictionary entry with project name as key
+                        if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
                     }
 
-                    // Add dictionary entry with project name as key
-                    if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
+                    // Build chart source from the grouped data
+                    foreach (var group in groupedSubTasks)
+                    {
+                        chartSource.AddRange(
+                            GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate, person)
+                        );
+                    }
+
+                    // Total row needs to repeat the above logic but on the flattened set of subtasks
+                    var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
+                    var rowName = $"Total ({name})";
+                    chartSource.AddRange(
+                        GetProjectModeChartItemsFromTasks(
+                            rowName,
+                            new KeyValuePair<object, IEnumerable<SubTask>>(rowName, allProjectSubTasks),
+                            startDate,
+                            endDate,
+                            person
+                        )
+                    );
+
+                    // Add the subtasks to the aggregated list for later (if more than one person)
+                    if (ChosenPeople.Count() > 1) subTasksAllPeople.AddRange(allProjectSubTasks);
                 }
 
-                // Build chart source from the grouped data
-                foreach (var group in groupedSubTasks)
+                if (ChosenPeople.Count() > 1)
                 {
-
+                    // Final total row is the same logic applied to the subtasks aggregated across everyone selected
+                    var totalName = $"Total (All)";
                     chartSource.AddRange(
-                        GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate)
+                        GetProjectModeChartItemsFromTasks(
+                            totalName,
+                            new KeyValuePair<object, IEnumerable<SubTask>>(totalName, subTasksAllPeople),
+                            startDate,
+                            endDate
+                        )
                     );
                 }
-
-                // Total row needs to repeat the above logic but on the whole set of subtasks
-                var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
-                var name = "Total";
-                chartSource.AddRange(
-                    GetProjectModeChartItemsFromTasks(
-                        name,
-                        new KeyValuePair<object, IEnumerable<SubTask>>(name, allProjectSubTasks),
-                        startDate,
-                        endDate
-                    )
-                );
             }
 
-            chartTitle = $"Load for {(peopleChosen ? string.Join(",", chosenPeople) : (!managerChosen ? "All" : "None"))} " +
-                $"{(managerChosen ? " with manager " + chosenManager.Name : "")}";
+            chartTitle = $"Load for {(peopleChosen ? string.Join(",", ChosenPeople) : (!managerChosen ? "All" : "None"))} " +
+                $"{(managerChosen ? " with manager " + ChosenManager.Name : "")}";
             Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
             // Format X Axis range
             options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
             options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
 
+            loading = false;
+
             // First time this is called, there is no reference to the chart
             if (chart != null)
             {
-                Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
+                Debug.WriteLine($"** Re-renderering chart with options! {options.Xaxis.Min} to {options.Xaxis.Max}");
                 await RefreshChartAsync();
+            }
+            else
+            {
+                await InvokeAsync(StateHasChanged);
             }
 
             Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
@@ -524,16 +621,22 @@ namespace PPMTool.Pages
             string seriesName,
             KeyValuePair<object, IEnumerable<SubTask>> group,
             DateTime startDate,
-            DateTime endDate
+            DateTime endDate,
+            Person chosenPerson = null
         )
         {
             return ChartHelper.ConvertSubTasksToChartItems(
                 group.Value,
-                // Value 1 for each block is the sum of the effort across all chosen people
+                // Value 1 for each block
                 x =>
                 {
-                    var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                    // If no person specified then it is the sum of the effort across all chosen people
+                    // If a person specified then the value is just their effort
+                    var resources = chosenPerson == null ?
+                        x.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
+                        x.AssignedResources.Where(x => x.Person == chosenPerson);
                     return resources.RoundedSum(x => x.AssignmentFTE);
+
                 },
                 // Shading function based on value 1 and value 2
                 (x, y) =>
@@ -546,13 +649,17 @@ namespace PPMTool.Pages
                 // Hatched value is whether any assignee is provisional
                 x =>
                 {
-                    var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
+                    var resources = chosenPerson == null ?
+                        x.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
+                        x.AssignedResources.Where(x => x.Person == chosenPerson);
                     return resources.Any(x => x.IsProvisional);
                 },
                 // Value 2 for each block is based on the sum of the availability of all chosen people
                 (x, w) =>
                 {
-                    var peo = people.Where(y => chosenPeople.Contains(y.Name));
+                    var peo = chosenPerson == null ?
+                        people.Where(y => ChosenPeople.Contains(y.Name)) :
+                        people.Where(y => y == chosenPerson);
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
                 });
         }
