@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -18,6 +19,9 @@ namespace PPMTool.Pages
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         [Parameter]
         public int? ProjectID { get; set; }
@@ -160,6 +164,11 @@ namespace PPMTool.Pages
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectID == null) Navigation.NavigateTo("/nothinghere");
+        }
+
+        private async void NavigateToRTPAsync()
+        {
+            await JSRuntime.InvokeAsync<object>("open", $"https://universityofmanchester.atlassian.net/jira/software/projects/RTP/boards/654?selectedIssue=RTP-{project.RTP}", "_blank");
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
