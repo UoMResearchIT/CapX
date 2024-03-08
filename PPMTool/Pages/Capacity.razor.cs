@@ -51,7 +51,7 @@ namespace PPMTool.Pages
                 if (includeUnFunded != value)
                 {
                     includeUnFunded = value;
-                    SessionStorage.SetItemAsync("capacity-include-unfunded", includeUnFunded);
+                    SessionStorage.SetItemAsync<bool?>("capacity-include-unfunded", includeUnFunded);
 
                     // Update the chart source
                     InvokeAsync(async () => await ConfigureSourceAsync());
@@ -68,7 +68,7 @@ namespace PPMTool.Pages
                 if (includeLeavers != value)
                 {
                     includeLeavers = value;
-                    SessionStorage.SetItemAsync("capacity-include-leavers", includeLeavers);
+                    SessionStorage.SetItemAsync<bool?>("capacity-include-leavers", includeLeavers);
 
                     // Refresh the people source
                     ReloadDropDownSources();
@@ -184,8 +184,12 @@ namespace PPMTool.Pages
                 ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
                 ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
                 UpdateSelectionState();
-                IncludeLeavers = await SessionStorage.GetItemAsync<bool>("capacity-include-leavers");
-                IncludeUnFunded = await SessionStorage.GetItemAsync<bool>("capacity-include-unfunded");
+
+                // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
+                var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
+                if (temp != null) IncludeLeavers = temp ?? false;
+                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
+                if (temp != null) IncludeUnFunded = temp ?? false;
 
                 // Choose the person automatically if not a manager
                 if (!EditAuthorised)
