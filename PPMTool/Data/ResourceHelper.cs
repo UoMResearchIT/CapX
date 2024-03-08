@@ -46,7 +46,9 @@ namespace PPMTool.Data
                     List<string> items = new List<string>();
                     foreach (var s in temp)
                     {
-                        var values = s.Split('|');
+                        // Strip any double quotes or carriage returns
+                        var stripped = s.Replace("\"", "").Replace("\r", "");
+                        var values = stripped.Split('|');
                         items.Add(string.Join(" - ", values));
                         AvailableInnateActivities = items;
                     }
