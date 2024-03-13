@@ -1,10 +1,11 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using PPMTool.Data.Context;
+using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
-    public class Role
+    public class Role : ILoggableClass
     {
         public int RoleId { get; set; }
 
@@ -15,6 +16,11 @@ namespace PPMTool.Data.Entities
         public string CASUserName { get; set; }
 
         public Person Person { get; set; }
+
+        public string GetSensibleObjectName()
+        {
+            return Person.Name;
+        }
 
         internal string GetStandardisedUserName()
         {
