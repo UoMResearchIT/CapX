@@ -156,6 +156,7 @@ namespace PPMTool.Pages
                     InvokeAsync(StateHasChanged);
                 }
             }
+            LogInformation($"Viewing project details for RTP-{project?.RTP}");
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -168,6 +169,7 @@ namespace PPMTool.Pages
 
         private async void NavigateToRTPAsync()
         {
+            LogInformation($"Navigating to Jira for RTP-{project?.RTP}");
             await JSRuntime.InvokeAsync<object>("open", $"https://universityofmanchester.atlassian.net/jira/software/projects/RTP/boards/654?selectedIssue=RTP-{project.RTP}", "_blank");
         }
 

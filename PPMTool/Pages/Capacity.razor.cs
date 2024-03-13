@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using ApexCharts;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -173,6 +172,8 @@ namespace PPMTool.Pages
 
             // Refresh the dropdown
             ReloadDropDownSources();
+
+            LogInformation($"Viewing capacity page");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -310,6 +311,8 @@ namespace PPMTool.Pages
 
             // Regenerate the chart data
             await ConfigureSourceAsync();
+
+            LogInformation($"Selected people: {string.Join("|", items)}");
         }
 
         /// <summary>
@@ -326,6 +329,8 @@ namespace PPMTool.Pages
 
             // Regenerate the chart data
             await ConfigureSourceAsync();
+
+            LogInformation($"Selected manager: {item?.Name}");
         }
 
         /// <summary>
@@ -339,6 +344,8 @@ namespace PPMTool.Pages
             queryActive = false;
             ChosenPeople = new List<string>();
             await ConfigureSourceAsync();
+
+            LogInformation($"Query cleared");
         }
 
         /// <summary>
@@ -347,6 +354,7 @@ namespace PPMTool.Pages
         private async void RunQueryAsync()
         {
             Debug.WriteLine("** Running query...");
+            LogInformation($"Query running.");
 
             // Add error
             if (QueryStartDate >= queryEndDate)
@@ -429,7 +437,7 @@ namespace PPMTool.Pages
             // Need some people for this to work
             if (people.Count() == 0)
             {
-                Logger.LogError("People database is empty!");
+                LogError("People database is empty!");
                 Debug.WriteLine("** No people registered in the database!");
                 loading = false;
                 chartSource = new List<ChartItem>();
@@ -697,6 +705,8 @@ namespace PPMTool.Pages
         /// </summary>
         private async void ExportCapacityData()
         {
+            LogInformation($"Exporting capacity data");
+
             // Get all the people
             var people = PersonService.GetAll(context).OrderBy(x => x.Name);
 
@@ -788,7 +798,7 @@ namespace PPMTool.Pages
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Could not download file: {ex}");
+                LogError($"Could not download file: {ex}");
             }
         }
     }

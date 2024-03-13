@@ -30,6 +30,7 @@ namespace PPMTool.Pages
             // Get people from the database
             context = new PPMToolContext();
             LoadData(new LoadDataArgs());
+            LogInformation($"Viewing people grid");
         }
 
         private void AddPerson()

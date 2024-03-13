@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -62,6 +61,8 @@ namespace PPMTool.Pages
 
             // Instantiate the edit context so we have a reference to it
             editContext = new EditContext(personModel);
+
+            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
         }
 
         void OnChange(dynamic args)
@@ -79,6 +80,7 @@ namespace PPMTool.Pages
             var match = chosenTags.FirstOrDefault(x => x.Name == tag.Name);
             if (match != null)
             {
+                LogInformation($"Removing skill tag {tag.Name}");
                 chosenTags.Remove(match);
                 chosenTags = chosenTags.OrderBy(x => x.Name).ToList();
             }
@@ -91,14 +93,14 @@ namespace PPMTool.Pages
             {
                 HandleValidSubmit();
 
-                Logger.LogInformation("Editing availability changes...");
+                LogInformation("Editing availability changes...");
                 Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
             }
         }
 
         private void HandleValidSubmit()
         {
-            Logger.LogInformation("Adding / editing person...");
+            LogInformation($"Adding / editing person {personModel?.Name}...");
 
             // Add tags to person model
             personModel.SkillTags = chosenTags.ToList();
@@ -114,6 +116,7 @@ namespace PPMTool.Pages
                 if (PersonService.Add(context, personModel) < 0)
                 {
                     // TODO: Duplicate found -- do something
+                    LogWarning($"Duplicate person found with name {personModel?.Name}");
                 }
             }
 

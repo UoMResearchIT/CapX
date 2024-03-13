@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 using System.Linq;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 
 namespace PPMTool.Pages.Account
 {
@@ -16,6 +18,9 @@ namespace PPMTool.Pages.Account
     public class LoginModel : PageModel
     {
         private RolesService _roleService;
+
+        [Inject]
+        ILogger Logger { get; set; }
 
         public LoginModel(RolesService rolesService)
         {
@@ -47,6 +52,7 @@ namespace PPMTool.Pages.Account
                 new ClaimsPrincipal(identity),
                 new AuthenticationProperties { RedirectUri = "/" }
             );
+            Logger?.LogInformation($"{HttpContext.User.Identity.Name}: Logged In");
         }
 #endif
     }

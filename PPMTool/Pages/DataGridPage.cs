@@ -29,23 +29,27 @@ namespace PPMTool.Pages
 
         protected virtual void Reset()
         {
+            LogInformation($"Reset in-line edit <{entityToInsert?.GetSensibleObjectName()}>");
             entityToInsert = null;
             entityToUpdate = null;
         }
 
         protected async virtual Task EditRow(T entity)
         {
+            LogInformation($"Edit row for <{entity?.GetSensibleObjectName()}>");
             entityToUpdate = entity;
             await dataGrid.EditRow(entity);
         }
 
         protected async virtual Task SaveRow(T entity)
         {
+            LogInformation($"Save row for <{entity?.GetSensibleObjectName()}>");
             await dataGrid.UpdateRow(entity);
         }
 
         protected virtual void CancelEdit(T entity)
         {
+            LogInformation($"Cancel edit row for <{entity?.GetSensibleObjectName()}>");
             Reset();
             dataGridEntityService.RestoreModel(context, ref entity);
             dataGrid.CancelEditRow(entity);
@@ -57,6 +61,7 @@ namespace PPMTool.Pages
 
             if (dataGridEntities.Contains(entity))
             {
+                LogInformation($"Delete row for <{entity?.GetSensibleObjectName()}>");
                 dataGridEntities.Remove(entity);
             }
             else
@@ -75,12 +80,14 @@ namespace PPMTool.Pages
         protected virtual void OnCreateRow(T entity)
         {
             Reset();
+            LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
             dataGridEntityService.Add(context, entity);
         }
 
         protected virtual void OnUpdateRow(T entity)
         {
             Reset();
+            LogInformation($"Update row for <{entity?.GetSensibleObjectName()}>");
             dataGridEntityService.Update(context, entity);
         }
     }
