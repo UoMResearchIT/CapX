@@ -44,7 +44,7 @@ namespace PPMTool.Data.Entities
 
         public string GetSensibleObjectName()
         {
-            return $"{Person.Name} (Resource)";
+            return $"{Person?.Name} (Resource)";
         }
     }
 }
