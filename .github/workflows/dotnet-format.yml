@@ -24,7 +24,7 @@ jobs:
         dotnet-version: 6.0.x
     - name: Ensure GitHub NuGet Source
       run: |
-        dotnet nuget update source UoMResearchIT \
+        dotnet nuget update source UoMResearchITGitHub \
         -u ${{ secrets.REGISTRY_USER }} \
         -p ${{ secrets.REGISTRY_TOKEN }} \
         --store-password-in-clear-text
