@@ -100,13 +100,13 @@ namespace PPMTool.Pages
 
         private void HandleValidSubmit()
         {
-            LogInformation($"Adding / editing person {personModel?.Name}...");
-
             // Add tags to person model
             personModel.SkillTags = chosenTags.ToList();
 
             if (PersonId > -1)
             {
+                LogInformation($"Saving person {personModel?.Name}...");
+
                 // Edit
                 PersonService.Update(context, personModel);
             }

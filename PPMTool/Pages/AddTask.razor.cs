@@ -278,12 +278,13 @@ namespace PPMTool.Pages
 
         private void HandleValidSubmit()
         {
-            LogInformation("Adding new sub task...");
             if (projectModel != null)
             {
                 UpdateSubTask();
                 if (isValid)
                 {
+                    LogInformation("Saving sub task...");
+
                     // Add new new to task list for project if it is a new one
                     if (TaskId < 0)
                     {

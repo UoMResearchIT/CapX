@@ -354,7 +354,6 @@ namespace PPMTool.Pages
         private async void RunQueryAsync()
         {
             Debug.WriteLine("** Running query...");
-            LogInformation($"Query running.");
 
             // Add error
             if (QueryStartDate >= queryEndDate)
@@ -368,6 +367,8 @@ namespace PPMTool.Pages
             queryActive = true;
             queryErrorMessage = null;
             var results = new List<CapacityQueryItem>();
+
+            LogInformation($"Query running.");
 
             // Update the chart source as this is used
             await ConfigureSourceAsync();

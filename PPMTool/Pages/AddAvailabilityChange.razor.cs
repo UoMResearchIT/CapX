@@ -97,7 +97,8 @@ namespace PPMTool.Pages
                 {
                     personModel.AvailabilityChanges.Add(avail);
                 }
-                LogInformation($"Updating availability changes in    the database.");
+
+                LogInformation($"Saving availability changes for {personModel.Name}.");
                 PersonService.Update(context, personModel);
                 Navigation.NavigateTo($"addperson/{PersonId}");
             }

@@ -29,7 +29,6 @@ namespace PPMTool.Pages
 
         protected virtual void Reset()
         {
-            LogInformation($"Reset in-line edit <{entityToInsert?.GetSensibleObjectName()}>");
             entityToInsert = null;
             entityToUpdate = null;
         }

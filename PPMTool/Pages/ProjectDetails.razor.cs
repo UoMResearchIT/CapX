@@ -170,7 +170,14 @@ namespace PPMTool.Pages
         private async void NavigateToRTPAsync()
         {
             LogInformation($"Navigating to Jira for RTP-{project?.RTP}");
-            await JSRuntime.InvokeAsync<object>("open", $"https://universityofmanchester.atlassian.net/jira/software/projects/RTP/boards/654?selectedIssue=RTP-{project.RTP}", "_blank");
+            try
+            {
+                await JSRuntime.InvokeAsync<object>("open", $"https://universityofmanchester.atlassian.net/jira/software/projects/RTP/boards/654?selectedIssue=RTP-{project.RTP}", "_blank");
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to navigate to Jira", ex);
+            }
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
