@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using FluentDateTime;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -94,9 +93,9 @@ namespace PPMTool.Data.Entities
         public int DurationDays { get; set; }
 
         /// <summary>
-        /// Used to drive the work assuming 7 hour days. This is excludes weekends.
+        /// Used to drive the work assuming each day is 220 billable days spread over the year of 365 days so roughly 4.22 hours per calendar day.
         /// </summary>
-        public int DurationBusinessDays { get; set; }
+        public int DurationBillableDays { get; set; }
 
         private bool isWorkDriven;
         /// <summary>
@@ -181,20 +180,18 @@ namespace PPMTool.Data.Entities
                     // From predecessor
                     if (Predecessor != null)
                     {
-                        // Correct the end date to start on the next working day if necessary
-                        StartDate = TaskType == TaskType.FixedWork ? GetNextWorkingDay(Predecessor.EndDate) : Predecessor.EndDate.AddDays(1);
+                        StartDate = Predecessor.EndDate.AddDays(1);
                     }
 
                     // Check whether we need to drive from resources
                     if (units > 0d && latestStart > StartDate)
                     {
-                        latestStart = TaskType == TaskType.FixedWork ? GetNextWorkingDay(latestStart) : Predecessor.EndDate.AddDays(1);
                         Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
                         StartDate = latestStart.Date;
                     }
                 }
 
-                // Update core parameters
+                // Fixed Units Update
                 if (TaskType == TaskType.FixedUnits)
                 {
                     // End date must be driven
@@ -211,6 +208,8 @@ namespace PPMTool.Data.Entities
                     }
 
                 }
+
+                // Fixed Work Update
                 else if (TaskType == TaskType.FixedWork)
                 {
                     // End Date must be driven
@@ -219,6 +218,8 @@ namespace PPMTool.Data.Entities
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
                 }
+
+                // Fixed Duration Update
                 else
                 {
                     // Make sure the duration is at least zero or greater
@@ -238,7 +239,7 @@ namespace PPMTool.Data.Entities
                 PlannedCost = 0d;
                 foreach (var res in AssignedResources)
                 {
-                    // Assume 7 hours in a day; fallback on default day rate if resource day rate is null
+                    // Assume 7 hours in a billable day; fallback on default day rate if resource day rate is null
                     PlannedCost += (res.AssignmentFTE / units) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
                 }
 
@@ -257,7 +258,7 @@ namespace PPMTool.Data.Entities
         {
             // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
             DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
-            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, EndDate);
+            DurationBillableDays = GetNumberOfBillableDays(StartDate, EndDate);
         }
 
         private void UpdateDuration(double units)
@@ -265,13 +266,13 @@ namespace PPMTool.Data.Entities
             if (units == 0)
             {
                 DurationDays = 0;
-                DurationBusinessDays = 0;
+                DurationBillableDays = 0;
             }
             else
             {
-                // Correct for annual leave etc. with the 0.84
-                DurationBusinessDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units * .84));
-                var estimatedEndDate = StartDate.AddBusinessDays(DurationBusinessDays);
+                // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
+                DurationBillableDays = (int)Math.Round(PlannedWorkHours / (7 * units));
+                var estimatedEndDate = StartDate.AddDays(GetNumberOfCalendarDays(DurationBillableDays));
 
                 // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
                 DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
@@ -280,64 +281,34 @@ namespace PPMTool.Data.Entities
 
         private void UpdateWork(double units)
         {
-            // Duration input is calendar days so need to compute business days to get work
+            // Duration input is calendar days so need to compute billable days to get work
             var endDate = StartDate.AddDays(DurationDays);
-            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
+            DurationBillableDays = GetNumberOfBillableDays(StartDate, endDate);
 
-            // Correct for annual leave etc. with the 0.84 and truncate to 1 DP
-            PlannedWorkHours = Math.Ceiling(10 * DurationBusinessDays * 7 * units * 0.84) / 10;
+            // Truncate to 1 DP
+            PlannedWorkHours = Math.Ceiling(10 * DurationBillableDays * 7 * units) / 10;
         }
 
-        private DateTime GetNextWorkingDay(DateTime date)
+        /// <summary>
+        /// Use 220 billable days per year to estimate the number of billable days between two dates.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private int GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
         {
-            if (date.DayOfWeek == DayOfWeek.Saturday) return date.AddDays(2);
-            else if (date.DayOfWeek == DayOfWeek.Friday) return date.AddDays(3);
-            return date.AddDays(1);
+            var calendarDays = endDate.Subtract(startDate).Days;
+            return (int)Math.Round((calendarDays / 365f) * 220f);
         }
 
-
-        private int GetNumberOfBusinessDays(DateTime startDate, DateTime endDate)
+        /// <summary>
+        /// Converts the number of billable days into a duration of calendar days assuming 220 billable days per 365 day year.
+        /// </summary>
+        /// <param name="billableDays"></param>
+        /// <returns></returns>
+        private int GetNumberOfCalendarDays(int billableDays)
         {
-            // Same day returns zero
-            if (startDate.Date == endDate.Date)
-            {
-                return 0;
-            }
-
-            // Cannot start a fixed work task on a weekend
-            if (TaskType == TaskType.FixedWork && (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday))
-            {
-                throw new Exception("Cannot start a task on a weekend!");
-            }
-
-            // If end date is a weekend day then move on to the following Monday
-            if (endDate.DayOfWeek == DayOfWeek.Saturday || endDate.DayOfWeek == DayOfWeek.Sunday) endDate = GetNextWorkingDay(endDate);
-
-            // Work out the number of normal days
-            int normalDays = (int)Math.Round(endDate.Date.Subtract(startDate.Date).TotalDays);
-
-            // Best guess at business days is to take 2 days off for every week
-            int guess = normalDays - (normalDays / 7) * 2;
-            int lastGuess = guess;
-
-            // Iterate
-            int error = int.MaxValue;
-            while (error > 0 && guess != 0)
-            {
-                // Compute error
-                var guessedEndDate = startDate.Date.AddBusinessDays(guess);
-                error = (int)Math.Round(guessedEndDate.Date.Subtract(endDate.Date).TotalDays);
-
-                // Break out early if found the answer
-                if (error == 0) return guess;
-
-                // Update guess by 1 day in the correct direction
-                lastGuess = guess;
-                guess = lastGuess - (error / Math.Abs(error));
-            }
-
-            // Shouldn't end up here
-            return lastGuess;
+            return (int)Math.Round(billableDays / 220f * 365f);
         }
 
         /// <summary>
