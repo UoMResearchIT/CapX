@@ -127,7 +127,7 @@
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Duration (Days)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" @bind-Value="taskModel.DurationDays" Disabled="@(durationDisabled || taskModel.IsDone)" /><br />
-                    <div>(@(taskModel.DurationBusinessDays) Business Days)</div>
+                    <div>(@(taskModel.DurationBillableDays) Billable Days)</div>
                 </div>
             </div>
 
