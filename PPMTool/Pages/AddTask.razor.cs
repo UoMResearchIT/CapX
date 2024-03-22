@@ -201,33 +201,12 @@ namespace PPMTool.Pages
             {
                 LogInformation("Updating sub task configuration...");
 
-                // Remove resources on the task model that are no-longer active
-                var toRemove = taskModel.AssignedResources.Where(x => !dataGridEntities.Any(y => x.ResourceId == y.ResourceId));
-                foreach (var r in toRemove.ToList())
-                {
-                    Debug.WriteLine($"** Inactive Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
-                    taskModel.AssignedResources.Remove(r);
-                }
-
-                // Update/Add the active resources
+                // Update the resources on the task model to match the data grid entities
+                taskModel.AssignedResources.Clear();
                 foreach (var r in dataGridEntities)
                 {
                     Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
-                    var existing = r.ResourceId != 0 ? taskModel.AssignedResources.FirstOrDefault(x => x.ResourceId == r.ResourceId) : null;
-                    if (existing != null)
-                    {
-                        // Don't know why I have to update every individual property to get this to work
-                        existing.AssignmentFTE = r.AssignmentFTE;
-                        existing.UseDefaultDayRate = r.UseDefaultDayRate;
-                        existing.DayRate = r.DayRate;
-                        existing.IsProvisional = r.IsProvisional;
-
-                        Debug.WriteLine($"** Existing Resource: ResId: {existing.ResourceId} | PersonId: {existing.Person.PersonId} | FTE: {existing.AssignmentFTE} | Rate: {existing.DayRate}");
-                    }
-                    else
-                    {
-                        taskModel.AssignedResources.Add(r);
-                    }
+                    taskModel.AssignedResources.Add(r);
                 }
 
                 // Track total proportion of effort
