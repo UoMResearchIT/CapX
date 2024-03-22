@@ -22,6 +22,13 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 6.0.x
+        - name: Ensure GitHub NuGet Source
+      run: |
+        dotnet nuget update source UoMResearchIT \
+        -n github \
+        -u ${{ secrets.REGISTRY_USER }} \
+        -p ${{ secrets.REGISTRY_TOKEN }} \
+        --store-password-in-clear-text
     - name: Restore dependencies
       run: dotnet restore
     - name: Format
