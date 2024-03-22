@@ -34,10 +34,13 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = new List<AvailabilityChange>();
             }
+
+            LogInformation($"Viewing availability changes for {personModel?.Name}");
         }
 
         protected override void CancelEdit(AvailabilityChange entity)
         {
+            LogInformation($"Cancel row edit for {entity?.GetSensibleObjectName()}");
             Reset();
             PersonService.RestoreModel(context, ref entity);
             dataGrid.CancelEditRow(entity);
@@ -53,6 +56,7 @@ namespace PPMTool.Pages
 
         protected override void OnCreateRow(AvailabilityChange entity)
         {
+            LogInformation($"Added row for {entity?.GetSensibleObjectName()}");
             entity.Person = personModel;
             dataGridEntities.Add(entity);
             entityToInsert = null;
@@ -65,6 +69,8 @@ namespace PPMTool.Pages
 
         private void DiscardChanges()
         {
+            LogInformation($"Discarding availability changes!");
+
             // Just navigate away as nothing will have been written to the database
             Navigation.NavigateTo($"addperson/{PersonId}");
         }
@@ -76,6 +82,7 @@ namespace PPMTool.Pages
                 // Check it doesn't duplicate the date, otherwise reject update
                 if (dataGridEntities.DistinctBy(x => x.ChangeDate).Count() != dataGridEntities.Count())
                 {
+                    LogWarning($"Availability change duplicates a change data!");
                     isValid = false;
                     return;
                 }
@@ -90,6 +97,8 @@ namespace PPMTool.Pages
                 {
                     personModel.AvailabilityChanges.Add(avail);
                 }
+
+                LogInformation($"Saving availability changes for {personModel.Name}.");
                 PersonService.Update(context, personModel);
                 Navigation.NavigateTo($"addperson/{PersonId}");
             }

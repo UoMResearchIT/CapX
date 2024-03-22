@@ -4,7 +4,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -66,6 +65,8 @@ namespace PPMTool.Pages
                     && x.Person != null
                 );
             projectManagers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
+
+            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
         }
 
         private string GetNiceString(Enum x)
@@ -92,16 +93,17 @@ namespace PPMTool.Pages
                             }
                         }
 
-                        Logger.LogInformation($"Edit project {ProjectId} saved...");
+                        LogInformation($"Edit project {projectModel?.GetFullName()} saved...");
                         ProjectService.Update(context, projectModel);
                     }
                     else
                     {
-                        Logger.LogInformation("Adding new project...");
+                        LogInformation("Adding new project...");
 
                         if (ProjectService.Add(context, projectModel) < 0)
                         {
                             // TODO: Duplicate found -- do something
+                            LogWarning($"Duplicate project found with name {projectModel?.Name}");
                         }
                     }
                 }
@@ -114,6 +116,7 @@ namespace PPMTool.Pages
             {
                 if (discardChanges)
                 {
+                    LogInformation($"Discarding project changes!");
                     NavigatePostSubmit();
                 }
             }
@@ -146,13 +149,13 @@ namespace PPMTool.Pages
                     {
                         if (projectModel.SubTasks.Count > 0)
                         {
-                            Logger.LogInformation($"Deleting subtask ID {projectModel.SubTasks.First()?.SubTaskId}");
+                            LogInformation($"Deleting subtask ID {projectModel.SubTasks.First()?.SubTaskId}");
 
                             SubTaskService.Delete(context, projectModel.SubTasks.First());
                         }
                     }
 
-                    Logger.LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
+                    LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
                     ProjectService.Delete(context, projectModel);

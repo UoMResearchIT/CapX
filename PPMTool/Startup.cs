@@ -153,7 +153,7 @@ namespace PPMTool
                                 }
 
                                 await context.HttpContext.SignInAsync(context.Principal);
-                                Logger?.LogInformation($"{context.Principal.Identity.Name} Logged In");
+                                Logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
                             }
                         },
                         OnRemoteFailure = context =>

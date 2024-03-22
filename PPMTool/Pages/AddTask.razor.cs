@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -87,16 +86,13 @@ namespace PPMTool.Pages
             taskModel.EndDateDrivenChanged += UpdateUIState;
             taskModel.DoneChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
+
+            LogInformation(taskModel.SubTaskId > 0 ? $"Editing task {taskModel?.Name} on {projectModel?.GetFullName()}" : $"Adding new task to {projectModel?.GetFullName()}");
         }
 
         private string GetNiceString(Enum x)
         {
             return x.ToNiceString();
-        }
-
-        private void PredecessorSelected()
-        {
-
         }
 
         /// <summary>
@@ -118,6 +114,8 @@ namespace PPMTool.Pages
                 bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.GetFullName()}");
                 if (confirmed)
                 {
+                    LogWarning($"Deleting task {taskModel?.Name} on {projectModel?.GetFullName()}");
+
                     // Call delete on the subtask service and let it remove the resources
                     SubTaskService.Delete(context, taskModel);
 
@@ -138,6 +136,7 @@ namespace PPMTool.Pages
 
         protected override void CancelEdit(Resource resource)
         {
+            LogInformation($"Cancel edit row for {resource.GetSensibleObjectName()}");
             Reset();
             SubTaskService.RestoreModel(context, ref resource);
             dataGrid.CancelEditRow(resource);
@@ -145,6 +144,7 @@ namespace PPMTool.Pages
 
         protected override void OnCreateRow(Resource resource)
         {
+            LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
             dataGridEntities.Add(resource);
             entityToInsert = null;
         }
@@ -183,6 +183,7 @@ namespace PPMTool.Pages
 
         private void DiscardChanges()
         {
+            LogInformation($"Discarding task changes!");
             Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
         }
 
@@ -194,11 +195,11 @@ namespace PPMTool.Pages
             // Don't update the scheduling if the task is done
             if (taskModel.IsDone)
             {
-                Logger.LogInformation("Not updating sub task as it is marked as Done...");
+                LogInformation("Not updating sub task as it is marked as Done...");
             }
             else
             {
-                Logger.LogInformation("Updating sub task configuration...");
+                LogInformation("Updating sub task configuration...");
 
                 // Remove resources on the task model that are no-longer active
                 var toRemove = taskModel.AssignedResources.Where(x => !dataGridEntities.Any(y => x.ResourceId == y.ResourceId));
@@ -277,12 +278,13 @@ namespace PPMTool.Pages
 
         private void HandleValidSubmit()
         {
-            Logger.LogInformation("Adding new sub task...");
             if (projectModel != null)
             {
                 UpdateSubTask();
                 if (isValid)
                 {
+                    LogInformation("Saving sub task...");
+
                     // Add new new to task list for project if it is a new one
                     if (TaskId < 0)
                     {
