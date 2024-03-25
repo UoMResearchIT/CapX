@@ -312,7 +312,7 @@ namespace PPMTool.Pages
             // Regenerate the chart data
             await ConfigureSourceAsync();
 
-            LogInformation($"Selected people: {string.Join("|", items)}");
+            LogInformation($"Selected people: {(items == null ? "" : string.Join("|", items))}");
         }
 
         /// <summary>
