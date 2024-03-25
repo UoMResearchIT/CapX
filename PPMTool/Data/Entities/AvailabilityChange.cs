@@ -1,12 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
     /// <summary>
     /// Represents a stretch of time with an associated availability for project work in FTE.
     /// </summary>
-    public class AvailabilityChange
+    public class AvailabilityChange : ILoggableClass
     {
         public int AvailabilityChangeId { get; set; }
 
@@ -22,5 +23,10 @@ namespace PPMTool.Data.Entities
         public string BaselineActivities { get; set; }
 
         public Person Person { get; set; }
+
+        public string GetSensibleObjectName()
+        {
+            return $"Availability change for {Person?.Name}";
+        }
     }
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -78,9 +77,10 @@ namespace PPMTool.Pages
                 // Log any time there is no role returned?
                 if (userRole == null)
                 {
-                    Logger.LogError($"{uname}: Role is null!");
+                    LogError($"{uname}: Role is null!");
                 }
             }
+            LogInformation("Viewing project grid");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)

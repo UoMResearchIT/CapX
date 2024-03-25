@@ -23,6 +23,8 @@ namespace PPMTool.Pages
             // Set up the base page
             dataGridEntityService = TagService;
             dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
+
+            LogInformation($"Viewing skills tags");
         }
 
         protected override async Task DeleteRow(SkillTag entity)
@@ -44,6 +46,7 @@ namespace PPMTool.Pages
                 }
 
                 // Remove tag
+                LogInformation($"Delete Tag {entity.Name}");
                 dataGridEntityService.Delete(context, entity);
 
                 await dataGrid.Reload();

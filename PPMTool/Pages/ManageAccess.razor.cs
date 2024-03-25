@@ -31,6 +31,8 @@ namespace PPMTool.Pages
             // Populate the people and role types for the dropdowns
             roles = Enum.GetValues(typeof(RoleType)).ToDynamicList<RoleType>();
             people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+
+            LogInformation($"Viewing access grid");
         }
     }
 }
