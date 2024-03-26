@@ -17,7 +17,7 @@ namespace PPMTool.Pages
         protected NavigationManager Navigation { get; set; }
 
         [CascadingParameter]
-        protected Task<AuthenticationState> authenticationStateTask { get; set; }
+        protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
         protected bool EditAuthorised { get; set; }
 
@@ -31,7 +31,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            AuthenticationState = authenticationStateTask.Result;
+            AuthenticationState = AuthenticationStateTask.Result;
 
             // Editing only permitted by managers and superusers
             EditAuthorised = (AuthenticationState?.User.IsInRole("Superuser") ?? false) || (AuthenticationState?.User.IsInRole("Manager") ?? false);
