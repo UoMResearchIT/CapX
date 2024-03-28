@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -8,6 +9,14 @@ namespace PPMTool.Services
 {
     public class RolesService : BaseService<Role>
     {
+
+        private ILogger<RolesService> _logger;
+
+        public RolesService(ILogger<RolesService> logger)
+        {
+            _logger = logger;
+        }
+
         public override int Add(PPMToolContext context, Role entity)
         {
             if (GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName()))
@@ -67,11 +76,13 @@ namespace PPMTool.Services
 
         public Role GetByUsername(PPMToolContext context, string username)
         {
+            _logger.LogInformation($"GetRoleByUsername({username})");
             return GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
         }
 
         public RoleType GetRoleTypeForUsername(PPMToolContext context, string username)
         {
+            _logger.LogInformation($"GetRoleTypeForUsername({username})");
             Role match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
             if (match != null)
             {
