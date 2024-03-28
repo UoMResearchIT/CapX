@@ -116,6 +116,10 @@ namespace PPMTool.Pages
                     // Set options
                     options2 = new ApexChartOptions<ChartItem>
                     {
+                        Stroke = new Stroke
+                        {
+                            Curve = new CurveSelections(new Curve[] { Curve.Straight })
+                        },
                         Annotations = new Annotations
                         {
                             Yaxis = new List<AnnotationsYAxis>
