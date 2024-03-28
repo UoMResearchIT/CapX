@@ -342,7 +342,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Event invoked when the end date driven setting is changed
+        /// Event invoked when the end date fixed setting is changed
         /// </summary>
         public event EventHandler EndDateDrivenChanged;
         protected virtual void OnHasFixedEndDateChanged(EventArgs e)

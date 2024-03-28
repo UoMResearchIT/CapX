@@ -71,7 +71,7 @@
 
             <div class="row">
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Fixed Start" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Fixed Start Date" /><br />
                     <div class="align-items-center p-1">
                         <div style="display: flex">
                             <RadzenSwitch @bind-value="taskModel.HasFixedStart" Disabled="@(taskModel.IsDone || selectedPredecessorId != null)" />
@@ -91,7 +91,7 @@
             <div class="row">
                 <!-- Choice of whether the end drive should be picked or driven -->
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="End Date Driven" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Fixed End Date" /><br />
                     <div class="align-items-center p-1">
                         <div style="display: flex">
                             <RadzenSwitch @bind-value="taskModel.HasFixedEndDate" Disabled="@(taskModel.IsDone || taskModel.TaskType != TaskType.FixedDuration)" />
