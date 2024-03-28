@@ -66,6 +66,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             loading = true;
+            context = new PPMToolContext();
 
             // Store the role of the user
             if (!EditAuthorised)
@@ -109,7 +110,6 @@ namespace PPMTool.Pages
         private void LoadProjectData(bool initial)
         {
             // Get projects from the database
-            context = new PPMToolContext();
             var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
 
             // Only show projects to developers that they are assigned to
@@ -124,7 +124,7 @@ namespace PPMTool.Pages
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
             {
-                Debug.WriteLine($"** Updating project summary data...");
+                Debug.WriteLine($"** Updating project summary data for {proj.Count} project(s)...");
                 for (int i = 0; i < proj.Count; ++i)
                 {
                     var p = proj[i];

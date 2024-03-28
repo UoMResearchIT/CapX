@@ -21,7 +21,7 @@
             <RadzenButton Click=@EditProject Text="Edit" Icon="edit" Disabled=!EditAuthorised />
         </div>
         <div class="col-auto">
-            <RadzenButton Click=@NavigateToRTPAsync Text="View on RTP" Icon="open_in_new" />
+            <RadzenButton Click=@NavigateToRTPAsync Text="View on RTP" Icon="open_in_new" Disabled=!EditAuthorised />
         </div>
     </div>
     <hr />
