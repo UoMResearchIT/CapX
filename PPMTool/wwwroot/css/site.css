@@ -89,9 +89,9 @@ select {
     height: 28px
 }
 
-switch-align {
+.centre-align {
     vertical-align: middle;
-    margin: 5px
+    margin-left: 2pt;
 }
 
 .green {
@@ -112,6 +112,10 @@ switch-align {
 
 .radzen-form-label {
     font-weight: bold
+}
+
+.radzen-note {
+    margin-left: 10pt
 }
 
 .radzen-dropdown {
