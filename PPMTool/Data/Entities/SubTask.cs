@@ -114,25 +114,25 @@ namespace PPMTool.Data.Entities
             }
         }
 
-        private bool isEndDateDriven = true;
+        private bool hasFixedEndDate = true;
         /// <summary>
-        /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round
+        /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round (i.e. the end date is fixed)
         /// </summary>
-        public bool IsEndDateDriven
+        public bool HasFixedEndDate
         {
-            get => isEndDateDriven;
+            get => hasFixedEndDate;
             set
             {
-                if (isEndDateDriven != value)
+                if (hasFixedEndDate != value)
                 {
-                    isEndDateDriven = value;
+                    hasFixedEndDate = value;
 
                     // Update the end date to match the start date plus a day
-                    if (!isEndDateDriven && EndDate <= StartDate)
+                    if (hasFixedEndDate && EndDate <= StartDate)
                     {
                         EndDate = StartDate.AddDays(1);
                     }
-                    OnEndDateDrivenChanged(new EventArgs());
+                    OnHasFixedEndDateChanged(new EventArgs());
                 }
             }
         }
@@ -142,10 +142,10 @@ namespace PPMTool.Data.Entities
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
-        /// <param name="permitUndrivenEndToMove">Whether we can move the end date to maintain 
-        /// the duration if the end date is not driven. Only applies to fixed duration tasks.</param>
+        /// <param name="permitEndDateToMove">Whether we can move the end date to maintain 
+        /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule(bool permitUndrivenEndToMove)
+        public string Schedule(bool permitEndDateToMove)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace PPMTool.Data.Entities
                 if (TaskType == TaskType.FixedUnits)
                 {
                     // End date must be driven
-                    IsEndDateDriven = true;
+                    HasFixedEndDate = false;
 
                     // Which one is updated based on preference
                     if (IsWorkDriven)
@@ -213,7 +213,7 @@ namespace PPMTool.Data.Entities
                 else if (TaskType == TaskType.FixedWork)
                 {
                     // End Date must be driven
-                    IsEndDateDriven = true;
+                    HasFixedEndDate = false;
 
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
@@ -225,11 +225,11 @@ namespace PPMTool.Data.Entities
                     // Make sure the duration is at least zero or greater
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
-                    // If we are allowed to move the end date to maintain the current duration then set the end date now
-                    if (!IsEndDateDriven && permitUndrivenEndToMove) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
+                    // If we are allowed to move the end date to maintain the current duration despite being marked as fixed then set the end date now
+                    if (HasFixedEndDate && permitEndDateToMove) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
-                    // If the end date is not driven then set duration here from the start and end dates
-                    if (!IsEndDateDriven) UpdateDurationFromEndDate();
+                    // If the end date is fixed then set duration here from the start and end dates
+                    if (HasFixedEndDate) UpdateDurationFromEndDate();
 
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
@@ -244,7 +244,7 @@ namespace PPMTool.Data.Entities
                 }
 
                 // Set end date from the duration
-                if (IsEndDateDriven) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
+                if (!HasFixedEndDate) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
                 return null;
             }
@@ -342,10 +342,10 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Event invoked when the end date driven setting is changed
+        /// Event invoked when the end date fixed setting is changed
         /// </summary>
         public event EventHandler EndDateDrivenChanged;
-        protected virtual void OnEndDateDrivenChanged(EventArgs e)
+        protected virtual void OnHasFixedEndDateChanged(EventArgs e)
         {
             EventHandler handler = EndDateDrivenChanged;
             handler?.Invoke(this, e);
