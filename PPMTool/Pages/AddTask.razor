@@ -94,7 +94,7 @@
                     <RadzenLabel class="radzen-form-label" Text="End Date Driven" /><br />
                     <div class="align-items-center p-1">
                         <div style="display: flex">
-                            <RadzenSwitch @bind-value="taskModel.IsEndDateDriven" Disabled="@(taskModel.IsDone || taskModel.TaskType != TaskType.FixedDuration)" />
+                            <RadzenSwitch @bind-value="taskModel.HasFixedEndDate" Disabled="@(taskModel.IsDone || taskModel.TaskType != TaskType.FixedDuration)" />
                         </div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
                 <!-- End date is can be driven by duration or chosen which will then drive the duration -->
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="End Date" /><br />
-                    <RadzenDatePicker @bind-Value="taskModel.EndDate" Disabled="@(taskModel.IsEndDateDriven || taskModel.IsDone)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker @bind-Value="taskModel.EndDate" Disabled="@(!taskModel.HasFixedEndDate || taskModel.IsDone)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
 
                 <div class="col">

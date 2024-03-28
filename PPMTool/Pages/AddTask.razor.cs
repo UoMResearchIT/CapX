@@ -104,7 +104,7 @@ namespace PPMTool.Pages
         {
             startDateDisabled = !taskModel.HasFixedStart || taskModel.IsDone;
             workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven) || taskModel.IsDone;
-            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && !taskModel.IsEndDateDriven || taskModel.IsDone;
+            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && taskModel.HasFixedEndDate || taskModel.IsDone;
         }
 
         private async void DeleteSubTask()
