@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using PPMTool.Data.Context;
 
 namespace PPMTool.Pages
 {
@@ -16,6 +18,9 @@ namespace PPMTool.Pages
         [Inject]
         protected NavigationManager Navigation { get; set; }
 
+        [Inject]
+        protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+
         [CascadingParameter]
         protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
@@ -27,10 +32,16 @@ namespace PPMTool.Pages
 
         private string activeUser = "None";
 
+        protected PPMToolContext context;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            // Create the context on every page
+            context = ContextFactory.CreateDbContext();
+
+            // Get authentication state
             AuthenticationState = AuthenticationStateTask.Result;
 
             // Editing only permitted by managers and superusers

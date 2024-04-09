@@ -11,10 +11,12 @@ namespace PPMTool.Services
     {
 
         private ILogger<RolesService> _logger;
+        private IDbContextFactory<PPMToolContext> _contextFactory;
 
-        public RolesService(ILogger<RolesService> logger)
+        public RolesService(ILogger<RolesService> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
             _logger = logger;
+            _contextFactory = contextFactory;
         }
 
         public override int Add(PPMToolContext context, Role entity)
@@ -52,7 +54,7 @@ namespace PPMTool.Services
         public void SeedSuperUser()
         {
             // Check if I am in the role database already
-            var context = new PPMToolContext();
+            var context = _contextFactory.CreateDbContext();
             var match = GetByUsername(context, "mbgm6ah3");
             if (match == null)
             {

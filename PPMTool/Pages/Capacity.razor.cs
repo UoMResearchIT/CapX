@@ -127,7 +127,6 @@ namespace PPMTool.Pages
         private List<Person> people;
         private List<Person> managers;
         private string chartTitle;
-        private PPMToolContext context;
         private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
         private bool queryResultsAvailable;
         private string queryErrorMessage;
@@ -145,7 +144,6 @@ namespace PPMTool.Pages
             base.OnInitialized();
             loading = true;
 
-            context = new PPMToolContext();
             options = new ApexChartOptions<ChartItem>
             {
                 PlotOptions = new PlotOptions

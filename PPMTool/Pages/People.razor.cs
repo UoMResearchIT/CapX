@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
@@ -19,7 +18,6 @@ namespace PPMTool.Pages
         private RolesService RoleService { get; set; }
 
         private IEnumerable<Person> people;
-        private PPMToolContext context;
         private int count;
         private int pageCount = 10;
 
@@ -28,7 +26,6 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Get people from the database
-            context = new PPMToolContext();
             LoadData(new LoadDataArgs());
             LogInformation($"Viewing people grid");
         }

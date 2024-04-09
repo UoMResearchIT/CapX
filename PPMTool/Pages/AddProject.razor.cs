@@ -37,7 +37,6 @@ namespace PPMTool.Pages
         EditForm ProjectForm { get; set; }
 
         private Project projectModel = new Project();
-        private PPMToolContext context;
         private bool gotoDetails = false;
         private bool discardChanges = true;
         private IEnumerable<string> innateActivities = new List<string>();
@@ -48,7 +47,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
 
             if (ProjectId > -1)
             {

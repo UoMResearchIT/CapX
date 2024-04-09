@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PPMTool.Data.Context;
 using PPMTool.Services;
 using Radzen.Blazor;
 
@@ -19,12 +18,10 @@ namespace PPMTool.Pages
         protected T entityToInsert;
         protected T entityToUpdate;
         protected IEntityService<T> dataGridEntityService;
-        protected PPMToolContext context;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
         }
 
         protected virtual void Reset()

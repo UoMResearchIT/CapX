@@ -39,7 +39,8 @@ namespace PPMTool.Data.Context
         /// </summary>
         /// <param name="optionsBuilder"></param>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseSqlite("DataSource=PPMTool.db");
+        {
+        }
 
         /// <summary>
         /// Define the model.
