@@ -2,15 +2,14 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 #endif
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace PPMTool.Pages.Account
 {
