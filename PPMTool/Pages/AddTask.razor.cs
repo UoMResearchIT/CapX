@@ -5,7 +5,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -48,7 +47,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
             dataGridEntities = new List<Resource>();
             people = PersonService.GetAll(context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)

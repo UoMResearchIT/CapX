@@ -7,7 +7,6 @@ using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -35,7 +34,6 @@ namespace PPMTool.Pages
         private List<ChartItem> chartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> options;
         private ApexChartOptions<ChartItem> options2;
-        private PPMToolContext context;
         private int count;
         private string plannedCostColour;
         private string actualCostColour;
@@ -44,9 +42,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
-            // Create context for later
-            context = new PPMToolContext();
 
             // Query string only consulted when Project ID is not specified in URL
             if (ProjectID == null && RTP != null)

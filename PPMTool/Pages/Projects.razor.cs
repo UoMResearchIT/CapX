@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -24,7 +23,6 @@ namespace PPMTool.Pages
         private ISessionStorageService SessionStorage { get; set; }
 
         private IEnumerable<Project> projects;
-        private PPMToolContext context;
         private Role userRole;
 
         private bool includeFinished;
@@ -66,7 +64,6 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             loading = true;
-            context = new PPMToolContext();
 
             // Store the role of the user
             if (!EditAuthorised)
