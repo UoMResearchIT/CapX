@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data
+@using PPMTool.Pages.Components
 
 <div class="container">
     @if (ProjectId < 0)
@@ -15,8 +16,14 @@
                 <h1>Edit @projectModel.GetFullName()</h1>
             </div>
             <div class="col-auto" style="align-content: center">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
             </div>
+        </div>
+    }
+    @if (!EditAuthorised)
+    {
+        <div class="row">
+            <ProjectManagerOnlyComponent />
         </div>
     }
     <hr />
@@ -87,7 +94,7 @@
             </div>
 
             <div>
-                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Click="@(()=> { gotoDetails = true; discardChanges = false; })" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Click="@(()=> { gotoDetails = true; discardChanges = false; })" Disabled=!EditAuthorised />
                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > -1; discardChanges = true; })" />
             </div>
         </EditForm>
