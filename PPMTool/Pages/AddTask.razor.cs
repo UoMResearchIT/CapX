@@ -24,6 +24,9 @@ namespace PPMTool.Pages
         private SubTaskService SubTaskService { get; set; }
 
         [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
         private IJSRuntime JsRuntime { get; set; }
 
         [Parameter]
@@ -63,6 +66,11 @@ namespace PPMTool.Pages
 
                 // Assign the predecessor option
                 if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
+
+                // If editing a task, only allow the project manager to edit it or a superuser
+                var user = AuthenticationState?.User;
+                var role = RolesService.GetByUsername(context, ActiveUser);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
             }
 
             if (TaskId > -1)

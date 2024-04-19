@@ -16,7 +16,7 @@
                 <h1>Edit @taskModel.Name</h1>
             </div>
             <div class="col-auto" style="align-content: center">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
             </div>
         </div>
         <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
@@ -223,7 +223,7 @@
             <div class="row">
                 <div class="col">
                     <RadzenButton ButtonType="ButtonType.Button" Click="UpdateSubTask" Text="Update" Icon="refresh" />
-                    <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" />
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" Disabled=!EditAuthorised />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                 </div>
             </div>
