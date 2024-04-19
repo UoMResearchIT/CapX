@@ -29,15 +29,17 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "rtp")]
         public int? RTP { get; set; }
 
-        private List<SubTask> data;
+        private List<SubTask> confirmedTasks;
+        private List<SubTask> provisionalTasks;
         private Project project;
-        private List<ChartItem> chartSource = new List<ChartItem>();
-        private ApexChartOptions<SubTask> options;
-        private ApexChartOptions<ChartItem> options2;
+        private List<ChartItem> burnUpChartSource = new List<ChartItem>();
+        private ApexChartOptions<SubTask> ganttChartOptions;
+        private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
         private string plannedCostColour;
         private string actualCostColour;
         private string fundsReceivedColour;
+        private ApexChart<SubTask> ganttChart;
 
         protected override void OnInitialized()
         {
@@ -54,19 +56,31 @@ namespace PPMTool.Pages
             if (ProjectID != null)
             {
                 project = ProjectService.GetById(context, ProjectID);
-                data = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                confirmedTasks = project.SubTasks.Where(x => !x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
+                provisionalTasks = project.SubTasks.Where(x => x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
-                count = data.Count;
+                count = confirmedTasks.Count + provisionalTasks.Count;
 
-                options = new ApexChartOptions<SubTask>
+                ganttChartOptions = new ApexChartOptions<SubTask>
                 {
                     PlotOptions = new PlotOptions
                     {
                         Bar = new PlotOptionsBar
                         {
-                            Horizontal = true
+                            Horizontal = true,
+                            RangeBarGroupRows = true
+                        }
+                    },
+                    Colors = new List<string> { "#1151F3", "#FFC107" },
+                    Fill = new Fill
+                    {
+                        Opacity = 1,
+                        Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                        Pattern = new FillPattern
+                        {
+                            Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                         }
                     }
                 };
@@ -92,15 +106,15 @@ namespace PPMTool.Pages
                     foreach (var week in temp)
                     {
                         cumulative += week.Value1;
-                        chartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulative), 0, false));
+                        burnUpChartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulative), 0, false));
                     }
 
                     // Early exit if chartSource has no data
-                    if (chartSource.Count < 1) return;
+                    if (burnUpChartSource.Count < 1) return;
 
                     // Create a new data point to indicate progress
-                    var seriesStart = chartSource.Min(x => x.StartDate);
-                    var seriesEnd = chartSource.Max(x => x.EndDate);
+                    var seriesStart = burnUpChartSource.Min(x => x.StartDate);
+                    var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
                     var actualsX = DateTime.Now.Date;
                     var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
 
@@ -109,7 +123,7 @@ namespace PPMTool.Pages
                     else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
 
                     // Set options
-                    options2 = new ApexChartOptions<ChartItem>
+                    burnUpChartOptions = new ApexChartOptions<ChartItem>
                     {
                         Stroke = new Stroke
                         {
@@ -240,19 +254,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging via Skip and Take.
-            data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
-        }
-
-        public class ActualPoint
-        {
-            public DateTime X { get; set; }
-            public double Y { get; set; }
-
-            public ActualPoint(DateTime x, double y)
-            {
-                X = x;
-                Y = y;
-            }
+            confirmedTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
         }
     }
 }

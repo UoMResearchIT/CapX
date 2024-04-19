@@ -77,10 +77,10 @@
     <div class="card">
         <ApexChart TItem="ChartItem"
                    XAxisType="XAxisType.Datetime"
-                   Options="options2">
+                   Options="burnUpChartOptions">
 
             <ApexPointSeries TItem="ChartItem"
-                             Items="chartSource"
+                             Items="burnUpChartSource"
                              SeriesType="@SeriesType.Area"
                              Name="Planned Work"
                              XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
@@ -115,7 +115,7 @@
                             AllowPaging="true"
                             PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
-                            Data="@data"
+                            Data="@confirmedTasks"
                             TItem="SubTask"
                             ColumnWidth="100px"
                             SelectionMode="DataGridSelectionMode.Single"
@@ -170,21 +170,33 @@
             <ApexChart TItem="SubTask"
                        Title="All Tasks"
                        XAxisType="XAxisType.Datetime"
-                       Options=options
-                       OnDataPointSelection="TaskSelected">
+                       Options=ganttChartOptions
+                       OnDataPointSelection="TaskSelected"
+                       @ref="ganttChart">
                 <ChildContent>
                     <ApexRangeSeries TItem="SubTask"
-                                     Items="data"
+                                     Items="confirmedTasks"
+                                     Name="Resources Confirmed"
                                      XValue="@(e => e.Name)"
                                      YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                     PointColor="@(e => e.AssignedResources.Any(x => x.IsProvisional) ? "#ffc107" : "#1151F3")" />
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+
+                    <ApexRangeSeries TItem="SubTask"
+                                     Items="provisionalTasks"
+                                     Name="Resources Provisional"
+                                     XValue="@(e => e.Name)"
+                                     YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
                 </ChildContent>
                 <ApexPointTooltip>
                     <div class="m-2">
                         @{
                             var point = (ListPoint<SubTask>)context.DataPoint;
-                            <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false ? "bg-warning" : "bg-transparent")">
+                            <div class="m-0 p-3">
+                                @if (point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false)
+                                {
+                                    <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL]</h3>
+                                }
                                 <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
