@@ -57,24 +57,28 @@ namespace PPMTool.Pages
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
             projectModel = ProjectService.GetById(context, ProjectId);
+
+            // No project then stop initialising
+            if (projectModel == null) return;
+
+            // Initialise sub tasks
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
+
+            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
+            var user = AuthenticationState?.User;
+            var role = RolesService.GetByUsername(context, ActiveUser);
+            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
 
             // Load task
             if (TaskId > -1)
             {
+                // Load model
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
 
                 // Assign the predecessor option
                 if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
 
-                // If editing a task, only allow the project manager to edit it or a superuser
-                var user = AuthenticationState?.User;
-                var role = RolesService.GetByUsername(context, ActiveUser);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
-            }
-
-            if (TaskId > -1)
-            {
+                // Assign resources
                 foreach (var r in taskModel.AssignedResources)
                 {
                     dataGridEntities.Add(r);
@@ -94,6 +98,14 @@ namespace PPMTool.Pages
             UpdateUIState(taskModel, new EventArgs());
 
             LogInformation(taskModel.SubTaskId > 0 ? $"Editing task {taskModel?.Name} on {projectModel?.GetFullName()}" : $"Adding new task to {projectModel?.GetFullName()}");
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            // If no project then navigate away
+            if (projectModel == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private string GetNiceString(Enum x)
