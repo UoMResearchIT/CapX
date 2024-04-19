@@ -2,12 +2,21 @@
 @inherits DataGridPage<Resource>
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     @if (TaskId < 0)
     {
-        <h1>Add Task</h1>
-        <p>Add new task to <b>@projectModel?.GetFullName()</b></p>
+        <div class="row">
+            <div class="col-auto">
+                <h1>Add Task</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Add new task to <b>@projectModel?.GetFullName()</b></p>
+            </div>
+        </div>
     }
     else
     {
@@ -19,8 +28,18 @@
                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
             </div>
         </div>
-        <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
+        <div class="row">
+            <div class="col">
+                <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
+            </div>
+        </div>
 
+    }
+    @if (!EditAuthorised)
+    {
+        <div class="row">
+            <ProjectManagerOnlyComponent />
+        </div>
     }
     <hr />
     <div class="card">
@@ -229,7 +248,15 @@
             </div>
             @if (!isValid)
             {
-                <p style="color: red">Task configuration insufficent for scheduling. Please correct and update again: @error</p>
+                <hr />
+                <div class="row">
+                    <div class="col-auto">
+                        <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" />
+                    </div>
+                    <div class="col">
+                        <RadzenText Style="color: var(--rz-danger)" Text=@($"Task configuration insufficent for scheduling. Please correct and update again: {error}") />
+                    </div>
+                </div>                
             }
 
         </EditForm>

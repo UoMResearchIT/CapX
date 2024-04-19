@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data
+@using PPMTool.Pages.Components
 
 <div class="container">
     @if (ProjectId < 0)
@@ -17,6 +18,12 @@
             <div class="col-auto" style="align-content: center">
                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
             </div>
+        </div>
+    }
+    @if (!EditAuthorised)
+    {
+        <div class="row">
+            <ProjectManagerOnlyComponent />
         </div>
     }
     <hr />
