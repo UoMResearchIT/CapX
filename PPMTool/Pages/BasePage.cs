@@ -28,10 +28,9 @@ namespace PPMTool.Pages
 
         protected AuthenticationState AuthenticationState { get; private set; }
 
+        protected string ActiveUser { get; private set; } = "None";
+
         protected bool loading;
-
-        private string activeUser = "None";
-
         protected PPMToolContext context;
 
         protected override void OnInitialized()
@@ -48,17 +47,17 @@ namespace PPMTool.Pages
             EditAuthorised = (AuthenticationState?.User.IsInRole("Superuser") ?? false) || (AuthenticationState?.User.IsInRole("Manager") ?? false);
 
             // Stash the user name
-            activeUser = AuthenticationState?.User.Identity.Name.Trim().ToLower();
+            ActiveUser = AuthenticationState?.User.Identity.Name.Trim().ToLower();
         }
 
         protected void LogInformation(string message)
         {
-            Logger?.LogInformation($"{activeUser}: {message}");
+            Logger?.LogInformation($"{ActiveUser}: {message}");
         }
 
         protected void LogWarning(string message)
         {
-            Logger.LogWarning($"{activeUser}: {message}");
+            Logger.LogWarning($"{ActiveUser}: {message}");
         }
 
         protected void LogError(string message)
