@@ -51,6 +51,11 @@ namespace PPMTool.Pages
             if (ProjectId > -1)
             {
                 projectModel = ProjectService.GetById(context, ProjectId);
+
+                // If editing a project, only allow the project manager to edit it or a superuser
+                var user = AuthenticationState?.User;
+                var role = RolesService.GetByUsername(context, ActiveUser);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
             }
 
             innateActivities = ResourceHelper.AvailableInnateActivities.ToList();
