@@ -525,7 +525,8 @@ namespace PPMTool.Pages
                         queryActive ? queryEndDate : endDate,
                         x =>
                         {
-                            // TODO: Also should be considered "hatched" if the owning project is not funded, active, or maintenance
+                            // TODO: Also should be considered "hatched" if the owning project is not
+                            // funded, active, or maintenance
                             return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
                         },
                         (x, w) =>
@@ -621,6 +622,41 @@ namespace PPMTool.Pages
             confirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched).ToList();
             provisionalChartItems = chartSourceTemp.Where(x => x.IsHatched).ToList();
 
+
+            // Horrible hack required to get the Y-axis sorting to work correctly with multiple series
+            if (chosenPeople != null && chosenPeople.Count() > 0)
+            {
+                confirmedChartItems.Clear();
+                provisionalChartItems.Clear();
+
+                var confirmedChartItemsTemp = chartSourceTemp;
+                foreach (var c in confirmedChartItemsTemp)
+                {
+                    if (!c.IsHatched)
+                    {
+                        confirmedChartItems.Add(c);
+                    }
+                    else
+                    {
+                        confirmedChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Now.Date, DateTime.Now.Date, 0, 0, c.IsHatched));
+                    }
+                }
+
+                var provisionalChartItemsTemp = chartSourceTemp;
+                foreach (var c in provisionalChartItemsTemp)
+                {
+                    if (c.IsHatched)
+                    {
+                        provisionalChartItems.Add(c);
+                    }
+                    else
+                    {
+                        provisionalChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Now.Date, DateTime.Now.Date, 0, 0, c.IsHatched));
+                    }
+                }
+            }
+
+            // Title
             chartTitle = $"Load for {(peopleChosen ? string.Join(",", ChosenPeople) : (!managerChosen ? "All" : "None"))} " +
                 $"{(managerChosen ? " with manager " + ChosenManager.Name : "")}";
             Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
@@ -672,9 +708,11 @@ namespace PPMTool.Pages
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                // Hatched value is whether any assignee is provisional
+                // Hatched value is whether any assignee is provisional or owning
+                // project is not funded, active or in maintenance
                 x =>
                 {
+                    // TODO: Make this correct as per the decription about
                     var resources = chosenPerson == null ?
                         x.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
                         x.AssignedResources.Where(x => x.Person == chosenPerson);
