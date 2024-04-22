@@ -122,8 +122,9 @@ namespace PPMTool.Pages
 
         private IDictionary<object, IEnumerable<SubTask>> groupedSubTasks;
         private ApexChart<ChartItem> chart;
-        private List<ChartItem> chartSource;
-        private ApexChartOptions<ChartItem> options;
+        private List<ChartItem> confirmedChartItems;
+        private List<ChartItem> provisionalChartItems;
+        private ApexChartOptions<ChartItem> chartOptions;
         private List<Person> people;
         private List<Person> managers;
         private string chartTitle;
@@ -144,14 +145,15 @@ namespace PPMTool.Pages
             base.OnInitialized();
             loading = true;
 
-            options = new ApexChartOptions<ChartItem>
+            chartOptions = new ApexChartOptions<ChartItem>
             {
                 PlotOptions = new PlotOptions
                 {
                     Bar = new PlotOptionsBar
                     {
                         Horizontal = true,
-                        RangeBarOverlap = true
+                        RangeBarOverlap = true,
+                        RangeBarGroupRows = true
                     }
                 },
                 Legend = new Legend
@@ -161,9 +163,11 @@ namespace PPMTool.Pages
                 Xaxis = new XAxis { },
                 Fill = new Fill
                 {
+                    Opacity = 1,
+                    Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
                     Pattern = new FillPattern
                     {
-                        Style = FillPatternStyle.SlantedLines
+                        Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                     }
                 }
             };
@@ -371,8 +375,9 @@ namespace PPMTool.Pages
             // Update the chart source as this is used
             await ConfigureSourceAsync();
 
-            // Convert the chart results to capcity query results
-            foreach (var item in chartSource)
+            // Convert the chart results to capacity query results
+            var mergedItems = confirmedChartItems.Concat(provisionalChartItems).ToList();
+            foreach (var item in mergedItems)
             {
                 // Get person from item label
                 var person = people.FirstOrDefault(p => p.Name == item.Label);
@@ -423,7 +428,6 @@ namespace PPMTool.Pages
 
         /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
-        /// Can specific a start and end date to restrict the data window
         /// </summary>
         private async Task ConfigureSourceAsync()
         {
@@ -439,7 +443,8 @@ namespace PPMTool.Pages
                 LogError("People database is empty!");
                 Debug.WriteLine("** No people registered in the database!");
                 loading = false;
-                chartSource = new List<ChartItem>();
+                confirmedChartItems = new List<ChartItem>();
+                provisionalChartItems = new List<ChartItem>();
                 return;
             }
 
@@ -462,7 +467,8 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** No projects found that match the chosen options!");
                 loading = false;
-                chartSource = new List<ChartItem>();
+                confirmedChartItems = new List<ChartItem>();
+                provisionalChartItems = new List<ChartItem>();
                 return;
             }
             var startDate = safeProjects.Min(x => x.StartDate);
@@ -519,6 +525,7 @@ namespace PPMTool.Pages
                         queryActive ? queryEndDate : endDate,
                         x =>
                         {
+                            // TODO: Also should be considered "hatched" if the owning project is not funded, active, or maintenance
                             return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
                         },
                         (x, w) =>
@@ -611,20 +618,21 @@ namespace PPMTool.Pages
 
             // Assign new source
             loading = false;
-            chartSource = chartSourceTemp;
+            confirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched).ToList();
+            provisionalChartItems = chartSourceTemp.Where(x => x.IsHatched).ToList();
 
             chartTitle = $"Load for {(peopleChosen ? string.Join(",", ChosenPeople) : (!managerChosen ? "All" : "None"))} " +
                 $"{(managerChosen ? " with manager " + ChosenManager.Name : "")}";
             Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
             // Format X Axis range
-            options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-            options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
+            chartOptions.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+            chartOptions.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
 
             // First time this is called, there is no reference to the chart
             if (chart != null)
             {
-                Debug.WriteLine($"** Re-renderering chart with options! {options.Xaxis.Min} to {options.Xaxis.Max}");
+                Debug.WriteLine($"** Re-renderering chart with options! {chartOptions.Xaxis.Min} to {chartOptions.Xaxis.Max}");
                 await RefreshChartAsync();
             }
             else
@@ -632,7 +640,7 @@ namespace PPMTool.Pages
                 await InvokeAsync(StateHasChanged);
             }
 
-            Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
+            Debug.WriteLine($"** ChartSource has {confirmedChartItems?.Count()} confirmed entries and {provisionalChartItems.Count()} provisional entries!");
         }
 
         private IEnumerable<ChartItem> GetProjectModeChartItemsFromTasks(
