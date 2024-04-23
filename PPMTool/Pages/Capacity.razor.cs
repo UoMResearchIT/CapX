@@ -120,7 +120,7 @@ namespace PPMTool.Pages
             }
         }
 
-        private IDictionary<object, IEnumerable<SubTask>> groupedSubTasks;
+        private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
         private ApexChart<ChartItem> chart;
         private List<ChartItem> confirmedChartItems;
         private List<ChartItem> provisionalChartItems;
@@ -475,7 +475,7 @@ namespace PPMTool.Pages
             var endDate = safeProjects.Max(x => x.EndDate);
 
             // Reinitialise dictionary
-            groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
+            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
 
             // Determine state
             UpdateSelectionState();
@@ -489,26 +489,26 @@ namespace PPMTool.Pages
                 foreach (var person in people)
                 {
                     // Create a list of subtasks to which this person is assigned
-                    var assignments = new List<SubTask>();
+                    var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
                         foreach (var subTask in project.SubTasks)
                         {
                             if (subTask.AssignedResources.Any(z => z.Person == person))
                             {
-                                assignments.Add(subTask);
+                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
                             }
                         }
                     }
 
                     // Add dictionary entry with person as key
-                    groupedSubTasks.Add(person, assignments);
+                    groupedAssignments.Add(person, assignments);
                 }
 
                 // Build chart source from the grouped data
-                foreach (var group in groupedSubTasks)
+                foreach (var group in groupedAssignments)
                 {
-                    var items = ChartHelper.ConvertSubTasksToChartItemsForPerson(
+                    var items = ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                         group.Key as Person,
                         group.Value,
                         x =>
@@ -525,9 +525,13 @@ namespace PPMTool.Pages
                         queryActive ? queryEndDate : endDate,
                         x =>
                         {
-                            // TODO: Also should be considered "hatched" if the owning project is not
-                            // funded, active, or maintenance
-                            return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
+                            // If any resources are marked as provisional or the project owning the task
+                            // is not funded, active or in maintenance
+                            return
+                                (x.ProjectStatus != ProjectStatus.Funded &&
+                                x.ProjectStatus != ProjectStatus.Active &&
+                                x.ProjectStatus != ProjectStatus.Maintenance) ||
+                                x.SubTask.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
                         },
                         (x, w) =>
                         {
@@ -548,35 +552,35 @@ namespace PPMTool.Pages
                 Debug.WriteLine("** Chart in PROJECT MODE.");
 
                 // For each person selected
-                List<SubTask> subTasksAllPeople = new List<SubTask>();
+                List<Assignment> assignmentsAllPeople = new List<Assignment>();
                 foreach (var name in ChosenPeople)
                 {
                     // Get person object
                     var person = people.First(x => x.Name == name);
 
                     // Reset the grouped subtasks list for the next person
-                    groupedSubTasks.Clear();
+                    groupedAssignments.Clear();
 
                     // Create a list of subtasks for each project this person is assigned to
                     foreach (var project in projects)
                     {
-                        var assignments = new List<SubTask>();
+                        var assignments = new List<Assignment>();
                         foreach (var subTask in project.SubTasks)
                         {
-                            // Only include subtasks with this person assigned aa resource
-                            if (subTask.AssignedResources.Any(z => name == z.Person.Name))
+                            // Only include subtasks with this person assigned as a resource
+                            if (subTask.AssignedResources.Any(x => name == x.Person.Name))
                             {
-                                assignments.Add(subTask);
+                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
                             }
                         }
 
                         // Add dictionary entry with project name as key
-                        if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
+                        if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
                     }
 
                     // Build chart source from the grouped data
-                    Debug.WriteLine($"** {person.Name} has {groupedSubTasks.Count} projects");
-                    foreach (var group in groupedSubTasks)
+                    Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+                    foreach (var group in groupedAssignments)
                     {
                         // Give unique name to series when multiple people selected
                         var seriesName = (group.Key as Project).GetFullName();
@@ -586,12 +590,12 @@ namespace PPMTool.Pages
                     }
 
                     // Total row needs to repeat the above logic but on the flattened set of subtasks
-                    var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
+                    var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                     var rowName = $"Total ({name})";
                     chartSourceTemp.AddRange(
                         GetProjectModeChartItemsFromTasks(
                             rowName,
-                            new KeyValuePair<object, IEnumerable<SubTask>>(rowName, allProjectSubTasks),
+                            new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
                             startDate,
                             endDate,
                             person
@@ -599,7 +603,7 @@ namespace PPMTool.Pages
                     );
 
                     // Add the subtasks to the aggregated list for later (if more than one person)
-                    if (ChosenPeople.Count() > 1) subTasksAllPeople.AddRange(allProjectSubTasks);
+                    if (ChosenPeople.Count() > 1) assignmentsAllPeople.AddRange(allProjectAssignments);
                 }
 
                 if (ChosenPeople.Count() > 1)
@@ -609,7 +613,7 @@ namespace PPMTool.Pages
                     chartSourceTemp.AddRange(
                         GetProjectModeChartItemsFromTasks(
                             totalName,
-                            new KeyValuePair<object, IEnumerable<SubTask>>(totalName, subTasksAllPeople),
+                            new KeyValuePair<object, IEnumerable<Assignment>>(totalName, assignmentsAllPeople),
                             startDate,
                             endDate
                         )
@@ -624,6 +628,7 @@ namespace PPMTool.Pages
 
 
             // Horrible hack required to get the Y-axis sorting to work correctly with multiple series
+            // by adding zero width entries to ensure both series have the same number of Y categories
             if (chosenPeople != null && chosenPeople.Count() > 0)
             {
                 confirmedChartItems.Clear();
@@ -681,14 +686,14 @@ namespace PPMTool.Pages
 
         private IEnumerable<ChartItem> GetProjectModeChartItemsFromTasks(
             string seriesName,
-            KeyValuePair<object, IEnumerable<SubTask>> group,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person chosenPerson = null
         )
         {
-            return ChartHelper.ConvertSubTasksToChartItems(
-                group.Value,
+            return ChartHelper.ConvertAssignmentsToChartItems(
+                groupedAssignments.Value,
                 // Value 1 for each block
                 x =>
                 {
@@ -700,23 +705,28 @@ namespace PPMTool.Pages
                     return resources.RoundedSum(x => x.AssignmentFTE);
 
                 },
-                // Shading function based on value 1 and value 2
                 (x, y) =>
                 {
+                    // Shading function based on value 1 and value 2
                     return ChartItem.GetColourStringFTE(x, y);
                 },
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                // Hatched value is whether any assignee is provisional or owning
-                // project is not funded, active or in maintenance
                 x =>
                 {
-                    // TODO: Make this correct as per the decription about
+                    // Get the set of resources to check the condition against
                     var resources = chosenPerson == null ?
-                        x.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
-                        x.AssignedResources.Where(x => x.Person == chosenPerson);
-                    return resources.Any(x => x.IsProvisional);
+                        x.SubTask.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
+                        x.SubTask.AssignedResources.Where(x => x.Person == chosenPerson);
+
+                    // If any resources are marked as provisional or the project owning the task
+                    // is not funded, active or in maintenance
+                    return
+                        (x.ProjectStatus != ProjectStatus.Funded &&
+                        x.ProjectStatus != ProjectStatus.Active &&
+                        x.ProjectStatus != ProjectStatus.Maintenance) ||
+                        resources.Any(x => x.IsProvisional);
                 },
                 // Value 2 for each block is based on the sum of the availability of all chosen people
                 (x, w) =>
