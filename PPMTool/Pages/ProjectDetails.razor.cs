@@ -256,7 +256,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging via Skip and Take.
-            confirmedTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            allTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
         }
     }
 }
