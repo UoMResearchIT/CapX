@@ -77,10 +77,10 @@
     <div class="card">
         <ApexChart TItem="ChartItem"
                    XAxisType="XAxisType.Datetime"
-                   Options="options2">
+                   Options="burnUpChartOptions">
 
             <ApexPointSeries TItem="ChartItem"
-                             Items="chartSource"
+                             Items="burnUpChartSource"
                              SeriesType="@SeriesType.Area"
                              Name="Planned Work"
                              XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
@@ -115,7 +115,7 @@
                             AllowPaging="true"
                             PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
-                            Data="@data"
+                            Data="@allTasks"
                             TItem="SubTask"
                             ColumnWidth="100px"
                             SelectionMode="DataGridSelectionMode.Single"
@@ -123,7 +123,17 @@
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
+                        <Template Context="t">
+                            <span style="display: flex; align-items: center">
+                                @if (t.AssignedResources.Any(x => x.IsProvisional))
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title="Resources are only provisionally assigned to this task!"/>
+                                }
+                                @t.Name
+                            </span>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="task">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
@@ -170,21 +180,33 @@
             <ApexChart TItem="SubTask"
                        Title="All Tasks"
                        XAxisType="XAxisType.Datetime"
-                       Options=options
-                       OnDataPointSelection="TaskSelected">
+                       Options=ganttChartOptions
+                       OnDataPointSelection="TaskSelected"
+                       @ref="ganttChart">
                 <ChildContent>
                     <ApexRangeSeries TItem="SubTask"
-                                     Items="data"
+                                     Items="confirmedTasks"
+                                     Name="Resources Confirmed"
                                      XValue="@(e => e.Name)"
                                      YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                     PointColor="@(e => e.AssignedResources.Any(x => x.IsProvisional) ? "#ffc107" : "#1151F3")" />
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+
+                    <ApexRangeSeries TItem="SubTask"
+                                     Items="provisionalTasks"
+                                     Name="Resources Provisional"
+                                     XValue="@(e => e.Name)"
+                                     YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
                 </ChildContent>
                 <ApexPointTooltip>
                     <div class="m-2">
                         @{
                             var point = (ListPoint<SubTask>)context.DataPoint;
-                            <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false ? "bg-warning" : "bg-transparent")">
+                            <div class="m-0 p-3">
+                                @if (point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false)
+                                {
+                                    <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL]</h3>
+                                }
                                 <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
