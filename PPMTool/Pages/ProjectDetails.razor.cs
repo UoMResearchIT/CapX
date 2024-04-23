@@ -31,6 +31,7 @@ namespace PPMTool.Pages
 
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
+        private List<SubTask> allTasks;
         private Project project;
         private List<ChartItem> burnUpChartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> ganttChartOptions;
@@ -58,10 +59,11 @@ namespace PPMTool.Pages
                 project = ProjectService.GetById(context, ProjectID);
                 confirmedTasks = project.SubTasks.Where(x => !x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 provisionalTasks = project.SubTasks.Where(x => x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
+                allTasks = confirmedTasks.Concat(provisionalTasks).ToList();
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
-                count = confirmedTasks.Count + provisionalTasks.Count;
+                count = allTasks.Count;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
                 {

@@ -115,7 +115,7 @@
                             AllowPaging="true"
                             PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
-                            Data="@confirmedTasks"
+                            Data="@allTasks"
                             TItem="SubTask"
                             ColumnWidth="100px"
                             SelectionMode="DataGridSelectionMode.Single"
@@ -123,7 +123,17 @@
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
+                        <Template Context="t">
+                            <span style="display: flex; align-items: center">
+                                @if (t.AssignedResources.Any(x => x.IsProvisional))
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title="Resources are only provisionally assigned to this task!"/>
+                                }
+                                @t.Name
+                            </span>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="task">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
