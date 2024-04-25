@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -165,6 +166,7 @@ namespace PPMTool.Pages
             LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
             dataGridEntities.Add(resource);
             entityToInsert = null;
+            taskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         protected override void OnUpdateRow(Resource entity)
@@ -174,6 +176,7 @@ namespace PPMTool.Pages
 
         private void OnResourcePersonChange(object value)
         {
+            Debug.WriteLine("** Resource Person Change");
             Person person = value as Person;
             if (person != null)
             {
@@ -197,6 +200,18 @@ namespace PPMTool.Pages
                     resourceToChange.DayRate = person.DayRate;
                 }
             }
+        }
+
+        protected override async Task DeleteRow(Resource entity)
+        {
+            await base.DeleteRow(entity);
+            taskModel.UpdateUnmetDemand(dataGridEntities);
+        }
+
+        protected override async Task SaveRow(Resource entity)
+        {
+            await base.SaveRow(entity);
+            taskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         private void DiscardChanges()

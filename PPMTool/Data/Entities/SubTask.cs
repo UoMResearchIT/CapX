@@ -337,14 +337,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the unmet demand value for this task.
-        /// </summary>
-        private void UpdateUnmetDemand()
-        {
-            UnmetDemand = Demand - AssignedResources.Sum(r => r.AssignmentFTE);
-        }
-
-        /// <summary>
         /// Event invoked when the task type is changed
         /// </summary>
         public event EventHandler TaskTypeChanged;
@@ -392,6 +384,19 @@ namespace PPMTool.Data.Entities
         {
             EventHandler handler = DoneChanged;
             handler?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Updates the unmet demand value for this task.
+        /// </summary>
+        /// <param name="assignedResources">List of resources to use in the update. If not supplied will use the resources saved on the entity.</param>
+        public void UpdateUnmetDemand(IEnumerable<Resource> assignedResources = null)
+        {
+            if (assignedResources == null)
+            {
+                assignedResources = AssignedResources;
+            }
+            UnmetDemand = Math.Round(100 * (Demand - assignedResources.Sum(r => r.AssignmentFTE))) / 100f;
         }
 
         /// <summary>
