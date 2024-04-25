@@ -397,6 +397,7 @@ namespace PPMTool.Data.Entities
                 assignedResources = AssignedResources;
             }
             UnmetDemand = Math.Round(100 * (Demand - assignedResources.Sum(r => r.AssignmentFTE))) / 100f;
+            if (UnmetDemand < 0) UnmetDemand = 0;
         }
 
         /// <summary>
@@ -429,6 +430,24 @@ namespace PPMTool.Data.Entities
             else if (ActualWorkHours > PlannedWorkHours) BudgetStatus = BudgetStatus.Overspend;
             else BudgetStatus = BudgetStatus.OnBudget;
 
+        }
+
+        /// <summary>
+        /// Checks whether the task has any provisional resources assigned to it.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasProvisionalResources()
+        {
+            return AssignedResources.Any(r => r.IsProvisional);
+        }
+
+        /// <summary>
+        /// Checks whether the task has any unmet demand.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasUnmetDemand()
+        {
+            return UnmetDemand > 0;
         }
     }
 }

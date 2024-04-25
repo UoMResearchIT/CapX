@@ -126,9 +126,17 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
                         <Template Context="t">
                             <span style="display: flex; align-items: center">
-                                @if (t.AssignedResources.Any(x => x.IsProvisional))
+                                @if (t.HasUnmetDemand())
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="error" IconStyle="IconStyle.Danger" title="Task is currently under-resourced!"/>                                    
+                                }
+                                @if (t.HasProvisionalResources())
                                 {
                                     <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title="Resources are only provisionally assigned to this task!"/>
+                                }
+                                @if (!t.HasProvisionalResources() && !t.HasUnmetDemand())
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="check" IconStyle="IconStyle.Success" title="Task is has enough confirmed resources to meet demand!" />
                                 }
                                 @t.Name
                             </span>
