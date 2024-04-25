@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Linq;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -136,6 +138,29 @@ namespace PPMTool.Data.Entities
                 }
             }
         }
+
+        private double demand;
+        /// <summary>
+        /// The minimum demand required to complete this task in FTE.
+        /// </summary>
+        [Required]
+        public double Demand
+        {
+            get => demand;
+            set
+            {
+                if (demand != value)
+                {
+                    demand = value;
+                    UpdateUnmetDemand();
+                }
+            }
+        }
+
+        /// <summary>
+        /// The difference between the demand and the sum of the assigned resources.
+        /// </summary>
+        public double UnmetDemand { get; set; }
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
@@ -309,6 +334,14 @@ namespace PPMTool.Data.Entities
         private int GetNumberOfCalendarDays(int billableDays)
         {
             return (int)Math.Round(billableDays / 220f * 365f);
+        }
+
+        /// <summary>
+        /// Updates the unmet demand value for this task.
+        /// </summary>
+        private void UpdateUnmetDemand()
+        {
+            UnmetDemand = Demand - AssignedResources.Sum(r => r.AssignmentFTE);
         }
 
         /// <summary>
