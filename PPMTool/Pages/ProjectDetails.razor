@@ -186,7 +186,7 @@
         </div>
         <div class="card">
             <ApexChart TItem="SubTask"
-                       Title="All Tasks"
+                       Title="Note: Any tasks shaded in red indicate unmet demand."
                        XAxisType="XAxisType.Datetime"
                        Options=ganttChartOptions
                        OnDataPointSelection="TaskSelected"
@@ -197,14 +197,16 @@
                                      Name="Resources Confirmed"
                                      XValue="@(e => e.Name)"
                                      YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                     PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
 
                     <ApexRangeSeries TItem="SubTask"
                                      Items="provisionalTasks"
                                      Name="Resources Provisional"
                                      XValue="@(e => e.Name)"
                                      YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                     PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
                 </ChildContent>
                 <ApexPointTooltip>
                     <div class="m-2">

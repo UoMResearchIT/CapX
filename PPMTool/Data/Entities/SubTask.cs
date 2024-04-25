@@ -449,5 +449,14 @@ namespace PPMTool.Data.Entities
         {
             return UnmetDemand > 0;
         }
+
+        /// <summary>
+        /// Returns the percentage of the minimum demand that is unmet.
+        /// </summary>
+        /// <returns></returns>
+        public double GetPercentageUnmetDemand()
+        {
+            return Math.Round(UnmetDemand / Demand * 100);
+        }
     }
 }
