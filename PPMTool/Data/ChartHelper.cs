@@ -121,6 +121,7 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
             IEnumerable<Assignment> assignments,
@@ -130,12 +131,13 @@ namespace PPMTool.Data
             DateTime startDate,
             DateTime endDate,
             Func<Assignment, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             return AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
         }
 
@@ -252,6 +254,7 @@ namespace PPMTool.Data
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
+        /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments provided</param>
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
             IEnumerable<Assignment> assignments,
@@ -261,7 +264,8 @@ namespace PPMTool.Data
             DateTime startDate,
             DateTime endDate,
             Func<Assignment, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             // Each block is considered an element of a series.
@@ -329,7 +333,8 @@ namespace PPMTool.Data
                             currentDay,
                             valueTracked,
                             value2Tracked,
-                            hatchedTracked ?? false
+                            hatchedTracked ?? false,
+                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
                         ));
                     }
                     currentBlockStartDay = currentDay;
@@ -352,7 +357,8 @@ namespace PPMTool.Data
                     currentDay,
                     valueDay,
                     value2Day,
-                    hatchedDay
+                    hatchedDay,
+                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
                 ));
             }
             return temp;

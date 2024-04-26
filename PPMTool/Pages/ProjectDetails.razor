@@ -4,6 +4,7 @@
 @using PPMTool.Data;
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     <div class="row">
@@ -126,9 +127,17 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
                         <Template Context="t">
                             <span style="display: flex; align-items: center">
-                                @if (t.AssignedResources.Any(x => x.IsProvisional))
+                                @if (t.HasUnmetDemand())
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="error" IconStyle="IconStyle.Danger" title=@($"Task is currently under-resourced ({t.UnmetDemand} FTE)!")/>                                    
+                                }
+                                @if (t.HasProvisionalResources())
                                 {
                                     <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title="Resources are only provisionally assigned to this task!"/>
+                                }
+                                @if (!t.HasProvisionalResources() && !t.HasUnmetDemand())
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="check" IconStyle="IconStyle.Success" title="Task is has enough confirmed resources to meet demand!" />
                                 }
                                 @t.Name
                             </span>
@@ -138,6 +147,18 @@
                         <Template Context="task">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
                             </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="UnmetDemand" Title="Unmet Demand" FormatString="{0:F1}" MinWidth="10px">
+                        <Template Context="t">
+                            @if(t.HasUnmetDemand())
+                            {
+                                <RadzenText Style="color: var(--rz-danger)" Text=@t.UnmetDemand.ToString() />
+                            }
+                            else
+                            {
+                                @t.UnmetDemand.ToString()
+                            }
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start" MinWidth="10px">
@@ -161,6 +182,7 @@
                             @t.TaskType.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F1}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" MinWidth="10px">
                         <Template Context="t">
                             @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
@@ -178,7 +200,7 @@
         </div>
         <div class="card">
             <ApexChart TItem="SubTask"
-                       Title="All Tasks"
+                       Title="Note: Any tasks shaded in red indicate unmet demand."
                        XAxisType="XAxisType.Datetime"
                        Options=ganttChartOptions
                        OnDataPointSelection="TaskSelected"
@@ -189,23 +211,29 @@
                                      Name="Resources Confirmed"
                                      XValue="@(e => e.Name)"
                                      YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                     PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
 
                     <ApexRangeSeries TItem="SubTask"
                                      Items="provisionalTasks"
                                      Name="Resources Provisional"
                                      XValue="@(e => e.Name)"
                                      YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())" />
+                                     YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                     PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
                 </ChildContent>
                 <ApexPointTooltip>
                     <div class="m-2">
                         @{
                             var point = (ListPoint<SubTask>)context.DataPoint;
                             <div class="m-0 p-3">
-                                @if (point.Items.FirstOrDefault()?.AssignedResources.Any(x => x.IsProvisional) ?? false)
+                                @if (point.Items.FirstOrDefault()?.HasProvisionalResources() ?? false)
                                 {
-                                    <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL]</h3>
+                                    <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>
+                                }
+                                @if (point.Items.FirstOrDefault()?.HasUnmetDemand() ?? false)
+                                {
+                                    <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().UnmetDemand FTE)]</h3>
                                 }
                                 <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>

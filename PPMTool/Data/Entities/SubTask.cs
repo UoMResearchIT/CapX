@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Linq;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -136,6 +138,29 @@ namespace PPMTool.Data.Entities
                 }
             }
         }
+
+        private double demand;
+        /// <summary>
+        /// The minimum demand required to complete this task in FTE.
+        /// </summary>
+        [Required]
+        public double Demand
+        {
+            get => demand;
+            set
+            {
+                if (demand != value)
+                {
+                    demand = value;
+                    UpdateUnmetDemand();
+                }
+            }
+        }
+
+        /// <summary>
+        /// The difference between the demand and the sum of the assigned resources.
+        /// </summary>
+        public double UnmetDemand { get; set; }
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
@@ -362,6 +387,20 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Updates the unmet demand value for this task.
+        /// </summary>
+        /// <param name="assignedResources">List of resources to use in the update. If not supplied will use the resources saved on the entity.</param>
+        public void UpdateUnmetDemand(IEnumerable<Resource> assignedResources = null)
+        {
+            if (assignedResources == null)
+            {
+                assignedResources = AssignedResources;
+            }
+            UnmetDemand = Math.Round(100 * (Demand - assignedResources.Sum(r => r.AssignmentFTE))) / 100f;
+            if (UnmetDemand < 0) UnmetDemand = 0;
+        }
+
+        /// <summary>
         /// Method to update the budget and schedule status flags for this task
         /// </summary>
         public void UpdateStatusFlags()
@@ -391,6 +430,33 @@ namespace PPMTool.Data.Entities
             else if (ActualWorkHours > PlannedWorkHours) BudgetStatus = BudgetStatus.Overspend;
             else BudgetStatus = BudgetStatus.OnBudget;
 
+        }
+
+        /// <summary>
+        /// Checks whether the task has any provisional resources assigned to it.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasProvisionalResources()
+        {
+            return AssignedResources.Any(r => r.IsProvisional);
+        }
+
+        /// <summary>
+        /// Checks whether the task has any unmet demand.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasUnmetDemand()
+        {
+            return UnmetDemand > 0;
+        }
+
+        /// <summary>
+        /// Returns the percentage of the minimum demand that is unmet.
+        /// </summary>
+        /// <returns></returns>
+        public double GetPercentageUnmetDemand()
+        {
+            return Math.Round(UnmetDemand / Demand * 100);
         }
     }
 }

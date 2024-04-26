@@ -15,6 +15,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.ExportHelper;
 
 namespace PPMTool.Pages
 {
@@ -735,7 +736,20 @@ namespace PPMTool.Pages
                         people.Where(y => ChosenPeople.Contains(y.Name)) :
                         people.Where(y => y == chosenPerson);
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
-                });
+                },
+                // Accepts list of assignments for this group to determine tooltip messages
+                x =>
+                {
+                    // When not a total row, the group key will be a project.
+                    // Check whether this project has unmet demand in that case.
+                    if (groupedAssignments.Key is Project project && project.SubTasks.Any(x => x.HasUnmetDemand()))
+                    {
+                        var unmetDemand = project.SubTasks.Sum(x => x.UnmetDemand);
+                        return $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                    }
+                    return null;
+                }
+                );
         }
 
         /// <summary>
@@ -766,7 +780,7 @@ namespace PPMTool.Pages
             var people = PersonService.GetAll(context).OrderBy(x => x.Name);
 
             // Create blank list of data
-            var allData = new List<ExportHelper.TaskData>();
+            var allData = new List<TaskData>();
 
             // Set the report length
             const int numMonths = 6;
@@ -785,6 +799,33 @@ namespace PPMTool.Pages
                 allData.AddRange(data);
             }
 
+            // Remove duplicates of unmet demand entries
+            var tempList = new List<TaskData>();
+            foreach (var data in allData)
+            {
+                // If not unmet demand entry then copy over
+                if (data.EmployeeName != "Unmet Demand")
+                {
+                    tempList.Add(data);
+                    continue;
+                }
+                else
+                {
+                    // If unmet demand entry but already in list then skip
+                    if (tempList.Any(x => x.ProjectAndTaskName == data.ProjectAndTaskName && x.EmployeeName == "Unmet Demand"))
+                    {
+                        continue;
+                    }
+                    // Must be a new unmet demand entry
+                    else
+                    {
+                        tempList.Add(data);
+                    }
+                }
+            }
+            allData = tempList;
+            allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+
             try
             {
 
@@ -797,7 +838,7 @@ namespace PPMTool.Pages
                 {
 
                     // Get all public properties
-                    var props = typeof(ExportHelper.TaskData).GetProperties();
+                    var props = typeof(TaskData).GetProperties();
                     var propNames = props.Select(x => x.Name);
 
                     // Create header row

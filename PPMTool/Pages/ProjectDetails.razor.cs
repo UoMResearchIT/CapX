@@ -75,7 +75,6 @@ namespace PPMTool.Pages
                             RangeBarGroupRows = true
                         }
                     },
-                    Colors = new List<string> { "#1151F3", "#FFC107" },
                     Fill = new Fill
                     {
                         Opacity = 1,
@@ -84,7 +83,11 @@ namespace PPMTool.Pages
                         {
                             Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                         }
-                    }
+                    },
+                    Legend = new Legend
+                    {
+                        Show = false
+                    },
                 };
 
                 // Only show a burn-up chart if the project is actually happening
