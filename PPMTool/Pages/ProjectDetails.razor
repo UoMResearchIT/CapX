@@ -87,6 +87,13 @@
                              XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                              YValue="@(e => Convert.ToDecimal(e.Value1))" />
 
+            <ApexPointSeries TItem="ChartItem"
+                             Items="burnUpChartSource"
+                             SeriesType="@SeriesType.Area"
+                             Name="Planned Work (Adjusted for Unmet Demand)"
+                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                             YValue="@(e => Convert.ToDecimal(e.Value2))" />
+
         </ApexChart>
     </div>
     <hr />
@@ -203,8 +210,7 @@
                        Title="Note: Any tasks shaded in red indicate unmet demand."
                        XAxisType="XAxisType.Datetime"
                        Options=ganttChartOptions
-                       OnDataPointSelection="TaskSelected"
-                       @ref="ganttChart">
+                       OnDataPointSelection="TaskSelected">
                 <ChildContent>
                     <ApexRangeSeries TItem="SubTask"
                                      Items="confirmedTasks"
