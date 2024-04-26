@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -40,7 +39,6 @@ namespace PPMTool.Pages
         private string plannedCostColour;
         private string actualCostColour;
         private string fundsReceivedColour;
-        private ApexChart<SubTask> ganttChart;
 
         protected override void OnInitialized()
         {
@@ -90,89 +88,91 @@ namespace PPMTool.Pages
                     },
                 };
 
-                // Only show a burn-up chart if the project is actually happening
-                if (!project.ProjectStatus.IsProjectFinishedOrCancelled())
-                {
-                    // Create the chart items
-                    var temp = ChartHelper.AggregateSubTasksByWeek(
-                        project.GetFullName(),
-                        project.SubTasks,
-                        task =>
-                        {
-                            // Value summed is the average contribution of the task for that week
-                            // Duration includes weekends by default so only approximate
-                            var durationWeeks = task.DurationDays / 7f < 1 ? 1 : task.DurationDays / 7f;
-                            return task.PlannedWorkHours / durationWeeks;
-                        }
-                    ).ToList();
-
-                    // Generate series by aggregating the values
-                    double cumulative = 0;
-                    foreach (var week in temp)
+                // Create the chart items
+                var temp = ChartHelper.AggregateSubTasksByWeek(
+                    project.GetFullName(),
+                    project.SubTasks,
+                    task =>
                     {
-                        cumulative += week.Value1;
-                        burnUpChartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulative), 0, false));
+                        // Value 1 is simply the planned work hours spread out over the duration of the task
+                        return 7f * task.PlannedWorkHours / task.DurationDays;
+                    },
+                    task =>
+                    {
+                        // Value 2 is corrected for the unmet demand on the task
+                        return (7f * task.PlannedWorkHours / task.DurationDays) * (1 - (task.UnmetDemand / task.Demand));
                     }
+                ).ToList();
 
-                    // Early exit if chartSource has no data
-                    if (burnUpChartSource.Count < 1) return;
+                // Generate series by aggregating the values
+                double cumulativeValue1 = 0;
+                double cumulativeValue2 = 0;
+                foreach (var week in temp)
+                {
+                    cumulativeValue1 += week.Value1;
+                    cumulativeValue2 += week.Value2;
+                    burnUpChartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulativeValue1), Math.Round(cumulativeValue2), false));
+                }
 
-                    // Create a new data point to indicate progress
-                    var seriesStart = burnUpChartSource.Min(x => x.StartDate);
-                    var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
-                    var actualsX = DateTime.Now.Date;
-                    var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
+                // Early exit if chartSource has no data
+                if (burnUpChartSource.Count < 1) return;
 
-                    // If the task has started yet or has already finished then x coordinate is the limits of the series
-                    if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
-                    else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
+                // Create a new data point to indicate progress
+                var seriesStart = burnUpChartSource.Min(x => x.StartDate);
+                var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
+                var actualsX = DateTime.Now.Date;
+                var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
 
-                    // Set options
-                    burnUpChartOptions = new ApexChartOptions<ChartItem>
+                // If the task has started yet or has already finished then x coordinate is the limits of the series
+                if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
+                else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
+
+                // Set options
+                burnUpChartOptions = new ApexChartOptions<ChartItem>
+                {
+                    Stroke = new Stroke
                     {
-                        Stroke = new Stroke
+                        Curve = new CurveSelections(new Curve[] { Curve.Straight })
+                    },
+                    Colors = new List<string> { "#1151F3", "#FFC107" },
+                    Annotations = new Annotations
+                    {
+                        Yaxis = new List<AnnotationsYAxis>
                         {
-                            Curve = new CurveSelections(new Curve[] { Curve.Straight })
-                        },
-                        Annotations = new Annotations
-                        {
-                            Yaxis = new List<AnnotationsYAxis>
+                            new AnnotationsYAxis()
                             {
-                                new AnnotationsYAxis()
+                                Y = actualsY,
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "red",
+                                Label = new Label
                                 {
-                                    Y = actualsY,
-                                    BorderWidth = 2,
-                                    StrokeDashArray = 5,
-                                    BorderColor = "red",
-                                    Label = new Label
-                                    {
-                                        Text = "Actual (Hours)"
-                                    }
-                                }
-                            },
-                            Xaxis = new List<AnnotationsXAxis>
-                            {
-                                new AnnotationsXAxis()
-                                {
-                                    X = actualsX.ToUnixTimeMilliseconds(),
-                                    BorderWidth = 2,
-                                    StrokeDashArray = 5,
-                                    BorderColor = "red",
-                                    Label = new Label
-                                    {
-                                        Text = "Current Week"
-                                    }
+                                    Text = "Actual (Hours)"
                                 }
                             }
                         },
-                        Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
-                        Yaxis = new List<YAxis>
+                        Xaxis = new List<AnnotationsXAxis>
                         {
-                            new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
+                            new AnnotationsXAxis()
+                            {
+                                X = actualsX.ToUnixTimeMilliseconds(),
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "red",
+                                Label = new Label
+                                {
+                                    Text = "Current Week"
+                                }
+                            }
                         }
-                    };
-                    InvokeAsync(StateHasChanged);
-                }
+                    },
+                    Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
+                    Yaxis = new List<YAxis>
+                    {
+                        new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
+                    }
+                };
+                InvokeAsync(StateHasChanged);
             }
             LogInformation($"Viewing project details for RTP-{project?.RTP}");
         }
