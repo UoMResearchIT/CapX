@@ -735,7 +735,20 @@ namespace PPMTool.Pages
                         people.Where(y => ChosenPeople.Contains(y.Name)) :
                         people.Where(y => y == chosenPerson);
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
-                });
+                },
+                // Accepts list of assignments for this group to determine tooltip messages
+                x =>
+                {
+                    // When not a total row, the group key will be a project.
+                    // Check whether this project has unmet demand in that case.
+                    if (groupedAssignments.Key is Project project && project.SubTasks.Any(x => x.HasUnmetDemand()))
+                    {
+                        var unmetDemand = project.SubTasks.Sum(x => x.UnmetDemand);
+                        return $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                    }
+                    return null;
+                }
+                );
         }
 
         /// <summary>

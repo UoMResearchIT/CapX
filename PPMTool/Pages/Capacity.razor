@@ -267,9 +267,13 @@
                             @{
                                 var point = (ListPoint<ChartItem>)context.DataPoint;
                                 <div class="m-0 p-3">
-                                    @if(point.Items.FirstOrDefault()?.IsHatched ?? false)
+                                    @if (point.Items.FirstOrDefault()?.IsHatched ?? false)
                                     {
-                                        <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL]</h3>
+                                        <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>
+                                    }
+                                    @if (point.Items.FirstOrDefault()?.AdditionalTooltipMessages != null)
+                                    {
+                                        @((MarkupString)point.Items.FirstOrDefault().AdditionalTooltipMessages)
                                     }
                                     <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
                                     <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
