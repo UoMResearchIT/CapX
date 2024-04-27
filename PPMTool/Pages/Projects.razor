@@ -1,21 +1,52 @@
 ﻿@page "/projects"
 @page "/"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+
+@if (userRole.RoleType == RoleType.Superuser || userRole.RoleType == RoleType.Manager)
+{
+    <div class="container">
+        <h1>My Projects</h1>
+        <hr />
+        @if (ownedProjects == null || ownedProjects.Count() ==0)
+        {
+            <RadzenText Text="You don't have any projects to manage!" />
+        }
+        else
+        {
+            foreach (var p in ownedProjects)
+            {
+                <div class="card">
+                    <div class=row style="align-items:center">
+                        <div class="col">
+                            <RadzenText TextStyle=TextStyle.H5 Text="@p.GetFullName()" />
+                        </div>
+                        <div class="col-auto">
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(args => ProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" />
+                        </div>
+                        <div class="col-auto">
+                            <RTPButtonComponent Page=@this Project=p />
+                        </div>
+                    </div>
+                    <MessageSummaryComponent Project=p />
+                </div>
+            }
+        }
+    </div>
+    <br />
+}
 
 <div class="container">
     <div class="row">
         <div class="col-auto mr-auto">
-            <h1>Projects</h1>
+            <h1>All Projects</h1>
         </div>
         <div class="col-auto">
             <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled=!EditAuthorised />
         </div>
-        <!-- This is a temporary button to be used one time to migrate the RTP codes from the names -->
-        @*<div class="col-auto">
-                <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
-            </div>*@
     </div>
     <hr />
     @if (loading)
@@ -92,10 +123,9 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <RadzenDataGridColumn TItem="Project" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
-                            </RadzenButton>
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="100px" MinWidth="10px" />

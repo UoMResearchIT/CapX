@@ -23,6 +23,7 @@ namespace PPMTool.Pages
         private ISessionStorageService SessionStorage { get; set; }
 
         private IEnumerable<Project> projects;
+        private IEnumerable<Project> ownedProjects;
         private Role userRole;
 
         private bool includeFinished;
@@ -65,18 +66,14 @@ namespace PPMTool.Pages
             base.OnInitialized();
             loading = true;
 
-            // Store the role of the user
-            if (!EditAuthorised)
-            {
-                // Look up the username
-                var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-                userRole = RoleService.GetByUsername(context, uname);
+            // Look up the username
+            var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
+            userRole = RoleService.GetByUsername(context, uname);
 
-                // Log any time there is no role returned?
-                if (userRole == null)
-                {
-                    LogError($"{uname}: Role is null!");
-                }
+            // Log any time there is no role returned?
+            if (userRole == null)
+            {
+                LogError($"{uname}: Role is null!");
             }
             LogInformation("Viewing project grid");
         }
@@ -114,6 +111,9 @@ namespace PPMTool.Pages
             {
                 proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person))).ToList();
             }
+
+            // Extract the owned projects
+            ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
 
             // Remove the ones that are not active for the data grid if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
