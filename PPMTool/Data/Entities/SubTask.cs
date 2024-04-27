@@ -458,5 +458,23 @@ namespace PPMTool.Data.Entities
         {
             return Math.Round(UnmetDemand / Demand * 100);
         }
+
+        /// <summary>
+        /// Checks whether this task will start within the next month
+        /// </summary>
+        /// <returns></returns>
+        public bool WillStartWithinAMonth()
+        {
+            return StartDate.Date > DateTime.Now.Date && StartDate.Date.AddMonths(-1) <= DateTime.Now.Date;
+        }
+
+        /// <summary>
+        /// Checks whether this task has started within the last week
+        /// </summary>
+        /// <returns></returns>
+        public bool HasStartedInTheLastWeek()
+        {
+            return StartDate.Date <= DateTime.Now.Date && StartDate.Date >= DateTime.Now.Date.AddDays(-7);
+        }
     }
 }

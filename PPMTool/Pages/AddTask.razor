@@ -43,14 +43,8 @@
     }
     @if (taskModel.UnmetDemand > 0)
     {
-        <div class="row">
-            <div class="col-auto">
-                <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" />
-            </div>
-            <div class="col">
-                <RadzenText Style="color: var(--rz-warning)" Text=@("Task is currently under-resourced and has un-met demand!") />
-            </div>
-        </div>
+        <StatusMessageComponent Type="StatusMessageComponent.MessageType.Warning"
+                                Message=@("Task is currently under-resourced and has un-met demand!") />
     }
     <hr />
     <div class="card">
@@ -285,14 +279,8 @@
             @if (!isValid)
             {
                 <hr />
-                <div class="row">
-                    <div class="col-auto">
-                        <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" />
-                    </div>
-                    <div class="col">
-                        <RadzenText Style="color: var(--rz-danger)" Text=@($"Task configuration insufficent for scheduling. Please correct and update again: {error}") />
-                    </div>
-                </div>                
+                <StatusMessageComponent Type="StatusMessageComponent.MessageType.Error"
+                                        Message=@($"Task configuration insufficent for scheduling. Please correct and update again: {error}") />
             }
 
         </EditForm>
