@@ -1,0 +1,25 @@
+﻿@using PPMTool.Data.Entities
+
+@if (Project.SubTasks.Any(x => x.WillStartWithinAMonth()))
+{
+    <StatusMessageComponent Message="A task in this project will start soon!" />
+}
+@if (Project.SubTasks.Any(x => x.HasStartedInTheLastWeek()))
+{
+    <StatusMessageComponent Message="A task in this project has recently started!" />
+}
+@if (Project.SubTasks.Any(x => x.HasProvisionalResources()))
+{
+    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Warning
+                            Message="A task in this project has provisional resources!" />
+}
+@if (Project.SubTasks.Any(x => x.HasUnmetDemand()))
+{
+    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
+                            Message="A task in this project is under-resourced!" />
+}
+
+@code {
+    [Parameter]
+    public Project Project { get; set; }
+}
