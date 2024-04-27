@@ -465,7 +465,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool WillStartWithinAMonth()
         {
-            return StartDate.Date <= DateTime.Now.Date.AddMonths(1);
+            return StartDate.Date > DateTime.Now.Date && StartDate.Date.AddMonths(-1) <= DateTime.Now.Date;
         }
 
         /// <summary>
@@ -474,7 +474,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedInTheLastWeek()
         {
-            return StartDate.Date >= DateTime.Now.Date.AddDays(-7);
+            return StartDate.Date <= DateTime.Now.Date && StartDate.Date >= DateTime.Now.Date.AddDays(-7);
         }
     }
 }
