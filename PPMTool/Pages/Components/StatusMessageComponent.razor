@@ -1,0 +1,44 @@
+﻿<div class="col-auto">
+    @if (Type == MessageType.Info)
+    {
+        <RadzenIcon Icon="info" IconStyle="IconStyle.Info" />
+    }
+    else if (Type == MessageType.Warning)
+    {
+        <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" />
+    }
+    else if (Type == MessageType.Error)
+    {
+        <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" />
+    }
+</div>
+<div class="col">
+    @if (Type == MessageType.Info)
+    {
+        <RadzenText Style="color: var(--rz-info)" Text=@Message />
+    }
+    else if (Type == MessageType.Warning)
+    {
+        <RadzenText Style="color: var(--rz-warning)" Text=@Message />
+    }
+    else if (Type == MessageType.Error)
+    {
+        <RadzenText Style="color: var(--rz-danger)" Text=@Message />
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public string Message { get; set; }
+
+    [Parameter]
+    public MessageType Type {get; set;}
+
+    public enum MessageType
+    {
+        Info,
+        Warning,
+        Error
+    }
+}
