@@ -50,22 +50,22 @@ namespace PPMTool.Pages
             ActiveUser = AuthenticationState?.User.Identity.Name.Trim().ToLower();
         }
 
-        protected void LogInformation(string message)
+        public void LogInformation(string message)
         {
             Logger?.LogInformation($"{ActiveUser}: {message}");
         }
 
-        protected void LogWarning(string message)
+        public void LogWarning(string message)
         {
             Logger.LogWarning($"{ActiveUser}: {message}");
         }
 
-        protected void LogError(string message)
+        public void LogError(string message)
         {
             Logger?.LogError(message);
         }
 
-        protected void LogError(string message, Exception exception)
+        public void LogError(string message, Exception exception)
         {
             Logger?.LogError(exception, message);
         }
