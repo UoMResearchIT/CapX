@@ -740,14 +740,21 @@ namespace PPMTool.Pages
                 // Accepts list of assignments for this group to determine tooltip messages
                 x =>
                 {
-                    // When not a total row, the group key will be a project.
-                    // Check whether this project has unmet demand in that case.
-                    if (groupedAssignments.Key is Project project && project.SubTasks.Any(x => x.HasUnmetDemand()))
+                    var messages = string.Empty;
+                    if (groupedAssignments.Key is Project project)
                     {
-                        var unmetDemand = project.SubTasks.Sum(x => x.UnmetDemand);
-                        return $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                        // Always return the project manager on the tooltip
+                        messages += $"PM: {project.ProjectManager?.Name ?? "Not Set"}";
+
+                        // When not a total row, the group key will be a project.
+                        // Check whether this project has unmet demand in that case.
+                        if (project.SubTasks.Any(x => x.HasUnmetDemand()))
+                        {
+                            var unmetDemand = project.SubTasks.Sum(x => x.UnmetDemand);
+                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                        }
                     }
-                    return null;
+                    return messages;
                 }
                 );
         }
