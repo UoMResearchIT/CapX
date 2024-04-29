@@ -29,6 +29,11 @@
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
                             Message="This project is active but has no currently running tasks!" />
 }
+@if (Project.NotFinishedOrCancelledButNoPM())
+{
+    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
+                            Message="This project has no Project Manager set!" />
+}
 
 @code {
     [Parameter]

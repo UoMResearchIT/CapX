@@ -21,11 +21,17 @@
             {
                 <div class="card my-1">
                     <div class=row style="align-items:center">
-                        <div class="col">
+                        <div class="col-auto">
                             <RadzenText TextStyle=TextStyle.H5 Text="@p.GetFullName()" />
                         </div>
+                        <div class="col">
+                            @if (!p.HasActiveStatusMessages())
+                            {
+                                <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
+                            }
+                        </div>
                         <div class="col-auto">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(args => ProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" />
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(args => NavigateToProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" />
                         </div>
                         <div class="col-auto">
                             <RTPButtonComponent Page=@this Project=p />
@@ -125,7 +131,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
                         <Template Context="proj">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" />
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="100px" MinWidth="10px" />

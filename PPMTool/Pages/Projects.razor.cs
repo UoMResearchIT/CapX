@@ -121,13 +121,18 @@ namespace PPMTool.Pages
             {
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
-                    // Show just the list of alerts
+                    // Show just the list of alerts for all
                     ownedProjects = proj.Where(x => x.HasActiveStatusMessages()).ToList();
+                }
+                else if (ProjectManagerShortName.ToLower() == "errors")
+                {
+                    // Show just the list of errors for all
+                    ownedProjects = proj.Where(x => x.HasErrorMessages()).ToList();
                 }
                 else
                 {
                     // Use query string to see someone else's list of cards
-                    ownedProjects = proj.Where(x => x.ProjectManager.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                    ownedProjects = proj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
                 }
             }
             else

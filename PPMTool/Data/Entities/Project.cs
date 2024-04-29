@@ -75,6 +75,27 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no project manager assigned
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoPM()
+        {
+            return !ProjectStatus.IsProjectFinishedOrCancelled() && ProjectManager == null;
+        }
+
+        /// <summary>
+        /// Checks whether this project has any error-grade status messages
+        /// </summary>
+        /// <returns></returns>
+        public bool HasErrorMessages()
+        {
+            return
+                RunningTaskButInactive() ||
+                ActiveButNoRunningTask() ||
+                NotFinishedOrCancelledButNoPM();
+        }
+
+        /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database
         /// </summary>
         public void UpdateProjectSummary()
