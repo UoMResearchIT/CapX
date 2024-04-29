@@ -19,10 +19,10 @@
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
                             Message="A task in this project is under-resourced!" />
 }
-@if (Project.SubTasks.Any(x => x.HasStartedInTheLastWeek()) && (Project.ProjectStatus != ProjectStatus.Active || Project.ProjectStatus != ProjectStatus.Maintenance))
+@if (Project.SubTasks.Any(x => x.IsCurrentlyRunning()) && (Project.ProjectStatus != ProjectStatus.Active || Project.ProjectStatus != ProjectStatus.Maintenance))
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="A task in this project has started, but the project is not active!" />
+                            Message="A task in this project is running, but the project is not active!" />
 }
 
 @code {
