@@ -3,11 +3,11 @@
 
 @if (Project.SubTasks.Any(x => x.WillStartWithinAMonth()))
 {
-    <StatusMessageComponent Message="A task in this project will start soon!" />
+    <StatusMessageComponent Message="A task in this project will start soon." />
 }
 @if (Project.SubTasks.Any(x => x.HasStartedInTheLastWeek()))
 {
-    <StatusMessageComponent Message="A task in this project has recently started!" />
+    <StatusMessageComponent Message="A task in this project has recently started." />
 }
 @if (Project.SubTasks.Any(x => x.HasProvisionalResources()))
 {
@@ -16,16 +16,27 @@
 }
 @if (Project.SubTasks.Any(x => x.HasUnmetDemand()))
 {
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
+    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Warning
                             Message="A task in this project is under-resourced!" />
 }
-@if (Project.SubTasks.Any(x => x.HasStartedInTheLastWeek()) && (Project.ProjectStatus != ProjectStatus.Active || Project.ProjectStatus != ProjectStatus.Maintenance))
+@if (Project.RunningTaskButInactive())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="A task in this project has started, but the project is not active!" />
+                            Message="A task in this project is running, but the project is not active!" />
+}
+@if (Project.ActiveButNoRunningTask())
+{
+    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
+                            Message="This project is active but has no currently running tasks!" />
+}
+@if (Project.NotFinishedOrCancelledButNoPM())
+{
+    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
+                            Message="This project has no Project Manager set!" />
 }
 
 @code {
     [Parameter]
     public Project Project { get; set; }
+    
 }

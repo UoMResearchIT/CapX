@@ -476,5 +476,27 @@ namespace PPMTool.Data.Entities
         {
             return StartDate.Date <= DateTime.Now.Date && StartDate.Date >= DateTime.Now.Date.AddDays(-7);
         }
+
+        /// <summary>
+        /// Checks whether this task is currently running
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentlyRunning()
+        {
+            return StartDate.Date <= DateTime.Now.Date && EndDate.Date >= DateTime.Now.Date;
+        }
+
+        /// <summary>
+        /// Checks whether any of the task-level status messages will be active
+        /// </summary>
+        /// <returns></returns>
+        public bool HasActiveStatusMessages()
+        {
+            return
+                HasProvisionalResources() ||
+                HasUnmetDemand() ||
+                HasStartedInTheLastWeek() ||
+                WillStartWithinAMonth();
+        }
     }
 }
