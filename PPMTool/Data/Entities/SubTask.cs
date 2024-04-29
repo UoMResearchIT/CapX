@@ -485,5 +485,18 @@ namespace PPMTool.Data.Entities
         {
             return StartDate.Date <= DateTime.Now.Date && EndDate.Date >= DateTime.Now.Date;
         }
+
+        /// <summary>
+        /// Checks whether any of the task-level status messages will be active
+        /// </summary>
+        /// <returns></returns>
+        public bool HasActiveStatusMessages()
+        {
+            return
+                HasProvisionalResources() ||
+                HasUnmetDemand() ||
+                HasStartedInTheLastWeek() ||
+                WillStartWithinAMonth();
+        }
     }
 }

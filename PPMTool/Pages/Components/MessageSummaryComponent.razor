@@ -19,12 +19,12 @@
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Warning
                             Message="A task in this project is under-resourced!" />
 }
-@if (Project.SubTasks.Any(x => x.IsCurrentlyRunning()) && (Project.ProjectStatus != ProjectStatus.Active && Project.ProjectStatus != ProjectStatus.Maintenance))
+@if (Project.RunningTaskButInactive())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
                             Message="A task in this project is running, but the project is not active!" />
 }
-@if (Project.SubTasks.All(x => !x.IsCurrentlyRunning()) && (Project.ProjectStatus == ProjectStatus.Active || Project.ProjectStatus == ProjectStatus.Maintenance))
+@if (Project.ActiveButNoRunningTask())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
                             Message="This project is active but has no currently running tasks!" />
@@ -33,4 +33,5 @@
 @code {
     [Parameter]
     public Project Project { get; set; }
+    
 }

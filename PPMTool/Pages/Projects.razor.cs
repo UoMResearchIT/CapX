@@ -22,6 +22,10 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "pm")]
+        public string ProjectManagerShortName { get; set; }
+
         private IEnumerable<Project> projects;
         private IEnumerable<Project> ownedProjects;
         private Role userRole;
@@ -113,7 +117,24 @@ namespace PPMTool.Pages
             }
 
             // Extract the owned projects
-            ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
+            if (ProjectManagerShortName != null)
+            {
+                if (ProjectManagerShortName.ToLower() == "alerts")
+                {
+                    // Show just the list of alerts
+                    ownedProjects = proj.Where(x => x.HasActiveStatusMessages()).ToList();
+                }
+                else
+                {
+                    // Use query string to see someone else's list of cards
+                    ownedProjects = proj.Where(x => x.ProjectManager.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                }
+            }
+            else
+            {
+                // Show just the logged in user's projects
+                ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
+            }
 
             // Remove the ones that are not active for the data grid if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
