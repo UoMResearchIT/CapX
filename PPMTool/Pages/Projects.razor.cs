@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -21,6 +22,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         [Parameter]
         [SupplyParameterFromQuery(Name = "pm")]
@@ -165,9 +169,9 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private void ProjectDetails(int id)
+        private async Task NavigateToProjectDetails(int id)
         {
-            Navigation.NavigateTo($"/projectdetails/{id}");
+            await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
         }
 
         private void AddProject()
