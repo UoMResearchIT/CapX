@@ -120,6 +120,9 @@ namespace PPMTool.Pages
                 proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person))).ToList();
             }
 
+            // Remove the ones that are not active if necessary
+            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
+
             // Extract the owned projects
             if (ProjectManagerShortName != null)
             {
@@ -144,9 +147,6 @@ namespace PPMTool.Pages
                 // Show just the logged in user's projects
                 ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
             }
-
-            // Remove the ones that are not active for the data grid if necessary
-            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
 
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
