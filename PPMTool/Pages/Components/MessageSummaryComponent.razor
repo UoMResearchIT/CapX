@@ -32,12 +32,12 @@
 @if (Project.NotFinishedOrCancelledButNoPM())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project has no Project Manager set!" />
+                            Message="This project has no project manager set!" />
 }
 @if (Project.NotFinishedOrCancelledButNoInnateCode())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project has no Innate Code set!" />
+                            Message="This project has no timesheet activity set!" />
 }
 
 @code {

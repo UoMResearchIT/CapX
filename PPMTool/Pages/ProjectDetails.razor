@@ -191,7 +191,7 @@
                             @t.TaskType.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F1}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" MinWidth="10px">
                         <Template Context="t">
                             @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
