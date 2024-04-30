@@ -370,15 +370,15 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="label"></param>
         /// <param name="subTasks"></param>
-        /// <param name="value1Function">Function to determine a value summed over subtasks in the current week</param>
-        /// <param name="value2Function">Function to determine a second value summed over subtasks in the current week></param>
+        /// <param name="value1Function">Function to determine a value for subtasks in the current week</param>
+        /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
         /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
             string label,
             IEnumerable<SubTask> subTasks,
-            Func<SubTask, double> value1Function,
-            Func<SubTask, double> value2Function = null,
+            Func<SubTask, DateTime, double> value1Function,
+            Func<SubTask, DateTime, double> value2Function = null,
             Func<SubTask, bool> hatchedFunction = null
         )
         {
@@ -388,6 +388,9 @@ namespace PPMTool.Data
 
             // Get earliest assignment to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
+
+            // Move to a Monday
+            start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
             // Get latest assignment finish so we know when to stop
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate;
@@ -406,8 +409,8 @@ namespace PPMTool.Data
                         label,
                         currentWeek,
                         currentWeek.AddDays(7),
-                        within.RoundedSum(x => value1Function(x)),
-                        value2Function != null ? within.RoundedSum(x => value2Function(x)) : 0,
+                        within.RoundedSum(x => value1Function(x, currentWeek)),
+                        value2Function != null ? within.RoundedSum(x => value2Function(x, currentWeek)) : 0,
                         hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false
                     )
                 );

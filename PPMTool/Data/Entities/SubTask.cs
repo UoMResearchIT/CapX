@@ -188,11 +188,17 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
+                // If no resources assigned then use the demand to schedule the task
+                if (AssignedResources.Count == 0)
+                {
+                    units = Demand;
+                }
+
                 // Start date is fixed
                 if (HasFixedStart)
                 {
                     // If we assign someone who doesn't start until after the date then error
-                    if (units > 0d && latestStart > StartDate)
+                    if (AssignedResources.Count > 0 && latestStart > StartDate)
                     {
                         return $"This task has a fixed start date of {StartDate}. " +
                             $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
@@ -209,7 +215,7 @@ namespace PPMTool.Data.Entities
                     }
 
                     // Check whether we need to drive from resources
-                    if (units > 0d && latestStart > StartDate)
+                    if (AssignedResources.Count > 0 && latestStart > StartDate)
                     {
                         Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
                         StartDate = latestStart.Date;
@@ -497,6 +503,45 @@ namespace PPMTool.Data.Entities
                 HasUnmetDemand() ||
                 HasStartedInTheLastWeek() ||
                 WillStartWithinAMonth();
+        }
+
+        /// <summary>
+        /// Method to get the amount of work planned for this task from its start to the end of the week
+        /// assuming the date time provided is a Monday.
+        /// </summary>
+        /// <param name="currentWeek"></param>
+        /// <returns></returns>
+        public double GetPlannedWorkUpToEndOfWeek(DateTime currentWeek)
+        {
+            // Current week DateTime needs to be a Monday
+            if (currentWeek.DayOfWeek != DayOfWeek.Monday)
+                throw new Exception("This method requires the day to be a Monday!");
+
+            // Work is average planned work per day of duration
+            var workPerDay = PlannedWorkHours / DurationDays;
+
+            // Assume runs for full week initially
+            var daysUpToEndOfWeek = 7d;
+
+            // Correct if starts or ends in the week
+            if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7) &&
+                EndDate >= currentWeek && EndDate < currentWeek.AddDays(7))
+            {
+                // Starts and finishes in the week
+                daysUpToEndOfWeek = EndDate.Subtract(StartDate).TotalDays;
+            }
+            if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7))
+            {
+                // Start in the week
+                daysUpToEndOfWeek = currentWeek.AddDays(7).Subtract(StartDate).TotalDays;
+            }
+            else if (EndDate >= currentWeek && EndDate < currentWeek.AddDays(7))
+            {
+                // Ends in the week (end date inclusive)
+                daysUpToEndOfWeek = EndDate.Subtract(currentWeek).TotalDays + 1;
+            }
+
+            return daysUpToEndOfWeek * workPerDay;
         }
     }
 }
