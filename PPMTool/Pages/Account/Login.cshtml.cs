@@ -54,11 +54,13 @@ namespace PPMTool.Pages.Account
                 new ClaimsPrincipal(identity),
                 new AuthenticationProperties { RedirectUri = "/" }
             );
-            _logger?.LogInformation($"{identity.Name}: Logged In");
+
+            // Update last logged in and log
             if (roleEntity != null)
             {
                 _roleService.UpdateLastLoggedIn(_contextFactory.CreateDbContext(), roleEntity);
             }
+            _logger?.LogInformation($"{identity.Name}: Logged In");
         }
 #endif
     }
