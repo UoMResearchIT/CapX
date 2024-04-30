@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
-using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -31,6 +30,9 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private InnateCodeService InnateCodeService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -39,7 +41,7 @@ namespace PPMTool.Pages
         private Project projectModel = new Project();
         private bool gotoDetails = false;
         private bool discardChanges = true;
-        private IEnumerable<string> innateActivities = new List<string>();
+        private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
@@ -58,7 +60,7 @@ namespace PPMTool.Pages
                 EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
             }
 
-            innateActivities = ResourceHelper.AvailableInnateActivities.ToList();
+            innateActivities = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).ToList();
             portfolios = Enum.GetValues<Portfolio>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();

@@ -18,7 +18,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 
@@ -144,9 +143,6 @@ namespace PPMTool
 
             // Seed the superuser
             roleService.SeedSuperUser();
-
-            // Initialise the Resource Helper
-            ResourceHelper.Initialise();
         }
 
         private async Task OnCreatingTicket(CasCreatingTicketContext context)
