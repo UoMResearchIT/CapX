@@ -159,7 +159,6 @@ namespace PPMTool.Migrations
                     ('S-RES-RTP-224', 'Future Data Services (Mark Elliot)'),
                     ('S-RES-RTP-227', 'Continental European Books in Early Modern England (Nilani Ganeshwaran)'),
                     ('S-RES-RTP-23', 'Vaccination Acceptance Analysis (Yu-wang Chen)'),
-                    ('S-RES-RTP-23', 'Vaccination Acceptance Analysis (Yu-wang Chen)'),
                     ('S-RES-RTP-232', 'VR Mindfulness'),
                     ('S-RES-RTP-24', 'Dialectics of Modernity'),
                     ('S-RES-RTP-25', 'Conflict, Memory and Migration (Harte)'),
