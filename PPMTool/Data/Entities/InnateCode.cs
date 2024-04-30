@@ -1,9 +1,9 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
-    public class InnateCode
+    public class InnateCode : ILoggableClass
     {
         public int InnateCodeId { get; set; }
 
@@ -21,6 +21,11 @@ namespace PPMTool.Data.Entities
         public string GetCodeAsString()
         {
             return $"{ActivityCode} - {ActivityName}";
+        }
+
+        public string GetSensibleObjectName()
+        {
+            return GetCodeAsString();
         }
     }
 }

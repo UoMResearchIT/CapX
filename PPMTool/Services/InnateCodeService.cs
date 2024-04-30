@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Collections.Generic;
 using System.Linq;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -15,7 +15,8 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override int Add(PPMToolContext context, InnateCode entity)
         {
-            if (context.InnateCodes.FirstOrDefault(x => x.GetCodeAsString().ToLower() == entity.GetCodeAsString().ToLower()) != null)
+            var allCodes = context.InnateCodes.ToList();
+            if (allCodes.FirstOrDefault(x => x.GetCodeAsString().ToLower() == entity.GetCodeAsString().ToLower()) != null)
             {
                 // Duplicate found!
                 return -1;
@@ -32,7 +33,7 @@ namespace PPMTool.Services
             context.SaveChanges();
         }
 
-        public override IEnumerable GetAll(PPMToolContext context)
+        public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
             return context.InnateCodes.ToList();
         }
