@@ -45,7 +45,8 @@ namespace PPMTool.Pages.Account
 
             // Add roles from DB for this user
             var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";
-            var role = string.IsNullOrWhiteSpace(username) ? RoleType.None : _roleService.GetRoleTypeForUsername(_contextFactory.CreateDbContext(), username.Trim().ToLower());
+            var roleEntity = _roleService.GetByUsername(_contextFactory.CreateDbContext(), username.Trim().ToLower());
+            var role = string.IsNullOrWhiteSpace(username) || roleEntity == null ? RoleType.None : roleEntity.RoleType;
             identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
 
             await HttpContext.SignInAsync(
@@ -54,6 +55,10 @@ namespace PPMTool.Pages.Account
                 new AuthenticationProperties { RedirectUri = "/" }
             );
             _logger?.LogInformation($"{identity.Name}: Logged In");
+            if (roleEntity != null)
+            {
+                _roleService.UpdateLastLoggedIn(_contextFactory.CreateDbContext(), roleEntity);
+            }
         }
 #endif
     }

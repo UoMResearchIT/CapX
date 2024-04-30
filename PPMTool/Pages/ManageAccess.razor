@@ -46,6 +46,11 @@
                     <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" />
                 </EditTemplate>
             </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Role" Property="LastLoggedIn" Title="Last Logged In" Width="280px" MinWidth="10px">
+                <Template Context="role">
+                    <RadzenLabel @bind-Value="role.LastLoggedIn" Disabled="true" />
+                </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
                 <Template Context="role">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(role))" @onclick:stopPropagation="true">
