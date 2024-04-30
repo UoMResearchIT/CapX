@@ -83,6 +83,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no Innate Code
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoInnateCode()
+        {
+            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null;
+        }
+
+        /// <summary>
         /// Checks whether this project has any error-grade status messages
         /// </summary>
         /// <returns></returns>
@@ -91,7 +100,8 @@ namespace PPMTool.Data.Entities
             return
                 RunningTaskButInactive() ||
                 ActiveButNoRunningTask() ||
-                NotFinishedOrCancelledButNoPM();
+                NotFinishedOrCancelledButNoPM() ||
+                NotFinishedOrCancelledButNoInnateCode();
         }
 
         /// <summary>
