@@ -46,6 +46,7 @@ namespace PPMTool
 
             services.AddBlazoredSessionStorage();
 
+            services.AddScoped<InnateCodeService>();
             services.AddScoped<RolesService>();
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
