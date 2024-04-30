@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data.Context;
+using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -23,8 +23,15 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "pm")]
+        public string ProjectManagerShortName { get; set; }
+
         private IEnumerable<Project> projects;
-        private PPMToolContext context;
+        private IEnumerable<Project> ownedProjects;
         private Role userRole;
 
         private bool includeFinished;
@@ -66,20 +73,15 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             loading = true;
-            context = new PPMToolContext();
 
-            // Store the role of the user
-            if (!EditAuthorised)
+            // Look up the username
+            var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
+            userRole = RoleService.GetByUsername(context, uname);
+
+            // Log any time there is no role returned?
+            if (userRole == null)
             {
-                // Look up the username
-                var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-                userRole = RoleService.GetByUsername(context, uname);
-
-                // Log any time there is no role returned?
-                if (userRole == null)
-                {
-                    LogError($"{uname}: Role is null!");
-                }
+                LogError($"{uname}: Role is null!");
             }
             LogInformation("Viewing project grid");
         }
@@ -118,8 +120,33 @@ namespace PPMTool.Pages
                 proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person))).ToList();
             }
 
-            // Remove the ones that are not active for the data grid if necessary
+            // Remove the ones that are not active if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
+
+            // Extract the owned projects
+            if (ProjectManagerShortName != null)
+            {
+                if (ProjectManagerShortName.ToLower() == "alerts")
+                {
+                    // Show just the list of alerts for all
+                    ownedProjects = proj.Where(x => x.HasActiveStatusMessages()).ToList();
+                }
+                else if (ProjectManagerShortName.ToLower() == "errors")
+                {
+                    // Show just the list of errors for all
+                    ownedProjects = proj.Where(x => x.HasErrorMessages()).ToList();
+                }
+                else
+                {
+                    // Use query string to see someone else's list of cards
+                    ownedProjects = proj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                }
+            }
+            else
+            {
+                // Show just the logged in user's projects
+                ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
+            }
 
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
@@ -142,9 +169,9 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private void ProjectDetails(int id)
+        private async Task NavigateToProjectDetails(int id)
         {
-            Navigation.NavigateTo($"/projectdetails/{id}");
+            await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
         }
 
         private void AddProject()

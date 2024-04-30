@@ -9,10 +9,10 @@ namespace PPMTool.Data
     public class ChartHelper
     {
         /// <summary>
-        /// For a given person, convert subtasks into an aggregated set of blocks for the timeline graph
+        /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph
         /// </summary>
         /// <param name="person">Person of interest</param>
-        /// <param name="subTasks">Set of subtasks to aggregate</param>
+        /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
         /// <param name="label">Chart axis label for the data</param>
@@ -21,15 +21,15 @@ namespace PPMTool.Data
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertSubTasksToChartItemsForPerson(
+        public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
-            IEnumerable<SubTask> subTasks,
+            IEnumerable<Assignment> assignments,
             Func<SubTask, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<SubTask, bool> hatchedFunction = null,
+            Func<Assignment, bool> hatchedFunction = null,
             Func<double, DateTime, double> value2Function = null
         )
         {
@@ -46,8 +46,8 @@ namespace PPMTool.Data
             }
 
             // Get the chart items
-            var chartItems = AggregateSubTasksIntoBlocks(
-                subTasks, valueFunction, colourFunction, label, startDate,
+            var chartItems = AggregateAssignmentsIntoBlocks(
+                assignments, valueFunction, colourFunction, label, startDate,
                 endDate, hatchedFunction, value2Function
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
@@ -111,9 +111,9 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// For a given set of subtasks, convert subtasks into an aggregated set of blocks for the timeline graph
+        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph
         /// </summary>
-        /// <param name="subTasks">Set of subtasks to aggregate</param>
+        /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
         /// <param name="label">Chart axis label for the data</param>
@@ -121,21 +121,23 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertSubTasksToChartItems(
-            IEnumerable<SubTask> subTasks,
+        public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
+            IEnumerable<Assignment> assignments,
             Func<SubTask, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<SubTask, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<Assignment, bool> hatchedFunction = null,
+            Func<double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
-            return AggregateSubTasksIntoBlocks(
-                subTasks, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function
+            return AggregateAssignmentsIntoBlocks(
+                assignments, valueFunction, colourFunction, label, startDate,
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
         }
 
@@ -241,27 +243,29 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Time-marching method for summing up the contribution across sub tasks based on the value function provided.
+        /// Time-marching method for summing up the contribution across assignments based on the value function provided.
         /// The results are arranged into irregular blocks of the same continuous value.
         /// </summary>
         /// <param name="label"></param>
-        /// <param name="subTasks">Assignments to aggregate</param>
-        /// <param name="valueFunction">Function used to generate the value for the block by summing the value returned by the function over the sub tasks</param>
+        /// <param name="assignments">Assignments to aggregate</param>
+        /// <param name="valueFunction">Function used to generate the value for the block by summing the value returned by the function over the subtasks</param>
         /// <param name="colourFunction">Function used to generate the colour for the block based on value and value2</param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
-        /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
+        /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
+        /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments provided</param>
         /// <returns></returns>
-        private static IEnumerable<ChartItem> AggregateSubTasksIntoBlocks(
-            IEnumerable<SubTask> subTasks,
+        private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
+            IEnumerable<Assignment> assignments,
             Func<SubTask, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<SubTask, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<Assignment, bool> hatchedFunction = null,
+            Func<double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             // Each block is considered an element of a series.
@@ -272,7 +276,7 @@ namespace PPMTool.Data
             var temp = new List<ChartItem>();
 
             // If no subtasks in the list
-            if (subTasks.Count() < 1)
+            if (assignments.Count() < 1)
             {
                 // Return no blocks
                 return temp;
@@ -295,10 +299,10 @@ namespace PPMTool.Data
             while (currentDay < endDate)
             {
                 // Find assignments running on current day
-                var within = subTasks.Where(x => x.IsWithin(currentDay));
+                var within = assignments.Where(x => x.SubTask.IsWithin(currentDay));
 
                 // Sum value for the current day -- truncate to 2 DP
-                valueDay = within.RoundedSum(x => valueFunction(x));
+                valueDay = within.RoundedSum(x => valueFunction(x.SubTask));
 
                 // Set hatched for the current day
                 hatchedDay = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
@@ -329,7 +333,8 @@ namespace PPMTool.Data
                             currentDay,
                             valueTracked,
                             value2Tracked,
-                            hatchedTracked ?? false
+                            hatchedTracked ?? false,
+                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
                         ));
                     }
                     currentBlockStartDay = currentDay;
@@ -352,7 +357,8 @@ namespace PPMTool.Data
                     currentDay,
                     valueDay,
                     value2Day,
-                    hatchedDay
+                    hatchedDay,
+                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
                 ));
             }
             return temp;
@@ -364,15 +370,15 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="label"></param>
         /// <param name="subTasks"></param>
-        /// <param name="value1Function">Function to determine a value summed over subtasks in the current week</param>
-        /// <param name="value2Function">Function to determine a second value summed over subtasks in the current week></param>
+        /// <param name="value1Function">Function to determine a value for subtasks in the current week</param>
+        /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
         /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
             string label,
             IEnumerable<SubTask> subTasks,
-            Func<SubTask, double> value1Function,
-            Func<SubTask, double> value2Function = null,
+            Func<SubTask, DateTime, double> value1Function,
+            Func<SubTask, DateTime, double> value2Function = null,
             Func<SubTask, bool> hatchedFunction = null
         )
         {
@@ -382,6 +388,9 @@ namespace PPMTool.Data
 
             // Get earliest assignment to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
+
+            // Move to a Monday
+            start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
             // Get latest assignment finish so we know when to stop
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate;
@@ -400,8 +409,8 @@ namespace PPMTool.Data
                         label,
                         currentWeek,
                         currentWeek.AddDays(7),
-                        within.RoundedSum(x => value1Function(x)),
-                        value2Function != null ? within.RoundedSum(x => value2Function(x)) : 0,
+                        within.RoundedSum(x => value1Function(x, currentWeek)),
+                        value2Function != null ? within.RoundedSum(x => value2Function(x, currentWeek)) : 0,
                         hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false
                     )
                 );

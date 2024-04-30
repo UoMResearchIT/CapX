@@ -2,12 +2,21 @@
 @inherits DataGridPage<Resource>
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     @if (TaskId < 0)
     {
-        <h1>Add Task</h1>
-        <p>Add new task to <b>@projectModel?.GetFullName()</b></p>
+        <div class="row">
+            <div class="col-auto">
+                <h1>Add Task</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Add new task to <b>@projectModel?.GetFullName()</b></p>
+            </div>
+        </div>
     }
     else
     {
@@ -16,14 +25,30 @@
                 <h1>Edit @taskModel.Name</h1>
             </div>
             <div class="col-auto" style="align-content: center">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
             </div>
         </div>
-        <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
+        <div class="row">
+            <div class="col">
+                <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
+            </div>
+        </div>
 
+    }
+    @if (!EditAuthorised)
+    {
+        <div class="row">
+            <ProjectManagerOnlyComponent />
+        </div>
+    }
+    @if (taskModel.UnmetDemand > 0)
+    {
+        <StatusMessageComponent Type="StatusMessageComponent.MessageType.Warning"
+                                Message=@("Task is currently under-resourced and has un-met demand!") />
     }
     <hr />
     <div class="card">
+        <h2>Details</h2>
         <EditForm Model="@taskModel" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
@@ -86,6 +111,7 @@
                     <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled || selectedPredecessorId != null)" /><br />
                     <RadzenDatePicker @bind-Value="taskModel.StartDate" Disabled="@(startDateDisabled || taskModel.IsDone || selectedPredecessorId != null)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
+
                 <div class="col">
                 </div>
             </div>
@@ -146,6 +172,8 @@
                         <RadzenLabel class="radzen-form-label" Text="Actual Cost (£)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cost computed from resource day rates and work" /><br />
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="taskModel.ActualCost" Disabled="true" />
                     </div>
+                    <div class="col">
+                    </div>
                 </div>
             }
 
@@ -158,78 +186,101 @@
                     <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || taskModel.IsDone) />
                 </div>
             </div>
+            <div class="row"
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Minimum required units for this task"/><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.001)" Step="0.001" Placeholder="0.00" @bind-Value="taskModel.Demand" Disabled="@taskModel.IsDone" />
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Unmet Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="The difference between the minimum demand required and the sum of the resources assigned" />
+                    @if(taskModel.UnmetDemand > 0)
+                    {
+                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Warning Icon="warning" title="This task is under-resourced!" />
+                    }
+                    <br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" @bind-Value="@taskModel.UnmetDemand" Disabled="true" />
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <br />
+            <div class="row"
+                <div class="col">
+                    <RadzenDataGrid @ref="dataGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                                    Data="@dataGridEntities" TItem="Resource" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
+                                <EditTemplate Context="res">
+                                    <RadzenDropDown @bind-Value="res.Person" Data="@people" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
+                                        <Template Context="person">
+                                            @person.Name
+                                        </Template>
+                                    </RadzenDropDown>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="80px" MinWidth="10px">
+                                <EditTemplate Context="res">
+                                    <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" Width="100px" MinWidth="10px">
+                                <EditTemplate Context="res">
+                                    <div class="align-items-center p-1">
+                                        <div style="display: flex">
+                                            <RadzenSwitch @bind-Value="@res.IsProvisional" />
+                                        </div>
+                                    </div>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Resource" Property="UseDefaultDayRate" Title="Default Day Rate?" Width="100px" MinWidth="10px">
+                                <EditTemplate Context="res">
+                                    <div class="align-items-center p-1">
+                                        <div style="display: flex">
+                                            <RadzenSwitch @bind-Value="@res.UseDefaultDayRate" />
+                                        </div>
+                                    </div>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate (£)" Width="120px" MinWidth="10px">
+                                <EditTemplate Context="res">
+                                    <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseDefaultDayRate)" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
 
-            <RadzenDataGrid @ref="dataGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                            Data="@dataGridEntities" TItem="Resource" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
-                <Columns>
-                    <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
-                        <EditTemplate Context="res">
-                            <RadzenDropDown @bind-Value="res.Person" Data="@people" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
-                                <Template Context="person">
-                                    @person.Name
+                            <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="156px" MinWidth="10px">
+                                <Template Context="res">
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
+                                    </RadzenButton>
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
+                                    </RadzenButton>
                                 </Template>
-                            </RadzenDropDown>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="80px" MinWidth="10px">
-                        <EditTemplate Context="res">
-                            <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" Width="180px" MinWidth="10px">
-                        <EditTemplate Context="res">
-                            <div class="align-items-center p-1">
-                                <div style="display: flex">
-                                    <RadzenSwitch @bind-Value="@res.IsProvisional" />
-                                </div>
-                            </div>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="UseDefaultDayRate" Title="Default Day Rate?" Width="180px" MinWidth="10px">
-                        <EditTemplate Context="res">
-                            <div class="align-items-center p-1">
-                                <div style="display: flex">
-                                    <RadzenSwitch @bind-Value="@res.UseDefaultDayRate" />
-                                </div>
-                            </div>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate (£)" Width="180px" MinWidth="10px">
-                        <EditTemplate Context="res">
-                            <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseDefaultDayRate)" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="156px" MinWidth="10px">
-                        <Template Context="res">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" @onclick:stopPropagation="true" Disabled=@taskModel.IsDone>
-                            </RadzenButton>
-                        </Template>
-                        <EditTemplate Context="res">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(res))">
-                            </RadzenButton>
-                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(res))">
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))">
-                            </RadzenButton>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
+                                <EditTemplate Context="res">
+                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(res))">
+                                    </RadzenButton>
+                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(res))">
+                                    </RadzenButton>
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))">
+                                    </RadzenButton>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </div>
+            </div>
 
             <hr />
             <div class="row">
                 <div class="col">
                     <RadzenButton ButtonType="ButtonType.Button" Click="UpdateSubTask" Text="Update" Icon="refresh" />
-                    <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" />
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" Disabled=!EditAuthorised />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                 </div>
             </div>
             @if (!isValid)
             {
-                <p style="color: red">Task configuration insufficent for scheduling. Please correct and update again: @error</p>
+                <hr />
+                <StatusMessageComponent Type="StatusMessageComponent.MessageType.Error"
+                                        Message=@($"Task configuration insufficent for scheduling. Please correct and update again: {error}") />
             }
 
         </EditForm>

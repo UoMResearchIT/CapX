@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -26,7 +25,6 @@ namespace PPMTool.Pages
         public int PersonId { get; set; }
 
         private Person personModel = new();
-        private PPMToolContext context;
         private IEnumerable<SkillTag> availableTags;
         private IList<SkillTag> chosenTags = new List<SkillTag>();
         private string autoCompleteText;
@@ -35,7 +33,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
 
             // Map entities to checkbox list items
             availableTags = TagService.GetAll(context).OrderBy(x => x.Name).ToList();

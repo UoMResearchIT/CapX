@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
-using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -31,16 +30,18 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private InnateCodeService InnateCodeService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
         EditForm ProjectForm { get; set; }
 
         private Project projectModel = new Project();
-        private PPMToolContext context;
         private bool gotoDetails = false;
         private bool discardChanges = true;
-        private IEnumerable<string> innateActivities = new List<string>();
+        private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
@@ -48,14 +49,18 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
 
             if (ProjectId > -1)
             {
                 projectModel = ProjectService.GetById(context, ProjectId);
+
+                // If editing a project, only allow the project manager to edit it or a superuser
+                var user = AuthenticationState?.User;
+                var role = RolesService.GetByUsername(context, ActiveUser);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
             }
 
-            innateActivities = ResourceHelper.AvailableInnateActivities.ToList();
+            innateActivities = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).ToList();
             portfolios = Enum.GetValues<Portfolio>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();

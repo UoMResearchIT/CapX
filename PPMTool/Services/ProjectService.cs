@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -64,6 +63,7 @@ namespace PPMTool.Services
                 .ThenInclude(s => s.AssignedResources)
                 .ThenInclude(r => r.Person)
                 .Include(p => p.ProjectManager)
+                .Include(p => p.InnateActivity)
                 .ToList();
         }
 

@@ -7,6 +7,7 @@ namespace PPMTool.Data.Context
 {
     public class PPMToolContext : DbContext
     {
+        public DbSet<InnateCode> InnateCodes { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
@@ -39,7 +40,8 @@ namespace PPMTool.Data.Context
         /// </summary>
         /// <param name="optionsBuilder"></param>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseSqlite("DataSource=PPMTool.db");
+        {
+        }
 
         /// <summary>
         /// Define the model.

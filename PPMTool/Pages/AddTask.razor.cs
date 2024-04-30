@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -23,6 +23,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private RolesService RolesService { get; set; }
 
         [Inject]
         private IJSRuntime JsRuntime { get; set; }
@@ -48,7 +51,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
             dataGridEntities = new List<Resource>();
             people = PersonService.GetAll(context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
@@ -56,19 +58,28 @@ namespace PPMTool.Pages
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
             projectModel = ProjectService.GetById(context, ProjectId);
+
+            // No project then stop initialising
+            if (projectModel == null) return;
+
+            // Initialise sub tasks
             if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
+
+            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
+            var user = AuthenticationState?.User;
+            var role = RolesService.GetByUsername(context, ActiveUser);
+            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
 
             // Load task
             if (TaskId > -1)
             {
+                // Load model
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
 
                 // Assign the predecessor option
                 if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
-            }
 
-            if (TaskId > -1)
-            {
+                // Assign resources
                 foreach (var r in taskModel.AssignedResources)
                 {
                     dataGridEntities.Add(r);
@@ -88,6 +99,14 @@ namespace PPMTool.Pages
             UpdateUIState(taskModel, new EventArgs());
 
             LogInformation(taskModel.SubTaskId > 0 ? $"Editing task {taskModel?.Name} on {projectModel?.GetFullName()}" : $"Adding new task to {projectModel?.GetFullName()}");
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            // If no project then navigate away
+            if (projectModel == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private string GetNiceString(Enum x)
@@ -147,6 +166,7 @@ namespace PPMTool.Pages
             LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
             dataGridEntities.Add(resource);
             entityToInsert = null;
+            taskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         protected override void OnUpdateRow(Resource entity)
@@ -156,6 +176,7 @@ namespace PPMTool.Pages
 
         private void OnResourcePersonChange(object value)
         {
+            Debug.WriteLine("** Resource Person Change");
             Person person = value as Person;
             if (person != null)
             {
@@ -179,6 +200,18 @@ namespace PPMTool.Pages
                     resourceToChange.DayRate = person.DayRate;
                 }
             }
+        }
+
+        protected override async Task DeleteRow(Resource entity)
+        {
+            await base.DeleteRow(entity);
+            taskModel.UpdateUnmetDemand(dataGridEntities);
+        }
+
+        protected override async Task SaveRow(Resource entity)
+        {
+            await base.SaveRow(entity);
+            taskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         private void DiscardChanges()

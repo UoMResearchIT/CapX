@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FluentDateTime;
 using PPMTool.Data.Entities;
@@ -76,10 +77,29 @@ namespace PPMTool.Data
             {
                 return $"{month}-{year}";
             }
+
+            /// <summary>
+            /// Special comparer to only recognise two entries as being the same if they represent unmet demand
+            /// </summary>
+            public class TaskDataUnmetDemandEntryEqualityCompararer : IEqualityComparer<TaskData>
+            {
+                public bool Equals(TaskData x, TaskData y)
+                {
+                    return
+                        x.EmployeeName == "Unmet Demand" &&
+                        y.EmployeeName == "Unmet Demand" &&
+                        x.ProjectAndTaskName == y.ProjectAndTaskName;
+                }
+
+                public int GetHashCode([DisallowNull] TaskData obj)
+                {
+                    return obj.GetHashCode();
+                }
+            }
         }
 
         /// <summary>
-        /// Test to see whether a date is within a 
+        /// Test to see whether a date is within a particular month
         /// </summary>
         /// <param name="dateToTest"></param>
         /// <param name="currentMonth"></param>
@@ -93,8 +113,8 @@ namespace PPMTool.Data
         /// Given a person, prepare data from database with a monthly granularity
         /// </summary>
         /// <param name="person">Person who is being exported</param>
-        /// <param name="subTasks">All subtasks as retireved from the subtask service</param>
-        /// <param name="projects">All projects as retireved from the project service</param>
+        /// <param name="subTasks">All subtasks where person is an assigned resource</param>
+        /// <param name="projects">All projects as retrieved from the project service</param>
         /// <param name="numMonthsIntoFuture">Number of months into the future we want data for</param>
         /// <returns>List of data items</returns>
         public IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, IEnumerable<Project> projects, int numMonthsIntoFuture)
@@ -160,12 +180,9 @@ namespace PPMTool.Data
                 // 1. Starts before month and finishes after month
                 // 2. Starts this month
                 // 3. Ends this month
-                var tasksThisMonth = subTasks.Where(x =>
-                    (x.StartDate <= currentDate && x.EndDate >= currentDate) ||
-                    (x.StartDate > currentDate && x.StartDate < currentDate.AddMonths(1)) ||
-                    (x.EndDate > currentDate && x.EndDate < currentDate.AddMonths(1))
-                );
+                var tasksThisMonth = GetAllTasksRunningThisMonth(subTasks, currentDate);
 
+                // Loop over the tasks in this month
                 foreach (var t in tasksThisMonth)
                 {
                     // Build task name
@@ -192,14 +209,37 @@ namespace PPMTool.Data
                             EmployeeName = person.Name,
                             FTE = person.FTE,
                             ProjectAndTaskName = name,
-                            InnateActivity = proj.InnateActivity,
+                            InnateActivity = proj.InnateActivity.GetCodeAsString(),
                         };
                         task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                         data.Add(task);
                     }
+
+                    // Add / update a task for unmet demand
+                    if (t.HasUnmetDemand())
+                    {
+                        existing = data.FirstOrDefault(x => x.EmployeeName == "Unmet Demand" && x.ProjectAndTaskName == name);
+                        if (existing != null)
+                        {
+                            // Add new month entry for existing task
+                            existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.UnmetDemand * 100));
+                        }
+                        else
+                        {
+                            // Add new task
+                            var task = new TaskData
+                            {
+                                EmployeeName = "Unmet Demand",
+                                FTE = 0,
+                                ProjectAndTaskName = name,
+                                InnateActivity = proj.InnateActivity.GetCodeAsString()
+                            };
+                            task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.UnmetDemand * 100));
+                            data.Add(task);
+                        }
+                    }
                 }
                 currentDate = currentDate.AddMonths(1).Date;
-
             }
 
             // Block out tasks after they leave or before they start
@@ -219,8 +259,25 @@ namespace PPMTool.Data
 
             Debug.WriteLine($"** Exported {data.Count} rows for {person.Name}");
             return data;
-
         }
 
+        /// <summary>
+        /// Finds all subtasks that run in this month based on the following conditions:
+        /// 1. Starts before month and finishes after month
+        /// 2. Starts this month
+        /// 3. Ends this month
+        /// </summary>
+        /// <param name="subTasks"></param>
+        /// <param name="firstOfTheMonth"></param>
+        /// <returns></returns>
+        private IEnumerable<SubTask> GetAllTasksRunningThisMonth(IEnumerable<SubTask> subTasks, DateTime firstOfTheMonth)
+        {
+
+            return subTasks.Where(x =>
+                (x.StartDate <= firstOfTheMonth && x.EndDate >= firstOfTheMonth) ||
+                (x.StartDate > firstOfTheMonth && x.StartDate < firstOfTheMonth.AddMonths(1)) ||
+                (x.EndDate > firstOfTheMonth && x.EndDate < firstOfTheMonth.AddMonths(1))
+            );
+        }
     }
 }

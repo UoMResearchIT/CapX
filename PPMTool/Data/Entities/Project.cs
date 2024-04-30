@@ -41,8 +41,68 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The Innate Activity Code to which this work is booked on the timesheeting system
         /// </summary>
-        [Required]
-        public string InnateActivity { get; set; } = ResourceHelper.GetDefaultInnateActivity();
+        public InnateCode InnateActivity { get; set; }
+
+        /// <summary>
+        /// Checks whether this project is inactive, not cancelled but there are tasks that are currently running
+        /// </summary>
+        /// <returns></returns>
+        public bool RunningTaskButInactive()
+        {
+            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsProjectCancelled();
+        }
+
+        /// <summary>
+        /// Checks whether this project is active but there are no tasks that are currently running
+        /// </summary>
+        /// <returns></returns>
+        public bool ActiveButNoRunningTask()
+        {
+            return SubTasks.All(x => !x.IsCurrentlyRunning()) && (ProjectStatus == ProjectStatus.Active || ProjectStatus == ProjectStatus.Maintenance);
+        }
+
+        /// <summary>
+        /// Checks whether this project has any active status messages trigger by its own state or states of the subtasks
+        /// </summary>
+        /// <returns></returns>
+        public bool HasActiveStatusMessages()
+        {
+            return
+                RunningTaskButInactive() ||
+                ActiveButNoRunningTask() ||
+                SubTasks.Any(x => x.HasActiveStatusMessages());
+        }
+
+        /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no project manager assigned
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoPM()
+        {
+            return !ProjectStatus.IsProjectFinishedOrCancelled() && ProjectManager == null;
+        }
+
+        /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no Innate Code
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoInnateCode()
+        {
+            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null;
+        }
+
+        /// <summary>
+        /// Checks whether this project has any error-grade status messages
+        /// </summary>
+        /// <returns></returns>
+        public bool HasErrorMessages()
+        {
+            return
+                RunningTaskButInactive() ||
+                ActiveButNoRunningTask() ||
+                NotFinishedOrCancelledButNoPM() ||
+                NotFinishedOrCancelledButNoInnateCode();
+        }
 
         /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database

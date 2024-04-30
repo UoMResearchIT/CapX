@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -19,6 +21,9 @@ namespace PPMTool.Pages
         [Inject]
         public PersonService PersonService { get; set; }
 
+        [Inject]
+        public IJSRuntime JsRuntime { get; set; }
+
         private List<Person> people;
         private List<RoleType> roles;
 
@@ -33,6 +38,16 @@ namespace PPMTool.Pages
             people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
 
             LogInformation($"Viewing access grid");
+        }
+
+        protected override async Task DeleteRow(Role entity)
+        {
+            if (await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete innate code {entity.GetSensibleObjectName()}. Are you sure?"))
+            {
+                await base.DeleteRow(entity);
+                RolesService.Delete(context, entity);
+                LogInformation($"Deleted access record for {entity.GetSensibleObjectName()}");
+            }
         }
     }
 }

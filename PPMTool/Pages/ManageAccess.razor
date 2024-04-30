@@ -27,7 +27,7 @@
         RowCreate="@OnCreateRow"
         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
-            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
+            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="250px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.Person" Data="@people" Style="width:100%; display: block;">
                         <Template Context="person">
@@ -36,15 +36,20 @@
                     </RadzenDropDown>
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" Width="280px" MinWidth="10px">
+            <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" Width="200px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenTextBox @bind-Value="role.CASUserName" ValueProperty="CASUserName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="280px" MinWidth="10px">
+            <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="200px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" />
                 </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Role" Property="LastLoggedIn" Title="Last Logged In" Width="250px" MinWidth="10px">
+                <Template Context="role">
+                    @role.LastLoggedIn
+                </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
                 <Template Context="role">

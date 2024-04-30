@@ -18,7 +18,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 
@@ -33,8 +32,6 @@ namespace PPMTool
 
         public IConfiguration Configuration { get; }
 
-        private ILogger<Startup> Logger;
-
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
@@ -42,15 +39,13 @@ namespace PPMTool
             services.AddRazorPages();
             services.AddServerSideBlazor();
 
-            services.AddDbContext<PPMToolContext>(options =>
-            {
-                var str = Configuration.GetConnectionString("PPMToolContextConnection");
-                options.UseSqlite(str);
-                options.EnableSensitiveDataLogging();
-            });
+            services.AddDbContextFactory<PPMToolContext>(options =>
+                options.UseSqlite(Configuration.GetConnectionString("PPMToolContextConnection"))
+            );
 
             services.AddBlazoredSessionStorage();
 
+            services.AddScoped<InnateCodeService>();
             services.AddScoped<RolesService>();
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
@@ -82,29 +77,7 @@ namespace PPMTool
                     options.Cookie.SameSite = SameSiteMode.None;
                     options.Events = new CookieAuthenticationEvents
                     {
-                        OnSigningOut = context =>
-                        {
-                            // Single Sign-Out
-                            var casUrl = new Uri(Configuration["Authentication:CAS:ServerUrlBase"]);
-                            var redirectUri = UriHelper.BuildAbsolute(
-                                casUrl.Scheme,
-                                new HostString(casUrl.Host, casUrl.Port),
-                                casUrl.LocalPath,
-                                "/logout",
-                                QueryString.Create("service", Configuration["HostUrl"])
-                            );
-
-                            var logoutRedirectContext = new RedirectContext<CookieAuthenticationOptions>(
-                                context.HttpContext,
-                                context.Scheme,
-                                context.Options,
-                                context.Properties,
-                                redirectUri
-                            );
-                            context.Response.StatusCode = 204; // Prevent RedirectToReturnUrl
-                            context.Options.Events.RedirectToLogout(logoutRedirectContext);
-                            return Task.CompletedTask;
-                        },
+                        OnSigningOut = OnCookieSigningOut,
                     };
                 })
                 .AddCAS(options =>
@@ -124,51 +97,8 @@ namespace PPMTool
 
                     options.Events = new CasEvents
                     {
-                        OnCreatingTicket = async context =>
-                        {
-                            if (context.Identity == null)
-                            {
-                                return;
-                            }
-
-                            if (context.Principal?.Identity is ClaimsIdentity identity)
-                            {
-                                // Map claims from assertion and sign in
-                                var assertion = context.Assertion;
-
-                                // Map UoM user name to claim
-                                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
-                                identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
-
-                                // Lookup the username in the DB and add role claim
-                                // Has to be done manually since service provider not built yet?
-                                var dbContext = new PPMToolContext();
-                                var role = dbContext.Roles
-                                    .Include(x => x.Person)
-                                    .ToList()
-                                    .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
-                                if (role != null)
-                                {
-                                    identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
-                                }
-
-                                await context.HttpContext.SignInAsync(context.Principal);
-                                Logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
-                            }
-                        },
-                        OnRemoteFailure = context =>
-                        {
-                            var failure = context.Failure;
-                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
-                            if (!string.IsNullOrWhiteSpace(failure?.Message))
-                            {
-                                logger.LogError(failure, "{Exception}", failure.Message);
-                            }
-
-                            context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
-                            context.HandleResponse();
-                            return Task.CompletedTask;
-                        },
+                        OnCreatingTicket = OnCreatingTicket,
+                        OnRemoteFailure = OnRemoteFailure
                     };
                 });
 
@@ -180,11 +110,10 @@ namespace PPMTool
             IApplicationBuilder app,
             IWebHostEnvironment env,
             RolesService roleService,
-            ILogger<Startup> logger)
+            ILogger<Startup> logger,
+            IDbContextFactory<PPMToolContext> contextFactory
+        )
         {
-            // Assign the logger for use in the ConfigureServices callbacks
-            Logger = logger;
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -214,9 +143,94 @@ namespace PPMTool
 
             // Seed the superuser
             roleService.SeedSuperUser();
+        }
 
-            // Initialise the Resource Helper
-            ResourceHelper.Initialise();
+        private async Task OnCreatingTicket(CasCreatingTicketContext context)
+        {
+            if (context.Identity == null)
+            {
+                return;
+            }
+
+            if (context.Principal?.Identity is ClaimsIdentity identity)
+            {
+                // Map claims from assertion and sign in
+                var assertion = context.Assertion;
+
+                // Map UoM user name to claim
+                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
+                identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
+
+                // Lookup the username in the DB and add role claim
+                // Has to be done manually since service provider not built yet?
+                var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+                var dbContext = dbContextFactory.CreateDbContext();
+                var role = dbContext.Roles
+                    .Include(x => x.Person)
+                    .ToList()
+                    .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
+                if (role != null)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
+                }
+
+                await context.HttpContext.SignInAsync(context.Principal);
+
+                // Update last logged in and log
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
+                var roleService = context.HttpContext.RequestServices.GetRequiredService<RolesService>();
+                if (roleService != null)
+                {
+                    if (role != null)
+                    {
+                        roleService.UpdateLastLoggedIn(dbContext, role);
+                    }
+                }
+                else
+                {
+                    logger?.LogError("RoleService not found! Cannot update last logged in!");
+                }
+
+                logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
+            }
+        }
+
+        private Task OnCookieSigningOut(CookieSigningOutContext context)
+        {
+            // Single Sign-Out
+            var casUrl = new Uri(Configuration["Authentication:CAS:ServerUrlBase"]);
+            var redirectUri = UriHelper.BuildAbsolute(
+                casUrl.Scheme,
+                new HostString(casUrl.Host, casUrl.Port),
+                casUrl.LocalPath,
+                "/logout",
+                QueryString.Create("service", Configuration["HostUrl"])
+            );
+
+            var logoutRedirectContext = new RedirectContext<CookieAuthenticationOptions>(
+                context.HttpContext,
+                context.Scheme,
+                context.Options,
+                context.Properties,
+                redirectUri
+            );
+            context.Response.StatusCode = 204; // Prevent RedirectToReturnUrl
+            context.Options.Events.RedirectToLogout(logoutRedirectContext);
+            return Task.CompletedTask;
+        }
+
+        private Task OnRemoteFailure(RemoteFailureContext context)
+        {
+            var failure = context.Failure;
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
+            if (!string.IsNullOrWhiteSpace(failure?.Message))
+            {
+                logger.LogError(failure, "{Exception}", failure.Message);
+            }
+
+            context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
+            context.HandleResponse();
+            return Task.CompletedTask;
         }
     }
 }

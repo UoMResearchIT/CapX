@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240430153535_MakeInnateCodeOptional")]
+    partial class MakeInnateCodeOptional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -55,25 +57,6 @@ namespace PPMTool.Migrations
                     b.HasIndex("PersonId");
 
                     b.ToTable("AvailabilityChanges");
-                });
-
-            modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
-                {
-                    b.Property<int>("InnateCodeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ActivityCode")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ActivityName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("InnateCodeId");
-
-                    b.ToTable("InnateCodes");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
@@ -130,8 +113,8 @@ namespace PPMTool.Migrations
                     b.Property<double>("FundsReceived")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("InnateActivityInnateCodeId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("InnateActivity")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -166,8 +149,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("ProjectId");
-
-                    b.HasIndex("InnateActivityInnateCodeId");
 
                     b.HasIndex("ProjectManagerPersonId");
 
@@ -349,15 +330,9 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateActivity")
-                        .WithMany()
-                        .HasForeignKey("InnateActivityInnateCodeId");
-
                     b.HasOne("PPMTool.Data.Entities.Person", "ProjectManager")
                         .WithMany()
                         .HasForeignKey("ProjectManagerPersonId");
-
-                    b.Navigation("InnateActivity");
 
                     b.Navigation("ProjectManager");
                 });
