@@ -188,11 +188,17 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
+                // If no resources assigned then use the demand to schedule the task
+                if (AssignedResources.Count == 0)
+                {
+                    units = Demand;
+                }
+
                 // Start date is fixed
                 if (HasFixedStart)
                 {
                     // If we assign someone who doesn't start until after the date then error
-                    if (units > 0d && latestStart > StartDate)
+                    if (AssignedResources.Count > 0 && latestStart > StartDate)
                     {
                         return $"This task has a fixed start date of {StartDate}. " +
                             $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
@@ -209,7 +215,7 @@ namespace PPMTool.Data.Entities
                     }
 
                     // Check whether we need to drive from resources
-                    if (units > 0d && latestStart > StartDate)
+                    if (AssignedResources.Count > 0 && latestStart > StartDate)
                     {
                         Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
                         StartDate = latestStart.Date;
