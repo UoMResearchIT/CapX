@@ -178,7 +178,22 @@ namespace PPMTool
                 }
 
                 await context.HttpContext.SignInAsync(context.Principal);
+
+                // Update last logged in and log
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
+                var roleService = context.HttpContext.RequestServices.GetRequiredService<RolesService>();
+                if (roleService != null)
+                {
+                    if (role != null)
+                    {
+                        roleService.UpdateLastLoggedIn(dbContext, role);
+                    }
+                }
+                else
+                {
+                    logger?.LogError("RoleService not found! Cannot update last logged in!");
+                }
+
                 logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
             }
         }

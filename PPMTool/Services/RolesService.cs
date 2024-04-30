@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -91,6 +92,13 @@ namespace PPMTool.Services
                 return match.RoleType;
             }
             return RoleType.None;
+        }
+
+        public void UpdateLastLoggedIn(PPMToolContext context, Role roleEntity)
+        {
+            roleEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Roles.Update(roleEntity);
+            context.SaveChanges();
         }
     }
 }
