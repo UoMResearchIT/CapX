@@ -41,7 +41,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The Innate Activity Code to which this work is booked on the timesheeting system
         /// </summary>
-        public string InnateActivity { get; set; }
+        public InnateCode InnateActivity { get; set; }
 
         /// <summary>
         /// Checks whether this project is inactive, not cancelled but there are tasks that are currently running
