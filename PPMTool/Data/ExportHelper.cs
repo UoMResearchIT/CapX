@@ -209,7 +209,7 @@ namespace PPMTool.Data
                             EmployeeName = person.Name,
                             FTE = person.FTE,
                             ProjectAndTaskName = name,
-                            InnateActivity = proj.InnateActivity,
+                            InnateActivity = proj.InnateActivity.GetCodeAsString(),
                         };
                         task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                         data.Add(task);
@@ -232,7 +232,7 @@ namespace PPMTool.Data
                                 EmployeeName = "Unmet Demand",
                                 FTE = 0,
                                 ProjectAndTaskName = name,
-                                InnateActivity = proj.InnateActivity,
+                                InnateActivity = proj.InnateActivity.GetCodeAsString()
                             };
                             task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.UnmetDemand * 100));
                             data.Add(task);

@@ -41,8 +41,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The Innate Activity Code to which this work is booked on the timesheeting system
         /// </summary>
-        [Required]
-        public string InnateActivity { get; set; } = ResourceHelper.GetDefaultInnateActivity();
+        public InnateCode InnateActivity { get; set; }
 
         /// <summary>
         /// Checks whether this project is inactive, not cancelled but there are tasks that are currently running
@@ -84,6 +83,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no Innate Code
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoInnateCode()
+        {
+            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null;
+        }
+
+        /// <summary>
         /// Checks whether this project has any error-grade status messages
         /// </summary>
         /// <returns></returns>
@@ -92,7 +100,8 @@ namespace PPMTool.Data.Entities
             return
                 RunningTaskButInactive() ||
                 ActiveButNoRunningTask() ||
-                NotFinishedOrCancelledButNoPM();
+                NotFinishedOrCancelledButNoPM() ||
+                NotFinishedOrCancelledButNoInnateCode();
         }
 
         /// <summary>
