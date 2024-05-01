@@ -86,9 +86,9 @@ namespace PPMTool.Data.Entities
         /// Checks whether this project is not finished or cancelled but has no Innate Code
         /// </summary>
         /// <returns></returns>
-        public bool NotFinishedOrCancelledButNoInnateCode()
+        public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
         {
-            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null;
+            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null && DateTime.Now.Date.AddMonths(1) >= StartDate);
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace PPMTool.Data.Entities
                 RunningTaskButInactive() ||
                 ActiveButNoRunningTask() ||
                 NotFinishedOrCancelledButNoPM() ||
-                NotFinishedOrCancelledButNoInnateCode();
+                NotFinishedOrCancelledButNoInnateCodeAndUpcoming();
         }
 
         /// <summary>
