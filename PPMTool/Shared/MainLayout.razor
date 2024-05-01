@@ -3,24 +3,26 @@
 @using Microsoft.Extensions.Hosting;
 @inject IWebHostEnvironment Environment
 
-<div class="page">
-    <div class="sidebar">
+<div class="row page-row">
+    <div class="sidebar col-2">
         <NavMenu />
     </div>
-
-    <div class="main">
-        <div class="top-row px-4 auth spaced-header">
-            <div class="col-auto mr-auto">
+    <div class="col">
+        <div class="row m-2">
+            <div class="col mr-auto">
                 @if (Environment.IsDevelopment())
                 {
                     <h1 style="color: var(--rz-warning)">&#x26A0; DEVELOPMENT VERSION &#x26A0;</h1>
                 }
             </div>
-            <LoginView />
+            <div class="col-auto mr-auto">
+                <LoginView />
+            </div>
         </div>
-
-        <div class="content px-4">
-            @Body
+        <div class="row">
+            <div class="px-4 col">
+                @Body
+            </div>
         </div>
     </div>
 </div>
