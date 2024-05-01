@@ -11,7 +11,11 @@
     <div class="container">
         <h1>My Projects</h1>
         <hr />
-        @if (ownedProjects == null || ownedProjects.Count() ==0)
+        @if (ownedProjects == null)
+        {
+            <LoadingComponent />            
+        }
+        else if (ownedProjects.Count() == 0)
         {
             <RadzenText Text="You don't have any projects to manage!" />
         }
@@ -57,7 +61,7 @@
     <hr />
     @if (loading)
     {
-        <PPMTool.Pages.Components.LoadingComponent />
+        <LoadingComponent />
     }
     else if (projects == null)
     {
