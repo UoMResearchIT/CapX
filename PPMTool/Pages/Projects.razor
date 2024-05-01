@@ -26,7 +26,9 @@
                 <div class="card my-1">
                     <div class=row style="align-items:center">
                         <div class="col-auto">
-                            <RadzenText TextStyle=TextStyle.H5 Text="@p.GetFullName()" />
+                            <RadzenLink @onclick="args => NavigateToProjectDetails(p.ProjectId)">
+                                <RadzenText TextStyle="TextStyle.H5" Text="@p.GetFullName()" />
+                            </RadzenLink>
                         </div>
                         <div class="col">
                             @if (!p.HasActiveStatusMessages())
@@ -35,7 +37,7 @@
                             }
                         </div>
                         <div class="col-auto">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(args => NavigateToProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" />
+                            <RadzenButton Icon="open_in_new" ButtonStyle="ButtonStyle.Primary" Text="Details (New Tab)" Click="@(args => NavigateToProjectDetails(p.ProjectId, true))" @onclick:stopPropagation="true" />
                         </div>
                         <div class="col-auto">
                             <RTPButtonComponent Page=@this Project=p />

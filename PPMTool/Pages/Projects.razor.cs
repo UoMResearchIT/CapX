@@ -169,9 +169,16 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private async Task NavigateToProjectDetails(int id)
+        private async Task NavigateToProjectDetails(int id, bool newWindow = false)
         {
-            await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+            if (newWindow)
+            {
+                await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+            }
+            else
+            {
+                Navigation.NavigateTo($"/projectdetails/{id}");
+            }
         }
 
         private void AddProject()
