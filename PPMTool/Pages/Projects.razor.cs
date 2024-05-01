@@ -179,7 +179,6 @@ namespace PPMTool.Pages
             {
                 Navigation.NavigateTo($"/projectdetails/{id}");
             }
-            
         }
 
         private void AddProject()
