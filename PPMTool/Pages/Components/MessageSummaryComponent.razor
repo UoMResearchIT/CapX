@@ -37,7 +37,7 @@
 @if (Project.NotFinishedOrCancelledButNoInnateCodeAndUpcoming())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project has no timesheet activity set and a task will start soon!" />
+                            Message="This project has no timesheet activity set and project has started or will start soon!" />
 }
 
 @code {
