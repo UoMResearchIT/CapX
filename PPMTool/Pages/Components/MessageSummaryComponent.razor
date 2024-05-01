@@ -34,10 +34,10 @@
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
                             Message="This project has no project manager set!" />
 }
-@if (Project.NotFinishedOrCancelledButNoInnateCode())
+@if (Project.NotFinishedOrCancelledButNoInnateCodeAndUpcoming())
 {
     <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project has no timesheet activity set!" />
+                            Message="This project has no timesheet activity set and project has started or will start soon!" />
 }
 
 @code {
