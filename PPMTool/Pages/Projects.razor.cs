@@ -9,6 +9,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -184,6 +185,22 @@ namespace PPMTool.Pages
         private void AddProject()
         {
             Navigation.NavigateTo($"/addproject/-1");
+        }
+
+        private async Task DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
+        {
+            if (item == null)
+            {
+                await NavigateToProjectDetails(project.ProjectId);
+            }
+            else if (item.Value == "NewWindow")
+            {
+                await NavigateToProjectDetails(project.ProjectId, true);
+            }
+            else if (item.Value == "Edit")
+            {
+                Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            }
         }
     }
 }
