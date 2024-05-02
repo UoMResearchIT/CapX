@@ -135,7 +135,7 @@ namespace PPMTool.Pages
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    ownedProjects = proj.Where(x => x.HasErrorMessages()).ToList();
+                    ownedProjects = proj.Where(x => x.HasActiveErrorMessages()).ToList();
                 }
                 else
                 {
