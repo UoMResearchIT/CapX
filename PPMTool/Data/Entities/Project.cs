@@ -219,12 +219,6 @@ namespace PPMTool.Data.Entities
             if (ActualCost > Budget) BudgetStatus = BudgetStatus.Overspend;
             else if (SubTasks.Any(x => x.BudgetStatus == BudgetStatus.Underspend)) BudgetStatus = BudgetStatus.Underspend;
             else BudgetStatus = BudgetStatus.OnBudget;
-
-            // Update status messages
-            foreach (var message in statusMessages)
-            {
-                message.Update();
-            }
         }
 
         /// <summary>
