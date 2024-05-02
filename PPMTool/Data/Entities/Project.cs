@@ -118,7 +118,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool RunningTaskButInactive()
         {
-            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsProjectCancelled();
+            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool NotFinishedOrCancelledButNoPM()
         {
-            return !ProjectStatus.IsProjectFinishedOrCancelled() && ProjectManager == null;
+            return !ProjectStatus.IsFinishedOrCancelled() && ProjectManager == null;
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
         {
-            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null && DateTime.Now.Date.AddMonths(1) >= StartDate;
+            return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Now.Date.AddMonths(1) >= StartDate;
         }
 
         /// <summary>

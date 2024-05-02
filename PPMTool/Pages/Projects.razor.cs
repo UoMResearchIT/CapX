@@ -122,7 +122,7 @@ namespace PPMTool.Pages
             }
 
             // Remove the ones that are not active if necessary
-            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
+            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
 
             // Extract the owned projects
             if (ProjectManagerShortName != null)

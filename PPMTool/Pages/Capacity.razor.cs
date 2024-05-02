@@ -450,7 +450,7 @@ namespace PPMTool.Pages
             }
 
             // Get projects from the database ignoring finished or cancelled projects
-            var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled());
+            var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
             if (!IncludeUnFunded)
             {
                 projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
@@ -509,39 +509,10 @@ namespace PPMTool.Pages
                 // Build chart source from the grouped data
                 foreach (var group in groupedAssignments)
                 {
-                    var items = ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                        group.Key as Person,
-                        group.Value,
-                        x =>
-                        {
-                            var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
-                            return resource.AssignmentFTE;
-                        },
-                        (x, y) =>
-                        {
-                            return ChartItem.GetColourStringFTE(x, y);
-                        },
-                        (group.Key as Person).Name,
-                        queryActive ? QueryStartDate : startDate,
-                        queryActive ? queryEndDate : endDate,
-                        x =>
-                        {
-                            // If any resources are marked as provisional or the project owning the task
-                            // is not funded, active or in maintenance
-                            return
-                                (x.ProjectStatus != ProjectStatus.Funded &&
-                                x.ProjectStatus != ProjectStatus.Active &&
-                                x.ProjectStatus != ProjectStatus.Maintenance) ||
-                                x.SubTask.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
-                        },
-                        (x, w) =>
-                        {
-                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 1.0;
-                        }
-                    ).ToList();
-
                     // Add the range for this person
-                    chartSourceTemp.AddRange(items);
+                    chartSourceTemp.AddRange(
+                        GetPersonModeChartItemsFromAssignments(group.Key as Person, group.Value, queryActive ? QueryStartDate : startDate, queryActive ? queryEndDate : endDate)
+                    );
                 }
             }
 
@@ -586,7 +557,7 @@ namespace PPMTool.Pages
                         // Give unique name to series when multiple people selected
                         var seriesName = (group.Key as Project).GetFullName();
                         chartSourceTemp.AddRange(
-                            GetProjectModeChartItemsFromTasks(ChosenPeople.Count() > 1 ? $"{seriesName} ({person.ShortName})" : seriesName, group, startDate, endDate, person)
+                            GetProjectModeChartItemsFromAssignments(ChosenPeople.Count() > 1 ? $"{seriesName} ({person.ShortName})" : seriesName, group, startDate, endDate, person)
                         );
                     }
 
@@ -594,7 +565,7 @@ namespace PPMTool.Pages
                     var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                     var rowName = $"Total ({name})";
                     chartSourceTemp.AddRange(
-                        GetProjectModeChartItemsFromTasks(
+                        GetProjectModeChartItemsFromAssignments(
                             rowName,
                             new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
                             startDate,
@@ -612,7 +583,7 @@ namespace PPMTool.Pages
                     // Final total row is the same logic applied to the subtasks aggregated across everyone selected
                     var totalName = $"Total (All)";
                     chartSourceTemp.AddRange(
-                        GetProjectModeChartItemsFromTasks(
+                        GetProjectModeChartItemsFromAssignments(
                             totalName,
                             new KeyValuePair<object, IEnumerable<Assignment>>(totalName, assignmentsAllPeople),
                             startDate,
@@ -685,7 +656,16 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** ChartSource has {confirmedChartItems?.Count()} confirmed entries and {provisionalChartItems.Count()} provisional entries!");
         }
 
-        private IEnumerable<ChartItem> GetProjectModeChartItemsFromTasks(
+        /// <summary>
+        /// Method only called in project mode to generate chart items
+        /// </summary>
+        /// <param name="seriesName"></param>
+        /// <param name="groupedAssignments"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="chosenPerson"></param>
+        /// <returns></returns>
+        private IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
             KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
@@ -724,9 +704,7 @@ namespace PPMTool.Pages
                     // If any resources are marked as provisional or the project owning the task
                     // is not funded, active or in maintenance
                     return
-                        (x.ProjectStatus != ProjectStatus.Funded &&
-                        x.ProjectStatus != ProjectStatus.Active &&
-                        x.ProjectStatus != ProjectStatus.Maintenance) ||
+                        x.ProjectStatus.IsUnconfirmed() ||
                         resources.Any(x => x.IsProvisional);
                 },
                 // Value 2 for each block is based on the sum of the availability of all chosen people
@@ -737,26 +715,95 @@ namespace PPMTool.Pages
                         people.Where(y => y == chosenPerson);
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
                 },
-                // Accepts list of assignments for this group to determine tooltip messages
+                // Accepts list of assignments for the block to determine tooltip messages for the block
                 x =>
                 {
                     var messages = string.Empty;
-                    if (groupedAssignments.Key is Project project)
-                    {
-                        // Always return the project manager on the tooltip
-                        messages += $"PM: {project.ProjectManager?.Name ?? "Not Set"}";
 
-                        // When not a total row, the group key will be a project.
-                        // Check whether this project has unmet demand in that case.
-                        if (project.SubTasks.Any(x => x.HasUnmetDemand()))
-                        {
-                            var unmetDemand = project.SubTasks.Sum(x => x.UnmetDemand);
-                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
-                        }
+                    // When not a total row, the group key will be a project.
+                    var keyAsProject = groupedAssignments.Key as Project;
+
+                    if (keyAsProject != null)
+                    {
+                        // Always return the project manager on the tooltip for project rows
+                        messages += $"PM: {keyAsProject.ProjectManager?.Name ?? "Not Set"}";
                     }
+
+                    // Check whether this project has unmet demand on the tasks to which this person is assigned
+                    if (keyAsProject != null ?
+                        keyAsProject.SubTasks.Any(x => x.HasUnmetDemand() && x.AssignedResources.Any(x => x.Person == chosenPerson)) :
+                        x.Any(x => x.SubTask.HasUnmetDemand() && x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson))
+                    )
+                    {
+                        var unmetDemand = keyAsProject.SubTasks.Sum(x => x.UnmetDemand);
+                        messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                    }
+
+                    // Add the project unconfirmed warning to the tooltip if project is unconfirmed
+                    if (keyAsProject != null ?
+                        keyAsProject.ProjectStatus.IsUnconfirmed() :
+                        x.Any(x => x.ProjectStatus.IsUnconfirmed())
+                    )
+                    {
+                        messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
+                    }
+
+                    // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
+                    if (keyAsProject != null ?
+                        keyAsProject.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == chosenPerson && x.IsProvisional)) :
+                        groupedAssignments.Value.Any(x => x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson && x.IsProvisional))
+                    )
+                    {
+                        messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
+                    }
+
                     return messages;
                 }
                 );
+        }
+
+        /// <summary>
+        /// Only called in person mode per person to generate chart items
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="assignments"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
+            Person person,
+            IEnumerable<Assignment> assignments,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+                person,
+                assignments,
+                x =>
+                {
+                    var resource = x.AssignedResources.First(x => x.Person.Name == person.Name);
+                    return resource.AssignmentFTE;
+                },
+                (x, y) =>
+                {
+                    return ChartItem.GetColourStringFTE(x, y);
+                },
+                person.Name,
+                queryActive ? QueryStartDate : startDate,
+                queryActive ? queryEndDate : endDate,
+                x =>
+                {
+                    // If any resources are marked as provisional or the project owning the task
+                    // is not funded, active or in maintenance
+                    return
+                        x.ProjectStatus.IsUnconfirmed() ||
+                        x.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                },
+                (x, w) =>
+                {
+                    return person.GetAvailabilityOnDate(w);
+                }
+            );
         }
 
         /// <summary>

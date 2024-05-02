@@ -88,6 +88,20 @@ namespace PPMTool.Data.Entities
             return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate <= EndDate;
         }
 
+        /// <summary>
+        /// Method to determine whether any part of the task runs within a date range [startDate endDate].
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        internal bool IsWithin(DateTime startDate, DateTime endDate)
+        {
+            return
+                IsWithin(endDate) ||
+                IsWithin(startDate) ||
+                StartDate <= startDate && EndDate >= endDate;
+        }
+
 
         /// <summary>
         /// Used to drive the end date from the start date assuming 7 hour days. This is includes weekends.
