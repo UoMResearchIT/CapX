@@ -25,14 +25,8 @@
             {
                 <div class="card my-1">
                     <div class=row style="align-items:center">
-                        <div class="col-auto">
-                            <RadzenText TextStyle="TextStyle.H5" Text="@p.GetFullName()" />
-                        </div>
                         <div class="col">
-                            @if (!p.HasActiveStatusMessages())
-                            {
-                                <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
-                            }
+                            <RadzenText TextStyle="TextStyle.H5" Text="@p.GetFullName()" />
                         </div>
                         <div class="col-auto">
                             <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, p))">
@@ -46,7 +40,7 @@
                             <RTPButtonComponent Page=@this Project=p />
                         </div>
                     </div>
-                    <MessageSummaryComponent Project=p />
+                    <MessageSummaryComponent Messages="p.GetLatestStatusMessages()" />
                 </div>
             }
         }

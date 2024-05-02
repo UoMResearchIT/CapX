@@ -493,19 +493,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks whether any of the task-level status messages will be active
-        /// </summary>
-        /// <returns></returns>
-        public bool HasActiveStatusMessages()
-        {
-            return
-                HasProvisionalResources() ||
-                HasUnmetDemand() ||
-                HasStartedInTheLastWeek() ||
-                WillStartWithinAMonth();
-        }
-
-        /// <summary>
         /// Method to get the amount of work planned for this task from its start to the end of the week
         /// assuming the date time provided is a Monday.
         /// </summary>
