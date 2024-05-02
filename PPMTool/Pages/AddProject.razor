@@ -78,7 +78,9 @@
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Innate Activity" /><br />
-                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities">
+                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" AllowClear="true"
+                                    LoadData="@LoadInnateDropdownData">
                         <Template Context="activity">
                             @activity.GetCodeAsString()
                         </Template>
