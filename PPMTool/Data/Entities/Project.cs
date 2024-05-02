@@ -108,11 +108,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public IList<StatusMessage> GetLatestStatusMessages()
         {
-            // Run the success checks last as condition depends on the lastest state of the others!
-            foreach (var item in statusMessages.Reverse())
-            {
-                item.Update();
-            }
+            UpdateStatusMessages();
             return statusMessages;
         }
 
@@ -227,6 +223,18 @@ namespace PPMTool.Data.Entities
         internal string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
+        }
+
+        /// <summary>
+        /// Method to update the status messages
+        /// </summary>
+        internal void UpdateStatusMessages()
+        {
+            // Run the success checks last as condition depends on the latest state of the others!
+            foreach (var item in statusMessages.Reverse())
+            {
+                item.Update();
+            }
         }
     }
 }

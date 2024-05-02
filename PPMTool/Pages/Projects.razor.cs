@@ -130,12 +130,20 @@ namespace PPMTool.Pages
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    ownedProjects = proj.Where(x => x.HasActiveStatusMessages()).ToList();
+                    ownedProjects = proj.Where(x =>
+                    {
+                        x.UpdateStatusMessages();
+                        return x.HasActiveStatusMessages();
+                    }).ToList();
                 }
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    ownedProjects = proj.Where(x => x.HasActiveErrorMessages()).ToList();
+                    ownedProjects = proj.Where(x =>
+                    {
+                        x.UpdateStatusMessages();
+                        return x.HasActiveErrorMessages();
+                    }).ToList();
                 }
                 else
                 {
