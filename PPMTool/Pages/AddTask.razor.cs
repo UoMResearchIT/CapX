@@ -298,6 +298,11 @@ namespace PPMTool.Pages
                     error = "Task name must be unique within the project";
                     isValid = false;
                 };
+                if (taskModel.Demand <= 0)
+                {
+                    error = "Demand for a task must be greater than zero!";
+                    isValid = false;
+                }
                 if (isValid)
                 {
                     LogInformation("Saving sub task...");
