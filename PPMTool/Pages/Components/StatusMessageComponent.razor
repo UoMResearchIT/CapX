@@ -1,30 +1,41 @@
-﻿<div class="row">
+﻿@using static PPMTool.Data.Entities.Project.StatusMessage
+@using static PPMTool.Data.Entities.Project
+
+<div class="row">
     <div class="col-auto">
-        @if (Type == MessageType.Info)
+        @if (Message.Type == MessageType.Info)
         {
             <RadzenIcon Icon="info" IconStyle="IconStyle.Info" />
         }
-        else if (Type == MessageType.Warning)
+        else if (Message.Type == MessageType.Warning)
         {
             <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" />
         }
-        else if (Type == MessageType.Error)
+        else if (Message.Type == MessageType.Error)
         {
             <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" />
         }
+        else
+        {
+            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
+        }
     </div>
     <div class="col">
-        @if (Type == MessageType.Info)
+        @if (Message.Type == MessageType.Info)
         {
-            <RadzenText Style="color: var(--rz-info)" Text=@Message />
+            <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
         }
-        else if (Type == MessageType.Warning)
+        else if (Message.Type == MessageType.Warning)
         {
-            <RadzenText Style="color: var(--rz-warning)" Text=@Message />
+            <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
         }
-        else if (Type == MessageType.Error)
+        else if (Message.Type == MessageType.Error)
         {
-            <RadzenText Style="color: var(--rz-danger)" Text=@Message />
+            <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
+        }
+        else
+        {
+            <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
         }
     </div>
 </div>
@@ -32,15 +43,5 @@
 @code {
 
     [Parameter]
-    public string Message { get; set; }
-
-    [Parameter]
-    public MessageType Type {get; set;}
-
-    public enum MessageType
-    {
-        Info,
-        Warning,
-        Error
-    }
+    public StatusMessage Message { get; set; }
 }

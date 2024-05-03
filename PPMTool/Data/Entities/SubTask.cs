@@ -77,15 +77,28 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to determine whether a date [startDate endDate].
+        /// Method to determine whether a date is in the range [task.startDate task.endDate].
         /// If end date and start date are the same evaluates against start date.
-        /// The end date is assumed to be a working day for the task so it included in the test.
         /// </summary>
         /// <param name="testDate">Date to test</param>
         /// <returns></returns>
         internal bool IsWithin(DateTime testDate)
         {
             return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate <= EndDate;
+        }
+
+        /// <summary>
+        /// Method to determine whether any part of the task runs within a date range [startDate endDate].
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        internal bool IsWithin(DateTime startDate, DateTime endDate)
+        {
+            return
+                IsWithin(endDate) ||
+                IsWithin(startDate) ||
+                StartDate <= startDate && EndDate >= endDate;
         }
 
 
@@ -402,7 +415,7 @@ namespace PPMTool.Data.Entities
             {
                 assignedResources = AssignedResources;
             }
-            UnmetDemand = Math.Round(100 * (Demand - assignedResources.Sum(r => r.AssignmentFTE))) / 100f;
+            UnmetDemand = Math.Round(Demand - assignedResources.RoundedSum(r => r.AssignmentFTE, 3), 3);
             if (UnmetDemand < 0) UnmetDemand = 0;
         }
 
@@ -490,19 +503,6 @@ namespace PPMTool.Data.Entities
         public bool IsCurrentlyRunning()
         {
             return StartDate.Date <= DateTime.Now.Date && EndDate.Date >= DateTime.Now.Date;
-        }
-
-        /// <summary>
-        /// Checks whether any of the task-level status messages will be active
-        /// </summary>
-        /// <returns></returns>
-        public bool HasActiveStatusMessages()
-        {
-            return
-                HasProvisionalResources() ||
-                HasUnmetDemand() ||
-                HasStartedInTheLastWeek() ||
-                WillStartWithinAMonth();
         }
 
         /// <summary>

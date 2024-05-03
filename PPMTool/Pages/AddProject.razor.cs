@@ -9,6 +9,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -42,6 +43,7 @@ namespace PPMTool.Pages
         private bool gotoDetails = false;
         private bool discardChanges = true;
         private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
+        private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
@@ -60,7 +62,9 @@ namespace PPMTool.Pages
                 EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
             }
 
-            innateActivities = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).ToList();
+            // Initially load data
+            innateActivityQuery = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).AsQueryable();
+            innateActivities = innateActivityQuery.ToList();
             portfolios = Enum.GetValues<Portfolio>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
@@ -72,6 +76,23 @@ namespace PPMTool.Pages
             projectManagers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
 
             LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
+        }
+
+        /// <summary>
+        /// Should be fired when the dropdown control initialises and when the filter condition changes.
+        /// </summary>
+        /// <param name="args"></param>
+        void LoadInnateDropdownData(LoadDataArgs args)
+        {
+            var temp = innateActivityQuery;
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = innateActivityQuery.Where(act => act.GetCodeAsString().ToLower().Contains(args.Filter.ToLower()));
+            }
+
+            innateActivities = temp.ToList();
+
+            InvokeAsync(StateHasChanged);
         }
 
         private string GetNiceString(Enum x)
@@ -90,7 +111,7 @@ namespace PPMTool.Pages
                     {
                         // Check to see if the project is marked as cancelled as then we need to remove resources.
                         // Leave resources on completed projects so we have a historical record.
-                        if (projectModel.ProjectStatus.IsProjectCancelled())
+                        if (projectModel.ProjectStatus.IsCancelled())
                         {
                             foreach (SubTask t in projectModel.SubTasks)
                             {
