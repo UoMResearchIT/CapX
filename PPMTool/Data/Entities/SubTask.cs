@@ -77,9 +77,8 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to determine whether a date [startDate endDate].
+        /// Method to determine whether a date is in the range [task.startDate task.endDate].
         /// If end date and start date are the same evaluates against start date.
-        /// The end date is assumed to be a working day for the task so it included in the test.
         /// </summary>
         /// <param name="testDate">Date to test</param>
         /// <returns></returns>
@@ -416,7 +415,7 @@ namespace PPMTool.Data.Entities
             {
                 assignedResources = AssignedResources;
             }
-            UnmetDemand = Math.Round(100 * (Demand - assignedResources.Sum(r => r.AssignmentFTE))) / 100f;
+            UnmetDemand = Math.Round(Demand - assignedResources.RoundedSum(r => r.AssignmentFTE, 3), 3);
             if (UnmetDemand < 0) UnmetDemand = 0;
         }
 
