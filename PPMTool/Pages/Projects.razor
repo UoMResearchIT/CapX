@@ -11,7 +11,11 @@
     <div class="container">
         <h1>My Projects</h1>
         <hr />
-        @if (ownedProjects == null || ownedProjects.Count() ==0)
+        @if (ownedProjects == null)
+        {
+            <LoadingComponent />            
+        }
+        else if (ownedProjects.Count() == 0)
         {
             <RadzenText Text="You don't have any projects to manage!" />
         }
@@ -21,23 +25,22 @@
             {
                 <div class="card my-1">
                     <div class=row style="align-items:center">
-                        <div class="col-auto">
-                            <RadzenText TextStyle=TextStyle.H5 Text="@p.GetFullName()" />
-                        </div>
                         <div class="col">
-                            @if (!p.HasActiveStatusMessages())
-                            {
-                                <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
-                            }
+                            <RadzenText TextStyle="TextStyle.H5" Text="@p.GetFullName()" />
                         </div>
                         <div class="col-auto">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(args => NavigateToProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" />
+                            <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, p))">
+                                <ChildContent>
+                                    <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
+                                    <RadzenSplitButtonItem Text="Edit Project" Value="Edit" />
+                                </ChildContent>
+                            </RadzenSplitButton>
                         </div>
                         <div class="col-auto">
                             <RTPButtonComponent Page=@this Project=p />
                         </div>
                     </div>
-                    <MessageSummaryComponent Project=p />
+                    <MessageSummaryComponent Messages="p.GetLatestStatusMessages()" />
                 </div>
             }
         }
@@ -57,7 +60,7 @@
     <hr />
     @if (loading)
     {
-        <PPMTool.Pages.Components.LoadingComponent />
+        <LoadingComponent />
     }
     else if (projects == null)
     {

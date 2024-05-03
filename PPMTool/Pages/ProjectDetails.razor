@@ -17,7 +17,7 @@
             {
                 <h1>@project.GetFullName()</h1>
 
-                <MessageSummaryComponent Project=project />
+                <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
             }
         </div>
         <div class="col-auto">

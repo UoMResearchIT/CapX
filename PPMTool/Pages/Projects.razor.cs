@@ -9,6 +9,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -121,7 +122,7 @@ namespace PPMTool.Pages
             }
 
             // Remove the ones that are not active if necessary
-            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
+            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
 
             // Extract the owned projects
             if (ProjectManagerShortName != null)
@@ -129,12 +130,20 @@ namespace PPMTool.Pages
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    ownedProjects = proj.Where(x => x.HasActiveStatusMessages()).ToList();
+                    ownedProjects = proj.Where(x =>
+                    {
+                        x.UpdateStatusMessages();
+                        return x.HasActiveStatusMessages();
+                    }).ToList();
                 }
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    ownedProjects = proj.Where(x => x.HasErrorMessages()).ToList();
+                    ownedProjects = proj.Where(x =>
+                    {
+                        x.UpdateStatusMessages();
+                        return x.HasActiveErrorMessages();
+                    }).ToList();
                 }
                 else
                 {
@@ -169,14 +178,37 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private async Task NavigateToProjectDetails(int id)
+        private async Task NavigateToProjectDetails(int id, bool newWindow = false)
         {
-            await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+            if (newWindow)
+            {
+                await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+            }
+            else
+            {
+                Navigation.NavigateTo($"/projectdetails/{id}");
+            }
         }
 
         private void AddProject()
         {
             Navigation.NavigateTo($"/addproject/-1");
+        }
+
+        private async Task DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
+        {
+            if (item == null)
+            {
+                await NavigateToProjectDetails(project.ProjectId);
+            }
+            else if (item.Value == "NewWindow")
+            {
+                await NavigateToProjectDetails(project.ProjectId, true);
+            }
+            else if (item.Value == "Edit")
+            {
+                Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            }
         }
     }
 }

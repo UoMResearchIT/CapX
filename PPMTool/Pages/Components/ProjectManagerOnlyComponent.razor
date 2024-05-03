@@ -1,1 +1,3 @@
-﻿<StatusMessageComponent Type=StatusMessageComponent.MessageType.Warning Message="Only the project manager or a superuser is authorised to edit project details!" />
+﻿@using static PPMTool.Data.Entities.Project
+
+<StatusMessageComponent Message=@(new StatusMessage("Only the project manager or a superuser is authorised to edit project details!", StatusMessage.MessageType.Warning)) />

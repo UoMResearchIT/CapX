@@ -76,10 +76,18 @@ namespace PPMTool.Data
             }
         }
 
+        /// <summary>
+        /// Find the sum of a value in a collection, rounded to a specified number of decimal places.
+        /// </summary>
+        /// <typeparam name="TSource"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="selector"></param>
+        /// <param name="decimalPlaces"></param>
+        /// <returns></returns>
         public static double RoundedSum<TSource>(this IEnumerable<TSource> source,
-            Func<TSource, double> selector)
+            Func<TSource, double> selector, int decimalPlaces = 3)
         {
-            return Math.Round(100 * source.Sum(selector)) / 100;
+            return Math.Round(source.Sum(selector), decimalPlaces);
         }
     }
 }

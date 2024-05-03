@@ -3,6 +3,7 @@
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+@using static PPMTool.Data.Entities.Project
 
 <div class="container">
     @if (TaskId < 0)
@@ -41,10 +42,9 @@
             <ProjectManagerOnlyComponent />
         </div>
     }
-    @if (taskModel.UnmetDemand > 0)
+    @if (taskModel.HasUnmetDemand())
     {
-        <StatusMessageComponent Type="StatusMessageComponent.MessageType.Warning"
-                                Message=@("Task is currently under-resourced and has un-met demand!") />
+        <StatusMessageComponent Message=@(new StatusMessage("Task is currently under-resourced and has un-met demand!", StatusMessage.MessageType.Warning)) />
     }
     <hr />
     <div class="card">
@@ -279,8 +279,7 @@
             @if (!isValid)
             {
                 <hr />
-                <StatusMessageComponent Type="StatusMessageComponent.MessageType.Error"
-                                        Message=@($"Task configuration insufficent for scheduling. Please correct and update again: {error}") />
+                <StatusMessageComponent Message=@(new StatusMessage($"Task cannot be updated. Please correct the issue and update again: {error}", StatusMessage.MessageType.Error)) />
             }
 
         </EditForm>

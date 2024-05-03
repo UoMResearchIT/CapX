@@ -1,47 +1,13 @@
 ﻿@using PPMTool.Data.Entities
 @using PPMTool.Enums
+@using static PPMTool.Data.Entities.Project
 
-@if (Project.SubTasks.Any(x => x.WillStartWithinAMonth()))
+@foreach (var message in Messages.Where(x => x.Status))
 {
-    <StatusMessageComponent Message="A task in this project will start soon." />
-}
-@if (Project.SubTasks.Any(x => x.HasStartedInTheLastWeek()))
-{
-    <StatusMessageComponent Message="A task in this project has recently started." />
-}
-@if (Project.SubTasks.Any(x => x.HasProvisionalResources()))
-{
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Warning
-                            Message="A task in this project has provisional resources!" />
-}
-@if (Project.SubTasks.Any(x => x.HasUnmetDemand()))
-{
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Warning
-                            Message="A task in this project is under-resourced!" />
-}
-@if (Project.RunningTaskButInactive())
-{
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="A task in this project is running, but the project is not active!" />
-}
-@if (Project.ActiveButNoRunningTask())
-{
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project is active but has no currently running tasks!" />
-}
-@if (Project.NotFinishedOrCancelledButNoPM())
-{
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project has no project manager set!" />
-}
-@if (Project.NotFinishedOrCancelledButNoInnateCode())
-{
-    <StatusMessageComponent Type=StatusMessageComponent.MessageType.Error
-                            Message="This project has no timesheet activity set!" />
+    <StatusMessageComponent Message=message />
 }
 
 @code {
     [Parameter]
-    public Project Project { get; set; }
-    
+    public IList<StatusMessage> Messages { get; set; }
 }

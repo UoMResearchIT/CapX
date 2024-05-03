@@ -293,6 +293,11 @@ namespace PPMTool.Pages
             if (projectModel != null)
             {
                 UpdateSubTask();
+                if (!SubTaskService.IsUniqueTaskNameInProject(projectModel, taskModel))
+                {
+                    error = "Task name must be unique within the project";
+                    isValid = false;
+                };
                 if (isValid)
                 {
                     LogInformation("Saving sub task...");

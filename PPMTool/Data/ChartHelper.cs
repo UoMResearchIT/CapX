@@ -9,7 +9,8 @@ namespace PPMTool.Data
     public class ChartHelper
     {
         /// <summary>
-        /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph
+        /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.
+        /// Adds special logic to pad whitespace in the timelines and adjust for person start and end dates.
         /// </summary>
         /// <param name="person">Person of interest</param>
         /// <param name="assignments">Set of assignments to aggregate</param>
@@ -20,6 +21,7 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
@@ -30,7 +32,8 @@ namespace PPMTool.Data
             DateTime startDate,
             DateTime endDate,
             Func<Assignment, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             // If person starts after the start date then reset the start date to that date
@@ -48,7 +51,7 @@ namespace PPMTool.Data
             // Get the chart items
             var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
 
@@ -63,14 +66,12 @@ namespace PPMTool.Data
                 var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
 
                 // Generate the items
-                //Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));
             }
 
             // If there is a gap after the last chart item and the end date then fill in
             if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
             {
-                //Debug.WriteLine($"** Generating extra items at the end for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate, endDate));
             }
 
@@ -93,7 +94,6 @@ namespace PPMTool.Data
                     if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
                     {
                         // Generate chart items from availability to fill the gap
-                        //Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
                         extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
                     }
                 }
@@ -111,7 +111,7 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph
+        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph.
         /// </summary>
         /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
@@ -121,7 +121,7 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
-        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
             IEnumerable<Assignment> assignments,
@@ -142,7 +142,7 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="startDate"></param>
@@ -254,7 +254,7 @@ namespace PPMTool.Data
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
-        /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments provided</param>
+        /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
             IEnumerable<Assignment> assignments,
@@ -325,6 +325,7 @@ namespace PPMTool.Data
                     // Only add a block if its value is non-zero
                     if (valueTracked != 0d)
                     {
+                        var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
                         temp.Add(new ChartItem(
                             colourFunction(valueTracked, value2Tracked),
@@ -334,7 +335,7 @@ namespace PPMTool.Data
                             valueTracked,
                             value2Tracked,
                             hatchedTracked ?? false,
-                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
+                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                         ));
                     }
                     currentBlockStartDay = currentDay;
@@ -350,6 +351,8 @@ namespace PPMTool.Data
             // Add the final block if it had a non-zero value
             if (valueTracked != 0d)
             {
+                // Consider the end date to be inclusive of the final block so do not move back a day like above
+                var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay));
                 temp.Add(new ChartItem(
                     colourFunction(valueDay, value2Day),
                     label,
@@ -358,7 +361,7 @@ namespace PPMTool.Data
                     valueDay,
                     value2Day,
                     hatchedDay,
-                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
+                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                 ));
             }
             return temp;
