@@ -21,6 +21,7 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
@@ -31,7 +32,8 @@ namespace PPMTool.Data
             DateTime startDate,
             DateTime endDate,
             Func<Assignment, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             // If person starts after the start date then reset the start date to that date
@@ -49,7 +51,7 @@ namespace PPMTool.Data
             // Get the chart items
             var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
 

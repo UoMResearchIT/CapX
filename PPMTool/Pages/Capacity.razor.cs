@@ -808,7 +808,8 @@ namespace PPMTool.Pages
                 (x, w) =>
                 {
                     return person.GetAvailabilityOnDate(w);
-                }
+                },
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
