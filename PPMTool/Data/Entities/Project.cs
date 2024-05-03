@@ -108,11 +108,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public IList<StatusMessage> GetLatestStatusMessages()
         {
-            // Run the success checks last as condition depends on the lastest state of the others!
-            foreach (var item in statusMessages.Reverse())
-            {
-                item.Update();
-            }
+            UpdateStatusMessages();
             return statusMessages;
         }
 
@@ -122,7 +118,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool RunningTaskButInactive()
         {
-            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsProjectCancelled();
+            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>
@@ -149,7 +145,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool NotFinishedOrCancelledButNoPM()
         {
-            return !ProjectStatus.IsProjectFinishedOrCancelled() && ProjectManager == null;
+            return !ProjectStatus.IsFinishedOrCancelled() && ProjectManager == null;
         }
 
         /// <summary>
@@ -158,7 +154,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
         {
-            return !ProjectStatus.IsProjectFinishedOrCancelled() && InnateActivity == null && DateTime.Now.Date.AddMonths(1) >= StartDate;
+            return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Now.Date.AddMonths(1) >= StartDate;
         }
 
         /// <summary>
@@ -227,6 +223,18 @@ namespace PPMTool.Data.Entities
         internal string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
+        }
+
+        /// <summary>
+        /// Method to update the status messages
+        /// </summary>
+        internal void UpdateStatusMessages()
+        {
+            // Run the success checks last as condition depends on the latest state of the others!
+            foreach (var item in statusMessages.Reverse())
+            {
+                item.Update();
+            }
         }
     }
 }

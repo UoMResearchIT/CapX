@@ -111,7 +111,7 @@ namespace PPMTool.Pages
                     {
                         // Check to see if the project is marked as cancelled as then we need to remove resources.
                         // Leave resources on completed projects so we have a historical record.
-                        if (projectModel.ProjectStatus.IsProjectCancelled())
+                        if (projectModel.ProjectStatus.IsCancelled())
                         {
                             foreach (SubTask t in projectModel.SubTasks)
                             {

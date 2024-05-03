@@ -22,7 +22,7 @@ namespace PPMTool.Data
 
         public bool IsHatched { get; }
 
-        public string AdditionalTooltipMessages { get; }
+        public string TooltipMessages { get; }
 
         public ChartItem(
             string colour,
@@ -32,7 +32,7 @@ namespace PPMTool.Data
             double value1,
             double value2,
             bool isHatched,
-            string additionalTooltipMessages = null)
+            string tooltipMessages = null)
         {
             StartDate = start;
             EndDate = end;
@@ -41,7 +41,7 @@ namespace PPMTool.Data
             Label = label;
             Colour = colour;
             IsHatched = isHatched;
-            AdditionalTooltipMessages = additionalTooltipMessages;
+            TooltipMessages = tooltipMessages;
         }
 
         /// <summary>
