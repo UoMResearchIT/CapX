@@ -272,6 +272,7 @@
                                         @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
                                     }
                                     <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
+                                    <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
                                     <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                     <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                                 </div>
