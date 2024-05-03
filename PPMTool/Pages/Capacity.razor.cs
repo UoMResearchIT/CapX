@@ -716,50 +716,56 @@ namespace PPMTool.Pages
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
-                x =>
+                assignmentsWithinBlock =>
                 {
                     var messages = string.Empty;
 
                     // When not a total row, the group key will be a project.
-                    var keyAsProject = groupedAssignments.Key as Project;
-
-                    if (keyAsProject != null)
+                    var projectForRow = groupedAssignments.Key as Project;
+                    if (projectForRow != null)
                     {
                         // Always return the project manager on the tooltip for project rows
-                        messages += $"PM: {keyAsProject.ProjectManager?.Name ?? "Not Set"}";
+                        messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
+
+                        // Check whether this project has unmet demand on the tasks to which this person is assigned
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson));
+                        if (assignedWithinBlockWithChosenPerson.Any(x => x.SubTask.HasUnmetDemand()))
+                        {
+                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x.SubTask.UnmetDemand);
+                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                        }
                     }
 
-                    // Check whether this project has unmet demand on the tasks to which this person is assigned
-                    if (keyAsProject != null ?
-                        keyAsProject.SubTasks.Any(x => x.HasUnmetDemand() && x.AssignedResources.Any(x => x.Person == chosenPerson)) :
-                        x.Any(x => x.SubTask.HasUnmetDemand() && x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson))
-                    )
-                    {
-                        var unmetDemand = keyAsProject.SubTasks.Sum(x => x.UnmetDemand);
-                        messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
-                    }
-
-                    // Add the project unconfirmed warning to the tooltip if project is unconfirmed
-                    if (keyAsProject != null ?
-                        keyAsProject.ProjectStatus.IsUnconfirmed() :
-                        x.Any(x => x.ProjectStatus.IsUnconfirmed())
-                    )
-                    {
-                        messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
-                    }
-
-                    // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-                    if (keyAsProject != null ?
-                        keyAsProject.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == chosenPerson && x.IsProvisional)) :
-                        groupedAssignments.Value.Any(x => x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson && x.IsProvisional))
-                    )
-                    {
-                        messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
-                    }
+                    // Generate further, universal messages
+                    messages = GenerateTooltipMessages(assignmentsWithinBlock, chosenPerson, messages);
 
                     return messages;
                 }
-                );
+            );
+        }
+
+        /// <summary>
+        /// Generates tooltip messages for the chart items (blocks) based on a series of conditions.
+        /// </summary>
+        /// <param name="assignmentsWithinBlock">List of assignments that have contributed to the block</param>
+        /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
+        /// <param name="messages">Messages to add to</param>
+        /// <returns></returns>
+        private string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        {
+            // Add the project unconfirmed warning to the tooltip if project is unconfirmed
+            if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
+            {
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
+            }
+
+            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
+            if (assignmentsWithinBlock.Any(x => x.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional)))
+            {
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
+            }
+
+            return messages;
         }
 
         /// <summary>
