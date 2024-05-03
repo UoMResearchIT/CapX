@@ -94,5 +94,17 @@ namespace PPMTool.Services
             // Update database
             context.SaveChanges();
         }
+
+        /// <summary>
+        /// Determine whether any existing subtasks in the project model have the same name
+        /// </summary>
+        /// <param name="projectModel"></param>
+        /// <param name="taskModel"></param>
+        /// <returns></returns>
+        internal bool IsUniqueTaskNameInProject(Project projectModel, SubTask taskModel)
+        {
+            var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
+            return !subSet.Any(x => x.Name == taskModel.Name);
+        }
     }
 }
