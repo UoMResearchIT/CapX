@@ -9,7 +9,8 @@ namespace PPMTool.Data
     public class ChartHelper
     {
         /// <summary>
-        /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph
+        /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.
+        /// Adds special logic to pad whitespace in the timelines and adjust for person start and end dates.
         /// </summary>
         /// <param name="person">Person of interest</param>
         /// <param name="assignments">Set of assignments to aggregate</param>
@@ -63,14 +64,12 @@ namespace PPMTool.Data
                 var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
 
                 // Generate the items
-                //Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));
             }
 
             // If there is a gap after the last chart item and the end date then fill in
             if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
             {
-                //Debug.WriteLine($"** Generating extra items at the end for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate, endDate));
             }
 
@@ -93,7 +92,6 @@ namespace PPMTool.Data
                     if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
                     {
                         // Generate chart items from availability to fill the gap
-                        //Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
                         extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
                     }
                 }
@@ -111,7 +109,7 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph
+        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph.
         /// </summary>
         /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
@@ -142,7 +140,7 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="startDate"></param>
@@ -325,6 +323,7 @@ namespace PPMTool.Data
                     // Only add a block if its value is non-zero
                     if (valueTracked != 0d)
                     {
+                        var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
                         temp.Add(new ChartItem(
                             colourFunction(valueTracked, value2Tracked),
@@ -334,7 +333,7 @@ namespace PPMTool.Data
                             valueTracked,
                             value2Tracked,
                             hatchedTracked ?? false,
-                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay))) : null
+                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                         ));
                     }
                     currentBlockStartDay = currentDay;
@@ -350,6 +349,8 @@ namespace PPMTool.Data
             // Add the final block if it had a non-zero value
             if (valueTracked != 0d)
             {
+                // Consider the end date to be inclusive of the final block so do not move back a day like above
+                var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay));
                 temp.Add(new ChartItem(
                     colourFunction(valueDay, value2Day),
                     label,
@@ -358,7 +359,7 @@ namespace PPMTool.Data
                     valueDay,
                     value2Day,
                     hatchedDay,
-                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignments) : null
+                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                 ));
             }
             return temp;
