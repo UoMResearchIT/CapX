@@ -279,7 +279,7 @@
             @if (!isValid)
             {
                 <hr />
-                <StatusMessageComponent Message=@(new StatusMessage($"Task configuration insufficent for scheduling. Please correct and update again: {error}", StatusMessage.MessageType.Error)) />
+                <StatusMessageComponent Message=@(new StatusMessage($"Task cannot be updated. Please correct the issue and update again: {error}", StatusMessage.MessageType.Error)) />
             }
 
         </EditForm>
