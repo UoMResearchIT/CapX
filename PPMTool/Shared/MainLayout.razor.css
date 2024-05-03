@@ -2,6 +2,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    background-color: #f7f7f7;
 }
 
 .main {
@@ -9,7 +10,7 @@
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, #609 0%, #609 70%);
+    background-image: linear-gradient(180deg, #609 0%, #f7f7f7 100%);
     min-width: 250px;
 }
 
