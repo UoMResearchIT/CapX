@@ -113,6 +113,8 @@
                 </div>
 
                 <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task work is computed from duration and resources (or demand if no resources)" Visible="@(workDisabled)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.5" Placeholder="0" @bind-Value="taskModel.PlannedWorkHours" Disabled="@(workDisabled || taskModel.IsDone)" />
                 </div>
             </div>
 
@@ -129,31 +131,12 @@
 
                 <!-- End date is can be driven by duration or chosen which will then drive the duration -->
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="End date is determined by work and resources and can only be fixed for a fixed duration task" Visible="@(!taskModel.HasFixedEndDate || taskModel.TaskType != TaskType.FixedDuration || taskModel.IsDone)" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="End date is determined by work and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(!taskModel.HasFixedEndDate || taskModel.TaskType != TaskType.FixedDuration || taskModel.IsDone)" /><br />
                     <RadzenDatePicker @bind-Value="taskModel.EndDate" Disabled="@(!taskModel.HasFixedEndDate || taskModel.IsDone)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
 
                 <div class="col">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Work Driven?" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Only need to choose whether work or duration drives for fixed unit tasks" Visible="@(taskModel.TaskType != TaskType.FixedUnits)" /><br />
-                    <div class="align-items-center p-1">
-                        <div style="display: flex">
-                            <RadzenSwitch @bind-value="taskModel.IsWorkDriven" Disabled="@(taskModel.IsDone || taskModel.TaskType != TaskType.FixedUnits)" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task work is computed from duration and resources" Visible="@(workDisabled)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.5" Placeholder="0" @bind-Value="taskModel.PlannedWorkHours" Disabled="@(workDisabled || taskModel.IsDone)" />
-                </div>
-
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Duration (Days)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task duration is computed from work and resources" Visible="@(durationDisabled)" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Duration (Days)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task duration is computed from work and resources (or demand if no resources)" Visible="@(durationDisabled)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" @bind-Value="taskModel.DurationDays" Disabled="@(durationDisabled || taskModel.IsDone)" /><br />
                     <div>(@(taskModel.DurationBillableDays) Billable Days)</div>
                 </div>
@@ -186,7 +169,7 @@
                     <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || taskModel.IsDone) />
                 </div>
             </div>
-            <div class="row"
+            <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Minimum required units for this task"/><br />
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.001)" Step="0.001" Placeholder="0.00" @bind-Value="taskModel.Demand" Disabled="@taskModel.IsDone" />
@@ -204,7 +187,7 @@
                 </div>
             </div>
             <br />
-            <div class="row"
+            <div class="row">
                 <div class="col">
                     <RadzenDataGrid @ref="dataGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
                                     Data="@dataGridEntities" TItem="Resource" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">

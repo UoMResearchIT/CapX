@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
 namespace PPMTool.Enums
 {
@@ -12,21 +8,15 @@ namespace PPMTool.Enums
     public enum TaskType
     {
         /// <summary>
-        /// When scheduling, maintain work and vary duration and units
+        /// When scheduling, maintain work and vary duration (assuming fixed units)
         /// </summary>
         [Description("Fixed Work")]
         FixedWork,
 
         /// <summary>
-        /// When scheduling, maintain duration and vary work and units
+        /// When scheduling, maintain duration and vary work (assuming fixed units)
         /// </summary>
         [Description("Fixed Duration")]
-        FixedDuration,
-
-        /// <summary>
-        /// When scheduling, maintain resource units and vary work and duration
-        /// </summary>
-        [Description("Fixed Units")]
-        FixedUnits
+        FixedDuration
     }
 }
