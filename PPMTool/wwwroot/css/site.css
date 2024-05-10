@@ -132,3 +132,7 @@ select {
 .radzen-autocomplete {
     width: 100%;
 }
+
+.container {
+    max-width: 100%;
+}
