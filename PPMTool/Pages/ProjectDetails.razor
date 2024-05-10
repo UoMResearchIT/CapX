@@ -138,7 +138,7 @@
                             <span style="display: flex; align-items: center">
                                 @if (t.HasUnmetDemand())
                                 {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="error" IconStyle="IconStyle.Danger" title=@($"Task is currently under-resourced ({t.UnmetDemand} FTE)!")/>                                    
+                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title=@($"Task is currently under-resourced ({t.UnmetDemand} FTE)!") />
                                 }
                                 @if (t.HasProvisionalResources())
                                 {
