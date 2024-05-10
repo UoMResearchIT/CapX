@@ -112,23 +112,6 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public int DurationBillableDays { get; set; }
 
-        private bool isWorkDriven;
-        /// <summary>
-        /// For fixed unit tasks indicates whether the work should be used to drive the duration or the other way round
-        /// </summary>
-        public bool IsWorkDriven
-        {
-            get => isWorkDriven;
-            set
-            {
-                if (isWorkDriven != value)
-                {
-                    isWorkDriven = value;
-                    OnWorkDrivenChanged(new EventArgs());
-                }
-            }
-        }
-
         private bool hasFixedEndDate = true;
         /// <summary>
         /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round (i.e. the end date is fixed)
@@ -235,26 +218,8 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
-                // Fixed Units Update
-                if (TaskType == TaskType.FixedUnits)
-                {
-                    // End date must be driven
-                    HasFixedEndDate = false;
-
-                    // Which one is updated based on preference
-                    if (IsWorkDriven)
-                    {
-                        UpdateDuration(units);
-                    }
-                    else
-                    {
-                        UpdateWork(units);
-                    }
-
-                }
-
                 // Fixed Work Update
-                else if (TaskType == TaskType.FixedWork)
+                if (TaskType == TaskType.FixedWork)
                 {
                     // End Date must be driven
                     HasFixedEndDate = false;
@@ -372,16 +337,6 @@ namespace PPMTool.Data.Entities
         protected virtual void OnFixedStartChanged(EventArgs e)
         {
             EventHandler handler = FixedStartChanged;
-            handler?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Event invoked when the work driven setting is changed
-        /// </summary>
-        public event EventHandler WorkDrivenChanged;
-        protected virtual void OnWorkDrivenChanged(EventArgs e)
-        {
-            EventHandler handler = WorkDrivenChanged;
             handler?.Invoke(this, e);
         }
 
