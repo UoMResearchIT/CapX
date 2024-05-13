@@ -40,7 +40,15 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
 
+        /// <summary>
+        /// Collection of skills
+        /// </summary>
         public ICollection<SkillTag> SkillTags { get; set; }
+
+        /// <summary>
+        /// Collection of absences
+        /// </summary>
+        public ICollection<Absence> Absences { get; set; } = new List<Absence>();
 
         /// <summary>
         /// Updates the initials of the person.

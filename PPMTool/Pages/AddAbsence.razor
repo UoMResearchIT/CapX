@@ -1,12 +1,12 @@
-﻿@page "/addavailabilitychange/{PersonId:int}"
-@inherits AddPersonProperty<AvailabilityChange>
+﻿@page "/addabsence/{PersonId:int}"
+@inherits AddPersonProperty<Absence>
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 
 <div class="container">
     @if (personModel != null)
     {
-        <h1>Availability Changes</h1>
+        <h1>Absences</h1>
         <hr />
         <div class="card">
             <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
@@ -14,7 +14,7 @@
                 <ValidationSummary />
                 <div class="row">
                     <div class="col">
-                        <h2>Current Changes to Default Availability</h2>
+                        <h2>Current Absences</h2>
                     </div>
                     <div class="col-auto" style="align-content: center">
                         <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
@@ -29,30 +29,31 @@
                                 EditMode="DataGridEditMode.Single"
                                 FilterMode="FilterMode.Simple"
                                 Data="@dataGridEntities"
-                                TItem="AvailabilityChange"
+                                TItem="Absence"
                                 RowUpdate="@OnUpdateRow"
                                 RowCreate="@OnCreateRow"
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="Absence" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="ChangeDate" Title="Date of Change" Width="180px" MinWidth="10px">
-                            <EditTemplate Context="c">
-                                <RadzenDatePicker @bind-Value="c.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                        <RadzenDataGridColumn TItem="Absence" Property="StartDate" Title="Start of Absence" Width="180px" MinWidth="10px">
+                            <Template Context="a">
+                                @a.StartDate.ToShortDateString()
+                            </Template>
+                            <EditTemplate Context="a">
+                                <RadzenDatePicker @bind-Value="a.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="AvailabilityFTE" Title="New FTE" Width="120px" MinWidth="10px">
-                            <EditTemplate Context="c">
-                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.AvailabilityFTE" />
-                            </EditTemplate>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px" MinWidth="10px">
-                            <EditTemplate Context="c">
-                                <RadzenTextBox TValue="string" @bind-Value="c.BaselineActivities" />
+                        <RadzenDataGridColumn TItem="Absence" Property="EndDate" Title="End of Absence (inclusive)" Width="180px" MinWidth="10px">
+                            <Template Context="a">
+                                @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                            </Template>
+                            <EditTemplate Context="a">
+                                <RadzenDatePicker @bind-Value="a.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
+                        <RadzenDataGridColumn TItem="Absence" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
                                 </RadzenButton>

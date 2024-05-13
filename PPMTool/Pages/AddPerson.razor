@@ -42,12 +42,16 @@
             <hr />
             <div class="row">
                 <div class="col">
-                    <h3>Skill Tags</h3>
+                    <div class="row">
+                        <div class="col-auto mr-auto py-2">
+                            <h3>Skill Tags</h3>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-auto flexbox">
                             <RadzenIcon Icon="search" />
                         </div>
-                        <div class="col flexbox pr-1 pl-0">
+                        <div class="col flexbox pr-3 pl-0">
                         <RadzenAutoComplete
                             @bind-Value=@autoCompleteText
                             Placeholder="Search for Skill Tags"
@@ -61,7 +65,7 @@
                     <div class="row">
                         <RadzenDataList
                             AllowVirtualization=true
-                            Style="height:250px; overflow:auto; width:100%"
+                            Style="min-height:120px; max-height:720px; overflow:auto; width:100%"
                             WrapItems="false"
                             AllowPaging="false"
                             Data="@chosenTags"
@@ -84,28 +88,67 @@
                 </div>
                 <div class="col">
                     <div class="row">
-                        <div class="col-auto mr-auto">
+                        <div class="col-auto mr-auto py-2">
                             <h3>Availability Changes</h3>
                         </div>
                         <div class="col-auto">
                             <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" />
                         </div>
                     </div>
-                    @foreach (var d in personModel.AvailabilityChanges)
-                    {
-                        <div class="row">
-                            <div class="col-3">
-                                @d.ChangeDate.ToShortDateString()
+                    <RadzenDataList AllowVirtualization=true
+                                    Style="min-height:120px; max-height:360px; overflow:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
+                                    WrapItems="false"
+                                    AllowPaging="false"
+                                    Data="@personModel.AvailabilityChanges"
+                                    TItem="AvailabilityChange">
+                        <Template Context="d">
+                            <div class="row flexbox p-0">
+                                <div class="col-3">
+                                    @d.ChangeDate.ToShortDateString()
+                                </div>
+                                <div class="col-3">
+                                    @d.AvailabilityFTE FTE
+                                </div>
+                                <div class="col-6">
+                                    @d.BaselineActivities
+                                </div>
                             </div>
-                            <div class="col-3">
-                                @d.AvailabilityFTE
-                            </div>
-                            <div class="col-6">
-                                <p>@d.BaselineActivities</p>
-                            </div>
-                            <br />
+                        </Template>
+                    </RadzenDataList>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col-auto mr-auto py-2">
+                            <h3>Absence</h3>
                         </div>
-                    }
+                        <div class="col-auto">
+                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" />
+                        </div>
+                    </div>
+                    <RadzenDataList AllowVirtualization=true
+                                    Style="min-height:120px; max-height:360px; overflow:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
+                                    WrapItems="false"
+                                    AllowPaging="false"
+                                    Data="@personModel.Absences"
+                                    TItem="Absence">
+                        <Template Context="a">
+                            <div class="row flexbox p-0">
+                                <div class="col-3">
+                                    @a.StartDate.ToShortDateString()
+                                </div>
+                                <div class="col-3">
+                                    to
+                                </div>
+                                <div class="col-3">
+                                    @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                                </div>
+                            </div>
+                        </Template>
+                    </RadzenDataList>
                 </div>
             </div>
             <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
