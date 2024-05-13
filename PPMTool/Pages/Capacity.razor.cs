@@ -638,9 +638,11 @@ namespace PPMTool.Pages
                 $"{(managerChosen ? " with manager " + ChosenManager.Name : "")}";
             Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
 
-            // Format X Axis range
+            // Format X Axis range based on last end date of real assignments
+            var allItems = confirmedChartItems.Concat(provisionalChartItems).Where(x => x.Value1 != 0);
+            long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
             chartOptions.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-            chartOptions.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
+            chartOptions.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
 
             // First time this is called, there is no reference to the chart
             if (chart != null)

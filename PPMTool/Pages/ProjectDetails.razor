@@ -138,7 +138,7 @@
                             <span style="display: flex; align-items: center">
                                 @if (t.HasUnmetDemand())
                                 {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="error" IconStyle="IconStyle.Danger" title=@($"Task is currently under-resourced ({t.UnmetDemand} FTE)!")/>                                    
+                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title=@($"Task is currently under-resourced ({t.UnmetDemand} FTE)!") />
                                 }
                                 @if (t.HasProvisionalResources())
                                 {
@@ -150,12 +150,6 @@
                                 }
                                 @t.Name
                             </span>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false"  Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
-                        <Template Context="task">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
-                            </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="UnmetDemand" Title="Unmet Demand" FormatString="{0:F1}" MinWidth="10px">
@@ -198,6 +192,12 @@
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
+                        <Template Context="task">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
         </div>

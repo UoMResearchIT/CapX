@@ -93,7 +93,6 @@ namespace PPMTool.Pages
             // Subscribe listeners
             taskModel.TaskTypeChanged += UpdateUIState;
             taskModel.FixedStartChanged += UpdateUIState;
-            taskModel.WorkDrivenChanged += UpdateUIState;
             taskModel.EndDateDrivenChanged += UpdateUIState;
             taskModel.DoneChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
@@ -122,8 +121,8 @@ namespace PPMTool.Pages
         private void UpdateUIState(object sender, EventArgs e)
         {
             startDateDisabled = !taskModel.HasFixedStart || taskModel.IsDone;
-            workDisabled = taskModel.TaskType == TaskType.FixedDuration || (taskModel.TaskType == TaskType.FixedUnits && !taskModel.IsWorkDriven) || taskModel.IsDone;
-            durationDisabled = taskModel.TaskType == TaskType.FixedWork || (taskModel.TaskType == TaskType.FixedUnits && taskModel.IsWorkDriven) || taskModel.TaskType == TaskType.FixedDuration && taskModel.HasFixedEndDate || taskModel.IsDone;
+            workDisabled = taskModel.TaskType == TaskType.FixedDuration || taskModel.IsDone;
+            durationDisabled = taskModel.TaskType == TaskType.FixedWork || taskModel.TaskType == TaskType.FixedDuration && taskModel.HasFixedEndDate || taskModel.IsDone;
         }
 
         private async void DeleteSubTask()

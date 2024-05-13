@@ -2,13 +2,13 @@
 @inject IConfiguration Configuration
 
 <div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">CapX</a><div class="p navbar-brand"><span>v</span><span>@Configuration["VersionNumber"]</span></div>
+    <a class="navbar-brand" href="">CapX</a><RadzenImage Path="images/rse-logo-374x335.png" Style="width: 30%; align-items: center" AlternateText="RSE logo" />
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+<div class="@NavMenuCssClass row">
     <ul class="nav flex-column">
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
@@ -43,8 +43,13 @@
                 </li>
             </Authorized>
         </AuthorizeView>
-
     </ul>
+</div>
+
+<div class="col" style="position: absolute; bottom: 0">
+    <div class="row" style="justify-content: center">
+        <RadzenText TextStyle=TextStyle.Subtitle1 Style="color: white" Text=@versionString />
+    </div>
 </div>
 
 @code {
@@ -52,8 +57,16 @@
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    private string versionString;
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        versionString = $"v{Configuration["VersionNumber"]}";
     }
 }

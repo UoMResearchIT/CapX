@@ -20,7 +20,7 @@
                     <RadzenTextBox @bind-Value="tag.Name" ValueProperty="Name" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
+            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
                 <Template Context="tag">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true">
                     </RadzenButton>
