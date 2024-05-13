@@ -55,8 +55,17 @@ namespace PPMTool.Data.Entities
             // Generate status messages to be maintained against a project
             statusMessages = new List<StatusMessage>
             {
-                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, () => Absences.Any(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today)))
+                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
             };
+        }
+
+        /// <summary>
+        /// Checks whether this person is current absent.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentlyAbsent()
+        {
+            return Absences.Any(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today));
         }
 
         /// <summary>

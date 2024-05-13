@@ -53,6 +53,7 @@ namespace PPMTool.Data.Entities
             {
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.WillStartWithinAMonth())),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasStartedInTheLastWeek())),
+                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek())),
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
                 new StatusMessage("A task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasUnmetDemand())),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),

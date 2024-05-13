@@ -425,6 +425,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether the task has any absent resources and the task is running or will start in 7 days.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasAbsentResourcesAndStartsWithinAWeek()
+        {
+            return AssignedResources.Any(r => r.Person.IsCurrentlyAbsent()) && DateTime.Today.AddDays(7) >= StartDate && DateTime.Today <= EndDate;
+        }
+
+        /// <summary>
         /// Returns the percentage of the minimum demand that is unmet.
         /// </summary>
         /// <returns></returns>
