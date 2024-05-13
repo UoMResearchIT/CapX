@@ -32,7 +32,7 @@ namespace PPMTool.Pages
         protected override async Task InsertRow()
         {
             await base.InsertRow();
-            entityToInsert.StartDate = DateTime.Now.Date;
+            entityToInsert.StartDate = DateTime.Today;
             await dataGrid.InsertRow(entityToInsert);
         }
 
@@ -52,9 +52,10 @@ namespace PPMTool.Pages
                 Absence absence = dataGridEntities.FirstOrDefault(x => dataGridEntities.Any(y =>
                 {
                     return
-                        x != y &&
-                        (x.EndDate == null && x.StartDate <= y.EndDate && x.StartDate >= y.StartDate) ||
-                        (x.EndDate != null && y.EndDate != null && x.StartDate <= y.EndDate && x.EndDate >= y.StartDate);
+                        x.AbsenceId != y.AbsenceId &&
+                        ((x.EndDate == null && x.StartDate <= y.EndDate && x.StartDate >= y.StartDate) ||
+                        (x.EndDate != null && y.EndDate != null && x.StartDate <= y.EndDate && x.EndDate >= y.StartDate));
+
                 }));
                 if (absence != null)
                 {

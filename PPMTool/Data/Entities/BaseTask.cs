@@ -4,7 +4,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public abstract class BaseTask
+    public abstract class BaseTask : ObjectWithStatusMessages
     {
         [Required]
         public string Name { get; set; }

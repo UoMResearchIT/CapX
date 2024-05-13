@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
-using static PPMTool.Data.Entities.Project;
 
 namespace PPMTool.Pages
 {

@@ -43,45 +43,6 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public InnateCode InnateActivity { get; set; }
 
-        public class StatusMessage
-        {
-            public string Message { get; }
-
-            public MessageType Type { get; }
-
-            public Func<bool> Condition { get; }
-
-            public bool Status { get; private set; }
-
-            /// <summary>
-            /// Create a new status message. Note, the condition will not be immediately checked. Update must be manually called.
-            /// </summary>
-            /// <param name="message"></param>
-            /// <param name="type"></param>
-            /// <param name="condition"></param>
-            public StatusMessage(string message, MessageType type, Func<bool> condition = null)
-            {
-                Message = message;
-                Type = type;
-                Condition = condition;
-            }
-
-            public void Update()
-            {
-                Status = Condition != null ? Condition.Invoke() : false;
-            }
-
-            public enum MessageType
-            {
-                Success,
-                Info,
-                Warning,
-                Error
-            }
-        }
-
-        private IList<StatusMessage> statusMessages;
-
         /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
@@ -90,7 +51,6 @@ namespace PPMTool.Data.Entities
             // Generate status messages to be maintained against a project
             statusMessages = new List<StatusMessage>
             {
-                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages()),
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.WillStartWithinAMonth())),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasStartedInTheLastWeek())),
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
@@ -98,19 +58,11 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
-                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming())
+                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming()),
+                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
 
-        /// <summary>
-        /// Calls update on the status messages in the list and returns the updated list
-        /// </summary>
-        /// <returns></returns>
-        public IList<StatusMessage> GetLatestStatusMessages()
-        {
-            UpdateStatusMessages();
-            return statusMessages;
-        }
 
         /// <summary>
         /// Checks whether this project is inactive, not cancelled but there are tasks that are currently running
@@ -223,18 +175,6 @@ namespace PPMTool.Data.Entities
         internal string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
-        }
-
-        /// <summary>
-        /// Method to update the status messages
-        /// </summary>
-        internal void UpdateStatusMessages()
-        {
-            // Run the success checks last as condition depends on the latest state of the others!
-            foreach (var item in statusMessages.Reverse())
-            {
-                item.Update();
-            }
         }
     }
 }

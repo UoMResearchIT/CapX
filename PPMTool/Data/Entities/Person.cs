@@ -8,7 +8,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person
+    public class Person : ObjectWithStatusMessages
     {
         public int PersonId { get; set; }
 
@@ -49,6 +49,15 @@ namespace PPMTool.Data.Entities
         /// Collection of absences
         /// </summary>
         public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+
+        public Person()
+        {
+            // Generate status messages to be maintained against a project
+            statusMessages = new List<StatusMessage>
+            {
+                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, () => Absences.Any(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today)))
+            };
+        }
 
         /// <summary>
         /// Updates the initials of the person.
