@@ -51,7 +51,7 @@
                     @role.LastLoggedIn
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
+            <RadzenDataGridColumn TItem="Role" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px" Title="Actions">
                 <Template Context="role">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(role))" @onclick:stopPropagation="true">
                     </RadzenButton>
