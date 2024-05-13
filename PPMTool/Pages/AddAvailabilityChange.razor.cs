@@ -32,7 +32,7 @@ namespace PPMTool.Pages
         protected override async Task InsertRow()
         {
             await base.InsertRow();
-            entityToInsert.ChangeDate = DateTime.Now.Date;
+            entityToInsert.ChangeDate = DateTime.Today;
             await dataGrid.InsertRow(entityToInsert);
         }
 

@@ -123,7 +123,7 @@ namespace PPMTool.Data
             var data = new List<TaskData>();
 
             // Set reference months
-            var now = DateTime.Now.Date;
+            var now = DateTime.Today;
             var startDate = new DateTime(now.Year, now.Month, 1);
             var endDate = startDate.AddMonths(numMonthsIntoFuture);
             var currentDate = startDate.Date;

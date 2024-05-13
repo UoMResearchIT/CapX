@@ -28,7 +28,7 @@ namespace PPMTool.Data.Entities
         public double DayRate { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; } = DateTime.Now.Date;
+        public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime? EndDate { get; set; }
 

@@ -45,7 +45,7 @@ namespace PPMTool.Data
             // If person leaves before the end date then reset the end date to that date
             if (person.EndDate != null && person.EndDate < endDate)
             {
-                endDate = person.EndDate?.AddDays(1) ?? DateTime.Now.Date;
+                endDate = person.EndDate?.AddDays(1) ?? DateTime.Today;
             }
 
             // Get the chart items
@@ -161,7 +161,7 @@ namespace PPMTool.Data
                 changes.Add(new AvailabilityChange()
                 {
                     Person = person,
-                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Now.Date,
+                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Today,
                     AvailabilityFTE = 0
                 });
 

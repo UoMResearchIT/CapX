@@ -1,10 +1,25 @@
 ﻿@page "/addperson/{PersonId:int}"
 @inherits BasePage
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
-    <h1>Add Person</h1>
+    <div class="row">
+        <div class="col-auto mr-auto">
+            @if (personModel == null)
+            {
+                <h1>Add Person</h1>
+            }
+            else
+            {
+                <h1>Edit @personModel.Name</h1>
+
+                <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+            }
+        </div>
+    </div>
     <hr />
+
     <div class="card">
         <EditForm EditContext="editContext" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />

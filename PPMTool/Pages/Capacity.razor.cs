@@ -80,7 +80,7 @@ namespace PPMTool.Pages
             }
         }
 
-        private DateTime queryStartDate = DateTime.Now.Date;
+        private DateTime queryStartDate = DateTime.Today;
         public DateTime QueryStartDate
         {
             get => queryStartDate;
@@ -129,7 +129,7 @@ namespace PPMTool.Pages
         private List<Person> people;
         private List<Person> managers;
         private string chartTitle;
-        private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
+        private DateTime queryEndDate = DateTime.Today.AddDays(7);
         private bool queryResultsAvailable;
         private string queryErrorMessage;
         private bool queryActive;
@@ -248,7 +248,7 @@ namespace PPMTool.Pages
             if (!includeLeavers)
             {
                 people = people
-                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now.Date)
+                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
                     .OrderBy(x => x.Name)
                     .ToList();
             }
@@ -615,7 +615,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
-                        confirmedChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Now.Date, DateTime.Now.Date, 0, 0, c.IsHatched));
+                        confirmedChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
                     }
                 }
 
@@ -628,7 +628,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
-                        provisionalChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Now.Date, DateTime.Now.Date, 0, 0, c.IsHatched));
+                        provisionalChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
                     }
                 }
             }
@@ -641,7 +641,7 @@ namespace PPMTool.Pages
             // Format X Axis range based on last end date of real assignments
             var allItems = confirmedChartItems.Concat(provisionalChartItems).Where(x => x.Value1 != 0);
             long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
-            chartOptions.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+            chartOptions.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
             chartOptions.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
 
             // First time this is called, there is no reference to the chart
@@ -906,7 +906,7 @@ namespace PPMTool.Pages
 
                     // Create header row
                     var headers = propNames.ToList();
-                    var startDate = DateTime.Now.Date;
+                    var startDate = DateTime.Today;
                     var d = startDate;
                     while (d < startDate.AddMonths(numMonths))
                     {

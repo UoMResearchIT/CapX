@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
-using static PPMTool.Data.Entities.Project;
 
 namespace PPMTool.Pages
 {

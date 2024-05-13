@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
         [Required]
         public string Name { get; set; }
 
-        public DateTime StartDate { get; set; } = DateTime.Now.Date;
+        public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime EndDate { get; set; }
 

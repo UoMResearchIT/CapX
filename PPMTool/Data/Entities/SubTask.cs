@@ -15,7 +15,7 @@ namespace PPMTool.Data.Entities
         public SubTask()
         {
             // Set default value
-            StartDate = DateTime.Now.Date;
+            StartDate = DateTime.Today;
         }
 
         public int SubTaskId { get; set; }
@@ -380,7 +380,7 @@ namespace PPMTool.Data.Entities
         public void UpdateStatusFlags()
         {
             // Update the schedule status and set the flag based on a tolerance of 10% either way
-            var endDate = DateTime.Now.Date > EndDate ? EndDate : DateTime.Now.Date;
+            var endDate = DateTime.Today > EndDate ? EndDate : DateTime.Today;
             var daysIntoTask = endDate.Subtract(StartDate.Date).TotalDays;
             var expectedWorkToDate = (PlannedWorkHours / DurationDays) * daysIntoTask;
             var maxWork = expectedWorkToDate * 1.1;
@@ -439,7 +439,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool WillStartWithinAMonth()
         {
-            return StartDate.Date > DateTime.Now.Date && StartDate.Date.AddMonths(-1) <= DateTime.Now.Date;
+            return StartDate.Date > DateTime.Today && StartDate.Date.AddMonths(-1) <= DateTime.Today;
         }
 
         /// <summary>
@@ -448,7 +448,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedInTheLastWeek()
         {
-            return StartDate.Date <= DateTime.Now.Date && StartDate.Date >= DateTime.Now.Date.AddDays(-7);
+            return StartDate.Date <= DateTime.Today && StartDate.Date >= DateTime.Today.AddDays(-7);
         }
 
         /// <summary>
@@ -457,7 +457,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool IsCurrentlyRunning()
         {
-            return StartDate.Date <= DateTime.Now.Date && EndDate.Date >= DateTime.Now.Date;
+            return StartDate.Date <= DateTime.Today && EndDate.Date >= DateTime.Today;
         }
 
         /// <summary>
