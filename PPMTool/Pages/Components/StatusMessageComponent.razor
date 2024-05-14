@@ -1,6 +1,5 @@
 ﻿@using PPMTool.Data
 @using static PPMTool.Data.StatusMessage
-@using static PPMTool.Data.Entities.Project
 
 <div class="row">
     <div class="col-auto">
@@ -21,28 +20,34 @@
             <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
         }
     </div>
-    <div class="col">
-        @if (Message.Type == MessageType.Info)
-        {
-            <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
-        }
-        else if (Message.Type == MessageType.Warning)
-        {
-            <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
-        }
-        else if (Message.Type == MessageType.Error)
-        {
-            <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
-        }
-        else
-        {
-            <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
-        }
-    </div>
+    @if(ShowMessages)
+    {
+        <div class="col">
+            @if (Message.Type == MessageType.Info)
+            {
+                <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
+            }
+            else if (Message.Type == MessageType.Warning)
+            {
+                <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
+            }
+            else if (Message.Type == MessageType.Error)
+            {
+                <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
+            }
+            else
+            {
+                <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
+            }
+        </div>
+    }
 </div>
 
 @code {
 
     [Parameter]
     public StatusMessage Message { get; set; }
+
+    [Parameter]
+    public bool ShowMessages { get; set; } = true;
 }

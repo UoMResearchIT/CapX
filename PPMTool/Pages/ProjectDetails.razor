@@ -136,22 +136,7 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
                         <Template Context="t">
                             <span style="display: flex; align-items: center">
-                                @if (t.HasUnmetDemand())
-                                {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title=@($"Task is currently under-resourced ({t.UnmetDemand} FTE)!") />
-                                }
-                                @if (t.HasProvisionalResources())
-                                {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title="Resources are only provisionally assigned to this task!"/>
-                                }
-                                @if (t.HasAbsentResourcesAndStartsWithinAWeek())
-                                {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="warning" IconStyle="IconStyle.Warning" title="One or more resources are currently absent!" />
-                                }
-                                @if (!t.HasProvisionalResources() && !t.HasUnmetDemand() && !t.HasAbsentResourcesAndStartsWithinAWeek())
-                                {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="check" IconStyle="IconStyle.Success" title="Task is has enough confirmed resources to meet demand!" />
-                                }
+                                <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
                                 @t.Name
                             </span>
                         </Template>

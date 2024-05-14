@@ -4,10 +4,13 @@
 
 @foreach (var message in Messages.Where(x => x.Status))
 {
-    <StatusMessageComponent Message=message />
+    <StatusMessageComponent Message=message ShowMessages=ShowMessages />
 }
 
 @code {
     [Parameter]
     public IList<StatusMessage> Messages { get; set; }
+
+    [Parameter]
+    public bool ShowMessages { get; set; } = true;
 }
