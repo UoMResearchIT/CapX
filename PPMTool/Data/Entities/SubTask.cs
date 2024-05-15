@@ -16,6 +16,17 @@ namespace PPMTool.Data.Entities
         {
             // Set default value
             StartDate = DateTime.Today;
+
+            // List of status messages to check for each task which will drive icons
+            statusMessages = new List<StatusMessage>()
+            {
+                new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
+                new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
+                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => HasAbsentResourcesAndStartsWithinAWeek()),
+                new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
+                new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
+                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
+            };
         }
 
         public int SubTaskId { get; set; }

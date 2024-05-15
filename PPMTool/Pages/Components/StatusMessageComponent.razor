@@ -5,49 +5,43 @@
     <div class="col-auto">
         @if (Message.Type == MessageType.Info)
         {
-            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" />
+            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title=@Message.Message />
         }
         else if (Message.Type == MessageType.Warning)
         {
-            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" />
+            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title=@Message.Message />
         }
         else if (Message.Type == MessageType.Error)
         {
-            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" />
+            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title=@Message.Message />
         }
         else
         {
-            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
+            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" title=@Message.Message />
         }
     </div>
-    @if(ShowMessages)
-    {
-        <div class="col">
-            @if (Message.Type == MessageType.Info)
-            {
-                <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
-            }
-            else if (Message.Type == MessageType.Warning)
-            {
-                <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
-            }
-            else if (Message.Type == MessageType.Error)
-            {
-                <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
-            }
-            else
-            {
-                <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
-            }
-        </div>
-    }
+    <div class="col">
+        @if (Message.Type == MessageType.Info)
+        {
+            <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
+        }
+        else if (Message.Type == MessageType.Warning)
+        {
+            <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
+        }
+        else if (Message.Type == MessageType.Error)
+        {
+            <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
+        }
+        else
+        {
+            <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
+        }
+    </div>
 </div>
 
 @code {
 
     [Parameter]
     public StatusMessage Message { get; set; }
-
-    [Parameter]
-    public bool ShowMessages { get; set; } = true;
 }

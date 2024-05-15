@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace PPMTool.Data
 {
@@ -28,6 +29,24 @@ namespace PPMTool.Data
             {
                 item.Update();
             }
+        }
+
+        /// <summary>
+        /// Checks whether this project has any active status messages trigger by its own state or states of the subtasks
+        /// </summary>
+        /// <returns></returns>
+        public bool HasActiveStatusMessages()
+        {
+            return statusMessages.Any(x => x.Status && x.Type != StatusMessage.MessageType.Success);
+        }
+
+        /// <summary>
+        /// Checks whether this project has any error-grade status messages
+        /// </summary>
+        /// <returns></returns>
+        public bool HasActiveErrorMessages()
+        {
+            return statusMessages.Any(x => x.Status && x.Type == StatusMessage.MessageType.Error);
         }
     }
 }

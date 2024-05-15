@@ -133,12 +133,14 @@
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
+                    <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="120px" MinWidth="10px">
+                        <Template Context="t">
+                            <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
                         <Template Context="t">
-                            <span style="display: flex; align-items: center">
-                                <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
-                                @t.Name
-                            </span>
+                            <RadzenText Text=@t.Name />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="UnmetDemand" Title="Unmet Demand" FormatString="{0:F1}" MinWidth="10px">

@@ -1,10 +1,25 @@
 ﻿@using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Data
+@using static PPMTool.Data.StatusMessage
 
-@foreach (var message in Messages.Where(x => x.Status))
+@if (ShowMessages)
 {
-    <StatusMessageComponent Message=message ShowMessages=ShowMessages />
+    @foreach (var message in Messages.Where(x => x.Status))
+    {
+        <StatusMessageComponent Message=message />
+    }
+}
+else
+{
+    <div class="row">
+        <div class="col-auto">
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Success" />
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Info" />
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Warning" />
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Error" />
+        </div>
+    </div>
 }
 
 @code {

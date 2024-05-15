@@ -84,15 +84,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks whether this project has any active status messages trigger by its own state or states of the subtasks
-        /// </summary>
-        /// <returns></returns>
-        public bool HasActiveStatusMessages()
-        {
-            return statusMessages.Any(x => x.Status && x.Type != StatusMessage.MessageType.Success);
-        }
-
-        /// <summary>
         /// Checks whether this project is not finished or cancelled but has no project manager assigned
         /// </summary>
         /// <returns></returns>
@@ -108,15 +99,6 @@ namespace PPMTool.Data.Entities
         public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
         {
             return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Today.AddMonths(1) >= StartDate;
-        }
-
-        /// <summary>
-        /// Checks whether this project has any error-grade status messages
-        /// </summary>
-        /// <returns></returns>
-        public bool HasActiveErrorMessages()
-        {
-            return statusMessages.Any(x => x.Status && x.Type == StatusMessage.MessageType.Error);
         }
 
         /// <summary>
