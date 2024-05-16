@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -12,6 +14,9 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser")]
     public partial class AddAbsence : AddPersonProperty<Absence>
     {
+        [Inject]
+        public EmailService EmailService { get; set; }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -81,6 +86,11 @@ namespace PPMTool.Pages
                 // Reset error
                 errorMessage = null;
 
+                // Check state of absence records and send to email service
+                List<Absence> newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
+                List<Absence> deletedAbsences = personModel.Absences.Where(x => !dataGridEntities.Contains(x)).ToList();
+                List<Absence> updatedAbsences = context.ChangeTracker.Entries<Absence>().Where(x => x.State == EntityState.Modified).Select(x => x.Entity).ToList();
+
                 // Update the person model, save to database, refresh the list and reset the model
                 personModel.Absences.Clear();
                 foreach (var ab in dataGridEntities)
@@ -90,6 +100,11 @@ namespace PPMTool.Pages
 
                 LogInformation($"Saving absences for {personModel.Name}.");
                 PersonService.Update(context, personModel);
+
+                // Send emails based on current projet model state after save
+                EmailService.SendAbsenceEmailNotifications(context, newAbsences, updatedAbsences, deletedAbsences);
+
+                // Navigate back
                 Navigation.NavigateTo($"addperson/{PersonId}");
             }
         }

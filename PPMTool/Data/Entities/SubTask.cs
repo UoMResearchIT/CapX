@@ -481,6 +481,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether the absence record provided encroaches on the scheduled task period and up to 7 days before.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsAffectedByAbsence(Absence absence)
+        {
+            return AssignedResources.Any(r => r.Person == absence.Person) && absence.StartDate.AddDays(7) >= StartDate && absence.StartDate <= EndDate;
+        }
+
+        /// <summary>
         /// Method to get the amount of work planned for this task from its start to the end of the week
         /// assuming the date time provided is a Monday.
         /// </summary>

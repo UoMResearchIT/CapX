@@ -60,7 +60,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks whether this person is current absent.
+        /// Checks whether this person is currently absent.
         /// </summary>
         /// <returns></returns>
         public bool IsCurrentlyAbsent()
