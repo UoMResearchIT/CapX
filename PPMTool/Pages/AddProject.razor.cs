@@ -45,7 +45,7 @@ namespace PPMTool.Pages
         private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
-        private IEnumerable<Portfolio> portfolios = new List<Portfolio>();
+        private IEnumerable<Faculty> faculties = new List<Faculty>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
 
         protected override void OnInitialized()
@@ -65,7 +65,7 @@ namespace PPMTool.Pages
             // Initially load data
             innateActivityQuery = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
-            portfolios = Enum.GetValues<Portfolio>().ToList();
+            faculties = Enum.GetValues<Faculty>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
             var roles = RolesService.GetAll(context)

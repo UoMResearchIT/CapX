@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240516134749_MakePortfolioNullable")]
+    partial class AddFacultyAndSchoolColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -149,7 +151,7 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("Faculty")
+                    b.Property<int>("Faculty")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("FundsReceived")
@@ -184,7 +186,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("ScheduleStatus")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("School")
+                    b.Property<int>("School")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")

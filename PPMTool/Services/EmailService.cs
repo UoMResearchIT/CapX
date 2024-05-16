@@ -103,7 +103,7 @@ namespace PPMTool.Services
                         // Add to email
                         if (relevantAbsences.Count > 0)
                         {
-                            body.Append($"<h2>{project.GetFullName()}</h2>");
+                            body.Append($"<h4>{project.GetFullName()}</h4>");
                             foreach (var ab in relevantAbsences)
                             {
                                 var state = newAbsences.Contains(ab) ? "New" : (deletedAbsences.Contains(ab) ? "Deleted" : "Modified");

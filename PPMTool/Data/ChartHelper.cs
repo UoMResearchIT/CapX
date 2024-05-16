@@ -6,7 +6,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
-    public class ChartHelper
+    public abstract class ChartHelper
     {
         /// <summary>
         /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.

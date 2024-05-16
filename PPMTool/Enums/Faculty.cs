@@ -7,22 +7,20 @@ using System.Threading.Tasks;
 namespace PPMTool.Enums
 {
     /// <summary>
-    /// Portfolio to which a project belongs
+    /// Faculty to which a project belongs
     /// </summary>
-    public enum Portfolio
+    public enum Faculty
     {
+        [Description("Research IT")]
         Internal,
-        [Description("Apps & Training")]
-        AppsAndTraining,
+        [Description("Professional Services and Cultural Institutions")]
+        PSCI,
+        [Description("Biology, Medicine and Health")]
         FBMH,
+        [Description("Humanities")]
         FHUMS,
+        [Description("Science and Engineering")]
         FSE,
-        MDS,
-        WADS,
-        [Description("Data Science & AI")]
-        DataScienceAI,
-        [Description("Digital Solutions")]
-        DigitalSolutions,
         [Description("Research Lifecycle Programme")]
         RLP
     }
