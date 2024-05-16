@@ -22,6 +22,7 @@ namespace PPMTool.Data.Entities
             {
                 new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
                 new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
+                new StatusMessage("Task has resources with absence during or near the start of this task.", StatusMessage.MessageType.Info, () => IsAffectedByAbsence()),
                 new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => HasAbsentResourcesAndStartsWithinAWeek()),
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
@@ -123,7 +124,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public int DurationBillableDays { get; set; }
 
-        private bool hasFixedEndDate = true;
+        private bool hasFixedEndDate;
         /// <summary>
         /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round (i.e. the end date is fixed)
         /// </summary>
@@ -487,6 +488,25 @@ namespace PPMTool.Data.Entities
         public bool IsAffectedByAbsence(Absence absence)
         {
             return AssignedResources.Any(r => r.Person == absence.Person) && absence.StartDate.AddDays(7) >= StartDate && absence.StartDate <= EndDate;
+        }
+
+        /// <summary>
+        /// Check whether any resources on this subtask have a planned period of absence which affects the task.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsAffectedByAbsence()
+        {
+            foreach (var r in AssignedResources)
+            {
+                foreach (var a in r.Person.Absences)
+                {
+                    if (IsAffectedByAbsence(a))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>

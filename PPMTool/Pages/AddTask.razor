@@ -35,9 +35,8 @@
                 <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
             </div>
         </div>
-        <MessageSummaryComponent Messages="taskModel.GetLatestStatusMessages()" />
-
     }
+    <MessageSummaryComponent Messages="taskModel.GetLatestStatusMessages()" />
     @if (!EditAuthorised)
     {
         <div class="row">
