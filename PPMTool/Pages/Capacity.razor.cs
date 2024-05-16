@@ -849,11 +849,10 @@ namespace PPMTool.Pages
             const int numMonths = 6;
 
             // Get data for each person
-            var helper = new ExportHelper();
             foreach (var p in people)
             {
                 // Assume 6 months for now
-                var data = helper.GetExportDataForPerson(
+                var data = ExportHelper.GetExportDataForPerson(
                     p,
                     SubTaskService.GetAll(context).Where(x => x.AssignedResources.Any(x => x.Person == p)),
                     ProjectService.GetAll(context),

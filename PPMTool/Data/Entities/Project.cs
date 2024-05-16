@@ -20,7 +20,10 @@ namespace PPMTool.Data.Entities
         public string PI { get; set; }
 
         [Required]
-        public Portfolio Portfolio { get; set; }
+        public Faculty Faculty { get; set; }
+
+        [Required]
+        public School School { get; set; }
 
         public Person ProjectManager { get; set; }
 

@@ -1,7 +1,7 @@
 ﻿@using PPMTool.Enums
 
 <div class="card m-1" style="width:200px; height:200px; display:flex; flex-direction:column">
-    <b>@Data.Portfolio.ToNiceString()</b>
+    <b>@Data.Faculty.ToNiceString()</b>
     <RadzenChart ColorScheme="ColorScheme.Palette">
         <RadzenDonutSeries Data="@data" CategoryProperty="DataItemCategory" ValueProperty="DataItemValue">
             <ChildContent>
@@ -31,7 +31,7 @@
 
         public int Complete { get; set; }
 
-        public Portfolio Portfolio { get; set; }
+        public Faculty Faculty { get; set; }
 
         public int GetTotal()
         {

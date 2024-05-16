@@ -120,9 +120,14 @@
                             @proj.ProjectStatus.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px">
                         <Template Context="proj">
-                            @proj.Portfolio.ToNiceString()
+                            @proj.Faculty.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px">
+                        <Template Context="proj">
+                            @proj.School.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
