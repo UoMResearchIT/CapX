@@ -95,6 +95,18 @@ namespace PPMTool.Pages
             }
         }
 
+        private void EditAbsence()
+        {
+            // Check the existing model is valid first
+            if (editContext.Validate())
+            {
+                HandleValidSubmit();
+
+                LogInformation("Editing absences...");
+                Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
+            }
+        }
+
         private void HandleValidSubmit()
         {
             // Add tags to person model

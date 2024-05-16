@@ -1,23 +1,23 @@
-﻿@using static PPMTool.Data.Entities.Project.StatusMessage
-@using static PPMTool.Data.Entities.Project
+﻿@using PPMTool.Data
+@using static PPMTool.Data.StatusMessage
 
 <div class="row">
     <div class="col-auto">
         @if (Message.Type == MessageType.Info)
         {
-            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" />
+            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title=@Message.Message />
         }
         else if (Message.Type == MessageType.Warning)
         {
-            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" />
+            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title=@Message.Message />
         }
         else if (Message.Type == MessageType.Error)
         {
-            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" />
+            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title=@Message.Message />
         }
         else
         {
-            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" />
+            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" title=@Message.Message />
         }
     </div>
     <div class="col">

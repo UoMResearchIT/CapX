@@ -15,7 +15,19 @@ namespace PPMTool.Data.Entities
         public SubTask()
         {
             // Set default value
-            StartDate = DateTime.Now.Date;
+            StartDate = DateTime.Today;
+
+            // List of status messages to check for each task which will drive icons
+            statusMessages = new List<StatusMessage>()
+            {
+                new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
+                new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
+                new StatusMessage("Task has resources with absence during or near the start of this task.", StatusMessage.MessageType.Info, () => IsAffectedByAbsence()),
+                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => HasAbsentResourcesAndStartsWithinAWeek()),
+                new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
+                new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
+                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
+            };
         }
 
         public int SubTaskId { get; set; }
@@ -112,7 +124,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public int DurationBillableDays { get; set; }
 
-        private bool hasFixedEndDate = true;
+        private bool hasFixedEndDate;
         /// <summary>
         /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round (i.e. the end date is fixed)
         /// </summary>
@@ -380,7 +392,7 @@ namespace PPMTool.Data.Entities
         public void UpdateStatusFlags()
         {
             // Update the schedule status and set the flag based on a tolerance of 10% either way
-            var endDate = DateTime.Now.Date > EndDate ? EndDate : DateTime.Now.Date;
+            var endDate = DateTime.Today > EndDate ? EndDate : DateTime.Today;
             var daysIntoTask = endDate.Subtract(StartDate.Date).TotalDays;
             var expectedWorkToDate = (PlannedWorkHours / DurationDays) * daysIntoTask;
             var maxWork = expectedWorkToDate * 1.1;
@@ -425,6 +437,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether the task has any absent resources and the task is running or will start in 7 days.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasAbsentResourcesAndStartsWithinAWeek()
+        {
+            return AssignedResources.Any(r => r.Person.IsCurrentlyAbsent()) && DateTime.Today.AddDays(7) >= StartDate && DateTime.Today <= EndDate;
+        }
+
+        /// <summary>
         /// Returns the percentage of the minimum demand that is unmet.
         /// </summary>
         /// <returns></returns>
@@ -439,7 +460,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool WillStartWithinAMonth()
         {
-            return StartDate.Date > DateTime.Now.Date && StartDate.Date.AddMonths(-1) <= DateTime.Now.Date;
+            return StartDate.Date > DateTime.Today && StartDate.Date.AddMonths(-1) <= DateTime.Today;
         }
 
         /// <summary>
@@ -448,7 +469,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedInTheLastWeek()
         {
-            return StartDate.Date <= DateTime.Now.Date && StartDate.Date >= DateTime.Now.Date.AddDays(-7);
+            return StartDate.Date <= DateTime.Today && StartDate.Date >= DateTime.Today.AddDays(-7);
         }
 
         /// <summary>
@@ -457,7 +478,35 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool IsCurrentlyRunning()
         {
-            return StartDate.Date <= DateTime.Now.Date && EndDate.Date >= DateTime.Now.Date;
+            return StartDate.Date <= DateTime.Today && EndDate.Date >= DateTime.Today;
+        }
+
+        /// <summary>
+        /// Checks whether the absence record provided encroaches on the scheduled task period and up to 7 days before.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsAffectedByAbsence(Absence absence)
+        {
+            return AssignedResources.Any(r => r.Person == absence.Person) && absence.StartDate.AddDays(7) >= StartDate && absence.StartDate <= EndDate;
+        }
+
+        /// <summary>
+        /// Check whether any resources on this subtask have a planned period of absence which affects the task.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsAffectedByAbsence()
+        {
+            foreach (var r in AssignedResources)
+            {
+                foreach (var a in r.Person.Absences)
+                {
+                    if (IsAffectedByAbsence(a))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>

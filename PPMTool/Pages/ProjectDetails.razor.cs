@@ -118,12 +118,12 @@ namespace PPMTool.Pages
                 // Create a new data point to indicate progress
                 var seriesStart = burnUpChartSource.Min(x => x.StartDate);
                 var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
-                var actualsX = DateTime.Now.Date;
+                var actualsX = DateTime.Today;
                 var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
 
                 // If the task has started yet or has already finished then x coordinate is the limits of the series
-                if (DateTime.Now.Date < seriesStart) actualsX = seriesStart;
-                else if (DateTime.Now.Date > seriesEnd) actualsX = seriesEnd;
+                if (DateTime.Today < seriesStart) actualsX = seriesStart;
+                else if (DateTime.Today > seriesEnd) actualsX = seriesEnd;
 
                 // Set options
                 burnUpChartOptions = new ApexChartOptions<ChartItem>

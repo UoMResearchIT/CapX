@@ -8,7 +8,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person
+    public class Person : ObjectWithStatusMessages
     {
         public int PersonId { get; set; }
 
@@ -28,7 +28,7 @@ namespace PPMTool.Data.Entities
         public double DayRate { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; } = DateTime.Now.Date;
+        public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime? EndDate { get; set; }
 
@@ -40,7 +40,33 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
 
+        /// <summary>
+        /// Collection of skills
+        /// </summary>
         public ICollection<SkillTag> SkillTags { get; set; }
+
+        /// <summary>
+        /// Collection of absences
+        /// </summary>
+        public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+
+        public Person()
+        {
+            // Generate status messages to be maintained against a project
+            statusMessages = new List<StatusMessage>
+            {
+                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
+            };
+        }
+
+        /// <summary>
+        /// Checks whether this person is currently absent.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentlyAbsent()
+        {
+            return Absences.Any(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today));
+        }
 
         /// <summary>
         /// Updates the initials of the person.

@@ -1,5 +1,6 @@
 ﻿@page "/addtask/{projectID:int}/{taskId:int}"
 @inherits DataGridPage<Resource>
+@using PPMTool.Data
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
@@ -34,17 +35,13 @@
                 <p>Edit existing task in <b>@projectModel?.GetFullName()</b></p>
             </div>
         </div>
-
     }
+    <MessageSummaryComponent Messages="taskModel.GetLatestStatusMessages()" />
     @if (!EditAuthorised)
     {
         <div class="row">
             <ProjectManagerOnlyComponent />
         </div>
-    }
-    @if (taskModel.HasUnmetDemand())
-    {
-        <StatusMessageComponent Message=@(new StatusMessage("Task is currently under-resourced and has un-met demand!", StatusMessage.MessageType.Warning)) />
     }
     <hr />
     <div class="card">

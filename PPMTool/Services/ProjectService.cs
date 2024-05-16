@@ -62,6 +62,7 @@ namespace PPMTool.Services
                 .Include(p => p.SubTasks)
                 .ThenInclude(s => s.AssignedResources)
                 .ThenInclude(r => r.Person)
+                .ThenInclude(pp => pp.Absences)
                 .Include(p => p.ProjectManager)
                 .Include(p => p.InnateActivity)
                 .ToList();
