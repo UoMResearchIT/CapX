@@ -40,7 +40,7 @@
                     <thead>
                         <tr>
                             <th>PI</th>
-                            <th>Faculty</th>
+                            <th>School (Faculty)</th>
                             <th>PM</th>
                             <th>Budget</th>
                             <th>Planned Cost</th>
@@ -55,7 +55,7 @@
                     <tbody>
                         <tr>
                             <td>@project.PI</td>
-                            <td>@project.Faculty.ToNiceString()</td>
+                            <td>@($"{project.School.ToNiceString()} ({project.Faculty.ToNiceString()})")</td>
                             <td>@(project.ProjectManager?.Name ?? "Not Set")</td>
                             <td>@project.Budget.ToString("C0")</td>
                             <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>

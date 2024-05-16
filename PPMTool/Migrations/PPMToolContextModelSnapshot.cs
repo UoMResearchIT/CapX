@@ -149,7 +149,7 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("Faculty")
+                    b.Property<int>("Faculty")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("FundsReceived")
@@ -184,7 +184,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("ScheduleStatus")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("School")
+                    b.Property<int>("School")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -46,6 +47,7 @@ namespace PPMTool.Pages
         private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Faculty> faculties = new List<Faculty>();
+        private IEnumerable<School> schools = new List<School>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
 
         protected override void OnInitialized()
@@ -98,6 +100,19 @@ namespace PPMTool.Pages
         private string GetNiceString(Enum x)
         {
             return x.ToNiceString();
+        }
+
+        /// <summary>
+        /// Loads the dropdown data for the schools based on the chosen faculty
+        /// </summary>
+        /// <param name="value"></param>
+        private void OnFacultyChosen(object value)
+        {
+            Faculty? faculty = value as Faculty?;
+            if (faculty != null)
+            {
+                schools = DropdownHelper.GetSchoolsForFaculty(faculty ?? Faculty.Internal);
+            }
         }
 
         private void HandleSubmit()

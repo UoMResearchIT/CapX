@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
 namespace PPMTool.Enums
 {
@@ -11,6 +7,7 @@ namespace PPMTool.Enums
     /// </summary>
     public enum Faculty
     {
+        None,
         [Description("Research IT")]
         Internal,
         [Description("Professional Services and Cultural Institutions")]

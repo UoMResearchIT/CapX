@@ -38,7 +38,15 @@
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
-                    <RadzenDropDown class="radzen-dropdown" TValue="Faculty?" @bind-Value="projectModel.Faculty" Data="@faculties">
+                    <RadzenDropDown class="radzen-dropdown" TValue="Faculty" @bind-Value="projectModel.Faculty" Data="@faculties" Change="OnFacultyChosen">
+                        <Template Context="x">
+                            @GetNiceString(x)
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="School" /><br />
+                    <RadzenDropDown class="radzen-dropdown" TValue="School" @bind-Value="projectModel.School" Data="@schools">
                         <Template Context="x">
                             @GetNiceString(x)
                         </Template>
