@@ -124,13 +124,16 @@ namespace PPMTool.Pages
             // Remove the ones that are not active if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
 
+            // Filter owned projects to only show active ones
+            ownedProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
+
             // Extract the owned projects
             if (ProjectManagerShortName != null)
             {
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    ownedProjects = proj.Where(x =>
+                    ownedProjects = ownedProjects.Where(x =>
                     {
                         x.UpdateStatusMessages();
                         return x.HasActiveStatusMessages();
@@ -139,7 +142,7 @@ namespace PPMTool.Pages
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    ownedProjects = proj.Where(x =>
+                    ownedProjects = ownedProjects.Where(x =>
                     {
                         x.UpdateStatusMessages();
                         return x.HasActiveErrorMessages();
@@ -148,17 +151,14 @@ namespace PPMTool.Pages
                 else
                 {
                     // Use query string to see someone else's list of cards
-                    ownedProjects = proj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                    ownedProjects = ownedProjects.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
                 }
             }
             else
             {
                 // Show just the logged in user's projects
-                ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
+                ownedProjects = ownedProjects.Where(x => x.ProjectManager == userRole.Person).ToList();
             }
-
-            // Filter owned projects to only show active ones
-            ownedProjects = ownedProjects.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
 
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
