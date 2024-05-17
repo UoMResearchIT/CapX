@@ -66,6 +66,9 @@ namespace PPMTool.Pages
                 var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(context, ActiveUser);
                 EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
+
+                // Populate school list
+                schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
             }
             else
             {

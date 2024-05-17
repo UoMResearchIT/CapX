@@ -196,7 +196,7 @@ namespace PPMTool.Pages
                 // Update the day rate field if using the default
                 if (resourceToChange.UseDefaultDayRate)
                 {
-                    resourceToChange.DayRate = person.DayRate;
+                    resourceToChange.DayRate = projectModel.DayRate;
                 }
             }
         }
@@ -260,7 +260,7 @@ namespace PPMTool.Pages
                     var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
                     if (person == null) continue;
                     // User the default day rate for the person if the assigned day rate is null
-                    averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? person.DayRate)) / totalResourceDaysPerDay;
+                    averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? projectModel.DayRate)) / totalResourceDaysPerDay;
                 }
 
                 // Update the actual cost for the sub task
@@ -271,11 +271,11 @@ namespace PPMTool.Pages
                 taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
                 // Schedule
-                error = taskModel.Schedule(false);
+                error = taskModel.Schedule(false, projectModel);
                 isValid = error == null;
 
                 // Call schedule() on the subtask that this is a predecssor for
-                var error2 = SubTaskService.UpdateFollowerTasks(taskModel, projectModel.SubTasks);
+                var error2 = SubTaskService.UpdateFollowerTasks(taskModel, projectModel);
                 if (error2 != null)
                 {
                     error = $"{error2.Item1}: {error2.Item2}";

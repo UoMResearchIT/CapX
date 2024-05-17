@@ -50,22 +50,22 @@ namespace PPMTool.Services
         /// Returns null if successful otherwise returns the name of the failed task and its error.
         /// </summary>
         /// <param name="task"></param>
-        /// <param name="projectTasks"></param>
+        /// <param name="project"></param>
         /// <returns></returns>
-        internal Tuple<string, string> UpdateFollowerTasks(SubTask task, IEnumerable<SubTask> projectTasks)
+        internal Tuple<string, string> UpdateFollowerTasks(SubTask task, Project project)
         {
             string error;
-            var followerTasks = projectTasks.Where(x => x.Predecessor == task);
+            var followerTasks = project.SubTasks.Where(x => x.Predecessor == task);
             foreach (var followerTask in followerTasks)
             {
                 // Call schedule and have it tracked in the context
-                error = followerTask.Schedule(true);
+                error = followerTask.Schedule(true, project);
 
                 // If error then abandon forward propagation
                 if (error != null) return new Tuple<string, string>(followerTask.Name, error);
 
                 // Recurse into the next layer
-                var result = UpdateFollowerTasks(followerTask, projectTasks);
+                var result = UpdateFollowerTasks(followerTask, project);
 
                 // If next layer throws an error then pass it back out
                 if (result != null) return result;

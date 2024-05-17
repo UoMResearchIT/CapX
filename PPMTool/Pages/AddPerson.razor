@@ -49,10 +49,6 @@
                     <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" />
                 </div>
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Default Day Rate (£)" /><br>
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="1" Placeholder="0" @bind-Value="personModel.DayRate" />
-                </div>
             </div>
             <hr />
             <div class="row">
@@ -111,7 +107,7 @@
                         </div>
                     </div>
                     <RadzenDataList AllowVirtualization=true
-                                    Style="min-height:120px; max-height:360px; overflow:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
+                                    Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
                                     WrapItems="false"
                                     AllowPaging="false"
                                     Data="@personModel.AvailabilityChanges"
@@ -145,7 +141,7 @@
                         </div>
                     </div>
                     <RadzenDataList AllowVirtualization=true
-                                    Style="min-height:120px; max-height:360px; overflow:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
+                                    Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
                                     WrapItems="false"
                                     AllowPaging="false"
                                     Data="@personModel.Absences"
