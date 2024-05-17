@@ -223,7 +223,7 @@
                                 <Template Context="res">
                                     <div class="align-items-center p-1">
                                         <div style="display: flex">
-                                            <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true />
+                                            <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true /> <div style="align-self:center; margin-left:0.5rem">(@(projectModel.DayRate.ToString("C0")))</div>
                                         </div>
                                     </div>
                                 </Template>
