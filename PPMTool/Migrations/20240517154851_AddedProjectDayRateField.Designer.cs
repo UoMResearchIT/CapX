@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240517154851_AddedProjectDayRateField")]
+    partial class AddedProjectDayRateField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -103,6 +105,9 @@ namespace PPMTool.Migrations
                     b.Property<int>("PersonId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("DayRate")
+                        .HasColumnType("REAL");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("TEXT");
@@ -220,7 +225,7 @@ namespace PPMTool.Migrations
                     b.Property<int?>("SubTaskId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("UseProjectDayRate")
+                    b.Property<bool>("UseDefaultDayRate")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("ResourceId");

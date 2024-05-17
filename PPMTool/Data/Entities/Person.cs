@@ -24,10 +24,6 @@ namespace PPMTool.Data.Entities
         public string ShortName { get; set; }
 
         [Required]
-        [DataType(DataType.Currency)]
-        public double DayRate { get; set; }
-
-        [Required]
         public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime? EndDate { get; set; }

@@ -3,7 +3,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Extensions.Configuration;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -17,9 +16,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private TagService TagService { get; set; }
-
-        [Inject]
-        private IConfiguration Configuration { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }
@@ -47,13 +43,6 @@ namespace PPMTool.Pages
                 {
                     chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
                 }
-            }
-
-            // Set the default day rate in the model if doesn't already exist
-            else
-            {
-                var success = double.TryParse(Configuration["DefaultDayRate"], out var temp);
-                if (success) personModel.DayRate = temp;
             }
 
             // Instantiate the edit context so we have a reference to it

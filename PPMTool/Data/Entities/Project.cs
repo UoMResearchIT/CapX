@@ -36,6 +36,9 @@ namespace PPMTool.Data.Entities
         public double Budget { get; set; }
 
         [Required]
+        public double DayRate { get; set; }
+
+        [Required]
         public double FundsReceived { get; set; }
 
         [Required]

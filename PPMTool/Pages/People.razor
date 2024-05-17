@@ -51,11 +51,10 @@
                             </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="DayRate" Title="Day Rate" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" Width="50px" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="Availability Changes" Sortable="false" MinWidth="10px">
                         <Template Context="p">
                             @string.Join(" | ", p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.AvailabilityFTE}"))

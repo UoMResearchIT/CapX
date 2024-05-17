@@ -177,8 +177,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="permitEndDateToMove">Whether we can move the end date to maintain 
         /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
+        /// <param name="project">Project owning the subtask</param>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule(bool permitEndDateToMove)
+        public string Schedule(bool permitEndDateToMove, Project project)
         {
             try
             {
@@ -260,8 +261,8 @@ namespace PPMTool.Data.Entities
                 PlannedCost = 0d;
                 foreach (var res in AssignedResources)
                 {
-                    // Assume 7 hours in a billable day; fallback on default day rate if resource day rate is null
-                    PlannedCost += (res.AssignmentFTE / units) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
+                    // Assume 7 hours in a billable day; fallback on project day rate if resource day rate is null
+                    PlannedCost += (res.AssignmentFTE / units) * PlannedWorkHours * ((res.DayRate ?? project.DayRate) / 7f);
                 }
 
                 // Set end date from the duration
