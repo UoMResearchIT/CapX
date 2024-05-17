@@ -194,7 +194,7 @@ namespace PPMTool.Pages
                 }
 
                 // Update the day rate field if using the default
-                if (resourceToChange.UseDefaultDayRate)
+                if (resourceToChange.UseProjectDayRate)
                 {
                     resourceToChange.DayRate = projectModel.DayRate;
                 }
@@ -259,7 +259,7 @@ namespace PPMTool.Pages
                 {
                     var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
                     if (person == null) continue;
-                    // User the default day rate for the person if the assigned day rate is null
+                    // User the default day rate for the project if the assigned day rate is null
                     averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? projectModel.DayRate)) / totalResourceDaysPerDay;
                 }
 

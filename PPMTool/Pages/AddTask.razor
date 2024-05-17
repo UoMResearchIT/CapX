@@ -204,6 +204,13 @@
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" Width="100px" MinWidth="10px">
+                                <Template Context="res">
+                                    <div class="align-items-center p-1">
+                                        <div style="display: flex">
+                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true />
+                                        </div>
+                                    </div>
+                                </Template>
                                 <EditTemplate Context="res">
                                     <div class="align-items-center p-1">
                                         <div style="display: flex">
@@ -212,18 +219,25 @@
                                     </div>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="Resource" Property="UseDefaultDayRate" Title="Default Day Rate?" Width="100px" MinWidth="10px">
+                            <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Title="Project Day Rate?" Width="100px" MinWidth="10px">
+                                <Template Context="res">
+                                    <div class="align-items-center p-1">
+                                        <div style="display: flex">
+                                            <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true />
+                                        </div>
+                                    </div>
+                                </Template>
                                 <EditTemplate Context="res">
                                     <div class="align-items-center p-1">
                                         <div style="display: flex">
-                                            <RadzenSwitch @bind-Value="@res.UseDefaultDayRate" />
+                                            <RadzenSwitch @bind-Value="@res.UseProjectDayRate" />
                                         </div>
                                     </div>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate (£)" Width="120px" MinWidth="10px">
                                 <EditTemplate Context="res">
-                                    <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseDefaultDayRate)" />
+                                    <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseProjectDayRate)" />
                                 </EditTemplate>
                             </RadzenDataGridColumn>
 
