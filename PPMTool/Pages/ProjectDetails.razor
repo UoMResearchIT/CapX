@@ -42,6 +42,7 @@
                             <th>PI</th>
                             <th>School (Faculty)</th>
                             <th>PM</th>
+                            <th>Day Rate</th>
                             <th>Budget</th>
                             <th>Planned Cost</th>
                             <th>Actual Cost</th>
@@ -57,6 +58,7 @@
                             <td>@project.PI</td>
                             <td>@($"{project.School.ToNiceString()} ({project.Faculty.ToNiceString()})")</td>
                             <td>@(project.ProjectManager?.Name ?? "Not Set")</td>
+                            <td>@project.DayRate.ToString("C0")</td>
                             <td>@project.Budget.ToString("C0")</td>
                             <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>
                             <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>
@@ -153,15 +155,6 @@
                             {
                                 @t.UnmetDemand.ToString()
                             }
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="HasFixedStart" Title="Fixed Start" MinWidth="10px">
-                        <Template Context="t">
-                            <div class="align-items-center p-1">
-                                <div style="display: flex">
-                                    <RadzenSwitch @bind-Value=@t.HasFixedStart Disabled="true" />
-                                </div>
-                            </div>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" MinWidth="10px" />

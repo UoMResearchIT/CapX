@@ -98,6 +98,10 @@
 
             <div class="row">
                 <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
+                </div>
+                <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" />
                 </div>

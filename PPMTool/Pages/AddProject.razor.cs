@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -35,6 +36,9 @@ namespace PPMTool.Pages
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
+        [Inject]
+        private IConfiguration Configuration { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -62,6 +66,10 @@ namespace PPMTool.Pages
                 var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(context, ActiveUser);
                 EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
+            }
+            else
+            {
+                projectModel.DayRate = double.Parse(Configuration["DefaultDayRate"]);
             }
 
             // Initially load data
