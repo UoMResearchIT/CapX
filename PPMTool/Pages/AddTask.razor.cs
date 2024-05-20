@@ -9,6 +9,7 @@ using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -40,6 +41,7 @@ namespace PPMTool.Pages
         private Project projectModel;
         private SubTask taskModel = new SubTask();
         private IList<Person> people = new List<Person>();
+        private IList<Person> filteredPeople = new List<Person>();
         private bool isValid = true;
         private bool startDateDisabled;
         private bool workDisabled;
@@ -152,27 +154,10 @@ namespace PPMTool.Pages
             }
         }
 
-        protected override void CancelEdit(Resource resource)
-        {
-            LogInformation($"Cancel edit row for {resource.GetSensibleObjectName()}");
-            Reset();
-            SubTaskService.RestoreModel(context, ref resource);
-            dataGrid.CancelEditRow(resource);
-        }
-
-        protected override void OnCreateRow(Resource resource)
-        {
-            LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
-            dataGridEntities.Add(resource);
-            entityToInsert = null;
-            taskModel.UpdateUnmetDemand(dataGridEntities);
-        }
-
-        protected override void OnUpdateRow(Resource entity)
-        {
-            Reset();
-        }
-
+        /// <summary>
+        /// Method to change the resource day rate when selected
+        /// </summary>
+        /// <param name="value"></param>
         private void OnResourcePersonChange(object value)
         {
             Debug.WriteLine("** Resource Person Change");
@@ -201,16 +186,53 @@ namespace PPMTool.Pages
             }
         }
 
+        protected override void CancelEdit(Resource resource)
+        {
+            LogInformation($"Cancel edit row for {resource.GetSensibleObjectName()}");
+            Reset();
+            SubTaskService.RestoreModel(context, ref resource);
+            dataGrid.CancelEditRow(resource);
+            UpdatePeopleDropdownSource(new LoadDataArgs());
+        }
+
+        protected override void OnCreateRow(Resource resource)
+        {
+            LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
+            dataGridEntities.Add(resource);
+            entityToInsert = null;
+            taskModel.UpdateUnmetDemand(dataGridEntities);
+        }
+
+        protected override void OnUpdateRow(Resource entity)
+        {
+            Reset();
+            UpdatePeopleDropdownSource(new LoadDataArgs());
+        }
+
         protected override async Task DeleteRow(Resource entity)
         {
             await base.DeleteRow(entity);
+            UpdatePeopleDropdownSource(new LoadDataArgs());
             taskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         protected override async Task SaveRow(Resource entity)
         {
             await base.SaveRow(entity);
+            UpdatePeopleDropdownSource(new LoadDataArgs());
             taskModel.UpdateUnmetDemand(dataGridEntities);
+        }
+
+        protected override async Task InsertRow()
+        {
+            await base.InsertRow();
+            UpdatePeopleDropdownSource(new LoadDataArgs());
+        }
+
+        protected override async Task EditRow(Resource entity)
+        {
+            await base.EditRow(entity);
+            UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
         private void DiscardChanges()
@@ -287,6 +309,9 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Handles the edit form submission
+        /// </summary>
         private void HandleValidSubmit()
         {
             if (projectModel != null)
@@ -331,6 +356,23 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to update the source for the resource dropdown to filter out based on search text
+        /// </summary>
+        /// <param name="args"></param>
+        void UpdatePeopleDropdownSource(LoadDataArgs args)
+        {
+            var temp = people.AsQueryable();
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
+            }
+
+            // Remove any people already selected as resources
+            filteredPeople = temp.Where(x => !dataGridEntities.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            InvokeAsync(StateHasChanged);
         }
     }
 }
