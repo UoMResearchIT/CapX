@@ -120,7 +120,7 @@ namespace PPMTool.Services
 #if LOCAL
                         new[] { "mbgm6ah3@manchester.ac.uk" };
 #else
-                    role.Select(x => $"{x.CASUserName}@manchester.ac.uk");
+                    role.Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ? $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
 #endif
                     SendEmail(recipients, subject, body.ToString());
                 }
