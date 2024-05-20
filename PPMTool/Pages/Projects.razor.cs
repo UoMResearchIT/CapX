@@ -163,10 +163,9 @@ namespace PPMTool.Pages
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
             {
-                Debug.WriteLine($"** Updating project summary data for {proj.Count} project(s)...");
-                for (int i = 0; i < proj.Count; ++i)
+                Debug.WriteLine($"** Updating project summary data for {ownedProjects.Count()} project(s) that I own...");
+                foreach (var p in ownedProjects)
                 {
-                    var p = proj[i];
                     p.UpdateProjectSummary();
                     ProjectService.Update(context, p);
                 }
