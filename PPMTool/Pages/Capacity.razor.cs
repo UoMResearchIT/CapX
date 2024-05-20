@@ -128,6 +128,8 @@ namespace PPMTool.Pages
         private ApexChartOptions<ChartItem> chartOptions;
         private List<Person> people;
         private List<Person> managers;
+        private List<Person> filteredPeople;
+        private List<Person> filteredManagers;
         private string chartTitle;
         private DateTime queryEndDate = DateTime.Today.AddDays(7);
         private bool queryResultsAvailable;
@@ -242,7 +244,7 @@ namespace PPMTool.Pages
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            managers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
+
 
             // Filter out leavers if necessary
             if (!includeLeavers)
@@ -252,6 +254,39 @@ namespace PPMTool.Pages
                     .OrderBy(x => x.Name)
                     .ToList();
             }
+
+            // Add managers
+            managers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
+        }
+
+        /// <summary>
+        /// Use the master list of people to filter the data source for the dropdown based on user typing
+        /// </summary>
+        /// <param name="args"></param>
+        void LoadFilteredPeople(LoadDataArgs args)
+        {
+            var temp = people.AsQueryable();
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
+            }
+            filteredPeople = temp.ToList();
+            InvokeAsync(StateHasChanged);
+        }
+
+        /// <summary>
+        /// Use the master list of managers to filter the data source for the dropdown based on user typing
+        /// </summary>
+        /// <param name="args"></param>
+        void LoadFilteredManagers(LoadDataArgs args)
+        {
+            var temp = managers.AsQueryable();
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
+            }
+            filteredManagers = temp.ToList();
+            InvokeAsync(StateHasChanged);
         }
 
         /// <summary>
