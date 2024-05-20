@@ -18,6 +18,9 @@ namespace PPMTool.Data.Entities
 
         public string LastLoggedIn { get; set; }
 
+        [DataType(DataType.EmailAddress)]
+        public string EmailAddress { get; set; }
+
         public string GetSensibleObjectName()
         {
             return Person?.Name;

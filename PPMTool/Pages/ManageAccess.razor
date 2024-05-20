@@ -41,6 +41,11 @@
                     <RadzenTextBox @bind-Value="role.CASUserName" ValueProperty="CASUserName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Role" Property="EmailAddress" Title="Email" Width="200px" MinWidth="10px">
+                <EditTemplate Context="role">
+                    <RadzenTextBox @bind-Value="role.EmailAddress" ValueProperty="EmailAddress" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" Width="200px" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" />
