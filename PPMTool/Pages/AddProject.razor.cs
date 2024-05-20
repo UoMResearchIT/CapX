@@ -100,7 +100,7 @@ namespace PPMTool.Pages
             var temp = innateActivityQuery;
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                temp = innateActivityQuery.Where(act => act.GetCodeAsString().ToLower().Contains(args.Filter.ToLower()));
+                temp = temp.Where(act => act.GetCodeAsString().ToLower().Contains(args.Filter.ToLower()));
             }
 
             innateActivities = temp.ToList();

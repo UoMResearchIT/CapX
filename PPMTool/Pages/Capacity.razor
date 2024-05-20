@@ -200,14 +200,18 @@
         <div class="card">
             <div class="row align-items-center">
                 <div class="col-auto mr-auto">
-                    <RadzenDropDown @bind-Value=@chosenPeople Data=@people TextProperty="Name" ValueProperty="Name"
+                    <RadzenDropDown @bind-Value=@chosenPeople Data=@filteredPeople TextProperty="Name" ValueProperty="Name"
                                     Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
-                                    Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))" Disabled=!EditAuthorised />
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                    Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
+                                    LoadData="@LoadFilteredPeople" Disabled=!EditAuthorised />
                 </div>
                 <div class="col-auto mr-auto">
-                    <RadzenDropDown @bind-Value=@chosenManager Data=@managers TextProperty="Name"
+                    <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
                                     Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
-                                    Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))" Disabled=!EditAuthorised />
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                    Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
+                                    LoadData="@LoadFilteredManagers" Disabled=!EditAuthorised />
                 </div>
                 <div class="col-auto">
                     Include Unfunded:

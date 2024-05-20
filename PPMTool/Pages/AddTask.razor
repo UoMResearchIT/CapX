@@ -191,7 +191,9 @@
                         <Columns>
                             <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
                                 <EditTemplate Context="res">
-                                    <RadzenDropDown @bind-Value="res.Person" Data="@people" Style="width:100%; display: block;" Change="@OnResourcePersonChange">
+                                    <RadzenDropDown @bind-Value="res.Person" Data="@filteredPeople" Style="width:100%; display: block;" Change="@OnResourcePersonChange"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                                    LoadData="@UpdatePeopleDropdownSource">
                                         <Template Context="person">
                                             @person.Name
                                         </Template>
@@ -230,7 +232,7 @@
                                 <EditTemplate Context="res">
                                     <div class="align-items-center p-1">
                                         <div style="display: flex">
-                                            <RadzenSwitch @bind-Value="@res.UseProjectDayRate" />
+                                            <RadzenSwitch @bind-Value="@res.UseProjectDayRate" /> <div style="align-self:center; margin-left:0.5rem">(@(projectModel.DayRate.ToString("C0")))</div>
                                         </div>
                                     </div>
                                 </EditTemplate>
