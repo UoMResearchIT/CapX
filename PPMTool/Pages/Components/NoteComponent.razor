@@ -1,0 +1,22 @@
+﻿
+<RadzenCard>
+    <RadzenStack Orientation="Radzen.Orientation.Vertical">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@("Adrian Harwood posted on 21/05/2024 15:23")" />
+        <RadzenText TextStyle="TextStyle.Body2">
+            @((MarkupString)"This is the content of the note where we can add <b>multi-line rich text</b> stored in HTML and read out as a markup string.")
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@("Last edited by Adrian Harwood on 21/05/2024 16:32")" />
+    </RadzenStack>
+</RadzenCard>
+
+@code
+{
+    [Parameter]
+    string NoteEditorText { get; set; } = "Last edited by Adrian Harwood on 21/05/2024 16:32";
+
+    [Parameter]
+    string NoteAuthorText { get; set; } = "Adrian Harwood posted on 21/05/2024 15:23";
+
+    [Parameter]
+    string NoteContent { get; set; } = (MarkupString)"This is the content of the note where we can add <b>multi-line rich text</b> stored in HTML and read out as a markup string.";
+}

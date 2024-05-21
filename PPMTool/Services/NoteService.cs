@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -20,9 +21,15 @@ namespace PPMTool.Services
             context.SaveChanges();
         }
 
-        public override IEnumerable GetAll(PPMToolContext context)
+        /// <summary>
+        /// Returns all notes in the DB ordered with the most recently created first.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override IEnumerable<Note> GetAll(PPMToolContext context)
         {
             return context.Notes
+                .OrderBy(x => x.CreatedDate)
                 .Include(x => x.Author);
         }
 

@@ -75,30 +75,53 @@
     </div>
     <hr />
     <div class="row">
-        <div class="col-auto mr-auto">
-            <h2>Burn-Up Chart</h2>
+        <div class="col">
+            <div class="row">
+                <div class="col-auto mr-auto">
+                    <h2>Burn-Up Chart</h2>
+                </div>
+            </div>
+            <div class="row"
+                <div class="card">
+                    <ApexChart TItem="ChartItem"
+                               XAxisType="XAxisType.Datetime"
+                               Options="burnUpChartOptions">
+
+                        <ApexPointSeries TItem="ChartItem"
+                                         Items="burnUpChartSource"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work"
+                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YValue="@(e => Convert.ToDecimal(e.Value1))" />
+
+                        <ApexPointSeries TItem="ChartItem"
+                                         Items="burnUpChartSource"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work (Adjusted for Unmet Demand)"
+                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YValue="@(e => Convert.ToDecimal(e.Value2))" />
+
+                    </ApexChart>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="card">
-        <ApexChart TItem="ChartItem"
-                   XAxisType="XAxisType.Datetime"
-                   Options="burnUpChartOptions">
+        <div class="col">
+            <div class="row-auto">
+                <div class="row">
+                    <div class="col-auto mr-auto">
+                        <h2>Notes</h2>
+                    </div>
+                </div>
 
-            <ApexPointSeries TItem="ChartItem"
-                             Items="burnUpChartSource"
-                             SeriesType="@SeriesType.Area"
-                             Name="Planned Work"
-                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.Value1))" />
-
-            <ApexPointSeries TItem="ChartItem"
-                             Items="burnUpChartSource"
-                             SeriesType="@SeriesType.Area"
-                             Name="Planned Work (Adjusted for Unmet Demand)"
-                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.Value2))" />
-
-        </ApexChart>
+                <div class="row-auto" style="overflow-y:scroll">
+            
+                    @for (int i = 0; i < 5; ++i)
+                    {
+                        <NoteComponent />
+                    }
+                </div>
+            </div>
+        </div>
     </div>
     <hr />
     <div class="row">

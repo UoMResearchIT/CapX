@@ -17,10 +17,11 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-
+        [Inject]
+        private NoteService NoteService { get; set; }
 
         [Parameter]
-        public int? ProjectID { get; set; }
+        public int? ProjectId { get; set; }
 
         [Parameter]
         [SupplyParameterFromQuery(Name = "rtp")]
@@ -29,6 +30,7 @@ namespace PPMTool.Pages
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
         private List<SubTask> allTasks;
+        private List<Note> notes;
         private Project project;
         private List<ChartItem> burnUpChartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> ganttChartOptions;
@@ -43,22 +45,23 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Query string only consulted when Project ID is not specified in URL
-            if (ProjectID == null && RTP != null)
+            if (ProjectId == null && RTP != null)
             {
                 // Try get the project
-                ProjectID = ProjectService.GetByRTP(context, RTP)?.ProjectId;
+                ProjectId = ProjectService.GetByRTP(context, RTP)?.ProjectId;
             }
 
             // Carry on and load the project details
-            if (ProjectID != null)
+            if (ProjectId != null)
             {
-                project = ProjectService.GetById(context, ProjectID);
+                project = ProjectService.GetById(context, ProjectId);
                 confirmedTasks = project.SubTasks.Where(x => !x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 provisionalTasks = project.SubTasks.Where(x => x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 allTasks = confirmedTasks.Concat(provisionalTasks).ToList();
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                notes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
                 count = allTasks.Count;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
@@ -180,7 +183,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectID == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
@@ -193,7 +196,7 @@ namespace PPMTool.Pages
                 var task = dataPoint.DataPoint.Items.FirstOrDefault();
                 if (task == null) return;
                 Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
-                Navigation.NavigateTo($"/addtask/{ProjectID}/{task.SubTaskId}");
+                Navigation.NavigateTo($"/addtask/{ProjectId}/{task.SubTaskId}");
             }
         }
 
