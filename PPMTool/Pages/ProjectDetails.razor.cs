@@ -148,7 +148,8 @@ namespace PPMTool.Pages
                                 BorderColor = "red",
                                 Label = new Label
                                 {
-                                    Text = "Actual (Hours)"
+                                    Text = "Actual (Hours)",
+                                    Position = LabelPosition.Right
                                 }
                             }
                         },
@@ -162,7 +163,8 @@ namespace PPMTool.Pages
                                 BorderColor = "red",
                                 Label = new Label
                                 {
-                                    Text = "Current Week"
+                                    Text = "Current Week",
+                                    Position = LabelPosition.Left
                                 }
                             }
                         }
