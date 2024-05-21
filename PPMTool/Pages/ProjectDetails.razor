@@ -76,12 +76,10 @@
     <hr />
     <div class="row">
         <div class="col">
-            <div class="row">
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="max-height: 500px;">
                 <div class="col-auto mr-auto">
                     <h2>Burn-Up Chart</h2>
                 </div>
-            </div>
-            <div class="row"
                 <div class="card">
                     <ApexChart TItem="ChartItem"
                                XAxisType="XAxisType.Datetime"
@@ -103,24 +101,25 @@
 
                     </ApexChart>
                 </div>
-            </div>
+            </RadzenStack>
         </div>
         <div class="col">
-            <div class="row-auto">
-                <div class="row">
-                    <div class="col-auto mr-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                    <div class="col mr-auto">
                         <h2>Notes</h2>
                     </div>
-                </div>
-
-                <div class="row-auto" style="overflow-y:scroll">
-            
+                    <div class="col-auto mr-auto">
+                        <RadzenButton Icon="add" Text="Add" Disabled=!EditAuthorised />
+                    </div>
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem" Style="max-height: 500px; overflow: scroll">
                     @for (int i = 0; i < 5; ++i)
                     {
                         <NoteComponent />
                     }
-                </div>
-            </div>
+                </RadzenStack>
+            </RadzenStack>
         </div>
     </div>
     <hr />
