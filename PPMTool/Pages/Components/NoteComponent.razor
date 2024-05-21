@@ -1,13 +1,19 @@
 ﻿
-<RadzenCard class="rz-m-1" Style="min-height:8rem">
-    <RadzenStack class="rz-p-0" Orientation="Radzen.Orientation.Vertical">
-        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@NoteAuthorText" />
-        <RadzenText TextStyle="TextStyle.Body1">
-            @((MarkupString)NoteContent)
-        </RadzenText>
-        <RadzenText TextStyle="TextStyle.Body2" Text="@NoteEditorText" Style="font-weight:lighter; margin-top:1rem" />
-    </RadzenStack>
-</RadzenCard>
+    <div class="card">
+        <div class="col">
+            <div class="row">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@NoteAuthorText" />
+            </div>
+            <div class="row">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    @((MarkupString)NoteContent)
+                </RadzenText>
+            </div>
+            <div class="row">
+                <RadzenText TextStyle="TextStyle.Body2" Text="@NoteEditorText" Style="font-weight:lighter" />
+            </div>
+        </div>
+    </div>
 
 @code
 {
