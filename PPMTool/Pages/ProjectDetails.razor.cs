@@ -48,6 +48,7 @@ namespace PPMTool.Pages
         private string actualCostColour;
         private string fundsReceivedColour;
         private bool addNote;
+        private bool editNote;
         private Note noteModel = new Note();
 
         protected override void OnInitialized()
@@ -203,10 +204,10 @@ namespace PPMTool.Pages
             notes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
         }
 
-        private async void ToggleAddNote()
+        private async void SetShowNoteEditor(bool show)
         {
             // Toggle state
-            addNote = !addNote;
+            addNote = show;
             if (addNote)
             {
                 noteModel = new Note();
@@ -216,13 +217,17 @@ namespace PPMTool.Pages
                 await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
                 StateHasChanged();
             }
+            else
+            {
+                editNote = false;
+            }
         }
 
         private void SaveNote()
         {
             if (project == null || project.ProjectId < 0)
             {
-                ToggleAddNote();
+                SetShowNoteEditor(false);
                 LogError("Attempt to add a note when no project model present!");
                 return;
             }
@@ -235,7 +240,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             NoteService.Add(context, noteModel);
             InitialiseNotes();
-            ToggleAddNote();
+            SetShowNoteEditor(false);
         }
 
         private void UpdateNote()
@@ -247,14 +252,27 @@ namespace PPMTool.Pages
             LogInformation($"Updated note for {project.GetFullName()}");
             NoteService.Update(context, noteModel);
             InitialiseNotes();
-            ToggleAddNote();
+            SetShowNoteEditor(false);
         }
 
         private void EditNote(Note noteToEdit)
         {
-            ToggleAddNote();
+            SetShowNoteEditor(true);
             LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
             noteModel = noteToEdit;
+            editNote = true;
+        }
+
+        private async void DeleteNote(Note noteToDelete)
+        {
+            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"You are about to delete a note from {project.GetFullName()}!");
+            if (confirmed)
+            {
+                LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
+                NoteService.Delete(context, noteToDelete);
+                InitialiseNotes();
+                StateHasChanged();
+            }
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)

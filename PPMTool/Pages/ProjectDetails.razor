@@ -257,10 +257,10 @@
             <h2>Notes</h2>
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="SaveNote" Visible="@addNote" />
+            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(editNote ? UpdateNote : SaveNote)" Visible="@addNote" />
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="@(addNote ? "clear" : "add")" Text="@(addNote ? "Discard" : "Add")" ButtonStyle="@(addNote ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="ToggleAddNote" />
+            <RadzenButton Icon="@(addNote ? "clear" : "add")" Text="@(addNote ? "Discard" : "Add")" ButtonStyle="@(addNote ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="@(args => SetShowNoteEditor(!addNote))" />
         </div>
     </div>
     <div id="note-editor">
@@ -275,7 +275,7 @@
         {
             @foreach (var note in notes)
             {
-                <NoteComponent Note="note"/>
+                <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" />
             }
         }
     </RadzenStack>

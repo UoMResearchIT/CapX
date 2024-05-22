@@ -1,17 +1,25 @@
 ﻿@using PPMTool.Data.Entities
 
     <div class="card">
-        <div class="col">
-            <div class="row">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
+        <div class="row">
+            <div class="col">
+                <div class="row-auto">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
+                </div>
+                <div class="row-auto">
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        @((MarkupString)Note.HtmlContent)
+                    </RadzenText>
+                </div>
+                <div class="row-auto">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@Note.GetNoteEditorText()" Style="font-weight:lighter" />
+                </div>
             </div>
-            <div class="row">
-                <RadzenText TextStyle="TextStyle.Body1">
-                    @((MarkupString)Note.HtmlContent)
-                </RadzenText>
+            <div class="col-auto my-1 p-1 mr-0">
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" />
             </div>
-            <div class="row">
-                <RadzenText TextStyle="TextStyle.Body2" Text="@Note.GetNoteEditorText()" Style="font-weight:lighter" />
+            <div class="col-auto my-1 p-1 ml-0 mr-4">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" />
             </div>
         </div>
     </div>
@@ -20,4 +28,10 @@
 {
     [Parameter]
     public Note Note { get; set; }
+
+    [Parameter]
+    public Action<Note> DeleteNote { get; set; }
+
+    [Parameter]
+    public Action<Note> EditNote { get; set; }
 }
