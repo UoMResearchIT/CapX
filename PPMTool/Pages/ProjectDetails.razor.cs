@@ -38,7 +38,7 @@ namespace PPMTool.Pages
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
         private List<SubTask> allTasks;
-        private List<Note> notes;
+        private List<Note> allNotes;
         private Project project;
         private List<ChartItem> burnUpChartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> ganttChartOptions;
@@ -50,6 +50,8 @@ namespace PPMTool.Pages
         private bool addNote;
         private bool editNote;
         private Note noteModel = new Note();
+        private string noteSearchTerms;
+        private List<Note> filteredNotes;
 
         protected override void OnInitialized()
         {
@@ -72,7 +74,7 @@ namespace PPMTool.Pages
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
-                InitialiseNotes();
+                PopulateNotes();
                 count = allTasks.Count;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
@@ -199,9 +201,33 @@ namespace PPMTool.Pages
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
         }
 
-        private void InitialiseNotes()
+        private void PopulateNotes()
         {
-            notes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+            allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+            FilterNotes();
+        }
+
+        private void FilterNotes()
+        {
+            if (!string.IsNullOrWhiteSpace(noteSearchTerms))
+            {
+                filteredNotes = allNotes.Where(x =>
+                {
+                    var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
+                    return plainText.ToLower().Contains(noteSearchTerms.ToLower());
+                }).ToList();
+            }
+            else
+            {
+                filteredNotes = allNotes;
+            }
+            StateHasChanged();
+        }
+
+        private void ClearSearch()
+        {
+            noteSearchTerms = string.Empty;
+            FilterNotes();
         }
 
         private async void SetShowNoteEditor(bool show)
@@ -239,7 +265,7 @@ namespace PPMTool.Pages
             noteModel.CreatedDate = DateTime.Now;
             LogInformation($"Added note for {project.GetFullName()}");
             NoteService.Add(context, noteModel);
-            InitialiseNotes();
+            PopulateNotes();
             SetShowNoteEditor(false);
         }
 
@@ -251,7 +277,7 @@ namespace PPMTool.Pages
             noteModel.Editor = role.Person;
             LogInformation($"Updated note for {project.GetFullName()}");
             NoteService.Update(context, noteModel);
-            InitialiseNotes();
+            PopulateNotes();
             SetShowNoteEditor(false);
         }
 
@@ -270,7 +296,7 @@ namespace PPMTool.Pages
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
                 NoteService.Delete(context, noteToDelete);
-                InitialiseNotes();
+                PopulateNotes();
                 StateHasChanged();
             }
         }
