@@ -77,6 +77,93 @@
         }
     </div>
     <hr />
+
+    <div class="row">
+        @* Graphs *@
+        <div class="col">
+            <h2>Burn-Up Chart</h2>
+            <RadzenCard>
+                <ApexChart TItem="ChartItem"
+                            XAxisType="XAxisType.Datetime"
+                            Options="burnUpChartOptions">
+
+                    <ApexPointSeries TItem="ChartItem"
+                                        Items="burnUpChartSource"
+                                        SeriesType="@SeriesType.Area"
+                                        Name="Planned Work"
+                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                        YValue="@(e => Convert.ToDecimal(e.Value1))" />
+
+                    <ApexPointSeries TItem="ChartItem"
+                                        Items="burnUpChartSource"
+                                        SeriesType="@SeriesType.Area"
+                                        Name="Planned Work (Adjusted for Unmet Demand)"
+                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                        YValue="@(e => Convert.ToDecimal(e.Value2))" />
+
+                </ApexChart>
+            </RadzenCard>
+        </div>
+
+        <div class="col">
+            <h2>Schedule</h2>
+            <RadzenCard>
+                <ApexChart TItem="SubTask"
+                            XAxisType="XAxisType.Datetime"
+                            Options=ganttChartOptions
+                            OnDataPointSelection="TaskSelected">
+                    <ChildContent>
+                        <ApexRangeSeries TItem="SubTask"
+                                            Items="confirmedTasks"
+                                            Name="Resources Confirmed"
+                                            XValue="@(e => e.Name)"
+                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+
+                        <ApexRangeSeries TItem="SubTask"
+                                            Items="provisionalTasks"
+                                            Name="Resources Provisional"
+                                            XValue="@(e => e.Name)"
+                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                    </ChildContent>
+                    <ApexPointTooltip>
+                        <div class="m-2">
+                            @{
+                                var point = (ListPoint<SubTask>)context.DataPoint;
+                                <div class="m-0 p-3">
+                                    @if (point.Items.FirstOrDefault()?.HasProvisionalResources() ?? false)
+                                    {
+                                        <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>
+                                    }
+                                    @if (point.Items.FirstOrDefault()?.HasUnmetDemand() ?? false)
+                                    {
+                                        <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().UnmetDemand FTE)]</h3>
+                                    }
+                                    <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
+                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
+                                </div>
+                            }
+                        </div>
+                    </ApexPointTooltip>
+
+                </ApexChart>
+            </RadzenCard>
+            <RadzenCard class="rz-p-2">
+                <RadzenStack class="rz-m-0 rz-p-0" Orientation="Radzen.Orientation.Horizontal" Gap="0" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
+                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg> Demand Met</div>
+                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(124)" /></svg> &lt;25% Unmet</div>
+                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(149)" /></svg> &lt;50% Unmet</div>
+                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(150)" /></svg> &gt;50% Unmet</div>
+                </RadzenStack>
+            </RadzenCard>
+        </div>
+    </div>
+    <hr />
+
     <div class="row">
         <div class="col">
             <h2>Tasks</h2>
@@ -164,104 +251,32 @@
     }
     <hr />
 
-    <div class="row">
-        @* Graphs *@
-        <div class="col">
-            <h2>Burn-Up Chart</h2>
-            <RadzenCard>
-                <ApexChart TItem="ChartItem"
-                            XAxisType="XAxisType.Datetime"
-                            Options="burnUpChartOptions">
-
-                    <ApexPointSeries TItem="ChartItem"
-                                        Items="burnUpChartSource"
-                                        SeriesType="@SeriesType.Area"
-                                        Name="Planned Work"
-                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YValue="@(e => Convert.ToDecimal(e.Value1))" />
-
-                    <ApexPointSeries TItem="ChartItem"
-                                        Items="burnUpChartSource"
-                                        SeriesType="@SeriesType.Area"
-                                        Name="Planned Work (Adjusted for Unmet Demand)"
-                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YValue="@(e => Convert.ToDecimal(e.Value2))" />
-
-                </ApexChart>
-            </RadzenCard>
-        </div>
-
-        <div class="col">
-            <h2>Schedule</h2>
-            <RadzenCard>
-                <ApexChart TItem="SubTask"
-                            XAxisType="XAxisType.Datetime"
-                            Options=ganttChartOptions
-                            OnDataPointSelection="TaskSelected">
-                    <ChildContent>
-                        <ApexRangeSeries TItem="SubTask"
-                                            Items="confirmedTasks"
-                                            Name="Resources Confirmed"
-                                            XValue="@(e => e.Name)"
-                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
-
-                        <ApexRangeSeries TItem="SubTask"
-                                            Items="provisionalTasks"
-                                            Name="Resources Provisional"
-                                            XValue="@(e => e.Name)"
-                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
-                    </ChildContent>
-                    <ApexPointTooltip>
-                        <div class="m-2">
-                            @{
-                                var point = (ListPoint<SubTask>)context.DataPoint;
-                                <div class="m-0 p-3">
-                                    @if (point.Items.FirstOrDefault()?.HasProvisionalResources() ?? false)
-                                    {
-                                        <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>
-                                    }
-                                    @if (point.Items.FirstOrDefault()?.HasUnmetDemand() ?? false)
-                                    {
-                                        <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().UnmetDemand FTE)]</h3>
-                                    }
-                                    <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
-                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
-                                </div>
-                            }
-                        </div>
-                    </ApexPointTooltip>
-
-                </ApexChart>
-            </RadzenCard>
-            <RadzenCard class="rz-p-2">
-                <RadzenStack class="rz-m-0 rz-p-0" Orientation="Radzen.Orientation.Horizontal" Gap="0" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg> Demand Met</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(124)" /></svg> &lt;25% Unmet</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(149)" /></svg> &lt;50% Unmet</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(150)" /></svg> &gt;50% Unmet</div>
-                </RadzenStack>
-            </RadzenCard>
-        </div>
-    </div>
-    <hr />
     @* Notes *@
     <div class="row">
-        <div class="col mr-auto">
+        <div class="col">
             <h2>Notes</h2>
         </div>
-        <div class="col-auto mr-auto">
-            <RadzenButton Icon="add" Text="Add" Disabled=!EditAuthorised />
+        <div class="col-auto">
+            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="SaveNote" Visible="@addNote" />
+        </div>
+        <div class="col-auto">
+            <RadzenButton Icon="@(addNote ? "clear" : "add")" Text="@(addNote ? "Discard" : "Add")" ButtonStyle="@(addNote ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="ToggleAddNote" />
         </div>
     </div>
-    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow: scroll">
-        @for (int i = 0; i < 10; ++i)
+    <div id="note-editor">
+        <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@addNote />
+    </div>
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow: auto">
+        @if (notes.Count == 0)
         {
-            <NoteComponent />
+            <RadzenText Text="There are no notes for this project" />
+        }
+        else
+        {
+            @foreach (var note in notes)
+            {
+                <NoteComponent Note="note"/>
+            }
         }
     </RadzenStack>
 </div>

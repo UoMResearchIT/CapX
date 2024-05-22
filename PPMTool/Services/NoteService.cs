@@ -29,7 +29,7 @@ namespace PPMTool.Services
         public override IEnumerable<Note> GetAll(PPMToolContext context)
         {
             return context.Notes
-                .OrderBy(x => x.CreatedDate)
+                .OrderByDescending(x => x.CreatedDate)
                 .Include(x => x.Author);
         }
 

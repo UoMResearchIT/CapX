@@ -21,5 +21,15 @@ namespace PPMTool.Data.Entities
         public DateTime EditedDate { get; set; }
 
         public Person Editor { get; set; }
+
+        internal string GetNoteEditorText()
+        {
+            return Editor != null ? $"Last edited by {Editor.Name} on {EditedDate.ToString("dd/MM/yyyy HH:mm:ss")}" : null;
+        }
+
+        internal string GetNoteAuthorText()
+        {
+            return $"{Author.Name} posted on {CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")}";
+        }
     }
 }

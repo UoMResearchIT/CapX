@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool
 {
@@ -53,6 +54,7 @@ namespace PPMTool
             services.AddScoped<TagService>();
             services.AddScoped<EmailService>();
             services.AddScoped<NoteService>();
+            services.AddScoped<DialogService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>

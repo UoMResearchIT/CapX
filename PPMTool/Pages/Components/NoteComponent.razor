@@ -1,16 +1,17 @@
-﻿
+﻿@using PPMTool.Data.Entities
+
     <div class="card">
         <div class="col">
             <div class="row">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@NoteAuthorText" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
             </div>
             <div class="row">
                 <RadzenText TextStyle="TextStyle.Body1">
-                    @((MarkupString)NoteContent)
+                    @((MarkupString)Note.HtmlContent)
                 </RadzenText>
             </div>
             <div class="row">
-                <RadzenText TextStyle="TextStyle.Body2" Text="@NoteEditorText" Style="font-weight:lighter" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="@Note.GetNoteEditorText()" Style="font-weight:lighter" />
             </div>
         </div>
     </div>
@@ -18,11 +19,5 @@
 @code
 {
     [Parameter]
-    public string NoteEditorText { get; set; } = "Last edited by Adrian Harwood on 21/05/2024 16:32";
-
-    [Parameter]
-    public string NoteAuthorText { get; set; } = "Adrian Harwood posted on 21/05/2024 15:23";
-
-    [Parameter]
-    public string NoteContent { get; set; } = "This is the content of the note where we can add <b>multi-line rich text</b> stored in HTML and read out as a markup string.";
+    public Note Note { get; set; }
 }

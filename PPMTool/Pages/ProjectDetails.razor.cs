@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -19,6 +21,12 @@ namespace PPMTool.Pages
 
         [Inject]
         private NoteService NoteService { get; set; }
+
+        [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -39,6 +47,8 @@ namespace PPMTool.Pages
         private string plannedCostColour;
         private string actualCostColour;
         private string fundsReceivedColour;
+        private bool addNote;
+        private Note noteModel = new Note();
 
         protected override void OnInitialized()
         {
@@ -61,7 +71,7 @@ namespace PPMTool.Pages
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
-                notes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+                InitialiseNotes();
                 count = allTasks.Count;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
@@ -186,6 +196,65 @@ namespace PPMTool.Pages
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+        }
+
+        private void InitialiseNotes()
+        {
+            notes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+        }
+
+        private async void ToggleAddNote()
+        {
+            // Toggle state
+            addNote = !addNote;
+            if (addNote)
+            {
+                noteModel = new Note();
+
+                // Scroll to the new editor window after a delay to allow the page to render
+                await Task.Delay(500);
+                await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
+                StateHasChanged();
+            }
+        }
+
+        private void SaveNote()
+        {
+            if (project == null || project.ProjectId < 0)
+            {
+                ToggleAddNote();
+                LogError("Attempt to add a note when no project model present!");
+                return;
+            }
+
+            // Populate model and add to DB
+            noteModel.Project = project;
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            noteModel.Author = role.Person;
+            noteModel.CreatedDate = DateTime.Now;
+            LogInformation($"Added note for {project.GetFullName()}");
+            NoteService.Add(context, noteModel);
+            InitialiseNotes();
+            ToggleAddNote();
+        }
+
+        private void UpdateNote()
+        {
+            // Update model in DB
+            noteModel.EditedDate = DateTime.Now;
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            noteModel.Editor = role.Person;
+            LogInformation($"Updated note for {project.GetFullName()}");
+            NoteService.Update(context, noteModel);
+            InitialiseNotes();
+            ToggleAddNote();
+        }
+
+        private void EditNote(Note noteToEdit)
+        {
+            ToggleAddNote();
+            LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
+            noteModel = noteToEdit;
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
