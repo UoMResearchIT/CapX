@@ -266,7 +266,7 @@
     <div id="note-editor">
         <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@addNote />
     </div>
-    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow: auto">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip">
         @if (notes.Count == 0)
         {
             <RadzenText Text="There are no notes for this project" />
