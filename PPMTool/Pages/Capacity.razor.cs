@@ -125,7 +125,9 @@ namespace PPMTool.Pages
         private IList<List<ChartItem>> confirmedChartItems;
         private IList<List<ChartItem>> provisionalChartItems;
         private IList<string> chartTitles;
-        private ApexChartOptions<ChartItem> chartOptions;
+        private IList<ApexChartOptions<ChartItem>> chartOptions;
+        private long? standardXMin;
+        private long? standardXMax;
         private List<Person> people;
         private List<Person> managers;
         private List<Person> filteredPeople;
@@ -146,33 +148,6 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             Loading = true;
-
-            chartOptions = new ApexChartOptions<ChartItem>
-            {
-                PlotOptions = new PlotOptions
-                {
-                    Bar = new PlotOptionsBar
-                    {
-                        Horizontal = true,
-                        RangeBarOverlap = true,
-                        RangeBarGroupRows = true
-                    }
-                },
-                Legend = new Legend
-                {
-                    Show = false
-                },
-                Xaxis = new XAxis { },
-                Fill = new Fill
-                {
-                    Opacity = 1,
-                    Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
-                    Pattern = new FillPattern
-                    {
-                        Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
-                    }
-                }
-            };
 
             // Refresh the dropdown
             ReloadDropDownSources();
@@ -479,6 +454,7 @@ namespace PPMTool.Pages
                 provisionalChartItems = new List<List<ChartItem>>();
                 groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                 chartTitles = new List<string>();
+                chartOptions = new List<ApexChartOptions<ChartItem>>();
 
                 // Need some people for this to work
                 if (people.Count() == 0)
@@ -563,6 +539,9 @@ namespace PPMTool.Pages
                     // Chart title
                     var chartTitle = $"Load for {(!managerChosen ? "All" : "None")} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
                     chartTitles.Add(chartTitle);
+
+                    // Chart options
+                    chartOptions.Add(BuildNewChartOptionsObject());
                 }
 
                 // -------------- PROJECT MODE -------------- //
@@ -661,15 +640,19 @@ namespace PPMTool.Pages
                         // Title
                         var chartTitle = $"Load for {name} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
                         chartTitles.Add(chartTitle);
+
+                        // Options
+                        chartOptions.Add(BuildNewChartOptionsObject());
                     }
                 }
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
                 long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
-                chartOptions.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-                chartOptions.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
-                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartOptions?.Xaxis?.Min} to {chartOptions?.Xaxis?.Max}");
+                standardXMin = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+                standardXMax = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
+                ResetZoom();
+                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartOptions.FirstOrDefault()?.Xaxis?.Min} to {chartOptions.FirstOrDefault()?.Xaxis?.Max}");
 
             }).ContinueWith(task =>
             {
@@ -681,6 +664,71 @@ namespace PPMTool.Pages
 
                 Debug.WriteLine($"** There are {chartTitles.Count} charts!");
             });
+        }
+
+        private void OnChartZoomed(ZoomedData<ChartItem> zoomedData)
+        {
+            if (zoomedData != null)
+            {
+                Debug.WriteLine($"** Zoomed {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+
+                // Go through all the chart options objects and for all not associated with the chart making this call
+                // and whose values of the X limits differ from those give can then be updated.
+                foreach (var opt in chartOptions)
+                {
+                    if (opt != zoomedData.Chart.Options)
+                    {
+                        if (zoomedData.XAxis.Min == standardXMin && zoomedData.XAxis.Max == standardXMax)
+                        {
+                            opt.Xaxis.Min = standardXMin;
+                            opt.Xaxis.Max = standardXMax;
+                        }
+                        else if (opt.Xaxis.Min as decimal? != zoomedData.XAxis.Min || opt.Xaxis.Max as decimal? != zoomedData.XAxis.Max))
+                        {
+                            Debug.WriteLine($"** Updating options {opt.Chart.Id}");
+                            opt.Xaxis.Min = zoomedData.XAxis.Min;
+                            opt.Xaxis.Max = zoomedData.XAxis.Max;
+
+                            // TODO: Need to work out how to update!
+                            //(opt.Chart as ApexChart<ChartItem>)?.UpdateOptionsAsync(false, true, false);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a standard chart object to be pass to all chart instances -- they cannot share the same object
+        /// </summary>
+        /// <returns></returns>
+        private ApexChartOptions<ChartItem> BuildNewChartOptionsObject()
+        {
+            return new ApexChartOptions<ChartItem>
+            {
+                PlotOptions = new PlotOptions
+                {
+                    Bar = new PlotOptionsBar
+                    {
+                        Horizontal = true,
+                        RangeBarOverlap = true,
+                        RangeBarGroupRows = true
+                    }
+                },
+                Legend = new Legend
+                {
+                    Show = false
+                },
+                Xaxis = new XAxis { },
+                Fill = new Fill
+                {
+                    Opacity = 1,
+                    Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                    Pattern = new FillPattern
+                    {
+                        Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                    }
+                }
+            };
         }
 
         /// <summary>

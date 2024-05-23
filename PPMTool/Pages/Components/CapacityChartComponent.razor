@@ -1,10 +1,13 @@
 ﻿@using PPMTool.Data
+@using System.Diagnostics
 
-<ApexChart Title="@Title"
+<ApexChart @ref="@chart"
+           Title="@Title"
            TItem="ChartItem"
            Options=@ChartOptions
            XAxisType="XAxisType.Datetime"
-           OnDataPointSelection=@OnDataPointSelection>
+           OnDataPointSelection=@OnDataPointSelection
+           OnZoomed="@OnChartZoomed">
     <ChildContent>
         <ApexRangeSeries TItem="ChartItem"
                          Items="@ConfirmedChartItems"
@@ -55,4 +58,9 @@
     
     [Parameter]
     public string Title { get; set; }
+
+    [Parameter]
+    public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
+
+    private ApexChart<ChartItem> chart;
 }
