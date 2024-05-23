@@ -681,9 +681,8 @@ namespace PPMTool.Pages
                 long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
                 chartOptions.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
                 chartOptions.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
-
-                // Refresh chart
                 Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartOptions?.Xaxis?.Min} to {chartOptions?.Xaxis?.Max}");
+
             }).ContinueWith(task =>
             {
                 InvokeAsync(() =>
