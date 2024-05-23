@@ -73,7 +73,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            loading = true;
+            Loading = true;
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
@@ -175,7 +175,7 @@ namespace PPMTool.Pages
             projects = proj;
 
             // Disable spinner now load complete
-            loading = false;
+            Loading = false;
 
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
