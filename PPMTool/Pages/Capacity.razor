@@ -46,22 +46,28 @@
             </div>
         </div>
     </div>
-    <div class="card">
-        @if (Loading)
-        {
-            <LoadingComponent />
-        }
-        else if (confirmedChartItems == null || confirmedChartItems.Count < 1)
-        {
+    
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else if (confirmedChartItems == null || confirmedChartItems.Count < 1)
+    {
+        <div class="card">
             <p class="lead">No data to show for the selected people.</p>
-        }
-        else if (chosenManager != null && (chosenPeople == null || chosenPeople.Count() == 0))
-        {
+        </div>
+    }
+    else if (chosenManager != null && (chosenPeople == null || chosenPeople.Count() == 0))
+    {
+        <div class="card">
             <p class="lead">Select one or more RSEs to view capacity information for projects owned by this project manager.</p>
-        }
-        else
-        {
-            <!-- Legend -->
+        </div>
+    }
+    else
+    {
+        <!-- Legend -->
+            
+        <div class="card">
             <div class="row">
                 <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(49)" /></svg> &lt;50%</div>
                 <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(74)" /></svg> &lt;75%</div>
@@ -71,14 +77,22 @@
                 <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(126)" /></svg> &gt;125%</div>
                 <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(151)" /></svg> &gt;150%</div>
             </div>
+        </div>
 
-            <!-- Chart -->
-            <CapacityChartComponent ChartOptions="@chartOptions"
-                                    ConfirmedChartItems="@confirmedChartItems"
-                                    ProvisionalChartItems="@provisionalChartItems"
-                                    OnDataPointSelection="@DataPointsSelected" />
-        }
-    </div>
+        <!-- Chart -->
+        <div class="card">
+            @for (int i = 0; i < chartTitles.Count; ++i)
+            {
+                <div class="@(chartTitles.Count == 1 ? "col" :"col-6")">
+                    <CapacityChartComponent Title=@chartTitles[i]
+                                            ChartOptions="@chartOptions"
+                                            ConfirmedChartItems="@confirmedChartItems[i]"
+                                            ProvisionalChartItems="@provisionalChartItems[i]"
+                                            OnDataPointSelection="@DataPointsSelected" />
+                </div>
+            }
+        </div>
+    }
     <hr />
 
     @if (EditAuthorised)

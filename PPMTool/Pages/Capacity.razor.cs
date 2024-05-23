@@ -122,14 +122,14 @@ namespace PPMTool.Pages
         }
 
         private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
-        private List<ChartItem> confirmedChartItems;
-        private List<ChartItem> provisionalChartItems;
+        private IList<List<ChartItem>> confirmedChartItems;
+        private IList<List<ChartItem>> provisionalChartItems;
+        private IList<string> chartTitles;
         private ApexChartOptions<ChartItem> chartOptions;
         private List<Person> people;
         private List<Person> managers;
         private List<Person> filteredPeople;
         private List<Person> filteredManagers;
-        private string chartTitle;
         private DateTime queryEndDate = DateTime.Today.AddDays(7);
         private bool queryResultsAvailable;
         private string queryErrorMessage;
@@ -141,7 +141,6 @@ namespace PPMTool.Pages
         private List<CapacityQueryItem> partialMatchBoth;
         private bool managerChosen;
         private bool peopleChosen;
-        private List<int> charts = new List<int>();
 
         protected override void OnInitialized()
         {
@@ -412,7 +411,7 @@ namespace PPMTool.Pages
             ConfigureChartSource();
 
             // Convert the chart results to capacity query results
-            var mergedItems = confirmedChartItems.Concat(provisionalChartItems).ToList();
+            var mergedItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).ToList();
             foreach (var item in mergedItems)
             {
                 // Get person from item label
@@ -475,16 +474,17 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Running task...");
 
-                // Create a temp source
-                var chartSourceTemp = new List<ChartItem>();
+                // Initialise the dictionaries
+                confirmedChartItems = new List<List<ChartItem>>();
+                provisionalChartItems = new List<List<ChartItem>>();
+                groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
+                chartTitles = new List<string>();
 
                 // Need some people for this to work
                 if (people.Count() == 0)
                 {
                     LogError("People database is empty!");
                     Debug.WriteLine("** No people registered in the database!");
-                    confirmedChartItems = new List<ChartItem>();
-                    provisionalChartItems = new List<ChartItem>();
                     Loading = false;
                     return;
                 }
@@ -503,22 +503,18 @@ namespace PPMTool.Pages
                 }
 
                 // Get the window from the start and end dates of the projects included in the source
+                // Avoids including malformed projects without a proper start date
                 var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
                 if (safeProjects.Count() == 0)
                 {
                     Debug.WriteLine("** No projects found that match the chosen options!");
-                    confirmedChartItems = new List<ChartItem>();
-                    provisionalChartItems = new List<ChartItem>();
                     Loading = false;
                     return;
                 }
                 var startDate = safeProjects.Min(x => x.StartDate);
                 var endDate = safeProjects.Max(x => x.EndDate);
 
-                // Reinitialise dictionary
-                groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
-
-                // Determine state
+                // Determine state based on drop down selections
                 UpdateSelectionState();
 
                 // -------------- PERSON MODE -------------- //
@@ -527,6 +523,11 @@ namespace PPMTool.Pages
                 if (!managerChosen && !peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PERSON MODE.");
+
+                    // Create temporary list of chart items
+                    var chartSourceTemp = new List<ChartItem>();
+
+                    // Build chart items for each person
                     foreach (var person in people)
                     {
                         // Create a list of subtasks to which this person is assigned
@@ -554,6 +555,14 @@ namespace PPMTool.Pages
                             GetPersonModeChartItemsFromAssignments(group.Key as Person, group.Value, queryActive ? QueryStartDate : startDate, queryActive ? queryEndDate : endDate)
                         );
                     }
+
+                    // Add data
+                    confirmedChartItems.Add(chartSourceTemp.Where(x => !x.IsHatched).ToList());
+                    provisionalChartItems.Add(chartSourceTemp.Where(x => x.IsHatched).ToList());
+
+                    // Chart title
+                    var chartTitle = $"Load for {(!managerChosen ? "All" : "None")} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
+                    chartTitles.Add(chartTitle);
                 }
 
                 // -------------- PROJECT MODE -------------- //
@@ -564,9 +573,11 @@ namespace PPMTool.Pages
                     Debug.WriteLine("** Chart in PROJECT MODE.");
 
                     // For each person selected
-                    List<Assignment> assignmentsAllPeople = new List<Assignment>();
                     foreach (var name in ChosenPeople)
                     {
+                        // Create temporary list of chart items
+                        var chartSourceTemp = new List<ChartItem>();
+
                         // Get person object
                         var person = people.First(x => x.Name == name);
 
@@ -594,16 +605,16 @@ namespace PPMTool.Pages
                         Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
                         foreach (var group in groupedAssignments)
                         {
-                            // Give unique name to series when multiple people selected
+                            // Compute chart items from the grouped assignments
                             var seriesName = (group.Key as Project).GetFullName();
                             chartSourceTemp.AddRange(
-                                GetProjectModeChartItemsFromAssignments(ChosenPeople.Count() > 1 ? $"{seriesName} ({person.ShortName})" : seriesName, group, startDate, endDate, person)
+                                GetProjectModeChartItemsFromAssignments(seriesName, group, startDate, endDate, person)
                             );
                         }
 
                         // Total row needs to repeat the above logic but on the flattened set of subtasks
                         var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
-                        var rowName = $"Total ({name})";
+                        var rowName = "Total";
                         chartSourceTemp.AddRange(
                             GetProjectModeChartItemsFromAssignments(
                                 rowName,
@@ -614,56 +625,47 @@ namespace PPMTool.Pages
                             )
                         );
 
-                        // Add the subtasks to the aggregated list for later (if more than one person)
-                        if (ChosenPeople.Count() > 1) assignmentsAllPeople.AddRange(allProjectAssignments);
+                        // Horrible hack required to get the Y-axis sorting to work correctly with multiple series
+                        // by adding zero width entries to ensure both series have the same number of Y categories
+                        var confirmedChartItemsComplete = new List<ChartItem>();
+                        var provisionalChartItemsComplete = new List<ChartItem>();
+
+                        foreach (var c in chartSourceTemp)
+                        {
+                            if (!c.IsHatched)
+                            {
+                                confirmedChartItemsComplete.Add(c);
+                            }
+                            else
+                            {
+                                confirmedChartItemsComplete.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
+                            }
+                        }
+
+                        foreach (var c in chartSourceTemp)
+                        {
+                            if (c.IsHatched)
+                            {
+                                provisionalChartItemsComplete.Add(c);
+                            }
+                            else
+                            {
+                                provisionalChartItemsComplete.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
+                            }
+                        }
+
+                        // Add completed chart source to dictionary
+                        confirmedChartItems.Add(confirmedChartItemsComplete);
+                        provisionalChartItems.Add(provisionalChartItemsComplete);
+
+                        // Title
+                        var chartTitle = $"Load for {name} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
+                        chartTitles.Add(chartTitle);
                     }
                 }
 
-                // Assign new source
-                confirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched).ToList();
-                provisionalChartItems = chartSourceTemp.Where(x => x.IsHatched).ToList();
-
-                // Horrible hack required to get the Y-axis sorting to work correctly with multiple series
-                // by adding zero width entries to ensure both series have the same number of Y categories
-                if (chosenPeople != null && chosenPeople.Count() > 0)
-                {
-                    confirmedChartItems.Clear();
-                    provisionalChartItems.Clear();
-
-                    var confirmedChartItemsTemp = chartSourceTemp;
-                    foreach (var c in confirmedChartItemsTemp)
-                    {
-                        if (!c.IsHatched)
-                        {
-                            confirmedChartItems.Add(c);
-                        }
-                        else
-                        {
-                            confirmedChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
-                        }
-                    }
-
-                    var provisionalChartItemsTemp = chartSourceTemp;
-                    foreach (var c in provisionalChartItemsTemp)
-                    {
-                        if (c.IsHatched)
-                        {
-                            provisionalChartItems.Add(c);
-                        }
-                        else
-                        {
-                            provisionalChartItems.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
-                        }
-                    }
-                }
-
-                // Title
-                chartTitle = $"Load for {(peopleChosen ? string.Join(",", ChosenPeople) : (!managerChosen ? "All" : "None"))} " +
-                    $"{(managerChosen ? " with manager " + ChosenManager.Name : "")}";
-                Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
-
-                // Format X Axis range based on last end date of real assignments
-                var allItems = confirmedChartItems.Concat(provisionalChartItems).Where(x => x.Value1 != 0);
+                // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
+                var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
                 long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
                 chartOptions.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
                 chartOptions.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
@@ -677,7 +679,7 @@ namespace PPMTool.Pages
                     StateHasChanged();
                 });
 
-                Debug.WriteLine($"** ChartSource has {confirmedChartItems?.Count()} confirmed entries and {provisionalChartItems.Count()} provisional entries!");
+                Debug.WriteLine($"** There are {chartTitles.Count} charts!");
             });
         }
 

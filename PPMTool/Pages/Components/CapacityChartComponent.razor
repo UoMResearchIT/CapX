@@ -1,19 +1,20 @@
 ﻿@using PPMTool.Data
 
-<ApexChart TItem="ChartItem"
-           Options=ChartOptions
+<ApexChart Title="@Title"
+           TItem="ChartItem"
+           Options=@ChartOptions
            XAxisType="XAxisType.Datetime"
-           OnDataPointSelection=OnDataPointSelection>
+           OnDataPointSelection=@OnDataPointSelection>
     <ChildContent>
         <ApexRangeSeries TItem="ChartItem"
-                         Items="ConfirmedChartItems"
+                         Items="@ConfirmedChartItems"
                          XValue="@(e => e.Label)"
                          YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                          YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
                          PointColor="@(e => e.Colour)" />
 
         <ApexRangeSeries TItem="ChartItem"
-                         Items="ProvisionalChartItems"
+                         Items="@ProvisionalChartItems"
                          XValue="@(e => e.Label)"
                          YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                          YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
@@ -50,5 +51,8 @@
     public IEnumerable<ChartItem> ProvisionalChartItems { get; set; }
 
     [Parameter]
-    public Action<SelectedData<ChartItem>> OnDataPointSelection { get; set; }    
+    public Action<SelectedData<ChartItem>> OnDataPointSelection { get; set; }   
+    
+    [Parameter]
+    public string Title { get; set; }
 }
