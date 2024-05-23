@@ -617,20 +617,6 @@ namespace PPMTool.Pages
                         // Add the subtasks to the aggregated list for later (if more than one person)
                         if (ChosenPeople.Count() > 1) assignmentsAllPeople.AddRange(allProjectAssignments);
                     }
-
-                    if (ChosenPeople.Count() > 1)
-                    {
-                        // Final total row is the same logic applied to the subtasks aggregated across everyone selected
-                        var totalName = $"Total (All)";
-                        chartSourceTemp.AddRange(
-                            GetProjectModeChartItemsFromAssignments(
-                                totalName,
-                                new KeyValuePair<object, IEnumerable<Assignment>>(totalName, assignmentsAllPeople),
-                                startDate,
-                                endDate
-                            )
-                        );
-                    }
                 }
 
                 // Assign new source
