@@ -34,7 +34,7 @@ namespace PPMTool.Pages
         private SubTaskService SubTaskService { get; set; }
 
         [Inject]
-        private IJSRuntime JS { get; set; }
+        private IJSRuntime JSRuntime { get; set; }
 
         [Inject]
         private RolesService RolesService { get; set; }
@@ -121,13 +121,12 @@ namespace PPMTool.Pages
             }
         }
 
+        private IEnumerable<Project> projects;
         private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
         private IList<List<ChartItem>> confirmedChartItems;
         private IList<List<ChartItem>> provisionalChartItems;
         private IList<string> chartTitles;
         private IList<ApexChartOptions<ChartItem>> chartOptions;
-        private long? standardXMin;
-        private long? standardXMax;
         private List<Person> people;
         private List<Person> managers;
         private List<Person> filteredPeople;
@@ -148,6 +147,9 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             Loading = true;
+
+            // Get all projects not finished or cancelled
+            projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
 
             // Refresh the dropdown
             ReloadDropDownSources();
@@ -229,8 +231,11 @@ namespace PPMTool.Pages
                     .ToList();
             }
 
+            LoadFilteredPeople(new LoadDataArgs());
+
             // Add managers
             managers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
+            LoadFilteredManagers(new LoadDataArgs());
         }
 
         /// <summary>
@@ -465,8 +470,7 @@ namespace PPMTool.Pages
                     return;
                 }
 
-                // Get projects from the database ignoring finished or cancelled projects
-                var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
+                // Filter projects ignoring finished or cancelled projects
                 if (!IncludeUnFunded)
                 {
                     projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
@@ -649,9 +653,11 @@ namespace PPMTool.Pages
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
                 long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
-                standardXMin = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-                standardXMax = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
-                ResetZoom();
+                foreach (var opt in chartOptions)
+                {
+                    opt.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+                    opt.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
+                }
                 Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartOptions.FirstOrDefault()?.Xaxis?.Min} to {chartOptions.FirstOrDefault()?.Xaxis?.Max}");
 
             }).ContinueWith(task =>
@@ -670,7 +676,7 @@ namespace PPMTool.Pages
         {
             if (zoomedData != null)
             {
-                Debug.WriteLine($"** Zoomed {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+                Debug.WriteLine($"** {zoomedData.Chart.ChartId} Zoomed {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
 
                 // Go through all the chart options objects and for all not associated with the chart making this call
                 // and whose values of the X limits differ from those give can then be updated.
@@ -678,19 +684,10 @@ namespace PPMTool.Pages
                 {
                     if (opt != zoomedData.Chart.Options)
                     {
-                        if (zoomedData.XAxis.Min == standardXMin && zoomedData.XAxis.Max == standardXMax)
+                        if (opt.Xaxis.Min as decimal? != zoomedData.XAxis.Min || opt.Xaxis.Max as decimal? != zoomedData.XAxis.Max)
                         {
-                            opt.Xaxis.Min = standardXMin;
-                            opt.Xaxis.Max = standardXMax;
-                        }
-                        else if (opt.Xaxis.Min as decimal? != zoomedData.XAxis.Min || opt.Xaxis.Max as decimal? != zoomedData.XAxis.Max))
-                        {
-                            Debug.WriteLine($"** Updating options {opt.Chart.Id}");
-                            opt.Xaxis.Min = zoomedData.XAxis.Min;
-                            opt.Xaxis.Max = zoomedData.XAxis.Max;
-
-                            // TODO: Need to work out how to update!
-                            //(opt.Chart as ApexChart<ChartItem>)?.UpdateOptionsAsync(false, true, false);
+                            Debug.WriteLine($"** Updating zoom for {opt.Chart.Id}: {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+                            JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, zoomedData.XAxis.Min, zoomedData.XAxis.Max);
                         }
                     }
                 }
@@ -1008,7 +1005,7 @@ namespace PPMTool.Pages
                 using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
 
                 // Invoke JS on the client to download the file
-                await JS.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
             }
             catch (Exception ex)
             {
