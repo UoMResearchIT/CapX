@@ -7,16 +7,16 @@
 @using static PPMTool.Data.Entities.Project
 
 <div class="container">
-    @if (TaskId < 0)
+    @if (TaskId <= 0 || IsCopy)
     {
         <div class="row">
             <div class="col-auto">
-                <h1>Add Task</h1>
+                <h1>@(IsCopy ? "Copy" : "Add") Task</h1>
             </div>
         </div>
         <div class="row">
             <div class="col">
-                <p>Add new task to <b>@projectModel?.GetFullName()</b></p>
+                <p>Add new task to <b>@projectModel?.GetFullName()</b>@(IsCopy ? " by copying an existing task." : "")</p>
             </div>
         </div>
     }

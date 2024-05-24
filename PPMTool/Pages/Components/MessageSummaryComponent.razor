@@ -3,7 +3,7 @@
 @using PPMTool.Data
 @using static PPMTool.Data.StatusMessage
 
-@if (ShowMessages)
+@if (ShowMessages && Messages != null)
 {
     @foreach (var message in Messages.Where(x => x.Status))
     {

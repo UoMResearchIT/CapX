@@ -37,6 +37,10 @@ namespace PPMTool.Pages
         [Parameter]
         public int TaskId { get; set; }
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "copy")]
+        public bool IsCopy { get; set; }
+
         private int? selectedPredecessorId;
         private Project projectModel;
         private SubTask taskModel = new SubTask();
@@ -75,8 +79,9 @@ namespace PPMTool.Pages
             // Load task
             if (TaskId > 0)
             {
-                // Load model
-                taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+                // Get task or clone if copying
+                var referenceTask = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+                taskModel = IsCopy ? SubTaskService.Clone(context, referenceTask) : referenceTask;
 
                 // Assign the predecessor option
                 if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
@@ -99,7 +104,7 @@ namespace PPMTool.Pages
             taskModel.DoneChanged += UpdateUIState;
             UpdateUIState(taskModel, new EventArgs());
 
-            LogInformation(taskModel.SubTaskId > 0 ? $"Editing task {taskModel?.Name} on {projectModel?.GetFullName()}" : $"Adding new task to {projectModel?.GetFullName()}");
+            LogInformation(taskModel.SubTaskId > 0 ? $"Editing task {taskModel?.Name} on {projectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {projectModel?.GetFullName()}");
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -332,7 +337,7 @@ namespace PPMTool.Pages
                     LogInformation("Saving sub task...");
 
                     // Add new new to task list for project if it is a new one
-                    if (TaskId < 0)
+                    if (taskModel.SubTaskId <= 0)
                     {
                         // Add the subtask to the database
                         SubTaskService.Add(context, taskModel);

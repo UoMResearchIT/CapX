@@ -106,5 +106,41 @@ namespace PPMTool.Services
             var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
             return !subSet.Any(x => x.Name == taskModel.Name);
         }
+
+        /// <summary>
+        /// Method to clone an existing task without tracking so it is returned as a new task unknown to EF Core
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="taskToClone"></param>
+        /// <returns></returns>
+        internal SubTask Clone(PPMToolContext context, SubTask taskToClone)
+        {
+            var clone = context.SubTasks
+                .Include(s => s.AssignedResources)
+                .AsNoTracking()
+                .FirstOrDefault(x => x.SubTaskId == taskToClone.SubTaskId);
+
+            // Reset ID
+            clone.SubTaskId = 0;
+
+            // Create new resources
+            clone.AssignedResources.Clear();
+            foreach (var res in taskToClone.AssignedResources)
+            {
+                clone.AssignedResources.Add(new Resource
+                {
+                    AssignmentFTE = res.AssignmentFTE,
+                    DayRate = res.DayRate,
+                    IsProvisional = res.IsProvisional,
+                    Person = res.Person,
+                    UseProjectDayRate = res.UseProjectDayRate
+                });
+            }
+
+            // Change name
+            clone.Name = $"{taskToClone.Name} (Copy)";
+
+            return clone;
+        }
     }
 }

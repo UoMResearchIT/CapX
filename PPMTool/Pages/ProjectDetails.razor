@@ -176,10 +176,10 @@
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
+                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" FrozenPosition="FrozenColumnPosition.Right" Title="Actions">
                         <Template Context="task">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
-                            </RadzenButton>
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised />
+                            <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
