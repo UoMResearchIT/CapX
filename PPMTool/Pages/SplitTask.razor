@@ -1,0 +1,48 @@
+﻿@page "/splittask/{ProjectId:int}/{SubTaskId:int}"
+@inherits BasePage
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using PPMTool.Services
+
+<div class="row">
+    <div class="col">
+        <h1>Split Task @originalAddTaskComponent?.TaskModel.Name</h1>
+    </div>
+</div>
+
+@if (!EditAuthorised)
+{
+    <div class="row">
+        <ProjectManagerOnlyComponent />
+    </div>
+}
+<hr />
+
+<RadzenStack Gap="1rem" Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+    <RadzenText TextStyle="TextStyle.Body1">This task currently runs from <b>@originalAddTaskComponent?.TaskModel.StartDate.ToShortDateString()</b> to <b>@originalAddTaskComponent?.TaskModel.EndDate.ToShortDateString()</b></RadzenText>
+    
+    <p>Options will go here for:</p>
+    <p>3-way swtich for split based on date, duration, work?</p>
+    <p>Relevant input based on the option above</p>
+    <p>3-way swtich for dividing, duplicating or resetting the actuals</p>
+</RadzenStack>
+<hr />
+
+<div class="row">
+    <div class="col-6">
+        <AddTask @ref="@originalAddTaskComponent" IsSplit="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+    </div>
+    <div class="col-6 vr">
+        <AddTask @ref="@newAddTaskComponent" IsSplit="true" IsCopy="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+    </div>
+</div>
+<hr />
+
+<div class="row">
+    <RadzenStack JustifyContent="JustifyContent.Center" Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" Style="width:100%">
+        <RadzenButton Click="UpdateSubTasks" Text="Update" Icon="refresh" />
+        <RadzenButton Click="UpdateAndSave" Text="Update & Save" Icon="check" Disabled=!EditAuthorised />
+        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="close" />
+    </RadzenStack>
+</div>
+<hr />

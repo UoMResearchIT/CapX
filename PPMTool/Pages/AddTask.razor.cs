@@ -41,9 +41,14 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "copy")]
         public bool IsCopy { get; set; }
 
+        [Parameter]
+        public bool IsSplit { get; set; }
+
+        public SubTask TaskModel { get; private set; } = new SubTask();
+
+        public Project ProjectModel { get; private set; }
+
         private int? selectedPredecessorId;
-        private Project projectModel;
-        private SubTask taskModel = new SubTask();
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
         private bool isValid = true;
@@ -63,48 +68,48 @@ namespace PPMTool.Pages
                 .OrderBy(x => x.Name)
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
-            projectModel = ProjectService.GetById(context, ProjectId);
+            ProjectModel = ProjectService.GetById(context, ProjectId);
 
             // No project then stop initialising
-            if (projectModel == null) return;
+            if (ProjectModel == null) return;
 
             // Initialise sub tasks
-            if (projectModel.SubTasks == null) projectModel.SubTasks = new List<SubTask>();
+            if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
             var user = AuthenticationState?.User;
             var role = RolesService.GetByUsername(context, ActiveUser);
-            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
+            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
             // Load task
             if (TaskId > 0)
             {
                 // Get task or clone if copying
-                var referenceTask = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
-                taskModel = IsCopy ? SubTaskService.Clone(context, referenceTask) : referenceTask;
+                var referenceTask = ProjectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+                TaskModel = IsCopy ? SubTaskService.Clone(context, referenceTask) : referenceTask;
 
                 // Assign the predecessor option
-                if (taskModel.Predecessor != null) selectedPredecessorId = taskModel.Predecessor.SubTaskId;
+                if (TaskModel.Predecessor != null) selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
 
                 // Assign resources
-                foreach (var r in taskModel.AssignedResources)
+                foreach (var r in TaskModel.AssignedResources)
                 {
                     dataGridEntities.Add(r);
                 }
             }
 
             // Populate predecessor dropdown source (exclude self)
-            predecessorTasks = projectModel.SubTasks
-                .Where(x => x.SubTaskId != taskModel.SubTaskId && x.Predecessor?.SubTaskId != taskModel.SubTaskId).ToList();
+            predecessorTasks = ProjectModel.SubTasks
+                .Where(x => x.SubTaskId != TaskModel.SubTaskId && x.Predecessor?.SubTaskId != TaskModel.SubTaskId).ToList();
 
             // Subscribe listeners
-            taskModel.TaskTypeChanged += UpdateUIState;
-            taskModel.FixedStartChanged += UpdateUIState;
-            taskModel.EndDateDrivenChanged += UpdateUIState;
-            taskModel.DoneChanged += UpdateUIState;
-            UpdateUIState(taskModel, new EventArgs());
+            TaskModel.TaskTypeChanged += UpdateUIState;
+            TaskModel.FixedStartChanged += UpdateUIState;
+            TaskModel.EndDateDrivenChanged += UpdateUIState;
+            TaskModel.DoneChanged += UpdateUIState;
+            UpdateUIState(TaskModel, new EventArgs());
 
-            LogInformation(taskModel.SubTaskId > 0 ? $"Editing task {taskModel?.Name} on {projectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {projectModel?.GetFullName()}");
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -112,7 +117,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project then navigate away
-            if (projectModel == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private string GetNiceString(Enum x)
@@ -127,31 +132,31 @@ namespace PPMTool.Pages
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            startDateDisabled = !taskModel.HasFixedStart || taskModel.IsDone;
-            workDisabled = taskModel.TaskType == TaskType.FixedDuration || taskModel.IsDone;
-            durationDisabled = taskModel.TaskType == TaskType.FixedWork || taskModel.TaskType == TaskType.FixedDuration && taskModel.HasFixedEndDate || taskModel.IsDone;
+            startDateDisabled = !TaskModel.HasFixedStart || TaskModel.IsDone;
+            workDisabled = TaskModel.TaskType == TaskType.FixedDuration || TaskModel.IsDone;
+            durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate || TaskModel.IsDone;
         }
 
         private async void DeleteSubTask()
         {
             if (TaskId > 0)
             {
-                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.GetFullName()}");
+                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {TaskModel.Name} from project {ProjectModel?.GetFullName()}");
                 if (confirmed)
                 {
-                    LogWarning($"Deleting task {taskModel?.Name} on {projectModel?.GetFullName()}");
+                    LogWarning($"Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
 
                     // Call delete on the subtask service and let it remove the resources
-                    SubTaskService.Delete(context, taskModel);
+                    SubTaskService.Delete(context, TaskModel);
 
                     // Remove the sub-task from the project model
-                    projectModel.SubTasks.Remove(taskModel);
+                    ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    projectModel.UpdateProjectSummary();
+                    ProjectModel.UpdateProjectSummary();
 
                     // Update the project in the database
-                    ProjectService.Update(context, projectModel);
+                    ProjectService.Update(context, ProjectModel);
 
                     // Return to the project details page
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
@@ -186,7 +191,7 @@ namespace PPMTool.Pages
                 // Update the day rate field if using the default
                 if (resourceToChange.UseProjectDayRate)
                 {
-                    resourceToChange.DayRate = projectModel.DayRate;
+                    resourceToChange.DayRate = ProjectModel.DayRate;
                 }
             }
         }
@@ -205,7 +210,7 @@ namespace PPMTool.Pages
             LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
             dataGridEntities.Add(resource);
             entityToInsert = null;
-            taskModel.UpdateUnmetDemand(dataGridEntities);
+            TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         protected override void OnUpdateRow(Resource entity)
@@ -218,14 +223,14 @@ namespace PPMTool.Pages
         {
             await base.DeleteRow(entity);
             UpdatePeopleDropdownSource(new LoadDataArgs());
-            taskModel.UpdateUnmetDemand(dataGridEntities);
+            TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         protected override async Task SaveRow(Resource entity)
         {
             await base.SaveRow(entity);
             UpdatePeopleDropdownSource(new LoadDataArgs());
-            taskModel.UpdateUnmetDemand(dataGridEntities);
+            TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
         protected override async Task InsertRow()
@@ -243,7 +248,7 @@ namespace PPMTool.Pages
         private void DiscardChanges()
         {
             LogInformation($"Discarding task changes!");
-            Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
+            Navigation.NavigateTo($"projectdetails/{ProjectModel.ProjectId}");
         }
 
         /// <summary>
@@ -252,7 +257,7 @@ namespace PPMTool.Pages
         public void UpdateSubTask()
         {
             // Don't update the scheduling if the task is done
-            if (taskModel.IsDone)
+            if (TaskModel.IsDone)
             {
                 LogInformation("Not updating sub task as it is marked as Done...");
             }
@@ -261,11 +266,11 @@ namespace PPMTool.Pages
                 LogInformation("Updating sub task configuration...");
 
                 // Update the resources on the task model to match the data grid entities
-                taskModel.AssignedResources.Clear();
+                TaskModel.AssignedResources.Clear();
                 foreach (var r in dataGridEntities)
                 {
                     Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
-                    taskModel.AssignedResources.Add(r);
+                    TaskModel.AssignedResources.Add(r);
                 }
 
                 // Track total proportion of effort
@@ -282,27 +287,27 @@ namespace PPMTool.Pages
                 // need actuals entering per person.
                 var people = PersonService.GetAll(context);
                 double averageCostPerDayOfResources = 0;
-                foreach (var r in taskModel.AssignedResources)
+                foreach (var r in TaskModel.AssignedResources)
                 {
                     var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
                     if (person == null) continue;
                     // User the default day rate for the project if the assigned day rate is null
-                    averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? projectModel.DayRate)) / totalResourceDaysPerDay;
+                    averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? ProjectModel.DayRate)) / totalResourceDaysPerDay;
                 }
 
                 // Update the actual cost for the sub task
                 // Truncate to 2 DP
-                taskModel.ActualCost = Math.Round(taskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
+                TaskModel.ActualCost = Math.Round(TaskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
                 // Update predecessor task
-                taskModel.Predecessor = projectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
+                TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
                 // Schedule
-                error = taskModel.Schedule(false, projectModel);
+                error = TaskModel.Schedule(false, ProjectModel);
                 isValid = error == null;
 
                 // Call schedule() on the subtask that this is a predecssor for
-                var error2 = SubTaskService.UpdateFollowerTasks(taskModel, projectModel);
+                var error2 = SubTaskService.UpdateFollowerTasks(TaskModel, ProjectModel);
                 if (error2 != null)
                 {
                     error = $"{error2.Item1}: {error2.Item2}";
@@ -319,15 +324,15 @@ namespace PPMTool.Pages
         /// </summary>
         private void HandleValidSubmit()
         {
-            if (projectModel != null)
+            if (ProjectModel != null)
             {
                 UpdateSubTask();
-                if (!SubTaskService.IsUniqueTaskNameInProject(projectModel, taskModel))
+                if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
                 {
                     error = "Task name must be unique within the project";
                     isValid = false;
                 };
-                if (taskModel.Demand <= 0)
+                if (TaskModel.Demand <= 0)
                 {
                     error = "Demand for a task must be greater than zero!";
                     isValid = false;
@@ -337,25 +342,25 @@ namespace PPMTool.Pages
                     LogInformation("Saving sub task...");
 
                     // Add new new to task list for project if it is a new one
-                    if (taskModel.SubTaskId <= 0)
+                    if (TaskModel.SubTaskId <= 0)
                     {
                         // Add the subtask to the database
-                        SubTaskService.Add(context, taskModel);
+                        SubTaskService.Add(context, TaskModel);
 
                         // Add reference to the project
-                        projectModel.SubTasks.Add(taskModel);
+                        ProjectModel.SubTasks.Add(TaskModel);
                     }
                     else
                     {
                         // Update the sub task in the database
-                        SubTaskService.Update(context, taskModel);
+                        SubTaskService.Update(context, TaskModel);
                     }
 
                     // Update the project summary values
-                    projectModel.UpdateProjectSummary();
+                    ProjectModel.UpdateProjectSummary();
 
                     // Update the project in the database
-                    ProjectService.Update(context, projectModel);
+                    ProjectService.Update(context, ProjectModel);
 
                     // Return to the project details page
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
