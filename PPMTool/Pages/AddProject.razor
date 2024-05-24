@@ -113,7 +113,7 @@
 
             <div>
                 <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Click="@(()=> { gotoDetails = true; discardChanges = false; })" Disabled=!EditAuthorised />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > -1; discardChanges = true; })" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > 0; discardChanges = true; })" />
             </div>
         </EditForm>
     </div>

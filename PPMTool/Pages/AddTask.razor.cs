@@ -73,7 +73,7 @@ namespace PPMTool.Pages
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
 
             // Load task
-            if (TaskId > -1)
+            if (TaskId > 0)
             {
                 // Load model
                 taskModel = projectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
@@ -129,7 +129,7 @@ namespace PPMTool.Pages
 
         private async void DeleteSubTask()
         {
-            if (TaskId > -1)
+            if (TaskId > 0)
             {
                 bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {taskModel.Name} from project {projectModel?.GetFullName()}");
                 if (confirmed)

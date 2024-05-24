@@ -16,7 +16,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            if (PersonId > -1)
+            if (PersonId > 0)
             {
                 personModel = PersonService.GetById(context, PersonId);
                 dataGridEntities = personModel.AvailabilityChanges.ToList();
