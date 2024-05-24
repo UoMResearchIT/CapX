@@ -9,3 +9,13 @@
     anchorElement.remove();
     URL.revokeObjectURL(url);
 }
+
+function apexChartsUpdateAxis(id, minvalue, maxvalue) {
+    console.log('Updating chart ' + id + ' with min: ' + minvalue + ' and max: ' + maxvalue);
+    ApexCharts.exec(id, 'updateOptions', {
+        xaxis: {
+            min: minvalue,
+            max: maxvalue
+        }
+    }, false, true);
+}
