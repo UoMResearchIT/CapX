@@ -24,7 +24,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent.ProjectModel.GetFullName()}");
+            LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
         }
 
         private void UpdateSubTasks()
