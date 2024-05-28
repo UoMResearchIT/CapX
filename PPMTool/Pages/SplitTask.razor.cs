@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System;
+using Microsoft.AspNetCore.Components;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -19,18 +20,37 @@ namespace PPMTool.Pages
 
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
+        private int selectedSplitLogic = 0;
+        private int selectedActualsLogic = 0;
+        private DateTime? splitDate;
+        private double? splitValue;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+        }
 
-            LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+            if (firstRender)
+            {
+                LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
+            }
+        }
+
+        private void SelectedSplitLogicChanged(int value)
+        {
+            // TODO: Respond to the selected split logic changing by updating the relevant parts of the tasks
+        }
+
+        private void SelectedActualsLogicChanged(int value)
+        {
+            // TODO: Respond to the selected split logic changing by updating the relevant parts of the tasks
         }
 
         private void UpdateSubTasks()
         {
-            // TODO: Use the config logic to update the two subtasks -- use the SubTaskService to restore the original model
-
             // TODO: Call update subtasks on both panes to validate
         }
 
@@ -43,7 +63,10 @@ namespace PPMTool.Pages
         private void UpdateAndSave()
         {
             // TODO: Run the edit context validation on both panes and if both are valid, save the changes and navigate away
+
             UpdateSubTasks();
+
+            Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
         }
     }
 }
