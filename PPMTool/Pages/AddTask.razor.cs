@@ -60,7 +60,7 @@ namespace PPMTool.Pages
         private string error;
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
-        private EditContext? editContext;
+        private EditContext editContext;
 
         protected override void OnInitialized()
         {
@@ -337,6 +337,18 @@ namespace PPMTool.Pages
                 if (TaskModel.Demand <= 0)
                 {
                     error = "Demand for a task must be greater than zero!";
+                    IsValid = false;
+                }
+
+                if (TaskModel.TaskType == TaskType.FixedWork && TaskModel.PlannedWorkHours == 0)
+                {
+                    error = "Fixed work tasks must have a value of work greater than zero!";
+                    IsValid = false;
+                }
+
+                if (TaskModel.TaskType == TaskType.FixedDuration && TaskModel.DurationDays == 0)
+                {
+                    error = "Fixed duration tasks must have a value of duration greater than zero!";
                     IsValid = false;
                 }
             }

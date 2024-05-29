@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Enums;
@@ -22,13 +23,12 @@ namespace PPMTool.Pages
 
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
-        private bool splitOnDate;
+        private bool splitOnDate = true;
         private ActualsLogic selectedActualsLogic;
         private DateTime? splitDate;
         private double? splitValue;
         private StatusMessage errorMessage;
         double origProportion = 0;
-        double newProportion = 0;
 
         protected override void OnInitialized()
         {
@@ -47,9 +47,12 @@ namespace PPMTool.Pages
 
         private void SelectedSplitLogicChanged()
         {
+            errorMessage = null;
             RestoreModels();
             ApplySplitLogic();
             ApplyActualsLogic();
+            UpdateSubTasks();
+            StateHasChanged();
         }
 
         private void SelectedSplitDateChanged(DateTime? value)
@@ -107,37 +110,35 @@ namespace PPMTool.Pages
 
                 // Set split date
                 splitDate = originalAddTaskComponent.TaskModel.StartDate.AddDays(proposedDurationOrigTask - 1);
-
             }
+
+            Debug.WriteLine($"** Orig Duration = {proposedDurationOrigTask} | New Duration = {proposedDurationNewTask} | Split Date = {splitDate?.ToString("dd/MM/yyyy")}");
 
             // Get proportion of split based on duration
             origProportion = proposedDurationOrigTask / durationUnaltered;
-            newProportion = proposedDurationNewTask / durationUnaltered;
 
             // Adjust the start and end dates of the tasks
-            newAddTaskComponent.TaskModel.StartDate = splitDate ?? DateTime.Today;
             originalAddTaskComponent.TaskModel.EndDate = splitDate.Value.AddDays(-1);
+            newAddTaskComponent.TaskModel.StartDate = splitDate ?? DateTime.Today;
 
             // Reset new task settings to match original
             newAddTaskComponent.TaskModel.TaskType = originalAddTaskComponent.TaskModel.TaskType;
             newAddTaskComponent.TaskModel.HasFixedEndDate = originalAddTaskComponent.TaskModel.HasFixedEndDate;
 
-            // Divide up the work if fixed work based on proportion
+            // Fixed work tasks drive their own duration or end date so the number of hours of work needs to align with what is expected
+            // or throw an error when scheduling later if it doesn't due to rounding to the nearest whole day.
             if (originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork)
             {
                 originalAddTaskComponent.TaskModel.PlannedWorkHours = Math.Round(10 * originalWork * origProportion) / 10;
-                newAddTaskComponent.TaskModel.PlannedWorkHours = originalWork - originalAddTaskComponent.TaskModel.PlannedWorkHours;
+                newAddTaskComponent.TaskModel.PlannedWorkHours = Math.Round(10 * originalWork - originalAddTaskComponent.TaskModel.PlannedWorkHours) / 10;
             }
 
-            // Specify duration if fixed duration
+            // Specify duration if fixed duration and end date is not specified
             else if (!originalAddTaskComponent.TaskModel.HasFixedEndDate)
             {
                 originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
                 newAddTaskComponent.TaskModel.DurationDays = originalDuration - originalAddTaskComponent.TaskModel.DurationDays;
             }
-
-            // No errors
-            errorMessage = null;
         }
 
         private void ApplyActualsLogic()
@@ -159,16 +160,13 @@ namespace PPMTool.Pages
             else if (selectedActualsLogic == ActualsLogic.Divide)
             {
                 newAddTaskComponent.TaskModel.ActualWorkHours = Math.Round(10 * originalActuals * origProportion) / 10;
-                originalAddTaskComponent.TaskModel.ActualWorkHours = originalActuals - newAddTaskComponent.TaskModel.ActualWorkHours;
+                originalAddTaskComponent.TaskModel.ActualWorkHours = Math.Round(10 * originalActuals - newAddTaskComponent.TaskModel.ActualWorkHours) / 10;
             }
             else if (selectedActualsLogic == ActualsLogic.Leave)
             {
                 newAddTaskComponent.TaskModel.ActualWorkHours = 0;
                 originalAddTaskComponent.TaskModel.ActualWorkHours = originalActuals;
             }
-
-            // No errors
-            errorMessage = null;
         }
 
         private void UpdateSubTasks()
@@ -182,7 +180,6 @@ namespace PPMTool.Pages
         {
             originalAddTaskComponent.InitialiseTaskModel();
             newAddTaskComponent.InitialiseTaskModel();
-            errorMessage = null;
             StateHasChanged();
         }
 
