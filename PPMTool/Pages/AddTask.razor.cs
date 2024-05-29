@@ -62,7 +62,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            dataGridEntities = new List<Resource>();
             people = PersonService.GetAll(context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
@@ -81,7 +80,25 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUser);
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
-            // Load task
+            InitialiseTaskModel();
+
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            // If no project then navigate away
+            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
+        }
+
+        public void InitialiseTaskModel()
+        {
+            TaskModel = new SubTask();
+            dataGridEntities = new List<Resource>();
+
+            // Load task and related data
             if (TaskId > 0)
             {
                 // Get task or clone if copying
@@ -108,16 +125,6 @@ namespace PPMTool.Pages
             TaskModel.EndDateDrivenChanged += UpdateUIState;
             TaskModel.DoneChanged += UpdateUIState;
             UpdateUIState(TaskModel, new EventArgs());
-
-            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
-        }
-
-        protected override void OnAfterRender(bool firstRender)
-        {
-            base.OnAfterRender(firstRender);
-
-            // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private string GetNiceString(Enum x)

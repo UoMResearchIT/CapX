@@ -1,5 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
+using PPMTool.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -20,10 +22,11 @@ namespace PPMTool.Pages
 
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
-        private int selectedSplitLogic = 0;
-        private int selectedActualsLogic = 0;
+        private bool splitOnDate;
+        private ActualsLogic selectedActualsLogic;
         private DateTime? splitDate;
         private double? splitValue;
+        private StatusMessage errorMessage;
 
         protected override void OnInitialized()
         {
@@ -36,22 +39,124 @@ namespace PPMTool.Pages
             if (firstRender)
             {
                 LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
+                SelectedSplitLogicChanged();
             }
         }
 
-        private void SelectedSplitLogicChanged(int value)
+        private void SelectedSplitLogicChanged()
         {
-            // TODO: Respond to the selected split logic changing by updating the relevant parts of the tasks
+            RestoreModels();
+            ApplySplitLogic();
+            ApplyActualsLogic();
         }
 
-        private void SelectedActualsLogicChanged(int value)
+        private void SelectedSplitDateChanged(DateTime? value)
         {
-            // TODO: Respond to the selected split logic changing by updating the relevant parts of the tasks
+            SelectedSplitLogicChanged();
+        }
+
+        private void ApplySplitLogic()
+        {
+            // Store some original values before modification
+            var originalEndDate = originalAddTaskComponent.TaskModel.EndDate;
+            var originalWork = originalAddTaskComponent.TaskModel.PlannedWorkHours;
+            var originalDuration = originalAddTaskComponent.TaskModel.DurationDays;
+            double proposedDurationOrigTask = 0;
+            double proposedDurationNewTask = 0;
+            var durationUnaltered = (originalAddTaskComponent.TaskModel.EndDate - originalAddTaskComponent.TaskModel.StartDate).TotalDays + 1;
+            double origProportion = 0;
+            double newProportion = 0;
+
+            // Configure the split date adn value as required and validate choices
+            if (splitOnDate)
+            {
+                // Check we have a split date specified
+                if (splitDate == null)
+                {
+                    errorMessage = new StatusMessage("Please select a date to split the task on!", StatusMessage.MessageType.Error);
+                    return;
+                }
+
+                // Split date must be the day after the start of the original task for it to have a non-zero duration
+                // Split date must be at least the same day as the end of the new task for it to have a non-zero duration
+                proposedDurationOrigTask = (splitDate - originalAddTaskComponent.TaskModel.StartDate).Value.TotalDays;
+                proposedDurationNewTask = (newAddTaskComponent.TaskModel.EndDate - splitDate).Value.TotalDays + 1;
+                if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
+                {
+                    errorMessage = new StatusMessage("The original and new task must both have a non-zero duration! Remember the dates are inclusive.", StatusMessage.MessageType.Error);
+                    return;
+                }
+            }
+            else
+            {
+                // Check we have a split value
+                if (splitValue == null)
+                {
+                    errorMessage = new StatusMessage("Please specify the number of days to split the task by!", StatusMessage.MessageType.Error);
+                    return;
+                }
+
+                // Duration of both tasks in days must be greater than zero
+                proposedDurationOrigTask = splitValue ?? 0;
+                proposedDurationNewTask = originalAddTaskComponent.TaskModel.DurationDays - splitValue ?? 0;
+                if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
+                {
+                    errorMessage = new StatusMessage("The original and new task must both have a non-zero duration!", StatusMessage.MessageType.Error);
+                    return;
+                }
+
+                // Set split date
+                splitDate = originalAddTaskComponent.TaskModel.StartDate.AddDays(proposedDurationOrigTask - 1);
+
+            }
+
+            // Get proportion of split based on duration
+            origProportion = proposedDurationOrigTask / durationUnaltered;
+            newProportion = proposedDurationNewTask / durationUnaltered;
+
+            // Adjust the start and end dates of the tasks
+            newAddTaskComponent.TaskModel.StartDate = splitDate ?? DateTime.Today;
+            originalAddTaskComponent.TaskModel.EndDate = splitDate.Value.AddDays(-1);
+
+            // Reset new task settings to match original
+            newAddTaskComponent.TaskModel.TaskType = originalAddTaskComponent.TaskModel.TaskType;
+            newAddTaskComponent.TaskModel.HasFixedEndDate = originalAddTaskComponent.TaskModel.HasFixedEndDate;
+
+            // Divide up the work if fixed work based on proportion
+            if (originalAddTaskComponent.TaskModel.TaskType == Enums.TaskType.FixedWork)
+            {
+                originalAddTaskComponent.TaskModel.PlannedWorkHours = Math.Round(10 * originalWork * origProportion) / 10;
+                newAddTaskComponent.TaskModel.PlannedWorkHours = Math.Round(10 * originalWork * newProportion) / 10;
+            }
+
+            // Specify duration if fixed duration
+            else if (!originalAddTaskComponent.TaskModel.HasFixedEndDate)
+            {
+                originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
+                newAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * newProportion);
+            }
+        }
+
+        private void ApplyActualsLogic()
+        {
+            var originalActuals = originalAddTaskComponent.TaskModel.ActualWorkHours;
+
+            // TODO: Apply the selected actuals logic to the tasks
         }
 
         private void UpdateSubTasks()
         {
-            // TODO: Call update subtasks on both panes to validate
+            // Call update subtasks on both panes to validate
+            originalAddTaskComponent.UpdateSubTask();
+            newAddTaskComponent.UpdateSubTask();
+        }
+
+        private void RestoreModels()
+        {
+            originalAddTaskComponent.InitialiseTaskModel();
+            newAddTaskComponent.InitialiseTaskModel();
+            errorMessage = null;
+            StateHasChanged();
         }
 
         private void DiscardChanges()

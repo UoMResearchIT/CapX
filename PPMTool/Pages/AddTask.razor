@@ -50,8 +50,6 @@
     <div class="card">
         <h2>Details</h2>
         <EditForm Model="@TaskModel" OnValidSubmit="@HandleValidSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br />
@@ -268,11 +266,16 @@
             </div>
 
             <hr />
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
             @if (!IsSplit)
             {
                 <div class="row">
-                    <div class="col">
+                    <div class="col-auto">
                         <RadzenButton ButtonType="ButtonType.Button" Click="UpdateSubTask" Text="Update" Icon="refresh" />
+                    </div>
+                    <div class="col" style="justify-content:end">
                         <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" Disabled=!EditAuthorised />
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                     </div>
@@ -283,7 +286,7 @@
             {
                 <StatusMessageComponent Message=@(new StatusMessage($"Task cannot be updated. Please correct the issue and update again: {error}", StatusMessage.MessageType.Error)) />
             }
-
+            
         </EditForm>
     </div>
 </div>
