@@ -34,14 +34,14 @@
     {
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
             <RadzenText TextStyle="TextStyle.Body1">First day of the new task:</RadzenText>
-            <RadzenDatePicker ShowTime="false" DateFormat="dd/MM/yyyy" @bind-Value="@splitDate" Change="@(args => SelectedSplitDateChanged(null))" />
+            <RadzenDatePicker ShowTime="false" DateFormat="dd/MM/yyyy" @bind-Value="@splitDate" Change="@(args => SplitDateChanged(null))" />
         </RadzenStack>
     }
     else
     {
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
             <RadzenText TextStyle="TextStyle.Body1">Number of days retained in original task:</RadzenText>
-            <RadzenNumeric TValue="double?" @bind-Value="@splitValue" Min="@Convert.ToDecimal(0.5)" Step="0.5" />
+            <RadzenNumeric TValue="double?" @bind-Value="@splitValue" Min="@Convert.ToDecimal(0.5)" Step="0.5" Change="@(args => SplitValueChanged(null))" />
             <RadzenText TextStyle="TextStyle.Body1">days</RadzenText>
         </RadzenStack>
     }
@@ -62,6 +62,15 @@
     <div class="row">
         <StatusMessageComponent Message="errorMessage" />
     </div>
+}
+@if (warningMessage != null)
+{
+    <div class="row">
+        <StatusMessageComponent Message="warningMessage" />
+    </div>
+}
+@if(errorMessage != null || warningMessage != null)
+{
     <hr />
 }
 

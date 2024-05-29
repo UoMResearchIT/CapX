@@ -70,20 +70,13 @@ namespace PPMTool.Pages
                 .OrderBy(x => x.Name)
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
-            ProjectModel = ProjectService.GetById(context, ProjectId);
 
-            // No project then stop initialising
-            if (ProjectModel == null) return;
-
-            // Initialise sub tasks
-            if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
+            InitialiseModels();
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
             var user = AuthenticationState?.User;
             var role = RolesService.GetByUsername(context, ActiveUser);
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
-
-            InitialiseTaskModel();
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
         }
@@ -96,10 +89,19 @@ namespace PPMTool.Pages
             if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
         }
 
-        public void InitialiseTaskModel()
+        public void InitialiseModels()
         {
+            // Get project model from DB
+            ProjectModel = ProjectService.GetById(context, ProjectId);
+
+            // No project then stop initialising
+            if (ProjectModel == null) return;
+
+            // Initialise sub tasks
+            if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
+
+            // Initialise
             TaskModel = new SubTask();
-            editContext = new EditContext(TaskModel);
             dataGridEntities = new List<Resource>();
 
             // Load task and related data
@@ -129,6 +131,9 @@ namespace PPMTool.Pages
             TaskModel.EndDateDrivenChanged += UpdateUIState;
             TaskModel.DoneChanged += UpdateUIState;
             UpdateUIState(TaskModel, new EventArgs());
+
+            // Assign edit context
+            editContext = new EditContext(TaskModel);
         }
 
         private string GetNiceString(Enum x)

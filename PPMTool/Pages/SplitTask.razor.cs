@@ -28,6 +28,7 @@ namespace PPMTool.Pages
         private DateTime? splitDate;
         private double? splitValue;
         private StatusMessage errorMessage;
+        private StatusMessage warningMessage;
         double origProportion = 0;
 
         protected override void OnInitialized()
@@ -55,7 +56,12 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-        private void SelectedSplitDateChanged(DateTime? value)
+        private void SplitDateChanged(DateTime? value)
+        {
+            SelectedSplitLogicChanged();
+        }
+
+        private void SplitValueChanged(double? value)
         {
             SelectedSplitLogicChanged();
         }
@@ -174,12 +180,22 @@ namespace PPMTool.Pages
             // Call update subtasks on both panes to validate
             originalAddTaskComponent.UpdateSubTask();
             newAddTaskComponent.UpdateSubTask();
+
+            // Check for error on fixed work scheduling
+            if (splitDate != null &&
+                originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork &&
+                (originalAddTaskComponent.TaskModel.EndDate != splitDate.Value.AddDays(-1) ||
+                originalAddTaskComponent.TaskModel.EndDate == newAddTaskComponent.TaskModel.StartDate))
+            {
+                warningMessage = new StatusMessage("Fixed work tasks drive their own end date / duration from the combination of work and resources (or demand if no resources assigned). As these are rounded to the nearest day, the splitter has been unable to split the task on the date you have specified and you may need to adjust as necessary.", StatusMessage.MessageType.Warning);
+            }
         }
 
         private void RestoreModels()
         {
-            originalAddTaskComponent.InitialiseTaskModel();
-            newAddTaskComponent.InitialiseTaskModel();
+            // Reinitialise the components from the DB
+            originalAddTaskComponent.InitialiseModels();
+            newAddTaskComponent.InitialiseModels();
             StateHasChanged();
         }
 
