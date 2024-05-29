@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -48,16 +49,18 @@ namespace PPMTool.Pages
 
         public Project ProjectModel { get; private set; }
 
+        public bool IsValid { get; private set; } = true;
+
         private int? selectedPredecessorId;
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
-        private bool isValid = true;
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
         private string error;
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
+        private EditContext? editContext;
 
         protected override void OnInitialized()
         {
@@ -96,6 +99,7 @@ namespace PPMTool.Pages
         public void InitialiseTaskModel()
         {
             TaskModel = new SubTask();
+            editContext = new EditContext(TaskModel);
             dataGridEntities = new List<Resource>();
 
             // Load task and related data
@@ -270,6 +274,9 @@ namespace PPMTool.Pages
             }
             else
             {
+                LogInformation("Validating the sub task model...");
+                editContext?.Validate();
+
                 LogInformation("Updating sub task configuration...");
 
                 // Update the resources on the task model to match the data grid entities
@@ -311,14 +318,26 @@ namespace PPMTool.Pages
 
                 // Schedule
                 error = TaskModel.Schedule(false, ProjectModel);
-                isValid = error == null;
+                IsValid = error == null;
 
                 // Call schedule() on the subtask that this is a predecssor for
                 var error2 = SubTaskService.UpdateFollowerTasks(TaskModel, ProjectModel);
                 if (error2 != null)
                 {
                     error = $"{error2.Item1}: {error2.Item2}";
-                    isValid = false;
+                    IsValid = false;
+                }
+
+                if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
+                {
+                    error = "Task name must be unique within the project";
+                    IsValid = false;
+                };
+
+                if (TaskModel.Demand <= 0)
+                {
+                    error = "Demand for a task must be greater than zero!";
+                    IsValid = false;
                 }
             }
 
@@ -329,22 +348,12 @@ namespace PPMTool.Pages
         /// <summary>
         /// Handles the edit form submission
         /// </summary>
-        private void HandleValidSubmit()
+        public void HandleSubmit()
         {
             if (ProjectModel != null)
             {
                 UpdateSubTask();
-                if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
-                {
-                    error = "Task name must be unique within the project";
-                    isValid = false;
-                };
-                if (TaskModel.Demand <= 0)
-                {
-                    error = "Demand for a task must be greater than zero!";
-                    isValid = false;
-                }
-                if (isValid)
+                if (IsValid)
                 {
                     LogInformation("Saving sub task...");
 
@@ -369,8 +378,8 @@ namespace PPMTool.Pages
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);
 
-                    // Return to the project details page
-                    Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                    // Return to the project details page if not triggered from a split task page
+                    if (!IsSplit) Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }
             }
         }

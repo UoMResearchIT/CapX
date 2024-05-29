@@ -135,6 +135,9 @@ namespace PPMTool.Pages
                 originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
                 newAddTaskComponent.TaskModel.DurationDays = originalDuration - originalAddTaskComponent.TaskModel.DurationDays;
             }
+
+            // No errors
+            errorMessage = null;
         }
 
         private void ApplyActualsLogic()
@@ -163,6 +166,9 @@ namespace PPMTool.Pages
                 newAddTaskComponent.TaskModel.ActualWorkHours = 0;
                 originalAddTaskComponent.TaskModel.ActualWorkHours = originalActuals;
             }
+
+            // No errors
+            errorMessage = null;
         }
 
         private void UpdateSubTasks()
@@ -188,11 +194,19 @@ namespace PPMTool.Pages
 
         private void UpdateAndSave()
         {
-            // TODO: Run the edit context validation on both panes and if both are valid, save the changes and navigate away
+            // Try to submit both tasks (Subtasks are updated as part of this submission attempt)
+            originalAddTaskComponent.HandleSubmit();
+            newAddTaskComponent.HandleSubmit();
 
-            UpdateSubTasks();
-
-            Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
+            // Navigate away if successful submit
+            if (originalAddTaskComponent.IsValid && newAddTaskComponent.IsValid)
+            {
+                Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
+            }
+            else
+            {
+                errorMessage = new StatusMessage("Please correct the errors on tasks before saving!", StatusMessage.MessageType.Error);
+            }
         }
     }
 }
