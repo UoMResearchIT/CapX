@@ -27,6 +27,8 @@ namespace PPMTool.Pages
         private DateTime? splitDate;
         private double? splitValue;
         private StatusMessage errorMessage;
+        double origProportion = 0;
+        double newProportion = 0;
 
         protected override void OnInitialized()
         {
@@ -64,8 +66,6 @@ namespace PPMTool.Pages
             double proposedDurationOrigTask = 0;
             double proposedDurationNewTask = 0;
             var durationUnaltered = (originalAddTaskComponent.TaskModel.EndDate - originalAddTaskComponent.TaskModel.StartDate).TotalDays + 1;
-            double origProportion = 0;
-            double newProportion = 0;
 
             // Configure the split date adn value as required and validate choices
             if (splitOnDate)
@@ -123,25 +123,46 @@ namespace PPMTool.Pages
             newAddTaskComponent.TaskModel.HasFixedEndDate = originalAddTaskComponent.TaskModel.HasFixedEndDate;
 
             // Divide up the work if fixed work based on proportion
-            if (originalAddTaskComponent.TaskModel.TaskType == Enums.TaskType.FixedWork)
+            if (originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork)
             {
                 originalAddTaskComponent.TaskModel.PlannedWorkHours = Math.Round(10 * originalWork * origProportion) / 10;
-                newAddTaskComponent.TaskModel.PlannedWorkHours = Math.Round(10 * originalWork * newProportion) / 10;
+                newAddTaskComponent.TaskModel.PlannedWorkHours = originalWork - originalAddTaskComponent.TaskModel.PlannedWorkHours;
             }
 
             // Specify duration if fixed duration
             else if (!originalAddTaskComponent.TaskModel.HasFixedEndDate)
             {
                 originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
-                newAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * newProportion);
+                newAddTaskComponent.TaskModel.DurationDays = originalDuration - originalAddTaskComponent.TaskModel.DurationDays;
             }
         }
 
         private void ApplyActualsLogic()
         {
             var originalActuals = originalAddTaskComponent.TaskModel.ActualWorkHours;
-
-            // TODO: Apply the selected actuals logic to the tasks
+            if (selectedActualsLogic == ActualsLogic.Overflow)
+            {
+                if (originalActuals > originalAddTaskComponent.TaskModel.PlannedWorkHours)
+                {
+                    newAddTaskComponent.TaskModel.ActualWorkHours = originalActuals - originalAddTaskComponent.TaskModel.PlannedWorkHours;
+                    originalAddTaskComponent.TaskModel.ActualWorkHours = originalAddTaskComponent.TaskModel.PlannedWorkHours;
+                }
+                else
+                {
+                    newAddTaskComponent.TaskModel.ActualWorkHours = 0;
+                    originalAddTaskComponent.TaskModel.ActualWorkHours = originalActuals;
+                }
+            }
+            else if (selectedActualsLogic == ActualsLogic.Divide)
+            {
+                newAddTaskComponent.TaskModel.ActualWorkHours = Math.Round(10 * originalActuals * origProportion) / 10;
+                originalAddTaskComponent.TaskModel.ActualWorkHours = originalActuals - newAddTaskComponent.TaskModel.ActualWorkHours;
+            }
+            else if (selectedActualsLogic == ActualsLogic.Leave)
+            {
+                newAddTaskComponent.TaskModel.ActualWorkHours = 0;
+                originalAddTaskComponent.TaskModel.ActualWorkHours = originalActuals;
+            }
         }
 
         private void UpdateSubTasks()
