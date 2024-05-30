@@ -157,7 +157,7 @@ namespace PPMTool.Pages
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
             var user = AuthenticationState?.User;
-            var role = RolesService.GetByUsername(context, ActiveUser);
+            var role = RolesService.GetByUsername(context, ActiveUserName);
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
