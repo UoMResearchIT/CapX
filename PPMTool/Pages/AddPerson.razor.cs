@@ -108,9 +108,9 @@ namespace PPMTool.Pages
                 // Add tags to person model
                 personModel.SkillTags = chosenTags.ToList();
 
-            if (PersonId > 0)
-            {
-                LogInformation($"Saving person {personModel?.Name}...");
+                if (PersonId > 0)
+                {
+                    LogInformation($"Saving person {personModel?.Name}...");
 
                     // Edit
                     if (PersonService.Update(context, personModel) < 0)
