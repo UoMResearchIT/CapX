@@ -33,10 +33,11 @@ namespace PPMTool.Services
                 .Include(x => x.Author);
         }
 
-        public override void Update(PPMToolContext context, Note entity)
+        public override int Update(PPMToolContext context, Note entity)
         {
             context.Notes.Update(entity);
             context.SaveChanges();
+            return entity.NoteId;
         }
     }
 }
