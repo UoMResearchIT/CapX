@@ -36,6 +36,7 @@ namespace PPMTool.Pages
             if (firstRender)
             {
                 LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
+                StateHasChanged();
             }
         }
 
@@ -54,6 +55,12 @@ namespace PPMTool.Pages
             ApplySplitLogic();
 
             // Update and schedule the sub tasks
+            UpdateSubTasks();
+
+            // Update the actuals
+            UpdateActuals();
+
+            // Call update subtasks again to update the actuals cost
             UpdateSubTasks();
 
             // Tell Blazor to redraw the page
@@ -113,7 +120,7 @@ namespace PPMTool.Pages
                 }
 
                 // Set split date
-                splitDate = originalAddTaskComponent.TaskModel.StartDate.AddDays(proposedDurationOrigTask - 1);
+                splitDate = originalAddTaskComponent.TaskModel.StartDate.AddDays(proposedDurationOrigTask);
             }
 
             Debug.WriteLine($"** Proposal: Orig Duration = {proposedDurationOrigTask} | New Duration = {proposedDurationNewTask} | Split Date = {splitDate?.ToString("dd/MM/yyyy")}");
@@ -148,14 +155,17 @@ namespace PPMTool.Pages
                 originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
                 newAddTaskComponent.TaskModel.DurationDays = originalDuration - originalAddTaskComponent.TaskModel.DurationDays;
             }
+        }
 
+        private void UpdateActuals()
+        {
             // Update the actuals
             var originalActuals = originalAddTaskComponent.TaskModel.ActualWorkHours;
             if (selectedActualsLogic == ActualsLogic.Overflow)
             {
                 if (originalActuals > originalAddTaskComponent.TaskModel.PlannedWorkHours)
                 {
-                    // TODO: This only works if called after the UpdateSubTasks method as work will be adjusted!
+                    // Must run after the sub task has been updated as it relies on the adjusted planned work
                     originalAddTaskComponent.TaskModel.ActualWorkHours = originalAddTaskComponent.TaskModel.PlannedWorkHours;
                     newAddTaskComponent.TaskModel.ActualWorkHours = originalActuals - originalAddTaskComponent.TaskModel.PlannedWorkHours;
                 }

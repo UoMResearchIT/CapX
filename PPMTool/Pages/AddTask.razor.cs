@@ -117,7 +117,6 @@ namespace PPMTool.Pages
             if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
 
             // Initialise
-            TaskModel = new SubTask();
             dataGridEntities = new List<Resource>();
 
             // Load task and related data
@@ -135,6 +134,10 @@ namespace PPMTool.Pages
                 {
                     dataGridEntities.Add(r);
                 }
+            }
+            else
+            {
+                TaskModel = new SubTask();
             }
 
             // Populate predecessor dropdown source (exclude self)
