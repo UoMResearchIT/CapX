@@ -47,7 +47,18 @@ namespace PPMTool.Pages
 
         public SubTask TaskModel { get; private set; } = new SubTask();
 
-        public Project ProjectModel { get; private set; }
+        private Project projectModel;
+        public Project ProjectModel
+        {
+            get => projectModel;
+            private set
+            {
+                if (value != projectModel)
+                {
+                    projectModel = value;
+                }
+            }
+        }
 
         public bool IsValid { get; private set; } = true;
 
@@ -93,9 +104,14 @@ namespace PPMTool.Pages
         {
             // Get project model from DB
             ProjectModel = ProjectService.GetById(context, ProjectId);
+            ProjectService.RestoreModel(context, ref projectModel);
 
             // No project then stop initialising
-            if (ProjectModel == null) return;
+            if (ProjectModel == null)
+            {
+                LogError($"Project model failed to initialise! ID = {ProjectId}");
+                return;
+            }
 
             // Initialise sub tasks
             if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
@@ -363,7 +379,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Handles the edit form submission
+        /// Handles the edit form submission. Can called by owning components.
         /// </summary>
         public void HandleSubmit()
         {

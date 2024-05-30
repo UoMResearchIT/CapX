@@ -5,7 +5,8 @@
 
 @if (ShowMessages && Messages != null)
 {
-    @foreach (var message in Messages.Where(x => x.Status))
+    var activeMessages = IgnoreStatus ? Messages : Messages.Where(x => x.Status).ToList();
+    @foreach (var message in activeMessages)
     {
         <StatusMessageComponent Message=message />
     }
@@ -28,4 +29,7 @@ else
 
     [Parameter]
     public bool ShowMessages { get; set; } = true;
+
+    [Parameter]
+    public bool IgnoreStatus { get; set; } = false;
 }

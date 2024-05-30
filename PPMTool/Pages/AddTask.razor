@@ -24,7 +24,7 @@
     {
         <div class="row">
             <div class="col">
-                <h1>Edit @TaskModel.Name</h1>
+                <h1>Edit "@(TaskModel.Name)"</h1>
             </div>
             @if (!IsSplit)
             {
@@ -35,7 +35,7 @@
         </div>
         <div class="row">
             <div class="col">
-                <p>Edit existing task in <b>@ProjectModel?.GetFullName()</b></p>
+                <p>Edit existing task in <b>@ProjectModel?.GetFullName()</b>.</p>
             </div>
         </div>
     }
