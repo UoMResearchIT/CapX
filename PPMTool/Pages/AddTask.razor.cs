@@ -36,7 +36,7 @@ namespace PPMTool.Pages
         public int? ProjectId { get; set; }
 
         [Parameter]
-        public int TaskId { get; set; }
+        public int? TaskId { get; set; }
 
         [Parameter]
         [SupplyParameterFromQuery(Name = "copy")]
@@ -45,7 +45,18 @@ namespace PPMTool.Pages
         [Parameter]
         public bool IsSplit { get; set; }
 
-        public SubTask TaskModel { get; private set; } = new SubTask();
+        private SubTask taskModel;
+        public SubTask TaskModel
+        {
+            get => taskModel;
+            private set
+            {
+                if (value != taskModel)
+                {
+                    taskModel = value;
+                }
+            }
+        }
 
         private Project projectModel;
         public Project ProjectModel
@@ -76,35 +87,20 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            InitialiseComponent();
+        }
+
+        public void InitialiseComponent(bool restoreModels = true)
+        {
             people = PersonService.GetAll(context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
 
-            InitialiseModels();
-
-            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            var user = AuthenticationState?.User;
-            var role = RolesService.GetByUsername(context, ActiveUser);
-            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
-
-            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
-        }
-
-        protected override void OnAfterRender(bool firstRender)
-        {
-            base.OnAfterRender(firstRender);
-
-            // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
-        }
-
-        public void InitialiseModels()
-        {
-            // Get project model from DB
+            // Get project model from DB and manually restore it in case it has been modified elsewhere
             ProjectModel = ProjectService.GetById(context, ProjectId);
-            ProjectService.RestoreModel(context, ref projectModel);
+            if (restoreModels) ProjectService.RestoreModel(context, ref projectModel);
 
             // No project then stop initialising
             if (ProjectModel == null)
@@ -116,14 +112,19 @@ namespace PPMTool.Pages
             // Initialise sub tasks
             if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
 
-            // Initialise
+            // Initialise data grid entities
             dataGridEntities = new List<Resource>();
 
             // Load task and related data
-            if (TaskId > 0)
+            if (TaskId != null && TaskId > 0)
             {
-                // Get task or clone if copying
+                // Get task and restore it in case it has been modified elsewhere
                 var referenceTask = ProjectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
+                if (restoreModels) SubTaskService.RestoreModel(context, ref referenceTask);
+
+                Debug.WriteLine($"** Reference Task: Start: {referenceTask.StartDate.ToShortDateString()} | End: {referenceTask.EndDate.ToShortDateString()} | Work: {referenceTask.PlannedWorkHours} | Duration: {referenceTask.DurationDays}");
+
+                // Clone the reference task if copying
                 TaskModel = IsCopy ? SubTaskService.Clone(context, referenceTask) : referenceTask;
 
                 // Assign the predecessor option
@@ -153,6 +154,21 @@ namespace PPMTool.Pages
 
             // Assign edit context
             editContext = new EditContext(TaskModel);
+
+            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
+            var user = AuthenticationState?.User;
+            var role = RolesService.GetByUsername(context, ActiveUser);
+            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
+
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            // If no project then navigate away
+            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
         }
 
         private string GetNiceString(Enum x)
@@ -174,7 +190,7 @@ namespace PPMTool.Pages
 
         private async void DeleteSubTask()
         {
-            if (TaskId > 0)
+            if (TaskId != null && TaskId > 0)
             {
                 bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {TaskModel.Name} from project {ProjectModel?.GetFullName()}");
                 if (confirmed)

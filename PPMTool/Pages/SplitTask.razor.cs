@@ -23,6 +23,7 @@ namespace PPMTool.Pages
         private double? splitValue;
         private List<StatusMessage> statusMessages = new List<StatusMessage>();
         private double origProportion = 0;
+        private DateTime originalStartDate;
         private DateTime originalEndDate;
 
         protected override void OnInitialized()
@@ -36,20 +37,22 @@ namespace PPMTool.Pages
             if (firstRender)
             {
                 LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
+                originalStartDate = originalAddTaskComponent?.TaskModel.StartDate ?? DateTime.Today;
+                originalEndDate = originalAddTaskComponent?.TaskModel.EndDate ?? DateTime.Today;
                 StateHasChanged();
             }
         }
 
         private void SplitTasks()
         {
-            Debug.WriteLine($"** Redoing the split logic...");
+            Debug.WriteLine($"** Running split logic...");
 
             // Clear the error messages
             statusMessages.Clear();
 
             // Reinitialise the components from the DB
-            originalAddTaskComponent.InitialiseModels();
-            newAddTaskComponent.InitialiseModels();
+            originalAddTaskComponent.InitialiseComponent();
+            newAddTaskComponent.InitialiseComponent();
 
             // Apply the logic to split the task and actuals
             ApplySplitLogic();
@@ -63,16 +66,36 @@ namespace PPMTool.Pages
             // Call update subtasks again to update the actuals cost
             UpdateSubTasks();
 
+            // Check for fixed work warnings
+            CheckForFixedWorkWarnings();
+
             // Tell Blazor to redraw the page
             StateHasChanged();
 
             Debug.WriteLine($"** {statusMessages.Count} status message(s).");
         }
 
+        private void CheckForFixedWorkWarnings()
+        {
+            // Check for error on fixed work scheduling
+            if (splitDate != null && originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork &&
+                (originalAddTaskComponent.TaskModel.EndDate != splitDate.Value.AddDays(-1) ||
+                originalAddTaskComponent.TaskModel.EndDate == newAddTaskComponent.TaskModel.StartDate))
+            {
+                statusMessages.Add(new StatusMessage("Due to fixed work scheduling, the splitter has been unable to split the task automatically at the date you have specified and will need manual adjustment.", StatusMessage.MessageType.Warning, () => true));
+                return;
+            }
+
+            if (originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork && newAddTaskComponent.TaskModel.EndDate != originalEndDate)
+            {
+                statusMessages.Add(new StatusMessage("Due to fixed work scheduling, the splitter has been unable to split the task automatically so that the new task ends on the same day as the unsplit task and will need manual adjustment.", StatusMessage.MessageType.Warning, () => true));
+                return;
+            }
+        }
+
         private void ApplySplitLogic()
         {
             // Store some original values before modification
-            originalEndDate = originalAddTaskComponent.TaskModel.EndDate;
             var originalWork = originalAddTaskComponent.TaskModel.PlannedWorkHours;
             var originalDuration = originalAddTaskComponent.TaskModel.DurationDays;
 
@@ -97,7 +120,9 @@ namespace PPMTool.Pages
                 proposedDurationNewTask = (newAddTaskComponent.TaskModel.EndDate - splitDate).Value.TotalDays + 1;
                 if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
                 {
-                    statusMessages.Add(new StatusMessage("The original and new task must both have a non-zero duration! Remember the dates are inclusive.", StatusMessage.MessageType.Error, () => true));
+                    statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! Remember the dates are inclusive. " +
+                        $"Based on your choice of split, the two tasks would have durations of {proposedDurationOrigTask} days and {proposedDurationNewTask} days respectively.",
+                        StatusMessage.MessageType.Error, () => true));
                     return;
                 }
             }
@@ -115,7 +140,9 @@ namespace PPMTool.Pages
                 proposedDurationNewTask = originalAddTaskComponent.TaskModel.DurationDays - splitValue ?? 0;
                 if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
                 {
-                    statusMessages.Add(new StatusMessage("The original and new task must both have a non-zero duration!", StatusMessage.MessageType.Error, () => true));
+                    statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! " +
+                        $"Based on your choice of split, the two tasks would have durations of {proposedDurationOrigTask} days and {proposedDurationNewTask} days respectively.",
+                        StatusMessage.MessageType.Error, () => true));
                     return;
                 }
 
@@ -192,19 +219,6 @@ namespace PPMTool.Pages
             // Call update subtasks on both panes to validate
             originalAddTaskComponent.UpdateSubTask();
             newAddTaskComponent.UpdateSubTask();
-
-            // Check for error on fixed work scheduling
-            if (splitDate != null && originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork &&
-                (originalAddTaskComponent.TaskModel.EndDate != splitDate.Value.AddDays(-1) ||
-                originalAddTaskComponent.TaskModel.EndDate == newAddTaskComponent.TaskModel.StartDate))
-            {
-                statusMessages.Add(new StatusMessage("Due to fixed work scheduling, the splitter has been unable to split the task automatically at the date you have specified and will need manual adjustment.", StatusMessage.MessageType.Warning, () => true));
-            }
-
-            if (originalAddTaskComponent.TaskModel.TaskType == TaskType.FixedWork && newAddTaskComponent.TaskModel.EndDate != originalEndDate)
-            {
-                statusMessages.Add(new StatusMessage("Due to fixed work scheduling, the splitter has been unable to split the task automatically so that the new task ends on the same day as the unsplit task and will need manual adjustment.", StatusMessage.MessageType.Warning, () => true));
-            }
         }
 
         private void DiscardChanges()

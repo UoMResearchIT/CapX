@@ -7,7 +7,7 @@
 @using static PPMTool.Data.Entities.Project
 
 <div class="container">
-    @if (TaskId <= 0 || IsCopy)
+    @if ((TaskId != null && TaskId <= 0) || IsCopy)
     {
         <div class="row">
             <div class="col-auto">
@@ -24,7 +24,7 @@
     {
         <div class="row">
             <div class="col">
-                <h1>Edit "@(TaskModel.Name)"</h1>
+                <h1>Edit <i>@(TaskModel.Name)</i></h1>
             </div>
             @if (!IsSplit)
             {
@@ -140,7 +140,7 @@
                 </div>
             </div>
 
-            @if (TaskId > 0)
+            @if (TaskId != null && TaskId > 0)
             {
                 <hr />
                 <h2>Actuals</h2>
