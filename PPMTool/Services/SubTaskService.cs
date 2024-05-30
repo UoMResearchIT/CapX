@@ -27,10 +27,11 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="taskModel"></param>
-        public override void Update(PPMToolContext context, SubTask taskModel)
+        public override int Update(PPMToolContext context, SubTask taskModel)
         {
             context.SubTasks.Update(taskModel);
             context.SaveChanges();
+            return taskModel.SubTaskId;
         }
 
         /// <summary>

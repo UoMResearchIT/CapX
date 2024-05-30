@@ -26,6 +26,17 @@ namespace PPMTool.Services
         public abstract int Add(PPMToolContext context, T entity);
         public abstract void Delete(PPMToolContext context, T entity);
         public abstract IEnumerable GetAll(PPMToolContext context);
-        public abstract void Update(PPMToolContext context, T entity);
+        public abstract int Update(PPMToolContext context, T entity);
+
+        /// <summary>
+        /// Method to allow services to define their own definition of a duplicate
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public virtual bool DuplicateDetected(PPMToolContext context, T entity)
+        {
+            return false;
+        }
     }
 }
