@@ -35,7 +35,7 @@ namespace PPMTool.Pages
             availableTags = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
 
             // Load the person model if necessary
-            if (PersonId > -1)
+            if (PersonId > 0)
             {
                 personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
 
@@ -108,7 +108,7 @@ namespace PPMTool.Pages
                 // Add tags to person model
                 personModel.SkillTags = chosenTags.ToList();
 
-                if (PersonId > -1)
+                if (PersonId > 0)
                 {
                     LogInformation($"Saving person {personModel?.Name}...");
 

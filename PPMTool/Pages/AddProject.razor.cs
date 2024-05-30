@@ -58,7 +58,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            if (ProjectId > -1)
+            if (ProjectId > 0)
             {
                 projectModel = ProjectService.GetById(context, ProjectId);
 
@@ -138,7 +138,7 @@ namespace PPMTool.Pages
             {
                 if (!discardChanges)
                 {
-                    if (ProjectId > -1)
+                    if (ProjectId > 0)
                     {
                         // Check to see if the project is marked as cancelled as then we need to remove resources.
                         // Leave resources on completed projects so we have a historical record.
@@ -211,7 +211,7 @@ namespace PPMTool.Pages
 
         private async void DeleteProject()
         {
-            if (ProjectId > -1)
+            if (ProjectId > 0)
             {
                 // Prompt
                 bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete project {projectModel.GetFullName()}. " +
