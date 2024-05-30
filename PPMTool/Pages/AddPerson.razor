@@ -21,9 +21,7 @@
     <hr />
 
     <div class="card">
-        <EditForm EditContext="editContext" OnValidSubmit="@HandleValidSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <EditForm EditContext="editContext" OnSubmit="@HandleSubmit">
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br>
@@ -162,6 +160,8 @@
                     </RadzenDataList>
                 </div>
             </div>
+            <DataAnnotationsValidator />
+            <ValidationSummary />
             <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
         </EditForm>
     </div>

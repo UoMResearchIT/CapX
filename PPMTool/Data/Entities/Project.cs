@@ -67,8 +67,14 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
                 new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming()),
+                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => HasNoRTPNumber()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        public bool HasNoRTPNumber()
+        {
+            return RTP == 0;
         }
 
 
