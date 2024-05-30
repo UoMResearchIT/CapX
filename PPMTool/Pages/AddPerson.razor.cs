@@ -25,6 +25,7 @@ namespace PPMTool.Pages
         private IList<SkillTag> chosenTags = new List<SkillTag>();
         private string autoCompleteText;
         private EditContext editContext;
+        private ValidationMessageStore messageStore;
 
         protected override void OnInitialized()
         {
@@ -47,6 +48,7 @@ namespace PPMTool.Pages
 
             // Instantiate the edit context so we have a reference to it
             editContext = new EditContext(personModel);
+            messageStore = new ValidationMessageStore(editContext);
 
             LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
         }
@@ -75,9 +77,10 @@ namespace PPMTool.Pages
         private void EditAvailability()
         {
             // Check the existing model is valid first
+            messageStore.Clear();
             if (editContext.Validate())
             {
-                HandleValidSubmit();
+                HandleSubmit();
 
                 LogInformation("Editing availability changes...");
                 Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
@@ -87,38 +90,51 @@ namespace PPMTool.Pages
         private void EditAbsence()
         {
             // Check the existing model is valid first
+            messageStore.Clear();
             if (editContext.Validate())
             {
-                HandleValidSubmit();
+                HandleSubmit();
 
                 LogInformation("Editing absences...");
                 Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
             }
         }
 
-        private void HandleValidSubmit()
+        private void HandleSubmit()
         {
-            // Add tags to person model
-            personModel.SkillTags = chosenTags.ToList();
-
-            if (PersonId > -1)
+            messageStore.Clear();
+            if (editContext.Validate())
             {
-                LogInformation($"Saving person {personModel?.Name}...");
+                // Add tags to person model
+                personModel.SkillTags = chosenTags.ToList();
 
-                // Edit
-                PersonService.Update(context, personModel);
-            }
-            else
-            {
-                // Add new
-                if (PersonService.Add(context, personModel) < 0)
+                if (PersonId > -1)
                 {
-                    // TODO: Duplicate found -- do something
-                    LogWarning($"Duplicate person found with name {personModel?.Name}");
-                }
-            }
+                    LogInformation($"Saving person {personModel?.Name}...");
 
-            Navigation.NavigateTo("people");
+                    // Edit
+                    if (PersonService.Update(context, personModel) < 0)
+                    {
+                        // Duplicate found so show error message
+                        LogWarning($"Duplicate person found with name {personModel?.Name}");
+                        messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        return;
+                    };
+                }
+                else
+                {
+                    // Add new
+                    if (PersonService.Add(context, personModel) < 0)
+                    {
+                        // Duplicate found so show error message
+                        LogWarning($"Duplicate person found with name {personModel?.Name}");
+                        messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        return;
+                    }
+                }
+
+                Navigation.NavigateTo("people");
+            }
         }
     }
 }
