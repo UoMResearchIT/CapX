@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -24,13 +25,27 @@ namespace PPMTool.Pages
         [CascadingParameter]
         protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
+        private bool loading;
+        [CascadingParameter]
+        public bool Loading
+        {
+            get => loading;
+            set
+            {
+                if (loading != value)
+                {
+                    loading = value;
+                    Debug.WriteLine($"** Loading: {loading}");
+                }
+            }
+        }
+
         protected bool EditAuthorised { get; set; }
 
         protected AuthenticationState AuthenticationState { get; private set; }
 
         protected string ActiveUserName { get; private set; } = "None";
 
-        protected bool loading;
         protected PPMToolContext context;
 
         protected override void OnInitialized()

@@ -330,6 +330,18 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"addproject/{project.ProjectId}");
         }
 
+        void CopyTask(SubTask task)
+        {
+            // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
+            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
+        }
+
+        void SplitTask(SubTask task)
+        {
+            // Navigate to the split task page passing the task ID to be split
+            Navigation.NavigateTo($"splittask/{project.ProjectId}/{task.SubTaskId}");
+        }
+
         // Necessary to ensure that we can filter the resources on the fly
         private void LoadData(LoadDataArgs args)
         {

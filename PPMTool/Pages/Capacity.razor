@@ -14,6 +14,90 @@
         </div>
     </div>
     <hr />
+
+    <h2>Charts</h2>
+    <div class="card">
+        <div class="row align-items-center">
+            <div class="col-auto mr-auto">
+                <RadzenDropDown @bind-Value=@chosenPeople Data=@filteredPeople TextProperty="Name" ValueProperty="Name"
+                                Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
+                                LoadData="@LoadFilteredPeople" Disabled=!EditAuthorised />
+            </div>
+            <div class="col-auto mr-auto">
+                <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
+                                Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
+                                LoadData="@LoadFilteredManagers" Disabled=!EditAuthorised />
+            </div>
+            <div class="col-auto">
+                Include Unfunded:
+            </div>
+            <div class="col-auto" style="display: flex">
+                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+            </div>
+            <div class="col-auto">
+                Include Leavers:
+            </div>
+            <div class="col" style="display: flex">
+                <RadzenSwitch @bind-Value="@IncludeLeavers" />
+            </div>
+        </div>
+    </div>
+    
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else if (confirmedChartItems == null || confirmedChartItems.Count < 1)
+    {
+        <div class="card">
+            <p class="lead">No data to show for the selected people.</p>
+        </div>
+    }
+    else if (chosenManager != null && (chosenPeople == null || chosenPeople.Count() == 0))
+    {
+        <div class="card">
+            <p class="lead">Select one or more RSEs to view capacity information for projects owned by this project manager.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Legend -->
+            
+        <div class="card">
+            <div class="row">
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(49)" /></svg> &lt;50%</div>
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(74)" /></svg> &lt;75%</div>
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(99)" /></svg> &lt;100%</div>
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg> =100%</div>
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(101)" /></svg> &gt;100%</div>
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(126)" /></svg> &gt;125%</div>
+                <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(151)" /></svg> &gt;150%</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card">
+        <div class="row">
+            @for (int i = 0; i < chartTitles.Count; ++i)
+            {
+                <div class="@(chartTitles.Count == 1 ? "col" :"col-6")">
+                        <CapacityChartComponent Title=@chartTitles[i]
+                                                ChartOptions="@chartOptions[i]"
+                                                ConfirmedChartItems="@confirmedChartItems[i]"
+                                                ProvisionalChartItems="@provisionalChartItems[i]"
+                                                OnDataPointSelection="@DataPointsSelected"
+                                                OnChartZoomed="@OnChartZoomed" />
+                </div>
+            }
+        </div>
+        </div>
+    }
+    <hr />
+
     @if (EditAuthorised)
     {
         <h2>Availability Query</h2>
@@ -56,10 +140,10 @@
                         <RadzenSwitch @bind-Value="@IncludeLeavers" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQueryAsync Text="Run" Icon="directions_run"/>
+                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQuery Text="Run" Icon="directions_run"/>
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@ClearQueryAsync Text="Clear" Icon="close"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@ClearQuery Text="Clear" Icon="close"/>
                     </div>
                 </div>
             </EditForm>
@@ -190,102 +274,4 @@
         </div>
     }
     <hr />
-    <h2>Charts</h2>
-    @if (loading)
-    {
-        <LoadingComponent />
-    }
-    else
-    {
-        <div class="card">
-            <div class="row align-items-center">
-                <div class="col-auto mr-auto">
-                    <RadzenDropDown @bind-Value=@chosenPeople Data=@filteredPeople TextProperty="Name" ValueProperty="Name"
-                                    Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
-                                    Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
-                                    LoadData="@LoadFilteredPeople" Disabled=!EditAuthorised />
-                </div>
-                <div class="col-auto mr-auto">
-                    <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
-                                    Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
-                                    Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
-                                    LoadData="@LoadFilteredManagers" Disabled=!EditAuthorised />
-                </div>
-                <div class="col-auto">
-                    Include Unfunded:
-                </div>
-                <div class="col-auto" style="display: flex">
-                    <RadzenSwitch @bind-Value="@IncludeUnFunded" />
-                </div>
-                <div class="col-auto">
-                    Include Leavers:
-                </div>
-                <div class="col" style="display: flex">
-                    <RadzenSwitch @bind-Value="@IncludeLeavers" />
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            @if (confirmedChartItems == null || confirmedChartItems.Count < 1)
-            {
-                <p class="lead">No data to show</p>
-            }
-            else
-            {
-                <!-- Legend -->
-                <div class="row">
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(49)" /></svg> &lt;50%</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(74)" /></svg> &lt;75%</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(99)" /></svg> &lt;100%</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg> =100%</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(101)" /></svg> &gt;100%</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(126)" /></svg> &gt;125%</div>
-                    <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(151)" /></svg> &gt;150%</div>
-                </div>
-
-                <!-- Chart -->
-                <ApexChart @ref="chart"
-                            TItem="ChartItem"
-                            Options=chartOptions
-                            XAxisType="XAxisType.Datetime"
-                            OnDataPointSelection=DataPointsSelected>
-                    <ChildContent>
-                        <ApexRangeSeries TItem="ChartItem"
-                                         Items="confirmedChartItems"
-                                         XValue="@(e => e.Label)"
-                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                         PointColor="@(e => e.Colour)" />
-
-                        <ApexRangeSeries TItem="ChartItem"
-                                         Items="provisionalChartItems"
-                                         XValue="@(e => e.Label)"
-                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                         PointColor="@(e => e.Colour)" />
-                    </ChildContent>
-                    <ApexPointTooltip>
-                        <div class="m-2">
-                            @{
-                                var point = (ListPoint<ChartItem>)context.DataPoint;
-                                <div class="m-0 p-3">
-                                    @if (point.Items.FirstOrDefault()?.TooltipMessages != null)
-                                    {
-                                        @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
-                                    }
-                                    <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
-                                    <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
-                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
-                                </div>
-                            }
-                        </div>
-                    </ApexPointTooltip>
-                </ApexChart>
-
-            }
-        </div>
-    }
 </div>

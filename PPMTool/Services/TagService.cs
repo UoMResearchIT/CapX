@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -22,10 +24,15 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="tag"></param>
-        public override void Update(PPMToolContext context, SkillTag tag)
+        public override int Update(PPMToolContext context, SkillTag tag)
         {
+            if (DuplicateDetected(context, tag))
+            {
+                return -1;
+            }
             context.SkillTags.Update(tag);
             context.SaveChanges();
+            return tag.SkillTagId;
         }
 
         /// <summary>
@@ -57,9 +64,18 @@ namespace PPMTool.Services
         /// <param name="tag"></param>
         public override int Add(PPMToolContext context, SkillTag tag)
         {
+            if (DuplicateDetected(context, tag))
+            {
+                return -1;
+            }
             context.Add(tag);
             context.SaveChanges();
             return tag.SkillTagId;
+        }
+
+        public override bool DuplicateDetected(PPMToolContext context, SkillTag entity)
+        {
+            return GetAll(context).Any(x => x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() && x.SkillTagId != entity.SkillTagId);
         }
     }
 }

@@ -5,7 +5,7 @@
 @using PPMTool.Pages.Components
 
 <div class="container">
-    @if (ProjectId < 0)
+    @if (ProjectId <= 0)
     {
         <h1>Add Project</h1>
     }
@@ -28,9 +28,7 @@
     }
     <hr />
     <div class="card">
-        <EditForm @ref="ProjectForm" Model="@projectModel" OnSubmit="HandleSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <EditForm EditContext="editContext" OnSubmit="HandleSubmit">
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="RTP-" /><br />
@@ -110,10 +108,11 @@
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
                 </div>
             </div>
-
+            <DataAnnotationsValidator />
+            <ValidationSummary />
             <div>
                 <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Click="@(()=> { gotoDetails = true; discardChanges = false; })" Disabled=!EditAuthorised />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > -1; discardChanges = true; })" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > 0; discardChanges = true; })" />
             </div>
         </EditForm>
     </div>

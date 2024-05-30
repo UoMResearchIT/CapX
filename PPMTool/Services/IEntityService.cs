@@ -8,7 +8,7 @@ namespace PPMTool.Services
     {
         public abstract int Add(PPMToolContext context, T entity);
         public IEnumerable<T> GetAll(PPMToolContext context);
-        public void Update(PPMToolContext context, T entity);
+        public int Update(PPMToolContext context, T entity);
         public void Delete(PPMToolContext context, T entity);
         public void RestoreModel<U>(PPMToolContext context, ref U entity);
 

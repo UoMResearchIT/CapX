@@ -25,6 +25,9 @@ namespace PPMTool.Data
         /// </summary>
         public virtual void UpdateStatusMessages()
         {
+            if (statusMessages == null)
+                return;
+
             foreach (var item in statusMessages)
             {
                 item.Update();
