@@ -47,8 +47,8 @@ namespace PPMTool.Pages
         private string plannedCostColour;
         private string actualCostColour;
         private string fundsReceivedColour;
-        private bool addNote;
-        private bool editNote;
+        private bool isEditExistingNote;
+        private bool editorVisible;
         private Note noteModel = new Note();
         private string noteSearchTerms;
         private List<Note> filteredNotes;
@@ -254,22 +254,39 @@ namespace PPMTool.Pages
             FilterNotes();
         }
 
-        private async void SetShowNoteEditor(bool show)
+        private async void ShowOrHideEditor(bool show)
         {
-            // Toggle state
-            addNote = show;
-            if (addNote)
-            {
-                noteModel = new Note();
+            // Set visibility
+            editorVisible = show;
 
+            if (editorVisible)
+            {
                 // Scroll to the new editor window after a delay to allow the page to render
                 await Task.Delay(500);
                 await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
-                StateHasChanged();
             }
+            StateHasChanged();
+        }
+
+        private void AddOrDiscardClicked()
+        {
+            // If editor not visible then must be an add click
+            if (!editorVisible)
+            {
+                noteModel = new Note();
+                ShowOrHideEditor(true);
+            }
+
+            // Else must be a discard click so reset state and hide
             else
             {
-                editNote = false;
+                LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
+                if (isEditExistingNote)
+                {
+                    NoteService.RestoreModel(context, ref noteModel);
+                }
+                isEditExistingNote = false;
+                ShowOrHideEditor(false);
             }
         }
 
@@ -277,7 +294,7 @@ namespace PPMTool.Pages
         {
             if (project == null || project.ProjectId < 0)
             {
-                SetShowNoteEditor(false);
+                ShowOrHideEditor(false);
                 LogError("Attempt to add a note when no project model present!");
                 return;
             }
@@ -287,10 +304,10 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUserName);
             noteModel.Author = role.Person;
             noteModel.CreatedDate = DateTime.Now;
-            LogInformation($"Added note for {project.GetFullName()}");
             NoteService.Add(context, noteModel);
+            LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
-            SetShowNoteEditor(false);
+            ShowOrHideEditor(false);
         }
 
         private void UpdateNote()
@@ -299,18 +316,18 @@ namespace PPMTool.Pages
             noteModel.EditedDate = DateTime.Now;
             var role = RolesService.GetByUsername(context, ActiveUserName);
             noteModel.Editor = role.Person;
-            LogInformation($"Updated note for {project.GetFullName()}");
             NoteService.Update(context, noteModel);
+            LogInformation($"Updated note for {project.GetFullName()}");
             PopulateNotes();
-            SetShowNoteEditor(false);
+            ShowOrHideEditor(false);
         }
 
         private void EditNote(Note noteToEdit)
         {
-            SetShowNoteEditor(true);
+            ShowOrHideEditor(true);
             LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
             noteModel = noteToEdit;
-            editNote = true;
+            isEditExistingNote = true;
         }
 
         private async void DeleteNote(Note noteToDelete)

@@ -268,14 +268,14 @@
             </RadzenStack>
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(editNote ? UpdateNote : SaveNote)" Visible="@addNote" />
+            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" Visible="@editorVisible" />
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="@(addNote ? "clear" : "add")" Text="@(addNote ? "Discard" : "Add")" ButtonStyle="@(addNote ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="@(args => SetShowNoteEditor(!addNote))" />
+            <RadzenButton Icon="@(editorVisible ? "clear" : "add")" Text="@(editorVisible ? "Discard" : "Add")" ButtonStyle="@(editorVisible ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="@AddOrDiscardClicked" />
         </div>
     </div>
     <div id="note-editor">
-        <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@addNote />
+        <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
     </div>
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
         @if (filteredNotes.Count == 0)
