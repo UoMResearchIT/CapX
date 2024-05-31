@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
@@ -38,6 +39,7 @@ namespace PPMTool.Pages
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
         private List<SubTask> allTasks;
+        private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
         private List<ChartItem> burnUpChartSource = new List<ChartItem>();
@@ -57,17 +59,19 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
+            allProjects = ProjectService.GetAll(context).ToList();
+
             // Query string only consulted when Project ID is not specified in URL
             if (ProjectId == null && RTP != null)
             {
                 // Try get the project
-                ProjectId = ProjectService.GetByRTP(context, RTP)?.ProjectId;
+                ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
             }
 
             // Carry on and load the project details
             if (ProjectId != null)
             {
-                project = ProjectService.GetById(context, ProjectId);
+                project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
                 confirmedTasks = project.SubTasks.Where(x => !x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 provisionalTasks = project.SubTasks.Where(x => x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 allTasks = confirmedTasks.Concat(provisionalTasks).ToList();
@@ -286,6 +290,7 @@ namespace PPMTool.Pages
                     NoteService.RestoreModel(context, ref noteModel);
                 }
                 isEditExistingNote = false;
+                PopulateNotes();
                 ShowOrHideEditor(false);
             }
         }
@@ -304,6 +309,7 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUserName);
             noteModel.Author = role.Person;
             noteModel.CreatedDate = DateTime.Now;
+            ResolveMentionsInCurrentNoteModel();
             NoteService.Add(context, noteModel);
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
@@ -316,6 +322,7 @@ namespace PPMTool.Pages
             noteModel.EditedDate = DateTime.Now;
             var role = RolesService.GetByUsername(context, ActiveUserName);
             noteModel.Editor = role.Person;
+            ResolveMentionsInCurrentNoteModel();
             NoteService.Update(context, noteModel);
             LogInformation($"Updated note for {project.GetFullName()}");
             PopulateNotes();
@@ -324,6 +331,10 @@ namespace PPMTool.Pages
 
         private void EditNote(Note noteToEdit)
         {
+            // Remove the note from the list so it doesn't confuse the user
+            filteredNotes.Remove(noteToEdit);
+
+            // Set state
             ShowOrHideEditor(true);
             LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
             noteModel = noteToEdit;
@@ -342,6 +353,52 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Attempts to resolve the mentions and links in the note content for the current note model.
+        /// </summary>
+        private void ResolveMentionsInCurrentNoteModel()
+        {
+            // Get list of all mentions in the note content
+            var mentions = new List<string>();
+            var matches = Regex.Matches(noteModel.HtmlContent, @"@\w+");
+            mentions.AddRange(matches.Select(x => x.Value).Distinct());
+
+            // Load in the list of managers
+            var managers = RolesService.GetAll(context).Where(x => x.RoleType == Data.Context.RoleType.Manager || x.RoleType == Data.Context.RoleType.Superuser).Select(x => x.Person).ToList();
+
+            // For each mention, attempt to resolve it and replace in the HTMl content
+            foreach (var m in mentions)
+            {
+                var match = managers.FirstOrDefault(x => x.ShortName.Equals(m.Substring(1), StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m, $"<div class=\"badge badge-primary\">{match.Name}</div>");
+                }
+                else
+                {
+                    // TODO: Throw some kind of warning if the mention cannot be resolved
+                }
+            }
+
+            // Get list of all RTP-XXX references in the note content
+            var rtpRefs = new List<string>();
+            matches = Regex.Matches(noteModel.HtmlContent, @"#RTP-\w+", RegexOptions.IgnoreCase);
+            rtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
+
+            // For each reference, attempt to resolve it and replace in the HTMl content
+            foreach (var r in rtpRefs)
+            {
+                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
+                }
+                else
+                {
+                    // TODO: Throw some kind of warning if the reference cannot be resolved
+                }
+            }
+        }
         private void TaskSelected(SelectedData<SubTask> dataPoint)
         {
             if (!EditAuthorised) return;
