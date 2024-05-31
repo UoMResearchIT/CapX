@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -17,8 +20,17 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Inject]
+        private NoteService NoteService { get; set; }
+
+        [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
         [Parameter]
-        public int? ProjectID { get; set; }
+        public int? ProjectId { get; set; }
 
         [Parameter]
         [SupplyParameterFromQuery(Name = "rtp")]
@@ -27,6 +39,8 @@ namespace PPMTool.Pages
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
         private List<SubTask> allTasks;
+        private List<Project> allProjects;
+        private List<Note> allNotes;
         private Project project;
         private List<ChartItem> burnUpChartSource = new List<ChartItem>();
         private ApexChartOptions<SubTask> ganttChartOptions;
@@ -35,28 +49,36 @@ namespace PPMTool.Pages
         private string plannedCostColour;
         private string actualCostColour;
         private string fundsReceivedColour;
+        private bool isEditExistingNote;
+        private bool editorVisible;
+        private Note noteModel = new Note();
+        private string noteSearchTerms;
+        private List<Note> filteredNotes;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            allProjects = ProjectService.GetAll(context).ToList();
+
             // Query string only consulted when Project ID is not specified in URL
-            if (ProjectID == null && RTP != null)
+            if (ProjectId == null && RTP != null)
             {
                 // Try get the project
-                ProjectID = ProjectService.GetByRTP(context, RTP)?.ProjectId;
+                ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
             }
 
             // Carry on and load the project details
-            if (ProjectID != null)
+            if (ProjectId != null)
             {
-                project = ProjectService.GetById(context, ProjectID);
+                project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
                 confirmedTasks = project.SubTasks.Where(x => !x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 provisionalTasks = project.SubTasks.Where(x => x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
                 allTasks = confirmedTasks.Concat(provisionalTasks).ToList();
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                PopulateNotes();
                 count = allTasks.Count;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
@@ -143,7 +165,8 @@ namespace PPMTool.Pages
                                 BorderColor = "red",
                                 Label = new Label
                                 {
-                                    Text = "Actual (Hours)"
+                                    Text = "Actual (Hours)",
+                                    Position = LabelPosition.Right
                                 }
                             }
                         },
@@ -157,7 +180,8 @@ namespace PPMTool.Pages
                                 BorderColor = "red",
                                 Label = new Label
                                 {
-                                    Text = "Current Week"
+                                    Text = "Current Week",
+                                    Position = LabelPosition.Left
                                 }
                             }
                         }
@@ -178,7 +202,212 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectID == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+        }
+
+        private void PopulateNotes()
+        {
+            allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+            filteredNotes = allNotes;
+            FilterNotes();
+        }
+
+        private void FilterNotes()
+        {
+            // Clear existing highlighting
+            InvokeAsync(async () =>
+            {
+                await JSRuntime.InvokeVoidAsync("clearHighlightInNotes");
+            }).ContinueWith(async t =>
+            {
+                // Wait for JS to finish
+                await Task.Delay(500);
+
+                if (string.IsNullOrWhiteSpace(noteSearchTerms))
+                {
+                    filteredNotes = allNotes;
+                    Debug.WriteLine($"** Notes reset");
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    filteredNotes = allNotes.Where(x =>
+                    {
+                        var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
+                        return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                    }).ToList();
+                    Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
+                    await InvokeAsync(async () =>
+                    {
+                        // Refresh
+                        StateHasChanged();
+
+                        // Wait for the page to render
+                        await Task.Delay(500);
+
+                        // Call highlighter JS function
+                        await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
+                    });
+                }
+            });
+        }
+
+        private void ClearSearch()
+        {
+            noteSearchTerms = string.Empty;
+            FilterNotes();
+        }
+
+        private async void ShowOrHideEditor(bool show)
+        {
+            // Set visibility
+            editorVisible = show;
+
+            if (editorVisible)
+            {
+                // Scroll to the new editor window after a delay to allow the page to render
+                await Task.Delay(500);
+                await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
+            }
+            StateHasChanged();
+        }
+
+        private void AddOrDiscardClicked()
+        {
+            // If editor not visible then must be an add click
+            if (!editorVisible)
+            {
+                noteModel = new Note();
+                ShowOrHideEditor(true);
+            }
+
+            // Else must be a discard click so reset state and hide
+            else
+            {
+                LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
+                if (isEditExistingNote)
+                {
+                    NoteService.RestoreModel(context, ref noteModel);
+                }
+                isEditExistingNote = false;
+                PopulateNotes();
+                ShowOrHideEditor(false);
+            }
+        }
+
+        private void SaveNote()
+        {
+            if (project == null || project.ProjectId < 0)
+            {
+                ShowOrHideEditor(false);
+                LogError("Attempt to add a note when no project model present!");
+                return;
+            }
+
+            // Populate model and add to DB
+            noteModel.Project = project;
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            noteModel.Author = role.Person;
+            noteModel.CreatedDate = DateTime.Now;
+            ResolveMentionsInCurrentNoteModel();
+            NoteService.Add(context, noteModel);
+            LogInformation($"Added note for {project.GetFullName()}");
+            PopulateNotes();
+            ShowOrHideEditor(false);
+        }
+
+        private void UpdateNote()
+        {
+            // Update model in DB
+            noteModel.EditedDate = DateTime.Now;
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            noteModel.Editor = role.Person;
+            ResolveMentionsInCurrentNoteModel();
+            NoteService.Update(context, noteModel);
+            LogInformation($"Updated note for {project.GetFullName()}");
+            PopulateNotes();
+            ShowOrHideEditor(false);
+        }
+
+        private void EditNote(Note noteToEdit)
+        {
+            // Remove the note from the list so it doesn't confuse the user
+            filteredNotes.Remove(noteToEdit);
+
+            // Set state
+            ShowOrHideEditor(true);
+            LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
+            noteModel = noteToEdit;
+            isEditExistingNote = true;
+        }
+
+        private async void DeleteNote(Note noteToDelete)
+        {
+            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"You are about to delete a note from {project.GetFullName()}!");
+            if (confirmed)
+            {
+                LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
+                NoteService.Delete(context, noteToDelete);
+                PopulateNotes();
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Attempts to resolve the mentions and links in the note content for the current note model.
+        /// </summary>
+        private void ResolveMentionsInCurrentNoteModel()
+        {
+            // Get list of all mentions in the note content
+            var mentions = new List<string>();
+            var matches = Regex.Matches(noteModel.HtmlContent, @"@\w+");
+            mentions.AddRange(matches.Select(x => x.Value).Distinct());
+
+            // Load in the list of managers
+            var managers = RolesService.GetAll(context).Where(x => x.RoleType == Data.Context.RoleType.Manager || x.RoleType == Data.Context.RoleType.Superuser).Select(x => x.Person).ToList();
+
+            // For each mention, attempt to resolve it and replace in the HTMl content
+            foreach (var m in mentions)
+            {
+                var match = managers.FirstOrDefault(x => x.ShortName.Equals(m.Substring(1), StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m, $"<div class=\"badge badge-primary\">{match.Name}</div>");
+                }
+                else
+                {
+                    // TODO: Throw some kind of warning if the mention cannot be resolved
+                }
+            }
+
+            // Get list of all RTP-XXX references in the note content
+            var rtpRefs = new List<string>();
+            matches = Regex.Matches(noteModel.HtmlContent, @"#RTP-\w+", RegexOptions.IgnoreCase);
+            rtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
+
+            // For each reference, attempt to resolve it and replace in the HTMl content
+            foreach (var r in rtpRefs)
+            {
+                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
+                }
+                else
+                {
+                    // TODO: Throw some kind of warning if the reference cannot be resolved
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends out emails using the email service to the project owner and mentioned people in the supplied note model.
+        /// </summary>
+        /// <param name="noteModified">The note modified</param>
+        /// <param name="actionDescription">The action description to be included in the email text</param>
+        private void SendEmailNotificationsToOwnerAndMentioned(Note noteModified, string actionDescription)
+        {
+            // TODO: Find the owner and mentioned people and send them an email
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
@@ -191,7 +420,7 @@ namespace PPMTool.Pages
                 var task = dataPoint.DataPoint.Items.FirstOrDefault();
                 if (task == null) return;
                 Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
-                Navigation.NavigateTo($"/addtask/{ProjectID}/{task.SubTaskId}");
+                Navigation.NavigateTo($"/addtask/{ProjectId}/{task.SubTaskId}");
             }
         }
 
