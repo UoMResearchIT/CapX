@@ -253,42 +253,46 @@
     <hr />
 
     @* Notes *@
-    <div class="row">
-        <div class="col-auto">
-            <h2>Notes</h2>
-        </div>
-        <div class="col">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
-                <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
-                <RadzenTextBox @bind-Value=@noteSearchTerms
-                                Placeholder="Search Notes"
-                                Change=@FilterNotes
-                                Style="width:100%" />
-                <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" />
+    <AuthorizeView Roles="Superuser, Manager">
+        <Authorized>
+            <div class="row">
+                <div class="col-auto">
+                    <h2>Notes</h2>
+                </div>
+                <div class="col">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
+                        <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                        <RadzenTextBox @bind-Value=@noteSearchTerms
+                                        Placeholder="Search Notes"
+                                        Change=@FilterNotes
+                                        Style="width:100%" />
+                        <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" />
+                    </RadzenStack>
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" Visible="@editorVisible" />
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Icon="@(editorVisible ? "clear" : "add")" Text="@(editorVisible ? "Discard" : "Add")" ButtonStyle="@(editorVisible ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="@AddOrDiscardClicked" />
+                </div>
+            </div>
+            <div id="note-editor">
+                <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
+            </div>
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
+                @if (filteredNotes.Count == 0)
+                {
+                    <RadzenText Text="There are no notes to show for this project" />
+                }
+                else
+                {
+                    @foreach (var note in filteredNotes)
+                    {
+                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" />
+                    }
+                }
             </RadzenStack>
-        </div>
-        <div class="col-auto">
-            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" Visible="@editorVisible" />
-        </div>
-        <div class="col-auto">
-            <RadzenButton Icon="@(editorVisible ? "clear" : "add")" Text="@(editorVisible ? "Discard" : "Add")" ButtonStyle="@(editorVisible ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="@AddOrDiscardClicked" />
-        </div>
-    </div>
-    <div id="note-editor">
-        <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
-    </div>
-    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
-        @if (filteredNotes.Count == 0)
-        {
-            <RadzenText Text="There are no notes to show for this project" />
-        }
-        else
-        {
-            @foreach (var note in filteredNotes)
-            {
-                <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" />
-            }
-        }
-    </RadzenStack>
-    <hr/>
+            <hr/>
+        </Authorized>
+    </AuthorizeView>
 </div>
