@@ -277,6 +277,17 @@
                 </div>
             </div>
             <div id="note-editor">
+                <RadzenText Visible=@editorVisible>
+                    Use &commat; symbol followed by a person's initials (as it appears on their <a href="people">People</a> entry) to mention them e.g. &commat;alb or &commat;ALB for
+                    <div class="badge badge-primary">
+                        Anja Le Blanc
+                    </div>.
+                    They will receive an email notification when the note is saved or updated. Use the # symbol followed by the RTP reference to link to a project e.g. #rtp-24 or #RTP-24 to link to
+                    <div class="badge badge-success">
+                        RTP-24 Project Name
+                    </div>.
+                    Failed linking, if either the person or project does not exist, will leave the text unchanged.
+                </RadzenText>
                 <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
             </div>
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">

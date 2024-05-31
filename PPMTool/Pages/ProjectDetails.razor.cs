@@ -399,6 +399,17 @@ namespace PPMTool.Pages
                 }
             }
         }
+
+        /// <summary>
+        /// Sends out emails using the email service to the project owner and mentioned people in the supplied note model.
+        /// </summary>
+        /// <param name="noteModified">The note modified</param>
+        /// <param name="actionDescription">The action description to be included in the email text</param>
+        private void SendEmailNotificationsToOwnerAndMentioned(Note noteModified, string actionDescription)
+        {
+            // TODO: Find the owner and mentioned people and send them an email
+        }
+
         private void TaskSelected(SelectedData<SubTask> dataPoint)
         {
             if (!EditAuthorised) return;
