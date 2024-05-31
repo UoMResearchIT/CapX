@@ -204,24 +204,48 @@ namespace PPMTool.Pages
         private void PopulateNotes()
         {
             allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+            filteredNotes = allNotes;
             FilterNotes();
         }
 
         private void FilterNotes()
         {
-            if (!string.IsNullOrWhiteSpace(noteSearchTerms))
+            // Clear existing highlighting
+            InvokeAsync(async () =>
             {
-                filteredNotes = allNotes.Where(x =>
+                await JSRuntime.InvokeVoidAsync("clearHighlightInNotes");
+            }).ContinueWith(async t =>
+            {
+                // Wait for JS to finish
+                await Task.Delay(500);
+
+                if (string.IsNullOrWhiteSpace(noteSearchTerms))
                 {
-                    var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
-                    return plainText.ToLower().Contains(noteSearchTerms.ToLower());
-                }).ToList();
-            }
-            else
-            {
-                filteredNotes = allNotes;
-            }
-            StateHasChanged();
+                    filteredNotes = allNotes;
+                    Debug.WriteLine($"** Notes reset");
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    filteredNotes = allNotes.Where(x =>
+                    {
+                        var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
+                        return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                    }).ToList();
+                    Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
+                    await InvokeAsync(async () =>
+                    {
+                        // Refresh
+                        StateHasChanged();
+
+                        // Wait for the page to render
+                        await Task.Delay(500);
+
+                        // Call highlighter JS function
+                        await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
+                    });
+                }
+            });
         }
 
         private void ClearSearch()
