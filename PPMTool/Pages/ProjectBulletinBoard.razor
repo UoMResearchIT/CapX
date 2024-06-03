@@ -1,0 +1,53 @@
+﻿@page "/projectbulletinboard"
+@inherits PPMTool.Pages.BasePage
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using static PPMTool.Enums.Extensions
+
+<div class="container">
+    <h1>Available Projects</h1>
+    <hr />
+    @if (availableProjects == null)
+    {
+        <LoadingComponent />            
+    }
+    else if (availableProjects.Count() == 0)
+    {
+        <RadzenText Text="There are currently no projects requiring RSE resource." />
+    }
+    else
+    {
+        foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Sum(x => x.GetUnmetDemandNowAndInFuture())))
+        {
+            <div class="card my-1" style="min-height: 5rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
+                        <RadzenText TextStyle="TextStyle.H5" Text="@project.GetFullName()" />
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Project Manager:" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @(project.ProjectManager?.Name ?? "Not Set")
+                            </RadzenText>
+                        </RadzenStack>
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Description" />
+                        <RadzenText Text="@project.Description" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
+                        <RadzenBadge Style="margin-bottom: 0.5rem"
+                                     BadgeStyle="@(
+                                project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
+                                project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
+                                project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                BadgeStyle.Light)"
+                                     Text="@project.ProjectStatus.ToNiceString()" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE)" />
+                        <RadzenText TextStyle="TextStyle.Body1" Text="@(project.SubTasks.Sum(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
+                        <RadzenButton Text="View Request Doc" Icon="description" />
+                    </RadzenStack>
+                </RadzenStack>
+            </div>
+        }
+    }
+</div>

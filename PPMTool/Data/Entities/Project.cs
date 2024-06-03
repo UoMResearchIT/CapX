@@ -50,6 +50,25 @@ namespace PPMTool.Data.Entities
         public InnateCode InnateActivity { get; set; }
 
         /// <summary>
+        /// HTML formatted text representing the description of the project
+        /// </summary>
+        [Required]
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Link to the scrum project on GitHub Projects
+        /// </summary>
+        [DataType(DataType.Url)]
+        public string ScrumProjectLink { get; set; }
+
+        /// <summary>
+        /// Link to the RSE request document on SharePoint
+        /// </summary>
+        [Required]
+        [DataType(DataType.Url)]
+        public string RequestDocLink { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -171,6 +190,15 @@ namespace PPMTool.Data.Entities
         internal string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
+        }
+
+        /// <summary>
+        /// Check whether this project has any tasks with unmet demand excluding tasks that ran in the past
+        /// </summary>
+        /// <returns></returns>
+        internal bool HasUnmetDemandNowOrInFuture()
+        {
+            return SubTasks.Where(x => x.IsWithin(DateTime.Today) || x.StartDate > DateTime.Today).Any(x => x.HasUnmetDemand());
         }
     }
 }
