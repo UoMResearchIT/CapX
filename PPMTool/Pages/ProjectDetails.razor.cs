@@ -54,6 +54,7 @@ namespace PPMTool.Pages
         private Note noteModel = new Note();
         private string noteSearchTerms;
         private List<Note> filteredNotes;
+        private bool showOnlyFinanceNotes;
 
         protected override void OnInitialized()
         {
@@ -205,9 +206,15 @@ namespace PPMTool.Pages
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
         }
 
+        private void FinanceSwitchToggled()
+        {
+            PopulateNotes();
+        }
+
         private void PopulateNotes()
         {
             allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+            if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             filteredNotes = allNotes;
             FilterNotes();
         }
@@ -272,27 +279,22 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-        private void AddOrDiscardClicked()
+        private void AddClicked()
         {
-            // If editor not visible then must be an add click
-            if (!editorVisible)
-            {
-                noteModel = new Note();
-                ShowOrHideEditor(true);
-            }
+            noteModel = new Note();
+            ShowOrHideEditor(true);
+        }
 
-            // Else must be a discard click so reset state and hide
-            else
+        private void DiscardClicked()
+        {
+            LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
+            if (isEditExistingNote)
             {
-                LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
-                if (isEditExistingNote)
-                {
-                    NoteService.RestoreModel(context, ref noteModel);
-                }
-                isEditExistingNote = false;
-                PopulateNotes();
-                ShowOrHideEditor(false);
+                NoteService.RestoreModel(context, ref noteModel);
             }
+            isEditExistingNote = false;
+            PopulateNotes();
+            ShowOrHideEditor(false);
         }
 
         private void SaveNote()
