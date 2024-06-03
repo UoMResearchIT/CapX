@@ -255,7 +255,7 @@
     @* Notes *@
     <AuthorizeView Roles="Superuser, Manager">
         <Authorized>
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-auto">
                     <h2>Notes</h2>
                 </div>
@@ -270,10 +270,14 @@
                     </RadzenStack>
                 </div>
                 <div class="col-auto">
-                    <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" Visible="@editorVisible" />
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FinanceSwitchToggled" />
+                        <RadzenText Text="Show Only Notes Tagged" Style="margin-bottom: 0.1rem" />
+                        <div class="badge badge-danger">Finance Info</div>
+                    </RadzenStack>
                 </div>
                 <div class="col-auto">
-                    <RadzenButton Icon="@(editorVisible ? "clear" : "add")" Text="@(editorVisible ? "Discard" : "Add")" ButtonStyle="@(editorVisible ? ButtonStyle.Danger : ButtonStyle.Primary)" Disabled=!EditAuthorised Click="@AddOrDiscardClicked" />
+                    <RadzenButton Visible="@(!editorVisible)" Icon ="add" Text="Add" ButtonStyle="ButtonStyle.Primary" Disabled=!EditAuthorised Click="@AddClicked" />
                 </div>
             </div>
             <div id="note-editor">
@@ -289,6 +293,22 @@
                     Failed linking, if either the person or project does not exist, will leave the text unchanged.
                 </RadzenText>
                 <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
+                <div class="row">
+                    <div class="col">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>
+                            <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
+                            <RadzenText Text="Tag as " Style="margin-bottom: 0.1rem" />
+                            <div class="badge badge-danger">Finance Info</div>
+                        </RadzenStack>
+                    </div>
+                    <div class="col-auto">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>
+                            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" />
+                            <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardClicked" />
+                        </RadzenStack>
+                    </div>
+                </div>
+                <hr />
             </div>
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
                 @if (filteredNotes.Count == 0)

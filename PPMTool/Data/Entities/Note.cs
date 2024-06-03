@@ -22,6 +22,8 @@ namespace PPMTool.Data.Entities
 
         public Person Editor { get; set; }
 
+        public bool IsFinanceInfo { get; set; }
+
         internal string GetNoteEditorText()
         {
             return Editor != null ? $"Last edited by {Editor.Name} on {EditedDate.ToString("dd/MM/yyyy HH:mm:ss")}" : null;
