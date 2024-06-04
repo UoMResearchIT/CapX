@@ -207,10 +207,11 @@ namespace PPMTool.Pages
             {
                 await NavigateToProjectDetails(project.ProjectId, true);
             }
-            else if (item.Value == "Edit")
-            {
-                Navigation.NavigateTo($"/addproject/{project.ProjectId}");
-            }
+        }
+
+        private void EditProject(Project project)
+        {
+            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
         }
     }
 }
