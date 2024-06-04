@@ -49,7 +49,9 @@
                         </RadzenStack>
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Description:" />
-                            <RadzenText TextStyle="TextStyle.Body1" Text="@project.Description" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @((MarkupString)project.Description)
+                            </RadzenText>
                         </RadzenStack>
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
