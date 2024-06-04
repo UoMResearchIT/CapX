@@ -1,5 +1,6 @@
 ﻿@page "/projectbulletinboard"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data
 @using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
@@ -24,27 +25,36 @@
             <div class="card my-1" style="min-height: 5rem">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
-                        <RadzenText TextStyle="TextStyle.H5" Text="@project.GetFullName()" />
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H5" Text="@project.GetFullName()" />
+                            <RadzenBadge Style="margin-bottom: 0.5rem"
+                                         BadgeStyle="@(
+                                project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
+                                project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
+                                project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                BadgeStyle.Light)"
+                                         Text="@project.ProjectStatus.ToNiceString()" />
+                        </RadzenStack>
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Project Manager:" />
                             <RadzenText TextStyle="TextStyle.Body1">
                                 @(project.ProjectManager?.Name ?? "Not Set")
                             </RadzenText>
                         </RadzenStack>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Description" />
-                        <RadzenText Text="@project.Description" />
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Description:" />
+                            <RadzenText TextStyle="TextStyle.Body1" Text="@project.Description" />
+                        </RadzenStack>
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
-                        <RadzenBadge Style="margin-bottom: 0.5rem"
-                                     BadgeStyle="@(
-                                project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                BadgeStyle.Light)"
-                                     Text="@project.ProjectStatus.ToNiceString()" />
                         <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE)" />
-                        <RadzenText TextStyle="TextStyle.Body1" Text="@(project.SubTasks.Sum(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
-                        <RadzenButton Text="View Request Doc" Icon="description" />
+                        <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium" 
+                                     BadgeStyle="BadgeStyle.Danger"
+                                     Text="@(project.SubTasks.RoundedSum(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
+                        <RadzenButton Text=@(string.IsNullOrWhiteSpace(project.RequestDocLink) ? "No Request Doc Link" : "View Request Doc")
+                                      Icon="description" Click="@(args => ViewRequestDocClickedAsync(project))"
+                                      ButtonStyle=@(string.IsNullOrWhiteSpace(project.RequestDocLink) ? ButtonStyle.Light : ButtonStyle.Primary)
+                                      Disabled=@string.IsNullOrWhiteSpace(project.RequestDocLink) />
                     </RadzenStack>
                 </RadzenStack>
             </div>
