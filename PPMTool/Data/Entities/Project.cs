@@ -90,12 +90,22 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
+                new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasks()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
 
         /// <summary>
-        /// Has no description
+        /// Whether a project has no sub tasks
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoTasks()
+        {
+            return SubTasks == null || SubTasks.Count == 0;
+        }
+
+        /// <summary>
+        /// Whether a project has no description
         /// </summary>
         /// <returns></returns>
         private bool HasNoDescription()
