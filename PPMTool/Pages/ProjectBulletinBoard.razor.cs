@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
@@ -11,6 +13,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Developer,Manager,Superuser")]
     public partial class ProjectBulletinBoard : BasePage
     {
         [Inject]
