@@ -29,6 +29,9 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
+        [Inject]
+        public EmailService EmailService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -316,6 +319,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
+            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, false);
         }
 
         private void UpdateNote()
@@ -326,9 +330,10 @@ namespace PPMTool.Pages
             noteModel.Editor = role.Person;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(context, noteModel);
-            LogInformation($"Updated note for {project.GetFullName()}");
+            LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
+            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, true);
         }
 
         private void EditNote(Note noteToEdit)
@@ -360,16 +365,16 @@ namespace PPMTool.Pages
         /// </summary>
         private void ResolveMentionsInCurrentNoteModel()
         {
-            // Get list of all mentions in the note content
-            var mentions = new List<string>();
+            // Get list of all new mentions in the note content
+            var newMentions = new List<string>();
             var matches = Regex.Matches(noteModel.HtmlContent, @"@\w+");
-            mentions.AddRange(matches.Select(x => x.Value).Distinct());
+            newMentions.AddRange(matches.Select(x => x.Value).Distinct());
 
             // Load in the list of managers
             var managers = RolesService.GetAll(context).Where(x => x.RoleType == Data.Context.RoleType.Manager || x.RoleType == Data.Context.RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
-            foreach (var m in mentions)
+            foreach (var m in newMentions)
             {
                 var match = managers.FirstOrDefault(x => x.ShortName.Equals(m.Substring(1), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
@@ -382,13 +387,28 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Get list of all RTP-XXX references in the note content
-            var rtpRefs = new List<string>();
+            // Update the mentions list (for notifications) by extracting the formatted tags
+            var resolvedMentions = new List<string>();
+            matches = Regex.Matches(noteModel.HtmlContent, @"<div class=""badge badge-primary"">(.*?)<\/div>");
+            resolvedMentions.AddRange(matches.Select(x => x.Groups[1].Value).Distinct());
+            noteModel.Mentions = new List<Person>();
+            foreach (var m in resolvedMentions)
+            {
+                // Extract the name from the match
+                var match = managers.FirstOrDefault(x => x.Name.Equals(m, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    noteModel.Mentions.Add(match);
+                }
+            }
+
+            // Get list of all new RTP-XXX references in the note content
+            var newRtpRefs = new List<string>();
             matches = Regex.Matches(noteModel.HtmlContent, @"#RTP-\w+", RegexOptions.IgnoreCase);
-            rtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
+            newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
-            foreach (var r in rtpRefs)
+            foreach (var r in newRtpRefs)
             {
                 var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)

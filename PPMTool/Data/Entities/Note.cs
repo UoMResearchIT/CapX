@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
@@ -23,6 +24,8 @@ namespace PPMTool.Data.Entities
         public Person Editor { get; set; }
 
         public bool IsFinanceInfo { get; set; }
+
+        public ICollection<Person> Mentions { get; set; }
 
         internal string GetNoteEditorText()
         {
