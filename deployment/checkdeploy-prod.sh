@@ -2,7 +2,7 @@
 
 cd ~/CapX
 git fetch
-git checkout dev
+git checkout release
 output=$(git rev-list --left-right --count HEAD...@{upstream} | cut -f2)
 
 if [ "$output" -gt 0 ]; then
