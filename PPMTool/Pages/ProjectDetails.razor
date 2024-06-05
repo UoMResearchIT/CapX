@@ -21,9 +21,6 @@
         <div class="col-auto">
             <RadzenButton Click=@EditProject Text="Edit" Icon="edit" Disabled=!EditAuthorised />
         </div>
-        <div class="col-auto">
-            <RTPButtonComponent Page=@this Project=project Disabled=!EditAuthorised />
-        </div>
     </div>
     <hr />
     @if (project != null)

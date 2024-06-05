@@ -40,15 +40,14 @@
                                 Text="@project.ProjectStatus.ToNiceString()" />
                         </div>
                         <div class="col-auto">
+                            <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
+                        </div>
+                        <div class="col-auto">
                             <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, project))">
                                 <ChildContent>
                                     <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
-                                    <RadzenSplitButtonItem Text="Edit Project" Value="Edit" />
                                 </ChildContent>
                             </RadzenSplitButton>
-                        </div>
-                        <div class="col-auto">
-                            <RTPButtonComponent Page=@this Project=project />
                         </div>
                     </div>
                     <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />

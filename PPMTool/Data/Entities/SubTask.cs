@@ -511,6 +511,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether a task is currently running or will run in the future and returns the unmet demand. Returns zero if in the past even if it has unmet demand.
+        /// </summary>
+        /// <returns></returns>
+        public double GetUnmetDemandNowAndInFuture()
+        {
+            return IsWithin(DateTime.Today) || StartDate > DateTime.Today ? UnmetDemand : 0;
+        }
+
+        /// <summary>
         /// Method to get the amount of work planned for this task from its start to the end of the week
         /// assuming the date time provided is a Monday.
         /// </summary>

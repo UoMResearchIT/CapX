@@ -50,6 +50,25 @@ namespace PPMTool.Data.Entities
         public InnateCode InnateActivity { get; set; }
 
         /// <summary>
+        /// HTML formatted text representing the description of the project
+        /// </summary>
+        [Required]
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Link to the scrum project on GitHub Projects
+        /// </summary>
+        [DataType(DataType.Url)]
+        public string ScrumProjectLink { get; set; }
+
+        /// <summary>
+        /// Link to the RSE request document on SharePoint
+        /// </summary>
+        [Required]
+        [DataType(DataType.Url)]
+        public string RequestDocLink { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -63,18 +82,53 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
                 new StatusMessage("A task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasUnmetDemand())),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Warning, () => Budget == 0),
+                new StatusMessage("This project has started but has no link to its project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
                 new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming()),
-                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => HasNoRTPNumber()),
+                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
+                new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
+                new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
+                new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasks()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
 
-        public bool HasNoRTPNumber()
+        /// <summary>
+        /// Whether a project has no sub tasks
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoTasks()
         {
-            return RTP == 0;
+            return SubTasks == null || SubTasks.Count == 0;
+        }
+
+        /// <summary>
+        /// Whether a project has no description
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoDescription()
+        {
+            return string.IsNullOrWhiteSpace(Description);
+        }
+
+        /// <summary>
+        /// Today is within [startdate enddate] and there is no scrum project link
+        /// </summary>
+        /// <returns></returns>
+        private bool HasStartedButHasNoScrumProjectLink()
+        {
+            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && string.IsNullOrWhiteSpace(ScrumProjectLink);
+        }
+
+        /// <summary>
+        /// Has no URL in the request doc link field
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoRequestDocLink()
+        {
+            return string.IsNullOrWhiteSpace(RequestDocLink);
         }
 
 
@@ -112,6 +166,15 @@ namespace PPMTool.Data.Entities
         public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
         {
             return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Today.AddMonths(1) >= StartDate;
+        }
+
+        /// <summary>
+        /// Check whether this project has any tasks with unmet demand excluding tasks that ran in the past
+        /// </summary>
+        /// <returns></returns>
+        internal bool HasUnmetDemandNowOrInFuture()
+        {
+            return SubTasks.Where(x => x.IsWithin(DateTime.Today) || x.StartDate > DateTime.Today).Any(x => x.HasUnmetDemand());
         }
 
         /// <summary>
