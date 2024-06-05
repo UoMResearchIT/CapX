@@ -38,10 +38,14 @@ namespace PPMTool.Services
                 IsBodyHtml = true,
             };
 
+#if !LOCAL
             foreach (var recipient in to)
             {
                 mailMessage.To.Add(recipient);
             }
+#else
+            mailMessage.To.Add("mbgm6ah3@manchester.ac.uk");
+#endif
 
             try
             {
@@ -116,16 +120,38 @@ namespace PPMTool.Services
                     body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
                     var subject = Configuration["Email:AbsenceEmailSubject"];
                     var role = RolesService.GetAll(context).Where(x => x.Person == pm);
-                    IEnumerable<string> recipients =
-#if LOCAL
-                        new[] { "mbgm6ah3@manchester.ac.uk" };
-#else
-                    role.Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ? $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
-#endif
+                    IEnumerable<string> recipients = role
+                        .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
+                            $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                     SendEmail(recipients, subject, body.ToString());
                 }
 
             });
+        }
+
+        internal void SendMentionAndOwnerEmailNotifications(PPMToolContext context, Note note, bool isUpdate)
+        {
+            var roles = RolesService.GetAll(context);
+            foreach (var m in note.Mentions)
+            {
+                // Create email body
+                StringBuilder body = new StringBuilder();
+                body.Append($"<p>Dear {m.Name},</p>");
+                var content = isUpdate ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
+                body.Append($"<p>{content}</p>");
+
+                // Include the full message from the note
+                body.Append($"<p>{note.HtmlContent}</p>");
+
+                // Send email
+                body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
+                var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
+                var role = RolesService.GetAll(context).Where(x => x.Person == m);
+                IEnumerable<string> recipients = role
+                    .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
+                        $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
+                SendEmail(recipients, subject, body.ToString());
+            }
         }
     }
 }
