@@ -9,7 +9,10 @@ As of v1.6, the app is integrated with UoM CAS with local access to restricted p
 The production version of CapX uses the DS CAS and users with a standard UoM user account can authenticate. The development version of CapX authenticates using the PPAD CAS instance; users will need a UoM PPAD account to use the development version.
 
 ## Automated Deployment
-CapX makes use of automated deployment. As the VMs are on the University private network, they are not visible to GitHub so we cannot simply use a GitHub action to auto-deploy. Instead, the VMs run a cron job which long-polls the repository every 10 minutes, using `git fetch` and `git status` to determine programmtically whether the source code on the VM is behind the remote. If it is, it will pull the latest source code for the `release` branch (production VM) or `dev` branch (development VM), authenticating with GitHUb using an SSH key, and then build the software, apply data base migrations and restart the web services. The development build script additionally copies the database from the production VM prior to applying migrations to ensure the development version is tested on real data. Deployment scripts can be found in the repo.
+CapX makes use of automated deployment. As the VMs are on the University private network, they are not visible to GitHub so we cannot simply use a GitHub action to auto-deploy. Instead, the VMs run a cron job which long-polls the repository every 10 minutes, using `git fetch` and `git status` to determine programmtically whether the source code on the VM is behind the remote. If it is, it will pull the latest source code for the `release` branch (production VM) or `dev` branch (development VM), authenticating with GitHUb using an SSH key, and then build the software, apply data base migrations and restart the web services. The development build script additionally copies the database from the production VM prior to applying migrations to ensure the development version is tested on real data. Deployment scripts can be found in the `deployment` folder in the repo.
 
 ## Documentation and User Guides
-User guides are now available in the Wiki associated with this repository rather than the Readme as before.
+All documentation is now available in the Wiki associated with this repository rather than the Readme as before.
+
+### Known Issues
+1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.

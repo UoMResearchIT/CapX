@@ -1,0 +1,35 @@
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Data
+@using static PPMTool.Data.StatusMessage
+
+@if (ShowMessages && Messages != null)
+{
+    var activeMessages = IgnoreStatus ? Messages : Messages.Where(x => x.Status).ToList();
+    @foreach (var message in activeMessages)
+    {
+        <StatusMessageComponent Message=message />
+    }
+}
+else
+{
+    <div class="row">
+        <div class="col-auto">
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Success" />
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Info" />
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Warning" />
+                <StatusMessageIconComponent Messages=@Messages Type="MessageType.Error" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IList<StatusMessage> Messages { get; set; }
+
+    [Parameter]
+    public bool ShowMessages { get; set; } = true;
+
+    [Parameter]
+    public bool IgnoreStatus { get; set; } = false;
+}

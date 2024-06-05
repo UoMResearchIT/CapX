@@ -1,0 +1,89 @@
+﻿@page "/addabsence/{PersonId:int}"
+@inherits AddPersonProperty<Absence>
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+
+<div class="container">
+    @if (personModel != null)
+    {
+        <h1>Absences</h1>
+        <hr />
+        <div class="card">
+            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="row">
+                    <div class="col">
+                        <h2>Current Absences</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                    </div>
+                </div>
+                <RadzenDataGrid @ref="dataGrid"
+                                AllowFiltering="true"
+                                AllowPaging="true"
+                                PageSize="15"
+                                AllowSorting="true"
+                                ShowPagingSummary="true"
+                                EditMode="DataGridEditMode.Single"
+                                FilterMode="FilterMode.Simple"
+                                Data="@dataGridEntities"
+                                TItem="Absence"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="Absence" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Absence" Property="StartDate" Title="Start of Absence" Width="180px" MinWidth="10px">
+                            <Template Context="a">
+                                @a.StartDate.ToShortDateString()
+                            </Template>
+                            <EditTemplate Context="a">
+                                <RadzenDatePicker @bind-Value="a.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Absence" Property="EndDate" Title="End of Absence (inclusive)" Width="180px" MinWidth="10px">
+                            <Template Context="a">
+                                @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                            </Template>
+                            <EditTemplate Context="a">
+                                <RadzenDatePicker @bind-Value="a.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Absence" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
+                            <Template Context="c">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                            </Template>
+                            <EditTemplate Context="c">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))">
+                                </RadzenButton>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))">
+                                </RadzenButton>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))">
+                                </RadzenButton>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                    </div>
+                </div>
+                @if (errorMessage != null)
+                {
+                    <br />
+                    <StatusMessageComponent Message=@errorMessage />
+                }
+            </EditForm>
+        </div>
+    }
+</div>

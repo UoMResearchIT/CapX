@@ -1,6 +1,7 @@
 ﻿@page "/addavailabilitychange/{PersonId:int}"
-@inherits DataGridPage<AvailabilityChange>
+@inherits AddPersonProperty<AvailabilityChange>
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     @if (personModel != null)
@@ -51,7 +52,7 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
                                 </RadzenButton>
@@ -76,9 +77,10 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                     </div>
                 </div>
-                @if (!isValid)
+                @if (errorMessage != null)
                 {
-                    <p style="color: red">You cannot have multiple changes in availability on the same day!</p>
+                    <br />
+                    <StatusMessageComponent Message=@errorMessage />
                 }
             </EditForm>
         </div>

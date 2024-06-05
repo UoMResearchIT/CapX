@@ -40,18 +40,21 @@
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.Contains" MinWidth="10px">
                         <Template Context="p">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
-                            </RadzenButton>
+                            <span style="display: flex; align-items: center">
+                                @if (p.IsCurrentlyAbsent())
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="info" IconStyle="IconStyle.Info" title=@($"Person is currently absent!") />
+                                }
+                                @p.Name
+                            </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.Contains" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="DayRate" Title="Day Rate" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" Width="50px" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="Availability Changes" Sortable="false" MinWidth="10px">
                         <Template Context="p">
                             @string.Join(" | ", p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.AvailabilityFTE}"))
@@ -60,6 +63,12 @@
                     <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
                         <Template Context="p">
                             @string.Join(',', p.SkillTags.Select(t => t.Name))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
+                        <Template Context="p">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
+                            </RadzenButton>
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>

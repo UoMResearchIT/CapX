@@ -15,7 +15,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// This is the day rate associated with this resource assignment.
         /// If this is null when creating the resource, it will be assigned based
-        /// on the default day rate for the person.
+        /// on the default day rate for the project.
         /// </summary>
         [DataType(DataType.Currency)]
         public double? DayRate { get; set; }
@@ -24,15 +24,15 @@ namespace PPMTool.Data.Entities
 
         public bool IsProvisional { get; set; }
 
-        private bool useDefaultDayRate = true;
-        public bool UseDefaultDayRate
+        private bool useProjectDayRate = true;
+        public bool UseProjectDayRate
         {
-            get => useDefaultDayRate;
+            get => useProjectDayRate;
             set
             {
-                if (useDefaultDayRate != value)
+                if (useProjectDayRate != value)
                 {
-                    useDefaultDayRate = value;
+                    useProjectDayRate = value;
 
                     // Set the day rate
                     if (!value) DayRate = 0;

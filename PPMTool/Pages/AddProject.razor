@@ -5,7 +5,7 @@
 @using PPMTool.Pages.Components
 
 <div class="container">
-    @if (ProjectId < 0)
+    @if (ProjectId <= 0)
     {
         <h1>Add Project</h1>
     }
@@ -28,17 +28,23 @@
     }
     <hr />
     <div class="card">
-        <EditForm @ref="ProjectForm" Model="@projectModel" OnSubmit="HandleSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <EditForm EditContext="editContext" OnSubmit="HandleSubmit">
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="RTP-" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
                 </div>
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Portfolio" /><br />
-                    <RadzenDropDown class="radzen-dropdown" TValue="Portfolio" @bind-Value="projectModel.Portfolio" Data="@portfolios">
+                    <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
+                    <RadzenDropDown class="radzen-dropdown" TValue="Faculty" @bind-Value="projectModel.Faculty" Data="@faculties" Change="OnFacultyChosen">
+                        <Template Context="x">
+                            @GetNiceString(x)
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="School" /><br />
+                    <RadzenDropDown class="radzen-dropdown" TValue="School" @bind-Value="projectModel.School" Data="@schools">
                         <Template Context="x">
                             @GetNiceString(x)
                         </Template>
@@ -78,11 +84,21 @@
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Innate Activity" /><br />
-                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" />
+                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" AllowClear="true"
+                                    LoadData="@LoadInnateDropdownData">
+                        <Template Context="activity">
+                            @activity.GetCodeAsString()
+                        </Template>
+                    </RadzenDropDown>
                 </div>
             </div>
 
             <div class="row">
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
+                </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" />
@@ -92,10 +108,11 @@
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
                 </div>
             </div>
-
+            <DataAnnotationsValidator />
+            <ValidationSummary />
             <div>
                 <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Click="@(()=> { gotoDetails = true; discardChanges = false; })" Disabled=!EditAuthorised />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > -1; discardChanges = true; })" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" Text="Discard" Icon="close" Click="@(()=> { gotoDetails = ProjectId > 0; discardChanges = true; })" />
             </div>
         </EditForm>
     </div>

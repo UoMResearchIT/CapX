@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,7 @@ namespace PPMTool.Services
 
         public override int Add(PPMToolContext context, Role entity)
         {
-            if (GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName()))
+            if (DuplicateDetected(context, entity))
             {
                 // Duplicate found
                 return -1;
@@ -30,6 +31,11 @@ namespace PPMTool.Services
             context.Roles.Add(entity);
             context.SaveChanges();
             return entity.RoleId;
+        }
+
+        public override bool DuplicateDetected(PPMToolContext context, Role entity)
+        {
+            return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.RoleId != entity.RoleId);
         }
 
         public override void Delete(PPMToolContext context, Role entity)
@@ -45,10 +51,16 @@ namespace PPMTool.Services
                 .ToList();
         }
 
-        public override void Update(PPMToolContext context, Role entity)
+        public override int Update(PPMToolContext context, Role entity)
         {
+            if (DuplicateDetected(context, entity))
+            {
+                // Duplicate found
+                return -1;
+            }
             context.Roles.Update(entity);
             context.SaveChanges();
+            return entity.RoleId;
         }
 
         public void SeedSuperUser()
@@ -91,6 +103,13 @@ namespace PPMTool.Services
                 return match.RoleType;
             }
             return RoleType.None;
+        }
+
+        public void UpdateLastLoggedIn(PPMToolContext context, Role roleEntity)
+        {
+            roleEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Roles.Update(roleEntity);
+            context.SaveChanges();
         }
     }
 }

@@ -20,7 +20,10 @@ namespace PPMTool.Data.Entities
         public string PI { get; set; }
 
         [Required]
-        public Portfolio Portfolio { get; set; }
+        public Faculty Faculty { get; set; }
+
+        [Required]
+        public School School { get; set; }
 
         public Person ProjectManager { get; set; }
 
@@ -33,6 +36,9 @@ namespace PPMTool.Data.Entities
         public double Budget { get; set; }
 
         [Required]
+        public double DayRate { get; set; }
+
+        [Required]
         public double FundsReceived { get; set; }
 
         [Required]
@@ -41,8 +47,72 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The Innate Activity Code to which this work is booked on the timesheeting system
         /// </summary>
-        [Required]
-        public string InnateActivity { get; set; } = ResourceHelper.GetDefaultInnateActivity();
+        public InnateCode InnateActivity { get; set; }
+
+        /// <summary>
+        /// Constructor also adds default status messages
+        /// </summary>
+        public Project()
+        {
+            // Generate status messages to be maintained against a project
+            statusMessages = new List<StatusMessage>
+            {
+                new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.WillStartWithinAMonth())),
+                new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasStartedInTheLastWeek())),
+                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek())),
+                new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
+                new StatusMessage("A task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasUnmetDemand())),
+                new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Warning, () => Budget == 0),
+                new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
+                new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
+                new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
+                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming()),
+                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => HasNoRTPNumber()),
+                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
+            };
+        }
+
+        public bool HasNoRTPNumber()
+        {
+            return RTP == 0;
+        }
+
+
+        /// <summary>
+        /// Checks whether this project is inactive, not cancelled but there are tasks that are currently running
+        /// </summary>
+        /// <returns></returns>
+        public bool RunningTaskButInactive()
+        {
+            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsCancelled();
+        }
+
+        /// <summary>
+        /// Checks whether this project is active but there are no tasks that are currently running
+        /// </summary>
+        /// <returns></returns>
+        public bool ActiveButNoRunningTask()
+        {
+            return SubTasks.All(x => !x.IsCurrentlyRunning()) && (ProjectStatus == ProjectStatus.Active || ProjectStatus == ProjectStatus.Maintenance);
+        }
+
+        /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no project manager assigned
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoPM()
+        {
+            return !ProjectStatus.IsFinishedOrCancelled() && ProjectManager == null;
+        }
+
+        /// <summary>
+        /// Checks whether this project is not finished or cancelled but has no Innate Code
+        /// </summary>
+        /// <returns></returns>
+        public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
+        {
+            return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Today.AddMonths(1) >= StartDate;
+        }
 
         /// <summary>
         /// Updates the project summary based on the current state of subtasks and resources then updates the database

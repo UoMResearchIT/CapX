@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -22,7 +24,15 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "pm")]
+        public string ProjectManagerShortName { get; set; }
+
         private IEnumerable<Project> projects;
+        private IEnumerable<Project> ownedProjects;
         private Role userRole;
 
         private bool includeFinished;
@@ -63,20 +73,16 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            loading = true;
+            Loading = true;
 
-            // Store the role of the user
-            if (!EditAuthorised)
+            // Look up the username
+            var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
+            userRole = RoleService.GetByUsername(context, uname);
+
+            // Log any time there is no role returned?
+            if (userRole == null)
             {
-                // Look up the username
-                var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-                userRole = RoleService.GetByUsername(context, uname);
-
-                // Log any time there is no role returned?
-                if (userRole == null)
-                {
-                    LogError($"{uname}: Role is null!");
-                }
+                LogError($"{uname}: Role is null!");
             }
             LogInformation("Viewing project grid");
         }
@@ -115,16 +121,51 @@ namespace PPMTool.Pages
                 proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person))).ToList();
             }
 
-            // Remove the ones that are not active for the data grid if necessary
-            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled()).ToList();
+            // Remove the ones that are not active if necessary
+            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
+
+            // Filter owned projects to only show active ones
+            ownedProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
+
+            // Extract the owned projects
+            if (ProjectManagerShortName != null)
+            {
+                if (ProjectManagerShortName.ToLower() == "alerts")
+                {
+                    // Show just the list of alerts for all
+                    ownedProjects = ownedProjects.Where(x =>
+                    {
+                        x.UpdateStatusMessages();
+                        return x.HasActiveStatusMessages();
+                    }).ToList();
+                }
+                else if (ProjectManagerShortName.ToLower() == "errors")
+                {
+                    // Show just the list of errors for all
+                    ownedProjects = ownedProjects.Where(x =>
+                    {
+                        x.UpdateStatusMessages();
+                        return x.HasActiveErrorMessages();
+                    }).ToList();
+                }
+                else
+                {
+                    // Use query string to see someone else's list of cards
+                    ownedProjects = ownedProjects.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                }
+            }
+            else
+            {
+                // Show just the logged in user's projects
+                ownedProjects = ownedProjects.Where(x => x.ProjectManager == userRole.Person).ToList();
+            }
 
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
             {
-                Debug.WriteLine($"** Updating project summary data for {proj.Count} project(s)...");
-                for (int i = 0; i < proj.Count; ++i)
+                Debug.WriteLine($"** Updating project summary data for {ownedProjects.Count()} project(s) that I own...");
+                foreach (var p in ownedProjects)
                 {
-                    var p = proj[i];
                     p.UpdateProjectSummary();
                     ProjectService.Update(context, p);
                 }
@@ -134,19 +175,42 @@ namespace PPMTool.Pages
             projects = proj;
 
             // Disable spinner now load complete
-            loading = false;
+            Loading = false;
 
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private void ProjectDetails(int id)
+        private async Task NavigateToProjectDetails(int id, bool newWindow = false)
         {
-            Navigation.NavigateTo($"/projectdetails/{id}");
+            if (newWindow)
+            {
+                await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+            }
+            else
+            {
+                Navigation.NavigateTo($"/projectdetails/{id}");
+            }
         }
 
         private void AddProject()
         {
             Navigation.NavigateTo($"/addproject/-1");
+        }
+
+        private async Task DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
+        {
+            if (item == null)
+            {
+                await NavigateToProjectDetails(project.ProjectId);
+            }
+            else if (item.Value == "NewWindow")
+            {
+                await NavigateToProjectDetails(project.ProjectId, true);
+            }
+            else if (item.Value == "Edit")
+            {
+                Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            }
         }
     }
 }

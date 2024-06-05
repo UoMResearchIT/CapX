@@ -1,6 +1,3 @@
-﻿<div class="col-auto">
-    <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning"/>
-</div>
-<div class="col">
-    <RadzenText style="color: var(--rz-warning)" Text=@("Only the project manager or a superuser is authorised to edit project details!") />
-</div>
+﻿@using PPMTool.Data
+
+<StatusMessageComponent Message=@(new StatusMessage("Only the project manager or a superuser is authorised to edit project details!", StatusMessage.MessageType.Warning)) />

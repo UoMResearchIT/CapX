@@ -1,7 +1,6 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+html, body {   
 }
 
 a, .btn-link {
@@ -18,6 +17,7 @@ a, .btn-link {
 
 .card {
     padding: 10px;
+    width: 100%;
 }
 
 .content {
@@ -133,50 +133,14 @@ select {
     width: 100%;
 }
 
-@media (min-width: 576px) {
-    .container {
-        max-width: 540px;
-    }
+.container {
+    max-width: 100%;
 }
 
-@media (min-width: 768px) {
-    .container {
-        max-width: 720px;
-    }
+.vr {
+    border-left: 1px solid rgba(0, 0, 0, .1);
+    height: 100%;
 }
 
-@media (min-width: 800px) {
-    .container {
-        max-width: 762px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .container {
-        max-width: 816px;
-    }
-}
-
-@media (min-width: 1280px) {
-    .container {
-        max-width: 1024px;
-    }
-}
-
-@media (min-width: 1600px) {
-    .container {
-        max-width: 1390px;
-    }
-}
-
-@media (min-width: 1920px) {
-    .container {
-        max-width: 1710px;
-    }
-}
-
-@media (min-width: 2560px) {
-    .container {
-        max-width: none;
-    }
+.note-content {
 }

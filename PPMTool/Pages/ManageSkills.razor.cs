@@ -46,8 +46,8 @@ namespace PPMTool.Pages
                 }
 
                 // Remove tag
-                LogInformation($"Delete Tag {entity.Name}");
                 dataGridEntityService.Delete(context, entity);
+                LogInformation($"Deleted Tag {entity.Name}");
 
                 await dataGrid.Reload();
             }

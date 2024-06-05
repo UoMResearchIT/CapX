@@ -4,7 +4,7 @@ namespace PPMTool.Data
 {
     /// <summary>
     /// Represents an aggregation of the assignments of a particular person for the purposes of plotting.
-    /// Can hold a couple of values that can vary in menaing depending on the chart being used.
+    /// Can hold a couple of values that can vary in meaning depending on the chart being used.
     /// </summary>
     public class ChartItem
     {
@@ -22,7 +22,17 @@ namespace PPMTool.Data
 
         public bool IsHatched { get; }
 
-        public ChartItem(string colour, string label, DateTime start, DateTime end, double value1, double value2, bool isHatched)
+        public string TooltipMessages { get; }
+
+        public ChartItem(
+            string colour,
+            string label,
+            DateTime start,
+            DateTime end,
+            double value1,
+            double value2,
+            bool isHatched,
+            string tooltipMessages = null)
         {
             StartDate = start;
             EndDate = end;
@@ -31,6 +41,7 @@ namespace PPMTool.Data
             Label = label;
             Colour = colour;
             IsHatched = isHatched;
+            TooltipMessages = tooltipMessages;
         }
 
         /// <summary>

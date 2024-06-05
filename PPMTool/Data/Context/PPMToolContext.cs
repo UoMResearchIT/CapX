@@ -7,6 +7,7 @@ namespace PPMTool.Data.Context
 {
     public class PPMToolContext : DbContext
     {
+        public DbSet<InnateCode> InnateCodes { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
@@ -14,6 +15,7 @@ namespace PPMTool.Data.Context
         public DbSet<Resource> Resources { get; set; }
         public DbSet<SkillTag> SkillTags { get; set; }
         public DbSet<AvailabilityChange> AvailabilityChanges { get; set; }
+        public DbSet<Note> Notes { get; set; }
 
         /// <summary>
         /// Inject options.

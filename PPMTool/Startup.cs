@@ -18,9 +18,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool
 {
@@ -46,11 +46,15 @@ namespace PPMTool
 
             services.AddBlazoredSessionStorage();
 
+            services.AddScoped<InnateCodeService>();
             services.AddScoped<RolesService>();
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
             services.AddScoped<TagService>();
+            services.AddScoped<EmailService>();
+            services.AddScoped<NoteService>();
+            services.AddScoped<DialogService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -143,9 +147,6 @@ namespace PPMTool
 
             // Seed the superuser
             roleService.SeedSuperUser();
-
-            // Initialise the Resource Helper
-            ResourceHelper.Initialise();
         }
 
         private async Task OnCreatingTicket(CasCreatingTicketContext context)
@@ -178,7 +179,22 @@ namespace PPMTool
                 }
 
                 await context.HttpContext.SignInAsync(context.Principal);
+
+                // Update last logged in and log
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
+                var roleService = context.HttpContext.RequestServices.GetRequiredService<RolesService>();
+                if (roleService != null)
+                {
+                    if (role != null)
+                    {
+                        roleService.UpdateLastLoggedIn(dbContext, role);
+                    }
+                }
+                else
+                {
+                    logger?.LogError("RoleService not found! Cannot update last logged in!");
+                }
+
                 logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
             }
         }
