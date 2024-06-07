@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -30,7 +31,10 @@ namespace PPMTool.Pages
         private IJSRuntime JSRuntime { get; set; }
 
         [Inject]
-        public EmailService EmailService { get; set; }
+        private EmailService EmailService { get; set; }
+
+        [Inject]
+        private IConfiguration Configuration { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -413,7 +417,7 @@ namespace PPMTool.Pages
                 var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"{Configuration["HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
                 }
                 else
                 {

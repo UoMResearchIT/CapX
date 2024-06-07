@@ -131,27 +131,42 @@ namespace PPMTool.Services
 
         internal void SendMentionAndOwnerEmailNotifications(PPMToolContext context, Note note, bool isUpdate)
         {
-            var roles = RolesService.GetAll(context);
-            foreach (var m in note.Mentions)
+            Task.Run(() =>
             {
-                // Create email body
-                StringBuilder body = new StringBuilder();
-                body.Append($"<p>Dear {m.Name},</p>");
-                var content = isUpdate ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
-                body.Append($"<p>{content}</p>");
+                var roles = RolesService.GetAll(context);
+                foreach (var m in note.Mentions)
+                {
+                    // Create email body
+                    StringBuilder body = new StringBuilder();
 
-                // Include the full message from the note
-                body.Append($"<p>{note.HtmlContent}</p>");
+                    // Inject the CSS for styling
+                    body.Append($"{Configuration["Email:EmailBadgeStyling"]}");
 
-                // Send email
-                body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
-                var role = RolesService.GetAll(context).Where(x => x.Person == m);
-                IEnumerable<string> recipients = role
-                    .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
-                        $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
-                SendEmail(recipients, subject, body.ToString());
-            }
+                    body.Append($"<p>Dear {m.Name},</p>");
+                    var content = isUpdate ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
+                    body.Append($"<p>{content}</p>");
+                    body.Append("<hr />");
+
+                    // Include author info as bold
+                    body.Append($"<b>{note.GetNoteAuthorText()}</b>");
+
+                    // Include the full message from the note
+                    body.Append($"<p>{note.HtmlContent}</p>");
+
+                    // Include editor info as italics
+                    body.Append($"<i>{note.GetNoteEditorText()}</i>");
+                    body.Append("<hr />");
+
+                    // Send email
+                    body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
+                    var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
+                    var role = RolesService.GetAll(context).Where(x => x.Person == m);
+                    IEnumerable<string> recipients = role
+                        .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
+                            $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
+                    SendEmail(recipients, subject, body.ToString());
+                }
+            });
         }
     }
 }
