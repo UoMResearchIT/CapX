@@ -58,6 +58,11 @@ namespace PPMTool.Enums
 
     static class ProjectStatusExtensions
     {
+        /// <summary>
+        /// Project status is one of the cancelled states or finished
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
         public static bool IsFinishedOrCancelled(this ProjectStatus status)
         {
             return
@@ -67,6 +72,11 @@ namespace PPMTool.Enums
                 status == ProjectStatus.CancelledNoResource;
         }
 
+        /// <summary>
+        /// Project status is one of the cancelled states
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
         public static bool IsCancelled(this ProjectStatus status)
         {
             return
@@ -75,12 +85,16 @@ namespace PPMTool.Enums
                 status == ProjectStatus.CancelledNoResource;
         }
 
+        /// <summary>
+        /// Project status is unfunded or cancelled
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
         public static bool IsUnconfirmed(this ProjectStatus status)
         {
             return
-                status != ProjectStatus.Funded &&
-                status != ProjectStatus.Active &&
-                status != ProjectStatus.Maintenance;
+                status.IsCancelled() ||
+                status == ProjectStatus.Unfunded;
         }
     }
 }
