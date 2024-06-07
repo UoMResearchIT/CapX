@@ -154,7 +154,7 @@ namespace PPMTool.Services
                     body.Append($"<p>{note.HtmlContent}</p>");
 
                     // Include editor info as italics
-                    body.Append($"<i>{note.GetNoteEditorText()}</i>");
+                    body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
                     body.Append("<hr />");
 
                     // Send email
