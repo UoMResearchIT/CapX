@@ -25,32 +25,30 @@
             foreach (var project in ownedProjects.OrderBy(x => x.ProjectStatus))
             {
                 <div class="card my-1">
-                    <div class=row style="align-items:center">
-                        <div class="col-auto">
-                            <RadzenText TextStyle="TextStyle.H5" Text="@project.GetFullName()" />
-                        </div>
-                        <div class="col">
-                            <RadzenBadge
-                                Style="margin-bottom: 0.5rem"
-                                BadgeStyle="@(
-                                    project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light : 
-                                    project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success : 
-                                    project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                    BadgeStyle.Light)"
-                                Text="@project.ProjectStatus.ToNiceString()" />
-                        </div>
-                        <div class="col-auto">
-                            <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
-                        </div>
-                        <div class="col-auto">
-                            <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, project))">
-                                <ChildContent>
-                                    <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
-                                </ChildContent>
-                            </RadzenSplitButton>
-                        </div>
-                    </div>
-                    <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"AlignItems="AlignItems.Center">
+                                <RadzenText TextStyle="TextStyle.H5" Text="@project.GetFullName()" />
+                                <RadzenBadge
+                                    Style="margin-bottom: 0.5rem"
+                                    BadgeStyle="@(
+                                        project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light : 
+                                        project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success : 
+                                        project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                        BadgeStyle.Light)"
+                                    Text="@project.ProjectStatus.ToNiceString()" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+                                <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
+                                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, project))">
+                                    <ChildContent>
+                                        <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
+                                    </ChildContent>
+                                </RadzenSplitButton>
+                            </RadzenStack>
+                        </RadzenStack>
+                        <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+                    </RadzenStack>
                 </div>
             }
         }

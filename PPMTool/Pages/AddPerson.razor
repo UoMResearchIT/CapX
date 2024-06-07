@@ -5,15 +5,15 @@
 
 <div class="container">
     <div class="row">
-        <div class="col-auto mr-auto">
+        <div class="col mr-auto">
             @if (personModel == null)
             {
                 <h1>Add Person</h1>
             }
             else
             {
-                <h1>Edit @personModel.Name</h1>
-
+                <h1>Edit <i>@personModel.Name</i></h1>
+                <hr />
                 <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
             }
         </div>
@@ -56,6 +56,7 @@
                             <h3>Skill Tags</h3>
                         </div>
                     </div>
+                    <hr />
                     <div class="row">
                         <div class="col-auto flexbox">
                             <RadzenIcon Icon="search" />
@@ -104,6 +105,7 @@
                             <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" />
                         </div>
                     </div>
+                    <hr />
                     <RadzenDataList AllowVirtualization=true
                                     Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
                                     WrapItems="false"
@@ -138,6 +140,7 @@
                             <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" />
                         </div>
                     </div>
+                    <hr />
                     <RadzenDataList AllowVirtualization=true
                                     Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
                                     WrapItems="false"

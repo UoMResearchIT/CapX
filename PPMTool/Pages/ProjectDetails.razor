@@ -169,6 +169,7 @@
             <RadzenButton Click=@AddTask Text="Add" Icon="add" Disabled=!EditAuthorised />
         </div>
     </div>
+    <hr />
 
     @if (project?.SubTasks == null)
     {
@@ -253,30 +254,14 @@
     <AuthorizeView Roles="Superuser, Manager">
         <Authorized>
             <div class="row align-items-center">
-                <div class="col-auto">
-                    <h2>Notes</h2>
-                </div>
                 <div class="col">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
-                        <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
-                        <RadzenTextBox @bind-Value=@noteSearchTerms
-                                        Placeholder="Search Notes"
-                                        Change=@FilterNotes
-                                        Style="width:100%" />
-                        <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" />
-                    </RadzenStack>
-                </div>
-                <div class="col-auto">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FinanceSwitchToggled" />
-                        <RadzenText Text="Show Only Notes Tagged" Style="margin-bottom: 0.1rem" />
-                        <div class="badge badge-danger">Finance Info</div>
-                    </RadzenStack>
-                </div>
+                    <h2>Notes</h2>
+                </div>               
                 <div class="col-auto">
                     <RadzenButton Visible="@(!editorVisible)" Icon ="add" Text="Add" ButtonStyle="ButtonStyle.Primary" Disabled=!EditAuthorised Click="@AddClicked" />
                 </div>
             </div>
+            <hr />
             <div id="note-editor">
                 <RadzenText Visible=@editorVisible>
                     Use &commat; symbol followed by a person's initials (as it appears on their <a href="people">People</a> entry) to mention them e.g. &commat;alb or &commat;ALB for
@@ -305,8 +290,29 @@
                         </RadzenStack>
                     </div>
                 </div>
-                <hr />
+                @if (editorVisible)
+                {
+                    <hr />
+                }
             </div>
+            <div class="row justify-content-center">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
+                        <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                        <RadzenTextBox @bind-Value=@noteSearchTerms
+                                       Placeholder="Search Notes"
+                                       Change=@FilterNotes
+                                       Style="width:40rem" />
+                        <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FinanceSwitchToggled" />
+                        <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem" />
+                        <div class="badge badge-danger">Finance Info</div>
+                    </RadzenStack>
+                </RadzenStack>
+            </div>
+            <br />
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
                 @if (filteredNotes.Count == 0)
                 {

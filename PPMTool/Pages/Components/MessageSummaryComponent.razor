@@ -6,10 +6,12 @@
 @if (ShowMessages && Messages != null)
 {
     var activeMessages = IgnoreStatus ? Messages : Messages.Where(x => x.Status).ToList();
-    @foreach (var message in activeMessages)
-    {
-        <StatusMessageComponent Message=message />
-    }
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
+        @foreach (var message in activeMessages)
+        {
+            <StatusMessageComponent Message=message />
+        }
+    </RadzenStack>
 }
 else
 {

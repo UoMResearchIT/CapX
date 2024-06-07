@@ -1,44 +1,28 @@
 ﻿@using PPMTool.Data
 @using static PPMTool.Data.StatusMessage
 
-<div class="row">
-    <div class="col-auto">
-        @if (Message.Type == MessageType.Info)
-        {
-            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title=@Message.Message />
-        }
-        else if (Message.Type == MessageType.Warning)
-        {
-            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title=@Message.Message />
-        }
-        else if (Message.Type == MessageType.Error)
-        {
-            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title=@Message.Message />
-        }
-        else
-        {
-            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" title=@Message.Message />
-        }
-    </div>
-    <div class="col">
-        @if (Message.Type == MessageType.Info)
-        {
-            <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
-        }
-        else if (Message.Type == MessageType.Warning)
-        {
-            <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
-        }
-        else if (Message.Type == MessageType.Error)
-        {
-            <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
-        }
-        else
-        {
-            <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
-        }
-    </div>
-</div>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem">
+    @if (Message.Type == MessageType.Info)
+    {
+        <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title=@Message.Message />
+        <RadzenText Style="color: var(--rz-info)" Text=@Message.Message />
+    }
+    else if (Message.Type == MessageType.Warning)
+    {
+        <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title=@Message.Message />
+        <RadzenText Style="color: var(--rz-warning)" Text=@Message.Message />
+    }
+    else if (Message.Type == MessageType.Error)
+    {
+        <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title=@Message.Message />
+        <RadzenText Style="color: var(--rz-danger)" Text=@Message.Message />
+    }
+    else
+    {
+        <RadzenIcon Icon="check" IconStyle="IconStyle.Success" title=@Message.Message />
+        <RadzenText Style="color: var(--rz-success)" Text=@Message.Message />
+    }
+</RadzenStack>
 
 @code {
 

@@ -4,11 +4,11 @@
         <div class="row">
             <div class="col">
                 <div class="row-auto">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
                         <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
                         @if (Note.IsFinanceInfo)
                         {
-                            <div class="badge badge-danger">Finance Info</div>
+                            <div class="badge badge-danger" style="margin-bottom:0.4rem">Finance Info</div>
                         }
                 </RadzenStack>
                 </div>
