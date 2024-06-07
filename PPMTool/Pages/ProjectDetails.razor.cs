@@ -417,7 +417,7 @@ namespace PPMTool.Pages
                 var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"{Configuration["HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
                 }
                 else
                 {
