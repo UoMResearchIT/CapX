@@ -136,12 +136,24 @@ namespace PPMTool.Services
             {
                 // Create email body
                 StringBuilder body = new StringBuilder();
+
+                // Inject the CSS for styling
+                body.Append($"{Configuration["Email:EmailBadgeStyling"]}");
+
                 body.Append($"<p>Dear {m.Name},</p>");
                 var content = isUpdate ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
                 body.Append($"<p>{content}</p>");
+                body.Append("<hr />");
+
+                // Include author info as bold
+                body.Append($"<b>{note.GetNoteAuthorText()}</b>");
 
                 // Include the full message from the note
                 body.Append($"<p>{note.HtmlContent}</p>");
+
+                // Include editor info as italics
+                body.Append($"<i>{note.GetNoteEditorText()}</i>");
+                body.Append("<hr />");
 
                 // Send email
                 body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
