@@ -383,7 +383,7 @@ namespace PPMTool.Pages
                 var match = managers.FirstOrDefault(x => x.ShortName.Equals(m.Substring(1), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m, $"<div class=\"badge badge-primary\">{match.Name}</div>");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m, $"<span class=\"badge badge-primary\">{match.Name}</span>");
                 }
                 else
                 {
@@ -393,7 +393,7 @@ namespace PPMTool.Pages
 
             // Update the mentions list (for notifications) by extracting the formatted tags
             var resolvedMentions = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"<div class=""badge badge-primary"">(.*?)<\/div>");
+            matches = Regex.Matches(noteModel.HtmlContent, @"<span class=""badge badge-primary"">(.*?)<\/span>");
             resolvedMentions.AddRange(matches.Select(x => x.Groups[1].Value).Distinct());
             noteModel.Mentions = new List<Person>();
             foreach (var m in resolvedMentions)
@@ -417,7 +417,7 @@ namespace PPMTool.Pages
                 var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"{Configuration["HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
                 }
                 else
                 {
