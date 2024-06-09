@@ -150,7 +150,9 @@ namespace PPMTool.Services
                     // Include author info as bold
                     body.Append($"<b>{note.GetNoteAuthorText()}</b>");
 
-                    // Include the full message from the note
+                    // Include the full message from the note and swap the badge for inline blue text
+                    //var matches = Regex.Match(note.HtmlContent, "<div class=\"badge.*?</div>");
+                    //content = note.HtmlContent.Replace("<div class=\"badge badge-primary\"", "<div style=\"display: inline; color: blue\"");
                     body.Append($"<p>{note.HtmlContent}</p>");
 
                     // Include editor info as italics
