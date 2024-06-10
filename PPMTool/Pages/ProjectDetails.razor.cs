@@ -263,6 +263,8 @@ namespace PPMTool.Pages
                 popupTriggerString = value;
                 popup.ToggleAsync(htmlEditor.Element);
             }
+
+            // TODO: Capture tab to select first in list?
         }
 
         private async Task OnMentionPopupOpenAsync()
@@ -277,7 +279,7 @@ namespace PPMTool.Pages
             var position = noteModel.HtmlContent.LastIndexOf(popupTriggerString);
             if (position != -1)
             {
-                noteModel.HtmlContent = noteModel.HtmlContent.Remove(position, popupTriggerString.Length).Insert(position, $"<span class=\"badge badge-primary\">{person.Name}</span> ...");
+                noteModel.HtmlContent = noteModel.HtmlContent.Remove(position, popupTriggerString.Length).Insert(position, $"@{person.ShortName}&nbsp; ");
             }
 
             // Close the popup
