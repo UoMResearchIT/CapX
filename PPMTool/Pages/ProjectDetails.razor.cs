@@ -257,6 +257,7 @@ namespace PPMTool.Pages
             {
                 mentionables = temp.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.ShortName.ToLower().StartsWith(searchString.ToLower())).ToList();
             }
+            highlightedPerson = mentionables.FirstOrDefault();
             Debug.WriteLine($"** Filtered mentionables based on \"{searchString}\" giving {mentionables.Count} results.");
         }
 
@@ -273,8 +274,11 @@ namespace PPMTool.Pages
                 htmlEditor.SaveSelectionAsync().ContinueWith(async t =>
                 {
                     // Open the popup if not already open
-                    await popup.ToggleAsync(htmlEditor.Element);
-                    await InvokeAsync(StateHasChanged);
+                    await InvokeAsync(async () =>
+                    {
+                        await popup.ToggleAsync(htmlEditor.Element);
+                        StateHasChanged();
+                    });
                 });
             }
         }
@@ -289,13 +293,11 @@ namespace PPMTool.Pages
         {
             htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
             {
-                await JSRuntime.InvokeVoidAsync("insertAtCursor", htmlEditor.Element, $"@{person.ShortName}&nbsp;");
+                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person.ShortName}");
 
                 // Close the popup
                 SearchString = string.Empty;
                 await popup.CloseAsync();
-
-                // TODO: Focus back on the editor after insertion
             });
         }
 
