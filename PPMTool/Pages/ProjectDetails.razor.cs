@@ -7,12 +7,16 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
+using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
@@ -43,6 +47,20 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "rtp")]
         public int? RTP { get; set; }
 
+        private string searchString = string.Empty;
+        public string SearchString
+        {
+            get => searchString;
+            private set
+            {
+                if (value != searchString)
+                {
+                    searchString = value;
+                    FilterMentionables();
+                }
+            }
+        }
+
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
         private List<SubTask> allTasks;
@@ -62,12 +80,17 @@ namespace PPMTool.Pages
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
+        private Popup popup;
+        private IList<Person> mentionables;
+        private Person highlightedPerson;
+        private RadzenHtmlEditor htmlEditor;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             allProjects = ProjectService.GetAll(context).ToList();
+            FilterMentionables();
 
             // Query string only consulted when Project ID is not specified in URL
             if (ProjectId == null && RTP != null)
@@ -108,7 +131,7 @@ namespace PPMTool.Pages
                             Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                         }
                     },
-                    Legend = new Legend
+                    Legend = new ApexCharts.Legend
                     {
                         Show = false
                     },
@@ -213,6 +236,99 @@ namespace PPMTool.Pages
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
         }
 
+        private void HighlightMention(Person person)
+        {
+            highlightedPerson = person;
+        }
+
+        private void UnHighlightMention(Person person)
+        {
+            highlightedPerson = null;
+        }
+
+        private void FilterMentionables()
+        {
+            var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
+            if (string.IsNullOrWhiteSpace(searchString))
+            {
+                mentionables = temp;
+            }
+            else
+            {
+                mentionables = temp.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.ShortName.ToLower().StartsWith(searchString.ToLower())).ToList();
+            }
+            highlightedPerson = mentionables.FirstOrDefault();
+            Debug.WriteLine($"** Filtered mentionables based on \"{searchString}\" giving {mentionables.Count} results.");
+        }
+
+        private void ProcessEditorInput(KeyboardEventArgs args)
+        {
+            Debug.WriteLine($"** Key pressed in the editor {args.Key}");
+
+            // If it is a mention trigger but not a mention insertion then open the popup
+            if (args.Key == "@")
+            {
+                Debug.WriteLine($"** Opening popup...");
+
+                // Save cursor position
+                htmlEditor.SaveSelectionAsync().ContinueWith(async t =>
+                {
+                    // Open the popup if not already open
+                    await InvokeAsync(async () =>
+                    {
+                        await popup.ToggleAsync(htmlEditor.Element);
+                        StateHasChanged();
+                    });
+                });
+            }
+        }
+
+        private void ProcessMentionSearchInput(KeyboardEventArgs args)
+        {
+            if (args.Key == "Escape")
+            {
+                MentionPerson(null);
+            }
+            else if (args.Key == "Enter" || args.Key == "Tab")
+            {
+                MentionPerson(highlightedPerson);
+            }
+            else if (args.Key == "ArrowDown")
+            {
+                var currentIndex = mentionables.IndexOf(highlightedPerson);
+                if (currentIndex < mentionables.Count - 1)
+                {
+                    highlightedPerson = mentionables[currentIndex + 1];
+                }
+            }
+            else if (args.Key == "ArrowUp")
+            {
+                var currentIndex = mentionables.IndexOf(highlightedPerson);
+                if (currentIndex > 0)
+                {
+                    highlightedPerson = mentionables[currentIndex - 1];
+                }
+            }
+        }
+
+        private async Task OnMentionPopupOpenAsync()
+        {
+            // Focus on the search box
+            await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function(){ document.getElementById('search').focus(); }, 200)");
+        }
+
+        private void MentionPerson(Person person)
+        {
+            htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
+            {
+                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
+
+                // Close the popup
+                SearchString = string.Empty;
+                await popup.CloseAsync();
+            });
+        }
+
         private void FinanceSwitchToggled()
         {
             PopulateNotes();
@@ -280,10 +396,17 @@ namespace PPMTool.Pages
             if (editorVisible)
             {
                 // Scroll to the new editor window after a delay to allow the page to render
-                await Task.Delay(500);
+                await Task.Delay(300);
                 await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
+
             }
             StateHasChanged();
+
+            // Needs to be called after state has changed
+            if (editorVisible)
+            {
+                await htmlEditor.FocusAsync();
+            }
         }
 
         private void AddClicked()
