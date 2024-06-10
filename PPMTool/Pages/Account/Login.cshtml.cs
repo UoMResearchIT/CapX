@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,9 @@ namespace PPMTool.Pages.Account
         private ILogger<LoginModel> _logger;
         private IDbContextFactory<PPMToolContext> _contextFactory;
 
+        [FromQuery(Name = "returnUrl")]
+        public string ReturnUrl { get; set; }
+
         public LoginModel(RolesService rolesService, ILogger<LoginModel> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
             _roleService = rolesService;
@@ -32,7 +36,7 @@ namespace PPMTool.Pages.Account
         public async Task OnGet()
         {
             // Challenge to force authentication
-            var props = new AuthenticationProperties { RedirectUri = "/" };
+            var props = new AuthenticationProperties { RedirectUri = $"{(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl)}" };
             await HttpContext.ChallengeAsync("CAS", props);
         }
 #else
@@ -52,7 +56,7 @@ namespace PPMTool.Pages.Account
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity),
-                new AuthenticationProperties { RedirectUri = "/" }
+                new AuthenticationProperties { RedirectUri = $"{(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl)}" }
             );
 
             // Update last logged in and log
