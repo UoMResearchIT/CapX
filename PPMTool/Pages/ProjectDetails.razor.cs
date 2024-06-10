@@ -396,10 +396,17 @@ namespace PPMTool.Pages
             if (editorVisible)
             {
                 // Scroll to the new editor window after a delay to allow the page to render
-                await Task.Delay(500);
+                await Task.Delay(300);
                 await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
+
             }
             StateHasChanged();
+
+            // Needs to be called after state has changed
+            if (editorVisible)
+            {
+                await htmlEditor.FocusAsync();
+            }
         }
 
         private void AddClicked()
