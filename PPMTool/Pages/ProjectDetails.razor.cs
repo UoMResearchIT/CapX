@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -81,8 +82,7 @@ namespace PPMTool.Pages
         private bool showOnlyFinanceNotes;
         private Popup popup;
         private IList<Person> mentionables;
-
-        private string popupTriggerString = string.Empty;
+        private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
 
         protected override void OnInitialized()
@@ -90,7 +90,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             allProjects = ProjectService.GetAll(context).ToList();
-            mentionables = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            FilterMentionables();
 
             // Query string only consulted when Project ID is not specified in URL
             if (ProjectId == null && RTP != null)
@@ -236,9 +236,19 @@ namespace PPMTool.Pages
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
         }
 
+        private void HighlightMention(Person person)
+        {
+            highlightedPerson = person;
+        }
+
+        private void UnHighlightMention(Person person)
+        {
+            highlightedPerson = null;
+        }
+
         private void FilterMentionables()
         {
-            var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
             if (string.IsNullOrWhiteSpace(searchString))
             {
                 mentionables = temp;
@@ -250,21 +260,23 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Filtered mentionables based on \"{searchString}\" giving {mentionables.Count} results.");
         }
 
-        private void OnHtmlEditorChanged(string value)
+        private void ProcessEditorInput(KeyboardEventArgs args)
         {
-            Debug.WriteLine($"** HTML Editor change {value}");
-            if (value.Contains("@"))
+            Debug.WriteLine($"** Key pressed in the editor {args.Key}");
+
+            // If it is a mention trigger but not a mention insertion then open the popup
+            if (args.Key == "@")
             {
-                var startSearchWith = value.Substring(value.LastIndexOf("@") + 1);
-                startSearchWith = HtmlHelper.ConvertToPlainText(startSearchWith);
-                SearchString = startSearchWith;
+                Debug.WriteLine($"** Opening popup...");
 
-                // Open the popup
-                popupTriggerString = value;
-                popup.ToggleAsync(htmlEditor.Element);
+                // Save cursor position
+                htmlEditor.SaveSelectionAsync().ContinueWith(async t =>
+                {
+                    // Open the popup if not already open
+                    await popup.ToggleAsync(htmlEditor.Element);
+                    await InvokeAsync(StateHasChanged);
+                });
             }
-
-            // TODO: Capture tab to select first in list?
         }
 
         private async Task OnMentionPopupOpenAsync()
@@ -273,18 +285,18 @@ namespace PPMTool.Pages
             await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function(){ document.getElementById('search').focus(); }, 200)");
         }
 
-        private async Task MentionPerson(Person person)
+        private void MentionPerson(Person person)
         {
-            // Replace the last instance of the trigger string in the HTML content
-            var position = noteModel.HtmlContent.LastIndexOf(popupTriggerString);
-            if (position != -1)
+            htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
             {
-                noteModel.HtmlContent = noteModel.HtmlContent.Remove(position, popupTriggerString.Length).Insert(position, $"@{person.ShortName}&nbsp; ");
-            }
+                await JSRuntime.InvokeVoidAsync("insertAtCursor", htmlEditor.Element, $"@{person.ShortName}&nbsp;");
 
-            // Close the popup
-            SearchString = string.Empty;
-            await popup.CloseAsync();
+                // Close the popup
+                SearchString = string.Empty;
+                await popup.CloseAsync();
+
+                // TODO: Focus back on the editor after insertion
+            });
         }
 
         private void FinanceSwitchToggled()
