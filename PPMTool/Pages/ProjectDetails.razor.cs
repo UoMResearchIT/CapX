@@ -283,6 +283,34 @@ namespace PPMTool.Pages
             }
         }
 
+        private void ProcessMentionSearchInput(KeyboardEventArgs args)
+        {
+            if (args.Key == "Escape")
+            {
+                MentionPerson(null);
+            }
+            else if (args.Key == "Enter" || args.Key == "Tab")
+            {
+                MentionPerson(highlightedPerson);
+            }
+            else if (args.Key == "ArrowDown")
+            {
+                var currentIndex = mentionables.IndexOf(highlightedPerson);
+                if (currentIndex < mentionables.Count - 1)
+                {
+                    highlightedPerson = mentionables[currentIndex + 1];
+                }
+            }
+            else if (args.Key == "ArrowUp")
+            {
+                var currentIndex = mentionables.IndexOf(highlightedPerson);
+                if (currentIndex > 0)
+                {
+                    highlightedPerson = mentionables[currentIndex - 1];
+                }
+            }
+        }
+
         private async Task OnMentionPopupOpenAsync()
         {
             // Focus on the search box
@@ -293,7 +321,7 @@ namespace PPMTool.Pages
         {
             htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
             {
-                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person.ShortName}");
+                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
 
                 // Close the popup
                 SearchString = string.Empty;

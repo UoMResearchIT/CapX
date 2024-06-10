@@ -275,22 +275,22 @@
                     </span>.
                     Failed linking, if either the person or project does not exist, will leave the text unchanged.
                 </RadzenText>
-                <RadzenHtmlEditor id="editor-entry" @onkeypress="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
+                <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
 
                 <Popup @ref=popup
                        Lazy=false
                        Open="@OnMentionPopupOpenAsync"
-                       Style="display:none;position:absolute;height:300px;width:450px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
+                       Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
 
-                    <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @oninput=@(args => SearchString = $"{args.Value}") Value="@searchString" />
+                    <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @onkeydown="@(args => ProcessMentionSearchInput(args))" @oninput=@(args => SearchString = $"{args.Value}") Value="@SearchString" autocomplete="off" />
                     <RadzenStack Style="height:100%;overflow:auto;">
                         @foreach (var person in mentionables)
                         {
                             <RadzenCard @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))" MouseLeave="@(args => UnHighlightMention(person))" Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
                                 <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                        <RadzenText Text="@person.ShortName" TextStyle=TextStyle.H6 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" /> 
-                                        <RadzenText Text="@person.Name" TextStyle="TextStyle.H6" />
+                                        <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
+                                        <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" />
                                     </RadzenStack>
                                 </RadzenStack>
                             </RadzenCard>
