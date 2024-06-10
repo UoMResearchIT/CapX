@@ -5,6 +5,7 @@
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+@using Radzen.Blazor.Rendering
 
 <div class="container">
     <div class="row">
@@ -263,18 +264,39 @@
             </div>
             <hr />
             <div id="note-editor">
-                <RadzenText Visible=@editorVisible>
+                <RadzenText TextStyle=TextStyle.Subtitle2 Visible=@editorVisible>
                     Use &commat; symbol followed by a person's initials (as it appears on their <a href="people">People</a> entry) to mention them e.g. &commat;alb or &commat;ALB for
-                    <div class="badge badge-primary">
+                    <span class="badge badge-primary">
                         Anja Le Blanc
-                    </div>.
+                    </span>.
                     They will receive an email notification when the note is saved or updated. Use the # symbol followed by the RTP reference to link to a project e.g. #rtp-24 or #RTP-24 to link to
-                    <div class="badge badge-success">
+                    <span class="badge badge-success">
                         RTP-24 Project Name
-                    </div>.
+                    </span>.
                     Failed linking, if either the person or project does not exist, will leave the text unchanged.
                 </RadzenText>
-                <RadzenHtmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
+                <RadzenHtmlEditor @ref=htmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible Change="OnHtmlEditorChanged"/>
+
+                <Popup @ref=popup Lazy=true Open="@OnMentionPopupOpenAsync"
+                    Style="display:none;position:absolute;height:300px;width:600px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
+                    <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @oninput=@(args => SearchString = $"{args.Value}") Value="@searchString" />
+                    
+                    <RadzenStack Style="height:100%;overflow:auto;">
+                        @foreach (var person in mentionables)
+                        {
+                            <RadzenCard>
+                                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenText Text="@person.Name" />
+                                        <RadzenButton Text="Mention" Click="@(args => MentionPerson(person))" />
+                                    </RadzenStack>
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
+                    </RadzenStack>
+                </Popup>
+
+
                 <div class="row">
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>

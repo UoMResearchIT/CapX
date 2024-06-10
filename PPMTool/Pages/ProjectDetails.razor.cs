@@ -10,9 +10,12 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
+using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
@@ -43,6 +46,20 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "rtp")]
         public int? RTP { get; set; }
 
+        private string searchString = string.Empty;
+        public string SearchString
+        {
+            get => searchString;
+            private set
+            {
+                if (value != searchString)
+                {
+                    searchString = value;
+                    FilterMentionables();
+                }
+            }
+        }
+
         private List<SubTask> confirmedTasks;
         private List<SubTask> provisionalTasks;
         private List<SubTask> allTasks;
@@ -62,12 +79,18 @@ namespace PPMTool.Pages
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
+        private Popup popup;
+        private IList<Person> mentionables;
+
+        private string popupTriggerString = string.Empty;
+        private RadzenHtmlEditor htmlEditor;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             allProjects = ProjectService.GetAll(context).ToList();
+            mentionables = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // Query string only consulted when Project ID is not specified in URL
             if (ProjectId == null && RTP != null)
@@ -108,7 +131,7 @@ namespace PPMTool.Pages
                             Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                         }
                     },
-                    Legend = new Legend
+                    Legend = new ApexCharts.Legend
                     {
                         Show = false
                     },
@@ -211,6 +234,55 @@ namespace PPMTool.Pages
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+        }
+
+        private void FilterMentionables()
+        {
+            var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            if (string.IsNullOrWhiteSpace(searchString))
+            {
+                mentionables = temp;
+            }
+            else
+            {
+                mentionables = temp.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.ShortName.ToLower().StartsWith(searchString.ToLower())).ToList();
+            }
+            Debug.WriteLine($"** Filtered mentionables based on \"{searchString}\" giving {mentionables.Count} results.");
+        }
+
+        private void OnHtmlEditorChanged(string value)
+        {
+            Debug.WriteLine($"** HTML Editor change {value}");
+            if (value.Contains("@"))
+            {
+                var startSearchWith = value.Substring(value.LastIndexOf("@") + 1);
+                startSearchWith = HtmlHelper.ConvertToPlainText(startSearchWith);
+                SearchString = startSearchWith;
+
+                // Open the popup
+                popupTriggerString = value;
+                popup.ToggleAsync(htmlEditor.Element);
+            }
+        }
+
+        private async Task OnMentionPopupOpenAsync()
+        {
+            // Focus on the search box
+            await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function(){ document.getElementById('search').focus(); }, 200)");
+        }
+
+        private async Task MentionPerson(Person person)
+        {
+            // Replace the last instance of the trigger string in the HTML content
+            var position = noteModel.HtmlContent.LastIndexOf(popupTriggerString);
+            if (position != -1)
+            {
+                noteModel.HtmlContent = noteModel.HtmlContent.Remove(position, popupTriggerString.Length).Insert(position, $"<span class=\"badge badge-primary\">{person.Name}</span> ...");
+            }
+
+            // Close the popup
+            SearchString = string.Empty;
+            await popup.CloseAsync();
         }
 
         private void FinanceSwitchToggled()
