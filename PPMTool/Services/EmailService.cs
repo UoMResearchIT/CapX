@@ -150,17 +150,18 @@ namespace PPMTool.Services
                     // Include author info as bold
                     body.Append($"<b>{note.GetNoteAuthorText()}</b>");
 
-                    // Include the full message from the note and swap the badge for inline blue text
-                    //var matches = Regex.Match(note.HtmlContent, "<div class=\"badge.*?</div>");
-                    //content = note.HtmlContent.Replace("<div class=\"badge badge-primary\"", "<div style=\"display: inline; color: blue\"");
+                    // Include the full message from the note
                     body.Append($"<p>{note.HtmlContent}</p>");
 
                     // Include editor info as italics
                     body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
                     body.Append("<hr />");
 
-                    // Send email
+                    // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
+                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}\">View {note.Project.GetFullName()} Details</a>");
+
+                    // Send email
                     var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
                     var role = RolesService.GetAll(context).Where(x => x.Person == m);
                     IEnumerable<string> recipients = role
