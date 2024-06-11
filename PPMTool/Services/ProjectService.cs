@@ -82,7 +82,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the projects
+        /// Gets all the projects with all their related tables -- pretty heavy operation now
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -95,6 +95,7 @@ namespace PPMTool.Services
                 .ThenInclude(pp => pp.Absences)
                 .Include(p => p.ProjectManager)
                 .Include(p => p.InnateActivity)
+                .Include(p => p.Followers)
                 .ToList();
         }
 

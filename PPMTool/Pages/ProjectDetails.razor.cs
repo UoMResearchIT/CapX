@@ -84,11 +84,14 @@ namespace PPMTool.Pages
         private IList<Person> mentionables;
         private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
+        private bool isCurrentUserFollowing;
+        private Person activeUser;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            activeUser = RolesService.GetByUsername(context, ActiveUserName)?.Person;
             allProjects = ProjectService.GetAll(context).ToList();
             FilterMentionables();
 
@@ -111,6 +114,8 @@ namespace PPMTool.Pages
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
                 PopulateNotes();
                 count = allTasks.Count;
+                isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
+                    project.ProjectManager.Name == activeUser.Name;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
                 {
@@ -234,6 +239,28 @@ namespace PPMTool.Pages
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+        }
+
+        /// <summary>
+        /// Toggle the following status by adding or removing the current acitve user to the project's follower list
+        /// </summary>
+        private void ToggleFollowing()
+        {
+            if (project.Followers.Contains(activeUser))
+            {
+                project.Followers.Remove(activeUser);
+                ProjectService.Update(context, project);
+                isCurrentUserFollowing = false;
+                LogInformation($"Stopped following project {project.GetFullName()}");
+            }
+            else
+            {
+                project.Followers.Add(activeUser);
+                ProjectService.Update(context, project);
+                isCurrentUserFollowing = true;
+                LogInformation($"Now following project {project.GetFullName()}");
+            }
+            StateHasChanged();
         }
 
         private void HighlightMention(Person person)

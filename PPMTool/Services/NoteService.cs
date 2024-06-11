@@ -30,7 +30,9 @@ namespace PPMTool.Services
         {
             return context.Notes
                 .OrderByDescending(x => x.CreatedDate)
-                .Include(x => x.Author);
+                .Include(x => x.Author)
+                .Include(x => x.Project)
+                .ThenInclude(x => x.Followers);
         }
 
         public override int Update(PPMToolContext context, Note entity)

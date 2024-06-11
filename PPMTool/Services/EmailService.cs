@@ -134,7 +134,27 @@ namespace PPMTool.Services
             Task.Run(() =>
             {
                 var roles = RolesService.GetAll(context);
-                foreach (var m in note.Mentions)
+
+                // Start with those mentioned in the note
+                var peopleToBeNotfied = note.Mentions;
+
+                // Add the PM
+                if (!peopleToBeNotfied.Contains(note.Project.ProjectManager))
+                {
+                    peopleToBeNotfied.Add(note.Project.ProjectManager);
+                }
+
+                // Add those who are following
+                foreach (var p in note.Project.Followers)
+                {
+                    if (!peopleToBeNotfied.Contains(p))
+                    {
+                        peopleToBeNotfied.Add(p);
+                    }
+                }
+
+                // Create the emails and send
+                foreach (var m in peopleToBeNotfied)
                 {
                     // Create email body
                     StringBuilder body = new StringBuilder();

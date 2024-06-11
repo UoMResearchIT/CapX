@@ -38,7 +38,7 @@
                                         BadgeStyle.Light)"
                                     Text="@project.ProjectStatus.ToNiceString()" />
                             </RadzenStack>
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.3rem">
                                 <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
                                 <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, project))">
                                     <ChildContent>
