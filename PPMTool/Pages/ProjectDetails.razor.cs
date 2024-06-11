@@ -77,6 +77,7 @@ namespace PPMTool.Pages
         private bool isEditExistingNote;
         private bool editorVisible;
         private Note noteModel = new Note();
+        private IList<Person> mentions;
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
@@ -476,7 +477,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, false);
+            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, false);
         }
 
         private void UpdateNote()
@@ -490,7 +491,7 @@ namespace PPMTool.Pages
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, true);
+            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, true);
         }
 
         private void EditNote(Note noteToEdit)
@@ -548,14 +549,14 @@ namespace PPMTool.Pages
             var resolvedMentions = new List<string>();
             matches = Regex.Matches(noteModel.HtmlContent, @"<span class=""badge badge-primary"">(.*?)<\/span>");
             resolvedMentions.AddRange(matches.Select(x => x.Groups[1].Value).Distinct());
-            noteModel.Mentions = new List<Person>();
+            mentions = new List<Person>();
             foreach (var m in resolvedMentions)
             {
                 // Extract the name from the match
                 var match = managers.FirstOrDefault(x => x.Name.Equals(m, StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.Mentions.Add(match);
+                    mentions.Add(match);
                 }
             }
 

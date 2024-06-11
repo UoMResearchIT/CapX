@@ -129,14 +129,14 @@ namespace PPMTool.Services
             });
         }
 
-        internal void SendMentionAndOwnerEmailNotifications(PPMToolContext context, Note note, bool isUpdate)
+        internal void SendMentionAndOwnerEmailNotifications(PPMToolContext context, Note note, IList<Person> mentions, bool isUpdate)
         {
             Task.Run(() =>
             {
                 var roles = RolesService.GetAll(context);
 
                 // Start with those mentioned in the note
-                var peopleToBeNotfied = note.Mentions;
+                var peopleToBeNotfied = mentions;
 
                 // Add the PM
                 if (!peopleToBeNotfied.Contains(note.Project.ProjectManager))
