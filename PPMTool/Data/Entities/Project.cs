@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using PPMTool.Enums;
 
@@ -25,6 +26,7 @@ namespace PPMTool.Data.Entities
         [Required]
         public School School { get; set; }
 
+        [InverseProperty("ManagedProjects")]
         public Person ProjectManager { get; set; }
 
         public IList<SubTask> SubTasks { get; set; }
@@ -71,6 +73,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// List of people who follow the project updates
         /// </summary>
+        [InverseProperty("FollowedProjects")]
         public ICollection<Person> Followers { get; set; } = new List<Person>();
 
         /// <summary>
