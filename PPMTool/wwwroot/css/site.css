@@ -144,3 +144,8 @@ select {
 
 .note-content {
 }
+
+mark {
+    background-color: yellow;
+    padding: 0rem;
+}
