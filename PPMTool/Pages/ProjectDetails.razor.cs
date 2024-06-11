@@ -251,12 +251,14 @@ namespace PPMTool.Pages
                 project.Followers.Remove(activeUser);
                 ProjectService.Update(context, project);
                 isCurrentUserFollowing = false;
+                LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
                 project.Followers.Add(activeUser);
                 ProjectService.Update(context, project);
                 isCurrentUserFollowing = true;
+                LogInformation($"Now following project {project.GetFullName()}");
             }
             StateHasChanged();
         }
