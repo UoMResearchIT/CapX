@@ -286,14 +286,14 @@
                        Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
 
                     <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @onkeydown="@(args => ProcessMentionSearchInput(args))" @oninput=@(args => SearchString = $"{args.Value}") Value="@SearchString" autocomplete="off" />
-                    <RadzenStack Style="height:100%;overflow:auto;">
+                    <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
                         @foreach (var person in mentionables)
                         {
-                            <RadzenCard @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))" MouseLeave="@(args => UnHighlightMention(person))" Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
+                            <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))" MouseLeave="@(args => UnHighlightMention(person))" Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
                                 <RadzenStack Orientation="Radzen.Orientation.Vertical">
-                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
                                         <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
-                                        <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" />
+                                        <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
                                     </RadzenStack>
                                 </RadzenStack>
                             </RadzenCard>

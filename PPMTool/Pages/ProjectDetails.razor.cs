@@ -273,6 +273,9 @@ namespace PPMTool.Pages
             highlightedPerson = null;
         }
 
+        /// <summary>
+        /// Filters the mentionables list based on the search string.
+        /// </summary>
         private void FilterMentionables()
         {
             var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
