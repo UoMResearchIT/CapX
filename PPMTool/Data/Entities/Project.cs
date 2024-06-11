@@ -69,6 +69,11 @@ namespace PPMTool.Data.Entities
         public string RequestDocLink { get; set; }
 
         /// <summary>
+        /// List of people who follow the project updates
+        /// </summary>
+        public ICollection<Person> Followers { get; set; } = new List<Person>();
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()

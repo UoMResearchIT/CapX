@@ -16,7 +16,10 @@
             }
             else
             {
-                <h1>@project.GetFullName()</h1>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                    <RadzenButton Icon=@(isCurrentUserFollowing ? "" : "") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" />
+                    <h1>@project.GetFullName()</h1>
+                </RadzenStack>
             }
         </div>
         <div class="col-auto">
