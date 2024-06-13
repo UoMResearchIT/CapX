@@ -144,3 +144,12 @@ select {
 
 .note-content {
 }
+
+mark {
+    background-color: yellow;
+    padding: 0rem;
+}
+
+.mention-card {
+    padding: 0.5rem;
+}

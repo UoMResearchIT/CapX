@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
 namespace PPMTool.Data.Entities
@@ -39,12 +40,24 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Collection of skills
         /// </summary>
-        public ICollection<SkillTag> SkillTags { get; set; }
+        public ICollection<SkillTag> SkillTags { get; set; } = new List<SkillTag>();
 
         /// <summary>
         /// Collection of absences
         /// </summary>
         public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+
+        /// <summary>
+        /// List of projects this person is following
+        /// </summary>
+        [InverseProperty("Followers")]
+        public ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
+
+        /// <summary>
+        /// List of projects this person manages
+        /// </summary>
+        [InverseProperty("ProjectManager")]
+        public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
 
         public Person()
         {

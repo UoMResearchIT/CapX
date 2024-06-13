@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,27 +11,13 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240611140225_RemovedMentionsFromNoteModel")]
+    partial class RemovedMentionsFromNoteModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
-
-            modelBuilder.Entity("PersonProject", b =>
-                {
-                    b.Property<int>("FollowedProjectsProjectId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("FollowersPersonId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("FollowedProjectsProjectId", "FollowersPersonId");
-
-                    b.HasIndex("FollowersPersonId");
-
-                    b.ToTable("PersonProject");
-                });
 
             modelBuilder.Entity("PersonSkillTag", b =>
                 {
@@ -168,6 +155,9 @@ namespace PPMTool.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ShortName")
                         .HasColumnType("TEXT");
 
@@ -175,6 +165,8 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("PersonId");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("People");
                 });
@@ -413,21 +405,6 @@ namespace PPMTool.Migrations
                     b.ToTable("SubTasks");
                 });
 
-            modelBuilder.Entity("PersonProject", b =>
-                {
-                    b.HasOne("PPMTool.Data.Entities.Project", null)
-                        .WithMany()
-                        .HasForeignKey("FollowedProjectsProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PPMTool.Data.Entities.Person", null)
-                        .WithMany()
-                        .HasForeignKey("FollowersPersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("PersonSkillTag", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", null)
@@ -486,6 +463,13 @@ namespace PPMTool.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Project", null)
+                        .WithMany("Followers")
+                        .HasForeignKey("ProjectId");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateActivity")
@@ -493,7 +477,7 @@ namespace PPMTool.Migrations
                         .HasForeignKey("InnateActivityInnateCodeId");
 
                     b.HasOne("PPMTool.Data.Entities.Person", "ProjectManager")
-                        .WithMany("ManagedProjects")
+                        .WithMany()
                         .HasForeignKey("ProjectManagerPersonId");
 
                     b.Navigation("InnateActivity");
@@ -541,12 +525,12 @@ namespace PPMTool.Migrations
                     b.Navigation("Absences");
 
                     b.Navigation("AvailabilityChanges");
-
-                    b.Navigation("ManagedProjects");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
+                    b.Navigation("Followers");
+
                     b.Navigation("SubTasks");
                 });
 

@@ -47,15 +47,19 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "rtp")]
         public int? RTP { get; set; }
 
-        private string searchString = string.Empty;
-        public string SearchString
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "filteredNote")]
+        public int? FilteredNote { get; set; }
+
+        private string mentionSearchString = string.Empty;
+        public string MentionSearchString
         {
-            get => searchString;
+            get => mentionSearchString;
             private set
             {
-                if (value != searchString)
+                if (value != mentionSearchString)
                 {
-                    searchString = value;
+                    mentionSearchString = value;
                     FilterMentionables();
                 }
             }
@@ -77,6 +81,7 @@ namespace PPMTool.Pages
         private bool isEditExistingNote;
         private bool editorVisible;
         private Note noteModel = new Note();
+        private IList<Person> mentions;
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
@@ -239,6 +244,16 @@ namespace PPMTool.Pages
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+
+            // After the page has finished rendering then apply the serach string from the parameter
+            if (firstRender && FilteredNote != null)
+            {
+                // Scroll to the note
+                InvokeAsync(() =>
+                {
+                    noteSearchTerms = $"#id={FilteredNote}";
+                });
+            }
         }
 
         /// <summary>
@@ -273,19 +288,22 @@ namespace PPMTool.Pages
             highlightedPerson = null;
         }
 
+        /// <summary>
+        /// Filters the mentionables list based on the search string.
+        /// </summary>
         private void FilterMentionables()
         {
             var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
-            if (string.IsNullOrWhiteSpace(searchString))
+            if (string.IsNullOrWhiteSpace(mentionSearchString))
             {
                 mentionables = temp;
             }
             else
             {
-                mentionables = temp.Where(x => x.Name.ToLower().Contains(searchString.ToLower()) || x.ShortName.ToLower().StartsWith(searchString.ToLower())).ToList();
+                mentionables = temp.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
-            Debug.WriteLine($"** Filtered mentionables based on \"{searchString}\" giving {mentionables.Count} results.");
+            Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
         }
 
         private void ProcessEditorInput(KeyboardEventArgs args)
@@ -351,7 +369,7 @@ namespace PPMTool.Pages
                 await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
 
                 // Close the popup
-                SearchString = string.Empty;
+                MentionSearchString = string.Empty;
                 await popup.CloseAsync();
             });
         }
@@ -380,31 +398,51 @@ namespace PPMTool.Pages
                 // Wait for JS to finish
                 await Task.Delay(500);
 
+                // No search terms so show all
                 if (string.IsNullOrWhiteSpace(noteSearchTerms))
                 {
                     filteredNotes = allNotes;
                     Debug.WriteLine($"** Notes reset");
                     await InvokeAsync(StateHasChanged);
                 }
+
+                // Search terms are present
                 else
                 {
-                    filteredNotes = allNotes.Where(x =>
+                    // Search by DB ID (useful for resolving links)
+                    if (noteSearchTerms.StartsWith("#id=") && noteSearchTerms.Length > 4 && int.TryParse(noteSearchTerms.Substring(4), out int noteId))
                     {
-                        var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
-                        return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
-                    }).ToList();
-                    Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
-                    await InvokeAsync(async () =>
+                        filteredNotes = allNotes.Where(x => x.NoteId == noteId).ToList();
+                        Debug.WriteLine($"** Filtered based on ID {noteId} giving {filteredNotes.Count} notes.");
+                        await InvokeAsync(async () =>
+                        {
+                            // Refresh then scroll to note
+                            StateHasChanged();
+                            await Task.Delay(300);
+                            await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{noteId}");
+                        });
+                    }
+                    else
                     {
-                        // Refresh
-                        StateHasChanged();
+                        // Filter based on the search terms (plain text content)
+                        filteredNotes = allNotes.Where(x =>
+                        {
+                            var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
+                            return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                        }).ToList();
+                        Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
+                        await InvokeAsync(async () =>
+                        {
+                            // Refresh
+                            StateHasChanged();
 
-                        // Wait for the page to render
-                        await Task.Delay(500);
+                            // Wait for the page to render
+                            await Task.Delay(500);
 
-                        // Call highlighter JS function
-                        await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
-                    });
+                            // Call highlighter JS function
+                            await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
+                        });
+                    }
                 }
             });
         }
@@ -473,7 +511,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, false);
+            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, false);
         }
 
         private void UpdateNote()
@@ -487,7 +525,7 @@ namespace PPMTool.Pages
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, true);
+            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, true);
         }
 
         private void EditNote(Note noteToEdit)
@@ -512,6 +550,12 @@ namespace PPMTool.Pages
                 PopulateNotes();
                 StateHasChanged();
             }
+        }
+
+        private async void CopyLinkToNoteToClipboard(Note noteTolink)
+        {
+            var link = $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
+            await JSRuntime.InvokeVoidAsync("copyText", link);
         }
 
         /// <summary>
@@ -545,14 +589,14 @@ namespace PPMTool.Pages
             var resolvedMentions = new List<string>();
             matches = Regex.Matches(noteModel.HtmlContent, @"<span class=""badge badge-primary"">(.*?)<\/span>");
             resolvedMentions.AddRange(matches.Select(x => x.Groups[1].Value).Distinct());
-            noteModel.Mentions = new List<Person>();
+            mentions = new List<Person>();
             foreach (var m in resolvedMentions)
             {
                 // Extract the name from the match
                 var match = managers.FirstOrDefault(x => x.Name.Equals(m, StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.Mentions.Add(match);
+                    mentions.Add(match);
                 }
             }
 
