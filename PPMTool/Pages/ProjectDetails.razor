@@ -285,7 +285,7 @@
                        Open="@OnMentionPopupOpenAsync"
                        Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
 
-                    <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @onkeydown="@(args => ProcessMentionSearchInput(args))" @oninput=@(args => SearchString = $"{args.Value}") Value="@SearchString" autocomplete="off" />
+                    <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @onkeydown="@(args => ProcessMentionSearchInput(args))" @oninput=@(args => MentionSearchString = $"{args.Value}") Value="@MentionSearchString" autocomplete="off" />
                     <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
                         @foreach (var person in mentionables)
                         {

@@ -1,34 +1,34 @@
 ﻿@using PPMTool.Data.Entities
 
-    <div class="card">
-        <div class="row">
-            <div class="col">
-                <div class="row-auto">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
-                        @if (Note.IsFinanceInfo)
-                        {
-                            <div class="badge badge-danger" style="margin-bottom:0.4rem">Finance Info</div>
-                        }
-                </RadzenStack>
-                </div>
-                <div class="row-auto note-content">
-                    <RadzenText>
-                        @((MarkupString)Note.HtmlContent)
-                    </RadzenText>
-                </div>
-                <div class="row-auto">
-                    <RadzenText TextStyle="TextStyle.Body2" Text="@Note.GetNoteEditorText()" Style="font-weight:lighter" />
-                </div>
+<div class="card" id="@($"note_{Note.NoteId}")">
+    <div class="row">
+        <div class="col">
+            <div class="row-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
+                    @if (Note.IsFinanceInfo)
+                    {
+                        <div class="badge badge-danger" style="margin-bottom:0.4rem">Finance Info</div>
+                    }
+            </RadzenStack>
             </div>
-            <div class="col-auto my-1 p-1 mr-0">
-                <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" />
+            <div class="row-auto note-content">
+                <RadzenText>
+                    @((MarkupString)Note.HtmlContent)
+                </RadzenText>
             </div>
-            <div class="col-auto my-1 p-1 ml-0 mr-4">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" />
+            <div class="row-auto">
+                <RadzenText TextStyle="TextStyle.Body2" Text="@Note.GetNoteEditorText()" Style="font-weight:lighter" />
             </div>
         </div>
+        <div class="col-auto my-1 p-1 mr-0">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" />
+        </div>
+        <div class="col-auto my-1 p-1 ml-0 mr-4">
+            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" />
+        </div>
     </div>
+</div>
 
 @code
 {
