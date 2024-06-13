@@ -24,6 +24,9 @@
         <div class="col-auto my-1 p-1 mr-0">
             <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" />
         </div>
+        <div class="col-auto my-1 p-1 ml-0">
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" />
+        </div>
         <div class="col-auto my-1 p-1 ml-0 mr-4">
             <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" />
         </div>
@@ -40,4 +43,7 @@
 
     [Parameter]
     public Action<Note> EditNote { get; set; }
+
+    [Parameter]
+    public Action<Note> CopyLinkToClipboard { get; set; }
 }

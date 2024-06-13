@@ -552,6 +552,12 @@ namespace PPMTool.Pages
             }
         }
 
+        private async void CopyLinkToNoteToClipboard(Note noteTolink)
+        {
+            var link = $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
+            await JSRuntime.InvokeVoidAsync("copyText", link);
+        }
+
         /// <summary>
         /// Attempts to resolve the mentions and links in the note content for the current note model.
         /// </summary>
