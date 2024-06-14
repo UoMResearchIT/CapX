@@ -654,11 +654,6 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
         }
 
-        void EditProject()
-        {
-            Navigation.NavigateTo($"addproject/{project.ProjectId}");
-        }
-
         void CopyTask(SubTask task)
         {
             // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
