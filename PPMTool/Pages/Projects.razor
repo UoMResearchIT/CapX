@@ -38,16 +38,18 @@
                                         BadgeStyle.Light)"
                                     Text="@project.ProjectStatus.ToNiceString()" />
                             </RadzenStack>
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.3rem">
-                                <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
-                                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, project))">
+                            <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
+                                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, project))">
                                     <ChildContent>
                                         <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
                                     </ChildContent>
                                 </RadzenSplitButton>
                             </RadzenStack>
                         </RadzenStack>
-                        <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.SpaceBetween">
+                            <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+                            <RequestAndScrumButtonsComponent Project="@project" EditAuthorised="@EditAuthorised" />
+                        </RadzenStack>
                     </RadzenStack>
                 </div>
             }
@@ -136,7 +138,7 @@
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right">
                         <Template Context="proj">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" />
+                            <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>

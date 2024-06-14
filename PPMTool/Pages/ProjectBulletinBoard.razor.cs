@@ -2,10 +2,8 @@
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -18,9 +16,6 @@ namespace PPMTool.Pages
     {
         [Inject]
         private ProjectService ProjectService { get; set; }
-
-        [Inject]
-        private IJSRuntime JSRuntime { get; set; }
 
         private IEnumerable<Project> availableProjects;
 
@@ -54,16 +49,6 @@ namespace PPMTool.Pages
             StateHasChanged();
 
             Debug.WriteLine($"** {availableProjects?.Count()} projects loaded.");
-        }
-
-        /// <summary>
-        /// Navigate to the Request Doc Link in new window
-        /// </summary>
-        /// <param name="project"></param>
-        /// <returns></returns>
-        private async Task ViewRequestDocClickedAsync(Project project)
-        {
-            await JSRuntime.InvokeAsync<object>("open", $"{project.RequestDocLink}", "_blank");
         }
     }
 }
