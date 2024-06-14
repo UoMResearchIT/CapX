@@ -35,7 +35,7 @@
                          Text="@(project.SubTasks.RoundedSum(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates" />
             <RadzenText TextStyle="TextStyle.Body1">@(project.StartDate <= DateTime.Today ? "Now" : project.StartDate.ToShortDateString()) - @project.EndDate.ToShortDateString()</RadzenText>
-            <RadzenButton Text=@(string.IsNullOrWhiteSpace(project.RequestDocLink) ? "No Request Doc Link" : "View Request Doc")
+            <RadzenButton Text=@(project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
                           Icon="description" Click="@(args => ViewRequestDocClickedAsync(project))"
                           ButtonStyle=@(string.IsNullOrWhiteSpace(project.RequestDocLink) ? ButtonStyle.Light : ButtonStyle.Primary)
                           Disabled=@string.IsNullOrWhiteSpace(project.RequestDocLink) />

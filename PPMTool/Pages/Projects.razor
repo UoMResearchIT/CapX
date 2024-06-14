@@ -38,16 +38,18 @@
                                         BadgeStyle.Light)"
                                     Text="@project.ProjectStatus.ToNiceString()" />
                             </RadzenStack>
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.3rem">
-                                <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
-                                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Click="@(item => DetailsButtonClicked(item, project))">
+                            <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
+                                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, project))">
                                     <ChildContent>
                                         <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
                                     </ChildContent>
                                 </RadzenSplitButton>
                             </RadzenStack>
                         </RadzenStack>
-                        <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.SpaceBetween">
+                            <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+                            <RequestAndScrumButtonsComponent Project="@project" EditAuthorised="@EditAuthorised" />
+                        </RadzenStack>
                     </RadzenStack>
                 </div>
             }

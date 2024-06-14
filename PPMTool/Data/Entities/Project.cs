@@ -107,7 +107,7 @@ namespace PPMTool.Data.Entities
         /// Whether a project has no sub tasks
         /// </summary>
         /// <returns></returns>
-        private bool HasNoTasks()
+        public bool HasNoTasks()
         {
             return SubTasks == null || SubTasks.Count == 0;
         }
@@ -116,7 +116,7 @@ namespace PPMTool.Data.Entities
         /// Whether a project has no description
         /// </summary>
         /// <returns></returns>
-        private bool HasNoDescription()
+        public bool HasNoDescription()
         {
             return string.IsNullOrWhiteSpace(Description);
         }
@@ -125,7 +125,7 @@ namespace PPMTool.Data.Entities
         /// Today is within [startdate enddate] and there is no scrum project link
         /// </summary>
         /// <returns></returns>
-        private bool HasStartedButHasNoScrumProjectLink()
+        public bool HasStartedButHasNoScrumProjectLink()
         {
             return DateTime.Today >= StartDate && DateTime.Today <= EndDate && string.IsNullOrWhiteSpace(ScrumProjectLink);
         }
@@ -134,7 +134,7 @@ namespace PPMTool.Data.Entities
         /// Has no URL in the request doc link field
         /// </summary>
         /// <returns></returns>
-        private bool HasNoRequestDocLink()
+        public bool HasNoRequestDocLink()
         {
             return string.IsNullOrWhiteSpace(RequestDocLink);
         }
@@ -180,7 +180,7 @@ namespace PPMTool.Data.Entities
         /// Check whether this project has any tasks with unmet demand excluding tasks that ran in the past
         /// </summary>
         /// <returns></returns>
-        internal bool HasUnmetDemandNowOrInFuture()
+        public bool HasUnmetDemandNowOrInFuture()
         {
             return SubTasks.Where(x => x.IsWithin(DateTime.Today) || x.StartDate > DateTime.Today).Any(x => x.HasUnmetDemand());
         }
@@ -239,7 +239,7 @@ namespace PPMTool.Data.Entities
         /// Method which returns the project name prefixed by the RTP code
         /// </summary>
         /// <returns></returns>
-        internal string GetFullName()
+        public string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
         }

@@ -208,10 +208,5 @@ namespace PPMTool.Pages
                 await NavigateToProjectDetails(project.ProjectId, true);
             }
         }
-
-        private void EditProject(Project project)
-        {
-            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
-        }
     }
 }
