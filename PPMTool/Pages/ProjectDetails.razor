@@ -351,6 +351,8 @@
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
                         <div class="badge badge-danger">Item Due</div>
                         <RadzenSwitch @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
+                        <RadzenText Text="Sort By Due Date" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
+                        <RadzenSwitch @bind-Value="@sortByDueDate" Change="@FilterSwitchToggled" />
                     </RadzenStack>
                 </RadzenStack>
             </div>

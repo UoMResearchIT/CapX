@@ -86,6 +86,7 @@ namespace PPMTool.Pages
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
         private bool showOnlyDueItems;
+        private bool sortByDueDate;
         private Popup popup;
         private IList<Person> mentionables;
         private Person highlightedPerson;
@@ -388,6 +389,7 @@ namespace PPMTool.Pages
             allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue()).ToList();
+            if (sortByDueDate) allNotes = allNotes.Where(x => x.DueDate != null).OrderBy(x => x.DueDate).Concat(allNotes.Where(x => x.DueDate == null)).ToList();
             filteredNotes = allNotes;
             FilterNotes();
         }

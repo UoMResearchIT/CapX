@@ -14,6 +14,10 @@
                     {
                         <div class="badge badge-danger" style="margin-bottom:0.4rem">Item Due</div>
                     }
+                    @if (Note.IsCompleted())
+                    {
+                        <div class="badge badge-success" style="margin-bottom:0.4rem">Item Complete</div>
+                    }
                 </RadzenStack>
             </div>
             <div class="row-auto note-content">
