@@ -28,9 +28,15 @@
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" />
+                    @if (EditAuthorised)
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" />
+                    }
                     <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" />
+                    @if (EditAuthorised)
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" />
+                    }
                 </RadzenStack>
                 @if (Note.DueDate != null && !Note.IsCompleted())
                 {

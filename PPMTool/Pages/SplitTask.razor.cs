@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
@@ -14,6 +15,9 @@ namespace PPMTool.Pages
 
         [Parameter]
         public int? ProjectId { get; set; }
+
+        [Inject]
+        public RolesService RolesService { get; set; }
 
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
@@ -39,6 +43,12 @@ namespace PPMTool.Pages
                 LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
                 originalStartDate = originalAddTaskComponent?.TaskModel.StartDate ?? DateTime.Today;
                 originalEndDate = originalAddTaskComponent?.TaskModel.EndDate ?? DateTime.Today;
+
+                // Only allow the project manager to save the split or a superuser
+                var user = AuthenticationState?.User;
+                var role = RolesService.GetByUsername(context, ActiveUserName);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && originalAddTaskComponent?.ProjectModel.ProjectManager == role?.Person);
+
                 StateHasChanged();
             }
         }

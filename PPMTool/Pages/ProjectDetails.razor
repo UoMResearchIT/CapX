@@ -361,7 +361,7 @@
                 {
                     @foreach (var note in filteredNotes)
                     {
-                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="MarkComplete" EditAuthorised="@isProjectManager"/>
+                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="MarkComplete" EditAuthorised="@(isProjectManager ||activeUser == note.Author)"/>
                     }
                 }
             </RadzenStack>
