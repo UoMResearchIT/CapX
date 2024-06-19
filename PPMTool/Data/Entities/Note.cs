@@ -24,6 +24,10 @@ namespace PPMTool.Data.Entities
 
         public bool IsFinanceInfo { get; set; }
 
+        public DateTime? DueDate { get; set; }
+
+        public DateTime? CompletedDate { get; set; }
+
         internal string GetNoteEditorText()
         {
             return Editor != null ? $"Last edited by {Editor.Name} on {EditedDate.ToString("dd/MM/yyyy HH:mm:ss")}" : null;
@@ -32,6 +36,16 @@ namespace PPMTool.Data.Entities
         internal string GetNoteAuthorText()
         {
             return $"{Author.Name} posted on {CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")}";
+        }
+
+        internal bool IsCompleted()
+        {
+            return CompletedDate.HasValue;
+        }
+
+        internal bool IsDue()
+        {
+            return DueDate.HasValue && DueDate.Value <= DateTime.Now && !IsCompleted();
         }
     }
 }
