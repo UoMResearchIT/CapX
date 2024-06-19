@@ -28,9 +28,9 @@
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" />
                     <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" />
                 </RadzenStack>
                 @if (Note.DueDate != null && !Note.IsCompleted())
                 {
@@ -38,7 +38,7 @@
                         <RadzenText Text="Due: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
                         <RadzenText Text="@Note.DueDate.Value.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="@($"margin-bottom: -0.1rem; {(Note.IsDue() ? "color: red" : "")}")" />
                     </RadzenStack>
-                    <RadzenButton ButtonStyle="ButtonStyle.Success" Text="Done" Icon="check" Size="ButtonSize.Small" class="ms-1" Click="@(args => MarkComplete?.Invoke(Note))" Disabled="@(Note.IsCompleted())" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Text="Done" Icon="check" Size="ButtonSize.Small" class="ms-1" Click="@(args => MarkComplete?.Invoke(Note))" Disabled="@(!EditAuthorised)"/>
                 }
                 @if (Note.IsCompleted())
                 {
@@ -68,4 +68,7 @@
 
     [Parameter]
     public Action<Note> MarkComplete { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
 }

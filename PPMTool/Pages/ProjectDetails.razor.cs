@@ -91,12 +91,14 @@ namespace PPMTool.Pages
         private RadzenHtmlEditor htmlEditor;
         private bool isCurrentUserFollowing;
         private Person activeUser;
+        private bool isProjectManager;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
-            activeUser = RolesService.GetByUsername(context, ActiveUserName)?.Person;
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            activeUser = role?.Person;
             allProjects = ProjectService.GetAll(context).ToList();
             FilterMentionables();
 
@@ -121,6 +123,7 @@ namespace PPMTool.Pages
                 count = allTasks.Count;
                 isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
                     project.ProjectManager.Name == activeUser.Name;
+                isProjectManager = activeUser == project?.ProjectManager || role.RoleType == RoleType.Superuser;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
                 {
@@ -558,6 +561,14 @@ namespace PPMTool.Pages
             await JSRuntime.InvokeVoidAsync("copyText", link);
         }
 
+        private void MarkComplete(Note note)
+        {
+            LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
+            noteModel.CompletedDate = DateTime.Now;
+            NoteService.Update(context, noteModel);
+            StateHasChanged();
+        }
+
         /// <summary>
         /// Attempts to resolve the mentions and links in the note content for the current note model.
         /// </summary>
@@ -618,16 +629,6 @@ namespace PPMTool.Pages
                     // TODO: Throw some kind of warning if the reference cannot be resolved
                 }
             }
-        }
-
-        /// <summary>
-        /// Sends out emails using the email service to the project owner and mentioned people in the supplied note model.
-        /// </summary>
-        /// <param name="noteModified">The note modified</param>
-        /// <param name="actionDescription">The action description to be included in the email text</param>
-        private void SendEmailNotificationsToOwnerAndMentioned(Note noteModified, string actionDescription)
-        {
-            // TODO: Find the owner and mentioned people and send them an email
         }
 
         private void TaskSelected(SelectedData<SubTask> dataPoint)
