@@ -45,7 +45,7 @@ namespace PPMTool.Data.Entities
 
         internal bool IsDue()
         {
-            return DueDate.HasValue && DueDate.Value <= DateTime.Now;
+            return DueDate.HasValue && DueDate.Value <= DateTime.Now && !IsCompleted();
         }
     }
 }

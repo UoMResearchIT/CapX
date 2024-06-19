@@ -334,7 +334,7 @@
                     <hr />
                 }
             </div>
-            <div class="row justify-content-center">
+            <div class="row justify-content-start">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
                         <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
@@ -345,9 +345,12 @@
                         <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" />
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FinanceSwitchToggled" />
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem" />
                         <div class="badge badge-warning">Finance Info</div>
+                        <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FilterSwitchToggled" />
+                        <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
+                        <div class="badge badge-danger">Item Due</div>
+                        <RadzenSwitch @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
                     </RadzenStack>
                 </RadzenStack>
             </div>
