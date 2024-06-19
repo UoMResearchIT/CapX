@@ -302,12 +302,22 @@
                 </Popup>
 
 
+                
+
                 <div class="row">
+                    <div class="col-auto align-items-center" style="display: flex">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>
+                            <RadzenText Text="Tag as " TextStyle="TextStyle.Subtitle1"  Style="margin-bottom: 0.1rem" />
+                            <div class="badge badge-warning">Finance Info</div>
+                            <RadzenText Text=":" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
+                            <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
+                        </RadzenStack>
+                    </div>
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>
-                            <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
-                            <RadzenText Text="Tag as " Style="margin-bottom: 0.1rem" />
-                            <div class="badge badge-danger">Finance Info</div>
+                            <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
+                            <RadzenDatePicker @bind-Value="@noteModel.DueDate" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })" Disabled="@(noteModel.DueDate == null)" />
                         </RadzenStack>
                     </div>
                     <div class="col-auto">
@@ -335,7 +345,7 @@
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                         <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FinanceSwitchToggled" />
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem" />
-                        <div class="badge badge-danger">Finance Info</div>
+                        <div class="badge badge-warning">Finance Info</div>
                     </RadzenStack>
                 </RadzenStack>
             </div>
