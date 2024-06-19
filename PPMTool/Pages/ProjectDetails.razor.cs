@@ -51,6 +51,10 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "filteredNote")]
         public int? FilteredNote { get; set; }
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "filterDueNotes")]
+        public bool FilterDueNotes { get; set; }
+
         private string mentionSearchString = string.Empty;
         public string MentionSearchString
         {
@@ -121,7 +125,6 @@ namespace PPMTool.Pages
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
-                PopulateNotes();
                 count = allTasks.Count;
                 isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
                     project.ProjectManager.Name == activeUser.Name;
@@ -250,14 +253,39 @@ namespace PPMTool.Pages
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
 
-            // After the page has finished rendering then apply the serach string from the parameter
-            if (firstRender && FilteredNote != null)
+            if (firstRender)
             {
-                // Scroll to the note
-                InvokeAsync(() =>
+                // After the page has finished rendering then apply the search string from the parameter
+                if (FilteredNote != null)
                 {
-                    noteSearchTerms = $"#id={FilteredNote}";
-                });
+                    // Set the search term
+                    InvokeAsync(() =>
+                    {
+                        noteSearchTerms = $"#id={FilteredNote}";
+                        PopulateNotes();
+                    });
+                }
+                else if (FilterDueNotes)
+                {
+                    InvokeAsync(() =>
+                    {
+                        showOnlyDueItems = true;
+                        sortByDueDate = true;
+                        PopulateNotes();
+
+                        // Check whether the parameter is present to scroll to the due notes
+                        if (FilterDueNotes)
+                        {
+                            InvokeAsync(async () =>
+                            {
+                                // Refresh then scroll last due note into view
+                                StateHasChanged();
+                                await Task.Delay(300);
+                                await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
+                            });
+                        }
+                    });
+                }
             }
         }
 

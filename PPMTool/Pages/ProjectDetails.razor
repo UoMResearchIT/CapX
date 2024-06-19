@@ -334,7 +334,7 @@
                     <hr />
                 }
             </div>
-            <div class="row justify-content-start">
+            <div class="row justify-content-start ml-1">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
                         <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
@@ -349,7 +349,7 @@
                         <div class="badge badge-warning">Finance Info</div>
                         <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FilterSwitchToggled" />
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
-                        <div class="badge badge-danger">Item Due</div>
+                        <div class="badge badge-danger">Note Due</div>
                         <RadzenSwitch @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
                         <RadzenText Text="Sort By Due Date" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
                         <RadzenSwitch @bind-Value="@sortByDueDate" Change="@FilterSwitchToggled" />
@@ -358,7 +358,7 @@
             </div>
             <br />
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
-                @if (filteredNotes.Count == 0)
+                @if (filteredNotes == null || filteredNotes.Count == 0)
                 {
                     <RadzenText Text="There are no notes to show for this project" />
                 }

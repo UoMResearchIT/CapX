@@ -12,11 +12,11 @@
                     }
                     @if (Note.IsDue() && !Note.IsCompleted())
                     {
-                        <div class="badge badge-danger" style="margin-bottom:0.4rem">Item Due</div>
+                        <div class="badge badge-danger" style="margin-bottom:0.4rem">Note Due</div>
                     }
                     @if (Note.IsCompleted())
                     {
-                        <div class="badge badge-success" style="margin-bottom:0.4rem">Item Complete</div>
+                        <div class="badge badge-success" style="margin-bottom:0.4rem">Note Complete</div>
                     }
                 </RadzenStack>
             </div>

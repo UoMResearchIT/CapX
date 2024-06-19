@@ -180,15 +180,22 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private async Task NavigateToProjectDetails(int id, bool newWindow = false)
+        private void NavigateToProjectDetails(int id, bool newWindow = false, bool filterDueNotes = false)
         {
+            string url = $"/projectdetails/{id}";
+
+            if (filterDueNotes)
+            {
+                url += "?filterDueNotes=true";
+            }
+
             if (newWindow)
             {
-                await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+                JSRuntime.InvokeAsync<object>("open", url, "_blank");
             }
             else
             {
-                Navigation.NavigateTo($"/projectdetails/{id}");
+                Navigation.NavigateTo(url);
             }
         }
 
@@ -197,16 +204,21 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"/addproject/-1");
         }
 
-        private async Task DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
+        private void DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
         {
             if (item == null)
             {
-                await NavigateToProjectDetails(project.ProjectId);
+                NavigateToProjectDetails(project.ProjectId);
             }
             else if (item.Value == "NewWindow")
             {
-                await NavigateToProjectDetails(project.ProjectId, true);
+                NavigateToProjectDetails(project.ProjectId, true);
             }
+        }
+
+        private void DueButtonClicked(Project project)
+        {
+            NavigateToProjectDetails(project.ProjectId, filterDueNotes: true);
         }
     }
 }
