@@ -169,7 +169,7 @@ namespace PPMTool.Services
                     body.Append("<hr />");
 
                     // Include author info as bold
-                    body.Append($"<b>{note.GetNoteAuthorText()}</b>{(note.IsFinanceInfo ? " [Finance Info]" : "")}");
+                    body.Append($"<b>{note.GetNoteAuthorText()}</b>{(note.IsFinanceInfo ? " [Finance Info]" : "")} {(note.DueDate != null ? $"Due Date: {note.DueDate?.ToShortDateString()}" : "")} {(note.CompletedDate != null ? $"Completed: {note.CompletedDate?.ToShortDateString()}" : "")}");
 
                     // Include the full message from the note
                     body.Append($"<p>{note.HtmlContent}</p>");
