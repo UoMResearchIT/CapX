@@ -98,18 +98,18 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
-                new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasks()),
+                new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasksButFundedOrFinished()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
 
         /// <summary>
-        /// Whether a project has no sub tasks
+        /// Whether a project has no sub tasks and has a status that is not unfunded or cancelled so should represent demand
         /// </summary>
         /// <returns></returns>
-        public bool HasNoTasks()
+        public bool HasNoTasksButFundedOrFinished()
         {
-            return SubTasks == null || SubTasks.Count == 0;
+            return (SubTasks == null || SubTasks.Count == 0) && ProjectStatus != ProjectStatus.Unfunded && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>
