@@ -9,7 +9,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
-    public class ExportHelper
+    public abstract class ExportHelper
     {
         /// <summary>
         /// Represents a task (row on the export sheet)
@@ -104,7 +104,7 @@ namespace PPMTool.Data
         /// <param name="dateToTest"></param>
         /// <param name="currentMonth"></param>
         /// <returns></returns>
-        private bool IsWithinMonth(DateTime dateToTest, DateTime currentMonth)
+        private static bool IsWithinMonth(DateTime dateToTest, DateTime currentMonth)
         {
             return dateToTest.Date >= currentMonth.BeginningOfMonth().Date && dateToTest.Date <= currentMonth.EndOfMonth().Date;
         }
@@ -117,13 +117,13 @@ namespace PPMTool.Data
         /// <param name="projects">All projects as retrieved from the project service</param>
         /// <param name="numMonthsIntoFuture">Number of months into the future we want data for</param>
         /// <returns>List of data items</returns>
-        public IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, IEnumerable<Project> projects, int numMonthsIntoFuture)
+        public static IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, IEnumerable<Project> projects, int numMonthsIntoFuture)
         {
             // New list
             var data = new List<TaskData>();
 
             // Set reference months
-            var now = DateTime.Now.Date;
+            var now = DateTime.Today;
             var startDate = new DateTime(now.Year, now.Month, 1);
             var endDate = startDate.AddMonths(numMonthsIntoFuture);
             var currentDate = startDate.Date;
@@ -270,7 +270,7 @@ namespace PPMTool.Data
         /// <param name="subTasks"></param>
         /// <param name="firstOfTheMonth"></param>
         /// <returns></returns>
-        private IEnumerable<SubTask> GetAllTasksRunningThisMonth(IEnumerable<SubTask> subTasks, DateTime firstOfTheMonth)
+        private static IEnumerable<SubTask> GetAllTasksRunningThisMonth(IEnumerable<SubTask> subTasks, DateTime firstOfTheMonth)
         {
 
             return subTasks.Where(x =>

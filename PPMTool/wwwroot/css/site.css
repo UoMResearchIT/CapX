@@ -17,6 +17,7 @@ a, .btn-link {
 
 .card {
     padding: 10px;
+    width: 100%;
 }
 
 .content {
@@ -134,4 +135,21 @@ select {
 
 .container {
     max-width: 100%;
+}
+
+.vr {
+    border-left: 1px solid rgba(0, 0, 0, .1);
+    height: 100%;
+}
+
+.note-content {
+}
+
+mark {
+    background-color: yellow;
+    padding: 0rem;
+}
+
+.mention-card {
+    padding: 0.5rem;
 }

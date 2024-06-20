@@ -4,12 +4,12 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public abstract class BaseTask
+    public abstract class BaseTask : ObjectWithStatusMessages
     {
         [Required]
         public string Name { get; set; }
 
-        public DateTime StartDate { get; set; } = DateTime.Now.Date;
+        public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime EndDate { get; set; }
 

@@ -3,29 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class AddAvailabilityChange : DataGridPage<AvailabilityChange>
+    public partial class AddAvailabilityChange : AddPersonProperty<AvailabilityChange>
     {
-        [Inject]
-        private PersonService PersonService { get; set; }
-
-        [Parameter]
-        public int PersonId { get; set; }
-
-        private Person personModel;
-        private bool isValid = true;
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
-            if (PersonId > -1)
+            if (PersonId > 0)
             {
                 personModel = PersonService.GetById(context, PersonId);
                 dataGridEntities = personModel.AvailabilityChanges.ToList();
@@ -38,33 +29,11 @@ namespace PPMTool.Pages
             LogInformation($"Viewing availability changes for {personModel?.Name}");
         }
 
-        protected override void CancelEdit(AvailabilityChange entity)
-        {
-            LogInformation($"Cancel row edit for {entity?.GetSensibleObjectName()}");
-            Reset();
-            PersonService.RestoreModel(context, ref entity);
-            dataGrid.CancelEditRow(entity);
-        }
-
         protected override async Task InsertRow()
         {
-            entityToInsert = Activator.CreateInstance(typeof(AvailabilityChange)) as AvailabilityChange;
-            entityToInsert.Person = personModel;
-            entityToInsert.ChangeDate = DateTime.Now.Date;
+            await base.InsertRow();
+            entityToInsert.ChangeDate = DateTime.Today;
             await dataGrid.InsertRow(entityToInsert);
-        }
-
-        protected override void OnCreateRow(AvailabilityChange entity)
-        {
-            LogInformation($"Added row for {entity?.GetSensibleObjectName()}");
-            entity.Person = personModel;
-            dataGridEntities.Add(entity);
-            entityToInsert = null;
-        }
-
-        protected override void OnUpdateRow(AvailabilityChange entity)
-        {
-            Reset();
         }
 
         private void DiscardChanges()
@@ -82,13 +51,13 @@ namespace PPMTool.Pages
                 // Check it doesn't duplicate the date, otherwise reject update
                 if (dataGridEntities.DistinctBy(x => x.ChangeDate).Count() != dataGridEntities.Count())
                 {
-                    LogWarning($"Availability change duplicates a change data!");
-                    isValid = false;
+                    LogWarning($"Availability change duplicates a change date!");
+                    errorMessage = new StatusMessage("You cannot have multiple changes in availability on the same day!", StatusMessage.MessageType.Error);
                     return;
                 }
                 else
                 {
-                    isValid = true;
+                    errorMessage = null;
                 }
 
                 // Update the person model, save to database, refresh the list and reset the model

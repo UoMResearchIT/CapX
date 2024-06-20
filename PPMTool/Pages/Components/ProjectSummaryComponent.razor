@@ -1,86 +1,79 @@
-﻿@using PPMTool.Enums
+﻿@using Microsoft.EntityFrameworkCore
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Services
+@using System.Diagnostics
 
-<div class="card m-1" style="width:200px; height:200px; display:flex; flex-direction:column">
-    <b>@Data.Portfolio.ToNiceString()</b>
-    <RadzenChart ColorScheme="ColorScheme.Palette">
-        <RadzenDonutSeries Data="@data" CategoryProperty="DataItemCategory" ValueProperty="DataItemValue">
-            <ChildContent>
-                <RadzenLegend Visible="false" Position="Radzen.Blazor.LegendPosition.Bottom" />
-            </ChildContent>
-            <TooltipTemplate Context="data">
-                <div>
-                    <span>@data.DataItemCategory</span> : <strong>@data.DataItemValue</strong>
-                </div>
-            </TooltipTemplate>
-            <TitleTemplate>
-                <div class="rz-donut-content">
-                    <h2>@Data.GetTotal()</h2>
-                </div>
-            </TitleTemplate>
-        </RadzenDonutSeries>
-    </RadzenChart>
+<div class="card my-1">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
+                <RadzenBadge Style="margin-bottom: 0.5rem"
+                                BadgeStyle="@(
+                                        Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
+                                        Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
+                                        Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                        BadgeStyle.Light)"
+                                Text="@Project.ProjectStatus.ToNiceString()" />
+            </RadzenStack>
+        @if (dueNotes?.Count > 0)
+        {
+            
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-border-danger p-1" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon IconStyle="IconStyle.Danger" Icon="flag"/>
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"You have {dueNotes.Count} note(s) due")" Style="margin-bottom: -0.1rem" />
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" />
+                </RadzenStack>
+            
+        }
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
+                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
+                    <ChildContent>
+                        <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
+                    </ChildContent>
+                </RadzenSplitButton>
+            </RadzenStack>
+        </RadzenStack>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
+            <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
+            <RequestAndScrumButtonsComponent Project="@Project" EditAuthorised="@EditAuthorised" />
+        </RadzenStack>
+    </RadzenStack>
 </div>
 
 @code {
 
-    public class ProjectSummaryData
-    {
-        public int Incoming { get; set; }
+    [Parameter]
+    public Project Project { get; set; }
 
-        public int Active { get; set; }
+    [Parameter]
+    public bool EditAuthorised { get; set; }
 
-        public int Complete { get; set; }
+    [Parameter]
+    public Action<RadzenSplitButtonItem, Project> DetailsButtonClicked { get; set; }
 
-        public Portfolio Portfolio { get; set; }
+    [Parameter]
+    public Action<Project> DueButtonClicked { get; set; }
 
-        public int GetTotal()
-        {
-            return Incoming + Active + Complete;
-        }
-    }
+    [Inject]
+    private NoteService NoteService { get; set; }
 
-    protected override void OnInitialized()
+    [Inject]
+    private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+
+    private List<Note> dueNotes;
+
+    override protected void OnInitialized()
     {
         base.OnInitialized();
 
-        UpdateChartData();
+        // Get any due notes
+        dueNotes = NoteService.GetAll(ContextFactory.CreateDbContext()).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsDue()).ToList();
+
+        Debug.WriteLine($"** ProjectSummaryComponent for {Project.GetFullName()} - due notes: {dueNotes.Count}");
     }
-
-    [Parameter]
-    public ProjectSummaryData Data { get; set; }
-
-    private List<DataItem> data = new List<DataItem>();
-
-    private void UpdateChartData()
-    {
-        data.Add(new DataItem
-            {
-                DataItemCategory = DataItemCategory.Incoming.ToString(),
-                DataItemValue = Data.Incoming
-            });
-        data.Add(new DataItem
-            {
-                DataItemCategory = DataItemCategory.Active.ToString(),
-                DataItemValue = Data.Active
-            });
-        data.Add(new DataItem
-            {
-                DataItemCategory = DataItemCategory.Complete.ToString(),
-                DataItemValue = Data.Complete
-            });
-    }
-
-    private class DataItem
-    {
-        public string DataItemCategory { get; set; }
-        public int DataItemValue { get; set; }
-    }
-
-    private enum DataItemCategory
-    {
-        Incoming,
-        Active,
-        Complete
-    }
-
 }

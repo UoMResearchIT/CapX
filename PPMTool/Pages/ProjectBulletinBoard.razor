@@ -1,0 +1,37 @@
+﻿@page "/projectbulletinboard"
+@inherits PPMTool.Pages.BasePage
+@using PPMTool.Data
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using static PPMTool.Enums.Extensions
+
+<div class="container">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Style="margin-bottom:-.5rem">
+        <h1>Available Projects</h1>
+        @if (availableProjects != null)
+        {
+            <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"({availableProjects.Count()} project(s) with unmet demand)")" />
+        }
+    </RadzenStack>
+    <hr />
+    @if (availableProjects == null)
+    {
+        <LoadingComponent />            
+    }
+    else if (availableProjects.Count() == 0)
+    {
+        <RadzenText Text="There are currently no projects requiring RSE resource." />
+    }
+    else
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+            @foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Sum(x => x.GetUnmetDemandNowAndInFuture())))
+            {
+                <ProjectBulletinCardComponent project="@project" />
+            }
+        </RadzenStack>
+        <hr />
+    }
+</div>

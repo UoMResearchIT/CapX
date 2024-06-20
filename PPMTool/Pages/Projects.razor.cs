@@ -73,7 +73,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            loading = true;
+            Loading = true;
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
@@ -124,13 +124,16 @@ namespace PPMTool.Pages
             // Remove the ones that are not active if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
 
+            // Filter owned projects to only show active ones
+            ownedProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
+
             // Extract the owned projects
             if (ProjectManagerShortName != null)
             {
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    ownedProjects = proj.Where(x =>
+                    ownedProjects = ownedProjects.Where(x =>
                     {
                         x.UpdateStatusMessages();
                         return x.HasActiveStatusMessages();
@@ -139,7 +142,7 @@ namespace PPMTool.Pages
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    ownedProjects = proj.Where(x =>
+                    ownedProjects = ownedProjects.Where(x =>
                     {
                         x.UpdateStatusMessages();
                         return x.HasActiveErrorMessages();
@@ -148,22 +151,21 @@ namespace PPMTool.Pages
                 else
                 {
                     // Use query string to see someone else's list of cards
-                    ownedProjects = proj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                    ownedProjects = ownedProjects.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
                 }
             }
             else
             {
                 // Show just the logged in user's projects
-                ownedProjects = proj.Where(x => x.ProjectManager == userRole.Person).ToList();
+                ownedProjects = ownedProjects.Where(x => x.ProjectManager == userRole.Person).ToList();
             }
 
             // Update the summary of each project and save back to DB if initial load of the page
             if (initial && proj.Count > 0)
             {
-                Debug.WriteLine($"** Updating project summary data for {proj.Count} project(s)...");
-                for (int i = 0; i < proj.Count; ++i)
+                Debug.WriteLine($"** Updating project summary data for {ownedProjects.Count()} project(s) that I own...");
+                foreach (var p in ownedProjects)
                 {
-                    var p = proj[i];
                     p.UpdateProjectSummary();
                     ProjectService.Update(context, p);
                 }
@@ -173,20 +175,27 @@ namespace PPMTool.Pages
             projects = proj;
 
             // Disable spinner now load complete
-            loading = false;
+            Loading = false;
 
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private async Task NavigateToProjectDetails(int id, bool newWindow = false)
+        private void NavigateToProjectDetails(int id, bool newWindow = false, bool filterDueNotes = false)
         {
+            string url = $"/projectdetails/{id}";
+
+            if (filterDueNotes)
+            {
+                url += "?filterDueNotes=true";
+            }
+
             if (newWindow)
             {
-                await JSRuntime.InvokeAsync<object>("open", $"/projectdetails/{id}", "_blank");
+                JSRuntime.InvokeAsync<object>("open", url, "_blank");
             }
             else
             {
-                Navigation.NavigateTo($"/projectdetails/{id}");
+                Navigation.NavigateTo(url);
             }
         }
 
@@ -195,20 +204,21 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"/addproject/-1");
         }
 
-        private async Task DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
+        private void DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
         {
             if (item == null)
             {
-                await NavigateToProjectDetails(project.ProjectId);
+                NavigateToProjectDetails(project.ProjectId);
             }
             else if (item.Value == "NewWindow")
             {
-                await NavigateToProjectDetails(project.ProjectId, true);
+                NavigateToProjectDetails(project.ProjectId, true);
             }
-            else if (item.Value == "Edit")
-            {
-                Navigation.NavigateTo($"/addproject/{project.ProjectId}");
-            }
+        }
+
+        private void DueButtonClicked(Project project)
+        {
+            NavigateToProjectDetails(project.ProjectId, filterDueNotes: true);
         }
     }
 }

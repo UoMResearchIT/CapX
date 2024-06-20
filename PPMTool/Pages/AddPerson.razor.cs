@@ -3,7 +3,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Extensions.Configuration;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -18,9 +17,6 @@ namespace PPMTool.Pages
         [Inject]
         private TagService TagService { get; set; }
 
-        [Inject]
-        private IConfiguration Configuration { get; set; }
-
         [Parameter]
         public int PersonId { get; set; }
 
@@ -29,6 +25,7 @@ namespace PPMTool.Pages
         private IList<SkillTag> chosenTags = new List<SkillTag>();
         private string autoCompleteText;
         private EditContext editContext;
+        private ValidationMessageStore messageStore;
 
         protected override void OnInitialized()
         {
@@ -38,7 +35,7 @@ namespace PPMTool.Pages
             availableTags = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
 
             // Load the person model if necessary
-            if (PersonId > -1)
+            if (PersonId > 0)
             {
                 personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
 
@@ -49,15 +46,9 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Set the default day rate in the model if doesn't already exist
-            else
-            {
-                var success = double.TryParse(Configuration["DefaultDayRate"], out var temp);
-                if (success) personModel.DayRate = temp;
-            }
-
             // Instantiate the edit context so we have a reference to it
             editContext = new EditContext(personModel);
+            messageStore = new ValidationMessageStore(editContext);
 
             LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
         }
@@ -86,38 +77,64 @@ namespace PPMTool.Pages
         private void EditAvailability()
         {
             // Check the existing model is valid first
+            messageStore.Clear();
             if (editContext.Validate())
             {
-                HandleValidSubmit();
+                HandleSubmit();
 
                 LogInformation("Editing availability changes...");
                 Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
             }
         }
 
-        private void HandleValidSubmit()
+        private void EditAbsence()
         {
-            // Add tags to person model
-            personModel.SkillTags = chosenTags.ToList();
-
-            if (PersonId > -1)
+            // Check the existing model is valid first
+            messageStore.Clear();
+            if (editContext.Validate())
             {
-                LogInformation($"Saving person {personModel?.Name}...");
+                HandleSubmit();
 
-                // Edit
-                PersonService.Update(context, personModel);
+                LogInformation("Editing absences...");
+                Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
             }
-            else
+        }
+
+        private void HandleSubmit()
+        {
+            messageStore.Clear();
+            if (editContext.Validate())
             {
-                // Add new
-                if (PersonService.Add(context, personModel) < 0)
+                // Add tags to person model
+                personModel.SkillTags = chosenTags.ToList();
+
+                if (PersonId > 0)
                 {
-                    // TODO: Duplicate found -- do something
-                    LogWarning($"Duplicate person found with name {personModel?.Name}");
-                }
-            }
+                    LogInformation($"Saving person {personModel?.Name}...");
 
-            Navigation.NavigateTo("people");
+                    // Edit
+                    if (PersonService.Update(context, personModel) < 0)
+                    {
+                        // Duplicate found so show error message
+                        LogWarning($"Duplicate person found with name {personModel?.Name}");
+                        messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        return;
+                    };
+                }
+                else
+                {
+                    // Add new
+                    if (PersonService.Add(context, personModel) < 0)
+                    {
+                        // Duplicate found so show error message
+                        LogWarning($"Duplicate person found with name {personModel?.Name}");
+                        messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        return;
+                    }
+                }
+
+                Navigation.NavigateTo("people");
+            }
         }
     }
 }

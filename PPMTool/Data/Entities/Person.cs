@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
 namespace PPMTool.Data.Entities
@@ -8,7 +9,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person
+    public class Person : ObjectWithStatusMessages
     {
         public int PersonId { get; set; }
 
@@ -24,11 +25,7 @@ namespace PPMTool.Data.Entities
         public string ShortName { get; set; }
 
         [Required]
-        [DataType(DataType.Currency)]
-        public double DayRate { get; set; }
-
-        [Required]
-        public DateTime StartDate { get; set; } = DateTime.Now.Date;
+        public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime? EndDate { get; set; }
 
@@ -40,7 +37,45 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
 
-        public ICollection<SkillTag> SkillTags { get; set; }
+        /// <summary>
+        /// Collection of skills
+        /// </summary>
+        public ICollection<SkillTag> SkillTags { get; set; } = new List<SkillTag>();
+
+        /// <summary>
+        /// Collection of absences
+        /// </summary>
+        public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+
+        /// <summary>
+        /// List of projects this person is following
+        /// </summary>
+        [InverseProperty("Followers")]
+        public ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
+
+        /// <summary>
+        /// List of projects this person manages
+        /// </summary>
+        [InverseProperty("ProjectManager")]
+        public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
+
+        public Person()
+        {
+            // Generate status messages to be maintained against a project
+            statusMessages = new List<StatusMessage>
+            {
+                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
+            };
+        }
+
+        /// <summary>
+        /// Checks whether this person is currently absent.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentlyAbsent()
+        {
+            return Absences.Any(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today));
+        }
 
         /// <summary>
         /// Updates the initials of the person.

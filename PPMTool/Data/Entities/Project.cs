@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using PPMTool.Enums;
 
@@ -20,8 +21,12 @@ namespace PPMTool.Data.Entities
         public string PI { get; set; }
 
         [Required]
-        public Portfolio Portfolio { get; set; }
+        public Faculty Faculty { get; set; }
 
+        [Required]
+        public School School { get; set; }
+
+        [InverseProperty("ManagedProjects")]
         public Person ProjectManager { get; set; }
 
         public IList<SubTask> SubTasks { get; set; }
@@ -31,6 +36,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public double Budget { get; set; }
+
+        [Required]
+        public double DayRate { get; set; }
 
         [Required]
         public double FundsReceived { get; set; }
@@ -43,44 +51,30 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public InnateCode InnateActivity { get; set; }
 
-        public class StatusMessage
-        {
-            public string Message { get; }
+        /// <summary>
+        /// HTML formatted text representing the description of the project
+        /// </summary>
+        [Required]
+        public string Description { get; set; }
 
-            public MessageType Type { get; }
+        /// <summary>
+        /// Link to the scrum project on GitHub Projects
+        /// </summary>
+        [DataType(DataType.Url)]
+        public string ScrumProjectLink { get; set; }
 
-            public Func<bool> Condition { get; }
+        /// <summary>
+        /// Link to the RSE request document on SharePoint
+        /// </summary>
+        [Required]
+        [DataType(DataType.Url)]
+        public string RequestDocLink { get; set; }
 
-            public bool Status { get; private set; }
-
-            /// <summary>
-            /// Create a new status message. Note, the condition will not be immediately checked. Update must be manually called.
-            /// </summary>
-            /// <param name="message"></param>
-            /// <param name="type"></param>
-            /// <param name="condition"></param>
-            public StatusMessage(string message, MessageType type, Func<bool> condition = null)
-            {
-                Message = message;
-                Type = type;
-                Condition = condition;
-            }
-
-            public void Update()
-            {
-                Status = Condition != null ? Condition.Invoke() : false;
-            }
-
-            public enum MessageType
-            {
-                Success,
-                Info,
-                Warning,
-                Error
-            }
-        }
-
-        private IList<StatusMessage> statusMessages;
+        /// <summary>
+        /// List of people who follow the project updates
+        /// </summary>
+        [InverseProperty("FollowedProjects")]
+        public ICollection<Person> Followers { get; set; } = new List<Person>();
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -90,27 +84,61 @@ namespace PPMTool.Data.Entities
             // Generate status messages to be maintained against a project
             statusMessages = new List<StatusMessage>
             {
-                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages()),
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.WillStartWithinAMonth())),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasStartedInTheLastWeek())),
+                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek())),
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
-                new StatusMessage("A task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasUnmetDemand())),
+                new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandNowOrInFuture()),
+                new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Warning, () => Budget == 0),
+                new StatusMessage("This project has started but has no link to its project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
-                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming())
+                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming()),
+                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
+                new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
+                new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
+                new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasksButFundedOrFinished()),
+                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
 
         /// <summary>
-        /// Calls update on the status messages in the list and returns the updated list
+        /// Whether a project has no sub tasks and has a status that is not unfunded or cancelled so should represent demand
         /// </summary>
         /// <returns></returns>
-        public IList<StatusMessage> GetLatestStatusMessages()
+        public bool HasNoTasksButFundedOrFinished()
         {
-            UpdateStatusMessages();
-            return statusMessages;
+            return (SubTasks == null || SubTasks.Count == 0) && ProjectStatus != ProjectStatus.Unfunded && !ProjectStatus.IsCancelled();
         }
+
+        /// <summary>
+        /// Whether a project has no description
+        /// </summary>
+        /// <returns></returns>
+        public bool HasNoDescription()
+        {
+            return string.IsNullOrWhiteSpace(Description);
+        }
+
+        /// <summary>
+        /// Today is within [startdate enddate] and there is no scrum project link
+        /// </summary>
+        /// <returns></returns>
+        public bool HasStartedButHasNoScrumProjectLink()
+        {
+            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && string.IsNullOrWhiteSpace(ScrumProjectLink);
+        }
+
+        /// <summary>
+        /// Has no URL in the request doc link field
+        /// </summary>
+        /// <returns></returns>
+        public bool HasNoRequestDocLink()
+        {
+            return string.IsNullOrWhiteSpace(RequestDocLink);
+        }
+
 
         /// <summary>
         /// Checks whether this project is inactive, not cancelled but there are tasks that are currently running
@@ -131,15 +159,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks whether this project has any active status messages trigger by its own state or states of the subtasks
-        /// </summary>
-        /// <returns></returns>
-        public bool HasActiveStatusMessages()
-        {
-            return statusMessages.Any(x => x.Status && x.Type != StatusMessage.MessageType.Success);
-        }
-
-        /// <summary>
         /// Checks whether this project is not finished or cancelled but has no project manager assigned
         /// </summary>
         /// <returns></returns>
@@ -154,16 +173,16 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
         {
-            return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Now.Date.AddMonths(1) >= StartDate;
+            return !ProjectStatus.IsFinishedOrCancelled() && InnateActivity == null && DateTime.Today.AddMonths(1) >= StartDate;
         }
 
         /// <summary>
-        /// Checks whether this project has any error-grade status messages
+        /// Check whether this project has any tasks with unmet demand excluding tasks that ran in the past
         /// </summary>
         /// <returns></returns>
-        public bool HasActiveErrorMessages()
+        public bool HasUnmetDemandNowOrInFuture()
         {
-            return statusMessages.Any(x => x.Status && x.Type == StatusMessage.MessageType.Error);
+            return SubTasks.Where(x => x.IsWithin(DateTime.Today) || x.StartDate > DateTime.Today).Any(x => x.HasUnmetDemand());
         }
 
         /// <summary>
@@ -220,21 +239,9 @@ namespace PPMTool.Data.Entities
         /// Method which returns the project name prefixed by the RTP code
         /// </summary>
         /// <returns></returns>
-        internal string GetFullName()
+        public string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
-        }
-
-        /// <summary>
-        /// Method to update the status messages
-        /// </summary>
-        internal void UpdateStatusMessages()
-        {
-            // Run the success checks last as condition depends on the latest state of the others!
-            foreach (var item in statusMessages.Reverse())
-            {
-                item.Update();
-            }
         }
     }
 }

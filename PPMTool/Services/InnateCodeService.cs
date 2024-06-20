@@ -15,8 +15,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override int Add(PPMToolContext context, InnateCode entity)
         {
-            var allCodes = context.InnateCodes.ToList();
-            if (allCodes.FirstOrDefault(x => x.GetCodeAsString().ToLower() == entity.GetCodeAsString().ToLower()) != null)
+            if (DuplicateDetected(context, entity))
             {
                 // Duplicate found!
                 return -1;
@@ -25,6 +24,11 @@ namespace PPMTool.Services
             context.InnateCodes.Add(entity);
             context.SaveChanges();
             return entity.InnateCodeId;
+        }
+
+        public override bool DuplicateDetected(PPMToolContext context, InnateCode entity)
+        {
+            return context.InnateCodes.Any(x => x.GetCodeAsString().ToLower() == entity.GetCodeAsString().ToLower() && x.InnateCodeId != entity.InnateCodeId);
         }
 
         public override void Delete(PPMToolContext context, InnateCode entity)
@@ -38,10 +42,16 @@ namespace PPMTool.Services
             return context.InnateCodes.ToList();
         }
 
-        public override void Update(PPMToolContext context, InnateCode entity)
+        public override int Update(PPMToolContext context, InnateCode entity)
         {
+            if (DuplicateDetected(context, entity))
+            {
+                // Duplicate found!
+                return -1;
+            }
             context.InnateCodes.Update(entity);
             context.SaveChanges();
+            return entity.InnateCodeId;
         }
     }
 }

@@ -1,0 +1,65 @@
+﻿@using PPMTool.Data
+@using static PPMTool.Data.StatusMessage
+
+@if (Messages?.Where(x => x.Type == Type && x.Status).Count() > 1)
+{
+    <RadzenBadge BadgeStyle="BadgeStyle.Light">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+            <RadzenIcon Icon=@icon IconStyle=@iconStyle title="@(string.Join('\n', Messages?.Where(x => x.Type == Type && x.Status).Select(x => x.Message)))" />
+            <RadzenText Style="margin-bottom: 0.1rem" TextAlign="TextAlign.Center" Text=@(Messages?.Where(x => x.Type == Type && x.Status).Count().ToString()) />
+        </RadzenStack>
+    </RadzenBadge>
+}
+else if (Messages?.Where(x => x.Type == Type && x.Status).Count() > 0)
+{
+    <RadzenIcon Icon=@icon IconStyle=@iconStyle title="@(string.Join('\n', Messages?.Where(x => x.Type == Type && x.Status).Select(x => x.Message)))" />
+}
+
+@code
+{
+    [Parameter]
+    public IList<StatusMessage> Messages { get; set; }
+
+    private MessageType? type = null;
+    [Parameter]
+    public MessageType? Type
+    {
+        get => type;
+        set
+        {
+            if (type != value)
+            {
+                type = value;
+                UpdateStyle();
+            }
+        }
+    }
+
+    private IconStyle iconStyle;
+    private string icon;
+
+    private void UpdateStyle()
+    {
+        if (Type == MessageType.Info)
+        {
+            iconStyle = IconStyle.Info;
+            icon = "info";
+        }
+        else if (Type == MessageType.Warning)
+        {
+            iconStyle = IconStyle.Warning;
+            icon = "warning";
+        }
+        else if (Type == MessageType.Error)
+        {
+            iconStyle = IconStyle.Danger;
+            icon = "error";
+        }
+        else
+        {
+            iconStyle = IconStyle.Success;
+            icon = "check";
+        }
+        StateHasChanged();
+    }
+}

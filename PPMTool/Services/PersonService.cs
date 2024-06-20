@@ -16,7 +16,7 @@ namespace PPMTool.Services
         /// <returns>False if an entry with the same name exists already.</returns>
         public override int Add(PPMToolContext context, Person personModel)
         {
-            if (context.People.Any(p => p.Name.ToLower().Trim() == personModel.Name.ToLower().Trim()))
+            if (DuplicateDetected(context, personModel))
             {
                 // Duplicate found
                 return -1;
@@ -25,6 +25,11 @@ namespace PPMTool.Services
             context.People.Add(personModel);
             context.SaveChanges();
             return personModel.PersonId;
+        }
+
+        public override bool DuplicateDetected(PPMToolContext context, Person entity)
+        {
+            return context.People.Any(p => p.Name.ToLower().Trim() == entity.Name.ToLower().Trim() && p.PersonId != entity.PersonId);
         }
 
         /// <summary>
@@ -36,6 +41,7 @@ namespace PPMTool.Services
             return context.People
                 .Include(p => p.SkillTags)
                 .Include(p => p.AvailabilityChanges)
+                .Include(p => p.Absences)
                 .ToList();
         }
 
@@ -54,11 +60,17 @@ namespace PPMTool.Services
         /// Update an exist person in the DB
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="person"></param>
-        public override void Update(PPMToolContext context, Person person)
+        /// <param name="personModel"></param>
+        public override int Update(PPMToolContext context, Person personModel)
         {
-            context.People.Update(person);
+            if (DuplicateDetected(context, personModel))
+            {
+                // Duplicate found
+                return -1;
+            }
+            context.People.Update(personModel);
             context.SaveChanges();
+            return personModel.PersonId;
         }
 
         /// <summary>
