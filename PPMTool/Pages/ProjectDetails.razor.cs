@@ -259,32 +259,30 @@ namespace PPMTool.Pages
                 if (FilteredNote != null)
                 {
                     // Set the search term
-                    InvokeAsync(() =>
-                    {
-                        noteSearchTerms = $"#id={FilteredNote}";
-                        PopulateNotes();
-                    });
+                    noteSearchTerms = $"#id={FilteredNote}";
+                    PopulateNotes();
                 }
                 else if (FilterDueNotes)
                 {
-                    InvokeAsync(() =>
-                    {
-                        showOnlyDueItems = true;
-                        sortByDueDate = true;
-                        PopulateNotes();
+                    showOnlyDueItems = true;
+                    sortByDueDate = true;
+                    PopulateNotes();
 
-                        // Check whether the parameter is present to scroll to the due notes
-                        if (FilterDueNotes)
+                    // Check whether the parameter is present to scroll to the due notes
+                    if (FilterDueNotes)
+                    {
+                        InvokeAsync(async () =>
                         {
-                            InvokeAsync(async () =>
-                            {
-                                // Refresh then scroll last due note into view
-                                StateHasChanged();
-                                await Task.Delay(300);
-                                await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
-                            });
-                        }
-                    });
+                            // Refresh then scroll last due note into view
+                            StateHasChanged();
+                            await Task.Delay(300);
+                            await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
+                        });
+                    }
+                }
+                else
+                {
+                    PopulateNotes();
                 }
             }
         }
