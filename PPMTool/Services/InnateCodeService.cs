@@ -28,7 +28,7 @@ namespace PPMTool.Services
 
         public override bool DuplicateDetected(PPMToolContext context, InnateCode entity)
         {
-            return context.InnateCodes.Any(x => x.GetCodeAsString().ToLower() == entity.GetCodeAsString().ToLower() && x.InnateCodeId != entity.InnateCodeId);
+            return GetAll(context).Any(x => x.GetCodeAsString().ToLower() == entity.GetCodeAsString().ToLower() && x.InnateCodeId != entity.InnateCodeId);
         }
 
         public override void Delete(PPMToolContext context, InnateCode entity)
