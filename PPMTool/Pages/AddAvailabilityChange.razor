@@ -54,18 +54,13 @@
 
                         <RadzenDataGridColumn TItem="AvailabilityChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
                             <Template Context="c">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true">
-                                </RadzenButton>
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true">
-                                </RadzenButton>
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
                             </Template>
                             <EditTemplate Context="c">
-                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))">
-                                </RadzenButton>
-                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))">
-                                </RadzenButton>
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))">
-                                </RadzenButton>
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
