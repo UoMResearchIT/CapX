@@ -127,7 +127,7 @@ namespace PPMTool.Pages
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
                 count = allTasks.Count;
                 isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
-                    project.ProjectManager.Name == activeUser.Name;
+                    project.ProjectManager?.Name == activeUser.Name;
                 isProjectManager = activeUser == project?.ProjectManager || role.RoleType == RoleType.Superuser;
 
                 ganttChartOptions = new ApexChartOptions<SubTask>
