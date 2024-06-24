@@ -113,22 +113,38 @@ namespace PPMTool.Pages
                     LogInformation($"Saving person {personModel?.Name}...");
 
                     // Edit
-                    if (PersonService.Update(context, personModel) < 0)
+                    var res = PersonService.Update(context, personModel);
+                    if (res < 0)
                     {
                         // Duplicate found so show error message
-                        LogWarning($"Duplicate person found with name {personModel?.Name}");
-                        messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        LogWarning($"Duplicate person found with name {personModel?.Name} or initials {personModel?.ShortName}");
+                        if (res == -1)
+                        {
+                            messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        }
+                        else
+                        {
+                            messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
+                        }
                         return;
                     };
                 }
                 else
                 {
                     // Add new
-                    if (PersonService.Add(context, personModel) < 0)
+                    var res = PersonService.Add(context, personModel);
+                    if (res < 0)
                     {
                         // Duplicate found so show error message
-                        LogWarning($"Duplicate person found with name {personModel?.Name}");
-                        messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        LogWarning($"Duplicate person found with name {personModel?.Name} or initials {personModel?.ShortName}");
+                        if (res == -1)
+                        {
+                            messageStore.Add(() => personModel.Name, "Duplicate person name found!");
+                        }
+                        else
+                        {
+                            messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
+                        }
                         return;
                     }
                 }

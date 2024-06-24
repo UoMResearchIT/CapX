@@ -32,7 +32,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Duplicate determined by name or RTP number
+        /// Duplicate determined by name
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
@@ -42,6 +42,12 @@ namespace PPMTool.Services
             return context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim() && projectModel.ProjectId != p.ProjectId);
         }
 
+        /// <summary>
+        /// Duplicate determined by RTP
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectModel"></param>
+        /// <returns></returns>
         private bool DuplicateRTPDetected(PPMToolContext context, Project projectModel)
         {
             return context.Projects.Any(x => x.RTP == projectModel.RTP && projectModel.ProjectId != x.ProjectId);
