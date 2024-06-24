@@ -73,6 +73,9 @@ namespace PPMTool.Pages
             else
             {
                 projectModel.DayRate = double.Parse(Configuration["DefaultDayRate"]);
+
+                // Auto generate the RTP number based on the highest in the DB
+                projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).Max() + 1;
             }
 
             // Initially load data
