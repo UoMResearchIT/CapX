@@ -21,15 +21,37 @@ namespace PPMTool.Services
                 // Duplicate found
                 return -1;
             }
+            if (DuplicateInitialsDetected(context, personModel))
+            {
+                // Duplicate found
+                return -2;
+            }
 
             context.People.Add(personModel);
             context.SaveChanges();
             return personModel.PersonId;
         }
 
+        /// <summary>
+        /// Duplicate determined by name
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Person entity)
         {
             return context.People.Any(p => p.Name.ToLower().Trim() == entity.Name.ToLower().Trim() && p.PersonId != entity.PersonId);
+        }
+
+        /// <summary>
+        /// Duplicate determined by initials
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public bool DuplicateInitialsDetected(PPMToolContext context, Person entity)
+        {
+            return context.People.Any(p => p.ShortName.ToLower().Trim() == entity.ShortName.ToLower().Trim() && p.PersonId != entity.PersonId);
         }
 
         /// <summary>
@@ -67,6 +89,11 @@ namespace PPMTool.Services
             {
                 // Duplicate found
                 return -1;
+            }
+            if (DuplicateInitialsDetected(context, personModel))
+            {
+                // Duplicate found
+                return -2;
             }
             context.People.Update(personModel);
             context.SaveChanges();
