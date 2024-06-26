@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -21,6 +22,9 @@ namespace PPMTool.Pages
 
         [Inject]
         protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+
+        [Inject]
+        protected TooltipService TooltipService { get; set; }
 
         [CascadingParameter]
         protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
@@ -83,6 +87,15 @@ namespace PPMTool.Pages
         public void LogError(string message, Exception exception)
         {
             Logger?.LogError(exception, message);
+        }
+
+        public void ShowTooltip(ElementReference elementReference, string message, int delay = 500)
+        {
+            var options = new TooltipOptions()
+            {
+                Delay = delay
+            };
+            TooltipService.Open(elementReference, message, options);
         }
     }
 }

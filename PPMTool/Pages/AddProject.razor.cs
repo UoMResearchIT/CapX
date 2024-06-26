@@ -73,6 +73,9 @@ namespace PPMTool.Pages
             else
             {
                 projectModel.DayRate = double.Parse(Configuration["DefaultDayRate"]);
+
+                // Auto generate the RTP number based on the highest in the DB
+                projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).Max() + 1;
             }
 
             // Initially load data
@@ -148,6 +151,13 @@ namespace PPMTool.Pages
                             {
                                 t.AssignedResources.Clear();
                             }
+                        }
+
+                        // If the project is marked as cancelled or finished then remove the followers
+                        if (projectModel.ProjectStatus.IsFinishedOrCancelled())
+                        {
+
+                            projectModel.Followers.Clear();
                         }
 
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");

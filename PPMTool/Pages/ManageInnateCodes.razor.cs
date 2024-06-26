@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -17,6 +18,8 @@ namespace PPMTool.Pages
 
         [Inject]
         public IJSRuntime JsRuntime { get; set; }
+
+        private StatusMessage statusMessage;
 
         protected override void OnInitialized()
         {
@@ -36,6 +39,40 @@ namespace PPMTool.Pages
                 dataGridEntityService.Delete(context, entity);
                 LogInformation($"Deleted innate code {entity.GetCodeAsString()}");
             }
+        }
+
+        protected override void OnCreateRow(InnateCode entity)
+        {
+            var result = InnateCodeService.Add(context, entity);
+            if (result == -1)
+            {
+                dataGridEntities.Remove(entity);
+                dataGrid.Reload();
+                Reset();
+                statusMessage = new StatusMessage("An entry with the same name or code already exists.", StatusMessage.MessageType.Error);
+                return;
+            }
+            LogInformation($"Added innate code {entity.GetCodeAsString()}");
+            Reset();
+        }
+
+        protected override void OnUpdateRow(InnateCode entity)
+        {
+            var result = InnateCodeService.Update(context, entity);
+            if (result == -1)
+            {
+                CancelEdit(entity);
+                statusMessage = new StatusMessage("An entry with the same name or code already exists.", StatusMessage.MessageType.Error);
+                return;
+            }
+            LogInformation($"Updated innate code {entity.GetCodeAsString()}");
+            Reset();
+        }
+
+        protected override void Reset()
+        {
+            base.Reset();
+            statusMessage = null;
         }
     }
 }

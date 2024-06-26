@@ -21,7 +21,10 @@
         </div>
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center">
-                <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(activeUser == project.ProjectManager) />
+                @if (EditAuthorised)
+                {
+                    <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(activeUser == project.ProjectManager) />
+                }
                 <RequestAndScrumButtonsComponent Project="@project" EditAuthorised="@EditAuthorised" />
             </RadzenStack>
         </div>
@@ -243,9 +246,9 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="160px" FrozenPosition="FrozenColumnPosition.Right" Title="Actions">
                         <Template Context="task">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised />
-                            <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised />
-                            <RadzenButton Icon="settings_ethernet" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => SplitTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised />
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                            <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Duplicate"))" />
+                            <RadzenButton Icon="settings_ethernet" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => SplitTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Split"))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -313,7 +316,7 @@
                             <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
                             <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
                             <RadzenDatePicker @bind-Value="@noteModel.DueDate" Disabled="@noteModel.IsCompleted()"/>
-                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })" Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })" Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                             @if (noteModel.IsCompleted())
                             {
                                 <RadzenText Text="Completed: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
@@ -342,7 +345,7 @@
                                        Placeholder="Search Notes"
                                        Change=@FilterNotes
                                        Style="width:40rem" />
-                        <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" />
+                        <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem" />
@@ -366,7 +369,7 @@
                 {
                     @foreach (var note in filteredNotes)
                     {
-                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="MarkComplete" EditAuthorised="@(isProjectManager ||activeUser == note.Author)"/>
+                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="MarkComplete" EditAuthorised="@(isProjectManager ||activeUser == note.Author)" ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
                     }
                 }
             </RadzenStack>
