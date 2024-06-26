@@ -153,6 +153,13 @@ namespace PPMTool.Pages
                             }
                         }
 
+                        // If the project is marked as cancelled or finished then remove the followers
+                        if (projectModel.ProjectStatus.IsFinishedOrCancelled())
+                        {
+
+                            projectModel.Followers.Clear();
+                        }
+
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
 
                         var res = ProjectService.Update(context, projectModel);

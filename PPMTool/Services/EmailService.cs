@@ -153,6 +153,16 @@ namespace PPMTool.Services
                     }
                 }
 
+                // Remove the author or the editor
+                if (note.Editor != null)
+                {
+                    peopleToBeNotfied.Remove(note.Editor);
+                }
+                else
+                {
+                    peopleToBeNotfied.Remove(note.Author);
+                }
+
                 // Create the emails and send
                 foreach (var m in peopleToBeNotfied)
                 {
