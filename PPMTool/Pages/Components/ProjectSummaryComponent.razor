@@ -30,7 +30,8 @@
                 </RadzenStack>
             
         }
-            <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
+                <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
                 <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
                     <ChildContent>
                         <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
@@ -40,7 +41,7 @@
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
             <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
-            <RequestAndScrumButtonsComponent Project="@Project" EditAuthorised="@EditAuthorised" />
+            <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
         </RadzenStack>
     </RadzenStack>
 </div>
@@ -59,11 +60,17 @@
     [Parameter]
     public Action<Project> DueButtonClicked { get; set; }
 
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
+
     [Inject]
     private NoteService NoteService { get; set; }
 
     [Inject]
     private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; }
 
     private List<Note> dueNotes;
 
@@ -75,5 +82,10 @@
         dueNotes = NoteService.GetAll(ContextFactory.CreateDbContext()).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsDue()).ToList();
 
         Debug.WriteLine($"** ProjectSummaryComponent for {Project.GetFullName()} - due notes: {dueNotes.Count}");
+    }
+
+    private void EditProject(Project project)
+    {
+        Navigation.NavigateTo($"/addproject/{project.ProjectId}");
     }
 }

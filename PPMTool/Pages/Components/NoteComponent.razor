@@ -34,12 +34,12 @@
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
                     @if (EditAuthorised)
                     {
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit"))" />
                     }
-                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" MouseEnter="@(args => ShowTooltip(args, "Copy Link"))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Copy Link"))" />
                     @if (EditAuthorised)
                     {
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Delete"))" />
                     }
                 </RadzenStack>
                 @if (Note.DueDate != null && !Note.IsCompleted())
