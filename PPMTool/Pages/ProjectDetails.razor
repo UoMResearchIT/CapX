@@ -337,14 +337,14 @@
                     <hr />
                 }
             </div>
-            <div class="row justify-content-start ml-1">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
+            <div class="row justify-content-center ml-1">
+                <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Center">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
                         <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
                         <RadzenTextBox @bind-Value=@noteSearchTerms
                                        Placeholder="Search Notes"
                                        Change=@FilterNotes
-                                       Style="width:40rem" />
+                                       Style="width:100%" />
                         <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -359,7 +359,7 @@
                     </RadzenStack>
                 </RadzenStack>
             </div>
-            <br />
+            <hr />
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
                 @if (filteredNotes == null || filteredNotes.Count == 0)
                 {

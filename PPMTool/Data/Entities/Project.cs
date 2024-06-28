@@ -99,8 +99,18 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasksButFundedOrFinished()),
+                new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Whether a project has no faculty or has faculty but no school
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoFacultyOrFacultyButNoSchool()
+        {
+            return Faculty == Faculty.None || ((Faculty == Faculty.FBMH || Faculty == Faculty.FHUMS || Faculty == Faculty.FSE) && School == School.None);
         }
 
         /// <summary>
