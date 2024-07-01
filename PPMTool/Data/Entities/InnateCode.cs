@@ -3,7 +3,7 @@ using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
-    public class InnateCode : ILoggableClass
+    public class InnateCode : ILoggableClass, IEntity
     {
         public int InnateCodeId { get; set; }
 
@@ -21,6 +21,11 @@ namespace PPMTool.Data.Entities
         public string GetCodeAsString()
         {
             return $"{ActivityCode} - {ActivityName}";
+        }
+
+        public int GetId()
+        {
+            return InnateCodeId;
         }
 
         public string GetSensibleObjectName()

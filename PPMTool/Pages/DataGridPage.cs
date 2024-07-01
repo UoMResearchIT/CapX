@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen.Blazor;
 
@@ -11,7 +12,7 @@ namespace PPMTool.Pages
         public abstract string GetSensibleObjectName();
     }
 
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass, IEntity
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;

@@ -4,7 +4,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public abstract class BaseTask : ObjectWithStatusMessages
+    public abstract class BaseTask : ObjectWithStatusMessages, IEntity
     {
         [Required]
         public string Name { get; set; }
@@ -33,5 +33,7 @@ namespace PPMTool.Data.Entities
         /// Flag is set by internal processing.
         /// </summary>
         public ScheduleStatus ScheduleStatus { get; protected set; }
+
+        public abstract int GetId();
     }
 }

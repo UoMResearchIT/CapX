@@ -14,5 +14,10 @@ namespace PPMTool.Data.Entities
         public DateTime StartDate { get; set; }
 
         public DateTime? EndDate { get; set; }
+
+        public override int GetId()
+        {
+            return AbsenceId;
+        }
     }
 }

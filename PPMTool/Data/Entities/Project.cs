@@ -253,5 +253,10 @@ namespace PPMTool.Data.Entities
         {
             return $"RTP-{RTP} {Name}";
         }
+
+        public override int GetId()
+        {
+            return ProjectId;
+        }
     }
 }

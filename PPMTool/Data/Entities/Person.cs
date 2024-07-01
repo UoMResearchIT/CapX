@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person : ObjectWithStatusMessages
+    public class Person : ObjectWithStatusMessages, IEntity
     {
         public int PersonId { get; set; }
 
@@ -112,6 +112,11 @@ namespace PPMTool.Data.Entities
             }
 
             return availability;
+        }
+
+        public int GetId()
+        {
+            return PersonId;
         }
     }
 }

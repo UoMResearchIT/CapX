@@ -20,5 +20,10 @@ namespace PPMTool.Data.Entities
         /// Notes on their baseline activities or whether they are part time to explain the change
         /// </summary>
         public string BaselineActivities { get; set; }
+
+        public override int GetId()
+        {
+            return AvailabilityChangeId;
+        }
     }
 }

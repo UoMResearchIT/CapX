@@ -557,5 +557,10 @@ namespace PPMTool.Data.Entities
 
             return daysUpToEndOfWeek * workPerDay;
         }
+
+        public override int GetId()
+        {
+            return SubTaskId;
+        }
     }
 }
