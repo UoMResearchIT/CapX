@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 
@@ -38,6 +37,27 @@ namespace PPMTool.Services
         public virtual bool DuplicateDetected(PPMToolContext context, T entity)
         {
             return false;
+        }
+
+        /// <summary>
+        /// Class to encapsulate a change to an entity with values represented as strings
+        /// </summary>
+        internal class EntityDiff
+        {
+            public int EntityId { get; }
+            public EntityState State { get; }
+            public string PropertyName { get; }
+            public string OriginalValue { get; }
+            public string CurrentValue { get; }
+
+            public EntityDiff(int entityId, EntityState state, string propertyName, string originalValue, string currentValue)
+            {
+                EntityId = entityId;
+                State = state;
+                PropertyName = propertyName;
+                OriginalValue = originalValue;
+                CurrentValue = currentValue;
+            }
         }
     }
 }

@@ -99,6 +99,7 @@ namespace PPMTool.Pages
                 }
 
                 LogInformation($"Saving absences for {personModel.Name}.");
+                var diff = PersonService.GetAbsenceDiff(context, personModel);
                 PersonService.Update(context, personModel);
 
                 // Send emails based on current projet model state after save
