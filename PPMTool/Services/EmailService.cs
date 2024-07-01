@@ -81,15 +81,15 @@ namespace PPMTool.Services
 
                 // Get affected PMs
                 var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct();
+                var allPMs = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).Distinct();
 
-                // For each PM, aggregate the changes
-                foreach (var pm in affectedPMs)
+                // For each manager
+                foreach (var pm in allPMs)
                 {
-
                     // Create email body
                     StringBuilder body = new StringBuilder();
                     body.Append($"<p>Dear {pm.Name},</p>");
-                    body.Append($"<p>{Configuration["Email:AbsenceEmailBody"]}</p>");
+                    body.Append($"<p>{(affectedPMs.Contains(pm) ? Configuration["Email:AbsenceEmailBody"] : Configuration["Email:AbsenceEmailBodyNotAffected"])}</p>");
 
                     // Get people absent from projects owned by this PM
                     var myProjects = affectedProjects.Where(x => x.ProjectManager == pm);
@@ -110,14 +110,17 @@ namespace PPMTool.Services
                             body.Append($"<h4>{project.GetFullName()}</h4>");
                             foreach (var ab in relevantAbsences)
                             {
+                                // Set state text
                                 var state = newAbsences.Contains(ab) ? "New" : (deletedAbsences.Contains(ab) ? "Deleted" : "Modified");
+
+                                // Write absence info
                                 body.Append($"<p>{ab.Person.Name} is absent from {ab.StartDate.ToShortDateString()} to {ab.EndDate?.ToShortDateString() ?? "present"} ({state}).</p>");
                             }
                         }
                     }
 
                     // Send email
-                    body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
+                    body.Append($"<p>{(affectedPMs.Contains(pm) ? Configuration["Email:AbsenceEmailEndBody"] : Configuration["Email:AbsenceEmailEndBodyNotAffected"])}</p><p><i>Sent from CapX</i></p>");
                     var subject = Configuration["Email:AbsenceEmailSubject"];
                     var role = RolesService.GetAll(context).Where(x => x.Person == pm);
                     IEnumerable<string> recipients = role
