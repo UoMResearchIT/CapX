@@ -8,7 +8,7 @@ namespace PPMTool.Enums
     public enum Faculty
     {
         None,
-        [Description("Research IT")]
+        [Description("Research IT / Internal")]
         Internal,
         [Description("Professional Services and Cultural Institutions")]
         PSCI,
@@ -19,6 +19,8 @@ namespace PPMTool.Enums
         [Description("Science and Engineering")]
         FSE,
         [Description("Research Lifecycle Programme")]
-        RLP
+        RLP,
+        [Description("Commercial / External")]
+        External
     }
 }

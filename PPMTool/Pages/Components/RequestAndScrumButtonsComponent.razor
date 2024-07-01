@@ -1,14 +1,13 @@
 ﻿@using PPMTool.Data.Entities
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
-    <RadzenButton Click=@(args => EditProject(project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
     @if (!project.HasNoRequestDocLink())
     {
-        <RadzenButton Click=@(args => ViewRequestDocClickedAsync(project)) Text="Request Doc" Icon="description" ButtonStyle="ButtonStyle.Dark" />
+        <RadzenButton Click=@(args => ViewRequestDocClickedAsync(project)) Icon="description" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, "View Request Doc"))" />
     }
     @if (!string.IsNullOrWhiteSpace(project.ScrumProjectLink))
     {
-        <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(project)) Text="Scrum Project" Icon="view_kanban" ButtonStyle="ButtonStyle.Dark" />
+        <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(project)) Icon="view_kanban" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, "View Scrum Project"))" />
     }
 </RadzenStack>
 
@@ -17,14 +16,11 @@
     [Parameter]
     public Project project { get; set; }
 
-    [Parameter]
-    public bool EditAuthorised { get; set; }
-
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
 
-    [Inject]
-    private NavigationManager Navigation { get; set; }
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
 
     private async Task ViewRequestDocClickedAsync(Project project)
     {
@@ -34,10 +30,5 @@
     private async Task ViewScrumBoardClickedAsync(Project project)
     {
         await JSRuntime.InvokeAsync<object>("open", $"{project.ScrumProjectLink}", "_blank");
-    }
-
-    private void EditProject(Project project)
-    {
-        Navigation.NavigateTo($"/addproject/{project.ProjectId}");
     }
 }

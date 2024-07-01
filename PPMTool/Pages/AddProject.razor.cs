@@ -171,6 +171,16 @@ namespace PPMTool.Pages
                         var res = ProjectService.Add(context, projectModel);
                         if (!CheckResultOfAddOrUpdate(res)) return;
 
+                        // Make sure that super users automatically follow the project
+                        var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
+                        foreach (var s in superusers)
+                        {
+                            if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
+                            {
+                                projectModel.Followers.Add(s);
+                            }
+                        }
+                        ProjectService.Update(context, projectModel);
                     }
                 }
 
