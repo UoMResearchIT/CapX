@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#if !LOCAL
+using System.Net.Mail;
+#endif
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
