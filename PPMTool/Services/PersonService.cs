@@ -111,20 +111,5 @@ namespace PPMTool.Services
             Debug.Write("** Delete Person not implemented!");
             throw new System.NotImplementedException();
         }
-
-        /// <summary>
-        /// Get the differences between the original and current values of an absence
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="absence"></param>
-        /// <returns></returns>
-        internal IList<EntityDiff> GetAbsenceDiff(PPMToolContext context, Absence absence)
-        {
-            // Start tracking
-            context.Absence.Update(absence);
-
-            // Get diff list
-            return GetDiffList(context, absence);
-        }
     }
 }

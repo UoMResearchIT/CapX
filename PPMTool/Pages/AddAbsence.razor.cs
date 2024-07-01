@@ -86,42 +86,25 @@ namespace PPMTool.Pages
                 // Reset error
                 errorMessage = null;
 
-                // Update the person model, save to database, refresh the list and reset the model
+                // Get tracking information for the absences (added or deleted won't be tracked yet)
+                var newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
+                var deletedAbsences = personModel.Absences.Where(x => !dataGridEntities.Contains(x)).ToList();
+                var updatedAbsences = PersonService.GetDiffList<Absence>(context).Where(x => x.State == EntityState.Modified).GroupBy(x => x.Entity);
+                var delAbsencesDictionary = deletedAbsences.ToDictionary(x => x.Person.PersonId);
+
+                // Send emails based on diff information
+                EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
+
+                // Reset assign the absences from the data grid to the model
                 personModel.Absences.Clear();
                 foreach (var ab in dataGridEntities)
                 {
                     personModel.Absences.Add(ab);
                 }
 
-                LogInformation($"Saving absences for {personModel.Name}.");
-
-                // Sort out the absences based on knowledge of the diffs of the entities
-                var newAbsences = new List<Absence>();
-                var deletedAbsences = new List<Absence>();
-                var updatedAbsences = new Dictionary<Absence, IList<EntityDiff>>();
-                foreach (var ab in personModel.Absences)
-                {
-                    var diff = PersonService.GetAbsenceDiff(context, ab);
-
-                    if (diff.FirstOrDefault()?.State == EntityState.Added)
-                    {
-                        newAbsences.Add(ab);
-                    }
-                    else if (diff.FirstOrDefault()?.State == EntityState.Deleted)
-                    {
-                        deletedAbsences.Add(ab);
-                    }
-                    else if (diff.FirstOrDefault()?.State == EntityState.Modified)
-                    {
-                        updatedAbsences.Add(ab, diff.ToList());
-                    }
-                }
-
                 // Write to the database
+                LogInformation($"Saving absences for {personModel.Name}.");
                 PersonService.Update(context, personModel);
-
-                // Send emails based on diff information
-                EmailService.SendAbsenceEmailNotifications(context, newAbsences, updatedAbsences, deletedAbsences);
 
                 // Navigate back
                 Navigation.NavigateTo($"addperson/{PersonId}");

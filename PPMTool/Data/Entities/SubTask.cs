@@ -485,10 +485,16 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Checks whether the absence record provided encroaches on the scheduled task period and up to 7 days before.
         /// </summary>
+        /// <param name="absence"></param>
+        /// <param name="id">Id of the person with whom the absence is associated (deleted absences have no person to get this from)</param>
         /// <returns></returns>
-        public bool IsAffectedByAbsence(Absence absence)
+        public bool IsAffectedByAbsence(Absence absence, int? id = null)
         {
-            return AssignedResources.Any(r => r.Person == absence.Person) && absence.StartDate.AddDays(7) >= StartDate && absence.StartDate <= EndDate;
+            if (id == null)
+            {
+                id = absence.Person.PersonId;
+            }
+            return AssignedResources.Any(r => r.Person.PersonId == id) && absence.StartDate.AddDays(7) >= StartDate && absence.StartDate <= EndDate;
         }
 
         /// <summary>

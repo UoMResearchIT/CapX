@@ -46,15 +46,14 @@ namespace PPMTool.Services
         /// Method to generate a list of differences between the original and current values of an entity
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="entity"></param>
         /// <returns></returns>
-        public IList<EntityDiff> GetDiffList(PPMToolContext context, IEntity entity)
+        public IList<EntityDiff<U>> GetDiffList<U>(PPMToolContext context) where U : class, IEntity
         {
             // Initialise
-            var diffList = new List<EntityDiff>();
+            var diffList = new List<EntityDiff<U>>();
 
             // Check entity state
-            var modifiedEntities = context.ChangeTracker.Entries()
+            var modifiedEntities = context.ChangeTracker.Entries<U>()
                 .Where(p => p.State == EntityState.Modified || p.State == EntityState.Added || p.State == EntityState.Deleted).ToList();
 
             // Loop over changes
@@ -69,8 +68,8 @@ namespace PPMTool.Services
                     // Record the diff of modified properties or all properties if an add or delete
                     if (originalValue != currentValue || change.State == EntityState.Added || change.State == EntityState.Deleted)
                     {
-                        diffList.Add(new EntityDiff(entity.GetId(), change.State, prop.Name, originalValue, currentValue));
-                        Debug.WriteLine($"** ID:{entity.GetId()} | {change.State} | {originalValue} -> {currentValue}");
+                        diffList.Add(new EntityDiff<U>(change.Entity, change.State, prop.Name, originalValue, currentValue));
+                        Debug.WriteLine($"** ID:{change.Entity} | {change.State} | {originalValue} -> {currentValue}");
                     }
                 }
             }

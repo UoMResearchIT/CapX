@@ -544,7 +544,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, false);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, false);
         }
 
         private void UpdateNote()
@@ -558,7 +558,7 @@ namespace PPMTool.Pages
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, true);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, true);
         }
 
         private void EditNote(Note noteToEdit)
