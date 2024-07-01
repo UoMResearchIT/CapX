@@ -112,37 +112,19 @@ namespace PPMTool.Services
             throw new System.NotImplementedException();
         }
 
-        internal IList<EntityDiff> GetAbsenceDiff(PPMToolContext context, Person entity)
+        /// <summary>
+        /// Get the differences between the original and current values of an absence
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="absence"></param>
+        /// <returns></returns>
+        internal IList<EntityDiff> GetAbsenceDiff(PPMToolContext context, Absence absence)
         {
-            var diffList = new List<EntityDiff>();
+            // Start tracking
+            context.Absence.Update(absence);
 
-            // Look at tracking information
-            foreach (var ab in entity.Absences)
-            {
-                // Start tracking
-                context.Absence.Update(ab);
-
-                // Check entity state
-                var modifiedEntities = context.ChangeTracker.Entries()
-                    .Where(p => p.State == EntityState.Modified || p.State == EntityState.Added || p.State == EntityState.Deleted).ToList();
-
-                foreach (var change in modifiedEntities)
-                {
-                    foreach (var prop in change.OriginalValues.Properties)
-                    {
-                        var originalValue = change.OriginalValues[prop]?.ToString() ?? null;
-                        var currentValue = change.CurrentValues[prop]?.ToString() ?? null;
-
-                        // Record the diff of modified properties or all properties if an add or delete
-                        if (originalValue != currentValue || change.State == EntityState.Added || change.State == EntityState.Deleted)
-                        {
-                            diffList.Add(new EntityDiff(ab.AbsenceId, change.State, prop.Name, originalValue, currentValue));
-                            Debug.WriteLine($"** {change.State} -> {originalValue} -> {currentValue}");
-                        }
-                    }
-                }
-            }
-            return diffList;
+            // Get diff list
+            return GetDiffList(context, absence);
         }
     }
 }

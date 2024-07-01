@@ -86,11 +86,6 @@ namespace PPMTool.Pages
                 // Reset error
                 errorMessage = null;
 
-                // Check state of absence records and send to email service
-                List<Absence> newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
-                List<Absence> deletedAbsences = personModel.Absences.Where(x => !dataGridEntities.Contains(x)).ToList();
-                List<Absence> updatedAbsences = context.ChangeTracker.Entries<Absence>().Where(x => x.State == EntityState.Modified).Select(x => x.Entity).ToList();
-
                 // Update the person model, save to database, refresh the list and reset the model
                 personModel.Absences.Clear();
                 foreach (var ab in dataGridEntities)
@@ -99,10 +94,33 @@ namespace PPMTool.Pages
                 }
 
                 LogInformation($"Saving absences for {personModel.Name}.");
-                var diff = PersonService.GetAbsenceDiff(context, personModel);
+
+                // Sort out the absences based on knowledge of the diffs of the entities
+                var newAbsences = new List<Absence>();
+                var deletedAbsences = new List<Absence>();
+                var updatedAbsences = new Dictionary<Absence, IList<EntityDiff>>();
+                foreach (var ab in personModel.Absences)
+                {
+                    var diff = PersonService.GetAbsenceDiff(context, ab);
+
+                    if (diff.FirstOrDefault()?.State == EntityState.Added)
+                    {
+                        newAbsences.Add(ab);
+                    }
+                    else if (diff.FirstOrDefault()?.State == EntityState.Deleted)
+                    {
+                        deletedAbsences.Add(ab);
+                    }
+                    else if (diff.FirstOrDefault()?.State == EntityState.Modified)
+                    {
+                        updatedAbsences.Add(ab, diff.ToList());
+                    }
+                }
+
+                // Write to the database
                 PersonService.Update(context, personModel);
 
-                // Send emails based on current projet model state after save
+                // Send emails based on diff information
                 EmailService.SendAbsenceEmailNotifications(context, newAbsences, updatedAbsences, deletedAbsences);
 
                 // Navigate back

@@ -58,12 +58,12 @@ namespace PPMTool.Services
             }
         }
 
-        public void SendAbsenceEmailNotifications(PPMToolContext context, IEnumerable<Absence> newAbsences, IList<Absence> modifiedAbsences, IList<Absence> deletedAbsences)
+        public void SendAbsenceEmailNotifications(PPMToolContext context, IEnumerable<Absence> newAbsences, Dictionary<Absence, IList<EntityDiff>> modifiedAbsences, IList<Absence> deletedAbsences)
         {
             Task.Run(() =>
             {
                 // Get various lists of relevant info
-                var allAbsences = newAbsences.Concat(modifiedAbsences).Concat(deletedAbsences);
+                var allAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences);
                 var absentPeople = allAbsences.Select(x => x.Person).Distinct();
 
                 // Find projects where they have subtasks affected by the absence
@@ -110,11 +110,30 @@ namespace PPMTool.Services
                             body.Append($"<h4>{project.GetFullName()}</h4>");
                             foreach (var ab in relevantAbsences)
                             {
-                                // Set state text
-                                var state = newAbsences.Contains(ab) ? "New" : (deletedAbsences.Contains(ab) ? "Deleted" : "Modified");
+                                // Decide on the state of the absence
+                                var state = "New";
+                                if (deletedAbsences.Contains(ab))
+                                {
+                                    state = "Deleted";
+                                }
+                                else if (modifiedAbsences.ContainsKey(ab))
+                                {
+                                    var changes = modifiedAbsences[ab];
+
+                                    // Determine if return to work or some other modification
+                                    var change = changes.FirstOrDefault(x => x.PropertyName == "EndDate");
+                                    if (change != null && change.OriginalValue == null)
+                                    {
+                                        state = "Returned to Work";
+                                    }
+                                    else
+                                    {
+                                        state = "Modified";
+                                    }
+                                }
 
                                 // Write absence info
-                                body.Append($"<p>{ab.Person.Name} is absent from {ab.StartDate.ToShortDateString()} to {ab.EndDate?.ToShortDateString() ?? "present"} ({state}).</p>");
+                                body.Append($"<p>{ab.Person.Name} is absent from {ab.StartDate.ToShortDateString()} to {ab.EndDate?.ToShortDateString() ?? "present"} (<b>{state}</b>).</p>");
                             }
                         }
                     }
@@ -128,7 +147,6 @@ namespace PPMTool.Services
                             $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                     SendEmail(recipients, subject, body.ToString());
                 }
-
             });
         }
 
