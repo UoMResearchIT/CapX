@@ -86,23 +86,25 @@ namespace PPMTool.Pages
                 // Reset error
                 errorMessage = null;
 
-                // Check state of absence records and send to email service
-                List<Absence> newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
-                List<Absence> deletedAbsences = personModel.Absences.Where(x => !dataGridEntities.Contains(x)).ToList();
-                List<Absence> updatedAbsences = context.ChangeTracker.Entries<Absence>().Where(x => x.State == EntityState.Modified).Select(x => x.Entity).ToList();
+                // Get tracking information for the absences (added or deleted won't be tracked yet)
+                var newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
+                var deletedAbsences = personModel.Absences.Where(x => !dataGridEntities.Contains(x)).ToList();
+                var updatedAbsences = PersonService.GetDiffList<Absence>(context).Where(x => x.State == EntityState.Modified).GroupBy(x => x.Entity);
+                var delAbsencesDictionary = deletedAbsences.ToDictionary(x => x.Person.PersonId);
 
-                // Update the person model, save to database, refresh the list and reset the model
+                // Send emails based on diff information
+                EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
+
+                // Reset assign the absences from the data grid to the model
                 personModel.Absences.Clear();
                 foreach (var ab in dataGridEntities)
                 {
                     personModel.Absences.Add(ab);
                 }
 
+                // Write to the database
                 LogInformation($"Saving absences for {personModel.Name}.");
                 PersonService.Update(context, personModel);
-
-                // Send emails based on current projet model state after save
-                EmailService.SendAbsenceEmailNotifications(context, newAbsences, updatedAbsences, deletedAbsences);
 
                 // Navigate back
                 Navigation.NavigateTo($"addperson/{PersonId}");

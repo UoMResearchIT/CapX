@@ -1,5 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 
@@ -38,6 +39,41 @@ namespace PPMTool.Services
         public virtual bool DuplicateDetected(PPMToolContext context, T entity)
         {
             return false;
+        }
+
+        /// <summary>
+        /// Method to generate a list of differences between the original and current values of an entity
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IList<EntityDiff<U>> GetDiffList<U>(PPMToolContext context) where U : class
+        {
+            // Initialise
+            var diffList = new List<EntityDiff<U>>();
+
+            // Check entity state
+            var modifiedEntities = context.ChangeTracker.Entries<U>()
+                .Where(p => p.State == EntityState.Modified || p.State == EntityState.Added || p.State == EntityState.Deleted).ToList();
+
+            // Loop over changes
+            foreach (var change in modifiedEntities)
+            {
+                // For every property, create a diff entry
+                foreach (var prop in change.OriginalValues.Properties)
+                {
+                    var originalValue = change.OriginalValues[prop]?.ToString() ?? null;
+                    var currentValue = change.CurrentValues[prop]?.ToString() ?? null;
+
+                    // Record the diff of modified properties or all properties if an add or delete
+                    if (originalValue != currentValue || change.State == EntityState.Added || change.State == EntityState.Deleted)
+                    {
+                        diffList.Add(new EntityDiff<U>(change.Entity, change.State, prop.Name, originalValue, currentValue));
+                        Debug.WriteLine($"** ID:{change.Entity} | {change.State} | {originalValue} -> {currentValue}");
+                    }
+                }
+            }
+
+            return diffList;
         }
     }
 }
