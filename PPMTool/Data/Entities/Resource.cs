@@ -6,7 +6,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a person as a resource to be assigned to a subtask
     /// </summary>
-    public class Resource : ILoggableClass, IEntity
+    public class Resource : ILoggableClass
     {
         public int ResourceId { get; set; }
 
@@ -45,11 +45,6 @@ namespace PPMTool.Data.Entities
         public string GetSensibleObjectName()
         {
             return $"{Person?.Name} (Resource)";
-        }
-
-        public int GetId()
-        {
-            return ResourceId;
         }
     }
 }

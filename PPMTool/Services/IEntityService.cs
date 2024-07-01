@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public interface IEntityService<T> where T : IEntity
+    public interface IEntityService<T>
     {
         public abstract int Add(PPMToolContext context, T entity);
         public IEnumerable<T> GetAll(PPMToolContext context);

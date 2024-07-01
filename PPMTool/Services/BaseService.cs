@@ -3,11 +3,10 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public abstract class BaseService<T> : IEntityService<T> where T : IEntity
+    public abstract class BaseService<T> : IEntityService<T>
     {
         /// <summary>
         /// Method to restore a model to its unmodified state in the database after local modification.
@@ -47,7 +46,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IList<EntityDiff<U>> GetDiffList<U>(PPMToolContext context) where U : class, IEntity
+        public IList<EntityDiff<U>> GetDiffList<U>(PPMToolContext context) where U : class
         {
             // Initialise
             var diffList = new List<EntityDiff<U>>();

@@ -1,12 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
     /// <summary>
     /// Class to encapsulate a change to an entity with values represented as strings
     /// </summary>
-    public class EntityDiff<T> where T : class, IEntity
+    public class EntityDiff<T> where T : class
     {
         public T Entity { get; }
         public EntityState State { get; }

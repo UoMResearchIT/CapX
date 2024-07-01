@@ -4,7 +4,7 @@ using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
-    public class Role : ILoggableClass, IEntity
+    public class Role : ILoggableClass
     {
         public int RoleId { get; set; }
 
@@ -20,11 +20,6 @@ namespace PPMTool.Data.Entities
 
         [DataType(DataType.EmailAddress)]
         public string EmailAddress { get; set; }
-
-        public int GetId()
-        {
-            return RoleId;
-        }
 
         public string GetSensibleObjectName()
         {

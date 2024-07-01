@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
-    public class Note : IEntity
+    public class Note
     {
         public int NoteId { get; set; }
 
@@ -46,11 +46,6 @@ namespace PPMTool.Data.Entities
         internal bool IsDue()
         {
             return DueDate.HasValue && DueDate.Value <= DateTime.Now && !IsCompleted();
-        }
-
-        public int GetId()
-        {
-            return NoteId;
         }
     }
 }

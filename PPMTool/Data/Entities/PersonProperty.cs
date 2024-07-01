@@ -2,11 +2,9 @@
 
 namespace PPMTool.Data.Entities
 {
-    public abstract class PersonProperty : ILoggableClass, IEntity
+    public abstract class PersonProperty : ILoggableClass
     {
         public Person Person { get; set; }
-
-        public abstract int GetId();
 
         public string GetSensibleObjectName()
         {
