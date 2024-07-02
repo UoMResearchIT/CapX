@@ -93,18 +93,18 @@
                             Options="burnUpChartOptions">
 
                     <ApexPointSeries TItem="ChartItem"
-                                        Items="burnUpChartSource"
-                                        SeriesType="@SeriesType.Area"
-                                        Name="Planned Work"
-                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YValue="@(e => Convert.ToDecimal(e.Value1))" />
+                                     Items="burnUpChartSource"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Planned Work"
+                                     XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YValue="@(e => Convert.ToDecimal(e.Value1))" />
 
                     <ApexPointSeries TItem="ChartItem"
-                                        Items="burnUpChartSource"
-                                        SeriesType="@SeriesType.Area"
-                                        Name="Planned Work (Adjusted for Unmet Demand)"
-                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YValue="@(e => Convert.ToDecimal(e.Value2))" />
+                                     Items="burnUpChartSource"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Planned Work (Adjusted for Unmet Demand)"
+                                     XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YValue="@(e => Convert.ToDecimal(e.Value2))" />
 
                 </ApexChart>
             </RadzenCard>
@@ -119,20 +119,20 @@
                             OnDataPointSelection="TaskSelected">
                     <ChildContent>
                         <ApexRangeSeries TItem="SubTask"
-                                            Items="confirmedTasks"
-                                            Name="Resources Confirmed"
-                                            XValue="@(e => e.Name)"
-                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                                         Items="confirmedTasks"
+                                         Name="Resources Confirmed"
+                                         XValue="@(e => e.Name)"
+                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                         PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
 
                         <ApexRangeSeries TItem="SubTask"
-                                            Items="provisionalTasks"
-                                            Name="Resources Provisional"
-                                            XValue="@(e => e.Name)"
-                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                                         Items="provisionalTasks"
+                                         Name="Resources Provisional"
+                                         XValue="@(e => e.Name)"
+                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                         PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
                     </ChildContent>
                     <ApexPointTooltip>
                         <div class="m-2">
