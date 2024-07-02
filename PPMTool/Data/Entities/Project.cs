@@ -141,12 +141,12 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Has no URL in the request doc link field
+        /// Has no URL in the request doc link field or value is less than 12 characters
         /// </summary>
         /// <returns></returns>
         public bool HasNoRequestDocLink()
         {
-            return string.IsNullOrWhiteSpace(RequestDocLink);
+            return string.IsNullOrWhiteSpace(RequestDocLink) || RequestDocLink.Length < 12;
         }
 
 
