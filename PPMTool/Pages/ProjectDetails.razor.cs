@@ -507,6 +507,11 @@ namespace PPMTool.Pages
             }
         }
 
+        private void EditProject(Project project)
+        {
+            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+        }
+
         private void AddClicked()
         {
             noteModel = new Note();
