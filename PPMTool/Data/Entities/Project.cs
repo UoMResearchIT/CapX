@@ -90,7 +90,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandNowOrInFuture()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Warning, () => Budget == 0),
-                new StatusMessage("This project has started but has no link to its project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
+                new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
