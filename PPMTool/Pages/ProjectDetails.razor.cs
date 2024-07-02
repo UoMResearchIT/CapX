@@ -599,8 +599,8 @@ namespace PPMTool.Pages
         private void MarkComplete(Note note)
         {
             LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
-            noteModel.CompletedDate = DateTime.Now;
-            NoteService.Update(context, noteModel);
+            note.CompletedDate = DateTime.Now;
+            NoteService.Update(context, note);
             StateHasChanged();
         }
 

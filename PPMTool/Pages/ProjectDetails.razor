@@ -270,9 +270,9 @@
                 </div>
             </div>
             <hr />
-            @if (editorVisible)
-            {
-                <div id="note-editor">
+            <div id="note-editor">
+                @if (editorVisible)
+                {
                     <RadzenText TextStyle=TextStyle.Subtitle2>
                         Use &commat; symbol followed by a person's initials (as it appears on their <a href="people">People</a> entry) to mention them e.g. &commat;alb or &commat;ALB for
                         <span class="badge badge-primary">
@@ -332,8 +332,8 @@
                         </div>
                     </div>
                     <hr />
-                </div>
-            }
+                }
+            </div>
 
             <div class="row justify-content-center ml-1">
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Center">
@@ -367,7 +367,7 @@
                 {
                     @foreach (var note in filteredNotes)
                     {
-                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="MarkComplete" EditAuthorised="@(isProjectManager ||activeUser == note.Author)" ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
+                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="@(args => MarkComplete(note))" EditAuthorised="@(isProjectManager ||activeUser == note.Author)" ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
                     }
                 }
             </RadzenStack>
