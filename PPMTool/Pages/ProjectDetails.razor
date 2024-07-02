@@ -25,7 +25,7 @@
                 {
                     <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(activeUser == project.ProjectManager) />
                 }
-                <RequestAndScrumButtonsComponent Project="@project" EditAuthorised="@EditAuthorised" />
+                <RequestAndScrumButtonsComponent Project="@project" />
             </RadzenStack>
         </div>
     </div>
