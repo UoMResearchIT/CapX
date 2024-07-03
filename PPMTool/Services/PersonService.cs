@@ -7,14 +7,14 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class PersonService : BaseService<Person>
+    public class PersonService : BaseEntityService<Person>
     {
         /// <summary>
         /// Adds a person to the DB.
         /// </summary>
         /// <param name="personModel"></param>
         /// <returns>False if an entry with the same name exists already.</returns>
-        public override int Add(PPMToolContext context, Person personModel)
+        public override int Add(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, personModel))
             {
@@ -28,7 +28,7 @@ namespace PPMTool.Services
             }
 
             context.People.Add(personModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return personModel.PersonId;
         }
 
@@ -83,7 +83,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="personModel"></param>
-        public override int Update(PPMToolContext context, Person personModel)
+        public override int Update(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, personModel))
             {
@@ -96,7 +96,7 @@ namespace PPMTool.Services
                 return -2;
             }
             context.People.Update(personModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return personModel.PersonId;
         }
 
@@ -106,7 +106,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="entity"></param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Delete(PPMToolContext context, Person entity)
+        public override void Delete(PPMToolContext context, Person entity, bool commitChanges = true)
         {
             Debug.Write("** Delete Person not implemented!");
             throw new System.NotImplementedException();

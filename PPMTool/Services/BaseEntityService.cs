@@ -6,7 +6,7 @@ using PPMTool.Data.Context;
 
 namespace PPMTool.Services
 {
-    public abstract class BaseService<T> : IEntityService<T>
+    public abstract class BaseEntityService<T> : IEntityService<T>
     {
         /// <summary>
         /// Method to restore a model to its unmodified state in the database after local modification.
@@ -25,10 +25,10 @@ namespace PPMTool.Services
             }
         }
 
-        public abstract int Add(PPMToolContext context, T entity);
-        public abstract void Delete(PPMToolContext context, T entity);
+        public abstract int Add(PPMToolContext context, T entity, bool commitChanges = true);
+        public abstract void Delete(PPMToolContext context, T entity, bool commitChanges = true);
         public abstract IEnumerable<T> GetAll(PPMToolContext context);
-        public abstract int Update(PPMToolContext context, T entity);
+        public abstract int Update(PPMToolContext context, T entity, bool commitChanges = true);
 
         /// <summary>
         /// Method to allow services to define their own definition of a duplicate
