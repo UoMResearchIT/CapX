@@ -75,5 +75,14 @@ namespace PPMTool.Services
 
             return diffList;
         }
+
+        /// <summary>
+        /// Write any staged changes to the database
+        /// </summary>
+        /// <param name="context"></param>
+        public virtual void CommitChanges(PPMToolContext context)
+        {
+            context.SaveChanges();
+        }
     }
 }
