@@ -5,10 +5,10 @@ namespace PPMTool.Services
 {
     public interface IEntityService<T>
     {
-        public abstract int Add(PPMToolContext context, T entity);
+        public abstract int Add(PPMToolContext context, T entity, bool commitChanges = true);
         public IEnumerable<T> GetAll(PPMToolContext context);
-        public int Update(PPMToolContext context, T entity);
-        public void Delete(PPMToolContext context, T entity);
+        public int Update(PPMToolContext context, T entity, bool commitChanges = true);
+        public void Delete(PPMToolContext context, T entity, bool commitChanges = true);
         public void RestoreModel<U>(PPMToolContext context, ref U entity);
 
     }

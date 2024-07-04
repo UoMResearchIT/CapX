@@ -7,7 +7,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class SubTaskService : BaseService<SubTask>
+    public class SubTaskService : BaseEntityService<SubTask>
     {
         /// <summary>
         /// Adds a subtask
@@ -15,10 +15,10 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="taskModel"></param>
         /// <returns></returns>
-        public override int Add(PPMToolContext context, SubTask taskModel)
+        public override int Add(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Add(taskModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return taskModel.SubTaskId;
         }
 
@@ -27,10 +27,10 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="taskModel"></param>
-        public override int Update(PPMToolContext context, SubTask taskModel)
+        public override int Update(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Update(taskModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return taskModel.SubTaskId;
         }
 
@@ -81,19 +81,14 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="subTask"></param>
-        public override void Delete(PPMToolContext context, SubTask subTask)
+        public override void Delete(PPMToolContext context, SubTask subTask, bool commitChanges = true)
         {
-            // Remove resources
             foreach (var res in subTask.AssignedResources)
             {
                 context.Resources.Remove(res);
             }
-
-            // Remove sub task
             context.SubTasks.Remove(subTask);
-
-            // Update database
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         /// <summary>

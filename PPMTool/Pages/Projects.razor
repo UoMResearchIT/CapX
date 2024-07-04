@@ -24,7 +24,7 @@
         {
             foreach (var project in ownedProjects.OrderBy(x => x.ProjectStatus))
             {
-                <ProjectSummaryComponent Project="project" EditAuthorised="EditAuthorised" DetailsButtonClicked="DetailsButtonClicked" DueButtonClicked="DueButtonClicked" />
+                <ProjectSummaryComponent Project="project" EditAuthorised="EditAuthorised" DetailsButtonClicked="DetailsButtonClicked" DueButtonClicked="DueButtonClicked" ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
             }
         }
     </div>

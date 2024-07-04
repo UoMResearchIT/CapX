@@ -7,7 +7,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class TagService : BaseService<SkillTag>
+    public class TagService : BaseEntityService<SkillTag>
     {
         /// <summary>
         /// Returns all skill tags in the DB
@@ -24,14 +24,14 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="tag"></param>
-        public override int Update(PPMToolContext context, SkillTag tag)
+        public override int Update(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             if (DuplicateDetected(context, tag))
             {
                 return -1;
             }
             context.SkillTags.Update(tag);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return tag.SkillTagId;
         }
 
@@ -51,10 +51,10 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="tag"></param>
-        public override void Delete(PPMToolContext context, SkillTag tag)
+        public override void Delete(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             context.Remove(tag);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         /// <summary>
@@ -62,14 +62,14 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="tag"></param>
-        public override int Add(PPMToolContext context, SkillTag tag)
+        public override int Add(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             if (DuplicateDetected(context, tag))
             {
                 return -1;
             }
             context.Add(tag);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return tag.SkillTagId;
         }
 

@@ -6,19 +6,19 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class NoteService : BaseService<Note>
+    public class NoteService : BaseEntityService<Note>
     {
-        public override int Add(PPMToolContext context, Note entity)
+        public override int Add(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Add(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.NoteId;
         }
 
-        public override void Delete(PPMToolContext context, Note entity)
+        public override void Delete(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Remove(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         /// <summary>
@@ -35,10 +35,10 @@ namespace PPMTool.Services
                 .ThenInclude(x => x.Followers);
         }
 
-        public override int Update(PPMToolContext context, Note entity)
+        public override int Update(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Update(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.NoteId;
         }
     }

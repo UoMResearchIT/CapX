@@ -153,6 +153,13 @@ namespace PPMTool.Pages
                             }
                         }
 
+                        // If the project is marked as cancelled or finished then remove the followers
+                        if (projectModel.ProjectStatus.IsFinishedOrCancelled())
+                        {
+
+                            projectModel.Followers.Clear();
+                        }
+
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
 
                         var res = ProjectService.Update(context, projectModel);
@@ -164,6 +171,16 @@ namespace PPMTool.Pages
                         var res = ProjectService.Add(context, projectModel);
                         if (!CheckResultOfAddOrUpdate(res)) return;
 
+                        // Make sure that super users automatically follow the project
+                        var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
+                        foreach (var s in superusers)
+                        {
+                            if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
+                            {
+                                projectModel.Followers.Add(s);
+                            }
+                        }
+                        ProjectService.Update(context, projectModel);
                     }
                 }
 

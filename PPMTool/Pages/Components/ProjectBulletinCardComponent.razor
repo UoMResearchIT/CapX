@@ -37,8 +37,8 @@
             <RadzenText TextStyle="TextStyle.Body1">@(project.StartDate <= DateTime.Today ? "Now" : project.StartDate.ToShortDateString()) - @project.EndDate.ToShortDateString()</RadzenText>
             <RadzenButton Text=@(project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
                           Icon="description" Click="@(args => ViewRequestDocClickedAsync(project))"
-                          ButtonStyle=@(string.IsNullOrWhiteSpace(project.RequestDocLink) ? ButtonStyle.Light : ButtonStyle.Primary)
-                          Disabled=@string.IsNullOrWhiteSpace(project.RequestDocLink) />
+                          ButtonStyle=@(project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
+                          Disabled=@project.HasNoRequestDocLink() />
         </RadzenStack>
     </RadzenStack>
 </div>

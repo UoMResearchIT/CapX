@@ -5,7 +5,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class InnateCodeService : BaseService<InnateCode>
+    public class InnateCodeService : BaseEntityService<InnateCode>
     {
         /// <summary>
         /// Will not add a duplicate but return -1 instead. If successfully added, will return new ID of saved entity.
@@ -13,7 +13,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public override int Add(PPMToolContext context, InnateCode entity)
+        public override int Add(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
             {
@@ -22,7 +22,7 @@ namespace PPMTool.Services
             }
 
             context.InnateCodes.Add(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.InnateCodeId;
         }
 
@@ -34,10 +34,10 @@ namespace PPMTool.Services
                     && x.InnateCodeId != entity.InnateCodeId);
         }
 
-        public override void Delete(PPMToolContext context, InnateCode entity)
+        public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             context.InnateCodes.Remove(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
@@ -45,7 +45,7 @@ namespace PPMTool.Services
             return context.InnateCodes.ToList();
         }
 
-        public override int Update(PPMToolContext context, InnateCode entity)
+        public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
             {
@@ -53,7 +53,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.InnateCodes.Update(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.InnateCodeId;
         }
     }
