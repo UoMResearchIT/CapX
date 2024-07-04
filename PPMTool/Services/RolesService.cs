@@ -8,7 +8,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class RolesService : BaseService<Role>
+    public class RolesService : BaseEntityService<Role>
     {
 
         private ILogger<RolesService> _logger;
@@ -20,16 +20,14 @@ namespace PPMTool.Services
             _contextFactory = contextFactory;
         }
 
-        public override int Add(PPMToolContext context, Role entity)
+        public override int Add(PPMToolContext context, Role entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
             {
-                // Duplicate found
                 return -1;
             }
-
             context.Roles.Add(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.RoleId;
         }
 
@@ -38,10 +36,10 @@ namespace PPMTool.Services
             return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.RoleId != entity.RoleId);
         }
 
-        public override void Delete(PPMToolContext context, Role entity)
+        public override void Delete(PPMToolContext context, Role entity, bool commitChanges = true)
         {
             context.Roles.Remove(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         public override IEnumerable<Role> GetAll(PPMToolContext context)
@@ -51,15 +49,14 @@ namespace PPMTool.Services
                 .ToList();
         }
 
-        public override int Update(PPMToolContext context, Role entity)
+        public override int Update(PPMToolContext context, Role entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
             {
-                // Duplicate found
                 return -1;
             }
             context.Roles.Update(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.RoleId;
         }
 

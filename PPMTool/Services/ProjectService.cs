@@ -7,7 +7,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
-    public class ProjectService : BaseService<Project>
+    public class ProjectService : BaseEntityService<Project>
     {
         /// <summary>
         /// Adds a project. If duplicate found based on name, does not add but returns false.
@@ -15,7 +15,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
         /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
-        public override int Add(PPMToolContext context, Project projectModel)
+        public override int Add(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, projectModel))
             {
@@ -27,7 +27,7 @@ namespace PPMTool.Services
             }
 
             context.Projects.Add(projectModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return projectModel.ProjectId;
         }
 
@@ -71,7 +71,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
         /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
-        public override int Update(PPMToolContext context, Project projectModel)
+        public override int Update(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, projectModel))
             {
@@ -81,9 +81,8 @@ namespace PPMTool.Services
             {
                 return -2;
             }
-
             context.Projects.Update(projectModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return projectModel.ProjectId;
         }
 
@@ -120,10 +119,10 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
-        public override void Delete(PPMToolContext context, Project projectModel)
+        public override void Delete(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             context.Projects.Remove(projectModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         /// <summary>
