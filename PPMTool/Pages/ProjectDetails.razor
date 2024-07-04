@@ -23,9 +23,10 @@
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center">
                 @if (EditAuthorised)
                 {
-                    <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(activeUser == project.ProjectManager) />
+                    <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(activeUser == project?.ProjectManager) />
                 }
-                <RequestAndScrumButtonsComponent Project="@project" EditAuthorised="@EditAuthorised" />
+                <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
+                <RequestAndScrumButtonsComponent Project="@project" />
             </RadzenStack>
         </div>
     </div>
@@ -92,18 +93,18 @@
                             Options="burnUpChartOptions">
 
                     <ApexPointSeries TItem="ChartItem"
-                                        Items="burnUpChartSource"
-                                        SeriesType="@SeriesType.Area"
-                                        Name="Planned Work"
-                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YValue="@(e => Convert.ToDecimal(e.Value1))" />
+                                     Items="burnUpChartSource"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Planned Work"
+                                     XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YValue="@(e => Convert.ToDecimal(e.Value1))" />
 
                     <ApexPointSeries TItem="ChartItem"
-                                        Items="burnUpChartSource"
-                                        SeriesType="@SeriesType.Area"
-                                        Name="Planned Work (Adjusted for Unmet Demand)"
-                                        XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YValue="@(e => Convert.ToDecimal(e.Value2))" />
+                                     Items="burnUpChartSource"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Planned Work (Adjusted for Unmet Demand)"
+                                     XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                     YValue="@(e => Convert.ToDecimal(e.Value2))" />
 
                 </ApexChart>
             </RadzenCard>
@@ -118,20 +119,20 @@
                             OnDataPointSelection="TaskSelected">
                     <ChildContent>
                         <ApexRangeSeries TItem="SubTask"
-                                            Items="confirmedTasks"
-                                            Name="Resources Confirmed"
-                                            XValue="@(e => e.Name)"
-                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                                         Items="confirmedTasks"
+                                         Name="Resources Confirmed"
+                                         XValue="@(e => e.Name)"
+                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                         PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
 
                         <ApexRangeSeries TItem="SubTask"
-                                            Items="provisionalTasks"
-                                            Name="Resources Provisional"
-                                            XValue="@(e => e.Name)"
-                                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                            PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                                         Items="provisionalTasks"
+                                         Name="Resources Provisional"
+                                         XValue="@(e => e.Name)"
+                                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                                         PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
                     </ChildContent>
                     <ApexPointTooltip>
                         <div class="m-2">
@@ -270,81 +271,78 @@
             </div>
             <hr />
             <div id="note-editor">
-                <RadzenText TextStyle=TextStyle.Subtitle2 Visible=@editorVisible>
-                    Use &commat; symbol followed by a person's initials (as it appears on their <a href="people">People</a> entry) to mention them e.g. &commat;alb or &commat;ALB for
-                    <span class="badge badge-primary">
-                        Anja Le Blanc
-                    </span>.
-                    They will receive an email notification when the note is saved or updated. Use the # symbol followed by the RTP reference to link to a project e.g. #rtp-24 or #RTP-24 to link to
-                    <span class="badge badge-success">
-                        RTP-24 Project Name
-                    </span>.
-                    Failed linking, if either the person or project does not exist, will leave the text unchanged.
-                </RadzenText>
-                <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent style="height:10rem; margin-bottom:1rem" Visible=@editorVisible />
-
-                <Popup @ref=popup
-                       Lazy=false
-                       Open="@OnMentionPopupOpenAsync"
-                       Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
-
-                    <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @onkeydown="@(args => ProcessMentionSearchInput(args))" @oninput=@(args => MentionSearchString = $"{args.Value}") Value="@MentionSearchString" autocomplete="off" />
-                    <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
-                        @foreach (var person in mentionables)
-                        {
-                            <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))" MouseLeave="@(args => UnHighlightMention(person))" Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
-                                <RadzenStack Orientation="Radzen.Orientation.Vertical">
-                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
-                                        <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
-                                        <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
-                                    </RadzenStack>
-                                </RadzenStack>
-                            </RadzenCard>
-                        }
-                    </RadzenStack>
-                </Popup>
-
-
-                
-
-                <div class="row">
-                    <div class="col align-items-center" style="display: flex">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>
-                            <RadzenText Text="Tag as " TextStyle="TextStyle.Subtitle1"  Style="margin-bottom: 0.1rem" />
-                            <div class="badge badge-warning">Finance Info</div>
-                            <RadzenText Text=":" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
-                            <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
-                            <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
-                            <RadzenDatePicker @bind-Value="@noteModel.DueDate" Disabled="@noteModel.IsCompleted()"/>
-                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })" Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
-                            @if (noteModel.IsCompleted())
-                            {
-                                <RadzenText Text="Completed: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
-                                <RadzenText Text="@noteModel.CompletedDate?.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
-                                <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="refresh" Text="Re-Open" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.CompletedDate = null; })" />
-                            }
-                        </RadzenStack>
-                    </div>
-                    <div class="col-auto">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Visible=@editorVisible>
-                            <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" />
-                            <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardClicked" />
-                        </RadzenStack>
-                    </div>
-                </div>
                 @if (editorVisible)
                 {
+                    <RadzenText TextStyle=TextStyle.Subtitle2>
+                        Use &commat; symbol followed by a person's initials (as it appears on their <a href="people">People</a> entry) to mention them e.g. &commat;alb or &commat;ALB for
+                        <span class="badge badge-primary">
+                            Anja Le Blanc
+                        </span>.
+                        They will receive an email notification when the note is saved or updated. Use the # symbol followed by the RTP reference to link to a project e.g. #rtp-24 or #RTP-24 to link to
+                        <span class="badge badge-success">
+                            RTP-24 Project Name
+                        </span>.
+                        Failed linking, if either the person or project does not exist, will leave the text unchanged.
+                    </RadzenText>
+                    <div class="grip">
+                        <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent style="height:100%; min-height:10rem;" />
+                    </div>
+                    <Popup @ref=popup
+                           Lazy=false
+                           Open="@OnMentionPopupOpenAsync"
+                           Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
+                        <RadzenTextBox id="search" Placeholder="Type to search..." Style="width:100%;" @onkeydown="@(args => ProcessMentionSearchInput(args))" @oninput=@(args => MentionSearchString = $"{args.Value}") Value="@MentionSearchString" autocomplete="off" />
+                        <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
+                            @foreach (var person in mentionables)
+                            {
+                                <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))" MouseLeave="@(args => UnHighlightMention(person))" Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
+                                    <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+                                            <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
+                                            <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        </RadzenStack>
+                    </Popup>
+                    <div class="row">
+                        <div class="col align-items-center" style="display: flex">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenText Text="Tag as " TextStyle="TextStyle.Subtitle1"  Style="margin-bottom: 0.1rem" />
+                                <div class="badge badge-warning">Finance Info</div>
+                                <RadzenText Text=":" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
+                                <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
+                                <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
+                                <RadzenDatePicker @bind-Value="@noteModel.DueDate" Disabled="@noteModel.IsCompleted()"/>
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })" Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                                @if (noteModel.IsCompleted())
+                                {
+                                    <RadzenText Text="Completed: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
+                                    <RadzenText Text="@noteModel.CompletedDate?.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="refresh" Text="Re-Open" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.CompletedDate = null; })" />
+                                }
+                            </RadzenStack>
+                        </div>
+                        <div class="col-auto">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" />
+                                <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardClicked" />
+                            </RadzenStack>
+                        </div>
+                    </div>
                     <hr />
                 }
             </div>
-            <div class="row justify-content-start ml-1">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem">
+
+            <div class="row justify-content-center ml-1">
+                <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Center">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
                         <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
                         <RadzenTextBox @bind-Value=@noteSearchTerms
                                        Placeholder="Search Notes"
                                        Change=@FilterNotes
-                                       Style="width:40rem" />
+                                       Style="width:100%" />
                         <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -359,7 +357,7 @@
                     </RadzenStack>
                 </RadzenStack>
             </div>
-            <br />
+            <hr />
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem" Style="max-height: 40rem; overflow-y: auto; overflow-x: clip;">
                 @if (filteredNotes == null || filteredNotes.Count == 0)
                 {
@@ -369,7 +367,7 @@
                 {
                     @foreach (var note in filteredNotes)
                     {
-                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="MarkComplete" EditAuthorised="@(isProjectManager ||activeUser == note.Author)" ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
+                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="@(args => MarkComplete(note))" EditAuthorised="@(isProjectManager ||activeUser == note.Author)" ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
                     }
                 }
             </RadzenStack>

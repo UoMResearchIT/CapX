@@ -507,6 +507,11 @@ namespace PPMTool.Pages
             }
         }
 
+        private void EditProject(Project project)
+        {
+            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+        }
+
         private void AddClicked()
         {
             noteModel = new Note();
@@ -544,7 +549,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, false);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, false);
         }
 
         private void UpdateNote()
@@ -558,7 +563,7 @@ namespace PPMTool.Pages
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(context, noteModel, mentions, true);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, true);
         }
 
         private void EditNote(Note noteToEdit)
@@ -594,8 +599,8 @@ namespace PPMTool.Pages
         private void MarkComplete(Note note)
         {
             LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
-            noteModel.CompletedDate = DateTime.Now;
-            NoteService.Update(context, noteModel);
+            note.CompletedDate = DateTime.Now;
+            NoteService.Update(context, note);
             StateHasChanged();
         }
 
