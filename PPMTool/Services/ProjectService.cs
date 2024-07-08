@@ -111,7 +111,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Project> GetUnfundedProjects(PPMToolContext context)
         {
-            return GetAll(context).Where(p => p.ProjectStatus == ProjectStatus.Unfunded);
+            return GetAll(context).Where(p => p.ProjectStatus.IsUnfunded());
         }
 
         /// <summary>
