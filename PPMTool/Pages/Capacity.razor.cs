@@ -473,7 +473,7 @@ namespace PPMTool.Pages
                 // Filter projects ignoring finished or cancelled projects
                 if (!IncludeUnFunded)
                 {
-                    projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+                    projects = projects.Where(p => !p.ProjectStatus.IsUnfunded());
                 }
 
                 // Filter the project source if a manager selected

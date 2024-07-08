@@ -119,7 +119,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasNoTasksButFundedOrFinished()
         {
-            return (SubTasks == null || SubTasks.Count == 0) && ProjectStatus != ProjectStatus.Unfunded && !ProjectStatus.IsCancelled();
+            return (SubTasks == null || SubTasks.Count == 0) && !ProjectStatus.IsUnfunded() && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>
