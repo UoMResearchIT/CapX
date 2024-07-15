@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
-using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -25,9 +24,6 @@ namespace PPMTool.Pages
         private SubTaskService SubTaskService { get; set; }
 
         [Inject]
-        private IJSRuntime JsRuntime { get; set; }
-
-        [Inject]
         private RolesService RolesService { get; set; }
 
         [Inject]
@@ -38,6 +34,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private IConfiguration Configuration { get; set; }
+
+        [Inject]
+        private DialogService DialogService { get; set; }
 
         [Parameter]
         public int ProjectId { get; set; }
@@ -76,6 +75,9 @@ namespace PPMTool.Pages
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).Max() + 1;
+
+                // Set the active user as the PM by default
+                projectModel.ProjectManager = RolesService.GetByUsername(context, ActiveUserName)?.Person;
             }
 
             // Initially load data
@@ -133,6 +135,18 @@ namespace PPMTool.Pages
             }
         }
 
+        private void OnProjectManagerChosen(object value)
+        {
+            Person pm = value as Person;
+
+            // If the PM is not null and is not the current user then warn of loss of access if not superuser
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            if (pm != null && pm.PersonId != role?.Person?.PersonId && role.RoleType != RoleType.Superuser)
+            {
+                DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
+            }
+        }
+
         private void HandleSubmit()
         {
             // Form valid?
@@ -141,6 +155,9 @@ namespace PPMTool.Pages
             {
                 if (!discardChanges)
                 {
+                    // Further validation
+                    if (!CheckProjectManagerSet()) return;
+
                     if (ProjectId > 0)
                     {
                         // Check to see if the project is marked as cancelled as then we need to remove resources.
@@ -217,6 +234,16 @@ namespace PPMTool.Pages
             return true;
         }
 
+        private bool CheckProjectManagerSet()
+        {
+            if (projectModel.ProjectManager == null)
+            {
+                messageStore.Add(() => projectModel.ProjectManager, "Project must have a project manager set!");
+                return false;
+            }
+            return true;
+        }
+
         private void NavigatePostSubmit()
         {
             if (gotoDetails)
@@ -234,8 +261,9 @@ namespace PPMTool.Pages
             if (ProjectId > 0)
             {
                 // Prompt
-                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete project {projectModel.GetFullName()}. " +
-                    $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.");
+                bool confirmed = await DialogService.Confirm($"You are about to delete project {projectModel.GetFullName()}. " +
+                    $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.",
+                    "Delete Project") ?? false;
                 if (confirmed)
                 {
                     // Delete all the subtasks for the project
