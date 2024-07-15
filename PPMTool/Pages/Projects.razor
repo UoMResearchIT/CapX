@@ -63,7 +63,7 @@
                     <RadzenSwitch @bind-Value="@IncludeFinished" />
                 </div>
             </div>
-            <RadzenDataGrid AllowFiltering="true"
+            <RadzenDataGrid AllowFiltering="@(projects != null && projects.Count() > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             EditMode="DataGridEditMode.Single"

@@ -18,7 +18,7 @@
     }
     <hr />
     <RadzenDataGrid @ref="dataGrid"
-                    AllowFiltering="true"
+                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
                     AllowPaging="true"
                     PageSize="15"
                     AllowSorting="true"

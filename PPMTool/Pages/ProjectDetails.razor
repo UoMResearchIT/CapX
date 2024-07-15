@@ -188,7 +188,7 @@
     else
     {
         <div class="card">
-            <RadzenDataGrid AllowFiltering="true"
+            <RadzenDataGrid AllowFiltering="@(allTasks != null && allTasks.Count > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"

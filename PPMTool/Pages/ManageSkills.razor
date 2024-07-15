@@ -12,8 +12,17 @@
         </div>
     </div>
     <hr />
-    <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                    Data="@dataGridEntities" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+    <RadzenDataGrid @ref="dataGrid"
+                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                    AllowPaging="true"
+                    PageSize="15"
+                    AllowSorting="true"
+                    EditMode="DataGridEditMode.Single"
+                    Data="@dataGridEntities"
+                    TItem="SkillTag"
+                    RowUpdate="@OnUpdateRow"
+                    RowCreate="@OnCreateRow"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
             <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px">
                 <EditTemplate Context="tag">
