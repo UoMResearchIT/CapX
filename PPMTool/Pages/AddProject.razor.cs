@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
-using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -23,9 +22,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
-
-        [Inject]
-        private IJSRuntime JsRuntime { get; set; }
 
         [Inject]
         private RolesService RolesService { get; set; }
@@ -265,8 +261,9 @@ namespace PPMTool.Pages
             if (ProjectId > 0)
             {
                 // Prompt
-                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete project {projectModel.GetFullName()}. " +
-                    $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.");
+                bool confirmed = await DialogService.Confirm($"You are about to delete project {projectModel.GetFullName()}. " +
+                    $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.",
+                    "Delete Project") ?? false;
                 if (confirmed)
                 {
                     // Delete all the subtasks for the project

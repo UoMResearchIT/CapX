@@ -40,6 +40,9 @@ namespace PPMTool.Pages
         [Inject]
         private IConfiguration Configuration { get; set; }
 
+        [Inject]
+        private DialogService DialogService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -580,7 +583,7 @@ namespace PPMTool.Pages
 
         private async void DeleteNote(Note noteToDelete)
         {
-            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"You are about to delete a note from {project.GetFullName()}!");
+            bool confirmed = await DialogService.Confirm($"You are about to delete a note from {project.GetFullName()}!", "Delete Note") ?? false;
             if (confirmed)
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
