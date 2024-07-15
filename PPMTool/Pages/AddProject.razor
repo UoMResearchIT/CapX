@@ -72,7 +72,7 @@
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
-                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.ProjectManager" Data="@projectManagers">
+                    <RadzenDropDown class="radzen-dropdown"  @bind-Value="projectModel.ProjectManager" Data="@projectManagers" Change="OnProjectManagerChosen">
                         <Template Context="person">
                             @person.Name
                         </Template>
@@ -80,7 +80,7 @@
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Innate Activity" /><br />
-                    <RadzenDropDown class="radzen-dropdown" style="width: 100%" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
+                    <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" AllowClear="true"
                                     LoadData="@LoadInnateDropdownData">
                         <Template Context="activity">
