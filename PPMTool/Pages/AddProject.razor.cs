@@ -39,6 +39,9 @@ namespace PPMTool.Pages
         [Inject]
         private IConfiguration Configuration { get; set; }
 
+        [Inject]
+        private DialogService DialogService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -76,6 +79,9 @@ namespace PPMTool.Pages
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).Max() + 1;
+
+                // Set the active user as the PM by default
+                projectModel.ProjectManager = RolesService.GetByUsername(context, ActiveUserName)?.Person;
             }
 
             // Initially load data
@@ -133,6 +139,18 @@ namespace PPMTool.Pages
             }
         }
 
+        private void OnProjectManagerChosen(object value)
+        {
+            Person pm = value as Person;
+
+            // If the PM is not null and is not the current user then warn of loss of access if not superuser
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            if (pm != null && pm.PersonId != role?.Person?.PersonId && role.RoleType != RoleType.Superuser)
+            {
+                DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
+            }
+        }
+
         private void HandleSubmit()
         {
             // Form valid?
@@ -141,6 +159,9 @@ namespace PPMTool.Pages
             {
                 if (!discardChanges)
                 {
+                    // Further validation
+                    if (!CheckProjectManagerSet()) return;
+
                     if (ProjectId > 0)
                     {
                         // Check to see if the project is marked as cancelled as then we need to remove resources.
@@ -212,6 +233,16 @@ namespace PPMTool.Pages
                 {
                     messageStore.Add(() => projectModel.RTP, "Duplicate RTP number found!");
                 }
+                return false;
+            }
+            return true;
+        }
+
+        private bool CheckProjectManagerSet()
+        {
+            if (projectModel.ProjectManager == null)
+            {
+                messageStore.Add(() => projectModel.ProjectManager, "Project must have a project manager set!");
                 return false;
             }
             return true;
