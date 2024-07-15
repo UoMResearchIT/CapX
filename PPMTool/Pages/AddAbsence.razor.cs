@@ -92,19 +92,28 @@ namespace PPMTool.Pages
                 var updatedAbsences = PersonService.GetDiffList<Absence>(context).Where(x => x.State == EntityState.Modified).GroupBy(x => x.Entity);
                 var delAbsencesDictionary = deletedAbsences.ToDictionary(x => x.Person.PersonId);
 
-                // Send emails based on diff information
-                EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
-
-                // Reset assign the absences from the data grid to the model
-                personModel.Absences.Clear();
-                foreach (var ab in dataGridEntities)
+                // If there are no changes then just navigate back
+                if (newAbsences.Count > 0 || updatedAbsences.Count() > 0 || deletedAbsences.Count > 0)
                 {
-                    personModel.Absences.Add(ab);
-                }
 
-                // Write to the database
-                LogInformation($"Saving absences for {personModel.Name}.");
-                PersonService.Update(context, personModel);
+                    // Send emails based on diff information
+                    EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
+
+                    // Reset assign the absences from the data grid to the model
+                    personModel.Absences.Clear();
+                    foreach (var ab in dataGridEntities)
+                    {
+                        personModel.Absences.Add(ab);
+                    }
+
+                    // Write to the database
+                    LogInformation($"Saving absences for {personModel.Name}.");
+                    PersonService.Update(context, personModel);
+                }
+                else
+                {
+                    LogInformation($"Save clicked but no changes identified in absences for {personModel.Name}.");
+                }
 
                 // Navigate back
                 Navigation.NavigateTo($"addperson/{PersonId}");
