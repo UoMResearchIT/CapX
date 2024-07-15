@@ -23,7 +23,7 @@
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="true"
+            <RadzenDataGrid AllowFiltering="@(people != null && people.Count() > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"

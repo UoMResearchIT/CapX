@@ -13,20 +13,19 @@
     </div>
     <hr />
     <div class="card">
-        <RadzenDataGrid
-            @ref="dataGrid"
-            AllowFiltering="true"
-            AllowPaging="true"
-            PageSize="15"
-            AllowSorting="true"
-            ShowPagingSummary="true"
-            EditMode="DataGridEditMode.Single"
-            FilterMode="FilterMode.Simple"
-            Data="@dataGridEntities"
-            TItem="Role"
-            RowUpdate="@OnUpdateRow"
-            RowCreate="@OnCreateRow"
-            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+        <RadzenDataGrid @ref="dataGrid"
+                        AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                        AllowPaging="true"
+                        PageSize="15"
+                        AllowSorting="true"
+                        ShowPagingSummary="true"
+                        EditMode="DataGridEditMode.Single"
+                        FilterMode="FilterMode.Simple"
+                        Data="@dataGridEntities"
+                        TItem="Role"
+                        RowUpdate="@OnUpdateRow"
+                        RowCreate="@OnCreateRow"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
             <Columns>
                 <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" Width="250px" MinWidth="10px">
                     <EditTemplate Context="role">
