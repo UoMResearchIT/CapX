@@ -188,13 +188,12 @@
     else
     {
         <div class="card">
-            <RadzenDataGrid AllowFiltering="@(allTasks != null && allTasks.Count > 0)"
+            <RadzenDataGrid AllowFiltering="@(project.SubTasks.Count > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
                             PageSize="10"
                             AllowPaging="true"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
                             Data="@allTasks"
                             TItem="SubTask"
