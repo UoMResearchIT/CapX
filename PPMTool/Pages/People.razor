@@ -17,13 +17,19 @@
     </div>
     <hr />
     <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
+            <RadzenSwitch @bind-Value="@IncludeLeavers" />
+        </RadzenStack>
+    </div>
+    <div class="card">
         @if (people == null)
         {
             <p class="lead">No data to show</p>
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="@(people != null && people.Count() > 0)"
+            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
@@ -35,7 +41,6 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             AllowPaging="true"
                             PageSize="@pageCount"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
                             Count="@count"
                             LoadData="@LoadData">
