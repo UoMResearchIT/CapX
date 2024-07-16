@@ -18,6 +18,7 @@ namespace PPMTool.Pages
         private RolesService RoleService { get; set; }
 
         private IEnumerable<Person> people;
+        private IEnumerable<Absence> currentAbsences;
         private int count;
         private int pageCount = 10;
 
@@ -60,6 +61,11 @@ namespace PPMTool.Pages
                 loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
             }
 
+            // Current absences
+            currentAbsences = loadedPeople
+                .Where(x => x.IsCurrentlyAbsent())
+                .Select(x => x.Absences.FirstOrDefault(x => x.IsCurrentAbsence()));
+
             // Convert to queryable
             var query = loadedPeople.AsQueryable();
 
@@ -100,6 +106,11 @@ namespace PPMTool.Pages
             }
 
             Debug.WriteLine($"{people.Count()} people loaded!");
+        }
+
+        private void EditAbsence(Person person)
+        {
+            Navigation.NavigateTo($"/addabsence/{person.PersonId}");
         }
     }
 }

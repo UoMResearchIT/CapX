@@ -1,0 +1,30 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Services
+@using System.Diagnostics
+
+<div class="card my-1">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
+            <RadzenText TextStyle="TextStyle.H5" Text="@Absence.Person.Name" />
+            <RadzenButton Click=@(args => EditPerson?.Invoke(Absence.Person)) Text="Edit Absences" Icon="edit" />
+        </RadzenStack>
+        <RadzenText Text="@($"{Absence.StartDate.ToShortDateString()} to {Absence.EndDate?.ToShortDateString() ?? "Now"}")" />
+    </RadzenStack>
+</div>
+
+@code {
+
+    [Parameter]
+    public Absence Absence { get; set; }
+
+    [Parameter]
+    public Action<Person> EditPerson { get; set; }
+
+    override protected void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+}

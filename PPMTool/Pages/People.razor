@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     <div class="row">
@@ -16,6 +17,39 @@
         </div>
     </div>
     <hr />
+    @if (EditAuthorised)
+    {
+        <div class="row">
+            <div class="col">
+                <h2>Absent Today</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                @if (currentAbsences == null)
+            {
+                <LoadingComponent />            
+            }
+            else if (currentAbsences.Count() == 0)
+            {
+                <RadzenText Text="There is no-one currently absent." />
+            }
+            else
+            {
+                foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
+                {
+                    <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
+                }
+            }
+                </div>
+            </div>
+        <hr/>
+    }
+    <div class="row">
+        <div class="col">
+            <h2>All People</h2>
+        </div>
+    </div>
     <div class="card">
         @if (people == null)
         {
