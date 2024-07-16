@@ -17,6 +17,12 @@
     </div>
     <hr />
     <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
+            <RadzenSwitch @bind-Value="@IncludeLeavers" />
+        </RadzenStack>
+    </div>
+    <div class="card">
         @if (people == null)
         {
             <p class="lead">No data to show</p>
