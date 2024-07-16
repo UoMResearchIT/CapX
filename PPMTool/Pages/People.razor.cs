@@ -18,6 +18,7 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RoleService { get; set; }
 
+        private bool tableEmpty;
         private IEnumerable<Person> people;
         private int count;
         private int pageCount = 10;
@@ -81,6 +82,10 @@ namespace PPMTool.Pages
                 loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
             }
 
+            tableEmpty = loadedPeople.Count == 0;
+
+            Debug.WriteLine($"** {loadedPeople.Count()} people loaded!");
+
             // Convert to queryable
             var query = loadedPeople.AsQueryable();
 
@@ -119,8 +124,6 @@ namespace PPMTool.Pages
             {
                 people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
-
-            Debug.WriteLine($"{people.Count()} people loaded!");
         }
     }
 }

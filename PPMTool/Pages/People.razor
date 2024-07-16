@@ -29,7 +29,7 @@
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="@(people != null && people.Count() > 0)"
+            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
@@ -41,7 +41,6 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             AllowPaging="true"
                             PageSize="@pageCount"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
                             Count="@count"
                             LoadData="@LoadData">
