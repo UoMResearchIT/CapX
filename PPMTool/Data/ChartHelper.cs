@@ -395,31 +395,39 @@ namespace PPMTool.Data
             // Move to a Monday
             start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
-            // Get latest assignment finish so we know when to stop
-            DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate;
+            // Get latest assignment finish, adding a day so it is the first day when no work will be done.
+            DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
+
+            // Move to the next Sunday if not already a Sunday
+            if (end.DayOfWeek != DayOfWeek.Sunday)
+            {
+                end = end.AddDays((6 - (int)end.DayOfWeek) % 7);
+            }
 
             // Start marching at a 1 week resolution
-            DateTime currentWeek = start;
-            while (currentWeek < end)
+            DateTime startOfWeek = start;
+            DateTime endOfWeek = start.AddDays(6);
+            while (startOfWeek < end)
             {
-                // Find assignments within current week
-                var within = subTasks.Where(x => x.IsWithin(currentWeek));
+                // Find assignments that run within current week
+                var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
                 temp.Add(
                     new ChartItem(
                         null,
                         label,
-                        currentWeek,
-                        currentWeek.AddDays(7),
-                        within.RoundedSum(x => value1Function(x, currentWeek)),
-                        value2Function != null ? within.RoundedSum(x => value2Function(x, currentWeek)) : 0,
+                        startOfWeek,
+                        endOfWeek,
+                        within.RoundedSum(x => value1Function(x, startOfWeek)),
+                        value2Function != null ? within.RoundedSum(x => value2Function(x, startOfWeek)) : 0,
                         hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false
                     )
                 );
 
                 // Increment by 1 week
-                currentWeek = currentWeek.AddDays(7);
+                startOfWeek = startOfWeek.AddDays(7);
+                endOfWeek = endOfWeek.AddDays(7);
             }
             return temp;
         }
