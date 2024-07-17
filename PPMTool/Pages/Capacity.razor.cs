@@ -353,14 +353,14 @@ namespace PPMTool.Pages
         /// <summary>
         /// Resets the page to its initial state
         /// </summary>
-        private void ClearQuery()
+        private void ClearQuery(bool regenerateChart = true)
         {
             Debug.WriteLine("** Clearing Query...");
             queryResultsAvailable = false;
             queryErrorMessage = null;
             queryActive = false;
             ChosenPeople = new List<string>();
-            ConfigureChartSource();
+            if (regenerateChart) ConfigureChartSource();
 
             LogInformation($"Query cleared");
         }
@@ -379,58 +379,15 @@ namespace PPMTool.Pages
                 return;
             }
 
-            // Reset query results
-            ClearQuery();
-            queryActive = true;
-            queryErrorMessage = null;
-            var results = new List<CapacityQueryItem>();
+            // Reset query results but don't regenerate the chart as we are going to do it again in a minute
+            ClearQuery(false);
 
+            // Start query state
+            queryActive = true;
             LogInformation($"Query running.");
 
             // Update the chart source as this is used to drive the query results
-            ConfigureChartSource();
-
-            // Convert the chart results to capacity query results
-            var mergedItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).ToList();
-            foreach (var item in mergedItems)
-            {
-                // Get person from item label
-                var person = people.FirstOrDefault(p => p.Name == item.Label);
-                if (person == null)
-                {
-                    Debug.WriteLine($"** Couldn't find person {item.Label}");
-                    continue;
-                }
-
-                // Availability of individual is value 2 in the chart item
-                var availabilityFTE = item.Value2;
-
-                // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
-                var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
-
-                // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-                if (item.StartDate != item.EndDate && unassignedFTE > 0)
-                {
-                    // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
-                }
-            }
-
-            // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
-            fullMatch = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-            partialMatchPercent = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-            partialMatchDuration = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-            partialMatchBoth = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-
-            // Results available
-            queryResultsAvailable = results.Count() > 0;
-
-            // Update the UI
-            StateHasChanged();
+            ConfigureChartSource(true);
         }
 
         private List<CapacityQueryItem> OrganiseResults(IEnumerable<CapacityQueryItem> results)
@@ -444,7 +401,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
         /// </summary>
-        private void ConfigureChartSource()
+        private void ConfigureChartSource(bool presentQueryResults = false)
         {
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
@@ -662,13 +619,60 @@ namespace PPMTool.Pages
 
             }).ContinueWith(task =>
             {
+                Debug.WriteLine($"** ...task complete. Status = {task.Status}");
+
+                if (presentQueryResults)
+                {
+                    // Convert the chart results to capacity query results
+                    var results = new List<CapacityQueryItem>();
+                    var mergedItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).ToList();
+                    foreach (var item in mergedItems)
+                    {
+                        // Get person from item label
+                        var person = people.FirstOrDefault(p => p.Name == item.Label);
+                        if (person == null)
+                        {
+                            Debug.WriteLine($"** Couldn't find person {item.Label}");
+                            continue;
+                        }
+
+                        // Availability of individual is value 2 in the chart item
+                        var availabilityFTE = item.Value2;
+
+                        // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
+                        var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
+
+                        // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
+                        if (item.StartDate != item.EndDate && unassignedFTE > 0)
+                        {
+                            // Add to range
+                            results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
+                        }
+                    }
+
+                    // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
+                    fullMatch = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+                    partialMatchPercent = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+                    partialMatchDuration = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+                    partialMatchBoth = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+
+                    // Results available
+                    queryResultsAvailable = results.Count() > 0;
+
+                    LogInformation("Query results generated.");
+                }
+
                 InvokeAsync(() =>
                 {
                     Loading = false;
                     StateHasChanged();
                 });
 
-                Debug.WriteLine($"** There are {chartTitles.Count} charts!");
+                Debug.WriteLine($"** There are {chartTitles.Count} chart(s)!");
             });
         }
 

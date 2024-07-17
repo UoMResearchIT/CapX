@@ -23,26 +23,26 @@
                                 Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                                 Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
-                                LoadData="@LoadFilteredPeople" Disabled=!EditAuthorised />
+                                LoadData="@LoadFilteredPeople" Disabled=@(!EditAuthorised || Loading) />
             </div>
             <div class="col-auto mr-auto">
                 <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
                                 Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                                 Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
-                                LoadData="@LoadFilteredManagers" Disabled=!EditAuthorised />
+                                LoadData="@LoadFilteredManagers" Disabled=@(!EditAuthorised || Loading) />
             </div>
             <div class="col-auto">
                 Include Unfunded:
             </div>
             <div class="col-auto" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
             </div>
             <div class="col-auto">
                 Include Leavers:
             </div>
             <div class="col" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeLeavers" />
+                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" />
             </div>
         </div>
     </div>
@@ -140,10 +140,10 @@
                         <RadzenSwitch @bind-Value="@IncludeLeavers" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQuery Text="Run" Icon="directions_run"/>
+                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQuery Text="Run" Icon="directions_run" Disabled="@Loading" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@ClearQuery Text="Clear" Icon="close"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@(() => ClearQuery(true)) Text="Clear" Icon="close" Disabled="@Loading" />
                     </div>
                 </div>
             </EditForm>
