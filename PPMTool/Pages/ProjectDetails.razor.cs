@@ -158,19 +158,19 @@ namespace PPMTool.Pages
                     },
                 };
 
-                // Create the chart items
+                // Create the burn-up chart items
                 var temp = ChartHelper.AggregateSubTasksByWeek(
                     project.GetFullName(),
                     project.SubTasks,
                     (task, currentWeek) =>
                     {
                         // Value 1 requires the number of days is simply the planned work hours up to the end of that week
-                        return task.GetPlannedWorkUpToEndOfWeek(currentWeek);
+                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek);
                     },
                     (task, currentWeek) =>
                     {
                         // Value 2 is corrected for the unmet demand on the task
-                        return task.GetPlannedWorkUpToEndOfWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand));
+                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand));
                     }
                 ).ToList();
 

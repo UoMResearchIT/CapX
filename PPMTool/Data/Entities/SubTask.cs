@@ -96,7 +96,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal bool IsWithin(DateTime testDate)
         {
-            return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate <= EndDate;
+            return StartDate.Date == EndDate.Date ? testDate.Date == StartDate.Date : testDate.Date >= StartDate.Date && testDate.Date <= EndDate.Date;
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace PPMTool.Data.Entities
             return
                 IsWithin(endDate) ||
                 IsWithin(startDate) ||
-                StartDate <= startDate && EndDate >= endDate;
+                StartDate.Date <= startDate.Date && EndDate.Date >= endDate.Date;
         }
 
 
@@ -531,19 +531,18 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="currentWeek"></param>
         /// <returns></returns>
-        public double GetPlannedWorkUpToEndOfWeek(DateTime currentWeek)
+        public double GetPlannedWorkWithinCurrentWeek(DateTime currentWeek)
         {
             // Current week DateTime needs to be a Monday
             if (currentWeek.DayOfWeek != DayOfWeek.Monday)
                 throw new Exception("This method requires the day to be a Monday!");
 
-            // Work is average planned work per day of duration
+            // Daily work is average planned work
             var workPerDay = PlannedWorkHours / DurationDays;
 
-            // Assume runs for full week initially
+            // Compute the duration of the task in days in this week
+            // Assume runs for full week initially (i.e. starts before the week and ends after the week)
             var daysUpToEndOfWeek = 7d;
-
-            // Correct if starts or ends in the week
             if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7) &&
                 EndDate >= currentWeek && EndDate < currentWeek.AddDays(7))
             {
@@ -552,7 +551,7 @@ namespace PPMTool.Data.Entities
             }
             if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7))
             {
-                // Start in the week
+                // Starts in the week
                 daysUpToEndOfWeek = currentWeek.AddDays(7).Subtract(StartDate).TotalDays;
             }
             else if (EndDate >= currentWeek && EndDate < currentWeek.AddDays(7))
