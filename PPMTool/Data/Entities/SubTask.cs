@@ -549,7 +549,7 @@ namespace PPMTool.Data.Entities
                 // Starts and finishes in the week
                 daysUpToEndOfWeek = EndDate.Subtract(StartDate).TotalDays;
             }
-            if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7))
+            else if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7))
             {
                 // Starts in the week
                 daysUpToEndOfWeek = currentWeek.AddDays(7).Subtract(StartDate).TotalDays;
