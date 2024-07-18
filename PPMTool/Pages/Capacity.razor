@@ -158,113 +158,25 @@
                 @if (fullMatch.Count > 0)
                 {
                     <b>Full Match</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in fullMatch)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="fullMatch" />
                 }
 
                 @if (partialMatchPercent.Count > 0)
                 {
                     <b>Partial Match (FTE)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchPercent)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchPercent" />
                 }
 
                 @if (partialMatchDuration.Count > 0)
                 {
                     <b>Partial Match (Duration)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchDuration)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchDuration" />
                 }
 
                 @if (partialMatchBoth.Count > 0)
                 {
                     <b>Partial Match (FTE and Duration)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchBoth)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchBoth" />
                 }
             }
             else
