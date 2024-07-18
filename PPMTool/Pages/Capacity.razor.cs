@@ -417,6 +417,7 @@ namespace PPMTool.Pages
                 groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                 chartTitles = new List<string>();
                 chartOptions = new List<ApexChartOptions<ChartItem>>();
+                IEnumerable<Project> validProjects = projects;
 
                 // Need some people for this to work
                 if (people.Count() == 0)
@@ -430,26 +431,26 @@ namespace PPMTool.Pages
                 // Filter projects ignoring finished or cancelled projects
                 if (!IncludeUnFunded)
                 {
-                    projects = projects.Where(p => !p.ProjectStatus.IsUnfunded());
+                    validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
                 }
 
                 // Filter the project source if a manager selected
                 if (ChosenManager != null)
                 {
-                    projects = projects.Where(x => x.ProjectManager == ChosenManager);
+                    validProjects = validProjects.Where(x => x.ProjectManager == ChosenManager);
                 }
 
                 // Get the window from the start and end dates of the projects included in the source
                 // Avoids including malformed projects without a proper start date
-                var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
-                if (safeProjects.Count() == 0)
+                validProjects = validProjects.Where(x => x.StartDate.Year > 2000);
+                if (validProjects.Count() == 0)
                 {
                     Debug.WriteLine("** No projects found that match the chosen options!");
                     Loading = false;
                     return;
                 }
-                var startDate = safeProjects.Min(x => x.StartDate);
-                var endDate = safeProjects.Max(x => x.EndDate);
+                var startDate = validProjects.Min(x => x.StartDate);
+                var endDate = validProjects.Max(x => x.EndDate);
 
                 // Determine state based on drop down selections
                 UpdateSelectionState();
@@ -469,7 +470,7 @@ namespace PPMTool.Pages
                     {
                         // Create a list of subtasks to which this person is assigned
                         var assignments = new List<Assignment>();
-                        foreach (var project in projects)
+                        foreach (var project in validProjects)
                         {
                             foreach (var subTask in project.SubTasks)
                             {
@@ -525,7 +526,7 @@ namespace PPMTool.Pages
                         groupedAssignments.Clear();
 
                         // Create a list of subtasks for each project this person is assigned to
-                        foreach (var project in projects)
+                        foreach (var project in validProjects)
                         {
                             var assignments = new List<Assignment>();
                             foreach (var subTask in project.SubTasks)
@@ -606,6 +607,8 @@ namespace PPMTool.Pages
                         chartOptions.Add(BuildNewChartOptionsObject());
                     }
                 }
+
+                Debug.WriteLine($"** Done. Unfunded = {IncludeUnFunded} | Leavers = {IncludeLeavers}.");
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
