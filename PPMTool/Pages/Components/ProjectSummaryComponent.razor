@@ -18,18 +18,30 @@
                                         BadgeStyle.Light)"
                                 Text="@Project.ProjectStatus.ToNiceString()" />
             </RadzenStack>
-        @if (dueNotes?.Count > 0)
-        {
+            @if (OverDueNoteCount > 0)
+            {
             
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-border-danger p-1" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                         <RadzenIcon IconStyle="IconStyle.Danger" Icon="flag"/>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"You have {dueNotes.Count} note(s) due")" Style="margin-bottom: -0.1rem" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"You have {OverDueNoteCount} note(s) overdue")" Style="margin-bottom: -0.1rem" />
                     </RadzenStack>
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" />
                 </RadzenStack>
             
-        }
+            }
+            @if (DueNoteCount > 0)
+            {
+
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-border-warning p-1" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon IconStyle="IconStyle.Warning" Icon="flag" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"You have {DueNoteCount} note(s) due")" Style="margin-bottom: -0.1rem" />
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="ButtonStyle.Warning" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" />
+                </RadzenStack>
+
+            }
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
                 <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
                 <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
@@ -37,12 +49,10 @@
                         <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
                     </ChildContent>
                 </RadzenSplitButton>
+                <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
             </RadzenStack>
         </RadzenStack>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
-            <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
-            <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
-        </RadzenStack>
+        <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
     </RadzenStack>
 </div>
 
@@ -63,28 +73,18 @@
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
 
-    [Inject]
-    private NoteService NoteService { get; set; }
+    [Parameter]
+    public int DueNoteCount { get; set; }
 
-    [Inject]
-    private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+    [Parameter]
+    public int OverDueNoteCount { get; set; }
 
     [Inject]
     private NavigationManager Navigation { get; set; }
 
-    private List<Note> dueNotes;
-    private List<Note> overdueNotes;
-
     override protected void OnInitialized()
     {
         base.OnInitialized();
-
-        // Get any due notes
-        var context = ContextFactory.CreateDbContext();
-        dueNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsDue()).ToList();
-        overdueNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsOverDue()).ToList();
-
-        Debug.WriteLine($"** ProjectSummaryComponent for {Project.GetFullName()} - due notes: {dueNotes.Count}");
     }
 
     private void EditProject(Project project)
