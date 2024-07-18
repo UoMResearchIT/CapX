@@ -73,13 +73,16 @@
     private NavigationManager Navigation { get; set; }
 
     private List<Note> dueNotes;
+    private List<Note> overdueNotes;
 
     override protected void OnInitialized()
     {
         base.OnInitialized();
 
         // Get any due notes
-        dueNotes = NoteService.GetAll(ContextFactory.CreateDbContext()).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsDue()).ToList();
+        var context = ContextFactory.CreateDbContext();
+        dueNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsDue()).ToList();
+        overdueNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == Project.ProjectId && x.IsOverDue()).ToList();
 
         Debug.WriteLine($"** ProjectSummaryComponent for {Project.GetFullName()} - due notes: {dueNotes.Count}");
     }

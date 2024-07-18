@@ -309,7 +309,7 @@
                         <div class="col align-items-center" style="display: flex">
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                 <RadzenText Text="Tag as " TextStyle="TextStyle.Subtitle1"  Style="margin-bottom: 0.1rem" />
-                                <div class="badge badge-warning">Finance Info</div>
+                                <div class="badge badge-info">Finance Info</div>
                                 <RadzenText Text=":" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
                                 <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" />
                                 <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
@@ -346,10 +346,12 @@
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem" />
-                        <div class="badge badge-warning">Finance Info</div>
+                        <div class="badge badge-info">Finance Info</div>
                         <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FilterSwitchToggled" />
                         <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
-                        <div class="badge badge-danger">Note Due</div>
+                        <div class="badge badge-danger">Note Overdue</div>
+                        <RadzenText Text="/" Style="margin-bottom: 0.1rem" />
+                        <div class="badge badge-warning">Note Due</div>
                         <RadzenSwitch @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
                         <RadzenText Text="Sort By Due Date" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
                         <RadzenSwitch @bind-Value="@sortByDueDate" Change="@FilterSwitchToggled" />
