@@ -1,14 +1,8 @@
 ﻿@using PPMTool.Data.Entities
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
-    @if (!Project?.HasNoRequestDocLink() ?? false)
-    {
-        <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? "View Request Doc": null) Icon="description" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, "View Request Doc"))" />
-    }
-    @if (!string.IsNullOrWhiteSpace(Project?.ScrumProjectLink))
-    {
-        <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? "View Scrum Project": null) Icon="view_kanban" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, "View Scrum Project"))" />
-    }
+    <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" />
+    <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? scrumText : null) Icon="view_kanban" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, scrumText))" Disabled="@(!hasScrumLink)" />
 </RadzenStack>
 
 @code {
@@ -22,6 +16,11 @@
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
 
+    private bool hasScrumLink;
+    private bool hasRequestDoc;
+    private string scrumText;
+    private string requestText;
+
     private async Task ViewRequestDocClickedAsync(Project project)
     {
         await JSRuntime.InvokeAsync<object>("open", $"{project?.RequestDocLink}", "_blank");
@@ -30,5 +29,14 @@
     private async Task ViewScrumBoardClickedAsync(Project project)
     {
         await JSRuntime.InvokeAsync<object>("open", $"{project?.ScrumProjectLink}", "_blank");
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        hasScrumLink = !string.IsNullOrWhiteSpace(Project?.ScrumProjectLink);
+        hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
+        scrumText = hasScrumLink ? "View Scrum Project" : "No Scrum Project";
+        requestText = hasRequestDoc ? "View Request Doc" : "No Request Doc";
     }
 }

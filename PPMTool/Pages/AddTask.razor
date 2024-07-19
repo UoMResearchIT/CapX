@@ -188,8 +188,21 @@
             <br />
             <div class="row">
                 <div class="col">
-                    <RadzenDataGrid @ref="dataGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                                    Data="@dataGridEntities" TItem="Resource" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+                    <RadzenDataGrid @ref="dataGrid"
+                                    AllowAlternatingRows="false"
+                                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                                    AllowPaging="true"
+                                    PageSize="5"
+                                    AllowSorting="true"
+                                    EditMode="DataGridEditMode.Single"
+                                    Data="@dataGridEntities"
+                                    TItem="Resource"
+                                    RowUpdate="@OnUpdateRow"
+                                    RowCreate="@OnCreateRow"
+                                    Sort="@Reset"
+                                    Page="@Reset"
+                                    Filter="@Reset"
+                                    ColumnWidth="200px">
                         <Columns>
                             <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="280px" MinWidth="10px">
                                 <EditTemplate Context="res">

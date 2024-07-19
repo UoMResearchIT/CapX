@@ -3,10 +3,10 @@ using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -17,7 +17,7 @@ namespace PPMTool.Pages
         public InnateCodeService InnateCodeService { get; set; }
 
         [Inject]
-        public IJSRuntime JsRuntime { get; set; }
+        public DialogService DialogService { get; set; }
 
         private StatusMessage statusMessage;
 
@@ -33,7 +33,7 @@ namespace PPMTool.Pages
 
         protected override async Task DeleteRow(InnateCode entity)
         {
-            if (await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete innate code {entity.GetCodeAsString()}. Are you sure?"))
+            if (await DialogService.Confirm($"You are about to delete innate code {entity.GetCodeAsString()}.", "Delete Code") ?? false)
             {
                 await base.DeleteRow(entity);
                 dataGridEntityService.Delete(context, entity);

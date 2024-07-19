@@ -1,0 +1,29 @@
+﻿@using PPMTool.Data
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+        <tr>
+            <th class="col-2">Name</th>
+            <th class="col-4">Skills</th>
+            <th class="col-2">Start</th>
+            <th class="col-2">End</th>
+            <th class="col-2">Availability</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var res in Results)
+        {
+            <tr>
+                <td>@res.Person.Name</td>
+                <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
+                <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
+                <td>@(res.AvailabilityPercent) FTE</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public IEnumerable<CapacityQueryItem> Results { get; set; }
+}

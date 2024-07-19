@@ -23,26 +23,26 @@
                                 Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                                 Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
-                                LoadData="@LoadFilteredPeople" Disabled=!EditAuthorised />
+                                LoadData="@LoadFilteredPeople" Disabled=@(!EditAuthorised || Loading) />
             </div>
             <div class="col-auto mr-auto">
                 <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
                                 Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                                 Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
-                                LoadData="@LoadFilteredManagers" Disabled=!EditAuthorised />
+                                LoadData="@LoadFilteredManagers" Disabled=@(!EditAuthorised || Loading) />
             </div>
             <div class="col-auto">
                 Include Unfunded:
             </div>
             <div class="col-auto" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
+                <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
             </div>
             <div class="col-auto">
                 Include Leavers:
             </div>
             <div class="col" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeLeavers" />
+                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" />
             </div>
         </div>
     </div>
@@ -140,10 +140,10 @@
                         <RadzenSwitch @bind-Value="@IncludeLeavers" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQuery Text="Run" Icon="directions_run"/>
+                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQuery Text="Run" Icon="directions_run" Disabled="@Loading" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@ClearQuery Text="Clear" Icon="close"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@(() => ClearQuery(true)) Text="Clear" Icon="close" Disabled="@Loading" />
                     </div>
                 </div>
             </EditForm>
@@ -158,113 +158,25 @@
                 @if (fullMatch.Count > 0)
                 {
                     <b>Full Match</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in fullMatch)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="fullMatch" />
                 }
 
                 @if (partialMatchPercent.Count > 0)
                 {
                     <b>Partial Match (FTE)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchPercent)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchPercent" />
                 }
 
                 @if (partialMatchDuration.Count > 0)
                 {
                     <b>Partial Match (Duration)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchDuration)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchDuration" />
                 }
 
                 @if (partialMatchBoth.Count > 0)
                 {
                     <b>Partial Match (FTE and Duration)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchBoth)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchBoth" />
                 }
             }
             else

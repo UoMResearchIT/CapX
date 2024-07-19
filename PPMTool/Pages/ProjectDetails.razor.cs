@@ -40,6 +40,9 @@ namespace PPMTool.Pages
         [Inject]
         private IConfiguration Configuration { get; set; }
 
+        [Inject]
+        private DialogService DialogService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -155,19 +158,19 @@ namespace PPMTool.Pages
                     },
                 };
 
-                // Create the chart items
+                // Create the burn-up chart items
                 var temp = ChartHelper.AggregateSubTasksByWeek(
                     project.GetFullName(),
                     project.SubTasks,
                     (task, currentWeek) =>
                     {
                         // Value 1 requires the number of days is simply the planned work hours up to the end of that week
-                        return task.GetPlannedWorkUpToEndOfWeek(currentWeek);
+                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek);
                     },
                     (task, currentWeek) =>
                     {
                         // Value 2 is corrected for the unmet demand on the task
-                        return task.GetPlannedWorkUpToEndOfWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand));
+                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand));
                     }
                 ).ToList();
 
@@ -414,7 +417,7 @@ namespace PPMTool.Pages
         {
             allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
-            if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue()).ToList();
+            if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
             if (sortByDueDate) allNotes = allNotes.Where(x => x.DueDate != null).OrderBy(x => x.DueDate).Concat(allNotes.Where(x => x.DueDate == null)).ToList();
             filteredNotes = allNotes;
             FilterNotes();
@@ -580,7 +583,7 @@ namespace PPMTool.Pages
 
         private async void DeleteNote(Note noteToDelete)
         {
-            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"You are about to delete a note from {project.GetFullName()}!");
+            bool confirmed = await DialogService.Confirm($"You are about to delete a note from {project.GetFullName()}!", "Delete Note") ?? false;
             if (confirmed)
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");

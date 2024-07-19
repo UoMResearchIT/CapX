@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -40,6 +41,11 @@ namespace PPMTool.Services
             context.Notes.Update(entity);
             if (commitChanges) context.SaveChanges();
             return entity.NoteId;
+        }
+
+        internal IEnumerable<Note> GetDueNotesForProject(PPMToolContext context, int projectId)
+        {
+            return context.Notes.Where(x => x.Project.ProjectId == projectId);
         }
     }
 }

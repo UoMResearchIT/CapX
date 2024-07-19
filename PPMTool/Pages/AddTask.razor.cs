@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -30,7 +29,7 @@ namespace PPMTool.Pages
         private RolesService RolesService { get; set; }
 
         [Inject]
-        private IJSRuntime JsRuntime { get; set; }
+        private DialogService DialogService { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -192,7 +191,8 @@ namespace PPMTool.Pages
         {
             if (TaskId != null && TaskId > 0)
             {
-                bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete task {TaskModel.Name} from project {ProjectModel?.GetFullName()}");
+                bool confirmed = await DialogService.Confirm($"You are about to delete task {TaskModel.Name} from project {ProjectModel?.GetFullName()}",
+                    "Delete Task") ?? false;
                 if (confirmed)
                 {
                     LogWarning($"Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");

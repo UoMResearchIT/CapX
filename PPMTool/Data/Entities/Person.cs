@@ -74,7 +74,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool IsCurrentlyAbsent()
         {
-            return Absences.Any(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today));
+            return Absences.Any(x => x.IsCurrentAbsence());
         }
 
         /// <summary>

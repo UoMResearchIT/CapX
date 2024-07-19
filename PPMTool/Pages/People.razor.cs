@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
@@ -17,9 +18,25 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RoleService { get; set; }
 
+        private bool tableEmpty;
         private IEnumerable<Person> people;
+        private IEnumerable<Absence> currentAbsences;
         private int count;
         private int pageCount = 10;
+
+        private bool includeLeavers;
+        public bool IncludeLeavers
+        {
+            get => includeLeavers;
+            private set
+            {
+                if (value != includeLeavers)
+                {
+                    includeLeavers = value;
+                    LoadData(new LoadDataArgs());
+                }
+            }
+        }
 
         protected override void OnInitialized()
         {
@@ -51,6 +68,12 @@ namespace PPMTool.Pages
             // Order by name by default
             var loadedPeople = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
 
+            // Reduce to just current people
+            if (!IncludeLeavers)
+            {
+                loadedPeople = loadedPeople.Where(x => x.EndDate == null || x.EndDate >= DateTime.Now).ToList();
+            }
+
             if (!EditAuthorised)
             {
                 // Look up the username
@@ -59,6 +82,16 @@ namespace PPMTool.Pages
                 // Only show the person themselves if in developer view
                 loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
             }
+
+            // Current absences
+            currentAbsences = loadedPeople
+                .Where(x => x.IsCurrentlyAbsent())
+                .Select(x => x.Absences.FirstOrDefault(x => x.IsCurrentAbsence()));
+
+            // Set the table empty flag
+            tableEmpty = loadedPeople.Count == 0;
+
+            Debug.WriteLine($"** {loadedPeople.Count()} people loaded!");
 
             // Convert to queryable
             var query = loadedPeople.AsQueryable();
@@ -98,8 +131,11 @@ namespace PPMTool.Pages
             {
                 people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
+        }
 
-            Debug.WriteLine($"{people.Count()} people loaded!");
+        private void EditAbsence(Person person)
+        {
+            Navigation.NavigateTo($"/addabsence/{person.PersonId}");
         }
     }
 }

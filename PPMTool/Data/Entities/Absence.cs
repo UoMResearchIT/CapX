@@ -14,5 +14,14 @@ namespace PPMTool.Data.Entities
         public DateTime StartDate { get; set; }
 
         public DateTime? EndDate { get; set; }
+
+        /// <summary>
+        /// Checks whether this absence indicates that someone is absent right now based on the current date
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentAbsence()
+        {
+            return StartDate <= DateTime.Today && (EndDate == null || EndDate >= DateTime.Today);
+        }
     }
 }

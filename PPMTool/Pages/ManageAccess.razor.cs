@@ -5,10 +5,10 @@ using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -22,7 +22,7 @@ namespace PPMTool.Pages
         public PersonService PersonService { get; set; }
 
         [Inject]
-        public IJSRuntime JsRuntime { get; set; }
+        public DialogService DialogService { get; set; }
 
         private List<Person> people;
         private List<RoleType> roles;
@@ -42,7 +42,7 @@ namespace PPMTool.Pages
 
         protected override async Task DeleteRow(Role entity)
         {
-            if (await JsRuntime.InvokeAsync<bool>("confirm", $"You are about to delete innate code {entity.GetSensibleObjectName()}. Are you sure?"))
+            if (await DialogService.Confirm($"You are about to delete access record {entity.GetSensibleObjectName()}.", "Delete Access") ?? false)
             {
                 await base.DeleteRow(entity);
                 RolesService.Delete(context, entity);

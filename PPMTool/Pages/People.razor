@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     <div class="row">
@@ -16,6 +17,45 @@
         </div>
     </div>
     <hr />
+    @if (EditAuthorised)
+    {
+        <div class="row">
+            <div class="col">
+                <h2>Absent Today</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                @if (currentAbsences == null)
+            {
+                <LoadingComponent />            
+            }
+            else if (currentAbsences.Count() == 0)
+            {
+                <RadzenText Text="There is no-one currently absent." />
+            }
+            else
+            {
+                foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
+                {
+                    <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
+                }
+            }
+                </div>
+            </div>
+        <hr/>
+    }
+    <div class="row">
+        <div class="col">
+            <h2>All People</h2>
+        </div>
+    </div>
+    <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
+            <RadzenSwitch @bind-Value="@IncludeLeavers" />
+        </RadzenStack>
+    </div>
     <div class="card">
         @if (people == null)
         {
@@ -23,7 +63,7 @@
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="true"
+            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
@@ -35,7 +75,6 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             AllowPaging="true"
                             PageSize="@pageCount"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
                             Count="@count"
                             LoadData="@LoadData">
