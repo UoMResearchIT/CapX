@@ -12,19 +12,25 @@
     <div class="container">
         <h1>My Projects</h1>
         <hr />
-        @if (ownedProjects == null)
+        @if (ownedProjectsAndDueNotes == null)
         {
             <LoadingComponent />            
         }
-        else if (ownedProjects.Count() == 0)
+        else if (ownedProjectsAndDueNotes.Count() == 0)
         {
             <RadzenText Text="You don't have any projects to manage!" />
         }
         else
         {
-            foreach (var project in ownedProjects.OrderBy(x => x.ProjectStatus))
+            foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
             {
-                <ProjectSummaryComponent Project="project" EditAuthorised="EditAuthorised" DetailsButtonClicked="DetailsButtonClicked" DueButtonClicked="DueButtonClicked" ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+                <ProjectSummaryComponent Project="projectAndNotes.Key"
+                                         EditAuthorised="EditAuthorised"
+                                         DetailsButtonClicked="DetailsButtonClicked"
+                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
+                                         DueButtonClicked="DueButtonClicked"
+                                         ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
             }
         }
     </div>

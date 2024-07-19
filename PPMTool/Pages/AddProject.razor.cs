@@ -158,6 +158,9 @@ namespace PPMTool.Pages
                     // Further validation
                     if (!CheckProjectManagerSet()) return;
 
+                    // Update the project summary values
+                    projectModel.UpdateProjectSummary();
+
                     if (ProjectId > 0)
                     {
                         // Check to see if the project is marked as cancelled as then we need to remove resources.

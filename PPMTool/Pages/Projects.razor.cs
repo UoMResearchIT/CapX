@@ -22,6 +22,9 @@ namespace PPMTool.Pages
         private RolesService RoleService { get; set; }
 
         [Inject]
+        private NoteService NoteService { get; set; }
+
+        [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
         [Inject]
@@ -32,7 +35,7 @@ namespace PPMTool.Pages
         public string ProjectManagerShortName { get; set; }
 
         private IEnumerable<Project> projects;
-        private IEnumerable<Project> ownedProjects;
+        private IDictionary<Project, IEnumerable<Note>> ownedProjectsAndDueNotes;
         private Role userRole;
 
         private bool includeFinished;
@@ -124,16 +127,19 @@ namespace PPMTool.Pages
             // Remove the ones that are not active if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
 
-            // Filter owned projects to only show active ones
-            ownedProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
+            // Assign data for the data grid
+            projects = proj;
 
-            // Extract the owned projects
+            // Filter owned projects to only show active ones
+            var tempProj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
+
+            // Extract the owned projects and their due notes
             if (ProjectManagerShortName != null)
             {
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    ownedProjects = ownedProjects.Where(x =>
+                    tempProj = tempProj.Where(x =>
                     {
                         x.UpdateStatusMessages();
                         return x.HasActiveStatusMessages();
@@ -142,7 +148,7 @@ namespace PPMTool.Pages
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    ownedProjects = ownedProjects.Where(x =>
+                    tempProj = tempProj.Where(x =>
                     {
                         x.UpdateStatusMessages();
                         return x.HasActiveErrorMessages();
@@ -151,28 +157,21 @@ namespace PPMTool.Pages
                 else
                 {
                     // Use query string to see someone else's list of cards
-                    ownedProjects = ownedProjects.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                    tempProj = tempProj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
                 }
             }
             else
             {
                 // Show just the logged in user's projects
-                ownedProjects = ownedProjects.Where(x => x.ProjectManager == userRole.Person).ToList();
+                tempProj = tempProj.Where(x => x.ProjectManager == userRole.Person).ToList();
             }
 
-            // Update the summary of each project and save back to DB if initial load of the page
-            if (initial && proj.Count > 0)
+            // Build the dictionary
+            ownedProjectsAndDueNotes = new Dictionary<Project, IEnumerable<Note>>();
+            foreach (var p in tempProj)
             {
-                Debug.WriteLine($"** Updating project summary data for {ownedProjects.Count()} project(s) that I own...");
-                foreach (var p in ownedProjects)
-                {
-                    p.UpdateProjectSummary();
-                    ProjectService.Update(context, p);
-                }
+                ownedProjectsAndDueNotes.Add(p, NoteService.GetDueNotesForProject(context, p.ProjectId));
             }
-
-            // Assign data for the data grid
-            projects = proj;
 
             // Disable spinner now load complete
             Loading = false;
