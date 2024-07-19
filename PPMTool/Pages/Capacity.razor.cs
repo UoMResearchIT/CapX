@@ -898,17 +898,20 @@ namespace PPMTool.Pages
             // Create blank list of data
             var allData = new List<TaskData>();
 
-            // Set the report length
-            const int numMonths = 6;
+            // Set the report length (previous, current and next financial years)
+            const int numMonths = 36;
+            var currentFinancialYear = DateTime.Today.Month < 8 ? DateTime.Today.AddYears(-2).Year : DateTime.Today.AddYears(-1).Year;
+            var startDate = new DateTime(currentFinancialYear, 8, 1);
 
             // Get data for each person
             foreach (var p in people)
             {
-                // Assume 6 months for now
+                // Get the data by month
                 var data = ExportHelper.GetExportDataForPerson(
                     p,
                     SubTaskService.GetAll(context).Where(x => x.AssignedResources.Any(x => x.Person == p)),
                     ProjectService.GetAll(context),
+                    startDate,
                     numMonths
                 );
                 allData.AddRange(data);
@@ -958,12 +961,11 @@ namespace PPMTool.Pages
 
                     // Create header row
                     var headers = propNames.ToList();
-                    var startDate = DateTime.Today;
                     var d = startDate;
                     while (d < startDate.AddMonths(numMonths))
                     {
                         // Convert month number to name for the column heading
-                        headers.Add($"{d.ToString("MMM", CultureInfo.InvariantCulture)} %");
+                        headers.Add($"{d.ToString("MMM-yyyy", CultureInfo.InvariantCulture)} %");
 
                         // Increment month
                         d = d.AddMonths(1);
