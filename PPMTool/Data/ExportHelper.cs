@@ -117,14 +117,12 @@ namespace PPMTool.Data
         /// <param name="projects">All projects as retrieved from the project service</param>
         /// <param name="numMonthsIntoFuture">Number of months into the future we want data for</param>
         /// <returns>List of data items</returns>
-        public static IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, IEnumerable<Project> projects, int numMonthsIntoFuture)
+        public static IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, IEnumerable<Project> projects, DateTime startDate, int numMonthsIntoFuture)
         {
             // New list
             var data = new List<TaskData>();
 
-            // Set reference months
-            var now = DateTime.Today;
-            var startDate = new DateTime(now.Year, now.Month, 1);
+            // Set reference data
             var endDate = startDate.AddMonths(numMonthsIntoFuture);
             var currentDate = startDate.Date;
             var availabilityChanges = person.AvailabilityChanges.ToList();
@@ -209,7 +207,7 @@ namespace PPMTool.Data
                             EmployeeName = person.Name,
                             FTE = person.FTE,
                             ProjectAndTaskName = name,
-                            InnateActivity = proj.InnateActivity.GetCodeAsString(),
+                            InnateActivity = proj.InnateActivity?.GetCodeAsString() ?? "Not Set",
                         };
                         task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
                         data.Add(task);
@@ -232,7 +230,7 @@ namespace PPMTool.Data
                                 EmployeeName = "Unmet Demand",
                                 FTE = 0,
                                 ProjectAndTaskName = name,
-                                InnateActivity = proj.InnateActivity.GetCodeAsString()
+                                InnateActivity = proj.InnateActivity?.GetCodeAsString() ?? "Not Set"
                             };
                             task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.UnmetDemand * 100));
                             data.Add(task);
@@ -275,8 +273,8 @@ namespace PPMTool.Data
 
             return subTasks.Where(x =>
                 (x.StartDate <= firstOfTheMonth && x.EndDate >= firstOfTheMonth) ||
-                (x.StartDate > firstOfTheMonth && x.StartDate < firstOfTheMonth.AddMonths(1)) ||
-                (x.EndDate > firstOfTheMonth && x.EndDate < firstOfTheMonth.AddMonths(1))
+                (x.StartDate >= firstOfTheMonth && x.StartDate < firstOfTheMonth.AddMonths(1)) ||
+                (x.EndDate >= firstOfTheMonth && x.EndDate < firstOfTheMonth.AddMonths(1))
             );
         }
     }

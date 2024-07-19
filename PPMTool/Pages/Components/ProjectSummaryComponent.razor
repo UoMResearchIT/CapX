@@ -22,15 +22,15 @@
         </RadzenStack>
             @if (DueNoteCount > 0 || OverDueNoteCount > 0)
             {
-                <RadzenStack class="col-3 rz-border-danger p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
-                    <RadzenText Text="Actions" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
+            <RadzenStack class="@($"col-3 p-1 {(OverDueNoteCount > 0 ? "rz-border-danger" : "rz-border-warning")}")" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.2rem">
+                        <RadzenText Text="Actions Due" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
                         <RadzenIcon IconStyle="IconStyle.Danger" Icon="flag"/>
                         <RadzenText class="rz-border-radius-10 rz-background-color-danger p-2" TextStyle="TextStyle.Subtitle1" Text="@($"{OverDueNoteCount}")" Style="margin-bottom: -0.1rem; color: white" />
                         <RadzenIcon IconStyle="IconStyle.Warning" Icon="flag" />
                         <RadzenText class="rz-border-radius-10 rz-background-color-warning p-2" TextStyle="TextStyle.Subtitle1" Text="@($"{DueNoteCount}")" Style="margin-bottom: -0.1rem" />
                     </RadzenStack>
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" class="align-self-center" />
+                    <RadzenButton ButtonStyle="@(OverDueNoteCount > 0 ? ButtonStyle.Danger : ButtonStyle.Warning)" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" class="align-self-center" />
                 </RadzenStack>
             }
         <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
