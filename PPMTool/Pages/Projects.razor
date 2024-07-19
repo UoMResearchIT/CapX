@@ -22,13 +22,13 @@
         }
         else
         {
-            foreach (var project in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
+            foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
             {
-                <ProjectSummaryComponent Project="project.Key"
+                <ProjectSummaryComponent Project="projectAndNotes.Key"
                                          EditAuthorised="EditAuthorised"
                                          DetailsButtonClicked="DetailsButtonClicked"
-                                         OverDueNoteCount="@(project.Value.Where(x => x.IsOverDue()).Count())"
-                                         DueNoteCount="@(project.Value.Where(x => x.IsDue()).Count())"
+                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
                                          DueButtonClicked="DueButtonClicked"
                                          ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
             }

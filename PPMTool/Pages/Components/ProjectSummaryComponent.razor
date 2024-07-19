@@ -6,53 +6,42 @@
 @using System.Diagnostics
 
 <div class="card my-1">
-    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
+        <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.3rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                 <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
                 <RadzenBadge Style="margin-bottom: 0.5rem"
-                                BadgeStyle="@(
-                                        Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                        Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                        Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                        BadgeStyle.Light)"
-                                Text="@Project.ProjectStatus.ToNiceString()" />
+                             BadgeStyle="@(
+                                    Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
+                                    Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
+                                    Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                    BadgeStyle.Light)"
+                             Text="@Project.ProjectStatus.ToNiceString()" />
             </RadzenStack>
-            @if (OverDueNoteCount > 0)
-            {
-            
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-border-danger p-1" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenIcon IconStyle="IconStyle.Danger" Icon="flag"/>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"You have {OverDueNoteCount} note(s) overdue")" Style="margin-bottom: -0.1rem" />
-                    </RadzenStack>
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" />
-                </RadzenStack>
-            
-            }
-            @if (DueNoteCount > 0)
-            {
-
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-border-warning p-1" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenIcon IconStyle="IconStyle.Warning" Icon="flag" />
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"You have {DueNoteCount} note(s) due")" Style="margin-bottom: -0.1rem" />
-                    </RadzenStack>
-                    <RadzenButton ButtonStyle="ButtonStyle.Warning" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" />
-                </RadzenStack>
-
-            }
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem">
-                <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
-                <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
-                    <ChildContent>
-                        <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
-                    </ChildContent>
-                </RadzenSplitButton>
-                <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
-            </RadzenStack>
+            <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
         </RadzenStack>
-        <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
+            @if (DueNoteCount > 0 || OverDueNoteCount > 0)
+            {
+                <RadzenStack class="col-3 rz-border-danger p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                    <RadzenText Text="Actions" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.2rem">
+                        <RadzenIcon IconStyle="IconStyle.Danger" Icon="flag"/>
+                        <RadzenText class="rz-border-radius-10 rz-background-color-danger p-2" TextStyle="TextStyle.Subtitle1" Text="@($"{OverDueNoteCount}")" Style="margin-bottom: -0.1rem; color: white" />
+                        <RadzenIcon IconStyle="IconStyle.Warning" Icon="flag" />
+                        <RadzenText class="rz-border-radius-10 rz-background-color-warning p-2" TextStyle="TextStyle.Subtitle1" Text="@($"{DueNoteCount}")" Style="margin-bottom: -0.1rem" />
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" class="align-self-center" />
+                </RadzenStack>
+            }
+        <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
+            <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
+                <ChildContent>
+                    <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
+                </ChildContent>
+            </RadzenSplitButton>
+            <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
+        </RadzenStack>
     </RadzenStack>
 </div>
 
