@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using PPMTool.Enums;
 #endif
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
