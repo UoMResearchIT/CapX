@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using PPMTool.Data.Context;
+using PPMTool.Enums;
 using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities

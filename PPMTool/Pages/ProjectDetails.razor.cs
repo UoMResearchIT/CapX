@@ -11,8 +11,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
@@ -618,7 +618,7 @@ namespace PPMTool.Pages
             newMentions.AddRange(matches.Select(x => x.Value).Distinct());
 
             // Load in the list of managers
-            var managers = RolesService.GetAll(context).Where(x => x.RoleType == Data.Context.RoleType.Manager || x.RoleType == Data.Context.RoleType.Superuser).Select(x => x.Person).ToList();
+            var managers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
             foreach (var m in newMentions)
