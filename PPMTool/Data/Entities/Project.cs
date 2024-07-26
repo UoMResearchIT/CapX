@@ -100,6 +100,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasksButFundedOrFinished()),
                 new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
+                new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -208,19 +209,19 @@ namespace PPMTool.Data.Entities
             double plannedCost = 0d;
 
             // Loop over all the subtasks
-            foreach (var task in SubTasks)
+            if (SubTasks != null)
             {
-                // Update the flags on this task
-                task.UpdateStatusFlags();
+                foreach (var task in SubTasks)
+                {
+                    // Update the project start and end dates
+                    if (task.StartDate < startDate) startDate = task.StartDate;
+                    if (task.EndDate > endDate) endDate = task.EndDate;
 
-                // Update the project start and end dates
-                if (task.StartDate < startDate) startDate = task.StartDate;
-                if (task.EndDate > endDate) endDate = task.EndDate;
-
-                // Sum costs and hours
-                actualCost += task.ActualCost;
-                plannedCost += task.PlannedCost;
-                actualHours += task.ActualWorkHours;
+                    // Sum costs and hours
+                    actualCost += task.ActualCost;
+                    plannedCost += task.PlannedCost;
+                    actualHours += task.ActualWorkHours;
+                }
             }
 
             // Update project
@@ -233,16 +234,6 @@ namespace PPMTool.Data.Entities
             // Truncate the cost to 2 DP as it is currency
             ActualCost = Math.Round(100 * actualCost) / 100;
             PlannedCost = Math.Round(100 * plannedCost) / 100;
-
-            // Update schedule status from the sub task flags
-            if (SubTasks.Any(x => x.ScheduleStatus == ScheduleStatus.Late)) ScheduleStatus = ScheduleStatus.Late;
-            else if (SubTasks.Any(x => x.ScheduleStatus == ScheduleStatus.Ahead)) ScheduleStatus = ScheduleStatus.Ahead;
-            else ScheduleStatus = ScheduleStatus.OnSchedule;
-
-            // Budget status
-            if (ActualCost > Budget) BudgetStatus = BudgetStatus.Overspend;
-            else if (SubTasks.Any(x => x.BudgetStatus == BudgetStatus.Underspend)) BudgetStatus = BudgetStatus.Underspend;
-            else BudgetStatus = BudgetStatus.OnBudget;
         }
 
         /// <summary>

@@ -388,38 +388,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to update the budget and schedule status flags for this task
-        /// </summary>
-        public void UpdateStatusFlags()
-        {
-            // Update the schedule status and set the flag based on a tolerance of 10% either way
-            var endDate = DateTime.Today > EndDate ? EndDate : DateTime.Today;
-            var daysIntoTask = endDate.Subtract(StartDate.Date).TotalDays;
-            var expectedWorkToDate = (PlannedWorkHours / DurationDays) * daysIntoTask;
-            var maxWork = expectedWorkToDate * 1.1;
-            var minWork = expectedWorkToDate * 0.9;
-
-            // If a task is done, it can be regarded as being on schedule regardless on when it was actually completed.
-            if (IsDone) ScheduleStatus = ScheduleStatus.OnSchedule;
-
-            // Simple condition for late
-            else if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
-
-            // Can't be ahead if you have done all the planned work already
-            else if (ActualWorkHours > maxWork && ActualWorkHours < PlannedWorkHours) ScheduleStatus = ScheduleStatus.Ahead;
-
-            // Within tolerance or already working beyond the planned work which will be reflected in the budget flag
-            else ScheduleStatus = ScheduleStatus.OnSchedule;
-
-            // Effort is somewhat related to costs except you can spend more than the planned amount
-            // which would not be captured by a schedule flag
-            if (ScheduleStatus == ScheduleStatus.Late) BudgetStatus = BudgetStatus.Underspend;
-            else if (ActualWorkHours > PlannedWorkHours) BudgetStatus = BudgetStatus.Overspend;
-            else BudgetStatus = BudgetStatus.OnBudget;
-
-        }
-
-        /// <summary>
         /// Checks whether the task has any provisional resources assigned to it.
         /// </summary>
         /// <returns></returns>
