@@ -179,7 +179,7 @@
     </div>
     <hr />
 
-    @if (project?.SubTasks == null)
+    @if (project?.SubTasks == null || project?.SubTasks.Count == 0)
     {
         <div class="card">
             <p class="lead">No data to show</p>
