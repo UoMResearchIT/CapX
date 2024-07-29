@@ -158,11 +158,11 @@ namespace PPMTool.Data
             // Add to the changes any leaving date within the window as a zero availability
             if (person.EndDate != null)
             {
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Today,
-                    AvailabilityFTE = 0
+                    ProjectWorkFTE = 0
                 });
 
                 // Keep only changes on or before the end date
@@ -172,22 +172,22 @@ namespace PPMTool.Data
             // Add to the changes any start date within the window as post FTE (if no availablity change on the start date)
             if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
             {
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = person.StartDate,
-                    AvailabilityFTE = person.FTE
+                    ProjectWorkFTE = person.FTE
                 });
 
                 // Keep only changes on or after the start date
                 changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
 
                 // Enforce a zero availability before they start
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = startDate,
-                    AvailabilityFTE = 0
+                    ProjectWorkFTE = 0
                 });
             }
 
@@ -213,7 +213,7 @@ namespace PPMTool.Data
                 // Find the change immediately before the query window or on day one
                 // if there is one on the first day of the query window
                 var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
+                if (changeBefore != null) initialFTE = changeBefore.ProjectWorkFTE;
 
                 // Any relevant changes after must be after the start of the window but before the end
                 var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
@@ -231,9 +231,9 @@ namespace PPMTool.Data
                 {
                     // If the last change then use query end date for block end otherwise it is date of next change
                     blocks.Add(
-                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate,
+                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].ProjectWorkFTE), person.Name, changesAfter[i].ChangeDate,
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            0, changesAfter[i].AvailabilityFTE, false
+                            0, changesAfter[i].ProjectWorkFTE, false
                         )
                     );
                 }

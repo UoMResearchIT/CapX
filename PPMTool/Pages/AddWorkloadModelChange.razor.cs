@@ -10,7 +10,7 @@ using PPMTool.Services;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class AddAvailabilityChange : AddPersonProperty<AvailabilityChange>
+    public partial class AddWorkloadModelChange : AddPersonProperty<WorkloadModelChange>
     {
         protected override void OnInitialized()
         {
@@ -23,7 +23,7 @@ namespace PPMTool.Pages
             }
             else
             {
-                dataGridEntities = new List<AvailabilityChange>();
+                dataGridEntities = new List<WorkloadModelChange>();
             }
 
             LogInformation($"Viewing availability changes for {personModel?.Name}");

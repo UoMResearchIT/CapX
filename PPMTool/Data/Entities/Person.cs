@@ -35,7 +35,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Any changes to their availability which includes the undertaking of baseline activities
         /// </summary>
-        public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
+        public ICollection<WorkloadModelChange> AvailabilityChanges { get; set; } = new List<WorkloadModelChange>();
 
         /// <summary>
         /// Collection of skills
@@ -108,7 +108,7 @@ namespace PPMTool.Data.Entities
             {
                 // Get availability based on the most recent change before the date provided
                 var latestChange = AvailabilityChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (latestChange != null) availability = latestChange.AvailabilityFTE;
+                if (latestChange != null) availability = latestChange.ProjectWorkFTE;
             }
 
             return availability;
