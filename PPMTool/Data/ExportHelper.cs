@@ -134,7 +134,7 @@ namespace PPMTool.Data
                 // Add a baseline task
                 var task = new TaskData
                 {
-                    ProjectAndTaskName = latestChange.BaselineActivities,
+                    ProjectAndTaskName = latestChange.Notes,
                     EmployeeName = person.Name,
                     FTE = person.FTE
                 };
@@ -156,7 +156,7 @@ namespace PPMTool.Data
                     // Add a new baseline task and value
                     var task = new TaskData
                     {
-                        ProjectAndTaskName = focus.BaselineActivities,
+                        ProjectAndTaskName = focus.Notes,
                         EmployeeName = person.Name,
                         FTE = person.FTE
                     };

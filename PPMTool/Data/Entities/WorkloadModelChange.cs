@@ -35,6 +35,6 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Optional notes to explain anything about the change
         /// </summary>
-        public string BaselineActivities { get; set; }
+        public string Notes { get; set; }
     }
 }
