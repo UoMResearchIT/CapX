@@ -75,7 +75,7 @@
                     <div class="row">
                         <RadzenDataList
                             AllowVirtualization=true
-                            Style="min-height:120px; max-height:720px; overflow:auto; width:100%"
+                            class="full-height-list"
                             WrapItems="false"
                             AllowPaging="false"
                             Data="@chosenTags"
@@ -107,31 +107,50 @@
                     </div>
                     <hr />
                     <RadzenDataList AllowVirtualization=true
-                                    Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
+                                    class="half-height-list"
                                     WrapItems="false"
                                     AllowPaging="false"
                                     Data="@personModel.WorkloadModelChanges"
                                     TItem="WorkloadModelChange">
                         <Template Context="d">
-                            <div class="row flexbox p-0">
-                                <div class="col-3">
-                                    @d.ChangeDate.ToShortDateString()
-                                </div>
-                                <div class="col-3">
-                                    @d.ProjectWorkFTE FTE
-                                </div>
-                                <div class="col-6">
-                                    @d.Notes
-                                </div>
+                            <div style="width:100%">
+                                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                            <RadzenText Text="@d.ChangeDate.ToShortDateString()" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                         BadgeStyle="BadgeStyle.Info"
+                                                         Text="@(d.Total().ToString("F1") + " FTE")" />
+                                        </RadzenStack>
+                                        <RadzenText Text="@d.Notes" TextStyle="TextStyle.Body2"/>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceAround" AlignItems="AlignItems.Center">
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="Project Work" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="BAU" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="Personal Dev" TextStyle="TextStyle.Subtitle1" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="@d.ProjectWorkFTE.ToString()" />
+                                            <RadzenText Text="@d.BusinessAsUsualFTE.ToString()" />
+                                            <RadzenText Text="@d.PersonalDevelopmentFTE.ToString()" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="Project and Service" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="@d.StaffManagementFTE.ToString()" />
+                                            <RadzenText Text="@d.ProjectAndServiceManagementFTE.ToString()" />
+                                            <RadzenText Text="@d.ArchitectureFTE.ToString()" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenStack>
                             </div>
                         </Template>
                     </RadzenDataList>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                </div>
-                <div class="col">
+                    <br /><br />
                     <div class="row">
                         <div class="col-auto mr-auto py-2">
                             <h3>Absence</h3>
@@ -142,7 +161,7 @@
                     </div>
                     <hr />
                     <RadzenDataList AllowVirtualization=true
-                                    Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
+                                    class="half-height-list"
                                     WrapItems="false"
                                     AllowPaging="false"
                                     Data="@personModel.Absences"

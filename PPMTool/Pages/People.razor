@@ -93,10 +93,10 @@
                     <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" Width="50px" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="Availability Changes" Sortable="false" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="Post FTE" Width="50px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Project Work FTE" Width="50px" MinWidth="10px" Sortable="false">
                         <Template Context="p">
-                            @string.Join(" | ", p.WorkloadModelChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.ProjectWorkFTE}"))
+                            @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.ProjectWorkFTE
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">

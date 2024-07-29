@@ -36,5 +36,14 @@ namespace PPMTool.Data.Entities
         /// Optional notes to explain anything about the change
         /// </summary>
         public string Notes { get; set; }
+
+        /// <summary>
+        /// Method to provide the sum of FTE assigned across the workload model
+        /// </summary>
+        /// <returns></returns>
+        public double Total()
+        {
+            return ProjectWorkFTE + BusinessAsUsualFTE + PersonalDevelopmentFTE + StaffManagementFTE + ProjectAndServiceManagementFTE + ArchitectureFTE;
+        }
     }
 }

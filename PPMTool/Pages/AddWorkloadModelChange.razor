@@ -34,19 +34,45 @@
                                 RowCreate="@OnCreateRow"
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ChangeDate" Title="Date of Change" Width="180px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ChangeDate" Title="Date of Change" Width="160px" MinWidth="10px">
+                            <Template Context="c">
+                                @c.ChangeDate.ToShortDateString()
+                            </Template>
                             <EditTemplate Context="c">
                                 <RadzenDatePicker @bind-Value="c.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="AvailabilityFTE" Title="New FTE" Width="120px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectWorkFTE" Title="Project" Width="80px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectWorkFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="BaselineActivities" Title="Baseline Activity Description" Width="350px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="BusinessAsUsualFTE" Title="BAU" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.BusinessAsUsualFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="PersonalDevelopmentFTE" Title="PD" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.PersonalDevelopmentFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="StaffManagementFTE" Title="Staff" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.StaffManagementFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectAndServiceManagementFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="RSA" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Notes" Title="Notes" Width="350px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenTextBox TValue="string" @bind-Value="c.Notes" />
                             </EditTemplate>
