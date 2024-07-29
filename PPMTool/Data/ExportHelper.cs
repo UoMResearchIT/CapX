@@ -125,7 +125,7 @@ namespace PPMTool.Data
             // Set reference data
             var endDate = startDate.AddMonths(numMonthsIntoFuture);
             var currentDate = startDate.Date;
-            var availabilityChanges = person.AvailabilityChanges.ToList();
+            var availabilityChanges = person.WorkloadModelChanges.ToList();
 
             // Configure a baseline task if there is an availability change in place that takes them below the post FTE
             var latestChange = availabilityChanges.Where(x => x.ChangeDate <= currentDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();

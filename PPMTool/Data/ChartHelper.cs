@@ -142,7 +142,7 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified.
+        /// Method to take the workload model changes of a person and create chart items to represent "zero assignment" for the period specified.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="startDate"></param>
@@ -152,8 +152,8 @@ namespace PPMTool.Data
         {
             var blocks = new List<ChartItem>();
 
-            // Get any availability changes in force at the beginning of the query or during it
-            var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < endDate).ToList();
+            // Get any workload model changes in force at the beginning of the query or during it
+            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
 
             // Add to the changes any leaving date within the window as a zero availability
             if (person.EndDate != null)
@@ -204,7 +204,7 @@ namespace PPMTool.Data
                 );
             }
 
-            // Work through the availability changes to establish blocks of availability
+            // Work through the workload model changes to establish blocks of availability
             else
             {
                 // We need to establish the availability at the beginning of the query window which will be post FTE by default

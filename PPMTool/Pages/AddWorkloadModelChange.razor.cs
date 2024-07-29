@@ -19,14 +19,14 @@ namespace PPMTool.Pages
             if (PersonId > 0)
             {
                 personModel = PersonService.GetById(context, PersonId);
-                dataGridEntities = personModel.AvailabilityChanges.ToList();
+                dataGridEntities = personModel.WorkloadModelChanges.ToList();
             }
             else
             {
                 dataGridEntities = new List<WorkloadModelChange>();
             }
 
-            LogInformation($"Viewing availability changes for {personModel?.Name}");
+            LogInformation($"Viewing workload model changes for {personModel?.Name}");
         }
 
         protected override async Task InsertRow()
@@ -38,7 +38,7 @@ namespace PPMTool.Pages
 
         private void DiscardChanges()
         {
-            LogInformation($"Discarding availability changes!");
+            LogInformation($"Discarding workload model changes!");
 
             // Just navigate away as nothing will have been written to the database
             Navigation.NavigateTo($"addperson/{PersonId}");
@@ -61,13 +61,13 @@ namespace PPMTool.Pages
                 }
 
                 // Update the person model, save to database, refresh the list and reset the model
-                personModel.AvailabilityChanges.Clear();
+                personModel.WorkloadModelChanges.Clear();
                 foreach (var avail in dataGridEntities)
                 {
-                    personModel.AvailabilityChanges.Add(avail);
+                    personModel.WorkloadModelChanges.Add(avail);
                 }
 
-                LogInformation($"Saving availability changes for {personModel.Name}.");
+                LogInformation($"Saving workload model changes for {personModel.Name}.");
                 PersonService.Update(context, personModel);
                 Navigation.NavigateTo($"addperson/{PersonId}");
             }

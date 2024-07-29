@@ -99,7 +99,7 @@
                 <div class="col">
                     <div class="row">
                         <div class="col-auto mr-auto py-2">
-                            <h3>Availability Changes</h3>
+                            <h3>Workload Model Changes</h3>
                         </div>
                         <div class="col-auto">
                             <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" />
@@ -110,7 +110,7 @@
                                     Style="min-height:120px; max-height:360px; overflow:auto; height:auto; width:100%; margin-left:-1rem; margin-right: 1rem"
                                     WrapItems="false"
                                     AllowPaging="false"
-                                    Data="@personModel.AvailabilityChanges"
+                                    Data="@personModel.WorkloadModelChanges"
                                     TItem="WorkloadModelChange">
                         <Template Context="d">
                             <div class="row flexbox p-0">
