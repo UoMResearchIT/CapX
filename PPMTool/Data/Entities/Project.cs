@@ -98,7 +98,6 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
-                new StatusMessage("This project has no tasks so cannot be scheduled!", StatusMessage.MessageType.Error, () => HasNoTasksButFundedOrFinished()),
                 new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
@@ -112,15 +111,6 @@ namespace PPMTool.Data.Entities
         private bool HasNoFacultyOrFacultyButNoSchool()
         {
             return Faculty == Faculty.None || ((Faculty == Faculty.FBMH || Faculty == Faculty.FHUMS || Faculty == Faculty.FSE) && School == School.None);
-        }
-
-        /// <summary>
-        /// Whether a project has no sub tasks and has a status that is not unfunded or cancelled so should represent demand
-        /// </summary>
-        /// <returns></returns>
-        public bool HasNoTasksButFundedOrFinished()
-        {
-            return (SubTasks == null || SubTasks.Count == 0) && !ProjectStatus.IsUnfunded() && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>

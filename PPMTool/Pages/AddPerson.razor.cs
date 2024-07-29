@@ -82,7 +82,7 @@ namespace PPMTool.Pages
             {
                 HandleSubmit();
 
-                LogInformation("Editing availability changes...");
+                LogInformation("Editing workload model changes...");
                 Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
             }
         }

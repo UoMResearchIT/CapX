@@ -125,21 +125,21 @@ namespace PPMTool.Data
             // Set reference data
             var endDate = startDate.AddMonths(numMonthsIntoFuture);
             var currentDate = startDate.Date;
-            var availabilityChanges = person.AvailabilityChanges.ToList();
+            var availabilityChanges = person.WorkloadModelChanges.ToList();
 
             // Configure a baseline task if there is an availability change in place that takes them below the post FTE
             var latestChange = availabilityChanges.Where(x => x.ChangeDate <= currentDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-            if (latestChange != null && latestChange.AvailabilityFTE < person.FTE)
+            if (latestChange != null && latestChange.ProjectWorkFTE < person.FTE)
             {
                 // Add a baseline task
                 var task = new TaskData
                 {
-                    ProjectAndTaskName = latestChange.BaselineActivities,
+                    ProjectAndTaskName = latestChange.Notes,
                     EmployeeName = person.Name,
                     FTE = person.FTE
                 };
                 task.SetIsBaseline(true);
-                task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * (person.FTE - latestChange.AvailabilityFTE)));
+                task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * (person.FTE - latestChange.ProjectWorkFTE)));
                 data.Add(task);
             }
 
@@ -151,17 +151,17 @@ namespace PPMTool.Data
                 if (currentMonthAvailabilityChanges.Count > 0)
                 {
                     // Get the lowest availability for the month as the focus for the month
-                    var focus = currentMonthAvailabilityChanges.OrderByDescending(x => x.AvailabilityFTE).FirstOrDefault();
+                    var focus = currentMonthAvailabilityChanges.OrderByDescending(x => x.ProjectWorkFTE).FirstOrDefault();
 
                     // Add a new baseline task and value
                     var task = new TaskData
                     {
-                        ProjectAndTaskName = focus.BaselineActivities,
+                        ProjectAndTaskName = focus.Notes,
                         EmployeeName = person.Name,
                         FTE = person.FTE
                     };
                     task.SetIsBaseline(true);
-                    task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * focus.AvailabilityFTE));
+                    task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * focus.ProjectWorkFTE));
                     data.Add(task);
                 }
 
