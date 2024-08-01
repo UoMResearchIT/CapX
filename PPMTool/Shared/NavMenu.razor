@@ -48,6 +48,15 @@
                 </li>
             </Authorized>
         </AuthorizeView>
+        <AuthorizeView Roles="Superuser">
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="datadashboard">
+                        <span class="oi oi-dashboard" aria-hidden="true"></span> Data Dashboard
+                    </NavLink>
+                </li>
+            </Authorized>
+        </AuthorizeView>
     </ul>
 </div>
 

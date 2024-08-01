@@ -257,7 +257,7 @@ namespace PPMTool.Data.Entities
                     UpdateWork(units);
                 }
 
-                // Update cost
+                // Update cost (only committed cost -- if no resources then no cost committed)
                 PlannedCost = 0d;
                 foreach (var res in AssignedResources)
                 {
