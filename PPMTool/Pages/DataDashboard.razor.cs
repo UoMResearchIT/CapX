@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -29,8 +31,10 @@ namespace PPMTool.Pages
         private DateTime startDate = DateTime.Today;
         private int yearsBehind = 1;
         private int yearsAhead = 2;
+        private int generationProgressPercent = 0;
 
         private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
+        private ApexChartOptions<DemandChartItem> demandChartOptions;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -43,35 +47,69 @@ namespace PPMTool.Pages
             // Default to the first day of the current financial year
             var today = DateTime.Today;
             startDate = new DateTime(today.Month < 8 ? today.Year - 1 : today.Year, 8, 1);
+
+            // Set chart options
+            demandChartOptions = new ApexChartOptions<DemandChartItem>
+            {
+                Chart = new Chart
+                {
+                    Stacked = true,
+                    Type = ChartType.Area
+                },
+                Xaxis = new XAxis
+                {
+                    Type = XAxisType.Datetime
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                        }
+                    }
+                }
+            };
         }
 
         private void GenerateCharts()
         {
             Loading = true;
+            generationProgressPercent = 0;
             Task.Run(() =>
             {
+                Debug.WriteLine("** Starting generation...");
+
                 // Clear the existing demand item list
                 demandChartItems.Clear();
+
+                // Max for spinner
+                var maxGenWeeks = (yearsBehind + yearsAhead) * 52;
 
                 // Get starting lists from the DB
                 var people = PersonService.GetAll(context);
                 var projects = ProjectService.GetAll(context);
 
-                // Initialise
-                float wlmProject = 0f;
-                float wlmBAU = 0f;
-                float wlmPD = 0f;
-                float wlmPSM = 0f;
-                float wlmStaff = 0f;
-                float wlmRSA = 0f;
-                float assignmentUnder = 0f;
-                float assignmentOver = 0f;
-                int numStaff = 0;
-
                 // For each week
                 var currentWeekStart = startDate.AddYears(-yearsBehind);
                 while (currentWeekStart < startDate.AddYears(yearsAhead))
                 {
+                    // Initialise
+                    float wlmProject = 0f;
+                    float wlmBAU = 0f;
+                    float wlmPD = 0f;
+                    float wlmPSM = 0f;
+                    float wlmStaff = 0f;
+                    float wlmRSA = 0f;
+                    float assignmentUnder = 0f;
+                    float assignmentOver = 0f;
+                    int numStaff = 0;
+                    int weekCount = 0;
+
+                    // Update the spinner
+                    generationProgressPercent = (int)Math.Round(weekCount / (float)maxGenWeeks);
+
                     // Get the projects that are running during the week (exclude those projects with no tasks that have default start date)
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
 
@@ -109,7 +147,7 @@ namespace PPMTool.Pages
 
                     // Confirmed //
 
-                    // Get just confirmed project tasks
+                    // Get just confirmed project tasks (not including finished)
                     var tasksOnConfirmedActiveProjectsThisWeek = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Get met and unmet demand for this subset
@@ -213,11 +251,14 @@ namespace PPMTool.Pages
 
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);
+                    weekCount++;
                 }
 
             }).ContinueWith(t =>
             {
+                Debug.WriteLine($"** ...generation finished {t.Status}");
                 Loading = false;
+                InvokeAsync(StateHasChanged);
             });
         }
     }
