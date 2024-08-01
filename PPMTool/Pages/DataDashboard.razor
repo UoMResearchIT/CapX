@@ -1,4 +1,5 @@
 ﻿@page "/datadashboard"
+@using PPMTool.Data
 @inherits BasePage
 
 <div class="container">
@@ -100,14 +101,113 @@
                 <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="currentBudget" />
             </div>
         </div>
+        <hr />
+        <div class="row">
+            <div class="col">
+                <h3>Other</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Start Date" />
+            </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Years Behind" />
+            </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-2">
+                <RadzenDatePicker TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsBehind" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
+            </div>
+        </div>
+
     </div>
     <hr />
     <div class="row">
         <div class="col">
             <h2>Charts</h2>
         </div>
+        <div class="col-auto">
+            <RadzenButton Text="Refresh" Icon="refresh" Click="GenerateCharts" />
+        </div>
     </div>
-    <div class="card">
+    <div class="row">
+        <div class="col-6">
+            <div class="card">
+                <ApexChart TItem="DemandChartItem"
+                           Title="Demand">
 
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Finished"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))"
+                                     OrderByDescending="e=>e.Y" />
+
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Net Value"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.ConfirmedMetDemandFTE))"
+                                     OrderByDescending="e=>e.Y" />
+
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Net Value"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.ConfirmedUnmetDemandFTE))"
+                                     OrderByDescending="e=>e.Y" />
+
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Net Value"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.UnconfirmedMetDemandFTE))"
+                                     OrderByDescending="e=>e.Y" />
+
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Net Value"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.UnconfirmedUnmetDemandFTE))"
+                                     OrderByDescending="e=>e.Y" />
+
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Net Value"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand))"
+                                     OrderByDescending="e=>e.Y" />
+
+                    <ApexPointSeries TItem="DemandChartItem"
+                                     Items="demandChartItems"
+                                     SeriesType="@SeriesType.Area"
+                                     Name="Net Value"
+                                     XValue="@(e => e.WeekStart)"
+                                     YValue="@(e => Convert.ToDecimal(e.CancelledDemand))"
+                                     OrderByDescending="e=>e.Y" />
+                </ApexChart>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card">
+
+            </div>
+        </div>
     </div>
 </div>
