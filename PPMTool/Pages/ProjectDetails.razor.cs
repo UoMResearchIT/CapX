@@ -6,6 +6,7 @@ using System.Linq.Dynamic.Core;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApexCharts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
