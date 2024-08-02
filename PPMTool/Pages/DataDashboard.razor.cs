@@ -33,9 +33,13 @@ namespace PPMTool.Pages
         private int yearsBehind = 2;
         private int yearsAhead = 2;
         private bool showFinishedAsSeparate = false;
+        private IEnumerable<Person> people;
+        private IEnumerable<Project> projects;
 
         private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
+        private ApexChartOptions<DemandChartItem> fteChartOptions;
+
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -43,8 +47,17 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        public DataDashboard()
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
+
+            // Editing only permitted by superusers
+            EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+
+            // Get starting lists from the DB
+            people = PersonService.GetAll(context);
+            projects = ProjectService.GetAll(context);
+
             // Default to the first day of the current financial year
             var today = DateTime.Today;
             startDate = new DateTime(today.Month < 8 ? today.Year - 1 : today.Year, 8, 1);
@@ -64,6 +77,7 @@ namespace PPMTool.Pages
             Task.Run(() =>
             {
                 Debug.WriteLine("** Starting generation...");
+
                 // Set chart options            
                 demandChartOptions = new ApexChartOptions<DemandChartItem>
                 {
@@ -72,7 +86,7 @@ namespace PPMTool.Pages
                         Stacked = true,
                         Type = ChartType.Area,
                         StackOnlyBar = true,
-                        Animations = new Animations { Enabled = false },
+                        Animations = new Animations { Enabled = false }
                     },
                     Xaxis = new XAxis
                     {
@@ -122,18 +136,85 @@ namespace PPMTool.Pages
                                     Text = "Anchor Date",
                                     Position = LabelPosition.Left
                                 }
+                            },
+                            new AnnotationsXAxis()
+                            {
+                                X = DateTime.Today.ToUnixTimeMilliseconds(),
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "#888",
+                                Label = new Label
+                                {
+                                    Text = "Today",
+                                    Position = LabelPosition.Left
+                                }
                             }
                         }
                     }
                 };
 
+                fteChartOptions = new ApexChartOptions<DemandChartItem>
+                {
+                    Chart = new Chart
+                    {
+                        Type = ChartType.Line,
+                        Animations = new Animations { Enabled = false }
+                    },
+                    Xaxis = new XAxis
+                    {
+                        Type = XAxisType.Datetime
+                    },
+                    Yaxis = new List<YAxis>
+                    {
+                        new YAxis
+                        {
+                            Labels = new YAxisLabels
+                            {
+                                Formatter = @"function (val, index) { return val.toFixed(2); }"
+                            }
+                        }
+                    },
+                    Colors = new List<string>
+                    {
+                        "#F44A4A",
+                        "#FB8F23",
+                        "#FEE440",
+                        "#7AFF60",
+                    },
+                    Annotations = new Annotations
+                    {
+                        Xaxis = new List<AnnotationsXAxis>
+                        {
+                            new AnnotationsXAxis()
+                            {
+                                X = startDate.ToUnixTimeMilliseconds(),
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "#888",
+                                Label = new Label
+                                {
+                                    Text = "Anchor Date",
+                                    Position = LabelPosition.Left
+                                }
+                            },
+                            new AnnotationsXAxis()
+                            {
+                                X = DateTime.Today.ToUnixTimeMilliseconds(),
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "#888",
+                                Label = new Label
+                                {
+                                    Text = "Today",
+                                    Position = LabelPosition.Left
+                                }
+                            }
+                        }
+                    }
+                };
 
                 // Clear the existing demand item list
                 demandChartItems.Clear();
-
-                // Get starting lists from the DB
-                var people = PersonService.GetAll(context);
-                var projects = ProjectService.GetAll(context);
 
                 // For each week
                 var currentWeekStart = startDate.AddYears(-yearsBehind);

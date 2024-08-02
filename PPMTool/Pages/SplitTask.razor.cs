@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Enums;
@@ -8,6 +9,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class SplitTask : BasePage
     {
         [Parameter]

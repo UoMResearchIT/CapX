@@ -11,7 +11,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Superuser,Manager,Developer")]
+    [Authorize]
     public abstract class BasePage : ComponentBase
     {
         [Inject]

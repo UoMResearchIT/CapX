@@ -36,22 +36,22 @@
         </div>
         <div class="row">
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" />
+                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" Disabled="@(!EditAuthorised)" />
             </div>
         </div>
         <br />
@@ -83,22 +83,22 @@
         </div>
         <div class="row">
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade41Costs" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade41Costs" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade55Costs" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade55Costs" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade65Costs" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade65Costs" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade71Costs" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade71Costs" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade75Costs" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade75Costs" Disabled="@(!EditAuthorised)" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="currentBudget" />
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="currentBudget" Disabled="@(!EditAuthorised)" />
             </div>
         </div>
         <hr />
@@ -237,7 +237,39 @@
                 }
                 else if (demandChartItems != null && demandChartItems.Count > 0)
                 {
-                    
+                    <ApexChart TItem="DemandChartItem"
+                               Title="RSE Allocation"
+                               Options="@fteChartOptions">
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Allocation"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.MetDemandFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Overallocation"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.OverallocationFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Underallocation"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.UnderallocationFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Available"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+
+                    </ApexChart>
                 }
                 else
                 {
