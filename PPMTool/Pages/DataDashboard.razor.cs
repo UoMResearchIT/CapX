@@ -172,6 +172,17 @@ namespace PPMTool.Pages
                             }
                         }
                     }
+                },
+                Markers = new Markers
+                {
+                    Size = 0
+                },
+                Tooltip = new ApexCharts.Tooltip
+                {
+                    Marker = new TooltipMarker
+                    {
+                        Show = false
+                    }
                 }
             };
 
