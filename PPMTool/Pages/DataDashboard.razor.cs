@@ -9,6 +9,7 @@ using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -31,7 +32,7 @@ namespace PPMTool.Pages
         private DateTime startDate = DateTime.Today;
         private int yearsBehind = 2;
         private int yearsAhead = 2;
-        private bool showFinishedAsSeparate = true;
+        private bool showFinishedAsSeparate = false;
 
         private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
@@ -48,58 +49,8 @@ namespace PPMTool.Pages
             var today = DateTime.Today;
             startDate = new DateTime(today.Month < 8 ? today.Year - 1 : today.Year, 8, 1);
 
-            // Set chart options
-            demandChartOptions = new ApexChartOptions<DemandChartItem>
-            {
-                Chart = new Chart
-                {
-                    Stacked = true,
-                    Type = ChartType.Area
-                },
-                Xaxis = new XAxis
-                {
-                    Type = XAxisType.Datetime
-                },
-                Yaxis = new List<YAxis>
-                {
-                    new YAxis
-                    {
-                        Labels = new YAxisLabels
-                        {
-                            Formatter = @"function (val, index) { return val.toFixed(2); }"
-                        }
-                    }
-                },
-                Colors = new List<string>
-                {
-                    "#F44A4A",
-                    "#FB8F23",
-                    "#FEE440",
-                    "#7AFF60",
-                    "#00F5D4",
-                    "#00BBF9",
-                    "#9B5DE5",
-                    "#F15BB5"
-                },
-                Annotations = new Annotations
-                {
-                    Xaxis = new List<AnnotationsXAxis>
-                    {
-                        new AnnotationsXAxis()
-                        {
-                            X = DateTime.Today.ToUnixTimeMilliseconds(),
-                            BorderWidth = 2,
-                            StrokeDashArray = 5,
-                            BorderColor = "black",
-                            Label = new Label
-                            {
-                                Text = "Current Week",
-                                Position = LabelPosition.Right
-                            }
-                        }
-                    }
-                }
-            };
+            // Generate the charts
+            GenerateCharts();
         }
 
         private void FinishedChanged(bool state)
@@ -113,6 +64,69 @@ namespace PPMTool.Pages
             Task.Run(() =>
             {
                 Debug.WriteLine("** Starting generation...");
+                // Set chart options            
+                demandChartOptions = new ApexChartOptions<DemandChartItem>
+                {
+                    Chart = new Chart
+                    {
+                        Stacked = true,
+                        Type = ChartType.Area,
+                        StackOnlyBar = true,
+                        Animations = new Animations { Enabled = false },
+                    },
+                    Xaxis = new XAxis
+                    {
+                        Type = XAxisType.Datetime
+                    },
+                    Yaxis = new List<YAxis>
+                    {
+                        new YAxis
+                        {
+                            Labels = new YAxisLabels
+                            {
+                                Formatter = @"function (val, index) { return val.toFixed(2); }"
+                            }
+                        }
+                    },
+                    Colors = showFinishedAsSeparate ? new List<string>
+                    {
+                        "#9B5DE5",
+                        "#F44A4A",
+                        "#FB8F23",
+                        "#FEE440",
+                        "#7AFF60",
+                        "#00F5D4",
+                        "#F15BB5",
+                        "#000"
+                    } : new List<string>
+                    {
+                        "#F44A4A",
+                        "#FB8F23",
+                        "#FEE440",
+                        "#7AFF60",
+                        "#00F5D4",
+                        "#000"
+                    },
+                    Annotations = new Annotations
+                    {
+                        Xaxis = new List<AnnotationsXAxis>
+                        {
+                            new AnnotationsXAxis()
+                            {
+                                X = startDate.ToUnixTimeMilliseconds(),
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "#888",
+                                Label = new Label
+                                {
+                                    Text = "Anchor Date",
+                                    Position = LabelPosition.Left
+                                }
+                            }
+                        }
+                    }
+                };
+
 
                 // Clear the existing demand item list
                 demandChartItems.Clear();
@@ -160,7 +174,7 @@ namespace PPMTool.Pages
                     // Get demand totals from tasks
                     var unmetDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
                     var totalDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.Demand);
-                    var metDemand = totalDemand - unmetDemand;
+                    var metDemand = (float)Math.Round(totalDemand - unmetDemand);
 
 
                     // Finished //
@@ -170,7 +184,7 @@ namespace PPMTool.Pages
                     var tasksOnFinishedProjectsThisWeek = projectsThisWeekThatAreFinished.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
                     var totalDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var unmetDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var metDemandFinished = totalDemandFinished - unmetDemandFinished;
+                    var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
                     // Confirmed //
@@ -190,7 +204,7 @@ namespace PPMTool.Pages
                     // Get met and unmet demand for this subset
                     var unmetDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
                     var totalDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
-                    var metDemandConfirmed = totalDemandConfirmed - unmetDemandConfirmed;
+                    var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
                     // Unconfirmed //
@@ -210,7 +224,7 @@ namespace PPMTool.Pages
                     // Calculate the unconfirmed totals
                     var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
                     var totalDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
-                    var metDemandUnconfirmed = totalDemandUnconfirmed - unmetDemandUnconfirmed;
+                    var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
                     // Compute value of confirmed and unconfirmed projects using G7.1 salary costs

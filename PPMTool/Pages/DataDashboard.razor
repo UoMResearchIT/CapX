@@ -109,7 +109,7 @@
         </div>
         <div class="row">
             <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Start Date" />
+                <RadzenLabel class="radzen-form-label" Text="Anchor Date" />
             </div>
             <div class="col-2">
                 <RadzenLabel class="radzen-form-label" Text="Years Behind" />
@@ -147,7 +147,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-6">
+        <div class="col">
             <div class="card">
                 @if (Loading)
                 {
@@ -163,7 +163,7 @@
                         {
                             <ApexPointSeries TItem="DemandChartItem"
                                              Items="demandChartItems"
-                                             SeriesType="@SeriesType.Area"
+                                             SeriesType="@SeriesType.Bar"
                                              Name="Finished Met"
                                              XValue="@(e => e.WeekStart)"
                                              YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
@@ -171,35 +171,35 @@
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
+                                         SeriesType="@SeriesType.Bar"
                                          Name="Confirmed Met"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.ConfirmedMetDemandFTE))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
+                                         SeriesType="@SeriesType.Bar"
                                          Name="Confirmed Unmet"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.ConfirmedUnmetDemandFTE))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
+                                         SeriesType="@SeriesType.Bar"
                                          Name="Unconfirmed Met"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.UnconfirmedMetDemandFTE))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
+                                         SeriesType="@SeriesType.Bar"
                                          Name="Unconfirmed Unmet"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.UnconfirmedUnmetDemandFTE))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
+                                         SeriesType="@SeriesType.Bar"
                                          Name="Cancelled"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.CancelledDemand))" />
@@ -208,18 +208,19 @@
                         {
                             <ApexPointSeries TItem="DemandChartItem"
                                              Items="demandChartItems"
-                                             SeriesType="@SeriesType.Area"
+                                             SeriesType="@SeriesType.Bar"
                                              Name="Finished Unmet"
                                              XValue="@(e => e.WeekStart)"
                                              YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand))" />
                         }
 
-@*                         <ApexPointSeries TItem="DemandChartItem"
+                        <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
                                          SeriesType="@SeriesType.Line"
                                          Name="RSE Available"
                                          XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" /> *@
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+                         
                     </ApexChart>
                 }
                 else
@@ -228,9 +229,20 @@
                 }
             </div>
         </div>
-        <div class="col-6">
+        <div class="col">
             <div class="card">
-
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
             </div>
         </div>
     </div>
