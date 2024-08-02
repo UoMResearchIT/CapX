@@ -39,6 +39,7 @@ namespace PPMTool.Pages
         private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
         private ApexChartOptions<DemandChartItem> fteChartOptions;
+        private ApexChartOptions<DemandChartItem> dutyChartOptions;
 
 
         [Inject]
@@ -62,6 +63,118 @@ namespace PPMTool.Pages
             var today = DateTime.Today;
             startDate = new DateTime(today.Month < 8 ? today.Year - 1 : today.Year, 8, 1);
 
+            // Set chart options
+            fteChartOptions = new ApexChartOptions<DemandChartItem>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Line,
+                    Animations = new Animations { Enabled = false }
+                },
+                Xaxis = new XAxis
+                {
+                    Type = XAxisType.Datetime
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                        }
+                    }
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = startDate.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Anchor Date",
+                                Position = LabelPosition.Left
+                            }
+                        },
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
+                }
+            };
+
+            demandChartOptions = new ApexChartOptions<DemandChartItem>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Area,
+                    Animations = new Animations { Enabled = false }
+                },
+                Xaxis = new XAxis
+                {
+                    Type = XAxisType.Datetime
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                        }
+                    }
+                },
+                Fill = new Fill
+                {
+                    Type = new FillTypeSelections(Enumerable.Repeat(FillType.Solid, 8).ToArray()),
+                    Opacity = new Opacity(Enumerable.Repeat(0.7, 8).ToArray())
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = startDate.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Anchor Date",
+                                Position = LabelPosition.Left
+                            }
+                        },
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
+                }
+            };
+
             // Generate the charts
             GenerateCharts();
         }
@@ -78,140 +191,9 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Starting generation...");
 
-                // Set chart options            
-                demandChartOptions = new ApexChartOptions<DemandChartItem>
-                {
-                    Chart = new Chart
-                    {
-                        Stacked = true,
-                        Type = ChartType.Area,
-                        StackOnlyBar = true,
-                        Animations = new Animations { Enabled = false }
-                    },
-                    Xaxis = new XAxis
-                    {
-                        Type = XAxisType.Datetime
-                    },
-                    Yaxis = new List<YAxis>
-                    {
-                        new YAxis
-                        {
-                            Labels = new YAxisLabels
-                            {
-                                Formatter = @"function (val, index) { return val.toFixed(2); }"
-                            }
-                        }
-                    },
-                    Colors = showFinishedAsSeparate ? new List<string>
-                    {
-                        "#9B5DE5",
-                        "#F44A4A",
-                        "#FB8F23",
-                        "#FEE440",
-                        "#7AFF60",
-                        "#00F5D4",
-                        "#F15BB5",
-                        "#000"
-                    } : new List<string>
-                    {
-                        "#F44A4A",
-                        "#FB8F23",
-                        "#FEE440",
-                        "#7AFF60",
-                        "#00F5D4",
-                        "#000"
-                    },
-                    Annotations = new Annotations
-                    {
-                        Xaxis = new List<AnnotationsXAxis>
-                        {
-                            new AnnotationsXAxis()
-                            {
-                                X = startDate.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "#888",
-                                Label = new Label
-                                {
-                                    Text = "Anchor Date",
-                                    Position = LabelPosition.Left
-                                }
-                            },
-                            new AnnotationsXAxis()
-                            {
-                                X = DateTime.Today.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "#888",
-                                Label = new Label
-                                {
-                                    Text = "Today",
-                                    Position = LabelPosition.Left
-                                }
-                            }
-                        }
-                    }
-                };
-
-                fteChartOptions = new ApexChartOptions<DemandChartItem>
-                {
-                    Chart = new Chart
-                    {
-                        Type = ChartType.Line,
-                        Animations = new Animations { Enabled = false }
-                    },
-                    Xaxis = new XAxis
-                    {
-                        Type = XAxisType.Datetime
-                    },
-                    Yaxis = new List<YAxis>
-                    {
-                        new YAxis
-                        {
-                            Labels = new YAxisLabels
-                            {
-                                Formatter = @"function (val, index) { return val.toFixed(2); }"
-                            }
-                        }
-                    },
-                    Colors = new List<string>
-                    {
-                        "#F44A4A",
-                        "#FB8F23",
-                        "#FEE440",
-                        "#7AFF60",
-                    },
-                    Annotations = new Annotations
-                    {
-                        Xaxis = new List<AnnotationsXAxis>
-                        {
-                            new AnnotationsXAxis()
-                            {
-                                X = startDate.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "#888",
-                                Label = new Label
-                                {
-                                    Text = "Anchor Date",
-                                    Position = LabelPosition.Left
-                                }
-                            },
-                            new AnnotationsXAxis()
-                            {
-                                X = DateTime.Today.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "#888",
-                                Label = new Label
-                                {
-                                    Text = "Today",
-                                    Position = LabelPosition.Left
-                                }
-                            }
-                        }
-                    }
-                };
+                // Variable chart options
+                demandChartOptions.Fill.Colors = GetColours();
+                demandChartOptions.Colors = GetColours();
 
                 // Clear the existing demand item list
                 demandChartItems.Clear();
@@ -404,6 +386,29 @@ namespace PPMTool.Pages
                 Loading = false;
                 InvokeAsync(StateHasChanged);
             });
+        }
+
+        public List<string> GetColours()
+        {
+            return !showFinishedAsSeparate ? new List<string>
+                {
+                    "#9B5DE5",
+                    "#7AFF60",
+                    "#FEE440",
+                    "#FB8F23",
+                    "#F44A4A",
+                    "#000",
+                } : new List<string>
+                {
+                    "#F15BB5",
+                    "#9B5DE5",
+                    "#7AFF60",
+                    "#FEE440",
+                    "#FB8F23",
+                    "#F44A4A",
+                    "#00F5D4",
+                    "#000",
+                };
         }
     }
 }

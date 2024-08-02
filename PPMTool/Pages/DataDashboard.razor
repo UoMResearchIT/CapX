@@ -156,62 +156,63 @@
                 else if (demandChartItems != null && demandChartItems.Count > 0)
                 {
                     <ApexChart TItem="DemandChartItem"
-                               Title="Demand"
+                               Title="Demand (FTE)"
                                Options="@demandChartOptions">
 
                         @if (showFinishedAsSeparate)
                         {
                             <ApexPointSeries TItem="DemandChartItem"
                                              Items="demandChartItems"
-                                             SeriesType="@SeriesType.Bar"
-                                             Name="Finished Met"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Finished Unmet"
                                              XValue="@(e => e.WeekStart)"
-                                             YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
+                                             YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand + e.FinishedMetDemand + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
                         }
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Confirmed Met"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.ConfirmedMetDemandFTE))" />
-
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Confirmed Unmet"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.ConfirmedUnmetDemandFTE))" />
-
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Unconfirmed Met"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.UnconfirmedMetDemandFTE))" />
-
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Unconfirmed Unmet"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.UnconfirmedUnmetDemandFTE))" />
-
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Bar"
+                                         SeriesType="@SeriesType.Area"
                                          Name="Cancelled"
                                          XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.CancelledDemand))" />
+                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Unconfirmed Unmet"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Unconfirmed Met"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Confirmed Unmet"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                        
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Confirmed Met"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedMetDemandFTE))" />
 
                         @if (showFinishedAsSeparate)
                         {
                             <ApexPointSeries TItem="DemandChartItem"
                                              Items="demandChartItems"
-                                             SeriesType="@SeriesType.Bar"
-                                             Name="Finished Unmet"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Finished Met"
                                              XValue="@(e => e.WeekStart)"
-                                             YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand))" />
+                                             YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
                         }
 
                         <ApexPointSeries TItem="DemandChartItem"
@@ -238,7 +239,7 @@
                 else if (demandChartItems != null && demandChartItems.Count > 0)
                 {
                     <ApexChart TItem="DemandChartItem"
-                               Title="RSE Allocation"
+                               Title="RSE Allocation (FTE)"
                                Options="@fteChartOptions">
 
                         <ApexPointSeries TItem="DemandChartItem"
@@ -276,6 +277,27 @@
                     <RadzenText Text="Click refresh to generate" />
                 }
             </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </div>
+        </div>
+        <div class="col">
+            
         </div>
     </div>
     <br />
