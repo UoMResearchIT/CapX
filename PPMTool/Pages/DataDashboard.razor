@@ -117,6 +117,9 @@
             <div class="col-2">
                 <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
             </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
+            </div>
         </div>
         <div class="row">
             <div class="col-2">
@@ -127,6 +130,9 @@
             </div>
             <div class="col-2">
                 <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
+            </div>
+            <div class="col-2">
+                <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
             </div>
         </div>
 
@@ -143,11 +149,25 @@
     <div class="row">
         <div class="col-6">
             <div class="card">
-                @if (!Loading && demandChartItems != null && demandChartItems.Count > 0)
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
                 {
                     <ApexChart TItem="DemandChartItem"
                                Title="Demand"
                                Options="@demandChartOptions">
+
+                        @if (showFinishedAsSeparate)
+                        {
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Finished Met"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
+                        }
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
@@ -184,6 +204,16 @@
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.CancelledDemand))" />
 
+                        @if (showFinishedAsSeparate)
+                        {
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Finished Unmet"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand))" />
+                        }
+
 @*                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
                                          SeriesType="@SeriesType.Line"
@@ -194,7 +224,7 @@
                 }
                 else
                 {
-                    <RadzenProgressBarCircular Value="@generationProgressPercent" Min="0" Max="100" Unit="%" />
+                    <RadzenText Text="Click refresh to generate" />
                 }
             </div>
         </div>

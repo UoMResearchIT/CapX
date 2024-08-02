@@ -29,9 +29,9 @@ namespace PPMTool.Pages
         private float currentBudget = 1096765;
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
-        private int yearsBehind = 1;
+        private int yearsBehind = 2;
         private int yearsAhead = 2;
-        private int generationProgressPercent = 0;
+        private bool showFinishedAsSeparate = true;
 
         private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
@@ -69,23 +69,53 @@ namespace PPMTool.Pages
                             Formatter = @"function (val, index) { return val.toFixed(2); }"
                         }
                     }
+                },
+                Colors = new List<string>
+                {
+                    "#F44A4A",
+                    "#FB8F23",
+                    "#FEE440",
+                    "#7AFF60",
+                    "#00F5D4",
+                    "#00BBF9",
+                    "#9B5DE5",
+                    "#F15BB5"
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "black",
+                            Label = new Label
+                            {
+                                Text = "Current Week",
+                                Position = LabelPosition.Right
+                            }
+                        }
+                    }
                 }
             };
+        }
+
+        private void FinishedChanged(bool state)
+        {
+            GenerateCharts();
         }
 
         private void GenerateCharts()
         {
             Loading = true;
-            generationProgressPercent = 0;
             Task.Run(() =>
             {
                 Debug.WriteLine("** Starting generation...");
 
                 // Clear the existing demand item list
                 demandChartItems.Clear();
-
-                // Max for spinner
-                var maxGenWeeks = (yearsBehind + yearsAhead) * 52;
 
                 // Get starting lists from the DB
                 var people = PersonService.GetAll(context);
@@ -105,10 +135,6 @@ namespace PPMTool.Pages
                     float assignmentUnder = 0f;
                     float assignmentOver = 0f;
                     int numStaff = 0;
-                    int weekCount = 0;
-
-                    // Update the spinner
-                    generationProgressPercent = (int)Math.Round(weekCount / (float)maxGenWeeks);
 
                     // Get the projects that are running during the week (exclude those projects with no tasks that have default start date)
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
@@ -124,7 +150,7 @@ namespace PPMTool.Pages
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
 
-                    // Get number of confirmed and unconfirmed in this subset
+                    // Get number of confirmed and unconfirmed in this subset (including finished)
                     var numberUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed()).Count();
                     var numberConfirmed = projectsThisWeekNotCancelled.Count() - numberUnconfirmed;
 
@@ -140,15 +166,26 @@ namespace PPMTool.Pages
                     // Finished //
 
                     // Get just total FTE of finished projects
-                    var tasksOnFinishedProjectsThisWeek = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
-                    var metDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
+                    var tasksOnFinishedProjectsThisWeek = projectsThisWeekThatAreFinished.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var totalDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var unmetDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var metDemandFinished = totalDemandFinished - unmetDemandFinished;
 
 
                     // Confirmed //
 
-                    // Get just confirmed project tasks (not including finished)
-                    var tasksOnConfirmedActiveProjectsThisWeek = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    // Get just confirmed projects
+                    var projectsThisWeekConfirmedActive = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
+
+                    // Remove finished projects if being shown separately
+                    if (showFinishedAsSeparate)
+                    {
+                        projectsThisWeekConfirmedActive = projectsThisWeekConfirmedActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                    }
+
+                    // Get tasks
+                    var tasksOnConfirmedActiveProjectsThisWeek = projectsThisWeekConfirmedActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Get met and unmet demand for this subset
                     var unmetDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -158,10 +195,23 @@ namespace PPMTool.Pages
 
                     // Unconfirmed //
 
+                    // Get just unconfirmed projects
+                    var projectsThisWeekUnconfirmedButActive = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
+
+                    // Remove finished projects if being shown separately
+                    if (showFinishedAsSeparate)
+                    {
+                        projectsThisWeekUnconfirmedButActive = projectsThisWeekUnconfirmedButActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                    }
+
+                    // Get tasks
+                    var tasksOnUnconfirmedActiveProjectsThisWeek = projectsThisWeekUnconfirmedButActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+
                     // Calculate the unconfirmed totals
-                    var unmetDemandUnconfirmed = unmetDemand - unmetDemandConfirmed;
-                    var totalDemandUnconfirmed = totalDemand = totalDemandConfirmed;
+                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandUnconfirmed = totalDemandUnconfirmed - unmetDemandUnconfirmed;
+
 
                     // Compute value of confirmed and unconfirmed projects using G7.1 salary costs
                     var confirmedValue = (float)Math.Round(totalDemandConfirmed * grade71Costs, 2);
@@ -251,7 +301,6 @@ namespace PPMTool.Pages
 
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);
-                    weekCount++;
                 }
 
             }).ContinueWith(t =>
