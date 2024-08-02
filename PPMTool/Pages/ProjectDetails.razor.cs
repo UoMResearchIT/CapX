@@ -520,6 +520,7 @@ namespace PPMTool.Pages
         private void AddClicked()
         {
             noteModel = new Note();
+            isEditExistingNote = false;
             ShowOrHideEditor(true);
         }
 
