@@ -186,3 +186,11 @@ mark {
     overflow: auto;
     width: 100%;
 }
+
+.dot {
+    height: .7rem;
+    width: .7rem;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    display: inline-block;
+}

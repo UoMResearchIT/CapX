@@ -158,69 +158,70 @@
                     <ApexChart TItem="DemandChartItem"
                                Title="Demand (FTE)"
                                Options="@demandChartOptions">
+                        <ChildContent>
+                            @if (showFinishedAsSeparate)
+                            {
+                                <ApexPointSeries TItem="DemandChartItem"
+                                                 Items="demandChartItems"
+                                                 SeriesType="@SeriesType.Area"
+                                                 Name="Finished Unmet"
+                                                 XValue="@(e => e.WeekStart)"
+                                                 YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand + e.FinishedMetDemand + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                            }
 
-                        @if (showFinishedAsSeparate)
-                        {
                             <ApexPointSeries TItem="DemandChartItem"
                                              Items="demandChartItems"
                                              SeriesType="@SeriesType.Area"
-                                             Name="Finished Unmet"
+                                             Name="Cancelled"
                                              XValue="@(e => e.WeekStart)"
-                                             YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand + e.FinishedMetDemand + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
-                        }
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
 
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Cancelled"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Unconfirmed Unmet"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
 
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Unconfirmed Unmet"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Unconfirmed Met"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
 
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Unconfirmed Met"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
-
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Confirmed Unmet"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Confirmed Unmet"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
                         
 
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Confirmed Met"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedMetDemandFTE))" />
-
-                        @if (showFinishedAsSeparate)
-                        {
                             <ApexPointSeries TItem="DemandChartItem"
                                              Items="demandChartItems"
                                              SeriesType="@SeriesType.Area"
-                                             Name="Finished Met"
+                                             Name="Confirmed Met"
                                              XValue="@(e => e.WeekStart)"
-                                             YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
-                        }
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedMetDemandFTE))" />
 
-                        <ApexPointSeries TItem="DemandChartItem"
-                                         Items="demandChartItems"
-                                         SeriesType="@SeriesType.Line"
-                                         Name="RSE Available"
-                                         XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+                            @if (showFinishedAsSeparate)
+                            {
+                                <ApexPointSeries TItem="DemandChartItem"
+                                                 Items="demandChartItems"
+                                                 SeriesType="@SeriesType.Area"
+                                                 Name="Finished Met"
+                                                 XValue="@(e => e.WeekStart)"
+                                                 YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
+                            }
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Line"
+                                             Name="RSE Available"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+                        </ChildContent>
                          
                     </ApexChart>
                 }
