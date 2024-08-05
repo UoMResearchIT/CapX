@@ -280,6 +280,7 @@
             </div>
         </div>
     </div>
+    <br />
     <div class="row">
         <div class="col">
             <div class="card">
@@ -287,9 +288,41 @@
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
                 }
-                else if (demandChartItems != null && demandChartItems.Count > 0)
+                else if (dutyChartItems != null && dutyChartItems.Count > 0)
                 {
-                    
+                    <ApexChart TItem="DutyChartItem"
+                               Title="Duty Demand (FTE)"
+                               Options="@dutyChartOptions">
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Research Software Architecture"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
+                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Staff Management"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
+                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Project and Service Management"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
+                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Project Work"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))" />
+
+                    </ApexChart>
                 }
                 else
                 {
