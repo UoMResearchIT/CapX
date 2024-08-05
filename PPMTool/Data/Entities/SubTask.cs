@@ -114,7 +114,7 @@ namespace PPMTool.Data.Entities
                     // Update the end date to match the start date plus a day
                     if (hasFixedEndDate && EndDate <= StartDate)
                     {
-                        EndDate = StartDate.AddDays(1);
+                        EndDate = StartDate.Date.AddDays(1);
                     }
                     OnHasFixedEndDateChanged(new EventArgs());
                 }
@@ -194,7 +194,7 @@ namespace PPMTool.Data.Entities
                     // From predecessor
                     if (Predecessor != null)
                     {
-                        StartDate = Predecessor.EndDate.AddDays(1);
+                        StartDate = Predecessor.EndDate.Date.AddDays(1);
                     }
 
                     // Check whether we need to drive from resources
@@ -267,7 +267,7 @@ namespace PPMTool.Data.Entities
             else
             {
                 // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
-                DurationBillableDays = (int)Math.Round(PlannedWorkHours / (7 * units));
+                DurationBillableDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units));
                 var estimatedEndDate = StartDate.AddDays(GetNumberOfCalendarDays(DurationBillableDays));
 
                 // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
@@ -293,8 +293,8 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private int GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
         {
-            var calendarDays = endDate.Subtract(startDate).Days;
-            return (int)Math.Round((calendarDays / 365f) * 220f);
+            var calendarDays = endDate.Date.Subtract(startDate.Date).Days;
+            return (int)Math.Ceiling((calendarDays / 365f) * 220f);
         }
 
         /// <summary>
@@ -304,7 +304,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private int GetNumberOfCalendarDays(int billableDays)
         {
-            return (int)Math.Round(billableDays / 220f * 365f);
+            return (int)Math.Ceiling(billableDays / 220f * 365f);
         }
 
         /// <summary>
@@ -436,7 +436,7 @@ namespace PPMTool.Data.Entities
             {
                 id = absence.Person.PersonId;
             }
-            return AssignedResources.Any(r => r.Person.PersonId == id) && absence.StartDate.AddDays(7) >= StartDate && absence.StartDate <= EndDate;
+            return AssignedResources.Any(r => r.Person.PersonId == id) && absence.StartDate.Date.AddDays(7) >= StartDate.Date && absence.StartDate.Date <= EndDate.Date;
         }
 
         /// <summary>
@@ -464,7 +464,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public double GetUnmetDemandNowAndInFuture()
         {
-            return IsWithin(DateTime.Today) || StartDate > DateTime.Today ? UnmetDemand : 0;
+            return IsWithin(DateTime.Today) || StartDate.Date > DateTime.Today ? UnmetDemand : 0;
         }
 
         /// <summary>
@@ -485,21 +485,21 @@ namespace PPMTool.Data.Entities
             // Compute the duration of the task in days in this week
             // Assume runs for full week initially (i.e. starts before the week and ends after the week)
             var daysUpToEndOfWeek = 7d;
-            if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7) &&
-                EndDate >= currentWeek && EndDate < currentWeek.AddDays(7))
+            if (StartDate.Date >= currentWeek.Date && StartDate.Date < currentWeek.Date.AddDays(7) &&
+                EndDate.Date >= currentWeek.Date && EndDate.Date < currentWeek.Date.AddDays(7))
             {
                 // Starts and finishes in the week
-                daysUpToEndOfWeek = EndDate.Subtract(StartDate).TotalDays;
+                daysUpToEndOfWeek = EndDate.Date.Subtract(StartDate.Date).TotalDays;
             }
-            else if (StartDate >= currentWeek && StartDate < currentWeek.AddDays(7))
+            else if (StartDate.Date >= currentWeek.Date && StartDate.Date < currentWeek.Date.AddDays(7))
             {
                 // Starts in the week
-                daysUpToEndOfWeek = currentWeek.AddDays(7).Subtract(StartDate).TotalDays;
+                daysUpToEndOfWeek = currentWeek.Date.AddDays(7).Subtract(StartDate.Date).TotalDays;
             }
-            else if (EndDate >= currentWeek && EndDate < currentWeek.AddDays(7))
+            else if (EndDate.Date >= currentWeek.Date && EndDate.Date < currentWeek.Date.AddDays(7))
             {
                 // Ends in the week (end date inclusive)
-                daysUpToEndOfWeek = EndDate.Subtract(currentWeek).TotalDays + 1;
+                daysUpToEndOfWeek = EndDate.Date.Subtract(currentWeek.Date).TotalDays + 1;
             }
 
             return daysUpToEndOfWeek * workPerDay;
