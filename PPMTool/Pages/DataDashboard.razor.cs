@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -47,6 +48,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         protected override void OnInitialized()
         {
@@ -182,16 +186,32 @@ namespace PPMTool.Pages
                     Marker = new TooltipMarker
                     {
                         Show = false
-                    }
+                    },
+                    Custom = @"function({series, seriesIndex, dataPointIndex, w}) { return formatTooltip({series, seriesIndex, dataPointIndex, w}); }"
+
                 }
             };
 
-            // Generate the charts
-            GenerateCharts();
+            // Start the spinners
+            Loading = true;
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            if (firstRender)
+            {
+                await JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
+
+                // Generate the charts
+                GenerateCharts();
+            }
         }
 
         private void FinishedChanged(bool state)
         {
+            JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
+            Task.Delay(500);
             GenerateCharts();
         }
 
