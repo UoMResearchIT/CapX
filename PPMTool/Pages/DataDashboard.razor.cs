@@ -38,9 +38,10 @@ namespace PPMTool.Pages
         private IEnumerable<Project> projects;
 
         private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
+        private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
         private ApexChartOptions<DemandChartItem> fteChartOptions;
-        private ApexChartOptions<DemandChartItem> dutyChartOptions;
+        private ApexChartOptions<DutyChartItem> dutyChartOptions;
 
 
         [Inject]
@@ -192,6 +193,22 @@ namespace PPMTool.Pages
                 }
             };
 
+            dutyChartOptions = new ApexChartOptions<DutyChartItem>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Bar,
+                    Animations = new Animations { Enabled = false }
+                },
+                PlotOptions = new PlotOptions
+                {
+                    Bar = new PlotOptionsBar
+                    {
+                        Horizontal = false
+                    }
+                }
+            };
+
             // Start the spinners
             Loading = true;
         }
@@ -228,9 +245,12 @@ namespace PPMTool.Pages
 
                 // Clear the existing demand item list
                 demandChartItems.Clear();
+                dutyChartItems.Clear();
 
                 // For each week
                 var currentWeekStart = startDate.AddYears(-yearsBehind);
+                int numberOfWeeks = 0;
+                List<string> dutyXLabels = new List<string>();
                 while (currentWeekStart < startDate.AddYears(yearsAhead))
                 {
                     // Initialise
@@ -243,6 +263,18 @@ namespace PPMTool.Pages
                     float assignmentUnder = 0f;
                     float assignmentOver = 0f;
                     int numStaff = 0;
+
+                    // If quarter has changed then create a new object for the quarter
+                    if (dutyChartItems.Count == 0 || dutyChartItems.Last().Year != currentWeekStart.Year || dutyChartItems.Last().Period != (int)Math.Ceiling(currentWeekStart.Month / 3f))
+                    {
+                        dutyChartItems.LastOrDefault()?.UpdateMinMax();
+                        dutyChartItems.Add(new DutyChartItem
+                        {
+                            WeekStart = currentWeekStart
+                        });
+                        numberOfWeeks = 0;
+                        dutyXLabels.Add($"Q{dutyChartItems.Last().Period} {dutyChartItems.Last().Year}");
+                    }
 
                     // Get the projects that are running during the week (exclude those projects with no tasks that have default start date)
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
@@ -407,9 +439,39 @@ namespace PPMTool.Pages
                         FinishedUnmetDemand = unmetDemandFinished,
                     });
 
+                    // Update averages for quarter for duty chart
+                    numberOfWeeks++;
+                    var item = dutyChartItems.Last();
+                    item.ProjectShortfall = item.UpdateAverage(wlmProject - totalDemand, numberOfWeeks);
+                    item.StaffManagementShortfall = item.UpdateAverage(wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
+                    item.PSManagementShortfall = item.UpdateAverage(wlmPSM - (numberConfirmed + numberUnconfirmed) * projectManFTE, numberOfWeeks);
+                    item.RSAShortfall = item.UpdateAverage(wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
+
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);
                 }
+
+                // Assign X Labels for duty chart
+                dutyChartOptions.Xaxis = new XAxis
+                {
+                    Categories = dutyXLabels.ToArray()
+                };
+
+                // Determine min and max for y axis of duty chart
+                dutyChartItems.Last().UpdateMinMax();
+                dutyChartOptions.Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Min = dutyChartItems.Min(x => x.Min),
+                        Max = dutyChartItems.Max(x => x.Max),
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                        },
+                        ForceNiceScale = true
+                    }
+                };
 
             }).ContinueWith(t =>
             {

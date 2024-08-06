@@ -1,31 +1,7 @@
-﻿using System;
-
-namespace PPMTool.Data
+﻿namespace PPMTool.Data
 {
-    public class DemandChartItem
+    public class DemandChartItem : BaseDemandChartItem
     {
-        /// <summary>
-        /// Start of the week to which this data corresponds
-        /// </summary>
-        private DateTime weekStart;
-        public DateTime WeekStart
-        {
-            get => weekStart;
-            set
-            {
-                if (value != weekStart)
-                {
-                    weekStart = value;
-                    Period = (int)Math.Ceiling(weekStart.Month / 3f);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Set automatically when the week is set and represents the period of the year
-        /// </summary>
-        public int? Period { get; private set; }
-
 
         // Workload Model //
 
@@ -175,6 +151,5 @@ namespace PPMTool.Data
         /// Based on the standard cost model what is the value of the unconfrimed projects
         /// </summary>
         public float UnconfirmedValue { get; set; }
-
     }
 }
