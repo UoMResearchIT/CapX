@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Enums;
@@ -8,6 +9,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class SplitTask : BasePage
     {
         [Parameter]
@@ -47,7 +49,7 @@ namespace PPMTool.Pages
                 // Only allow the project manager to save the split or a superuser
                 var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && originalAddTaskComponent?.ProjectModel.ProjectManager == role?.Person);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && originalAddTaskComponent?.ProjectModel.ProjectManager.PersonId == role?.Person.PersonId);
 
                 StateHasChanged();
             }

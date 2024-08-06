@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -10,6 +11,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class People : BasePage
     {
         [Inject]

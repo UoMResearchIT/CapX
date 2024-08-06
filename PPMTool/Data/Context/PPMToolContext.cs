@@ -15,7 +15,7 @@ namespace PPMTool.Data.Context
         public DbSet<SubTask> SubTasks { get; set; }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<SkillTag> SkillTags { get; set; }
-        public DbSet<AvailabilityChange> AvailabilityChanges { get; set; }
+        public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
         public DbSet<Note> Notes { get; set; }
 
         /// <summary>

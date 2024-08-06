@@ -142,7 +142,7 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified.
+        /// Method to take the workload model changes of a person and create chart items to represent "zero assignment" for the period specified.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="startDate"></param>
@@ -152,17 +152,17 @@ namespace PPMTool.Data
         {
             var blocks = new List<ChartItem>();
 
-            // Get any availability changes in force at the beginning of the query or during it
-            var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < endDate).ToList();
+            // Get any workload model changes in force at the beginning of the query or during it
+            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
 
             // Add to the changes any leaving date within the window as a zero availability
             if (person.EndDate != null)
             {
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Today,
-                    AvailabilityFTE = 0
+                    ProjectWorkFTE = 0
                 });
 
                 // Keep only changes on or before the end date
@@ -172,22 +172,22 @@ namespace PPMTool.Data
             // Add to the changes any start date within the window as post FTE (if no availablity change on the start date)
             if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
             {
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = person.StartDate,
-                    AvailabilityFTE = person.FTE
+                    ProjectWorkFTE = person.FTE
                 });
 
                 // Keep only changes on or after the start date
                 changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
 
                 // Enforce a zero availability before they start
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = startDate,
-                    AvailabilityFTE = 0
+                    ProjectWorkFTE = 0
                 });
             }
 
@@ -204,7 +204,7 @@ namespace PPMTool.Data
                 );
             }
 
-            // Work through the availability changes to establish blocks of availability
+            // Work through the workload model changes to establish blocks of availability
             else
             {
                 // We need to establish the availability at the beginning of the query window which will be post FTE by default
@@ -213,7 +213,7 @@ namespace PPMTool.Data
                 // Find the change immediately before the query window or on day one
                 // if there is one on the first day of the query window
                 var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
+                if (changeBefore != null) initialFTE = changeBefore.ProjectWorkFTE;
 
                 // Any relevant changes after must be after the start of the window but before the end
                 var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
@@ -231,9 +231,9 @@ namespace PPMTool.Data
                 {
                     // If the last change then use query end date for block end otherwise it is date of next change
                     blocks.Add(
-                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate,
+                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].ProjectWorkFTE), person.Name, changesAfter[i].ChangeDate,
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            0, changesAfter[i].AvailabilityFTE, false
+                            0, changesAfter[i].ProjectWorkFTE, false
                         )
                     );
                 }

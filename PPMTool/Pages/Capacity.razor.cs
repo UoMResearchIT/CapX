@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
 using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -18,6 +19,7 @@ using static PPMTool.Data.ExportHelper;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class Capacity : BasePage
     {
         [Inject]

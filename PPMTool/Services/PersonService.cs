@@ -62,7 +62,7 @@ namespace PPMTool.Services
         {
             return context.People
                 .Include(p => p.SkillTags)
-                .Include(p => p.AvailabilityChanges)
+                .Include(p => p.WorkloadModelChanges)
                 .Include(p => p.Absences)
                 .ToList();
         }

@@ -169,3 +169,28 @@ mark {
 .rz-html-editor {
     border-bottom: none !important;
 }
+
+.half-height-list {
+    min-height: 120px;
+    max-height: 420px;
+    overflow: auto;
+    height: auto;
+    width: 100%;
+    margin-left: -1rem;
+    margin-right: 1rem;
+}
+
+.full-height-list {
+    min-height: 120px;
+    max-height: 800px;
+    overflow: auto;
+    width: 100%;
+}
+
+.dot {
+    height: .7rem;
+    width: .7rem;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    display: inline-block;
+}
