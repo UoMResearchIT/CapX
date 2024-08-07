@@ -194,3 +194,11 @@ mark {
     border-radius: 50%;
     display: inline-block;
 }
+
+.rz-textbox {
+    text-indent: 0 !important;
+}
+
+.rz-inputtext {
+    text-indent: 0 !important;
+}
