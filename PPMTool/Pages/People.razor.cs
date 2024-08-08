@@ -54,11 +54,6 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"/addperson/-1");
         }
 
-        private void ManageSkills()
-        {
-            Navigation.NavigateTo($"/manageskills");
-        }
-
         private void EditPerson(Person person)
         {
             Navigation.NavigateTo($"addperson/{person.PersonId}");
