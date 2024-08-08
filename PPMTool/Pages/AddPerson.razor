@@ -64,7 +64,7 @@
                         <div class="col flexbox pr-3 pl-0">
                         <RadzenAutoComplete
                             @bind-Value=@autoCompleteText
-                            Placeholder="Search for Skill Tags"
+                            Placeholder="Search for Skill Tags to Add"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             Data=@availableTags
                             TextProperty="Name"
@@ -86,7 +86,7 @@
                                         @tag.Name
                                     </div>
                                     <div class="col">
-                                        @($"{tag.People?.Count ?? 0} other(s) with this tag")
+                                        @($"{tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0} other(s) with this tag")
                                     </div>
                                     <div class="col-auto">
                                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
