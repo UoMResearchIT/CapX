@@ -86,7 +86,7 @@
                                         @tag.Name
                                     </div>
                                     <div class="col">
-                                        @($"{tag.People.Count} other(s) with this tag")
+                                        @($"{tag.People?.Count ?? 0} other(s) with this tag")
                                     </div>
                                     <div class="col-auto">
                                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
