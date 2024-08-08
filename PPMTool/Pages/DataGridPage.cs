@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
 using PPMTool.Services;
+using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
@@ -18,6 +20,9 @@ namespace PPMTool.Pages
         protected T entityToInsert;
         protected T entityToUpdate;
         protected IEntityService<T> dataGridEntityService;
+
+        [Inject]
+        protected DialogService DialogService { get; set; }
 
         protected override void OnInitialized()
         {

@@ -28,9 +28,6 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RolesService { get; set; }
 
-        [Inject]
-        private DialogService DialogService { get; set; }
-
         [Parameter]
         public int? ProjectId { get; set; }
 
