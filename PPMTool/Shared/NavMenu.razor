@@ -14,7 +14,7 @@
             <Authorized>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="oi oi-home" aria-hidden="true"></span> Projects
+                        <span class="oi oi-briefcase" aria-hidden="true"></span> Projects
                     </NavLink>
                 </li>
             </Authorized>
@@ -46,11 +46,20 @@
                 </li>
         </Authorized>
         </AuthorizeView>
+        <AuthorizeView Roles="Superuser,Manager">
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="manageskills">
+                        <span class="oi oi-tags" aria-hidden="true"></span> Skills Tags
+                    </NavLink>
+                </li>
+            </Authorized>
+        </AuthorizeView>
         <AuthorizeView Roles="Superuser">
             <Authorized>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="manageaccess">
-                        <span class="oi oi-lock-locked" aria-hidden="true"></span> Access
+                        <span class="oi oi-lock-locked" aria-hidden="true"></span> Access Control
                     </NavLink>
                 </li>
             </Authorized>
