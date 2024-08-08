@@ -110,7 +110,7 @@
                                     class="half-height-list"
                                     WrapItems="false"
                                     AllowPaging="false"
-                                    Data="@personModel.WorkloadModelChanges"
+                                    Data="@personModel.WorkloadModelChanges.OrderByDescending(x => x.ChangeDate)"
                                     TItem="WorkloadModelChange">
                         <Template Context="d">
                             <div style="width:100%">
