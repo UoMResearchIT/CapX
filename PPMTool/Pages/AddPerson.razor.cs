@@ -55,7 +55,7 @@ namespace PPMTool.Pages
 
         void OnChange(dynamic args)
         {
-            var match = availableTags.FirstOrDefault(x => x.Name == autoCompleteText);
+            var match = availableTags.FirstOrDefault(x => x.Name.Trim() == autoCompleteText.Trim());
             if (match != null && !chosenTags.Contains(match))
             {
                 chosenTags.Add(match);
