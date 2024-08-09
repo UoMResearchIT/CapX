@@ -277,8 +277,8 @@ namespace PPMTool.Data.Entities
             // Duration input is calendar days so need to compute billable days to get work
             var endDate = StartDate.AddDays(DurationDays);
             var billableDays = GetNumberOfBillableDays(StartDate, endDate);
-            PlannedWorkHours = (int) Math.Floor(billableDays * 7 * units);
-            DurationBillableDays = (int) Math.Ceiling(billableDays);
+            PlannedWorkHours = (int)Math.Floor(billableDays * 7 * units);
+            DurationBillableDays = (int)Math.Ceiling(billableDays);
         }
 
         /// <summary>
