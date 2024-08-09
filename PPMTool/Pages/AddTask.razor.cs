@@ -139,7 +139,9 @@ namespace PPMTool.Pages
 
             // Populate predecessor dropdown source (exclude self)
             predecessorTasks = ProjectModel.SubTasks
-                .Where(x => x.SubTaskId != TaskModel.SubTaskId && x.Predecessor?.SubTaskId != TaskModel.SubTaskId).ToList();
+                .Where(x => x.SubTaskId != TaskModel.SubTaskId && x.Predecessor?.SubTaskId != TaskModel.SubTaskId)
+                .OrderBy(x => x.EndDate)
+                .ToList();
 
             // Subscribe listeners
             TaskModel.TaskTypeChanged += UpdateUIState;

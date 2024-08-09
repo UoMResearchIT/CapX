@@ -79,14 +79,14 @@
                         <br />
                         <RadzenDropDown class="radzen-dropdown" @bind-Value="@selectedPredecessorId" Data="@predecessorTasks" ValueProperty="SubTaskId" AllowClear="true" Disabled="@TaskModel.HasFixedStart">
                             <Template Context="x">
-                                @($"[{x.SubTaskId}] {x.Name}")
+                                @($"{x.Name} ({x.StartDate.ToShortDateString()} - {x.EndDate.ToShortDateString()})")
                             </Template>
                         </RadzenDropDown>
                     }
                 </div>
 
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Lag" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Only available when a predecessor is set" Visible="@(selectedPredecessorId != null)" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Lag" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Only available when a predecessor is set" Visible="@(selectedPredecessorId == null)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" Placeholder="0" @bind-Value="TaskModel.Lag" Disabled="@(selectedPredecessorId == null)" />
                 </div>
 
