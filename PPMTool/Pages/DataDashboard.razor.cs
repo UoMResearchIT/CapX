@@ -23,6 +23,7 @@ namespace PPMTool.Pages
         private float coachFTE = 0.1f;
         private float appSupportPSMFTE = 0.1f;
         private float trainingPSMFTE = 0.1f;
+        private float otherPSMFTE = 0.5f;
 
         private float grade41Costs = 33333.55f;
         private float grade55Costs = 43172.16f;
@@ -33,8 +34,7 @@ namespace PPMTool.Pages
         private float currentBudget = 1096765;
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
-        private int yearsBehind = 2;
-        private int yearsAhead = 2;
+        private int yearsAhead = 3;
         private bool showFinishedAsSeparate = false;
 
         private IEnumerable<Person> people;
@@ -67,9 +67,9 @@ namespace PPMTool.Pages
             people = PersonService.GetAll(context);
             projects = ProjectService.GetAll(context);
 
-            // Default to the first day of the current financial year
+            // Default to the first day of the previous financial year
             var today = DateTime.Today;
-            startDate = new DateTime(today.Month < 8 ? today.Year - 1 : today.Year, 8, 1);
+            startDate = new DateTime(today.Month < 8 ? today.Year - 2 : today.Year - 1, 8, 1);
 
             // Set chart options
             fteChartOptions = new ApexChartOptions<DemandChartItem>
@@ -97,18 +97,6 @@ namespace PPMTool.Pages
                 {
                     Xaxis = new List<AnnotationsXAxis>
                     {
-                        new AnnotationsXAxis()
-                        {
-                            X = startDate.ToUnixTimeMilliseconds(),
-                            BorderWidth = 2,
-                            StrokeDashArray = 5,
-                            BorderColor = "#888",
-                            Label = new Label
-                            {
-                                Text = "Anchor Date",
-                                Position = LabelPosition.Left
-                            }
-                        },
                         new AnnotationsXAxis()
                         {
                             X = DateTime.Today.ToUnixTimeMilliseconds(),
@@ -155,18 +143,6 @@ namespace PPMTool.Pages
                 {
                     Xaxis = new List<AnnotationsXAxis>
                     {
-                        new AnnotationsXAxis()
-                        {
-                            X = startDate.ToUnixTimeMilliseconds(),
-                            BorderWidth = 2,
-                            StrokeDashArray = 5,
-                            BorderColor = "#888",
-                            Label = new Label
-                            {
-                                Text = "Anchor Date",
-                                Position = LabelPosition.Left
-                            }
-                        },
                         new AnnotationsXAxis()
                         {
                             X = DateTime.Today.ToUnixTimeMilliseconds(),
@@ -251,7 +227,7 @@ namespace PPMTool.Pages
                 dutyChartItems.Clear();
 
                 // For each week
-                var currentWeekStart = startDate.AddYears(-yearsBehind);
+                var currentWeekStart = startDate;
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
                 while (currentWeekStart < startDate.AddYears(yearsAhead))
@@ -447,7 +423,7 @@ namespace PPMTool.Pages
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
                     item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
-                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPSM - (projectManFTE * (numberConfirmed + numberUnconfirmed) + appSupportPSMFTE + trainingPSMFTE), numberOfWeeks);
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPSM - (projectManFTE * (numberConfirmed + numberUnconfirmed) + appSupportPSMFTE + trainingPSMFTE + otherPSMFTE), numberOfWeeks);
                     item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
 
                     // Move to next week
