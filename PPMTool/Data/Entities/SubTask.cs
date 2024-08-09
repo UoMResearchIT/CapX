@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
 using PPMTool.Enums;
 
@@ -42,24 +41,6 @@ namespace PPMTool.Data.Entities
                 {
                     taskType = value;
                     OnTaskTypeChanged(new EventArgs());
-                }
-            }
-        }
-
-        private bool isDone;
-        /// <summary>
-        /// Represents whether a task is complete or not. It can be marked as complete any time whether the full budget for 
-        /// the task has been used or not. It will then allow tasks to be completed early without it affecting the definition of "Late".
-        /// </summary>
-        public bool IsDone
-        {
-            get => isDone;
-            set
-            {
-                if (isDone != value)
-                {
-                    isDone = value;
-                    OnDoneChanged(new EventArgs());
                 }
             }
         }
@@ -145,6 +126,11 @@ namespace PPMTool.Data.Entities
         public double UnmetDemand { get; set; }
 
         /// <summary>
+        /// The amount the start date of this task lags its predecessor. Only used if a predecessor is set.
+        /// </summary>
+        public int Lag { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
@@ -157,7 +143,13 @@ namespace PPMTool.Data.Entities
         {
             try
             {
-                // Sum up assigned resources and determine latest start date of assigned resources
+                // Start is driven by predecessor
+                if (Predecessor != null)
+                {
+                    StartDate = Predecessor.EndDate.Date.AddDays(Lag + 1);
+                }
+
+                // Sum up assigned resources as units and determine latest start date of assigned resources
                 double units = 0d;
                 DateTime latestStart = default;
                 string latestStarter = string.Empty;
@@ -177,32 +169,11 @@ namespace PPMTool.Data.Entities
                     units = Demand;
                 }
 
-                // Start date is fixed
-                if (HasFixedStart)
+                // If we assign someone who doesn't start until after the date then error
+                if (AssignedResources.Count > 0 && latestStart > StartDate)
                 {
-                    // If we assign someone who doesn't start until after the date then error
-                    if (AssignedResources.Count > 0 && latestStart > StartDate)
-                    {
-                        return $"This task has a fixed start date of {StartDate}. " +
-                            $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
-                    }
-                }
-
-                // Start date driven by predecessor, resources or just leave at default
-                else
-                {
-                    // From predecessor
-                    if (Predecessor != null)
-                    {
-                        StartDate = Predecessor.EndDate.Date.AddDays(1);
-                    }
-
-                    // Check whether we need to drive from resources
-                    if (AssignedResources.Count > 0 && latestStart > StartDate)
-                    {
-                        Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
-                        StartDate = latestStart.Date;
-                    }
+                    return $"This task has a fixed start date of {StartDate}. " +
+                        $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
                 }
 
                 // Fixed Work Update

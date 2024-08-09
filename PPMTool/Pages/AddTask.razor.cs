@@ -139,7 +139,9 @@ namespace PPMTool.Pages
 
             // Populate predecessor dropdown source (exclude self)
             predecessorTasks = ProjectModel.SubTasks
-                .Where(x => x.SubTaskId != TaskModel.SubTaskId && x.Predecessor?.SubTaskId != TaskModel.SubTaskId).ToList();
+                .Where(x => x.SubTaskId != TaskModel.SubTaskId && x.Predecessor?.SubTaskId != TaskModel.SubTaskId)
+                .OrderBy(x => x.EndDate)
+                .ToList();
 
             // Subscribe listeners
             TaskModel.TaskTypeChanged += UpdateUIState;
@@ -179,9 +181,9 @@ namespace PPMTool.Pages
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            startDateDisabled = !TaskModel.HasFixedStart || TaskModel.IsDone;
-            workDisabled = TaskModel.TaskType == TaskType.FixedDuration || TaskModel.IsDone;
-            durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate || TaskModel.IsDone;
+            startDateDisabled = !TaskModel.HasFixedStart;
+            workDisabled = TaskModel.TaskType == TaskType.FixedDuration;
+            durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate;
         }
 
         private async void DeleteSubTask()
@@ -304,90 +306,82 @@ namespace PPMTool.Pages
         /// </summary>
         public void UpdateSubTask()
         {
-            // Don't update the scheduling if the task is done
-            if (TaskModel.IsDone)
+            LogInformation("Validating the sub task model...");
+            editContext?.Validate();
+
+            LogInformation("Updating sub task configuration...");
+
+            // Update the resources on the task model to match the data grid entities
+            TaskModel.AssignedResources.Clear();
+            foreach (var r in dataGridEntities)
             {
-                LogInformation("Not updating sub task as it is marked as Done...");
+                Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
+                TaskModel.AssignedResources.Add(r);
             }
-            else
+
+            // Track total proportion of effort
+            double totalResourceDaysPerDay = 0;
+            foreach (var r in dataGridEntities)
             {
-                LogInformation("Validating the sub task model...");
-                editContext?.Validate();
+                // Update the total resource assigned
+                totalResourceDaysPerDay += r.AssignmentFTE;
+            }
 
-                LogInformation("Updating sub task configuration...");
+            // Compute the average hourly cost across the resources from their day rate
+            // scaled by the proportion to which they are assigned to the task
+            // This only works if every is the same cost. If we change this then we would
+            // need actuals entering per person.
+            var people = PersonService.GetAll(context);
+            double averageCostPerDayOfResources = 0;
+            foreach (var r in TaskModel.AssignedResources)
+            {
+                var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
+                if (person == null) continue;
+                // User the default day rate for the project if the assigned day rate is null
+                averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? ProjectModel.DayRate)) / totalResourceDaysPerDay;
+            }
 
-                // Update the resources on the task model to match the data grid entities
-                TaskModel.AssignedResources.Clear();
-                foreach (var r in dataGridEntities)
-                {
-                    Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
-                    TaskModel.AssignedResources.Add(r);
-                }
+            // Update the actual cost for the sub task
+            // Truncate to 2 DP
+            TaskModel.ActualCost = Math.Round(TaskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
-                // Track total proportion of effort
-                double totalResourceDaysPerDay = 0;
-                foreach (var r in dataGridEntities)
-                {
-                    // Update the total resource assigned
-                    totalResourceDaysPerDay += r.AssignmentFTE;
-                }
+            // Update predecessor task
+            TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
-                // Compute the average hourly cost across the resources from their day rate
-                // scaled by the proportion to which they are assigned to the task
-                // This only works if every is the same cost. If we change this then we would
-                // need actuals entering per person.
-                var people = PersonService.GetAll(context);
-                double averageCostPerDayOfResources = 0;
-                foreach (var r in TaskModel.AssignedResources)
-                {
-                    var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
-                    if (person == null) continue;
-                    // User the default day rate for the project if the assigned day rate is null
-                    averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? ProjectModel.DayRate)) / totalResourceDaysPerDay;
-                }
+            // Schedule
+            error = TaskModel.Schedule(false, ProjectModel);
+            IsValid = error == null;
 
-                // Update the actual cost for the sub task
-                // Truncate to 2 DP
-                TaskModel.ActualCost = Math.Round(TaskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
+            // Call schedule() on the subtask that this is a predecssor for
+            var error2 = SubTaskService.UpdateFollowerTasks(TaskModel, ProjectModel);
+            if (error2 != null)
+            {
+                error = $"{error2.Item1}: {error2.Item2}";
+                IsValid = false;
+            }
 
-                // Update predecessor task
-                TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
+            if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
+            {
+                error = "Task name must be unique within the project";
+                IsValid = false;
+            };
 
-                // Schedule
-                error = TaskModel.Schedule(false, ProjectModel);
-                IsValid = error == null;
+            if (TaskModel.Demand <= 0)
+            {
+                error = "Demand for a task must be greater than zero!";
+                IsValid = false;
+            }
 
-                // Call schedule() on the subtask that this is a predecssor for
-                var error2 = SubTaskService.UpdateFollowerTasks(TaskModel, ProjectModel);
-                if (error2 != null)
-                {
-                    error = $"{error2.Item1}: {error2.Item2}";
-                    IsValid = false;
-                }
+            if (TaskModel.TaskType == TaskType.FixedWork && TaskModel.PlannedWorkHours == 0)
+            {
+                error = "Fixed work tasks must have a value of work greater than zero!";
+                IsValid = false;
+            }
 
-                if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
-                {
-                    error = "Task name must be unique within the project";
-                    IsValid = false;
-                };
-
-                if (TaskModel.Demand <= 0)
-                {
-                    error = "Demand for a task must be greater than zero!";
-                    IsValid = false;
-                }
-
-                if (TaskModel.TaskType == TaskType.FixedWork && TaskModel.PlannedWorkHours == 0)
-                {
-                    error = "Fixed work tasks must have a value of work greater than zero!";
-                    IsValid = false;
-                }
-
-                if (TaskModel.TaskType == TaskType.FixedDuration && TaskModel.DurationDays == 0)
-                {
-                    error = "Fixed duration tasks must have a value of duration greater than zero!";
-                    IsValid = false;
-                }
+            if (TaskModel.TaskType == TaskType.FixedDuration && TaskModel.DurationDays == 0)
+            {
+                error = "Fixed duration tasks must have a value of duration greater than zero!";
+                IsValid = false;
             }
 
             // Update UI
