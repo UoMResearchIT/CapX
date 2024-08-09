@@ -109,10 +109,7 @@
         </div>
         <div class="row">
             <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Anchor Date" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Years Behind" />
+                <RadzenLabel class="radzen-form-label" Text="Start Date" />
             </div>
             <div class="col-2">
                 <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
@@ -120,19 +117,34 @@
             <div class="col-2">
                 <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
             </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="App Support Leadership (FTE)" />
+            </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Training Leadership (FTE)" />
+            </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Other PSM Leadership (FTE)" />
+            </div>
         </div>
         <div class="row">
             <div class="col-2">
                 <RadzenDatePicker TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
             </div>
             <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsBehind" />
-            </div>
-            <div class="col-2">
                 <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
             </div>
             <div class="col-2">
                 <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="appSupportPSMFTE" Disabled="@(!EditAuthorised)" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="trainingPSMFTE" Disabled="@(!EditAuthorised)" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="otherPSMFTE" Disabled="@(!EditAuthorised)" />
             </div>
         </div>
 
@@ -253,9 +265,9 @@
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
                                          SeriesType="@SeriesType.Line"
-                                         Name="RSE Overallocation"
+                                         Name="RSE Available"
                                          XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.OverallocationFTE))" />
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
@@ -267,9 +279,9 @@
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
                                          SeriesType="@SeriesType.Line"
-                                         Name="RSE Available"
+                                         Name="RSE Overallocation"
                                          XValue="@(e => e.WeekStart)"
-                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+                                         YValue="@(e => Convert.ToDecimal(e.OverallocationFTE))" />
 
                     </ApexChart>
                 }
