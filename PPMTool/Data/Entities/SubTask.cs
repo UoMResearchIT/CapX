@@ -254,7 +254,6 @@ namespace PPMTool.Data.Entities
         {
             // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
             DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
-            DurationBillableDays = GetNumberOfBillableDays(StartDate, EndDate);
         }
 
         private void UpdateDuration(double units)
@@ -267,8 +266,9 @@ namespace PPMTool.Data.Entities
             else
             {
                 // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
-                DurationBillableDays = PlannedWorkHours / (7 * units);
-                DurationDays = (int)Math.Ceiling(GetNumberOfCalendarDays(DurationBillableDays));
+                var billableDays = PlannedWorkHours / (7 * units);
+                DurationDays = (int)Math.Ceiling(GetNumberOfCalendarDays(billableDays));
+                DurationBillableDays = (int)Math.Ceiling(billableDays);
             }
         }
 
@@ -276,8 +276,9 @@ namespace PPMTool.Data.Entities
         {
             // Duration input is calendar days so need to compute billable days to get work
             var endDate = StartDate.AddDays(DurationDays);
-            DurationBillableDays = GetNumberOfBillableDays(StartDate, endDate);
-            PlannedWorkHours = Math.Floor(DurationBillableDays * 7 * units);
+            var billableDays = GetNumberOfBillableDays(StartDate, endDate);
+            PlannedWorkHours = (int) Math.Floor(billableDays * 7 * units);
+            DurationBillableDays = (int) Math.Ceiling(billableDays);
         }
 
         /// <summary>
