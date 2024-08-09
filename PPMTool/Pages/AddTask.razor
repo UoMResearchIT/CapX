@@ -93,6 +93,13 @@
                         </RadzenDropDown>
                     }
                 </div>
+
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Lag" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Only available when a predecessor is set" Visible="@(selectedPredecessorId != null)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" Placeholder="0" @bind-Value="TaskModel.Lag" Disabled="@(selectedPredecessorId == null)" />
+                </div>
+
+
             </div>
 
             <div class="row">
