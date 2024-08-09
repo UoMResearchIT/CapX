@@ -21,6 +21,8 @@ namespace PPMTool.Pages
         private float projectManFTE = 0.05f;
         private float staffManFTE = 0.05f;
         private float coachFTE = 0.1f;
+        private float appSupportPSMFTE = 0.1f;
+        private float trainingPSMFTE = 0.1f;
 
         private float grade41Costs = 33333.55f;
         private float grade55Costs = 43172.16f;
@@ -34,6 +36,7 @@ namespace PPMTool.Pages
         private int yearsBehind = 2;
         private int yearsAhead = 2;
         private bool showFinishedAsSeparate = false;
+
         private IEnumerable<Person> people;
         private IEnumerable<Project> projects;
 

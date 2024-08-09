@@ -120,6 +120,12 @@
             <div class="col-2">
                 <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
             </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="App Support Leadership (FTE)" />
+            </div>
+            <div class="col-2">
+                <RadzenLabel class="radzen-form-label" Text="Training Leadership (FTE)" />
+            </div>
         </div>
         <div class="row">
             <div class="col-2">
@@ -133,6 +139,12 @@
             </div>
             <div class="col-2">
                 <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="appSupportPSMFTE" Disabled="@(!EditAuthorised)" />
+            </div>
+            <div class="col-2">
+                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="trainingPSMFTE" Disabled="@(!EditAuthorised)" />
             </div>
         </div>
 
