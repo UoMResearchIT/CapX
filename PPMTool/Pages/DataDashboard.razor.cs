@@ -445,10 +445,10 @@ namespace PPMTool.Pages
                     // Update averages for quarter for duty chart
                     numberOfWeeks++;
                     var item = dutyChartItems.Last();
-                    item.ProjectShortfall = item.UpdateAverage(wlmProject - totalDemand, numberOfWeeks);
-                    item.StaffManagementShortfall = item.UpdateAverage(wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
-                    item.PSManagementShortfall = item.UpdateAverage(wlmPSM - (numberConfirmed + numberUnconfirmed) * projectManFTE, numberOfWeeks);
-                    item.RSAShortfall = item.UpdateAverage(wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
+                    item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
+                    item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPSM - (projectManFTE * (numberConfirmed + numberUnconfirmed) + appSupportPSMFTE + trainingPSMFTE), numberOfWeeks);
+                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
 
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);
@@ -484,6 +484,25 @@ namespace PPMTool.Pages
             });
         }
 
+        /// <summary>
+        /// Helper method to compute an average update
+        /// </summary>
+        /// <param name="oldValue">Reference to the old value you are updating</param>
+        /// <param name="newValue">New value to be added to the average</param>
+        /// <param name="numberOfWeeks">New number of values in the average collection</param>
+        /// <returns></returns>
+        internal float UpdateAverage(float oldValue, float newValue, int numberOfWeeks)
+        {
+            oldValue *= numberOfWeeks - 1;
+            oldValue += newValue;
+            oldValue /= numberOfWeeks;
+            return (float)Math.Round(oldValue, 2);
+        }
+
+        /// <summary>
+        /// Get list of colours for the charts
+        /// </summary>
+        /// <returns></returns>
         public List<string> GetColours()
         {
             return !showFinishedAsSeparate ? new List<string>
