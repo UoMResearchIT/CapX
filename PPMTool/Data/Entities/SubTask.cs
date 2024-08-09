@@ -145,6 +145,11 @@ namespace PPMTool.Data.Entities
         public double UnmetDemand { get; set; }
 
         /// <summary>
+        /// The amount the start date of this task lags its predecessor. Only used if a predecessor is set.
+        /// </summary>
+        public int Lag { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
