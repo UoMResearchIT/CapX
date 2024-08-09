@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
 using PPMTool.Enums;
 
@@ -162,7 +161,13 @@ namespace PPMTool.Data.Entities
         {
             try
             {
-                // Sum up assigned resources and determine latest start date of assigned resources
+                // Start is driven by predecessor
+                if (Predecessor != null)
+                {
+                    StartDate = Predecessor.EndDate.Date.AddDays(Lag + 1);
+                }
+
+                // Sum up assigned resources as units and determine latest start date of assigned resources
                 double units = 0d;
                 DateTime latestStart = default;
                 string latestStarter = string.Empty;
@@ -182,32 +187,11 @@ namespace PPMTool.Data.Entities
                     units = Demand;
                 }
 
-                // Start date is fixed
-                if (HasFixedStart)
+                // If we assign someone who doesn't start until after the date then error
+                if (AssignedResources.Count > 0 && latestStart > StartDate)
                 {
-                    // If we assign someone who doesn't start until after the date then error
-                    if (AssignedResources.Count > 0 && latestStart > StartDate)
-                    {
-                        return $"This task has a fixed start date of {StartDate}. " +
-                            $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
-                    }
-                }
-
-                // Start date driven by predecessor, resources or just leave at default
-                else
-                {
-                    // From predecessor
-                    if (Predecessor != null)
-                    {
-                        StartDate = Predecessor.EndDate.Date.AddDays(1);
-                    }
-
-                    // Check whether we need to drive from resources
-                    if (AssignedResources.Count > 0 && latestStart > StartDate)
-                    {
-                        Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
-                        StartDate = latestStart.Date;
-                    }
+                    return $"This task has a fixed start date of {StartDate}. " +
+                        $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
                 }
 
                 // Fixed Work Update
