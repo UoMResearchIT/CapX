@@ -267,11 +267,8 @@ namespace PPMTool.Data.Entities
             else
             {
                 // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
-                DurationBillableDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units));
-                var estimatedEndDate = StartDate.AddDays(GetNumberOfCalendarDays(DurationBillableDays));
-
-                // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
-                DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
+                DurationBillableDays = PlannedWorkHours / (7 * units);
+                DurationDays = (int)Math.Ceiling(GetNumberOfCalendarDays(DurationBillableDays));
             }
         }
 
@@ -280,9 +277,7 @@ namespace PPMTool.Data.Entities
             // Duration input is calendar days so need to compute billable days to get work
             var endDate = StartDate.AddDays(DurationDays);
             DurationBillableDays = GetNumberOfBillableDays(StartDate, endDate);
-
-            // Truncate to 1 DP
-            PlannedWorkHours = Math.Ceiling(10 * DurationBillableDays * 7 * units) / 10;
+            PlannedWorkHours = Math.Floor(DurationBillableDays * 7 * units);
         }
 
         /// <summary>
@@ -291,10 +286,10 @@ namespace PPMTool.Data.Entities
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        private int GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
+        private double GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
         {
             var calendarDays = endDate.Date.Subtract(startDate.Date).Days;
-            return (int)Math.Ceiling((calendarDays / 365f) * 220f);
+            return (calendarDays / 365f) * 220f;
         }
 
         /// <summary>
@@ -302,9 +297,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="billableDays"></param>
         /// <returns></returns>
-        private int GetNumberOfCalendarDays(int billableDays)
+        private double GetNumberOfCalendarDays(double billableDays)
         {
-            return (int)Math.Ceiling(billableDays / 220f * 365f);
+            return (billableDays / 220f) * 365f;
         }
 
         /// <summary>
