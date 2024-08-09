@@ -74,14 +74,14 @@ namespace PPMTool.Pages
             }
         }
 
-        private List<SubTask> confirmedTasks;
-        private List<SubTask> provisionalTasks;
+        private List<GanttBlock> confirmedBlocks;
+        private List<GanttBlock> provisionalBlocks;
         private List<SubTask> allTasks;
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
         private List<ChartItem> burnUpChartSource = new List<ChartItem>();
-        private ApexChartOptions<SubTask> ganttChartOptions;
+        private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
         private string plannedCostColour;
@@ -103,6 +103,21 @@ namespace PPMTool.Pages
         private bool isCurrentUserFollowing;
         private Person activeUser;
         private bool isProjectManager;
+        private bool groupLinkedTasks = true;
+
+        internal class GanttBlock
+        {
+            public GanttBlock(SubTask t, string groupName)
+            {
+                Task = t;
+                PredecessorGroupName = groupName;
+            }
+
+            public SubTask Task { get; private set; }
+
+            public string PredecessorGroupName { get; private set; }
+        }
+
 
         protected override void OnInitialized()
         {
@@ -124,9 +139,36 @@ namespace PPMTool.Pages
             if (ProjectId != null)
             {
                 project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
-                confirmedTasks = project.SubTasks.Where(x => !x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
-                provisionalTasks = project.SubTasks.Where(x => x.AssignedResources.Any(x => x.IsProvisional)).OrderBy(x => x.StartDate).ToList();
-                allTasks = confirmedTasks.Concat(provisionalTasks).ToList();
+
+                // Generate the blocks for the schedule chart
+                allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                var allBlocks = new List<GanttBlock>();
+                foreach (var t in allTasks)
+                {
+                    // Initialise as the task name
+                    var groupName = t.Name;
+
+                    if (t.Predecessor != null)
+                    {
+                        // Find predecessor in the existing list
+                        var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
+                        if (match != null)
+                        {
+                            groupName = match.PredecessorGroupName;
+                        }
+                        else
+                        {
+                            Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
+                            LogError("Cannot find predecessor task in temporary list!");
+                        }
+                    }
+
+                    // Add to the list of blocks
+                    allBlocks.Add(new GanttBlock(t, groupName));
+                }
+                confirmedBlocks = allBlocks.Where(x => x.Task.AssignedResources.All(x => !x.IsProvisional)).ToList();
+                provisionalBlocks = allBlocks.Where(x => x.Task.AssignedResources.Any(x => x.IsProvisional)).ToList();
+
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
@@ -135,7 +177,7 @@ namespace PPMTool.Pages
                     project.ProjectManager?.Name == activeUser.Name;
                 isProjectManager = activeUser == project?.ProjectManager || role.RoleType == RoleType.Superuser;
 
-                ganttChartOptions = new ApexChartOptions<SubTask>
+                ganttChartOptions = new ApexChartOptions<GanttBlock>
                 {
                     PlotOptions = new PlotOptions
                     {
@@ -672,14 +714,14 @@ namespace PPMTool.Pages
             }
         }
 
-        private void TaskSelected(SelectedData<SubTask> dataPoint)
+        private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
             if (!EditAuthorised) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
             {
-                var task = dataPoint.DataPoint.Items.FirstOrDefault();
+                var task = dataPoint.DataPoint.Items.FirstOrDefault()?.Task;
                 if (task == null) return;
                 Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
                 Navigation.NavigateTo($"/addtask/{ProjectId}/{task.SubTaskId}");

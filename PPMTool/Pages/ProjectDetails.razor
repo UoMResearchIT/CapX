@@ -114,41 +114,41 @@
             <div class="col">
                 <h2>Schedule</h2>
                 <RadzenCard>
-                    <ApexChart TItem="SubTask"
-                                XAxisType="XAxisType.Datetime"
-                                Options=ganttChartOptions
-                                OnDataPointSelection="TaskSelected">
+                    <ApexChart TItem="GanttBlock"
+                               XAxisType="XAxisType.Datetime"
+                               Options=ganttChartOptions
+                               OnDataPointSelection="TaskSelected">
                         <ChildContent>
-                            <ApexRangeSeries TItem="SubTask"
-                                             Items="confirmedTasks"
+                            <ApexRangeSeries TItem="GanttBlock"
+                                             Items="confirmedBlocks"
                                              Name="Resources Confirmed"
-                                             XValue="@(e => e.Name)"
-                                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.Task.EndDate.ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
-                            <ApexRangeSeries TItem="SubTask"
-                                             Items="provisionalTasks"
+                            <ApexRangeSeries TItem="GanttBlock"
+                                             Items="provisionalBlocks"
                                              Name="Resources Provisional"
-                                             XValue="@(e => e.Name)"
-                                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.GetPercentageUnmetDemand()))" />
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.Task.EndDate.ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                         </ChildContent>
                         <ApexPointTooltip>
                             <div class="m-2">
                                 @{
-                                    var point = (ListPoint<SubTask>)context.DataPoint;
+                                    var point = (ListPoint<GanttBlock>)context.DataPoint;
                                     <div class="m-0 p-3">
-                                        @if (point.Items.FirstOrDefault()?.HasProvisionalResources() ?? false)
+                                        @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
                                         {
                                             <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>
                                         }
-                                        @if (point.Items.FirstOrDefault()?.HasUnmetDemand() ?? false)
+                                        @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
                                         {
-                                            <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().UnmetDemand FTE)]</h3>
+                                            <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h3>
                                         }
-                                        <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
+                                        <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
                                     </div>
