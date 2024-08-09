@@ -112,12 +112,19 @@
             </div>
 
             <div class="col">
-                <h2>Schedule</h2>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <h2>Schedule</h2>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                        <RadzenText Text="Group Linked Tasks" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
+                        <RadzenSwitch @bind-Value="@groupLinkedTasks" Change="@GroupTasksChanged" />
+                    </RadzenStack>
+                </RadzenStack>
                 <RadzenCard>
                     <ApexChart TItem="GanttBlock"
                                XAxisType="XAxisType.Datetime"
                                Options=ganttChartOptions
-                               OnDataPointSelection="TaskSelected">
+                               OnDataPointSelection="TaskSelected"
+                               @ref=gantt>
                         <ChildContent>
                             <ApexRangeSeries TItem="GanttBlock"
                                              Items="confirmedBlocks"
@@ -140,6 +147,7 @@
                                 @{
                                     var point = (ListPoint<GanttBlock>)context.DataPoint;
                                     <div class="m-0 p-3">
+                                        <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
                                         @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
                                         {
                                             <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>

@@ -103,7 +103,8 @@ namespace PPMTool.Pages
         private bool isCurrentUserFollowing;
         private Person activeUser;
         private bool isProjectManager;
-        private bool groupLinkedTasks = true;
+        private bool groupLinkedTasks = false;
+        private ApexChart<GanttBlock> gantt;
 
         internal class GanttBlock
         {
@@ -332,6 +333,12 @@ namespace PPMTool.Pages
                     PopulateNotes();
                 }
             }
+        }
+
+        private void GroupTasksChanged(bool value)
+        {
+            // Redraw the chart
+            gantt?.RenderAsync();
         }
 
         /// <summary>
