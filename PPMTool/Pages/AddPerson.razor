@@ -116,10 +116,13 @@
                             <div style="width:100%">
                                 <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                             <RadzenText Text="@d.ChangeDate.ToShortDateString()" TextStyle="TextStyle.Subtitle1" />
                                             <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                                                         BadgeStyle="BadgeStyle.Info"
+                                                         BadgeStyle="BadgeStyle.Primary"
+                                                         Text="@($"Grade {d.Grade}")" />
+                                            <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                         BadgeStyle="BadgeStyle.Primary"
                                                          Text="@(d.Total().ToString("F1") + " FTE")" />
                                         </RadzenStack>
                                         <RadzenText Text="@d.Notes" TextStyle="TextStyle.Body2"/>

@@ -42,6 +42,11 @@
                                 <RadzenDatePicker @bind-Value="c.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Grade" Title="Grade" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="int" Min="4" Step="1" Max="9" @bind-Value="c.Grade" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectWorkFTE" Title="Project" Width="80px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectWorkFTE" />
