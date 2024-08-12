@@ -85,8 +85,7 @@
     @if (project?.SubTasks != null && project?.SubTasks.Count > 0)
     {
         <div class="row">
-            @* Graphs *@
-            <div class="col">
+            <div class="col-6">
                 <h2>Burn-Up Chart</h2>
                 <RadzenCard>
                     <ApexChart TItem="ChartItem"
@@ -111,7 +110,7 @@
                 </RadzenCard>
             </div>
 
-            <div class="col">
+            <div class="col-6">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                     <h2>Schedule</h2>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
