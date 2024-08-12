@@ -55,7 +55,7 @@ namespace PPMTool.Pages
 
         void OnChange(dynamic args)
         {
-            var match = availableTags.FirstOrDefault(x => x.Name == autoCompleteText);
+            var match = availableTags.FirstOrDefault(x => x.Name.Trim() == autoCompleteText.Trim());
             if (match != null && !chosenTags.Contains(match))
             {
                 chosenTags.Add(match);
@@ -82,8 +82,12 @@ namespace PPMTool.Pages
             {
                 HandleSubmit();
 
-                LogInformation("Editing workload model changes...");
-                Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
+                // Check for any further messages added by DB interactions
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    LogInformation("Editing workload model changes...");
+                    Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
+                }
             }
         }
 
@@ -95,8 +99,12 @@ namespace PPMTool.Pages
             {
                 HandleSubmit();
 
-                LogInformation("Editing absences...");
-                Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
+                // Check for any further messages added by DB interactions
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    LogInformation("Editing absences...");
+                    Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
+                }
             }
         }
 

@@ -4,17 +4,6 @@ namespace PPMTool.Data
 {
     public class DutyChartItem : BaseDemandChartItem
     {
-        /// <summary>
-        /// Helper method to compute an average update
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="numberOfWeeks"></param>
-        /// <returns></returns>
-        internal float UpdateAverage(float value, int numberOfWeeks)
-        {
-            return (float)Math.Round(value * (numberOfWeeks - 1) / numberOfWeeks, 2);
-        }
-
         internal void UpdateMinMax()
         {
             Min = Math.Min(StaffManagementShortfall, PSManagementShortfall);

@@ -84,7 +84,7 @@
         <div class="row">
             @for (int i = 0; i < chartTitles.Count; ++i)
             {
-                <div class="@(chartTitles.Count == 1 ? "col" :"col-6")">
+                <div class="@(chartTitles.Count == 1 ? "col" : "col-6")">
                         <CapacityChartComponent Title=@chartTitles[i]
                                                 ChartOptions="@chartOptions[i]"
                                                 ConfirmedChartItems="@confirmedChartItems[i]"

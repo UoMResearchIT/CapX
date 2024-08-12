@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
 using PPMTool.Enums;
 
@@ -42,24 +41,6 @@ namespace PPMTool.Data.Entities
                 {
                     taskType = value;
                     OnTaskTypeChanged(new EventArgs());
-                }
-            }
-        }
-
-        private bool isDone;
-        /// <summary>
-        /// Represents whether a task is complete or not. It can be marked as complete any time whether the full budget for 
-        /// the task has been used or not. It will then allow tasks to be completed early without it affecting the definition of "Late".
-        /// </summary>
-        public bool IsDone
-        {
-            get => isDone;
-            set
-            {
-                if (isDone != value)
-                {
-                    isDone = value;
-                    OnDoneChanged(new EventArgs());
                 }
             }
         }
@@ -145,6 +126,11 @@ namespace PPMTool.Data.Entities
         public double UnmetDemand { get; set; }
 
         /// <summary>
+        /// The amount the start date of this task lags its predecessor. Only used if a predecessor is set.
+        /// </summary>
+        public int Lag { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
@@ -157,7 +143,13 @@ namespace PPMTool.Data.Entities
         {
             try
             {
-                // Sum up assigned resources and determine latest start date of assigned resources
+                // Start is driven by predecessor
+                if (Predecessor != null)
+                {
+                    StartDate = Predecessor.EndDate.Date.AddDays(Lag + 1);
+                }
+
+                // Sum up assigned resources as units and determine latest start date of assigned resources
                 double units = 0d;
                 DateTime latestStart = default;
                 string latestStarter = string.Empty;
@@ -177,32 +169,11 @@ namespace PPMTool.Data.Entities
                     units = Demand;
                 }
 
-                // Start date is fixed
-                if (HasFixedStart)
+                // If we assign someone who doesn't start until after the date then error
+                if (AssignedResources.Count > 0 && latestStart > StartDate)
                 {
-                    // If we assign someone who doesn't start until after the date then error
-                    if (AssignedResources.Count > 0 && latestStart > StartDate)
-                    {
-                        return $"This task has a fixed start date of {StartDate}. " +
-                            $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
-                    }
-                }
-
-                // Start date driven by predecessor, resources or just leave at default
-                else
-                {
-                    // From predecessor
-                    if (Predecessor != null)
-                    {
-                        StartDate = Predecessor.EndDate.Date.AddDays(1);
-                    }
-
-                    // Check whether we need to drive from resources
-                    if (AssignedResources.Count > 0 && latestStart > StartDate)
-                    {
-                        Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
-                        StartDate = latestStart.Date;
-                    }
+                    return $"This task has a fixed start date of {StartDate}. " +
+                        $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
                 }
 
                 // Fixed Work Update
@@ -254,7 +225,6 @@ namespace PPMTool.Data.Entities
         {
             // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
             DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
-            DurationBillableDays = GetNumberOfBillableDays(StartDate, EndDate);
         }
 
         private void UpdateDuration(double units)
@@ -267,11 +237,9 @@ namespace PPMTool.Data.Entities
             else
             {
                 // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
-                DurationBillableDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units));
-                var estimatedEndDate = StartDate.AddDays(GetNumberOfCalendarDays(DurationBillableDays));
-
-                // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
-                DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
+                var billableDays = PlannedWorkHours / (7 * units);
+                DurationDays = (int)Math.Ceiling(GetNumberOfCalendarDays(billableDays));
+                DurationBillableDays = (int)Math.Ceiling(billableDays);
             }
         }
 
@@ -279,10 +247,9 @@ namespace PPMTool.Data.Entities
         {
             // Duration input is calendar days so need to compute billable days to get work
             var endDate = StartDate.AddDays(DurationDays);
-            DurationBillableDays = GetNumberOfBillableDays(StartDate, endDate);
-
-            // Truncate to 1 DP
-            PlannedWorkHours = Math.Ceiling(10 * DurationBillableDays * 7 * units) / 10;
+            var billableDays = GetNumberOfBillableDays(StartDate, endDate);
+            PlannedWorkHours = (int)Math.Floor(billableDays * 7 * units);
+            DurationBillableDays = (int)Math.Ceiling(billableDays);
         }
 
         /// <summary>
@@ -291,10 +258,10 @@ namespace PPMTool.Data.Entities
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        private int GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
+        private double GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
         {
             var calendarDays = endDate.Date.Subtract(startDate.Date).Days;
-            return (int)Math.Ceiling((calendarDays / 365f) * 220f);
+            return (calendarDays / 365f) * 220f;
         }
 
         /// <summary>
@@ -302,9 +269,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="billableDays"></param>
         /// <returns></returns>
-        private int GetNumberOfCalendarDays(int billableDays)
+        private double GetNumberOfCalendarDays(double billableDays)
         {
-            return (int)Math.Ceiling(billableDays / 220f * 365f);
+            return (billableDays / 220f) * 365f;
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -19,41 +20,28 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
-            // Set up the base page
             dataGridEntityService = TagService;
             dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
-
             LogInformation($"Viewing skills tags");
         }
 
         protected override async Task DeleteRow(SkillTag entity)
         {
-            if (entity == entityToInsert)
+            if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
             {
-                entityToInsert = null;
-            }
-
-            if (dataGridEntities.Contains(entity))
-            {
+                await base.DeleteRow(entity);
 
                 // Remove the tag from all the people to whom it is attached
                 var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(entity));
                 foreach (var person in people)
                 {
+                    LogInformation($"Removing skills tag {entity.GetSensibleObjectName()} from {person.Name}");
                     person.SkillTags.Remove(entity);
                     PersonService.Update(context, person);
                 }
 
-                // Remove tag
                 dataGridEntityService.Delete(context, entity);
-                LogInformation($"Deleted Tag {entity.Name}");
-
-                await dataGrid.Reload();
-            }
-            else
-            {
-                dataGrid.CancelEditRow(entity);
+                LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }
         }
     }

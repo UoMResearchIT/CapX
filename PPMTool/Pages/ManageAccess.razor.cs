@@ -21,9 +21,6 @@ namespace PPMTool.Pages
         [Inject]
         public PersonService PersonService { get; set; }
 
-        [Inject]
-        public DialogService DialogService { get; set; }
-
         private List<Person> people;
         private List<RoleType> roles;
 
