@@ -202,3 +202,7 @@ mark {
 .rz-inputtext {
     text-indent: 0 !important;
 }
+
+.rz-text-subtitle1 {
+    font-weight: 500
+}
