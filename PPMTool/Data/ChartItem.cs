@@ -50,7 +50,7 @@ namespace PPMTool.Data
         /// <param name="value"></param>
         /// <param name="capacity"></param>
         /// <returns></returns>
-        public static string GetColourStringFTE(double value, double capacity)
+        public static string GetColourStringFTE(double value, double capacity, bool useHotColdScale = false)
         {
             // If someone has zero capacity
             int percent = 0;
@@ -64,23 +64,36 @@ namespace PPMTool.Data
             {
                 percent = (int)Math.Round(value * 100 / capacity);
             }
-            return GetColourStringPercentage(percent);
+            return GetColourStringPercentage(percent, useHotColdScale);
         }
 
         /// <summary>
         /// Helper method to get the colour string from a percentage
         /// </summary>
         /// <param name="percent"></param>
+        /// <param name="useHotColdScale"></param>
         /// <returns></returns>
-        public static string GetColourStringPercentage(int percent)
+        public static string GetColourStringPercentage(int percent, bool useHotColdScale = false)
         {
-            if (percent < 50) return "#488f31";
-            if (percent < 75) return "#76a263";
-            if (percent < 100) return "#9fb494";
-            if (percent == 100) return "#c6c6c6";
-            if (percent < 125) return "#d69fa1";
-            if (percent < 150) return "#dd757d";
-            return "#de425b";
+            if (useHotColdScale)
+            {
+                if (percent < 10) return "#8C7D6F";
+                if (percent < 30) return "#B09175";
+                if (percent < 50) return "#FFA07A";
+                if (percent < 70) return "#FF503D";
+                if (percent < 90) return "#FF281E";
+                return "#FF0000";
+            }
+            else
+            {
+                if (percent < 50) return "#488f31";
+                if (percent < 75) return "#76a263";
+                if (percent < 100) return "#9fb494";
+                if (percent == 100) return "#c6c6c6";
+                if (percent < 125) return "#d69fa1";
+                if (percent < 150) return "#dd757d";
+                return "#de425b";
+            }
         }
     }
 }

@@ -491,7 +491,12 @@ namespace PPMTool.Pages
                     {
                         // Add the range for this person
                         chartSourceTemp.AddRange(
-                            GetPersonModeChartItemsFromAssignments(group.Key as Person, group.Value, queryActive ? QueryStartDate : startDate, queryActive ? queryEndDate : endDate)
+                            GetPersonModeChartItemsFromAssignments(
+                                group.Key as Person,
+                                group.Value,
+                                queryActive ? QueryStartDate : startDate,
+                                queryActive ? queryEndDate : endDate
+                            )
                         );
                     }
 
@@ -550,7 +555,15 @@ namespace PPMTool.Pages
                             // Compute chart items from the grouped assignments
                             var seriesName = (group.Key as Project).GetFullName();
                             chartSourceTemp.AddRange(
-                                GetProjectModeChartItemsFromAssignments(seriesName, group, startDate, endDate, person)
+                                GetProjectModeChartItemsFromAssignments(
+                                    seriesName,
+                                    group,
+                                    startDate,
+                                    endDate,
+                                    person,
+                                    value2IsCapacity: false,
+                                    groupedAssignmentsAllProjects: groupedAssignments
+                                )
                             );
                         }
 
@@ -744,56 +757,65 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="chosenPerson"></param>
+        /// <param name="value2IsCapacity"></param>
+        /// <param name="groupedAssignmentsAllProjects"></param>
         /// <returns></returns>
         private IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
             KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
-            Person chosenPerson = null
+            Person chosenPerson,
+            bool value2IsCapacity = true,
+            IDictionary<object, IEnumerable<Assignment>> groupedAssignmentsAllProjects = null
         )
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                x =>
+                subTask =>
                 {
-                    // If no person specified then it is the sum of the effort across all chosen people
-                    // If a person specified then the value is just their effort
-                    var resources = chosenPerson == null ?
-                        x.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
-                        x.AssignedResources.Where(x => x.Person == chosenPerson);
+                    // Value is the effort of the chosen person
+                    var resources = subTask.AssignedResources.Where(x => x.Person == chosenPerson);
                     return resources.RoundedSum(x => x.AssignmentFTE);
 
                 },
-                (x, y) =>
+                (value1, value2) =>
                 {
                     // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(x, y);
+                    return ChartItem.GetColourStringFTE(value1, value2, !value2IsCapacity);
                 },
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                x =>
+                assignment =>
                 {
                     // Get the set of resources to check the condition against
-                    var resources = chosenPerson == null ?
-                        x.SubTask.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
-                        x.SubTask.AssignedResources.Where(x => x.Person == chosenPerson);
+                    var resources = assignment.SubTask.AssignedResources.Where(x => x.Person == chosenPerson);
 
                     // If any resources are marked as provisional or the project owning the task
                     // is not funded, active or in maintenance
                     return
-                        x.ProjectStatus.IsUnconfirmed() ||
+                        assignment.ProjectStatus.IsUnconfirmed() ||
                         resources.Any(x => x.IsProvisional);
                 },
-                // Value 2 for each block is based on the sum of the availability of all chosen people
-                (x, w) =>
+                // Value 2 for each block
+                (value1, currentDay) =>
                 {
-                    var peo = chosenPerson == null ?
-                        people.Where(y => ChosenPeople.Contains(y.Name)) :
-                        people.Where(y => y == chosenPerson);
-                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
+                    var peo = people.Where(y => y == chosenPerson);
+
+                    // The total availability of the person becomes value 2
+                    if (value2IsCapacity)
+                    {
+                        return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
+                    }
+
+                    // The total amount of work that person has on that day becomes value 2
+                    var resources = groupedAssignmentsAllProjects?
+                        .SelectMany(x => x.Value)
+                        .SelectMany(x => x.SubTask.AssignedResources)
+                        .Where(x => x.Person == chosenPerson);
+                    return resources.RoundedSum(x => x.AssignmentFTE);
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 assignmentsWithinBlock =>
@@ -865,29 +887,29 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                x =>
+                subTask =>
                 {
-                    var resource = x.AssignedResources.First(x => x.Person.Name == person.Name);
+                    var resource = subTask.AssignedResources.First(x => x.Person.Name == person.Name);
                     return resource.AssignmentFTE;
                 },
-                (x, y) =>
+                (value1, value2) =>
                 {
-                    return ChartItem.GetColourStringFTE(x, y);
+                    return ChartItem.GetColourStringFTE(value1, value2);
                 },
                 person.Name,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                x =>
+                assignment =>
                 {
                     // If any resources are marked as provisional or the project owning the task
                     // is not funded, active or in maintenance
                     return
-                        x.ProjectStatus.IsUnconfirmed() ||
-                        x.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                        assignment.ProjectStatus.IsUnconfirmed() ||
+                        assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
                 },
-                (x, w) =>
+                (value1, currentDay) =>
                 {
-                    return person.GetAvailabilityOnDate(w);
+                    return person.GetAvailabilityOnDate(currentDay);
                 },
                 tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
