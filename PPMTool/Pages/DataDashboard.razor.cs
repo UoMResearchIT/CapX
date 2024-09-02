@@ -31,7 +31,12 @@ namespace PPMTool.Pages
         private float grade71Costs = 57458.16f;
         private float grade75Costs = 64797.29f;
 
-        private float currentBudget = 1096765;
+        /// <summary>
+        ///  The amount of money that we are expected to recover:
+        ///  i.e. negative, blue values in Column E of the tracker which represent the salary costs removed from the budget
+        /// </summary>
+        private float recoveryTarget = 1118849;
+
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
         private int yearsAhead = 3;

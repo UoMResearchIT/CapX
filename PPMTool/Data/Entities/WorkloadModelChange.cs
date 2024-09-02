@@ -11,6 +11,9 @@ namespace PPMTool.Data.Entities
         public int WorkloadModelChangeId { get; set; }
 
         [Required]
+        public int Grade { get; set; }
+
+        [Required]
         public DateTime ChangeDate { get; set; }
 
         [Required]
