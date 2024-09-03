@@ -102,7 +102,7 @@ namespace PPMTool.Services
                 }));
 
                 // Get affected PMs
-                var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct();
+                var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
 
                 // If any affected PM is currently absent then notify all PMs
                 var managersToNotify = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
@@ -112,6 +112,16 @@ namespace PPMTool.Services
                 if (currentPMAbsences.Count() == 0)
                 {
                     managersToNotify = affectedPMs;
+                }
+
+                // Ensure superusers are in the list in any case
+                var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
+                foreach (var su in superusers)
+                {
+                    if (!affectedPMs.Contains(su))
+                    {
+                        affectedPMs.Add(su);
+                    }
                 }
 
                 // For each manager to notify
