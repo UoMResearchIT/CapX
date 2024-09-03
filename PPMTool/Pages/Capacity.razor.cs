@@ -756,7 +756,7 @@ namespace PPMTool.Pages
         /// <param name="groupedAssignments"></param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
-        /// <param name="chosenPerson"></param>
+        /// <param name="person"></param>
         /// <param name="value2IsCapacity"></param>
         /// <param name="groupedAssignmentsAllProjects"></param>
         /// <returns></returns>
@@ -765,7 +765,7 @@ namespace PPMTool.Pages
             KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
-            Person chosenPerson,
+            Person person,
             bool value2IsCapacity = true,
             IDictionary<object, IEnumerable<Assignment>> groupedAssignmentsAllProjects = null
         )
@@ -773,12 +773,14 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                subTask =>
+                assignments =>
                 {
-                    // Value is the effort of the chosen person
-                    var resources = subTask.AssignedResources.Where(x => x.Person == chosenPerson);
-                    return resources.RoundedSum(x => x.AssignmentFTE);
-
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        // Value is the effort of the chosen person
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource.AssignmentFTE;
+                    });
                 },
                 (value1, value2) =>
                 {
@@ -788,21 +790,23 @@ namespace PPMTool.Pages
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                assignment =>
+                // Hatched function
+                assignments =>
                 {
-                    // Get the set of resources to check the condition against
-                    var resources = assignment.SubTask.AssignedResources.Where(x => x.Person == chosenPerson);
+                    return assignments.Any(assignment =>
+                    {
+                        // Get the set of resources to check the condition against
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person == person);
 
-                    // If any resources are marked as provisional or the project owning the task
-                    // is not funded, active or in maintenance
-                    return
-                        assignment.ProjectStatus.IsUnconfirmed() ||
-                        resources.Any(x => x.IsProvisional);
+                        // If resource is marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return assignment.ProjectStatus.IsUnconfirmed() || resource.IsProvisional;
+                    });
                 },
                 // Value 2 for each block
-                (value1, currentDay) =>
+                (assignments, value1, currentDay) =>
                 {
-                    var peo = people.Where(y => y == chosenPerson);
+                    var peo = people.Where(y => y == person);
 
                     // The total availability of the person becomes value 2
                     if (value2IsCapacity)
@@ -814,7 +818,7 @@ namespace PPMTool.Pages
                     var resources = groupedAssignmentsAllProjects?
                         .SelectMany(x => x.Value)
                         .SelectMany(x => x.SubTask.AssignedResources)
-                        .Where(x => x.Person == chosenPerson);
+                        .Where(x => x.Person == person);
                     return resources.RoundedSum(x => x.AssignmentFTE);
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
@@ -830,7 +834,7 @@ namespace PPMTool.Pages
                         messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
 
                         // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson));
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == person));
                         if (assignedWithinBlockWithChosenPerson.Any(x => x.SubTask.HasUnmetDemand()))
                         {
                             var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x.SubTask.UnmetDemand);
@@ -839,7 +843,7 @@ namespace PPMTool.Pages
                     }
 
                     // Generate further, universal messages
-                    messages = GenerateTooltipMessages(assignmentsWithinBlock, chosenPerson, messages);
+                    messages = GenerateTooltipMessages(assignmentsWithinBlock, person, messages);
 
                     return messages;
                 }
@@ -887,10 +891,13 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                subTask =>
+                assignments =>
                 {
-                    var resource = subTask.AssignedResources.First(x => x.Person.Name == person.Name);
-                    return resource.AssignmentFTE;
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource.AssignmentFTE;
+                    });
                 },
                 (value1, value2) =>
                 {
@@ -899,15 +906,18 @@ namespace PPMTool.Pages
                 person.Name,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                assignment =>
+                assignments =>
                 {
-                    // If any resources are marked as provisional or the project owning the task
-                    // is not funded, active or in maintenance
-                    return
-                        assignment.ProjectStatus.IsUnconfirmed() ||
-                        assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                    return assignments.Any(assignment =>
+                    {
+                        // If any resources are marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return
+                            assignment.ProjectStatus.IsUnconfirmed() ||
+                            assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                    });
                 },
-                (value1, currentDay) =>
+                (assignments, value1, currentDay) =>
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
