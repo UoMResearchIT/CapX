@@ -206,3 +206,7 @@ mark {
 .rz-text-subtitle1 {
     font-weight: 500
 }
+
+.center-text {
+    margin-bottom: 0rem;
+}
