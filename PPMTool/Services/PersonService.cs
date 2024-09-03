@@ -111,5 +111,16 @@ namespace PPMTool.Services
             Debug.Write("** Delete Person not implemented!");
             throw new System.NotImplementedException();
         }
+
+        /// <summary>
+        /// Returns a list of absences in the DB for the people provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="people"></param>
+        /// <returns></returns>
+        internal IEnumerable<Absence> GetAbsencesForPeople(PPMToolContext context, IEnumerable<Person> people)
+        {
+            return context.Absence.Where(x => people.Select(x => x.PersonId).Contains(x.Person.PersonId));
+        }
     }
 }
