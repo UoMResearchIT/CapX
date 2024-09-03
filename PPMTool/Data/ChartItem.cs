@@ -77,12 +77,7 @@ namespace PPMTool.Data
         {
             if (useHotColdScale)
             {
-                if (percent < 10) return "#8C7D6F";
-                if (percent < 30) return "#B09175";
-                if (percent < 50) return "#FFA07A";
-                if (percent < 70) return "#FF503D";
-                if (percent < 90) return "#FF281E";
-                return "#FF0000";
+                return InterpolateColor(280, 0.1, 1, 1, 0.3, percent);
             }
             else
             {
@@ -94,6 +89,74 @@ namespace PPMTool.Data
                 if (percent < 150) return "#dd757d";
                 return "#de425b";
             }
+        }
+
+        public static string InterpolateColor(double H, double startS, double startV, double endS, double endV, double percentage)
+        {
+            // Clamp percentage between 0 and 1
+            percentage = Math.Max(0, Math.Min(1, percentage / 100));
+
+            // Interpolate Saturation and Value
+            double s = startS + (endS - startS) * percentage;
+            double v = startV + (endV - startV) * percentage;
+
+            // Convert HSV to RGB
+            (int r, int g, int b) = HSVtoRGB(H, s, v);
+
+            // Return the color as a hex string
+            return $"#{r:X2}{g:X2}{b:X2}";
+        }
+
+        private static (int, int, int) HSVtoRGB(double h, double s, double v)
+        {
+            double c = v * s;
+            double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+            double m = v - c;
+
+            double rPrime, gPrime, bPrime;
+
+            if (h >= 0 && h < 60)
+            {
+                rPrime = c;
+                gPrime = x;
+                bPrime = 0;
+            }
+            else if (h >= 60 && h < 120)
+            {
+                rPrime = x;
+                gPrime = c;
+                bPrime = 0;
+            }
+            else if (h >= 120 && h < 180)
+            {
+                rPrime = 0;
+                gPrime = c;
+                bPrime = x;
+            }
+            else if (h >= 180 && h < 240)
+            {
+                rPrime = 0;
+                gPrime = x;
+                bPrime = c;
+            }
+            else if (h >= 240 && h < 300)
+            {
+                rPrime = x;
+                gPrime = 0;
+                bPrime = c;
+            }
+            else
+            {
+                rPrime = c;
+                gPrime = 0;
+                bPrime = x;
+            }
+
+            int r = (int)((rPrime + m) * 255);
+            int g = (int)((gPrime + m) * 255);
+            int b = (int)((bPrime + m) * 255);
+
+            return (r, g, b);
         }
     }
 }

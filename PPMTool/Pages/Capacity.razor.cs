@@ -560,9 +560,7 @@ namespace PPMTool.Pages
                                     group,
                                     startDate,
                                     endDate,
-                                    person,
-                                    value2IsCapacity: false,
-                                    groupedAssignmentsAllProjects: groupedAssignments
+                                    person
                                 )
                             );
                         }
@@ -576,7 +574,8 @@ namespace PPMTool.Pages
                                 new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
                                 startDate,
                                 endDate,
-                                person
+                                person,
+                                isTotalRow: true
                             )
                         );
 
@@ -757,8 +756,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
-        /// <param name="value2IsCapacity"></param>
-        /// <param name="groupedAssignmentsAllProjects"></param>
+        /// <param name="isTotalRow"></param>
         /// <returns></returns>
         private IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
@@ -766,8 +764,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
-            bool value2IsCapacity = true,
-            IDictionary<object, IEnumerable<Assignment>> groupedAssignmentsAllProjects = null
+            bool isTotalRow = false
         )
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
@@ -782,10 +779,11 @@ namespace PPMTool.Pages
                         return resource.AssignmentFTE;
                     });
                 },
+                // Colour function
                 (value1, value2) =>
                 {
                     // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(value1, value2, !value2IsCapacity);
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);
                 },
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
@@ -809,17 +807,7 @@ namespace PPMTool.Pages
                     var peo = people.Where(y => y == person);
 
                     // The total availability of the person becomes value 2
-                    if (value2IsCapacity)
-                    {
-                        return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
-                    }
-
-                    // The total amount of work that person has on that day becomes value 2
-                    var resources = groupedAssignmentsAllProjects?
-                        .SelectMany(x => x.Value)
-                        .SelectMany(x => x.SubTask.AssignedResources)
-                        .Where(x => x.Person == person);
-                    return resources.RoundedSum(x => x.AssignmentFTE);
+                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 assignmentsWithinBlock =>
