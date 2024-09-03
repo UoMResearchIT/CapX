@@ -85,8 +85,7 @@
     @if (project?.SubTasks != null && project?.SubTasks.Count > 0)
     {
         <div class="row">
-            @* Graphs *@
-            <div class="col">
+            <div class="col-6">
                 <h2>Burn-Up Chart</h2>
                 <RadzenCard>
                     <ApexChart TItem="ChartItem"
@@ -111,11 +110,11 @@
                 </RadzenCard>
             </div>
 
-            <div class="col">
+            <div class="col-6">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                     <h2>Schedule</h2>
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                        <RadzenText Text="Group Linked Tasks" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Group Linked Tasks" TextStyle="TextStyle.Subtitle1" />
                         <RadzenSwitch @bind-Value="@groupLinkedTasks" Change="@GroupTasksChanged" />
                     </RadzenStack>
                 </RadzenStack>
@@ -216,7 +215,7 @@
                             <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="150px" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="180px" MinWidth="10px">
                         <Template Context="t">
                             <RadzenText Text=@t.Name />
                         </Template>

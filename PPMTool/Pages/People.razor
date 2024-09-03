@@ -96,6 +96,11 @@
                             @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.ProjectWorkFTE
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Grade" Width="50px" MinWidth="10px" Sortable="false">
+                        <Template Context="p">
+                            @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.Grade
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
                         <Template Context="p">
                             @string.Join(',', p.SkillTags.Select(t => t.Name))

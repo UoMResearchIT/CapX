@@ -207,15 +207,15 @@ namespace PPMTool.Pages
                 var temp = ChartHelper.AggregateSubTasksByWeek(
                     project.GetFullName(),
                     project.SubTasks,
-                    (task, currentWeek) =>
+                    (assignments, currentWeek) =>
                     {
                         // Value 1 requires the number of days is simply the planned work hours up to the end of that week
-                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek);
+                        return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek));
                     },
-                    (task, currentWeek) =>
+                    (assignments, currentWeek) =>
                     {
                         // Value 2 is corrected for the unmet demand on the task
-                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand));
+                        return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand)));
                     }
                 ).ToList();
 
