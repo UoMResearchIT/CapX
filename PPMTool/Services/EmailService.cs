@@ -321,19 +321,26 @@ namespace PPMTool.Services
                     // Include author info as bold
                     body.Append($"<b>{note.GetNoteAuthorText()}</b>{(note.IsFinanceInfo ? " [Finance Info]" : "")} {(note.DueDate != null ? $"Due Date: {note.DueDate?.ToShortDateString()}" : "")} {(note.CompletedDate != null ? $"Completed: {note.CompletedDate?.ToShortDateString()}" : "")}");
 
-                    // Include the full message from the note if new or otherwise just state the changes
-                    if (listOfChanges == null)
-                    {
-                        body.Append($"<p>{note.HtmlContent}</p>");
-                    }
-                    else
-                    {
-                        // TODO
-                    }
+                    // Include the full message from the note
+                    body.Append($"<p>{note.HtmlContent}</p>");
 
                     // Include editor info as italics
                     body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
                     body.Append("<hr />");
+
+                    // State changes
+                    if (listOfChanges != null)
+                    {
+                        body.Append("<p><b>Changes</b></p>");
+
+                        // Write each change one and a time
+                        foreach (var diff in listOfChanges
+                            .Where(x => x.PropertyName != nameof(Note.Editor) && x.PropertyName != nameof(Note.EditedDate))
+                        )
+                        {
+                            body.Append($"{diff.PropertyName}: {diff.OriginalValue ?? "None"} => {diff.CurrentValue ?? "None"}<br/>");
+                        }
+                    }
 
                     // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
