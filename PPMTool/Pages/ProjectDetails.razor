@@ -16,7 +16,11 @@
             }
             else
             {
-                <h1>@project.GetFullName()</h1>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <h1>@project.GetFullName()</h1>
+                    <RadzenButton Icon="info" Click="@ViewDescription" Disabled="@(project?.HasNoDescription() ?? true)" />
+                </RadzenStack>
+                
             }
         </div>
         <div class="col-auto">

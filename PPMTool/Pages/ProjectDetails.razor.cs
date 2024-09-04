@@ -14,6 +14,7 @@ using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
@@ -792,6 +793,14 @@ namespace PPMTool.Pages
 
             // Perform paging via Skip and Take.
             allTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+        }
+
+        /// <summary>
+        /// Show dialog popup of the project description
+        /// </summary>
+        private async Task ViewDescription()
+        {
+            await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(project?.GetFullName(), new Dictionary<string, object>() { { "Project", project } });
         }
     }
 }
