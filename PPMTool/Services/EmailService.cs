@@ -335,10 +335,10 @@ namespace PPMTool.Services
 
                         // Write each change one and a time
                         foreach (var diff in listOfChanges
-                            .Where(x => x.PropertyName != nameof(Note.Editor) && x.PropertyName != nameof(Note.EditedDate))
+                            .Where(x => x.PropertyName != "EditorPersonId" && x.PropertyName != nameof(Note.EditedDate))
                         )
                         {
-                            body.Append($"{diff.PropertyName}: {diff.OriginalValue ?? "None"} => {diff.CurrentValue ?? "None"}<br/>");
+                            body.Append($"<b>{diff.PropertyName}:</b> {diff.OriginalValue ?? "None"} <b>&hArr;</b> {diff.CurrentValue ?? "None"}<br/>");
                         }
                     }
 
