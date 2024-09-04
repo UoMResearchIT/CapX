@@ -604,7 +604,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, false);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
         }
 
         private void UpdateNote()
@@ -614,11 +614,13 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUserName);
             noteModel.Editor = role.Person;
             ResolveMentionsInCurrentNoteModel();
-            NoteService.Update(context, noteModel);
+            NoteService.Update(context, noteModel, false);
+            var listOfNoteChanges = NoteService.GetDiffList<Note>(context);
+            NoteService.Update(context, noteModel, true);
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, true);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, listOfNoteChanges);
         }
 
         private void EditNote(Note noteToEdit)
