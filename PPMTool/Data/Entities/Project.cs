@@ -183,7 +183,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasUnmetDemandNowOrInFuture()
         {
-            return SubTasks.Where(x => x.IsWithin(DateTime.Today) || x.StartDate > DateTime.Today).Any(x => x.HasUnmetDemand());
+            return SubTasks.Any(x => x.GetUnmetDemandNowAndInFuture() > 0);
         }
 
         /// <summary>
@@ -233,6 +233,18 @@ namespace PPMTool.Data.Entities
         public string GetFullName()
         {
             return $"RTP-{RTP} {Name}";
+        }
+
+        /// <summary>
+        /// Method to calculate the window of subtasks which have unmet demand and 
+        /// </summary>
+        /// <returns></returns>
+        public string GetUnmetDemandWindowDatesAsFormattedString()
+        {
+            var tasks = SubTasks.Where(x => x.GetUnmetDemandNowAndInFuture() > 0);
+            var windowStart = tasks.Min(x => x.StartDate);
+            var windowEnd = tasks.Max(x => x.EndDate);
+            return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
         }
     }
 }

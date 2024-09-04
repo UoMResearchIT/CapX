@@ -27,7 +27,7 @@
     else
     {
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-            @foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Sum(x => x.GetUnmetDemandNowAndInFuture())))
+            @foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture())))
             {
                 <ProjectBulletinCardComponent project="@project" />
             }

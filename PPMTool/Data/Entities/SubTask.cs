@@ -431,7 +431,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public double GetUnmetDemandNowAndInFuture()
         {
-            return IsWithin(DateTime.Today) || StartDate.Date > DateTime.Today ? UnmetDemand : 0;
+            return (IsWithin(DateTime.Today) || StartDate.Date > DateTime.Today) ? UnmetDemand : 0;
         }
 
         /// <summary>
