@@ -267,11 +267,11 @@ namespace PPMTool.Services
             return $"<p>{name ?? absence.Person.Name} is absent from {absence.StartDate.ToShortDateString()} to {absence.EndDate?.ToShortDateString() ?? "present"} (<b>{state}</b>).</p>";
         }
 
-        internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, bool isUpdate)
+        internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
             Task.Run(() =>
             {
-                // Craete context and get roles
+                // Create context and get roles
                 var context = DbContextFactory.CreateDbContext();
                 var roles = RolesService.GetAll(context).DistinctBy(x => x.Person.PersonId);
 
@@ -314,7 +314,7 @@ namespace PPMTool.Services
 
                     // Write intro
                     body.Append($"<p>Dear {m.Name},</p>");
-                    var content = isUpdate ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
+                    var content = listOfChanges != null ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
                     body.Append($"<p>{content}</p>");
                     body.Append("<hr />");
 
@@ -327,6 +327,20 @@ namespace PPMTool.Services
                     // Include editor info as italics
                     body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
                     body.Append("<hr />");
+
+                    // State changes
+                    if (listOfChanges != null)
+                    {
+                        body.Append("<p><b>Changes</b></p>");
+
+                        // Write each change one and a time
+                        foreach (var diff in listOfChanges
+                            .Where(x => x.PropertyName != nameof(Note.Editor) && x.PropertyName != nameof(Note.EditedDate))
+                        )
+                        {
+                            body.Append($"{diff.PropertyName}: {diff.OriginalValue ?? "None"} => {diff.CurrentValue ?? "None"}<br/>");
+                        }
+                    }
 
                     // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
