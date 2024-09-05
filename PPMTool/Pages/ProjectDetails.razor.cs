@@ -338,6 +338,17 @@ namespace PPMTool.Pages
 
         private void GroupTasksChanged(bool value)
         {
+            // Set the axis limits?
+            ganttChartOptions.Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Min = confirmedBlocks.Concat(provisionalBlocks).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
+                    Max = confirmedBlocks.Concat(provisionalBlocks).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
+                }
+            };
+            gantt?.UpdateOptionsAsync(false, false, false);
+
             // Redraw the chart
             gantt?.RenderAsync();
         }
