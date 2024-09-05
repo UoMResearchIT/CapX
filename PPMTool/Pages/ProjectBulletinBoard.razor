@@ -42,7 +42,7 @@
             {
                 <h3>@(group.Key.ToNiceString())</h3>
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                    @foreach (var project in group.OrderByDescending(x => x.SubTasks.Sum(x => x.GetUnmetDemandNowAndInFuture())))
+                    @foreach (var project in group.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture())))
                     {
                         <ProjectBulletinCardComponent project="@project" />
                     }
