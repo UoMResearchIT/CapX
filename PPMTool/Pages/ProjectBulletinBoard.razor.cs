@@ -19,10 +19,11 @@ namespace PPMTool.Pages
         private ProjectService ProjectService { get; set; }
 
         private IEnumerable<Project> availableProjects;
+        private IEnumerable<IGrouping<ProjectStatus, Project>> availableProjectsGrouped;
         private IEnumerable<Project> allProjects;
         private DateTime? startDate;
         private DateTime? endDate;
-        private bool groupByStatus;
+        private bool groupByStatus = true;
 
 
         protected override void OnInitialized()
@@ -42,32 +43,29 @@ namespace PPMTool.Pages
             }
         }
 
-        private void ClearDateFilter()
-        {
-            startDate = null;
-            endDate = null;
-            FilterProjects();
-        }
-
         private void FilterProjects()
         {
             if (allProjects == null) return;
 
-            availableProjects = allProjects;
+            var temp = allProjects;
 
             if (startDate != null)
             {
-
+                // If start date specified then the task has to run after the start date for it to be a viable option
+                temp = temp.Where(x => x.SubTasks.Any(x => x.UnmetDemand > 0 && startDate <= x.EndDate));
             }
 
             if (endDate != null)
             {
-
+                // If an end date is specified then the task has to run before the end date for it to be viable
+                temp = temp.Where(x => x.SubTasks.Any(x => x.UnmetDemand > 0 && x.StartDate <= endDate));
             }
+
+            availableProjects = temp;
 
             if (groupByStatus)
             {
-
+                availableProjectsGrouped = temp.GroupBy(x => x.ProjectStatus);
             }
         }
 
@@ -77,7 +75,7 @@ namespace PPMTool.Pages
             var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
 
             // Filter to just projects that are active with current or future unmet demand
-            allProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandNowOrInFuture());
+            allProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandNowOrInFuture() && x.ProjectStatus != ProjectStatus.Paused);
 
             // Filter the projects
             FilterProjects();
