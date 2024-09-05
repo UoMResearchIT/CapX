@@ -38,18 +38,32 @@
             <RadzenButton Text=@(project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
                           Icon="description" Click="@(args => ViewRequestDocClickedAsync(project))"
                           ButtonStyle=@(project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
-                          Disabled=@project.HasNoRequestDocLink() />
+                          Disabled=@project.HasNoRequestDocLink()
+                          Style="width: 100%" />
+            @if (ShowDetailsButton)
+            {
+                <RadzenButton Text="View Project Details"
+                              Icon="info" Click="@(args => ViewDetails(project.ProjectId))"
+                              ButtonStyle=ButtonStyle.Primary
+                              Style="width: 100%" />
+            }
         </RadzenStack>
     </RadzenStack>
 </div>
 
 @code {
-    
+
     [Parameter]
     public Project project { get; set; }
 
+    [Parameter]
+    public bool ShowDetailsButton { get; set; }
+
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; }
 
     /// <summary>
     /// Navigate to the Request Doc Link in new window
@@ -59,5 +73,10 @@
     private async Task ViewRequestDocClickedAsync(Project project)
     {
         await JSRuntime.InvokeAsync<object>("open", $"{project.RequestDocLink}", "_blank");
+    }
+
+    private void ViewDetails(int id)
+    {
+        Navigation.NavigateTo($"/projectdetails/{id}");
     }
 }

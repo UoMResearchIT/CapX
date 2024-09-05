@@ -16,19 +16,17 @@
             }
             else
             {
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <h1>@project.GetFullName()</h1>
-                    <RadzenButton Icon="info" Click="@ViewDescription" Disabled="@(project?.HasNoDescription() ?? true)" />
-                </RadzenStack>
+                <h1>@project.GetFullName()</h1>
                 
             }
         </div>
         <div class="col-auto">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                 @if (EditAuthorised)
                 {
                     <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(activeUser == project?.ProjectManager) />
                 }
+                <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" />
                 <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
                 <RequestAndScrumButtonsComponent Project="@project" />
             </RadzenStack>
@@ -169,12 +167,28 @@
 
                     </ApexChart>
                 </RadzenCard>
+
                 <RadzenCard class="rz-p-2">
-                    <RadzenStack class="rz-m-0 rz-p-0" Orientation="Radzen.Orientation.Horizontal" Gap="0" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
-                        <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg> Demand Met</div>
-                        <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(124)" /></svg> &lt;25% Unmet</div>
-                        <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(149)" /></svg> &lt;50% Unmet</div>
-                        <div class="col-auto"><svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(150)" /></svg> &gt;50% Unmet</div>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.4rem">
+                            <RadzenText Text="Unmet Demand:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg>
+                                <RadzenText Text="None" class="center-text" />
+                            </RadzenStack>
+                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(124)" /></svg>
+                                <RadzenText Text="&lt;25%" class="center-text" />
+                            </RadzenStack>
+                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(149)" /></svg>
+                                <RadzenText Text="&lt;50%" class="center-text" />
+                            </RadzenStack>
+                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(150)" /></svg>
+                                <RadzenText Text="&gt;50%" class="center-text" />
+                            </RadzenStack>
+                        </RadzenStack>
                     </RadzenStack>
                 </RadzenCard>
             </div>

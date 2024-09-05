@@ -67,7 +67,7 @@
     {
         <!-- Legend -->
         <div class="card">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" Gap="0.8rem">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
                     <RadzenText Text="Capacity:" TextStyle="TextStyle.Subtitle1" class="center-text" />
                     <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
@@ -104,12 +104,17 @@
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
                         <RadzenText Text="Assignments:" TextStyle="TextStyle.Subtitle1" class="center-text" />
                         <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                            <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(20, true)" /></svg>
-                            <RadzenText Text="Low Load" class="center-text" />
-                        </RadzenStack>
-                        <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                            <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(70, true)" /></svg>
-                            <RadzenText Text="High Load" class="center-text" />
+                            <RadzenText Text="0 FTE" class="center-text" />
+                            <svg width=200 height=20 xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="Gradient1">
+                                        <stop offset="0%" stop-color="@ChartItem.GetColourStringPercentage(0, true)" />
+                                        <stop offset="100%" stop-color="@ChartItem.GetColourStringPercentage(100, true)" />
+                                    </linearGradient>
+                                </defs>
+                                <rect width="200" height="20" rx="15" fill="url(#Gradient1)" />
+                            </svg>
+                            <RadzenText Text="1.0 FTE" class="center-text" />
                         </RadzenStack>
                     </RadzenStack>
                 }

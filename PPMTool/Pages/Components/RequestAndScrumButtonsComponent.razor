@@ -36,7 +36,7 @@
         base.OnInitialized();
         hasScrumLink = !string.IsNullOrWhiteSpace(Project?.ScrumProjectLink);
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
-        scrumText = hasScrumLink ? "View Scrum Project" : "No Scrum Project";
-        requestText = hasRequestDoc ? "View Request Doc" : "No Request Doc";
+        scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
+        requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";
     }
 }

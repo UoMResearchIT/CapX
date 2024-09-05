@@ -44,7 +44,7 @@
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                     @foreach (var project in group.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture())))
                     {
-                        <ProjectBulletinCardComponent project="@project" />
+                        <ProjectBulletinCardComponent project="@project" ShowDetailsButton="EditAuthorised" />
                     }
                 </RadzenStack>
                 <hr />
@@ -55,7 +55,7 @@
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                 @foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture())))
                 {
-                    <ProjectBulletinCardComponent project="@project" />
+                    <ProjectBulletinCardComponent project="@project" ShowDetailsButton="EditAuthorised" />
                 }
             </RadzenStack>
             <hr />
