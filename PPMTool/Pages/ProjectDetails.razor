@@ -16,8 +16,15 @@
             }
             else
             {
-                <h1>@project.GetFullName()</h1>
-                
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <h1>@project.GetFullName()</h1>
+                    <RadzenBadge BadgeStyle="@(
+                                    project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
+                                    project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
+                                    project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                    BadgeStyle.Light)"
+                                 Text="@project.ProjectStatus.ToNiceString()" />
+                </RadzenStack>
             }
         </div>
         <div class="col-auto">
@@ -58,7 +65,6 @@
                             <th>Actual Cost</th>
                             <th>Funds Received</th>
                             <th>Actual Hours</th>
-                            <th>Project Status</th>
                             <th>Start Date</th>
                             <th>End Date</th>
                         </tr>
@@ -74,7 +80,6 @@
                             <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>
                             <td><span style="color:@fundsReceivedColour">@project.FundsReceived.ToString("C0")</span></td>
                             <td>@project.SubTasks.RoundedSum(x => x.ActualWorkHours)</td>
-                            <td>@project.ProjectStatus.ToNiceString()</td>
                             <td>@project.StartDate.ToShortDateString()</td>
                             <td>@project.EndDate.ToShortDateString()</td>
                         </tr>

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using PPMTool.Enums;
+using static PPMTool.Data.ValidationAttributes;
 
 namespace PPMTool.Data.Entities
 {
@@ -37,8 +38,14 @@ namespace PPMTool.Data.Entities
         [Required]
         public double Budget { get; set; }
 
-        [Required]
+        /// <summary>
+        /// If the relevant cost model is chosen then this becomes a required field
+        /// </summary>
+        [RequiredForAny(Values = new[] { nameof(CostModel.DayRate) }, PropertyName = nameof(CostModel))]
         public double DayRate { get; set; }
+
+        [Required]
+        public CostModel CostModel { get; set; }
 
         [Required]
         public double FundsReceived { get; set; }

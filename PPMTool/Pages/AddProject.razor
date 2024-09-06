@@ -96,19 +96,28 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-6">
                     <RadzenLabel class="radzen-form-label" Text="Link to Request Doc" /><br />
                     <RadzenTextBox TValue="string" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
                 </div>
-                <div class="col-4">
+                <div class="col-6">
                     <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
                     <RadzenTextBox TValue="string" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
                 </div>
             </div>
             <div class="row">
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
+                    <RadzenLabel class="radzen-form-label" Text="Cost Model" /><br />
+                    <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.CostModel" Data="@(Enum.GetNames(typeof(CostModel)).ToList())">
+                        <Template Context="cost">
+                            @cost.GetDescription()
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
+                    <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" Disabled="@(projectModel.CostModel != CostModel.DayRate)" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
