@@ -56,6 +56,7 @@ namespace PPMTool
             services.AddScoped<TagService>();
             services.AddScoped<EmailService>();
             services.AddScoped<NoteService>();
+            services.AddScoped<FinancialReferenceService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>
