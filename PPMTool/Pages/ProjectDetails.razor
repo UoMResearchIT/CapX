@@ -6,6 +6,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using Radzen.Blazor.Rendering
+@using System.ComponentModel.DataAnnotations
 
 <div class="container">
     <div class="row">
@@ -59,6 +60,7 @@
                             <th>PI</th>
                             <th>School (Faculty)</th>
                             <th>PM</th>
+                            <th>Cost Model</th>
                             <th>Day Rate</th>
                             <th>Budget</th>
                             <th>Planned Cost</th>
@@ -74,7 +76,8 @@
                             <td>@project.PI</td>
                             <td>@($"{project.School.ToNiceString()} ({project.Faculty.ToNiceString()})")</td>
                             <td>@(project.ProjectManager?.Name ?? "Not Set")</td>
-                            <td>@project.DayRate.ToString("C0")</td>
+                            <td>@(project.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
+                            <td>@(project.CostModel == CostModel.DayRate ? project.DayRate.ToString("C0") : "N/A")</td>
                             <td>@project.Budget.ToString("C0")</td>
                             <td><span style="color:@plannedCostColour">@project.PlannedCost.ToString("C0")</span></td>
                             <td><span style="color:@actualCostColour">@project.ActualCost.ToString("C0")</span></td>

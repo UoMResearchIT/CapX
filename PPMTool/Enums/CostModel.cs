@@ -1,14 +1,18 @@
 ﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Enums
 {
     public enum CostModel
     {
-        [Description("Technical Only using a specific Day Rate")]
+        [Display(Name = "Day Rate Technical Only")]
+        [Description("Uses specific day rate")]
         DayRate,
-        [Description("Technical Only using the middle of the grade for assigned resources")]
+        [Display(Name = "Grade Based Technical Only")]
+        [Description("Uses middle of the grade for assigned resources")]
         GradeBasedTechnicalOnly,
-        [Description("Technical using the middle of the grade for assigned resources + leadership over project duration using at middle of the grade for PM")]
+        [Display(Name = "Grade Based Tech + Leadership")]
+        [Description("Uses middle of the grade for assigned resources + middle of G7 over project duration for PM time")]
         GradeBasedTechAndLeadership
     }
 }

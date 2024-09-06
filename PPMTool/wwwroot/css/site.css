@@ -107,7 +107,8 @@ select {
 .radzen-numeric {
     margin-left: 4pt;
     margin-bottom: 4pt;
-    margin-top: 4pt
+    margin-top: 4pt;
+    width: 100%
 }
 
 .radzen-form-label {
