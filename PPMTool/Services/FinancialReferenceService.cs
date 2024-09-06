@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -37,6 +38,11 @@ namespace PPMTool.Services
             context.FinancialReferences.Update(entity);
             if (commitChanges) context.SaveChanges();
             return entity.FinancialReferenceId;
+        }
+
+        public override bool DuplicateDetected(PPMToolContext context, FinancialReference entity)
+        {
+            return context.FinancialReferences.Any(x => x.FinancialYear == entity.FinancialYear && x.FinancialReferenceId != entity.FinancialReferenceId);
         }
     }
 }
