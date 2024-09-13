@@ -302,22 +302,30 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Update the sub task properties but doesn't save to the database
+        /// Updates the resources on the subtask model from the data grid and validates
         /// </summary>
-        public void UpdateSubTask()
+        public void UpdateSubTaskModelFromResourceDataGrid()
         {
             LogInformation("Validating the sub task model...");
             editContext?.Validate();
 
-            LogInformation("Updating sub task configuration...");
+            LogInformation("Updating sub task resources from data grid entities...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
+            TaskModel.ActualWorkHours = 0;
             foreach (var r in dataGridEntities)
             {
                 Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
                 TaskModel.AssignedResources.Add(r);
+
+                // Update the actual hours on the subtask from the resources
+                TaskModel.ActualWorkHours += r.ActualWorkHours;
             }
+
+
+
+            // TODO: Invoke method instead to update the actual hours and costs on each resource and the sub task
 
             // Track total proportion of effort
             double totalResourceDaysPerDay = 0;
@@ -343,16 +351,20 @@ namespace PPMTool.Pages
 
             // Update the actual cost for the sub task
             // Truncate to 2 DP
-
-            // TODO: Invoke method instead
-
             TaskModel.ActualCost = Math.Round(TaskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
+
+
+
+
+
 
             // Update predecessor task
             TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
-            // Schedule
+            // Schedule (updates planned work, duration etc.)
             error = TaskModel.Schedule(false, ProjectModel);
+
+            // Set validity based on scheduler result
             IsValid = error == null;
 
             // Call schedule() on the subtask that this is a predecssor for
@@ -398,7 +410,7 @@ namespace PPMTool.Pages
         {
             if (ProjectModel != null)
             {
-                UpdateSubTask();
+                UpdateSubTaskModelFromResourceDataGrid();
                 if (IsValid)
                 {
                     LogInformation("Saving sub task...");
