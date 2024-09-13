@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -43,6 +45,17 @@ namespace PPMTool.Services
         public override bool DuplicateDetected(PPMToolContext context, FinancialReference entity)
         {
             return context.FinancialReferences.Any(x => x.FinancialYear == entity.FinancialYear && x.FinancialReferenceId != entity.FinancialReferenceId);
+        }
+
+        /// <summary>
+        /// Method to return a suitable financial reference following set logic given a date in a certain financial year
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="startDate"></param>
+        /// <returns></returns>
+        public FinancialReference GetFinancialReferenceForDate(PPMToolContext context, DateTime startDate)
+        {
+            return GetAll(context).GetSuitableFinancialReference(startDate);
         }
     }
 }

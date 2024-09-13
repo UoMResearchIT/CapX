@@ -80,7 +80,6 @@ a, .btn-link {
 
 input {
     width: 100%;
-    margin: 5px
 }
 
 select {
@@ -107,7 +106,7 @@ select {
 .radzen-numeric {
     margin-left: 4pt;
     margin-bottom: 4pt;
-    margin-top: 4pt;
+    margin-top: 0pt;
     width: 100%
 }
 
@@ -210,4 +209,14 @@ mark {
 
 .center-text {
     margin-bottom: 0rem;
+}
+.rz-switch {
+    margin: 0.3rem
+}
+.card {
+    background-color: #fcfcfc
+}
+
+.rz-card {
+    background-color: #fcfcfc
 }

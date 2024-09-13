@@ -62,14 +62,12 @@
     else
     {
         <div class="card">
-            <div class="row align-items-center mb-3">
-                <div class="col-auto">
-                    Include Finished?:
-                </div>
-                <div class="col-auto" style="display: flex">
-                    <RadzenSwitch @bind-Value="@IncludeFinished" />
-                </div>
-            </div>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
+                <RadzenSwitch @bind-Value="@IncludeFinished" />
+            </RadzenStack>
+        </div>
+        <div class="card">
             <RadzenDataGrid AllowFiltering="@(projects != null && projects.Count() > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"

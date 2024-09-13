@@ -226,18 +226,14 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" MinWidth="10px">
                                 <Template Context="res">
-                                    <div class="align-items-center p-1">
-                                        <div style="display: flex">
-                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true />
-                                        </div>
-                                    </div>
+                                    <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                                        <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true />
+                                    </RadzenStack>
                                 </Template>
                                 <EditTemplate Context="res">
-                                    <div class="align-items-center p-1">
-                                        <div style="display: flex">
-                                            <RadzenSwitch @bind-Value="@res.IsProvisional" />
-                                        </div>
-                                    </div>
+                                    <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                                        <RadzenSwitch @bind-Value="@res.IsProvisional" />
+                                     </RadzenStack>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="ActualWorkHours" Title="Actual Hours" MinWidth="10px">
@@ -256,17 +252,17 @@
 
                             @if (ProjectModel.CostModel == CostModel.DayRate)
                             {
-                                <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Title="Project Day Rate?" MinWidth="10px">
+                                <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Width="120px" Title="Project Day Rate?" MinWidth="10px">
                                     <Template Context="res">
-                                        <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal">
+                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
                                             <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true />
-                                            <RadzenText Style="margin-bottom: -0.1rem" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                            <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
                                         </RadzenStack>
                                     </Template>
                                     <EditTemplate Context="res">
-                                        <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal">
+                                        <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
                                             <RadzenSwitch @bind-Value="@res.UseProjectDayRate" />
-                                            <RadzenText Style="margin-bottom: -0.1rem" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                            <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
                                         </RadzenStack>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
