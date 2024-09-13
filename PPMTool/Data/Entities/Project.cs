@@ -228,6 +228,10 @@ namespace PPMTool.Data.Entities
                 }
             }
 
+            // Add the leadership costs
+            plannedCost += CalculateLeadershipCosts(false, financialReferences);
+            actualCost += CalculateLeadershipCosts(true, financialReferences);
+
             // Update project
             StartDate = startDate;
             EndDate = endDate;
@@ -259,6 +263,71 @@ namespace PPMTool.Data.Entities
             var windowStart = tasks.Min(x => x.StartDate);
             var windowEnd = tasks.Max(x => x.EndDate);
             return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
+        }
+
+        /// <summary>
+        /// Method to run the calculation of leaderhsip costs planned or actual
+        /// </summary>
+        /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
+        /// <param name="financialReferences"></param>
+        /// <returns></returns>
+        private double CalculateLeadershipCosts(bool actualCosts, IList<FinancialReference> financialReferences = null)
+        {
+            // If not using the leadership cost model then this is zero
+            if (CostModel == CostModel.DayRate)
+            {
+                return 0;
+            }
+
+            // What to use for end date -- use current date if looking for actuals and mid-project
+            var endDate = actualCosts ? (DateTime.Today > EndDate ? EndDate : DateTime.Today) : EndDate;
+
+            // For each financial year
+            var totalCost = 0d;
+            for (var finYear = FinancialReference.GetFinancialYear(StartDate); finYear <= FinancialReference.GetFinancialYear(endDate); finYear++)
+            {
+                // Get a suitable financial reference
+                var reference = financialReferences.GetSuitableFinancialReference(finYear);
+                var yearCost = 0d;
+                var yearFraction = 0d;
+
+                // Starts this financial year
+                if (FinancialReference.GetFinancialYear(StartDate) == finYear)
+                {
+                    // Starts and ends in the same financial year
+                    if (FinancialReference.GetFinancialYear(endDate) == finYear)
+                    {
+                        yearFraction = endDate.Subtract(StartDate).TotalDays / 365f;
+                    }
+
+                    // Starts this financial year but goes past the end
+                    else
+                    {
+                        yearFraction = (new DateTime(finYear + 1, 7, 31)).Subtract(StartDate).TotalDays / 365f;
+                    }
+                }
+
+                // Ends this financial year and starts in an earlier year
+                else if (FinancialReference.GetFinancialYear(endDate) == finYear)
+                {
+                    yearFraction = endDate.Subtract(new DateTime(finYear, 8, 1)).TotalDays / 365f;
+                }
+
+                // Starts and ends in different financial years
+                else
+                {
+                    yearFraction = 1d;
+                }
+
+                // Compute cost
+                yearCost = yearFraction * reference.Grade75Costs;
+
+                // Accumulate
+                totalCost += yearCost;
+            }
+
+            // Return the total cost
+            return totalCost;
         }
     }
 }
