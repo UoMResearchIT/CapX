@@ -203,7 +203,7 @@ namespace PPMTool.Pages
                     ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    ProjectModel.UpdateProjectSummary();
+                    ProjectModel.UpdateProjectMetaData();
 
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);
@@ -343,6 +343,9 @@ namespace PPMTool.Pages
 
             // Update the actual cost for the sub task
             // Truncate to 2 DP
+
+            // TODO: Invoke method instead
+
             TaskModel.ActualCost = Math.Round(TaskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
 
             // Update predecessor task
@@ -416,7 +419,7 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    ProjectModel.UpdateProjectSummary();
+                    ProjectModel.UpdateProjectMetaData();
 
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);

@@ -158,7 +158,7 @@ namespace PPMTool.Pages
                     if (!CheckProjectManagerSet()) return;
 
                     // Update the project summary values
-                    projectModel.UpdateProjectSummary();
+                    projectModel.UpdateProjectMetaData();
 
                     if (ProjectId > 0)
                     {

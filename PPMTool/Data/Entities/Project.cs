@@ -194,10 +194,17 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the project summary based on the current state of subtasks and resources then updates the database
+        /// Updates the project meta data based on the current state of subtasks, resources and actuals
         /// </summary>
-        public void UpdateProjectSummary()
+        public void UpdateProjectMetaData(IList<FinancialReference> financialReferences = null)
         {
+            // Check conditions for cost update
+            if ((CostModel == CostModel.GradeBasedTechJunAndLeadership || CostModel == CostModel.GradeBasedTechStdAndLeadership) &&
+                (financialReferences == null || financialReferences.Count == 0))
+            {
+                throw new Exception("Cannot compute leadership costs for the project as at least one financial reference is required based on the model chosen!");
+            }
+
             // Set initial values
             DateTime startDate = DateTime.MaxValue;
             DateTime endDate = DateTime.MinValue;
@@ -214,7 +221,7 @@ namespace PPMTool.Data.Entities
                     if (task.StartDate < startDate) startDate = task.StartDate;
                     if (task.EndDate > endDate) endDate = task.EndDate;
 
-                    // Sum costs and hours
+                    // Sum technical costs and hours
                     actualCost += task.ActualCost;
                     plannedCost += task.PlannedCost;
                     actualHours += task.ActualWorkHours;
