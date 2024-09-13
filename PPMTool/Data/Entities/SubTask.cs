@@ -471,40 +471,26 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the technical cost of the task either actual or planned based on the resources, model and financial references provided
-        /// Ignores grade changes mid-task -- all resources are assumed to cost whatever grade they were at the start of the task
+        /// Updates the actual or planned technical costs of the task based on the resources, model and financial references provided
         /// </summary>
-        /// <param name="actualCosts"></param>
         /// <param name="costModel"></param>
-        /// <param name="financialReferences"></param>
-        /// <param name="dayRate"></param>
+        /// <param name="financialReference"></param>
+        /// <param name="projectDayRate"></param>
         /// <returns></returns>
-        internal void UpdateSubTaskCosts(bool actualCosts, CostModel costModel, IList<FinancialReference> financialReferences = null, double? dayRate = null)
+        internal void UpdateSubTaskCosts(CostModel costModel, double? projectDayRate, FinancialReference financialReference = null)
         {
             // Reset the totals for this sub task
-            if (actualCosts)
-            {
-                ActualCost = 0;
-            }
-            else
-            {
-                PlannedCost = 0;
-            }
+            ActualCost = 0;
+            PlannedCost = 0;
 
             // For each resource assigned, update the costs
             foreach (var res in AssignedResources)
             {
-                res.UpdateResourceCosts(actualCosts, costModel, StartDate, EndDate, financialReferences, dayRate);
+                res.UpdateResourceCosts(costModel, StartDate, EndDate, projectDayRate, financialReference);
 
                 // Sum up the result post-update
-                if (actualCosts)
-                {
-                    ActualCost += res.ActualCost;
-                }
-                else
-                {
-                    PlannedCost += PlannedCost;
-                }
+                ActualCost += res.ActualCost;
+                PlannedCost += res.PlannedCost;
             }
         }
     }

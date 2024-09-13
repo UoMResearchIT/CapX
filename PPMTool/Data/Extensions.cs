@@ -98,7 +98,7 @@ namespace PPMTool.Data
         /// <param name="date"></param>
         /// <returns></returns>
         /// <exception cref="Exception">If no suitable references can be found</exception>
-        public static FinancialReference GetSuitableFinancialReference(this IList<FinancialReference> list, int year)
+        public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, int year)
         {
             // Try find matching reference
             var match = list.FirstOrDefault(x => x.FinancialYear == year);
@@ -130,7 +130,7 @@ namespace PPMTool.Data
         /// <param name="list"></param>
         /// <param name="date"></param>
         /// <returns></returns>
-        public static FinancialReference GetSuitableFinancialReference(this IList<FinancialReference> list, DateTime date)
+        public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, DateTime date)
         {
             // Get financial year from date
             int year = FinancialReference.GetFinancialYear(date);

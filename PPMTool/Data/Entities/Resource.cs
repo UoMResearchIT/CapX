@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using PPMTool.Enums;
 using PPMTool.Pages;
 
@@ -18,8 +16,7 @@ namespace PPMTool.Data.Entities
 
         /// <summary>
         /// This is the day rate associated with this resource assignment.
-        /// If this is null when creating the resource, it will be assigned based
-        /// on the default day rate for the project.
+        /// If this is null when using the project day rate.
         /// </summary>
         [DataType(DataType.Currency)]
         public double? DayRate { get; set; }
@@ -59,51 +56,70 @@ namespace PPMTool.Data.Entities
             return $"{Person?.Name} (Resource)";
         }
 
-        internal void UpdateResourceCosts(bool actualCosts, CostModel costModel, DateTime taskStart, DateTime taskEnd, IList<FinancialReference> financialReferences = null, double? dayRate = null)
+        /// <summary>
+        /// Updates the planned and actual cost of the resource given either a day rate a financial reference
+        /// </summary>
+        /// <param name="costModel"></param>
+        /// <param name="taskStart"></param>
+        /// <param name="taskEnd"></param>
+        /// <param name="financialReference"></param>
+        /// <param name="projectDayRate"></param>
+        internal void UpdateResourceCosts(CostModel costModel, DateTime taskStart, DateTime taskEnd, double? projectDayRate, FinancialReference financialReference = null)
         {
-            // Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
-            var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();
-
-            // Compute start and end FY for task
-            var startFY = FinancialReference.GetFinancialYear(taskStart);
-            var endFY = FinancialReference.GetFinancialYear(taskEnd);
-            var currentFY = FinancialReference.GetFinancialYear(DateTime.Today);
-
-            if (actualCosts)
+            // TODO: Update so that planned and actuals only use the same financial reference or day rate for the whole task duration
+            if (costModel == CostModel.DayRate)
             {
-                // TODO: Actual costs - calculated on a per resource basis based on the hours recorded for that person
-                ActualCost = 0;
-
-                // Actuals per year?
-
-                // Convert hours to billable days
-
-
+                // TODO: Easy day rate calculation using the day rate currently configured on the resource or the project day rate given to it if necessary
             }
             else
             {
-                // Cost of each resource -- note that these are committed costs, cost of unmet demand is not included as it is not a planned cost.
-                // Ignores WLM changes mid-assignment as too complicated to work out.
-                PlannedCost = 0;
-
-                // First period is partial year from start of task to end of the FY
-                var finref = financialReferences.GetSuitableFinancialReference(startFY);
-                var billableDays = SubTask.GetNumberOfBillableDays(taskStart, new DateTime(startFY + 1, 7, 31)) * AssignmentFTE;
-                PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade) * (billableDays / 220);
-
-                // Compute cost for each complete FY
-                for (int fy = startFY + 1; fy < endFY; ++fy)
-                {
-                    finref = financialReferences.GetSuitableFinancialReference(fy);
-                    billableDays = 220 * AssignmentFTE;
-                    PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade);
-                }
-
-                // Final period is partial year again from start of FY to end of task
-                finref = financialReferences.GetSuitableFinancialReference(endFY);
-                billableDays = SubTask.GetNumberOfBillableDays(new DateTime(endFY, 8, 1), taskEnd) * AssignmentFTE;
-                PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade) * (billableDays / 220);
+                // TODO: Use a financial reference and the standard or junior rate to compute the cost
             }
+
+            //// Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
+            //var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();
+
+            //// Compute start and end FY for task
+            //var startFY = FinancialReference.GetFinancialYear(taskStart);
+            //var endFY = FinancialReference.GetFinancialYear(taskEnd);
+            //var currentFY = FinancialReference.GetFinancialYear(DateTime.Today);
+
+
+            //if (actualCosts)
+            //{
+            //    // TODO: Actual costs - calculated on a per resource basis based on the hours recorded for that person
+            //    ActualCost = 0;
+
+            //    // Actuals per year?
+
+            //    // Convert hours to billable days
+
+
+            //}
+            //else
+            //{
+            //    // Cost of each resource -- note that these are committed costs, cost of unmet demand is not included as it is not a planned cost.
+            //    // Ignores WLM changes mid-assignment as too complicated to work out.
+            //    PlannedCost = 0;
+
+            //    // First period is partial year from start of task to end of the FY
+            //    var finref = financialReference.GetSuitableFinancialReference(startFY);
+            //    var billableDays = SubTask.GetNumberOfBillableDays(taskStart, new DateTime(startFY + 1, 7, 31)) * AssignmentFTE;
+            //    PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade) * (billableDays / 220);
+
+            //    // Compute cost for each complete FY
+            //    for (int fy = startFY + 1; fy < endFY; ++fy)
+            //    {
+            //        finref = financialReference.GetSuitableFinancialReference(fy);
+            //        billableDays = 220 * AssignmentFTE;
+            //        PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade);
+            //    }
+
+            //    // Final period is partial year again from start of FY to end of task
+            //    finref = financialReference.GetSuitableFinancialReference(endFY);
+            //    billableDays = SubTask.GetNumberOfBillableDays(new DateTime(endFY, 8, 1), taskEnd) * AssignmentFTE;
+            //    PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade) * (billableDays / 220);
+            //}
         }
     }
 }
