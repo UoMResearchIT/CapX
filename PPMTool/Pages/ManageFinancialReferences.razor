@@ -45,6 +45,14 @@
                     <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade41Costs" Style="width:100%; display: block;"/>
                 </EditTemplate>
             </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="FinancialReference" Property="Grade51Costs" Title="Grade 5.1" MinWidth="10px">
+                <Template Context="fin">
+                    @fin.Grade51Costs.ToString("C")
+                </Template>
+                <EditTemplate Context="fin">
+                    <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade51Costs" Style="width:100%; display: block;" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="FinancialReference" Property="Grade55Costs" Title="Grade 5.5" MinWidth="10px">
                 <Template Context="fin">
                     @fin.Grade55Costs.ToString("C")
