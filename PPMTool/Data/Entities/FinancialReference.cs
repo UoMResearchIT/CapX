@@ -44,7 +44,7 @@ namespace PPMTool.Data.Entities
         /// <param name="grade"></param>
         /// <returns></returns>
         /// <exception cref="Exception">If a grade lower than 4 is found</exception>
-        internal double GetSuitableCostForGrade(int grade)
+        internal double GetJuniorOrStandardAnnualCosts(int grade)
         {
             // Junior Rate
             if (grade == 4 || grade == 5)
@@ -58,6 +58,36 @@ namespace PPMTool.Data.Entities
                 return Grade71Costs;
             }
 
+            else
+            {
+                throw new Exception($"Grade {grade} is invalid!");
+            }
+        }
+
+        /// <summary>
+        /// Returns the mid grade salary costs from the reference (grade 4 always bottom of grade)
+        /// </summary>
+        /// <param name="grade"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception">If grade is not a valid grade</exception>
+        internal double GetMidGradeCosts(int grade)
+        {
+            if (grade == 4)
+            {
+                return Grade41Costs;
+            }
+            else if (grade == 5)
+            {
+                return Grade55Costs;
+            }
+            else if (grade == 6)
+            {
+                return Grade65Costs;
+            }
+            else if (grade == 7)
+            {
+                return Grade75Costs;
+            }
             else
             {
                 throw new Exception($"Grade {grade} is invalid!");
