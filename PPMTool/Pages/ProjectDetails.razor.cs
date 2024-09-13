@@ -714,7 +714,14 @@ namespace PPMTool.Pages
                 }
                 else
                 {
-                    // TODO: Throw some kind of warning if the mention cannot be resolved
+                    // Warning if the mention cannot be resolved
+                    ShowNotification(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Mention Failure",
+                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct.",
+                        Duration = 4000
+                    });
                 }
             }
 
@@ -748,7 +755,14 @@ namespace PPMTool.Pages
                 }
                 else
                 {
-                    // TODO: Throw some kind of warning if the reference cannot be resolved
+                    // Warning if the reference cannot be resolved
+                    ShowNotification(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "RTP Reference Failure",
+                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct.",
+                        Duration = 4000
+                    });
                 }
             }
         }
