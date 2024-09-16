@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a person as a resource to be assigned to a subtask
     /// </summary>
-    public class Resource : ILoggableClass
+    public class Resource : CostedItem, ILoggableClass
     {
         public int ResourceId { get; set; }
 
@@ -43,14 +43,6 @@ namespace PPMTool.Data.Entities
                 }
             }
         }
-
-        public double PlannedWorkHours { get; set; }
-
-        public double ActualWorkHours { get; set; }
-
-        public double PlannedCost { get; set; }
-
-        public double ActualCost { get; set; }
 
         public string GetSensibleObjectName()
         {
