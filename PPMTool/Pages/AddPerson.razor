@@ -167,7 +167,7 @@
                                     class="half-height-list"
                                     WrapItems="false"
                                     AllowPaging="false"
-                                    Data="@personModel.Absences"
+                                    Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
                                     TItem="Absence">
                         <Template Context="a">
                             <div class="row flexbox p-0">
