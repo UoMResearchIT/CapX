@@ -9,16 +9,16 @@ namespace PPMTool.Enums
         [Description("Uses specific day rate")]
         DayRate,
         [Display(Name = "Grade Based Technical Only (Standard)")]
-        [Description("Uses middle of the grade for assigned resources; budget based on standard rate")]
+        [Description("Middle of the grade for assigned resources; planned cost based on standard rate")]
         GradeBasedTechnicalOnlyStandard,
         [Display(Name = "Grade Based Technical Only (Junior)")]
-        [Description("Uses middle of the grade for assigned resources; budget based on junior rate")]
+        [Description("Middle of the grade for assigned resources; planned cost based on junior rate")]
         GradeBasedTechnicalOnlyJunior,
         [Display(Name = "Grade Based Tech (Std) + Leadership")]
-        [Description("Uses middle of the grade for assigned resources; budget based on standard rate; middle of G7 for PM time over project duration")]
+        [Description("Middle of the grade for assigned resources; planned cost based on standard rate; middle of G7 for PM time over project duration")]
         GradeBasedTechStdAndLeadership,
         [Display(Name = "Grade Based Tech (Jun) + Leadership")]
-        [Description("Uses middle of the grade for assigned resources; budget based on junior rate; middle of G7 for PM time over project duration")]
+        [Description("Middle of the grade for assigned resources; planned cost based on junior rate; middle of G7 for PM time over project duration")]
         GradeBasedTechJunAndLeadership
     }
 }

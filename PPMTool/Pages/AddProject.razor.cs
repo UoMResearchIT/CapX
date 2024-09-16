@@ -37,6 +37,9 @@ namespace PPMTool.Pages
         [Inject]
         private DialogService DialogService { get; set; }
 
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -158,7 +161,8 @@ namespace PPMTool.Pages
                     if (!CheckProjectManagerSet()) return;
 
                     // Update the project summary values
-                    projectModel.UpdateProjectMetaData();
+                    var finrefs = FinancialReferenceService.GetAll(context);
+                    projectModel.UpdateProjectMetaData(true, finrefs);
 
                     if (ProjectId > 0)
                     {

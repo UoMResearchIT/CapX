@@ -206,7 +206,8 @@ namespace PPMTool.Pages
                     ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    ProjectModel.UpdateProjectMetaData();
+                    var finrefs = FinancialReferenceService.GetAll(context);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);
@@ -344,7 +345,7 @@ namespace PPMTool.Pages
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
             var finref = FinancialReferenceService.GetFinancialReferenceForDate(context, TaskModel.StartDate);
-            TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, ProjectModel.CostModel != CostModel.DayRate ? finref : null);
+            TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, finref);
 
             // Set validity based on scheduler result
             IsValid = error == null;
@@ -413,7 +414,8 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    ProjectModel.UpdateProjectMetaData();
+                    var finrefs = FinancialReferenceService.GetAll(context);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);

@@ -206,11 +206,12 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Updates the project meta data based on the current state of subtasks, resources and actuals
         /// </summary>
-        public void UpdateProjectMetaData(IList<FinancialReference> financialReferences = null)
+        /// <param name="updateSubTaskCosts">Whether to update the subtask costs and save to database</param>
+        /// <param name="financialReferences">If necessary a set of financial references</param>
+        public void UpdateProjectMetaData(bool updateSubTaskCosts, IEnumerable<FinancialReference> financialReferences)
         {
             // Check conditions for cost update
-            if ((CostModel == CostModel.GradeBasedTechJunAndLeadership || CostModel == CostModel.GradeBasedTechStdAndLeadership) &&
-                (financialReferences == null || financialReferences.Count == 0))
+            if (CostModel != CostModel.DayRate && (financialReferences == null || financialReferences.Count() == 0))
             {
                 throw new Exception("Cannot compute leadership costs for the project as at least one financial reference is required based on the model chosen!");
             }
@@ -232,6 +233,16 @@ namespace PPMTool.Data.Entities
                     if (task.EndDate > endDate) endDate = task.EndDate;
 
                     // Sum technical costs and hours
+                    if (updateSubTaskCosts)
+                    {
+                        // Pick a suitable financial reference for this task
+                        var finref = financialReferences.GetSuitableFinancialReference(task.StartDate);
+
+                        // Update the cost of the tasks (and resources)
+                        task.UpdateSubTaskCosts(CostModel, DayRate, finref);
+                    }
+
+                    // Read subtask costs and hours and accumulate
                     actualCost += task.ActualCost;
                     plannedCost += task.PlannedCost;
                     actualHours += task.ActualWorkHours;
@@ -281,7 +292,7 @@ namespace PPMTool.Data.Entities
         /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
         /// <param name="financialReferences"></param>
         /// <returns></returns>
-        private double CalculateLeadershipCosts(bool actualCosts, IList<FinancialReference> financialReferences = null)
+        private double CalculateLeadershipCosts(bool actualCosts, IEnumerable<FinancialReference> financialReferences)
         {
             // If not using the leadership cost model then this is zero
             if (CostModel == CostModel.DayRate)

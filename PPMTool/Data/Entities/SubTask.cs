@@ -477,7 +477,7 @@ namespace PPMTool.Data.Entities
         /// <param name="financialReference"></param>
         /// <param name="projectDayRate"></param>
         /// <returns></returns>
-        internal void UpdateSubTaskCosts(CostModel costModel, double? projectDayRate, FinancialReference financialReference = null)
+        internal void UpdateSubTaskCosts(CostModel costModel, double? projectDayRate, FinancialReference financialReference)
         {
             // Reset the totals for this sub task
             ActualCost = 0;

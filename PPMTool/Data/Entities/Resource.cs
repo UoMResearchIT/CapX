@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using PPMTool.Enums;
-using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
@@ -60,7 +59,7 @@ namespace PPMTool.Data.Entities
         /// <param name="taskEnd"></param>
         /// <param name="financialReference"></param>
         /// <param name="projectDayRate"></param>
-        internal void UpdateResourceCosts(CostModel costModel, DateTime taskStart, DateTime taskEnd, double? projectDayRate, FinancialReference financialReference = null)
+        internal void UpdateResourceCosts(CostModel costModel, DateTime taskStart, DateTime taskEnd, double? projectDayRate, FinancialReference financialReference)
         {
             // If using the day rate model then calculation is simple
             if (costModel == CostModel.DayRate)
