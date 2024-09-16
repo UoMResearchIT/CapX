@@ -84,6 +84,16 @@ namespace PPMTool.Data.Entities
         public ICollection<Person> Followers { get; set; } = new List<Person>();
 
         /// <summary>
+        /// If using a cost model that has leadership costs calculated, then the planned cost based on the expected duration of the project is available here
+        /// </summary>
+        public double PlannedLeadershipCosts { get; set; }
+
+        /// <summary>
+        /// If using a cost model that has leadership costs calculated, then the actual cost to date based on the duration of the project so far is available here
+        /// </summary>
+        public double ActualLeadershipCosts { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -229,8 +239,8 @@ namespace PPMTool.Data.Entities
             }
 
             // Add the leadership costs
-            plannedCost += CalculateLeadershipCosts(false, financialReferences);
-            actualCost += CalculateLeadershipCosts(true, financialReferences);
+            ActualLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(true, financialReferences)) / 100;
+            PlannedLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(false, financialReferences)) / 100;
 
             // Update project
             StartDate = startDate;
@@ -239,9 +249,9 @@ namespace PPMTool.Data.Entities
             // Truncate to 1 DP
             ActualWorkHours = Math.Round(10 * actualHours) / 10;
 
-            // Truncate the cost to 2 DP as it is currency
-            ActualCost = Math.Round(100 * actualCost) / 100;
-            PlannedCost = Math.Round(100 * plannedCost) / 100;
+            // Truncate the cost to 2 DP as it is currency and add on leadership costs
+            ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
+            PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts;
         }
 
         /// <summary>
