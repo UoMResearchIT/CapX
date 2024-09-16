@@ -348,7 +348,7 @@ namespace PPMTool.Data.Entities
             }
 
             // Return the total cost
-            return totalCost;
+            return totalCost < 0 ? 0 : totalCost;
         }
     }
 }
