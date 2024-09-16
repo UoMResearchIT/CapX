@@ -104,9 +104,7 @@ select {
 }
 
 .radzen-numeric {
-    margin-left: 4pt;
-    margin-bottom: 4pt;
-    margin-top: 0pt;
+    margin: 4pt;
     width: 100%
 }
 
@@ -119,9 +117,7 @@ select {
 }
 
 .radzen-dropdown {
-    margin-left: 4pt;
-    margin-bottom: 4pt;
-    margin-top: 4pt;
+    margin: 4pt;
     width: 100%;
 }
 
@@ -197,6 +193,7 @@ mark {
 
 .rz-textbox {
     text-indent: 0 !important;
+    margin: 4pt;
 }
 
 .rz-inputtext {
