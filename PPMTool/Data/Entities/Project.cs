@@ -340,8 +340,8 @@ namespace PPMTool.Data.Entities
                     yearFraction = 1d;
                 }
 
-                // Compute cost
-                yearCost = yearFraction * reference.Grade75Costs;
+                // Compute cost (0.05 FTE per project)
+                yearCost = yearFraction * reference.Grade75Costs * 0.05;
 
                 // Accumulate
                 totalCost += yearCost;
