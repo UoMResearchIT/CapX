@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
@@ -13,7 +12,7 @@ namespace PPMTool.Data.Entities
 
         public string GetSensibleObjectName()
         {
-            return Name;
+            return $"Skill Tag: {Name}";
         }
     }
 }
