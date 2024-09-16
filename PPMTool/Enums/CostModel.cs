@@ -8,17 +8,17 @@ namespace PPMTool.Enums
         [Display(Name = "Day Rate")]
         [Description("Uses specific day rate")]
         DayRate,
-        [Display(Name = "Grade Based Technical Only (Standard)")]
-        [Description("Middle of the grade for assigned resources; planned cost based on standard rate")]
-        GradeBasedTechnicalOnlyStandard,
-        [Display(Name = "Grade Based Technical Only (Junior)")]
-        [Description("Middle of the grade for assigned resources; planned cost based on junior rate")]
-        GradeBasedTechnicalOnlyJunior,
-        [Display(Name = "Grade Based Tech (Std) + Leadership")]
-        [Description("Middle of the grade for assigned resources; planned cost based on standard rate; middle of G7 for PM time over project duration")]
-        GradeBasedTechStdAndLeadership,
-        [Display(Name = "Grade Based Tech (Jun) + Leadership")]
-        [Description("Middle of the grade for assigned resources; planned cost based on junior rate; middle of G7 for PM time over project duration")]
-        GradeBasedTechJunAndLeadership
+        [Display(Name = "Two-Tier Rate Technical Only (Standard)")]
+        [Description("Standard or Junior rate for resources; planned cost based on Standard rate")]
+        TwoTierRateTechOnlyStd,
+        [Display(Name = "Two-Tier Rate Technical Only (Junior)")]
+        [Description("Standard or Junior rate for resources; planned cost based on Junior rate")]
+        TwoTierRateTechOnlyJun,
+        [Display(Name = "Two-Tier Rate (Std) + Leadership")]
+        [Description("Standard or Junior rate for resources; planned cost based on Standard rate; middle of G7 for PM time over project duration")]
+        TwoTierTechStdAndLeadership,
+        [Display(Name = "Two-Tier Rate (Jun) + Leadership")]
+        [Description("Standard or Junior rate for resources; planned cost based on Junior rate; middle of G7 for PM time over project duration")]
+        TwoTierTechJunAndLeadership
     }
 }

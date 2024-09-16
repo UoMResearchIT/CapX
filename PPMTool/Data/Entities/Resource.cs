@@ -71,7 +71,7 @@ namespace PPMTool.Data.Entities
                 PlannedCost = (PlannedWorkHours / 7f) * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
             }
 
-            // If using the standard and junior rates (grade-based models)
+            // If using the standard and junior rates (two-tier models)
             else
             {
                 // Use a financial reference and the standard or junior rate to compute the cost
@@ -86,8 +86,13 @@ namespace PPMTool.Data.Entities
                 // Update the actuals
                 ActualCost = (ActualWorkHours / 7f) * annualCostPerBillableDay;
 
-                // Update the planned
-                PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDay;
+                // Update the planned (get std or jun rates by passing grade 6 or 5 as argument)
+                var annualCostPerBillableDayPlanned = financialReference.GetJuniorOrStandardAnnualCosts(
+                    costModel == CostModel.TwoTierRateTechOnlyStd || costModel == CostModel.TwoTierTechStdAndLeadership ?
+                    6 :
+                    5
+                ) / 220;
+                PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDayPlanned;
             }
 
 
