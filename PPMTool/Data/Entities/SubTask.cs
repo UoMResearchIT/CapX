@@ -21,8 +21,8 @@ namespace PPMTool.Data.Entities
             {
                 new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
                 new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
+                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => HasAbsentResourcesAndStartsWithinAWeek()),
                 new StatusMessage("Task has resources with absence during or near the start of this task.", StatusMessage.MessageType.Info, () => IsAffectedByAbsence()),
-                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => HasAbsentResourcesAndStartsWithinAWeek()),
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
