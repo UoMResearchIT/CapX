@@ -26,6 +26,9 @@ namespace PPMTool.Pages
         [Inject]
         protected TooltipService TooltipService { get; set; }
 
+        [Inject]
+        protected NotificationService NotificationService { get; set; }
+
         [CascadingParameter]
         protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
@@ -96,6 +99,11 @@ namespace PPMTool.Pages
                 Delay = delay
             };
             TooltipService.Open(elementReference, message, options);
+        }
+
+        protected void ShowNotification(NotificationMessage message)
+        {
+            NotificationService.Notify(message);
         }
     }
 }

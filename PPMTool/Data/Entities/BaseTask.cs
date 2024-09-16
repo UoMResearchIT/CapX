@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
-    public abstract class BaseTask : ObjectWithStatusMessages
+    public abstract class BaseTask : CostedItem
     {
         [Required]
         public string Name { get; set; }
@@ -11,17 +11,6 @@ namespace PPMTool.Data.Entities
         public DateTime StartDate { get; set; } = DateTime.Today;
 
         public DateTime EndDate { get; set; }
-
-        public double PlannedWorkHours { get; set; }
-
-        public double ActualWorkHours { get; set; }
-
-        /// <summary>
-        /// The amount of the money this task / project will cost based on the planned work
-        /// </summary>
-        public double PlannedCost { get; set; }
-
-        public double ActualCost { get; set; }
 
         /// <summary>
         /// Method to determine whether a date is in the range [task.startDate task.endDate].

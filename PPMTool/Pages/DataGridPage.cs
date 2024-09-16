@@ -2,17 +2,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public interface ILoggableClass
-    {
-        public abstract string GetSensibleObjectName();
-    }
-
     public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
     {
         protected RadzenDataGrid<T> dataGrid;

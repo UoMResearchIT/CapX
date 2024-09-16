@@ -56,6 +56,7 @@ namespace PPMTool
             services.AddScoped<TagService>();
             services.AddScoped<EmailService>();
             services.AddScoped<NoteService>();
+            services.AddScoped<FinancialReferenceService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -115,6 +116,9 @@ namespace PPMTool
             IApplicationBuilder app,
             IWebHostEnvironment env,
             RolesService roleService,
+            SubTaskService taskService,
+            ProjectService projectService,
+            FinancialReferenceService financialReferenceService,
             ILogger<Startup> logger,
             IDbContextFactory<PPMToolContext> contextFactory
         )
@@ -148,6 +152,35 @@ namespace PPMTool
 
             // Seed the superuser
             roleService.SeedSuperUser();
+
+            // TODO: REMOVE THIS AFTER v11 RELEASE
+            var context = contextFactory.CreateDbContext();
+            var tasks = taskService.GetAll(context);
+            foreach (var task in tasks)
+            {
+                logger.LogInformation($"Updating planned and actual hours for sub-task {task.SubTaskId}");
+
+                // Get total units
+                var totalunits = task.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                // Assign proportion of planned work and actuals to resources
+                foreach (var res in task.AssignedResources)
+                {
+                    res.PlannedWorkHours = task.PlannedWorkHours * (res.AssignmentFTE / totalunits);
+                    res.ActualWorkHours = task.ActualWorkHours * (res.AssignmentFTE / totalunits);
+                }
+
+                taskService.Update(context, task);
+            }
+            var projects = projectService.GetAll(context);
+            foreach (var project in projects)
+            {
+                logger.LogInformation($"Updating planned and actual costs for project {project.ProjectId}");
+
+                project.UpdateProjectMetaData(true, financialReferenceService.GetAll(context));
+                projectService.Update(context, project);
+            }
+            // TODO: REMOVE THE ABOVE AFTER v11 RELEASE
         }
 
         private async Task OnCreatingTicket(CasCreatingTicketContext context)

@@ -40,6 +40,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public string Notes { get; set; }
 
+        public override string GetSensibleObjectName()
+        {
+            return $"WLM Change entry for {Person?.Name}";
+        }
+
         /// <summary>
         /// Method to provide the sum of FTE assigned across the workload model
         /// </summary>

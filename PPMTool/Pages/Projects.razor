@@ -6,6 +6,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using static PPMTool.Enums.Extensions
+@using System.ComponentModel.DataAnnotations
 
 @if (userRole.RoleType == RoleType.Superuser || userRole.RoleType == RoleType.Manager)
 {
@@ -61,14 +62,12 @@
     else
     {
         <div class="card">
-            <div class="row align-items-center mb-3">
-                <div class="col-auto">
-                    Include Finished?:
-                </div>
-                <div class="col-auto" style="display: flex">
-                    <RadzenSwitch @bind-Value="@IncludeFinished" />
-                </div>
-            </div>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
+                <RadzenSwitch @bind-Value="@IncludeFinished" />
+            </RadzenStack>
+        </div>
+        <div class="card">
             <RadzenDataGrid AllowFiltering="@(projects != null && projects.Count() > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
@@ -107,8 +106,17 @@
                         <Template Context="proj">
                             @proj.School.ToNiceString()
                         </Template>
+                    </RadzenDataGridColumn>                    
+                    <RadzenDataGridColumn TItem="Project" Property="CostModel" Title="Cost Model" Width="150px" MinWidth="10px">
+                        <Template Context="proj">
+                            @(proj.CostModel.GetAttribute<DisplayAttribute>().Name)
+                        </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="80px" FormatString="{0:C0}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="80px" MinWidth="10px">
+                        <Template Context="proj">
+                            @(proj.CostModel == CostModel.DayRate ? proj.DayRate.ToString("C0") : "N/A")
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />

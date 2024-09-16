@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240905153429_AddedFinancialReferenceEntity")]
+    partial class AddedFinancialReferenceEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -79,9 +81,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<float>("Grade41Costs")
-                        .HasColumnType("REAL");
-
-                    b.Property<float>("Grade51Costs")
                         .HasColumnType("REAL");
 
                     b.Property<float>("Grade55Costs")
@@ -204,17 +203,11 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualCost")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("ActualLeadershipCosts")
-                        .HasColumnType("REAL");
-
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
                     b.Property<double>("Budget")
                         .HasColumnType("REAL");
-
-                    b.Property<int>("CostModel")
-                        .HasColumnType("INTEGER");
 
                     b.Property<double>("DayRate")
                         .HasColumnType("REAL");
@@ -244,9 +237,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<double>("PlannedCost")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("PlannedLeadershipCosts")
                         .HasColumnType("REAL");
 
                     b.Property<double>("PlannedWorkHours")
@@ -289,12 +279,6 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("ActualCost")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("ActualWorkHours")
-                        .HasColumnType("REAL");
-
                     b.Property<double>("AssignmentFTE")
                         .HasColumnType("REAL");
 
@@ -306,12 +290,6 @@ namespace PPMTool.Migrations
 
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<double>("PlannedCost")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("PlannedWorkHours")
-                        .HasColumnType("REAL");
 
                     b.Property<int?>("SubTaskId")
                         .HasColumnType("INTEGER");

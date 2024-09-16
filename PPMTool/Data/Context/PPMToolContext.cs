@@ -17,6 +17,7 @@ namespace PPMTool.Data.Context
         public DbSet<SkillTag> SkillTags { get; set; }
         public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<FinancialReference> FinancialReferences { get; set; }
 
         /// <summary>
         /// Inject options.

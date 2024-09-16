@@ -229,8 +229,8 @@ namespace PPMTool.Pages
         private void UpdateSubTasks()
         {
             // Call update subtasks on both panes to validate
-            originalAddTaskComponent.UpdateSubTask();
-            newAddTaskComponent.UpdateSubTask();
+            originalAddTaskComponent.UpdateSubTaskModelFromResourceDataGrid();
+            newAddTaskComponent.UpdateSubTaskModelFromResourceDataGrid();
         }
 
         private void DiscardChanges()

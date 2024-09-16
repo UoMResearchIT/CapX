@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;

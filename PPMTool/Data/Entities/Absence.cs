@@ -15,6 +15,11 @@ namespace PPMTool.Data.Entities
 
         public DateTime? EndDate { get; set; }
 
+        public override string GetSensibleObjectName()
+        {
+            return $"Absence entry for {Person?.Name}";
+        }
+
         /// <summary>
         /// Checks whether this absence indicates that someone is absent right now based on the current date
         /// </summary>

@@ -28,6 +28,9 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RolesService { get; set; }
 
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -203,7 +206,8 @@ namespace PPMTool.Pages
                     ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    ProjectModel.UpdateProjectSummary();
+                    var finrefs = FinancialReferenceService.GetAll(context);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);
@@ -302,14 +306,14 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Update the sub task properties but doesn't save to the database
+        /// Updates the resources on the subtask model from the data grid and validates
         /// </summary>
-        public void UpdateSubTask()
+        public void UpdateSubTaskModelFromResourceDataGrid()
         {
             LogInformation("Validating the sub task model...");
             editContext?.Validate();
 
-            LogInformation("Updating sub task configuration...");
+            LogInformation("Updating sub task resources from data grid...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
@@ -319,41 +323,35 @@ namespace PPMTool.Pages
                 TaskModel.AssignedResources.Add(r);
             }
 
-            // Track total proportion of effort
-            double totalResourceDaysPerDay = 0;
-            foreach (var r in dataGridEntities)
-            {
-                // Update the total resource assigned
-                totalResourceDaysPerDay += r.AssignmentFTE;
-            }
-
-            // Compute the average hourly cost across the resources from their day rate
-            // scaled by the proportion to which they are assigned to the task
-            // This only works if every is the same cost. If we change this then we would
-            // need actuals entering per person.
-            var people = PersonService.GetAll(context);
-            double averageCostPerDayOfResources = 0;
-            foreach (var r in TaskModel.AssignedResources)
-            {
-                var person = people.FirstOrDefault(x => x.PersonId == r.Person.PersonId);
-                if (person == null) continue;
-                // User the default day rate for the project if the assigned day rate is null
-                averageCostPerDayOfResources += (r.AssignmentFTE * (r.DayRate ?? ProjectModel.DayRate)) / totalResourceDaysPerDay;
-            }
-
-            // Update the actual cost for the sub task
-            // Truncate to 2 DP
-            TaskModel.ActualCost = Math.Round(TaskModel.ActualWorkHours * averageCostPerDayOfResources * 100 / 7) / 100;
-
             // Update predecessor task
             TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
-            // Schedule
+            LogInformation("Scheduling task...");
+
+            // Schedule (updates planned work, duration etc.)
             error = TaskModel.Schedule(false, ProjectModel);
+
+            LogInformation("Updating actual hours from resources...");
+
+            // Update actual hours
+            TaskModel.ActualWorkHours = 0;
+            foreach (var res in TaskModel.AssignedResources)
+            {
+                TaskModel.ActualWorkHours += res.ActualWorkHours;
+            }
+
+            LogInformation("Updating costs...");
+
+            // Update planned and actual costs from the resources now scheduling has completed
+            var projectDayRate = ProjectModel.DayRate;
+            var finref = FinancialReferenceService.GetFinancialReferenceForDate(context, TaskModel.StartDate);
+            TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, finref);
+
+            // Set validity based on scheduler result
             IsValid = error == null;
 
             // Call schedule() on the subtask that this is a predecssor for
-            var error2 = SubTaskService.UpdateFollowerTasks(TaskModel, ProjectModel);
+            var error2 = SubTaskService.ScheduleFollowerTasks(TaskModel, ProjectModel);
             if (error2 != null)
             {
                 error = $"{error2.Item1}: {error2.Item2}";
@@ -395,7 +393,7 @@ namespace PPMTool.Pages
         {
             if (ProjectModel != null)
             {
-                UpdateSubTask();
+                UpdateSubTaskModelFromResourceDataGrid();
                 if (IsValid)
                 {
                     LogInformation("Saving sub task...");
@@ -416,7 +414,8 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    ProjectModel.UpdateProjectSummary();
+                    var finrefs = FinancialReferenceService.GetAll(context);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
                     ProjectService.Update(context, ProjectModel);
