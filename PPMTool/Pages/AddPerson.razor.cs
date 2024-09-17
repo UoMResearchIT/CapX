@@ -3,8 +3,10 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.CodeAnalysis;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -15,7 +17,13 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
         private TagService TagService { get; set; }
+
+        [Inject]
+        private DialogService DialogService { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }
@@ -26,10 +34,14 @@ namespace PPMTool.Pages
         private string autoCompleteText;
         private EditContext editContext;
         private ValidationMessageStore messageStore;
+        private bool isSuperUser;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Find out if superuser for delete button
+            isSuperUser = RolesService.GetRoleTypeForUsername(context, ActiveUserName) == Enums.RoleType.Superuser;
 
             // Map entities to checkbox list items
             availableTags = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
@@ -158,6 +170,29 @@ namespace PPMTool.Pages
                 }
 
                 Navigation.NavigateTo("people");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a person -- use with caution as it is very destructive!
+        /// </summary>
+        private async void DeletePersonAsync()
+        {
+            if (PersonId > 0)
+            {
+                // Prompt
+                bool confirmed = await DialogService.Confirm($"You are about to delete person {personModel.Name}. This cannot be undone!",
+                    "Delete Person") ?? false;
+                if (confirmed)
+                {
+                    LogInformation($"Deleting person {personModel.Name}, ID {personModel.PersonId}");
+
+                    // Delete from DB
+                    PersonService.Delete(context, personModel);
+
+                    // Navigate back to the people list
+                    Navigation.NavigateTo("people");
+                }
             }
         }
     }

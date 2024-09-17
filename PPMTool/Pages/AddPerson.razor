@@ -12,9 +12,16 @@
             }
             else
             {
-                <h1>Edit <i>@personModel.Name</i></h1>
-                <hr />
-                <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                <div class="row">
+                    <div class="col">
+                        <h1>Edit <i>@personModel.Name</i></h1>
+                        <hr />
+                        <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
+                    </div>
+                </div>
             }
         </div>
     </div>

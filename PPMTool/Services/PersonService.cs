@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -101,15 +100,45 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Not yet implemented
+        /// Deletes the person and everything assocaited with them including notes they have authored or edited.
+        /// Maintains projects they owned but unsets the PM.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
-        /// <exception cref="System.NotImplementedException"></exception>
         public override void Delete(PPMToolContext context, Person entity, bool commitChanges = true)
         {
-            Debug.Write("** Delete Person not implemented!");
-            throw new System.NotImplementedException();
+            // Set project manager on all projects owned by person to null
+            foreach (var project in context.Projects.Where(x => x.ProjectManager.PersonId == entity.PersonId))
+            {
+                project.ProjectManager = null;
+            }
+
+            // Delete all the resources that have been created against this person
+            context.Resources.RemoveRange(context.Resources.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all absences created against the person
+            context.Absence.RemoveRange(context.Absence.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all workload models created against the person
+            context.WorkloadModelChanges.RemoveRange(context.WorkloadModelChanges.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all roles created against the person
+            context.Roles.RemoveRange(context.Roles.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all notes created or edited by the person
+            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.PersonId == entity.PersonId || x.Editor.PersonId == entity.PersonId));
+
+            // Remove entity from the skills tag list
+            foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))
+            {
+                skill.People.Remove(entity);
+            }
+
+            // Save changes as required
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
         }
 
         /// <summary>
