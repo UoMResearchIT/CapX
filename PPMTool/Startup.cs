@@ -19,7 +19,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
 
@@ -154,103 +153,6 @@ namespace PPMTool
 
             // Seed the superuser
             roleService.SeedSuperUser();
-
-            // TODO: REMOVE THIS AFTER v11 RELEASE
-            var context = contextFactory.CreateDbContext();
-            var tasks = taskService.GetAll(context);
-            foreach (var task in tasks)
-            {
-                logger.LogInformation($"Updating planned and actual hours for sub-task {task.SubTaskId}");
-
-                // Get total units
-                var totalunits = task.AssignedResources.Sum(x => x.AssignmentFTE);
-
-                // Assign proportion of planned work and actuals to resources
-                foreach (var res in task.AssignedResources)
-                {
-                    res.PlannedWorkHours = task.PlannedWorkHours * (res.AssignmentFTE / totalunits);
-                    res.ActualWorkHours = task.ActualWorkHours * (res.AssignmentFTE / totalunits);
-                }
-
-                taskService.Update(context, task);
-            }
-            var projects = projectService.GetAll(context);
-            foreach (var project in projects)
-            {
-                logger.LogInformation($"Updating planned and actual costs for project {project.ProjectId}");
-
-                project.UpdateProjectMetaData(true, financialReferenceService.GetAll(context));
-                projectService.Update(context, project);
-            }
-
-
-            // Fix workload models
-            var people = personService.GetAll(context);
-
-            var person = people.FirstOrDefault(x => x.ShortName == "AZ");
-            person.WorkloadModelChanges.Last().Grade = 5;
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "AE");
-            foreach (var wlm in person.WorkloadModelChanges)
-            {
-                wlm.Grade = 5;
-            }
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "AK");
-            foreach (var wlm in person.WorkloadModelChanges)
-            {
-                wlm.Grade = 5;
-            }
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "BM");
-            person.WorkloadModelChanges.Last().Grade = 5;
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "HC");
-            foreach (var wlm in person.WorkloadModelChanges)
-            {
-                wlm.Grade = 5;
-            }
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "MaS");
-            person.WorkloadModelChanges.Add(new WorkloadModelChange
-            {
-                Person = person,
-                Notes = "Standard YII WLM",
-                ProjectWorkFTE = 1,
-                Grade = 4,
-                ChangeDate = person.StartDate
-            });
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "MU");
-            person.WorkloadModelChanges.Add(new WorkloadModelChange
-            {
-                Person = person,
-                Notes = "Standard YII WLM",
-                ProjectWorkFTE = 1,
-                Grade = 4,
-                ChangeDate = person.StartDate
-            });
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "MS");
-            person.WorkloadModelChanges.Add(new WorkloadModelChange
-            {
-                Person = person,
-                Notes = "Standard YII WLM",
-                ProjectWorkFTE = 1,
-                Grade = 4,
-                ChangeDate = person.StartDate
-            });
-            personService.Update(context, person);
-
-
-            // TODO: REMOVE THE ABOVE AFTER v11 RELEASE
         }
 
         private async Task OnCreatingTicket(CasCreatingTicketContext context)
