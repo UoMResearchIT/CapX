@@ -77,7 +77,6 @@ namespace PPMTool.Pages
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
-                
 
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = RolesService.GetByUsername(context, ActiveUserName)?.Person;

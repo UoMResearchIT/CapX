@@ -100,7 +100,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Deletes the person and everything assocaited with them including notes they have authored or edited.
+        /// Deletes the person and everything associated with them including notes they have authored or edited.
         /// Maintains projects they owned but unsets the PM.
         /// </summary>
         /// <param name="context"></param>
@@ -134,8 +134,9 @@ namespace PPMTool.Services
                 skill.People.Remove(entity);
             }
 
+            // Remove the person from the table
             context.People.Remove(entity);
-            
+
             // Save changes as required
             if (commitChanges)
             {

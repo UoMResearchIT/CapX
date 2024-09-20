@@ -19,7 +19,7 @@ namespace PPMTool.Pages
         private TagService TagService { get; set; }
 
         private StatusMessage statusMessage;
-        
+
         private bool IsDuplicatedSkill(SkillTag entity)
         {
             if (TagService.DuplicateDetected(context, entity))
@@ -31,7 +31,6 @@ namespace PPMTool.Pages
             return false;
         }
 
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -39,7 +38,6 @@ namespace PPMTool.Pages
             dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
             LogInformation($"Viewing skills tags");
         }
-
 
         protected override async Task EditRow(SkillTag entity)
         {
