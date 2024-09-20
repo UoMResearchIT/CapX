@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
+using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
 
@@ -118,6 +119,7 @@ namespace PPMTool
             RolesService roleService,
             SubTaskService taskService,
             ProjectService projectService,
+            PersonService personService,
             FinancialReferenceService financialReferenceService,
             ILogger<Startup> logger,
             IDbContextFactory<PPMToolContext> contextFactory
@@ -180,6 +182,78 @@ namespace PPMTool
                 project.UpdateProjectMetaData(true, financialReferenceService.GetAll(context));
                 projectService.Update(context, project);
             }
+
+
+            // Fix workload models
+            var people = personService.GetAll(context);
+
+            var person = people.FirstOrDefault(x => x.ShortName == "AZ");
+            person.WorkloadModelChanges.Last().Grade = 5;
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "AE");
+            person.WorkloadModelChanges.Last().Grade = 5;
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "AK");
+            person.WorkloadModelChanges.Last().Grade = 5;
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "BM");
+            person.WorkloadModelChanges.Last().Grade = 5;
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "HC");
+            person.WorkloadModelChanges.Last().Grade = 5;
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "EM");
+            person.WorkloadModelChanges.Add(new WorkloadModelChange
+            {
+                Person = person,
+                Notes = "Standard G6 WLM",
+                PersonalDevelopmentFTE = 0.1,
+                BusinessAsUsualFTE = 0.1,
+                ProjectWorkFTE = 0.8,
+                Grade = 6,
+                ChangeDate = person.StartDate
+            });
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "MaS");
+            person.WorkloadModelChanges.Add(new WorkloadModelChange
+            {
+                Person = person,
+                Notes = "Standard YII WLM",
+                ProjectWorkFTE = 1,
+                Grade = 4,
+                ChangeDate = person.StartDate
+            });
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "MU");
+            person.WorkloadModelChanges.Add(new WorkloadModelChange
+            {
+                Person = person,
+                Notes = "Standard YII WLM",
+                ProjectWorkFTE = 1,
+                Grade = 4,
+                ChangeDate = person.StartDate
+            });
+            personService.Update(context, person);
+
+            person = people.FirstOrDefault(x => x.ShortName == "MS");
+            person.WorkloadModelChanges.Add(new WorkloadModelChange
+            {
+                Person = person,
+                Notes = "Standard YII WLM",
+                ProjectWorkFTE = 1,
+                Grade = 4,
+                ChangeDate = person.StartDate
+            });
+            personService.Update(context, person);
+
+
             // TODO: REMOVE THE ABOVE AFTER v11 RELEASE
         }
 
