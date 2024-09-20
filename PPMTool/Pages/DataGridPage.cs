@@ -30,6 +30,7 @@ namespace PPMTool.Pages
         {
             entityToInsert = null;
             entityToUpdate = null;
+            statusMessage = null;
         }
 
         protected async virtual Task EditRow(T entity)

@@ -62,11 +62,5 @@ namespace PPMTool.Pages
             LogInformation($"Updated finref {entity.GetSensibleObjectName()}");
             Reset();
         }
-
-        protected override void Reset()
-        {
-            base.Reset();
-            statusMessage = null;
-        }
     }
 }

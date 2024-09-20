@@ -62,11 +62,5 @@ namespace PPMTool.Pages
             LogInformation($"Updated innate code {entity.GetCodeAsString()}");
             Reset();
         }
-
-        protected override void Reset()
-        {
-            base.Reset();
-            statusMessage = null;
-        }
     }
 }
