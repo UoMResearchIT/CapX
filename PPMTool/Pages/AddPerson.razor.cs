@@ -195,5 +195,13 @@ namespace PPMTool.Pages
                 }
             }
         }
+
+        private void DiscardChanges()
+        {
+            LogInformation($"Discarding changes to person {personModel.Name}, ID {personModel.PersonId}");
+
+            // Navigate back to the people list
+            Navigation.NavigateTo("people");
+        }
     }
 }
