@@ -6,5 +6,6 @@
         Developer,
         Manager,
         Superuser,
+        Reader
     }
 }
