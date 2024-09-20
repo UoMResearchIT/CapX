@@ -53,7 +53,7 @@ namespace PPMTool.Services
         /// <param name="task"></param>
         /// <param name="project"></param>
         /// <returns></returns>
-        internal Tuple<string, string> UpdateFollowerTasks(SubTask task, Project project)
+        internal Tuple<string, string> ScheduleFollowerTasks(SubTask task, Project project)
         {
             string error;
             var followerTasks = project.SubTasks.Where(x => x.Predecessor == task);
@@ -66,7 +66,7 @@ namespace PPMTool.Services
                 if (error != null) return new Tuple<string, string>(followerTask.Name, error);
 
                 // Recurse into the next layer
-                var result = UpdateFollowerTasks(followerTask, project);
+                var result = ScheduleFollowerTasks(followerTask, project);
 
                 // If next layer throws an error then pass it back out
                 if (result != null) return result;

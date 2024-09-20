@@ -491,7 +491,12 @@ namespace PPMTool.Pages
                     {
                         // Add the range for this person
                         chartSourceTemp.AddRange(
-                            GetPersonModeChartItemsFromAssignments(group.Key as Person, group.Value, queryActive ? QueryStartDate : startDate, queryActive ? queryEndDate : endDate)
+                            GetPersonModeChartItemsFromAssignments(
+                                group.Key as Person,
+                                group.Value,
+                                queryActive ? QueryStartDate : startDate,
+                                queryActive ? queryEndDate : endDate
+                            )
                         );
                     }
 
@@ -550,7 +555,13 @@ namespace PPMTool.Pages
                             // Compute chart items from the grouped assignments
                             var seriesName = (group.Key as Project).GetFullName();
                             chartSourceTemp.AddRange(
-                                GetProjectModeChartItemsFromAssignments(seriesName, group, startDate, endDate, person)
+                                GetProjectModeChartItemsFromAssignments(
+                                    seriesName,
+                                    group,
+                                    startDate,
+                                    endDate,
+                                    person
+                                )
                             );
                         }
 
@@ -563,7 +574,8 @@ namespace PPMTool.Pages
                                 new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
                                 startDate,
                                 endDate,
-                                person
+                                person,
+                                isTotalRow: true
                             )
                         );
 
@@ -743,57 +755,59 @@ namespace PPMTool.Pages
         /// <param name="groupedAssignments"></param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
-        /// <param name="chosenPerson"></param>
+        /// <param name="person"></param>
+        /// <param name="isTotalRow"></param>
         /// <returns></returns>
         private IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
             KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
-            Person chosenPerson = null
+            Person person,
+            bool isTotalRow = false
         )
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                x =>
+                assignments =>
                 {
-                    // If no person specified then it is the sum of the effort across all chosen people
-                    // If a person specified then the value is just their effort
-                    var resources = chosenPerson == null ?
-                        x.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
-                        x.AssignedResources.Where(x => x.Person == chosenPerson);
-                    return resources.RoundedSum(x => x.AssignmentFTE);
-
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        // Value is the effort of the chosen person
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource.AssignmentFTE;
+                    });
                 },
-                (x, y) =>
+                // Colour function
+                (value1, value2) =>
                 {
                     // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(x, y);
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);
                 },
                 seriesName,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                x =>
+                // Hatched function
+                assignments =>
                 {
-                    // Get the set of resources to check the condition against
-                    var resources = chosenPerson == null ?
-                        x.SubTask.AssignedResources.Where(x => ChosenPeople.Contains(x.Person.Name)) :
-                        x.SubTask.AssignedResources.Where(x => x.Person == chosenPerson);
+                    return assignments.Any(assignment =>
+                    {
+                        // Get the set of resources to check the condition against
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person == person);
 
-                    // If any resources are marked as provisional or the project owning the task
-                    // is not funded, active or in maintenance
-                    return
-                        x.ProjectStatus.IsUnconfirmed() ||
-                        resources.Any(x => x.IsProvisional);
+                        // If resource is marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return assignment.ProjectStatus.IsUnconfirmed() || resource.IsProvisional;
+                    });
                 },
-                // Value 2 for each block is based on the sum of the availability of all chosen people
-                (x, w) =>
+                // Value 2 for each block
+                (assignments, value1, currentDay) =>
                 {
-                    var peo = chosenPerson == null ?
-                        people.Where(y => ChosenPeople.Contains(y.Name)) :
-                        people.Where(y => y == chosenPerson);
-                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
+                    var peo = people.Where(y => y == person);
+
+                    // The total availability of the person becomes value 2
+                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 assignmentsWithinBlock =>
@@ -808,7 +822,7 @@ namespace PPMTool.Pages
                         messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
 
                         // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == chosenPerson));
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == person));
                         if (assignedWithinBlockWithChosenPerson.Any(x => x.SubTask.HasUnmetDemand()))
                         {
                             var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x.SubTask.UnmetDemand);
@@ -817,7 +831,7 @@ namespace PPMTool.Pages
                     }
 
                     // Generate further, universal messages
-                    messages = GenerateTooltipMessages(assignmentsWithinBlock, chosenPerson, messages);
+                    messages = GenerateTooltipMessages(assignmentsWithinBlock, person, messages);
 
                     return messages;
                 }
@@ -865,29 +879,35 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                x =>
+                assignments =>
                 {
-                    var resource = x.AssignedResources.First(x => x.Person.Name == person.Name);
-                    return resource.AssignmentFTE;
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource.AssignmentFTE;
+                    });
                 },
-                (x, y) =>
+                (value1, value2) =>
                 {
-                    return ChartItem.GetColourStringFTE(x, y);
+                    return ChartItem.GetColourStringFTE(value1, value2);
                 },
                 person.Name,
                 queryActive ? QueryStartDate : startDate,
                 queryActive ? queryEndDate : endDate,
-                x =>
+                assignments =>
                 {
-                    // If any resources are marked as provisional or the project owning the task
-                    // is not funded, active or in maintenance
-                    return
-                        x.ProjectStatus.IsUnconfirmed() ||
-                        x.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                    return assignments.Any(assignment =>
+                    {
+                        // If any resources are marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return
+                            assignment.ProjectStatus.IsUnconfirmed() ||
+                            assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                    });
                 },
-                (x, w) =>
+                (assignments, value1, currentDay) =>
                 {
-                    return person.GetAvailabilityOnDate(w);
+                    return person.GetAvailabilityOnDate(currentDay);
                 },
                 tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );

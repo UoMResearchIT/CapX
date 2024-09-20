@@ -14,6 +14,7 @@ using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
@@ -201,21 +202,39 @@ namespace PPMTool.Pages
                     {
                         Show = false
                     },
+                    Annotations = new Annotations
+                    {
+                        Xaxis = new List<AnnotationsXAxis>
+                        {
+                            new AnnotationsXAxis()
+                            {
+                                X = DateTime.Today.ToUnixTimeMilliseconds(),
+                                BorderWidth = 2,
+                                StrokeDashArray = 5,
+                                BorderColor = "red",
+                                Label = new Label
+                                {
+                                    Text = "Current Week",
+                                    Position = LabelPosition.Right
+                                }
+                            }
+                        }
+                    }
                 };
 
                 // Create the burn-up chart items
                 var temp = ChartHelper.AggregateSubTasksByWeek(
                     project.GetFullName(),
                     project.SubTasks,
-                    (task, currentWeek) =>
+                    (assignments, currentWeek) =>
                     {
                         // Value 1 requires the number of days is simply the planned work hours up to the end of that week
-                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek);
+                        return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek));
                     },
-                    (task, currentWeek) =>
+                    (assignments, currentWeek) =>
                     {
                         // Value 2 is corrected for the unmet demand on the task
-                        return task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand));
+                        return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand)));
                     }
                 ).ToList();
 
@@ -337,6 +356,17 @@ namespace PPMTool.Pages
 
         private void GroupTasksChanged(bool value)
         {
+            // Set the axis limits?
+            ganttChartOptions.Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Min = confirmedBlocks.Concat(provisionalBlocks).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
+                    Max = confirmedBlocks.Concat(provisionalBlocks).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
+                }
+            };
+            gantt?.UpdateOptionsAsync(false, false, false);
+
             // Redraw the chart
             gantt?.RenderAsync();
         }
@@ -604,7 +634,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, false);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
         }
 
         private void UpdateNote()
@@ -614,11 +644,13 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUserName);
             noteModel.Editor = role.Person;
             ResolveMentionsInCurrentNoteModel();
-            NoteService.Update(context, noteModel);
+            NoteService.Update(context, noteModel, false);
+            var listOfNoteChanges = NoteService.GetDiffList<Note>(context);
+            NoteService.Update(context, noteModel, true);
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, true);
+            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, listOfNoteChanges);
         }
 
         private void EditNote(Note noteToEdit)
@@ -682,7 +714,14 @@ namespace PPMTool.Pages
                 }
                 else
                 {
-                    // TODO: Throw some kind of warning if the mention cannot be resolved
+                    // Warning if the mention cannot be resolved
+                    ShowNotification(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Mention Failure",
+                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct.",
+                        Duration = 4000
+                    });
                 }
             }
 
@@ -716,7 +755,14 @@ namespace PPMTool.Pages
                 }
                 else
                 {
-                    // TODO: Throw some kind of warning if the reference cannot be resolved
+                    // Warning if the reference cannot be resolved
+                    ShowNotification(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "RTP Reference Failure",
+                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct.",
+                        Duration = 4000
+                    });
                 }
             }
         }
@@ -790,6 +836,14 @@ namespace PPMTool.Pages
 
             // Perform paging via Skip and Take.
             allTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+        }
+
+        /// <summary>
+        /// Show dialog popup of the project description
+        /// </summary>
+        private async Task ViewDescription()
+        {
+            await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(project?.GetFullName(), new Dictionary<string, object>() { { "Project", project } });
         }
     }
 }

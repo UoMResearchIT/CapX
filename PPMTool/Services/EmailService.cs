@@ -18,11 +18,19 @@ namespace PPMTool.Services
 {
     public class EmailService
     {
-        public EmailService(IConfiguration configuration, ProjectService projectService, RolesService rolesService, IDbContextFactory<PPMToolContext> dbContextFactory, ILogger logger)
+        public EmailService(
+            IConfiguration configuration,
+            ProjectService projectService,
+            RolesService rolesService,
+            PersonService personService,
+            IDbContextFactory<PPMToolContext> dbContextFactory,
+            ILogger logger
+        )
         {
             Configuration = configuration;
             ProjectService = projectService;
             RolesService = rolesService;
+            PersonService = personService;
             DbContextFactory = dbContextFactory;
             Logger = logger;
         }
@@ -30,6 +38,7 @@ namespace PPMTool.Services
         public IConfiguration Configuration { get; }
         public ProjectService ProjectService { get; }
         public RolesService RolesService { get; }
+        public PersonService PersonService { get; }
 
         public IDbContextFactory<PPMToolContext> DbContextFactory { get; }
         public ILogger Logger { get; }
@@ -68,18 +77,18 @@ namespace PPMTool.Services
         {
             Task.Run(() =>
             {
-                // Craete context and get people for lookup
+                // Create context and get people for lookup
                 var context = DbContextFactory.CreateDbContext();
                 var people = RolesService.GetAll(context).Select(x => x.Person).DistinctBy(x => x.Name);
 
                 // Get various lists of relevant info
-                var allAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences.Values);
-                var absentPeople = allAbsences.Select(x => x.Person).Distinct();
+                var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences.Values);
+                var updatedAbsentPeople = allUpdatedAbsences.Select(x => x.Person).Distinct();
 
                 // Find projects where they have subtasks affected by the absence
                 var affectedProjects = ProjectService.GetAll(context).Where(x => x.SubTasks.Any(x =>
                 {
-                    foreach (var absence in allAbsences)
+                    foreach (var absence in allUpdatedAbsences)
                     {
                         // If a deletion, need to provide a person ID
                         var kvp = deletedAbsences.FirstOrDefault(x => x.Value == absence);
@@ -93,11 +102,30 @@ namespace PPMTool.Services
                 }));
 
                 // Get affected PMs
-                var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct();
-                var allPMs = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
+                var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
 
-                // For each manager
-                foreach (var pm in allPMs)
+                // If any affected PM is currently absent then notify all PMs
+                var managersToNotify = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
+                var currentPMAbsences = PersonService.GetAbsencesForPeople(context, affectedPMs).Where(x => x.IsCurrentAbsence());
+
+                // Just need to notify the affected if there are no affected PMs who are absent at the moment
+                if (currentPMAbsences.Count() == 0)
+                {
+                    managersToNotify = affectedPMs;
+                }
+
+                // Ensure superusers are in the list in any case
+                var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
+                foreach (var su in superusers)
+                {
+                    if (!affectedPMs.Contains(su))
+                    {
+                        affectedPMs.Add(su);
+                    }
+                }
+
+                // For each manager to notify
+                foreach (var pm in managersToNotify)
                 {
                     // Create email body
                     StringBuilder body = new StringBuilder();
@@ -115,7 +143,7 @@ namespace PPMTool.Services
                     {
                         // Find absences related to this project
                         var relevantAbsences = new List<Absence>();
-                        foreach (var absence in allAbsences)
+                        foreach (var absence in allUpdatedAbsences)
                         {
                             var kvp = deletedAbsences.FirstOrDefault(x => x.Value == absence);
                             int? id = kvp.Key == 0 ? null : kvp.Key;
@@ -156,7 +184,7 @@ namespace PPMTool.Services
                     }
 
                     // Any absences that remain in the list are therefore not related to any projects
-                    var notProjectRelatedAbsences = allAbsences.Except(mentionedAbsences);
+                    var notProjectRelatedAbsences = allUpdatedAbsences.Except(mentionedAbsences);
                     if (notProjectRelatedAbsences.Count() > 0)
                     {
                         // Only add this text if there were projects mentioned higher up
@@ -239,11 +267,11 @@ namespace PPMTool.Services
             return $"<p>{name ?? absence.Person.Name} is absent from {absence.StartDate.ToShortDateString()} to {absence.EndDate?.ToShortDateString() ?? "present"} (<b>{state}</b>).</p>";
         }
 
-        internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, bool isUpdate)
+        internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
             Task.Run(() =>
             {
-                // Craete context and get roles
+                // Create context and get roles
                 var context = DbContextFactory.CreateDbContext();
                 var roles = RolesService.GetAll(context).DistinctBy(x => x.Person.PersonId);
 
@@ -286,7 +314,7 @@ namespace PPMTool.Services
 
                     // Write intro
                     body.Append($"<p>Dear {m.Name},</p>");
-                    var content = isUpdate ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
+                    var content = listOfChanges != null ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
                     body.Append($"<p>{content}</p>");
                     body.Append("<hr />");
 
@@ -299,6 +327,20 @@ namespace PPMTool.Services
                     // Include editor info as italics
                     body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
                     body.Append("<hr />");
+
+                    // State changes
+                    if (listOfChanges != null)
+                    {
+                        body.Append("<p><b>Changes</b></p>");
+
+                        // Write each change one and a time
+                        foreach (var diff in listOfChanges
+                            .Where(x => x.PropertyName != "EditorPersonId" && x.PropertyName != nameof(Note.EditedDate))
+                        )
+                        {
+                            body.Append($"<b>{diff.PropertyName}:</b> {diff.OriginalValue ?? "None"} <b>&hArr;</b> {diff.CurrentValue ?? "None"}<br/>");
+                        }
+                    }
 
                     // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");

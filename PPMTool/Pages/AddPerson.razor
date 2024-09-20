@@ -12,9 +12,16 @@
             }
             else
             {
-                <h1>Edit <i>@personModel.Name</i></h1>
+                <div class="row">
+                    <div class="col">
+                        <h1>Edit <i>@personModel.Name</i></h1>
+                        <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
+                    </div>
+                </div>
                 <hr />
-                <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
             }
         </div>
     </div>
@@ -116,10 +123,13 @@
                             <div style="width:100%">
                                 <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                             <RadzenText Text="@d.ChangeDate.ToShortDateString()" TextStyle="TextStyle.Subtitle1" />
                                             <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                                                         BadgeStyle="BadgeStyle.Info"
+                                                         BadgeStyle="BadgeStyle.Primary"
+                                                         Text="@($"Grade {d.Grade}")" />
+                                            <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                         BadgeStyle="BadgeStyle.Primary"
                                                          Text="@(d.Total().ToString("F1") + " FTE")" />
                                         </RadzenStack>
                                         <RadzenText Text="@d.Notes" TextStyle="TextStyle.Body2"/>
@@ -164,7 +174,7 @@
                                     class="half-height-list"
                                     WrapItems="false"
                                     AllowPaging="false"
-                                    Data="@personModel.Absences"
+                                    Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
                                     TItem="Absence">
                         <Template Context="a">
                             <div class="row flexbox p-0">
@@ -184,7 +194,12 @@
             </div>
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+            <div class="row">
+                <div class="col">
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                </div>
+            </div>
         </EditForm>
     </div>
 </div>

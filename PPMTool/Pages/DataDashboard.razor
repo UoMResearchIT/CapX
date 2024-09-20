@@ -8,147 +8,146 @@
             <h2>Reference Data</h2>
         </div>
     </div>
-    <div class="card">
-        <div class="row">
-            <div class="col">
-                <h3>Workload Model Settings</h3>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Person Dev Allowance (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Research Software Architecture per Project (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Project / Service Management per Project (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Staff Management per Person (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Coaching Demand per G4/5 (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Staff Managed by HoRSE" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" Disabled="@(!EditAuthorised)" />
-            </div>
-        </div>
-        <br />
-        <hr />
-        <div class="row">
-            <div class="col">
-                <h3>Salary Costs</h3>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Grade 4.1" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Grade 5.5" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Grade 6.5" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Grade 7.1" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Grade 7.5" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Current Salary Budget" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade41Costs" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade55Costs" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade65Costs" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade71Costs" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade75Costs" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="currentBudget" Disabled="@(!EditAuthorised)" />
-            </div>
-        </div>
-        <hr />
-        <div class="row">
-            <div class="col">
-                <h3>Other</h3>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Start Date" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="App Support Leadership (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Training Leadership (FTE)" />
-            </div>
-            <div class="col-2">
-                <RadzenLabel class="radzen-form-label" Text="Other PSM Leadership (FTE)" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-2">
-                <RadzenDatePicker TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
-            </div>
-            <div class="col-2">
-                <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="appSupportPSMFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="trainingPSMFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-            <div class="col-2">
-                <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="otherPSMFTE" Disabled="@(!EditAuthorised)" />
-            </div>
-        </div>
-
-    </div>
+    <RadzenAccordion Multiple="true">
+        <Items>
+            <RadzenAccordionItem Text="Workload Models" Icon="work" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Workload Models"
+                                 ExpandAriaLabel="Expand the Workload Models">
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Person Dev Allowance (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Research Software Architecture per Project (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Project / Service Management per Project (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Staff Management per Person (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Coaching Demand per G4/5 (FTE)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Staff Managed by HoRSE" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="App Support Leadership (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Training Leadership (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Other PSM Leadership (FTE)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="appSupportPSMFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="trainingPSMFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="otherPSMFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                </div>
+            </RadzenAccordionItem>
+            <RadzenAccordionItem Text="Salary Costs" Icon="currency_pound" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Salary Costs"
+                                 ExpandAriaLabel="Expand the Salary Costs">
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Grade 4.1" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Grade 5.5" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Grade 6.5" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Grade 7.1" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Grade 7.5" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Current Salary Budget" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade41Costs" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade55Costs" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade65Costs" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade71Costs" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade75Costs" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="recoveryTarget" Disabled="@(!EditAuthorised)" />
+                    </div>
+                </div>
+            </RadzenAccordionItem>
+            <RadzenAccordionItem Text="View Settings" Icon="visibility" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the View Settings"
+                                 ExpandAriaLabel="Expand the View Settings" Selected="true">
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Start Date" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenDatePicker TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
+                    </div>
+                </div>
+            </RadzenAccordionItem>
+        </Items>
+    </RadzenAccordion>
     <hr />
     <div class="row">
         <div class="col">
@@ -159,7 +158,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col">
+        <div class="col-6">
             <div class="card">
                 @if (Loading)
                 {
@@ -243,7 +242,7 @@
                 }
             </div>
         </div>
-        <div class="col">
+        <div class="col-6">
             <div class="card">
                 @if (Loading)
                 {
@@ -294,7 +293,7 @@
     </div>
     <br />
     <div class="row">
-        <div class="col">
+        <div class="col-6">
             <div class="card">
                 @if (Loading)
                 {

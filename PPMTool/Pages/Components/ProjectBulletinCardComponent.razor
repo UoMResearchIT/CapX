@@ -28,28 +28,42 @@
                 </RadzenText>
             </RadzenStack>
         </RadzenStack>
-        <RadzenStack Style="min-width:12rem" Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
-            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE)" />
+        <RadzenStack Style="min-width:15rem" Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Max. Unmet Demand (FTE)" />
             <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
                          BadgeStyle="BadgeStyle.Danger"
-                         Text="@(project.SubTasks.RoundedSum(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
+                         Text="@(project.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates" />
-            <RadzenText TextStyle="TextStyle.Body1">@(project.StartDate <= DateTime.Today ? "Now" : project.StartDate.ToShortDateString()) - @project.EndDate.ToShortDateString()</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(project.GetUnmetDemandWindowDatesAsFormattedString())</RadzenText>
             <RadzenButton Text=@(project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
                           Icon="description" Click="@(args => ViewRequestDocClickedAsync(project))"
                           ButtonStyle=@(project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
-                          Disabled=@project.HasNoRequestDocLink() />
+                          Disabled=@project.HasNoRequestDocLink()
+                          Style="width: 100%" />
+            @if (ShowDetailsButton)
+            {
+                <RadzenButton Text="View Project Details"
+                              Icon="info" Click="@(args => ViewDetails(project.ProjectId))"
+                              ButtonStyle=ButtonStyle.Primary
+                              Style="width: 100%" />
+            }
         </RadzenStack>
     </RadzenStack>
 </div>
 
 @code {
-    
+
     [Parameter]
     public Project project { get; set; }
 
+    [Parameter]
+    public bool ShowDetailsButton { get; set; }
+
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; }
 
     /// <summary>
     /// Navigate to the Request Doc Link in new window
@@ -59,5 +73,10 @@
     private async Task ViewRequestDocClickedAsync(Project project)
     {
         await JSRuntime.InvokeAsync<object>("open", $"{project.RequestDocLink}", "_blank");
+    }
+
+    private void ViewDetails(int id)
+    {
+        Navigation.NavigateTo($"/projectdetails/{id}");
     }
 }

@@ -21,8 +21,8 @@ namespace PPMTool.Data.Entities
             {
                 new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
                 new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
+                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => HasAbsentResourcesAndStartsWithinAWeek()),
                 new StatusMessage("Task has resources with absence during or near the start of this task.", StatusMessage.MessageType.Info, () => IsAffectedByAbsence()),
-                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Warning, () => HasAbsentResourcesAndStartsWithinAWeek()),
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
@@ -202,12 +202,10 @@ namespace PPMTool.Data.Entities
                     UpdateWork(units);
                 }
 
-                // Update cost (only committed cost -- if no resources then no cost committed)
-                PlannedCost = 0d;
+                // Update hours on the resources
                 foreach (var res in AssignedResources)
                 {
-                    // Assume 7 hours in a billable day; fallback on project day rate if resource day rate is null
-                    PlannedCost += (res.AssignmentFTE / units) * PlannedWorkHours * ((res.DayRate ?? project.DayRate) / 7f);
+                    res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
                 }
 
                 // Set end date from the duration
@@ -258,7 +256,7 @@ namespace PPMTool.Data.Entities
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        private double GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
+        internal static double GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
         {
             var calendarDays = endDate.Date.Subtract(startDate.Date).Days;
             return (calendarDays / 365f) * 220f;
@@ -431,7 +429,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public double GetUnmetDemandNowAndInFuture()
         {
-            return IsWithin(DateTime.Today) || StartDate.Date > DateTime.Today ? UnmetDemand : 0;
+            return (IsWithin(DateTime.Today) || StartDate.Date > DateTime.Today) ? UnmetDemand : 0;
         }
 
         /// <summary>
@@ -470,6 +468,30 @@ namespace PPMTool.Data.Entities
             }
 
             return daysUpToEndOfWeek * workPerDay;
+        }
+
+        /// <summary>
+        /// Updates the actual or planned technical costs of the task based on the resources, model and financial references provided
+        /// </summary>
+        /// <param name="costModel"></param>
+        /// <param name="financialReference"></param>
+        /// <param name="projectDayRate"></param>
+        /// <returns></returns>
+        internal void UpdateSubTaskCosts(CostModel costModel, double? projectDayRate, FinancialReference financialReference)
+        {
+            // Reset the totals for this sub task
+            ActualCost = 0;
+            PlannedCost = 0;
+
+            // For each resource assigned, update the costs
+            foreach (var res in AssignedResources)
+            {
+                res.UpdateResourceCosts(costModel, StartDate, EndDate, projectDayRate, financialReference);
+
+                // Sum up the result post-update
+                ActualCost += res.ActualCost;
+                PlannedCost += res.PlannedCost;
+            }
         }
     }
 }

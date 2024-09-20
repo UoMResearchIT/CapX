@@ -69,6 +69,41 @@ namespace PPMTool.Migrations
                     b.ToTable("Absence");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.FinancialReference", b =>
+                {
+                    b.Property<int>("FinancialReferenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FinancialYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float>("Grade41Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade51Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade55Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade65Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade71Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade75Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RecoveryTarget")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("FinancialReferenceId");
+
+                    b.ToTable("FinancialReferences");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
                 {
                     b.Property<int>("InnateCodeId")
@@ -169,11 +204,17 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualCost")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ActualLeadershipCosts")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
                     b.Property<double>("Budget")
                         .HasColumnType("REAL");
+
+                    b.Property<int>("CostModel")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double>("DayRate")
                         .HasColumnType("REAL");
@@ -203,6 +244,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<double>("PlannedCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PlannedLeadershipCosts")
                         .HasColumnType("REAL");
 
                     b.Property<double>("PlannedWorkHours")
@@ -245,6 +289,12 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<double>("ActualCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ActualWorkHours")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("AssignmentFTE")
                         .HasColumnType("REAL");
 
@@ -256,6 +306,12 @@ namespace PPMTool.Migrations
 
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("PlannedCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PlannedWorkHours")
+                        .HasColumnType("REAL");
 
                     b.Property<int?>("SubTaskId")
                         .HasColumnType("INTEGER");
@@ -396,6 +452,9 @@ namespace PPMTool.Migrations
 
                     b.Property<DateTime>("ChangeDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Grade")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Notes")
                         .HasColumnType("TEXT");

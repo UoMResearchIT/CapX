@@ -11,6 +11,9 @@ namespace PPMTool.Data.Entities
         public int WorkloadModelChangeId { get; set; }
 
         [Required]
+        public int Grade { get; set; }
+
+        [Required]
         public DateTime ChangeDate { get; set; }
 
         [Required]
@@ -36,6 +39,11 @@ namespace PPMTool.Data.Entities
         /// Optional notes to explain anything about the change
         /// </summary>
         public string Notes { get; set; }
+
+        public override string GetSensibleObjectName()
+        {
+            return $"WLM Change entry for {Person?.Name}";
+        }
 
         /// <summary>
         /// Method to provide the sum of FTE assigned across the workload model

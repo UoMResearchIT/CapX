@@ -1,0 +1,8 @@
+﻿@using PPMTool.Data.Entities
+
+<RadzenText>@((MarkupString)Project?.Description)</RadzenText>
+
+@code {
+    [Parameter]
+    public Project Project { get; set; }
+}

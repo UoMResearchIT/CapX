@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
-using PPMTool.Pages;
 
 namespace PPMTool.Data.Entities
 {
@@ -23,7 +22,7 @@ namespace PPMTool.Data.Entities
 
         public string GetSensibleObjectName()
         {
-            return Person?.Name;
+            return $"{Person?.Name} ({GetStandardisedUserName()})";
         }
 
         internal string GetStandardisedUserName()
