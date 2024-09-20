@@ -192,11 +192,17 @@ namespace PPMTool
             personService.Update(context, person);
 
             person = people.FirstOrDefault(x => x.ShortName == "AE");
-            person.WorkloadModelChanges.Last().Grade = 5;
+            foreach (var wlm in person.WorkloadModelChanges)
+            {
+                wlm.Grade = 5;
+            }
             personService.Update(context, person);
 
             person = people.FirstOrDefault(x => x.ShortName == "AK");
-            person.WorkloadModelChanges.Last().Grade = 5;
+            foreach (var wlm in person.WorkloadModelChanges)
+            {
+                wlm.Grade = 5;
+            }
             personService.Update(context, person);
 
             person = people.FirstOrDefault(x => x.ShortName == "BM");
@@ -204,20 +210,10 @@ namespace PPMTool
             personService.Update(context, person);
 
             person = people.FirstOrDefault(x => x.ShortName == "HC");
-            person.WorkloadModelChanges.Last().Grade = 5;
-            personService.Update(context, person);
-
-            person = people.FirstOrDefault(x => x.ShortName == "EM");
-            person.WorkloadModelChanges.Add(new WorkloadModelChange
+            foreach (var wlm in person.WorkloadModelChanges)
             {
-                Person = person,
-                Notes = "Standard G6 WLM",
-                PersonalDevelopmentFTE = 0.1,
-                BusinessAsUsualFTE = 0.1,
-                ProjectWorkFTE = 0.8,
-                Grade = 6,
-                ChangeDate = person.StartDate
-            });
+                wlm.Grade = 5;
+            }
             personService.Update(context, person);
 
             person = people.FirstOrDefault(x => x.ShortName == "MaS");
