@@ -16,6 +16,7 @@ namespace PPMTool.Pages
         protected T entityToInsert;
         protected T entityToUpdate;
         protected IEntityService<T> dataGridEntityService;
+        protected StatusMessage statusMessage;
 
         [Inject]
         protected DialogService DialogService { get; set; }

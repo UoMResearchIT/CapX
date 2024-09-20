@@ -1,5 +1,6 @@
 ﻿@page "/manageaccess"
 @inherits DataGridPage<Role>
+@using PPMTool.Pages.Components
 @using PPMTool.Data.Entities
 
 <div class="container">
@@ -11,6 +12,10 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null) />
         </div>
     </div>
+    @if (statusMessage != null)
+    {
+        <StatusMessageComponent Message="statusMessage" />
+    }
     <hr />
     <RadzenDataGrid @ref="dataGrid"
                     AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"

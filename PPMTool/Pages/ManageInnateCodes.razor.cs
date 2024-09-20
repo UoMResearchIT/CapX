@@ -15,8 +15,6 @@ namespace PPMTool.Pages
         [Inject]
         public InnateCodeService InnateCodeService { get; set; }
 
-        private StatusMessage statusMessage;
-
         protected override void OnInitialized()
         {
             base.OnInitialized();

@@ -18,8 +18,6 @@ namespace PPMTool.Pages
         [Inject]
         private TagService TagService { get; set; }
 
-        private StatusMessage statusMessage;
-
         private bool IsDuplicatedSkill(SkillTag entity)
         {
             if (TagService.DuplicateDetected(context, entity))

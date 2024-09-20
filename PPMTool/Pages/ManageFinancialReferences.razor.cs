@@ -15,8 +15,6 @@ namespace PPMTool.Pages
         [Inject]
         public FinancialReferenceService FinancialReferenceService { get; set; }
 
-        private StatusMessage statusMessage;
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
