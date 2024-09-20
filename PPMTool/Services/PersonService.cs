@@ -134,6 +134,8 @@ namespace PPMTool.Services
                 skill.People.Remove(entity);
             }
 
+            context.People.Remove(entity);
+            
             // Save changes as required
             if (commitChanges)
             {
