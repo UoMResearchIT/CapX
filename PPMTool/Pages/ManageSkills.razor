@@ -1,6 +1,7 @@
 ﻿@page "/manageskills"
 @inherits DataGridPage<SkillTag>
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 
 <div class="container">
     <div class="row">
@@ -11,6 +12,10 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null)" />
         </div>
     </div>
+    @if (statusMessage != null)
+    {
+        <StatusMessageComponent Message="statusMessage" />
+    }
     <hr />
     <RadzenDataGrid @ref="dataGrid"
                     AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
@@ -37,7 +42,7 @@
                 <EditTemplate Context="tag">
                     <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
                     <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
                 </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>

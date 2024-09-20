@@ -61,7 +61,7 @@
                             <EditTemplate Context="c">
                                 <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))" MouseEnter="@(args => ShowTooltip(args, "Save"))"/>
                                 <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))"/>
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" MouseEnter="@(args => ShowTooltip(args, "Delete"))"/>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
