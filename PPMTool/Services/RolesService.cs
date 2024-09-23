@@ -66,6 +66,8 @@ namespace PPMTool.Services
             // Check if I am in the role database already
             var context = _contextFactory.CreateDbContext();
             var match = GetByUsername(context, "mbgm6ah3");
+
+
             if (match == null)
             {
                 match = new Role()
@@ -73,19 +75,22 @@ namespace PPMTool.Services
                     CASUserName = "mbgm6ah3",
                     RoleType = RoleType.Superuser
                 };
-
                 match.Person = new Person { Name = "Adrian Harwood" };
                 context.Roles.Add(match);
             }
-
-            // See if I need to be changed to a superuser
-            else if (match.RoleType != RoleType.Superuser)
+            else
             {
-                match.RoleType = RoleType.Superuser;
+                // See if I need to be changed to a superuser
+                if (match.RoleType != RoleType.Superuser)
+                {
+                    match.RoleType = RoleType.Superuser;
+                }
+
                 if (match.Person == null)
                 {
                     match.Person = new Person { Name = "Adrian Harwood" };
                 }
+
                 context.Roles.Update(match);
             }
 
