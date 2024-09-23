@@ -200,7 +200,7 @@ namespace PPMTool.Pages
                         foreach (var s in superusers)
                         {
                             if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");
-                            
+
                             if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
                             {
                                 projectModel.Followers.Add(s);
