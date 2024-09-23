@@ -73,6 +73,8 @@ namespace PPMTool.Services
                     CASUserName = "mbgm6ah3",
                     RoleType = RoleType.Superuser
                 };
+
+                match.Person = new Person { Name = "Adrian Harwood" };
                 context.Roles.Add(match);
             }
 
@@ -80,6 +82,10 @@ namespace PPMTool.Services
             else if (match.RoleType != RoleType.Superuser)
             {
                 match.RoleType = RoleType.Superuser;
+                if (match.Person == null)
+                {
+                    match.Person = new Person { Name = "Adrian Harwood" };
+                }
                 context.Roles.Update(match);
             }
 
