@@ -99,6 +99,7 @@ namespace PPMTool.Pages
         private bool sortByDueDate;
         private Popup popup;
         private IList<Person> mentionables;
+        private IList<Person> cachedMentionables;
         private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
         private bool isCurrentUserFollowing;
@@ -124,10 +125,11 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
             var role = RolesService.GetByUsername(context, ActiveUserName);
             activeUser = role?.Person;
             allProjects = ProjectService.GetAll(context).ToList();
+            
+            cachedMentionables = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
             FilterMentionables();
 
             // Query string only consulted when Project ID is not specified in URL
@@ -408,14 +410,14 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterMentionables()
         {
-            var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
+            
             if (string.IsNullOrWhiteSpace(mentionSearchString))
             {
-                mentionables = temp;
+                mentionables = cachedMentionables;
             }
             else
             {
-                mentionables = temp.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
+                mentionables = cachedMentionables.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
             Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
