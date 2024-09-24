@@ -61,25 +61,36 @@ namespace PPMTool.Services
             return entity.RoleId;
         }
 
-        public void SeedSuperUser()
+        public void SeedSuperUser(string username, string personName)
         {
             // Check if I am in the role database already
             var context = _contextFactory.CreateDbContext();
-            var match = GetByUsername(context, "mbgm6ah3");
+            var match = GetByUsername(context, username);
+
             if (match == null)
             {
                 match = new Role()
                 {
-                    CASUserName = "mbgm6ah3",
+                    CASUserName = username,
                     RoleType = RoleType.Superuser
                 };
+                match.Person = new Person { Name = personName };
                 context.Roles.Add(match);
             }
-
-            // See if I need to be changed to a superuser
-            else if (match.RoleType != RoleType.Superuser)
+            else
             {
-                match.RoleType = RoleType.Superuser;
+                // See if I need to be changed to a superuser
+                if (match.RoleType != RoleType.Superuser)
+                {
+                    match.RoleType = RoleType.Superuser;
+                }
+
+                // See if there is a person attached to the user and correct if not
+                if (match.Person == null)
+                {
+                    match.Person = new Person { Name = personName };
+                }
+
                 context.Roles.Update(match);
             }
 
