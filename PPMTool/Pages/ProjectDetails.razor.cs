@@ -128,7 +128,7 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUserName);
             activeUser = role?.Person;
             allProjects = ProjectService.GetAll(context).ToList();
-            
+
             cachedMentionables = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
             FilterMentionables();
 
@@ -410,7 +410,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterMentionables()
         {
-            
+
             if (string.IsNullOrWhiteSpace(mentionSearchString))
             {
                 mentionables = cachedMentionables;
