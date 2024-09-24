@@ -121,6 +121,12 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// This is the original demand of the task when we took the request. The current demand (if the requirement has changed) is recorded in the <see cref="Demand"/> property.
+        /// </summary>
+        [Required]
+        public double OriginalDemand { get; set; }
+
+        /// <summary>
         /// The difference between the demand and the sum of the assigned resources.
         /// </summary>
         public double UnmetDemand { get; set; }
