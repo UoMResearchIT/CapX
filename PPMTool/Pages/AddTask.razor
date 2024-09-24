@@ -52,13 +52,17 @@
         <h2>Details</h2>
         <EditForm EditContext=@editContext OnSubmit="@HandleSubmit">
             <div class="row">
-                <div class="col-8">
+                <div class="col-4">
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br />
                     <RadzenTextBox TValue="string" @bind-Value="TaskModel.Name" />
                 </div>
                 <div class="col-4">
-                    <RadzenLabel class="radzen-form-label" Text="Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Minimum required units for this task" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.001)" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.Demand" />
+                    <RadzenLabel class="radzen-form-label" Text="Original Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Minimum required units for this task when originally planned" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.001)" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.OriginalDemand" />
+                </div>
+                <div class="col-4">
+                    <RadzenLabel class="radzen-form-label" Text="Current Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Minimum required units for this task at present" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.Demand" />
                 </div>
             </div>
 
@@ -110,7 +114,7 @@
                 <!-- Start date is required if fixed start otherwise driven from predecesors -->
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled || selectedPredecessorId != null)" /><br />
-                    <RadzenDatePicker @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled || selectedPredecessorId != null)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled || selectedPredecessorId != null)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
 
                 <div class="col">
@@ -133,7 +137,7 @@
                 <!-- End date is can be driven by duration or chosen which will then drive the duration -->
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="End date is determined by work and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(!TaskModel.HasFixedEndDate || TaskModel.TaskType != TaskType.FixedDuration)" /><br />
-                    <RadzenDatePicker @bind-Value="TaskModel.EndDate" Disabled="@(!TaskModel.HasFixedEndDate)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.EndDate" Disabled="@(!TaskModel.HasFixedEndDate)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
 
                 <div class="col">
