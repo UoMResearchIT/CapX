@@ -430,12 +430,22 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks whether a task is currently running or will run in the future and returns the unmet demand. Returns zero if in the past even if it has unmet demand.
+        /// Gets the unmet demand of a task within the window given.
         /// </summary>
+        /// <param name="startDate">If null, assumed to be now</param>
+        /// <param name="endDate">If null, window just considered to be the future</param>
         /// <returns></returns>
-        public double GetUnmetDemandNowAndInFuture()
+        public double GetUnmetDemandInWindow(DateTime? startDate = null, DateTime? endDate = null)
         {
-            return (IsWithin(DateTime.Today) || StartDate.Date > DateTime.Today) ? UnmetDemand : 0;
+            // If no end date then include tasks where they end after the start of the window
+            // as this is any task that runs now or in the future
+            if (endDate == null && EndDate.Date >= (startDate ?? DateTime.Today))
+            {
+                return UnmetDemand;
+            }
+
+            // If we have a defined window then include tasks where any part of the task runs in the window
+            return IsWithin(startDate ?? DateTime.Today, endDate ?? DateTime.Today) ? UnmetDemand : 0;
         }
 
         /// <summary>
