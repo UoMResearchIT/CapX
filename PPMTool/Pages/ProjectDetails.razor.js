@@ -17,31 +17,32 @@ function clearHighlightInNotes() {
 }
 
 function insertTextAtCaret(text) {
-    var sel, range;
-    if (window.getSelection) {
-        sel = window.getSelection();
-        if (sel.getRangeAt && sel.rangeCount) {
-            range = sel.getRangeAt(0);
-            range.deleteContents();
 
-            var textNode = document.createTextNode(text);
-            range.insertNode(textNode);
+    var sel = window.getSelection();
+    var range = sel.getRangeAt(0);
+    var container = range.commonAncestorContainer;
 
-            // Move the cursor to the end of the range
-            range.setStartAfter(textNode);
-            range.setEndAfter(textNode);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    } else if (document.selection && document.selection.createRange) {
-        range = document.selection.createRange();
-        range.text = text;
+    // Find the last '@' character
+    var content = container.textContent;
+    var lastAtIndex = content.lastIndexOf('@');
 
-        // Move the cursor to the end of the range
-        range.collapse(false);
-        range.select();
-    }
+    // If the last '@' character is not found, return
+    if (lastAtIndex == -1) return;
+
+    // Create a new range starting after the last '@' character
+    range.setStart(container, lastAtIndex + 1);
+    range.setEnd(container, lastAtIndex + 1);
+
+    var textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+
+    // Move the cursor to the end of the inserted text
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    sel.removeAllRanges();
+    sel.addRange(range);
 }
+
 
 function copyText (text) {
     navigator.clipboard.writeText(text).then(function () {
