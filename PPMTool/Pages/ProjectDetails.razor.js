@@ -17,7 +17,6 @@ function clearHighlightInNotes() {
 }
 
 function insertTextAtCaret(text) {
-
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
     var container = range.commonAncestorContainer;
