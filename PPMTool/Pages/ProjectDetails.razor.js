@@ -21,25 +21,31 @@ function insertTextAtCaret(text) {
     var range = sel.getRangeAt(0);
     var container = range.commonAncestorContainer;
 
-    // Find the last '@' character
-    var content = container.textContent;
-    var lastAtIndex = content.lastIndexOf('@');
+    // Get the text content from the start of the container to the cursor position
+    var preCursorRange = range.cloneRange();
+    preCursorRange.selectNodeContents(container);
+    preCursorRange.setEnd(range.endContainer, range.endOffset);
+    var preCursorContent = preCursorRange.toString();
+
+    // Find the last '@' character before the cursor
+    var lastAtIndex = preCursorContent.lastIndexOf('@');
 
     // If the last '@' character is not found, return
     if (lastAtIndex == -1) return;
 
     // Create a new range starting after the last '@' character
-    range.setStart(container, lastAtIndex + 1);
-    range.setEnd(container, lastAtIndex + 1);
+    var newRange = document.createRange();
+    newRange.setStart(container, lastAtIndex + 1);
+    newRange.setEnd(container, lastAtIndex + 1);
 
     var textNode = document.createTextNode(text);
-    range.insertNode(textNode);
+    newRange.insertNode(textNode);
 
     // Move the cursor to the end of the inserted text
-    range.setStartAfter(textNode);
-    range.setEndAfter(textNode);
+    newRange.setStartAfter(textNode);
+    newRange.setEndAfter(textNode);
     sel.removeAllRanges();
-    sel.addRange(range);
+    sel.addRange(newRange);
 }
 
 
