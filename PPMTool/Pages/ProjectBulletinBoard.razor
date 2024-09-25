@@ -46,7 +46,7 @@
                     {
                         x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
                         return windowStart;
-                    }))
+                    }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
                     {
                         <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                     }
@@ -61,7 +61,7 @@
                 {
                    x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
                    return windowStart;
-                }))
+                }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
                 {
                     <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                 }
