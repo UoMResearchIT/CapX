@@ -1,49 +1,59 @@
 ﻿@using PPMTool.Data
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using System.Diagnostics
 
 <div class="card" style="min-height: 5rem">
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenText TextStyle="TextStyle.H5" Text="@project.GetFullName()" />
+                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
                 <RadzenBadge Style="margin-bottom: 0.5rem"
                              BadgeStyle="@(
-                                    project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                    project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                    project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
+                                    Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
+                                    Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
+                                    Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
                                     BadgeStyle.Light)"
-                             Text="@project.ProjectStatus.ToNiceString()" />
+                             Text="@Project.ProjectStatus.ToNiceString()" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                 <RadzenText Style="min-width:8rem" TextStyle="TextStyle.Subtitle1" Text="Project Manager:" />
                 <RadzenText TextStyle="TextStyle.Body1">
-                    @(project.ProjectManager?.Name ?? "Not Set")
+                    @(Project.ProjectManager?.Name ?? "Not Set")
                 </RadzenText>
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                 <RadzenText Style="min-width:8rem" TextStyle="TextStyle.Subtitle1" Text="Description:" />
                 <RadzenText TextStyle="TextStyle.Body1">
-                    @((MarkupString)project.Description)
+                    @((MarkupString)Project.Description)
                 </RadzenText>
             </RadzenStack>
         </RadzenStack>
         <RadzenStack Style="min-width:15rem" Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
-            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Max. Unmet Demand (FTE)" />
-            <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                         BadgeStyle="BadgeStyle.Danger"
-                         Text="@(project.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture()).ToString())" />
+            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE)" />
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center">
+                <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                             BadgeStyle="BadgeStyle.Danger"
+                             Text="@(minDemand.ToString())" />
+                @if (minDemand != maxDemand)
+                {
+                    <RadzenText Text="-" />
+                    <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                 BadgeStyle="BadgeStyle.Danger"
+                                 Text="@(maxDemand.ToString())" />
+                }
+            </RadzenStack>
             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates" />
-            <RadzenText TextStyle="TextStyle.Body1">@(project.GetUnmetDemandWindowDatesAsFormattedString())</RadzenText>
-            <RadzenButton Text=@(project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
-                          Icon="description" Click="@(args => ViewRequestDocClickedAsync(project))"
-                          ButtonStyle=@(project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
-                          Disabled=@project.HasNoRequestDocLink()
+            <RadzenText TextStyle="TextStyle.Body1">@(Project.GetUnmetDemandWindowDatesAsFormattedString())</RadzenText>
+            <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
+                          Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
+                          ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
+                          Disabled=@Project.HasNoRequestDocLink()
                           Style="width: 100%" />
             @if (ShowDetailsButton)
             {
                 <RadzenButton Text="View Project Details"
-                              Icon="info" Click="@(args => ViewDetails(project.ProjectId))"
+                              Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
                               ButtonStyle=ButtonStyle.Primary
                               Style="width: 100%" />
             }
@@ -53,17 +63,39 @@
 
 @code {
 
-    [Parameter]
-    public Project project { get; set; }
-
-    [Parameter]
-    public bool ShowDetailsButton { get; set; }
-
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
 
     [Inject]
     private NavigationManager Navigation { get; set; }
+
+    [Parameter]
+    public Project Project { get; set; }
+
+    [Parameter]
+    public bool ShowDetailsButton { get; set; }
+
+    [Parameter]
+    public Action<ProjectBulletinCardComponent> OnInitialised { get; set; }
+
+    private double maxDemand;
+    private double minDemand;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        OnInitialised?.Invoke(this);
+    }
+
+    public void UpdateMinMax(DateTime? startDate, DateTime? endDate)
+    {
+        // Get max and min demand (rounded to 3 dp) -- ignoring tasks with no unmet demand
+        var subtasks = Project.SubTasks.Where(x => x.GetUnmetDemandInWindow(startDate, endDate) != 0);
+        if (subtasks.Count() == 0) return;
+        maxDemand = Math.Round(1000 * subtasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))) / 1000;
+        minDemand = Math.Round(1000 * subtasks.Min(x => x.GetUnmetDemandInWindow(startDate, endDate))) / 1000;
+        StateHasChanged();
+    }
 
     /// <summary>
     /// Navigate to the Request Doc Link in new window
