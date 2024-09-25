@@ -42,7 +42,11 @@
             {
                 <h3>@(group.Key.ToNiceString())</h3>
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                    @foreach (var project in group.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                    @foreach (var project in group.OrderBy(x =>
+                    {
+                        x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                        return windowStart;
+                    }))
                     {
                         <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                     }
@@ -53,7 +57,11 @@
         else
         {
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                @foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                @foreach (var project in availableProjects.OrderBy(x =>
+                {
+                   x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                   return windowStart;
+                }))
                 {
                     <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                 }
