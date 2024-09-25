@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 
@@ -24,6 +25,7 @@ namespace PPMTool.Pages
         private DateTime? startDate;
         private DateTime? endDate;
         private bool groupByStatus = true;
+        private IList<ProjectBulletinCardComponent> projectBulletinCardComponents = new List<ProjectBulletinCardComponent>();
 
 
         protected override void OnInitialized()
@@ -50,12 +52,36 @@ namespace PPMTool.Pages
         {
             if (allProjects == null) return;
 
+            if (startDate != null && endDate != null)
+            {
+                if (endDate < startDate)
+                {
+                    endDate = startDate;
+                }
+            }
+
             availableProjects = allProjects.Where(x => x.HasUnmetDemandInWindow(startDate, endDate));
 
             if (groupByStatus)
             {
                 availableProjectsGrouped = availableProjects.GroupBy(x => x.ProjectStatus);
             }
+
+            // Update the min/max on the card
+            foreach (var component in projectBulletinCardComponents)
+            {
+                component.UpdateMinMax(startDate, endDate);
+            }
+        }
+
+        private void OnBulletinCardInitialised(ProjectBulletinCardComponent component)
+        {
+            // Stash a reference to the component so we can invoke the update method later
+            if (!projectBulletinCardComponents.Contains(component))
+            {
+                projectBulletinCardComponents.Add(component);
+            }
+            component.UpdateMinMax(startDate, endDate);
         }
 
         /// <summary>
