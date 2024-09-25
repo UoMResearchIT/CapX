@@ -279,7 +279,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to calculate the window of subtasks which have unmet demand and 
+        /// Method to return the dates in which there is unmet demand
         /// </summary>
         /// <returns></returns>
         public string GetUnmetDemandWindowDatesAsFormattedString()
