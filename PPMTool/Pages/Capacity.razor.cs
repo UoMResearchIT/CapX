@@ -81,6 +81,23 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool includeFinished = false;
+        public bool IncludeFinished
+        {
+            get => includeFinished;
+            set
+            {
+                if (includeFinished != value)
+                {
+                    includeFinished = value;
+                    SessionStorage.SetItemAsync<bool?>("capacity-include-finished", includeFinished);
+
+                    // Update the chart source
+                    ConfigureChartSource();
+                }
+            }
+        }
+
         private DateTime queryStartDate = DateTime.Today;
         public DateTime QueryStartDate
         {
@@ -150,7 +167,7 @@ namespace PPMTool.Pages
             Loading = true;
 
             // Get all projects not finished or cancelled
-            projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
+            projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsCancelled());
 
             // Refresh the dropdown
             ReloadDropDownSources();
@@ -173,6 +190,8 @@ namespace PPMTool.Pages
                 if (temp != null) IncludeLeavers = temp ?? false;
                 temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
                 if (temp != null) IncludeUnFunded = temp ?? false;
+                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
+                if (temp != null) IncludeFinished = temp ?? false;
 
                 // Choose the person automatically if not a manager
                 if (!EditAuthorised)
@@ -429,7 +448,13 @@ namespace PPMTool.Pages
                     return;
                 }
 
-                // Filter projects ignoring finished or cancelled projects
+                // Filter projects based on finished
+                if (!IncludeFinished)
+                {
+                    validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
+                }
+
+                // Filter projects based on unfunded
                 if (!IncludeUnFunded)
                 {
                     validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
@@ -621,7 +646,7 @@ namespace PPMTool.Pages
                     }
                 }
 
-                Debug.WriteLine($"** Done. Unfunded = {IncludeUnFunded} | Leavers = {IncludeLeavers}.");
+                Debug.WriteLine($"** Done. Unfunded = {IncludeUnFunded} | Leavers = {IncludeLeavers} | Finished = {IncludeFinished}.");
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
