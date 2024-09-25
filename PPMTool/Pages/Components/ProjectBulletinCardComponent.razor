@@ -44,7 +44,7 @@
                 }
             </RadzenStack>
             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates" />
-            <RadzenText TextStyle="TextStyle.Body1">@(Project.GetUnmetDemandWindowDatesAsFormattedString())</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@(Project.GetUnmetDemandWindowDates())</RadzenText>
             <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
                           Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
                           ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)

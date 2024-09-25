@@ -279,14 +279,24 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to return the dates in which there is unmet demand
+        /// Method to return the dates in which there is unmet demand.
         /// </summary>
-        /// <returns></returns>
-        public string GetUnmetDemandWindowDatesAsFormattedString()
+        /// <param name="windowStart">The start of the unmet demand window</param>
+        /// <param name="windowEnd">The end of the unmet demand window</param>
+        public void GetUnmetDemandWindowDates(out DateTime windowStart, out DateTime windowEnd)
         {
             var tasks = SubTasks.Where(x => x.GetUnmetDemandInWindow() > 0);
-            var windowStart = tasks.Min(x => x.StartDate);
-            var windowEnd = tasks.Max(x => x.EndDate);
+            windowStart = tasks.Min(x => x.StartDate);
+            windowEnd = tasks.Max(x => x.EndDate);
+        }
+
+        /// <summary>
+        /// Method to return the dates in which there is unmet demand as a formatted string.
+        /// </summary>
+        /// <returns>Dates as a formatted string</returns>
+        public string GetUnmetDemandWindowDates()
+        {
+            GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
             return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
         }
 
