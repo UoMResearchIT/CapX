@@ -140,7 +140,8 @@ namespace PPMTool.Pages
             }
         }
 
-        private IEnumerable<Project> projects;
+        private IEnumerable<Project> cachedProjects;
+        private IEnumerable<Person> cachedPeople;
         private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
         private IList<List<ChartItem>> confirmedChartItems;
         private IList<List<ChartItem>> provisionalChartItems;
@@ -170,7 +171,10 @@ namespace PPMTool.Pages
             Loading = true;
 
             // Get all projects not finished or cancelled
-            projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsCancelled());
+            cachedProjects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsCancelled());
+
+            // Cache all the people
+            cachedPeople = PersonService.GetAll(context).OrderBy(x => x.Name);
 
             // Refresh the dropdown
             ReloadDropDownSources();
@@ -236,14 +240,28 @@ namespace PPMTool.Pages
         /// </summary>
         private void ReloadDropDownSources()
         {
-            // Get dropdown options
-            people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            // Get people and filter if PM selected
+            people = cachedPeople.ToList();
+            if (chosenManager != null)
+            {
+                people = people
+                    .Where(p => cachedProjects
+                        .Where(x => x.ProjectManager.PersonId == chosenManager.PersonId)
+                        .Any(x => x.SubTasks.Any(x => x.AssignedResources
+                            .Any(x => x.Person.PersonId == p.PersonId)
+                        ))
+                    )
+                    .OrderBy(x => x.Name)
+                    .ToList();
+            }
+
+            // Add managers
             var roles = RolesService.GetAll(context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-
+            managers = cachedPeople.Where(x => roles.Any(y => y.Person == x)).ToList();
 
             // Filter out leavers if necessary
             if (!includeLeavers)
@@ -252,12 +270,15 @@ namespace PPMTool.Pages
                     .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
                     .OrderBy(x => x.Name)
                     .ToList();
+
+                managers = managers
+                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
+                    .OrderBy(x => x.Name)
+                    .ToList();
             }
 
+            // Apply autocomplete box filters
             LoadFilteredPeople(new LoadDataArgs());
-
-            // Add managers
-            managers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
             LoadFilteredManagers(new LoadDataArgs());
         }
 
@@ -367,6 +388,9 @@ namespace PPMTool.Pages
             // Save the new state
             SaveManagerState();
 
+            // Reload the people to include just those working on projects that PM manages
+            ReloadDropDownSources();
+
             // Regenerate the chart data
             ConfigureChartSource();
 
@@ -456,7 +480,7 @@ namespace PPMTool.Pages
                 groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                 chartTitles = new List<string>();
                 chartOptions = new List<ApexChartOptions<ChartItem>>();
-                IEnumerable<Project> validProjects = projects;
+                IEnumerable<Project> validProjects = cachedProjects;
 
                 // Need some people for this to work
                 if (people.Count() == 0)
@@ -503,7 +527,7 @@ namespace PPMTool.Pages
                 // -------------- PERSON MODE -------------- //
 
                 // Flatten subtasks and group by person if "All" chosen
-                if (!managerChosen && !peopleChosen)
+                if (!peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PERSON MODE.");
 
@@ -549,7 +573,7 @@ namespace PPMTool.Pages
                     provisionalChartItems.Add(chartSourceTemp.Where(x => x.IsHatched).ToList());
 
                     // Chart title
-                    var chartTitle = $"Load for {(!managerChosen ? "All" : "None")} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
+                    var chartTitle = $"Load for All {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
                     chartTitles.Add(chartTitle);
 
                     // Chart options
@@ -559,7 +583,7 @@ namespace PPMTool.Pages
                 // -------------- PROJECT MODE -------------- //
 
                 // Filter by people chosen, flatten and group by project if in project mode
-                else if (peopleChosen)
+                else if (managerChosen || peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PROJECT MODE.");
 
@@ -969,9 +993,6 @@ namespace PPMTool.Pages
         {
             LogInformation($"Exporting capacity data");
 
-            // Get all the people
-            var people = PersonService.GetAll(context).OrderBy(x => x.Name);
-
             // Create blank list of data
             var allData = new List<TaskData>();
 
@@ -981,7 +1002,7 @@ namespace PPMTool.Pages
             var startDate = new DateTime(currentFinancialYear, 8, 1);
 
             // Get data for each person
-            foreach (var p in people)
+            foreach (var p in cachedPeople)
             {
                 // Get the data by month
                 var data = ExportHelper.GetExportDataForPerson(
