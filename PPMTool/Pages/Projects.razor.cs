@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -117,14 +118,29 @@ namespace PPMTool.Pages
 
         private void LoadProjectData(bool initial)
         {
-            // Get projects from the database
-            var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
-
-            // Only show projects to developers that they are assigned to
-            if (!EditAuthorised && userRole != null)
+            List<Project> proj = null;
+            
+            switch (userRole.RoleType)
             {
-                proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person))).ToList();
+                default: // Manager, Superuser, Reader
+                    {
+                        proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
+                    } 
+                    break;
+                case RoleType.Developer:
+                    {
+                        proj = ProjectService.GetAll(context)
+                            .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person)))
+                            .OrderBy(x => x.RTP).ToList();
+                    } 
+                    break;
+                case RoleType.None:
+                    {
+                        proj = new List<Project>();
+                    }
+                    break;
             }
+            
 
             // Remove the ones that are not active if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
