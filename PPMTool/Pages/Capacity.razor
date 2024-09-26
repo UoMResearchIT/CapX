@@ -21,40 +21,36 @@
             <h1>Capacity</h1>
         </div>
         <div class="col-auto" style="align-content: center">
-            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!EditAuthorised />
+            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!CanRead />
         </div>
     </div>
     <hr />
     <h2>Charts</h2>
     <div class="card">
-        <div class="row align-items-center">
-            <div class="col-auto mr-auto">
-                <RadzenDropDown @bind-Value=@chosenPeople Data=@filteredPeople TextProperty="Name" ValueProperty="Name"
-                                Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
-                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
-                                Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
-                                LoadData="@LoadFilteredPeople" Disabled=@(!CanRead || Loading) />
-            </div>
-            <div class="col-auto mr-auto">
-                <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
-                                Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
-                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
-                                Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
-                                LoadData="@LoadFilteredManagers" Disabled=@(!CanRead || Loading) />
-            </div>
-            <div class="col-auto">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenDropDown @bind-Value=@chosenPeople Data=@filteredPeople TextProperty="Name" ValueProperty="Name"
+                            Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
+                            LoadData="@LoadFilteredPeople" Disabled=@(!CanRead || Loading) />
+            <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
+                            Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
+                            LoadData="@LoadFilteredManagers" Disabled=@(!CanRead || Loading) />
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
-            </div>
-            <div class="col-auto" style="display: flex">
                 <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
-            </div>
-            <div class="col-auto">
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Leavers:
-            </div>
-            <div class="col" style="display: flex">
                 <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" />
-            </div>
-        </div>
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Finished:
+                <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" />
+            </RadzenStack>
+        </RadzenStack>
     </div>
     
     @if (Loading)

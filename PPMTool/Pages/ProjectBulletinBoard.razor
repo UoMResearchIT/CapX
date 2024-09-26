@@ -42,9 +42,13 @@
             {
                 <h3>@(group.Key.ToNiceString())</h3>
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                    @foreach (var project in group.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture())))
+                    @foreach (var project in group.OrderBy(x =>
                     {
-                        <ProjectBulletinCardComponent project="@project" ShowDetailsButton="EditAuthorised" />
+                        x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                        return windowStart;
+                    }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                    {
+                        <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                     }
                 </RadzenStack>
                 <hr />
@@ -53,9 +57,13 @@
         else
         {
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                @foreach (var project in availableProjects.OrderByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandNowAndInFuture())))
+                @foreach (var project in availableProjects.OrderBy(x =>
                 {
-                    <ProjectBulletinCardComponent project="@project" ShowDetailsButton="EditAuthorised" />
+                   x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                   return windowStart;
+                }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                {
+                    <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                 }
             </RadzenStack>
             <hr />
