@@ -11,18 +11,18 @@ namespace PPMTool.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 1 WHERE RoleType = 2");
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 2 WHERE RoleType = 3");
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 3 WHERE RoleType = 4");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 4 WHERE RoleType = 3");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 3 WHERE RoleType = 2");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 2 WHERE RoleType = 1");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 1 WHERE RoleType = 0");
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 2 WHERE RoleType = 1");
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 3 WHERE RoleType = 2");
-            migrationBuilder.Sql("UPDATE Roles SET RoleType = 4 WHERE RoleType = 3");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 0 WHERE RoleType = 1");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 1 WHERE RoleType = 2");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 2 WHERE RoleType = 3");
+            migrationBuilder.Sql("UPDATE Roles SET RoleType = 3 WHERE RoleType = 4");
         }
     }
 }
