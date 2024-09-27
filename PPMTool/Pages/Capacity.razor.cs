@@ -199,6 +199,12 @@ namespace PPMTool.Pages
                 // Choose the person automatically if not a manager
                 if (!EditAuthorised)
                 {
+                    if (RoleService.GetRoleTypeForUsername(context,ActiveUserName) == RoleType.Reader)
+                    {
+                        ConfigureChartSource();
+                        return;
+                    }
+                    
                     // Look up the username
                     var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
                     ChosenPeople = new List<string>
@@ -503,7 +509,8 @@ namespace PPMTool.Pages
                 // -------------- PERSON MODE -------------- //
 
                 // Flatten subtasks and group by person if "All" chosen
-                if (!managerChosen && !peopleChosen)
+                if (RoleService.GetRoleTypeForUsername(context, ActiveUserName) == RoleType.Reader 
+                || (!managerChosen && !peopleChosen))
                 {
                     Debug.WriteLine("** Chart in PERSON MODE.");
 
