@@ -5,14 +5,7 @@
 @using PPMTool.Data
 
 @{
-    var role = RoleService.GetByUsername(context, ActiveUserName);
-    bool CanRead = false;
-    if (    role.RoleType == Enums.RoleType.Manager 
-        ||  role.RoleType == Enums.RoleType.Superuser
-        ||  role.RoleType == Enums.RoleType.Reader)
-    {
-        CanRead = true;
-    }
+    bool ReadAuthorised = EditAuthorised || IsReader;
 }
 
 <div class="container">
@@ -21,7 +14,7 @@
             <h1>Capacity</h1>
         </div>
         <div class="col-auto" style="align-content: center">
-            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!CanRead />
+            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!ReadAuthorised />
         </div>
     </div>
     <hr />
@@ -32,12 +25,12 @@
                             Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                             Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
-                            LoadData="@LoadFilteredPeople" Disabled=@(!CanRead || Loading) />
+                            LoadData="@LoadFilteredPeople" Disabled=@(!ReadAuthorised || Loading) />
             <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
                             Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                             Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
-                            LoadData="@LoadFilteredManagers" Disabled=@(!CanRead || Loading) />
+                            LoadData="@LoadFilteredManagers" Disabled=@(!ReadAuthorised || Loading) />
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
                 <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
@@ -146,7 +139,7 @@
     }
     <hr />
 
-    @if (CanRead)
+    @if (ReadAuthorised)
     {
         <h2>Availability Query</h2>
         <div class="card">

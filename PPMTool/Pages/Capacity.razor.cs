@@ -163,6 +163,9 @@ namespace PPMTool.Pages
         private bool peopleChosen;
         private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         private Task configureChartTask = null;
+        private bool IsReader => IsInRole(RoleType.Reader);
+        
+
 
         protected override void OnInitialized()
         {
@@ -178,47 +181,43 @@ namespace PPMTool.Pages
             LogInformation($"Viewing capacity page");
         }
 
+        protected bool IsInRole(RoleType role)
+        {
+            return AuthenticationState?.User.IsInRole(role.ToString()) ?? false;
+        }
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender)
+            if (!firstRender) return;
+            
+            // Load settings
+            var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
+            ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
+            ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
+            UpdateSelectionState();
+
+            // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
+            var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
+            if (temp != null) IncludeLeavers = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
+            if (temp != null) IncludeUnFunded = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
+            if (temp != null) IncludeFinished = temp ?? false;
+
+            if (EditAuthorised || IsReader)
             {
-                // Load settings
-                var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
-                ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
-                ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
-                UpdateSelectionState();
-
-                // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
-                var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
-                if (temp != null) IncludeLeavers = temp ?? false;
-                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
-                if (temp != null) IncludeUnFunded = temp ?? false;
-                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
-                if (temp != null) IncludeFinished = temp ?? false;
-
-                // Choose the person automatically if not a manager
-                if (!EditAuthorised)
-                {
-                    if (RoleService.GetRoleTypeForUsername(context, ActiveUserName) == RoleType.Reader)
-                    {
-                        ConfigureChartSource();
-                        return;
-                    }
-
-                    // Look up the username
-                    var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
-                    ChosenPeople = new List<string>
-                    {
-                        role.Person.Name
-                    };
-                    PeopleSelectionChanged(ChosenPeople);
-                }
-                else
-                {
-                    // Get data for chart
-                    ConfigureChartSource();
-                }
+                ConfigureChartSource();
+                return;
             }
+                
+            // Choose the person automatically if not a manager    
+            // Look up the username
+            var role = RoleService.GetByUsername(context, ActiveUserName);
+            ChosenPeople = new List<string>
+            {
+                role.Person.Name
+            };
+            PeopleSelectionChanged(ChosenPeople);
         }
 
         private void SaveManagerState()
@@ -509,8 +508,7 @@ namespace PPMTool.Pages
                 // -------------- PERSON MODE -------------- //
 
                 // Flatten subtasks and group by person if "All" chosen
-                if (RoleService.GetRoleTypeForUsername(context, ActiveUserName) == RoleType.Reader
-                || (!managerChosen && !peopleChosen))
+                if  (!managerChosen && !peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PERSON MODE.");
 
