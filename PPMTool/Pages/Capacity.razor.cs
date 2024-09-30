@@ -164,7 +164,7 @@ namespace PPMTool.Pages
         private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         private Task configureChartTask = null;
         private bool IsReader => IsInRole(RoleType.Reader);
-        
+
 
 
         protected override void OnInitialized()
@@ -189,7 +189,7 @@ namespace PPMTool.Pages
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender) return;
-            
+
             // Load settings
             var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
             ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
@@ -209,7 +209,7 @@ namespace PPMTool.Pages
                 ConfigureChartSource();
                 return;
             }
-                
+
             // Choose the person automatically if not a manager    
             // Look up the username
             var role = RoleService.GetByUsername(context, ActiveUserName);
@@ -508,7 +508,7 @@ namespace PPMTool.Pages
                 // -------------- PERSON MODE -------------- //
 
                 // Flatten subtasks and group by person if "All" chosen
-                if  (!managerChosen && !peopleChosen)
+                if (!managerChosen && !peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PERSON MODE.");
 
