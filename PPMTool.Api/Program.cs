@@ -10,7 +10,7 @@ class Program
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
+
 
 
         //builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
@@ -22,7 +22,7 @@ class Program
 
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
         builder.Services.AddScoped<TagService>();
-        
+
         // Add services to the container.
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -30,7 +30,7 @@ class Program
             opt =>
             {
                 opt.SwaggerDoc(
-                    name: "v1", 
+                    name: "v1",
                     info: new() { Title = "PPMTool", Version = "v1" }
                 );
 
@@ -52,15 +52,15 @@ class Program
         );
 
         var app = builder.Build();
-        
+
         app.UseSwagger();
         app.UseSwaggerUI();
         app.UseHttpsRedirection();
-        
+
         // map endpoints to methods
         app.MapGet("/skill/getAll", Endpoints.Skill.GetAll);
-        
-        
+
+
         app.Run();
     }
 }
