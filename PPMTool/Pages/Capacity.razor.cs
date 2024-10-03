@@ -774,7 +774,7 @@ namespace PPMTool.Pages
         /// Takes the cached projects on the page and filters them based on the state of the switches and dropdowns
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<Project> GetValidProjects()
+        private IEnumerable<Project> GetValidProjects(bool filterBasedOnSelectedManager = true)
         {
             var validProjects = cachedProjects;
 
@@ -793,7 +793,7 @@ namespace PPMTool.Pages
             }
 
             // Filter the project source if a manager selected
-            if (ChosenManager != null)
+            if (ChosenManager != null && filterBasedOnSelectedManager)
             {
                 Debug.WriteLine("** Removing projects not belonging to selected manager...");
                 validProjects = validProjects.Where(x => x.ProjectManager.PersonId == ChosenManager.PersonId);
