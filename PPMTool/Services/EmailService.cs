@@ -338,13 +338,14 @@ namespace PPMTool.Services
                             .Where(x => x.PropertyName != "EditorPersonId" && x.PropertyName != nameof(Note.EditedDate))
                         )
                         {
-                            body.Append($"<b>{diff.PropertyName}:</b> {diff.OriginalValue ?? "None"} <b>&hArr;</b> {diff.CurrentValue ?? "None"}<br/>");
+                            body.Append($"<p><b><i>{diff.PropertyName}:</i></b></p> <p>{diff.OriginalValue ?? "None"}<br/><b>&hArr;</b> {diff.CurrentValue ?? "None"}</p>");
                         }
+                        body.Append("<hr />");
                     }
 
                     // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View {note.Project.GetFullName()} on CapX</a>");
+                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
 
                     // Send email
                     var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
