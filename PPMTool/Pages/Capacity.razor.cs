@@ -344,7 +344,7 @@ namespace PPMTool.Pages
             }
 
             // When in people ("All") mode then add person to selection and update the chart
-            else if (dataPoint.IsSelected && !peopleChosen && !managerChosen)
+            else if (dataPoint.IsSelected && !peopleChosen)
             {
                 var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
                 Debug.WriteLine($"** Selected {personName}. Updating selection...");
