@@ -252,13 +252,11 @@ namespace PPMTool.Pages
             people = cachedPeople.ToList();
             if (chosenManager != null)
             {
-                people = people
-                    .Where(p => cachedProjects
-                        .Where(x => x.ProjectManager.PersonId == chosenManager.PersonId)
-                        .Any(x => x.SubTasks.Any(x => x.AssignedResources
-                            .Any(x => x.Person.PersonId == p.PersonId)
-                        ))
-                    )
+                var validProjects = GetValidProjects();
+
+                // Get flattened list of all resources for the valid projects
+                people = validProjects.SelectMany(x => x.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person)))
+                    .DistinctBy(x => x.PersonId)
                     .OrderBy(x => x.Name)
                     .ToList();
             }
@@ -288,6 +286,20 @@ namespace PPMTool.Pages
             // Apply autocomplete box filters
             LoadFilteredPeople(new LoadDataArgs());
             LoadFilteredManagers(new LoadDataArgs());
+
+            // Remove any people not in the dropdown source from the selected people list
+            if (chosenPeople != null)
+            {
+                var temp = new List<string>();
+                foreach (var p in chosenPeople)
+                {
+                    if (filteredPeople.Any(x => x.Name == p))
+                    {
+                        temp.Add(p);
+                    }
+                }
+                chosenPeople = temp;
+            }
         }
 
         /// <summary>
@@ -784,7 +796,7 @@ namespace PPMTool.Pages
             if (ChosenManager != null)
             {
                 Debug.WriteLine("** Removing projects not belonging to selected manager...");
-                validProjects = validProjects.Where(x => x.ProjectManager == ChosenManager);
+                validProjects = validProjects.Where(x => x.ProjectManager.PersonId == ChosenManager.PersonId);
             }
 
             return validProjects;
