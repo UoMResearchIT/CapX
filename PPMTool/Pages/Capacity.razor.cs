@@ -192,6 +192,12 @@ namespace PPMTool.Pages
                 ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
                 UpdateSelectionState();
 
+                // Reload the dropdown sources if a manager has been chosen
+                if (ChosenManager != null)
+                {
+                    ReloadDropDownSources();
+                }
+
                 // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
                 var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
                 if (temp != null) IncludeLeavers = temp ?? false;
@@ -240,6 +246,8 @@ namespace PPMTool.Pages
         /// </summary>
         private void ReloadDropDownSources()
         {
+            Debug.WriteLine("** Reloading dropdown sources...");
+
             // Get people and filter if PM selected
             people = cachedPeople.ToList();
             if (chosenManager != null)
@@ -494,18 +502,21 @@ namespace PPMTool.Pages
                 // Filter projects based on finished
                 if (!IncludeFinished)
                 {
+                    Debug.WriteLine("** Removing finished projects...");
                     validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
                 }
 
                 // Filter projects based on unfunded
                 if (!IncludeUnFunded)
                 {
+                    Debug.WriteLine("** Removing unfunded projects...");
                     validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
                 }
 
                 // Filter the project source if a manager selected
                 if (ChosenManager != null)
                 {
+                    Debug.WriteLine("** Removing projects not belonging to selected manager...");
                     validProjects = validProjects.Where(x => x.ProjectManager == ChosenManager);
                 }
 
