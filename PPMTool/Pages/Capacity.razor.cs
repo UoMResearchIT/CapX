@@ -499,26 +499,8 @@ namespace PPMTool.Pages
                     return Task.CompletedTask;
                 }
 
-                // Filter projects based on finished
-                if (!IncludeFinished)
-                {
-                    Debug.WriteLine("** Removing finished projects...");
-                    validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
-                }
-
-                // Filter projects based on unfunded
-                if (!IncludeUnFunded)
-                {
-                    Debug.WriteLine("** Removing unfunded projects...");
-                    validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
-                }
-
-                // Filter the project source if a manager selected
-                if (ChosenManager != null)
-                {
-                    Debug.WriteLine("** Removing projects not belonging to selected manager...");
-                    validProjects = validProjects.Where(x => x.ProjectManager == ChosenManager);
-                }
+                // Update the valid projects
+                validProjects = GetValidProjects();
 
                 // Get the window from the start and end dates of the projects included in the source
                 // Avoids including malformed projects without a proper start date
@@ -774,6 +756,38 @@ namespace PPMTool.Pages
 
                     Debug.WriteLine($"** There are {chartTitles.Count} chart(s)!");
                 });
+        }
+
+        /// <summary>
+        /// Takes the cached projects on the page and filters them based on the state of the switches and dropdowns
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<Project> GetValidProjects()
+        {
+            var validProjects = cachedProjects;
+
+            // Filter projects based on finished
+            if (!IncludeFinished)
+            {
+                Debug.WriteLine("** Removing finished projects...");
+                validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
+            }
+
+            // Filter projects based on unfunded
+            if (!IncludeUnFunded)
+            {
+                Debug.WriteLine("** Removing unfunded projects...");
+                validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
+            }
+
+            // Filter the project source if a manager selected
+            if (ChosenManager != null)
+            {
+                Debug.WriteLine("** Removing projects not belonging to selected manager...");
+                validProjects = validProjects.Where(x => x.ProjectManager == ChosenManager);
+            }
+
+            return validProjects;
         }
 
         private void OnChartZoomed(ZoomedData<ChartItem> zoomedData)
