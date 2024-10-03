@@ -113,9 +113,9 @@
             <RadzenButton Text="Refresh" Icon="refresh" Click="GenerateCharts" Disabled="@Loading" />
         </div>
     </div>
-    <div class="row">
-        <div class="col-6">
-            <div class="card">
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -196,10 +196,10 @@
                 {
                     <RadzenText Text="Click refresh to generate" />
                 }
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="card">
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -244,13 +244,13 @@
                 {
                     <RadzenText Text="Click refresh to generate" />
                 }
-            </div>
-        </div>
-    </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
     <br />
-    <div class="row">
-        <div class="col-6">
-            <div class="card">
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -295,11 +295,10 @@
                 {
                     <RadzenText Text="Click refresh to generate" />
                 }
-            </div>
-        </div>
-        <div class="col">
-            
-        </div>
-    </div>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Style="min-width: 500px">
+        </RadzenColumn>
+    </RadzenRow>
     <br />
 </div>
