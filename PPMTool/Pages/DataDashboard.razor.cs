@@ -25,12 +25,6 @@ namespace PPMTool.Pages
         private float trainingPSMFTE = 0.1f;
         private float otherPSMFTE = 0.5f;
 
-        private float grade41Costs = 33333.55f;
-        private float grade55Costs = 43172.16f;
-        private float grade65Costs = 50935.80f;
-        private float grade71Costs = 57458.16f;
-        private float grade75Costs = 64797.29f;
-
         /// <summary>
         ///  The amount of money that we are expected to recover:
         ///  i.e. negative, blue values in Column E of the tracker which represent the salary costs removed from the budget
@@ -227,9 +221,11 @@ namespace PPMTool.Pages
                 demandChartOptions.Fill.Colors = GetColours();
                 demandChartOptions.Colors = GetColours();
 
-                // Clear the existing demand item list
+                // Clear the existing demand item lists
                 demandChartItems.Clear();
                 dutyChartItems.Clear();
+
+                // TODO: Pre-compute the weekly values for each project
 
                 // For each week
                 var currentWeekStart = startDate;
@@ -260,16 +256,16 @@ namespace PPMTool.Pages
                         dutyXLabels.Add($"Q{dutyChartItems.Last().Period} {dutyChartItems.Last().Year}");
                     }
 
-                    // Get the projects that are running during the week (exclude those projects with no tasks that have default start date)
+                    // Get the projects that are running during the week (exclude those projects with no tasks as they will have "default" start date)
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
 
 
-                    // Cancelled //
+                    /// Cancelled ///
                     var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
-                    // All Projects (not cancelled) //
+                    /// All Projects (not cancelled) ///
 
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
@@ -287,7 +283,7 @@ namespace PPMTool.Pages
                     var metDemand = (float)Math.Round(totalDemand - unmetDemand);
 
 
-                    // Finished //
+                    /// Finished ///
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
@@ -297,7 +293,7 @@ namespace PPMTool.Pages
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
-                    // Confirmed //
+                    /// Confirmed ///
 
                     // Get just confirmed projects
                     var projectsThisWeekConfirmedActive = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
@@ -317,7 +313,7 @@ namespace PPMTool.Pages
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
-                    // Unconfirmed //
+                    /// Unconfirmed ///
 
                     // Get just unconfirmed projects
                     var projectsThisWeekUnconfirmedButActive = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
@@ -337,12 +333,12 @@ namespace PPMTool.Pages
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
-                    // Compute value of confirmed and unconfirmed projects using G7.1 salary costs
-                    var confirmedValue = (float)Math.Round(totalDemandConfirmed * grade71Costs, 2);
-                    var unConfirmedValue = (float)Math.Round(totalDemandUnconfirmed * grade71Costs, 2);
+                    /// Costs ///
+
+                    // TODO: Compute the cumulative YTD values
 
 
-                    // People //
+                    /// People ///
 
                     // Get the people who are employed for at least one day during the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));
@@ -361,7 +357,7 @@ namespace PPMTool.Pages
                                 ChangeDate = currentWeekStart,
                                 Person = person,
                                 ProjectWorkFTE = person.FTE,
-                                Notes = "Default model"
+                                Notes = "Default Model"
                             };
                         }
 
@@ -416,8 +412,6 @@ namespace PPMTool.Pages
                         UnderallocationFTE = assignmentUnder,
                         OverallocationFTE = assignmentOver,
                         BenchProjectFTE = wlmProject - metDemand - unmetDemand,
-                        ConfirmedValue = confirmedValue,
-                        UnconfirmedValue = unConfirmedValue,
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,

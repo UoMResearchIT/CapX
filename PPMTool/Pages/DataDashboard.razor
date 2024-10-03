@@ -76,50 +76,6 @@
                     </div>
                 </div>
             </RadzenAccordionItem>
-            <RadzenAccordionItem Text="Salary Costs" Icon="currency_pound" CollapseTitle="Collapse"
-                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Salary Costs"
-                                 ExpandAriaLabel="Expand the Salary Costs">
-                <div class="row">
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 4.1" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 5.5" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 6.5" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 7.1" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 7.5" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Current Salary Budget" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade41Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade55Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade65Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade71Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade75Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="recoveryTarget" Disabled="@(!EditAuthorised)" />
-                    </div>
-                </div>
-            </RadzenAccordionItem>
             <RadzenAccordionItem Text="View Settings" Icon="visibility" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the View Settings"
                                  ExpandAriaLabel="Expand the View Settings" Selected="true">
