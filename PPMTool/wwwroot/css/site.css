@@ -222,3 +222,7 @@ mark {
 .rz-card {
     background-color: #fcfcfc
 }
+
+.table thead th {
+    vertical-align: top
+}

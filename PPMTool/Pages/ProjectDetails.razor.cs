@@ -847,5 +847,24 @@ namespace PPMTool.Pages
         {
             await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(project?.GetFullName(), new Dictionary<string, object>() { { "Project", project } });
         }
+
+        /// <summary>
+        /// Resets the actuals timestamp after a prompt
+        /// </summary>
+        private async void ResetActualsTimeStamp()
+        {
+            // Prompt
+            bool confirmed = await DialogService.Confirm($"By clicking this button you are confirming that you have checked the actuals against timesheet data. This will silence any warning about out-of-date actuals for a month. This cannot be undone!",
+                "Have you checked the actuals?") ?? false;
+            if (confirmed)
+            {
+                LogInformation($"Silencing actuals warning for {project?.GetFullName()}");
+
+                // Set timestamp and save to DB
+                project.ActualsLastUpdated = DateTime.Now.ToString("R");
+                ProjectService.Update(context, project);
+                StateHasChanged();
+            }
+        }
     }
 }
