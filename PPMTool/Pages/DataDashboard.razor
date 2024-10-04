@@ -306,7 +306,7 @@
                 else if (demandChartItems != null && demandChartItems.Count > 0)
                 {
                     <ApexChart TItem="DemandChartItem"
-                               Title="Cost Recovery (YTD)"
+                               Title="Cost Recovery (YTD) Confirmed Projects"
                                Options="@ytdChartOptions">
 
                         <ApexPointSeries TItem="DemandChartItem"
@@ -315,6 +315,13 @@
                                          Name="Recovery Target"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.RecoveryTargetYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Project Budgets"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.BudgetYTD))" />
 
                     </ApexChart>
                 }

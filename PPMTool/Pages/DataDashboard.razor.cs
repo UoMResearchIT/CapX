@@ -270,8 +270,6 @@ namespace PPMTool.Pages
                 demandChartItems.Clear();
                 dutyChartItems.Clear();
 
-                // TODO: Pre-compute the weekly values for each project
-
                 // Tracked values
                 var currentWeekStart = startDate;
                 var currentFY = 0;
@@ -360,46 +358,52 @@ namespace PPMTool.Pages
                     /// Confirmed ///
 
                     // Get just confirmed projects
-                    var projectsThisWeekConfirmedActive = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
+                    var projectsThisWeekConfirmed = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
 
                     // Remove finished projects if being shown separately
                     if (showFinishedAsSeparate)
                     {
-                        projectsThisWeekConfirmedActive = projectsThisWeekConfirmedActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                        projectsThisWeekConfirmed = projectsThisWeekConfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
                     // Get tasks
-                    var tasksOnConfirmedActiveProjectsThisWeek = projectsThisWeekConfirmedActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Get met and unmet demand for this subset
-                    var unmetDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var totalDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var unmetDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
                     /// Unconfirmed ///
 
                     // Get just unconfirmed projects
-                    var projectsThisWeekUnconfirmedButActive = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
+                    var projectsThisWeekUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
 
                     // Remove finished projects if being shown separately
                     if (showFinishedAsSeparate)
                     {
-                        projectsThisWeekUnconfirmedButActive = projectsThisWeekUnconfirmedButActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                        projectsThisWeekUnconfirmed = projectsThisWeekUnconfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
                     // Get tasks
-                    var tasksOnUnconfirmedActiveProjectsThisWeek = projectsThisWeekUnconfirmedButActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Calculate the unconfirmed totals
-                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
                     /// Costs ///
 
-                    // TODO: Compute the cumulative YTD values
+                    // Get the expected income for all confirmed projects this week
+                    var budgetYTD = (float)projectsThisWeekNotCancelled.Sum(x =>
+                    {
+                        // Value per week is budget averaged over the number of weeks the project runs
+                        var weeksProjectRuns = x.EndDate.Subtract(x.StartDate).TotalDays / 7f;
+                        return x.Budget / weeksProjectRuns;
+                    });
 
 
                     /// People ///
@@ -455,6 +459,7 @@ namespace PPMTool.Pages
                     if (previousDemandChartItem != null)
                     {
                         recoveryYTD = previousDemandChartItem.RecoveryTargetYTD;
+                        budgetYTD += previousDemandChartItem.BudgetYTD;
                     }
                     recoveryYTD += recoveryTargetPerWeek;
 
@@ -489,7 +494,8 @@ namespace PPMTool.Pages
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
-                        RecoveryTargetYTD = recoveryYTD
+                        RecoveryTargetYTD = recoveryYTD,
+                        BudgetYTD = budgetYTD
                     });
 
                     // Update averages for quarter for duty chart
