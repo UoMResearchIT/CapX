@@ -22,7 +22,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
@@ -99,6 +99,7 @@ namespace PPMTool.Pages
         private bool sortByDueDate;
         private Popup popup;
         private IList<Person> mentionables;
+        private IList<Person> cachedMentionables;
         private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
         private bool isCurrentUserFollowing;
@@ -124,10 +125,11 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
             var role = RolesService.GetByUsername(context, ActiveUserName);
             activeUser = role?.Person;
             allProjects = ProjectService.GetAll(context).ToList();
+
+            cachedMentionables = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
             FilterMentionables();
 
             // Query string only consulted when Project ID is not specified in URL
@@ -177,7 +179,7 @@ namespace PPMTool.Pages
                 count = allTasks.Count;
                 isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
                     project.ProjectManager?.Name == activeUser.Name;
-                isProjectManager = activeUser == project?.ProjectManager || role.RoleType == RoleType.Superuser;
+                isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && activeUser == project?.ProjectManager);
 
                 ganttChartOptions = new ApexChartOptions<GanttBlock>
                 {
@@ -408,14 +410,14 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterMentionables()
         {
-            var temp = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
+
             if (string.IsNullOrWhiteSpace(mentionSearchString))
             {
-                mentionables = temp;
+                mentionables = cachedMentionables;
             }
             else
             {
-                mentionables = temp.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
+                mentionables = cachedMentionables.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
             Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
@@ -844,6 +846,25 @@ namespace PPMTool.Pages
         private async Task ViewDescription()
         {
             await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(project?.GetFullName(), new Dictionary<string, object>() { { "Project", project } });
+        }
+
+        /// <summary>
+        /// Resets the actuals timestamp after a prompt
+        /// </summary>
+        private async void ResetActualsTimeStamp()
+        {
+            // Prompt
+            bool confirmed = await DialogService.Confirm($"By clicking this button you are confirming that you have checked the actuals against timesheet data. This will silence any warning about out-of-date actuals for a month. This cannot be undone!",
+                "Have you checked the actuals?") ?? false;
+            if (confirmed)
+            {
+                LogInformation($"Silencing actuals warning for {project?.GetFullName()}");
+
+                // Set timestamp and save to DB
+                project.ActualsLastUpdated = DateTime.Now.ToString("R");
+                ProjectService.Update(context, project);
+                StateHasChanged();
+            }
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20240925145651_AddRoleTypeReader")]
+    partial class AddRoleTypeReader
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -209,9 +211,6 @@ namespace PPMTool.Migrations
 
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
-
-                    b.Property<string>("ActualsLastUpdated")
-                        .HasColumnType("TEXT");
 
                     b.Property<double>("Budget")
                         .HasColumnType("REAL");
@@ -410,9 +409,6 @@ namespace PPMTool.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<double>("OriginalDemand")
-                        .HasColumnType("REAL");
 
                     b.Property<double>("PlannedCost")
                         .HasColumnType("REAL");

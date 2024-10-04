@@ -121,6 +121,11 @@ select {
     width: 100%;
 }
 
+.radzen-datepicker {
+    margin: 4pt;
+    width: 100%;
+}
+
 .flexbox {
     display: flex;
     align-items: center;
@@ -216,4 +221,8 @@ mark {
 
 .rz-card {
     background-color: #fcfcfc
+}
+
+.table thead th {
+    vertical-align: top
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -76,7 +77,7 @@ namespace PPMTool.Pages
                 projectModel.DayRate = double.Parse(Configuration["DefaultDayRate"]);
 
                 // Auto generate the RTP number based on the highest in the DB
-                projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).Max() + 1;
+                projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = RolesService.GetByUsername(context, ActiveUserName)?.Person;
@@ -198,6 +199,8 @@ namespace PPMTool.Pages
                         var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
                         foreach (var s in superusers)
                         {
+                            if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");
+
                             if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
                             {
                                 projectModel.Followers.Add(s);

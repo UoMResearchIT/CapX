@@ -10,7 +10,7 @@
 
 <div class="@NavMenuCssClass row">
     <ul class="nav flex-column">
-        <AuthorizeView Roles="Superuser,Manager,Developer">
+        <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
             <Authorized>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
@@ -19,7 +19,7 @@
                 </li>
             </Authorized>
         </AuthorizeView>
-        <AuthorizeView Roles="Superuser,Manager,Developer">
+        <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
             <Authorized>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="capacity">
@@ -82,7 +82,7 @@
                 </li>
             </Authorized>
         </AuthorizeView>
-        <AuthorizeView Roles="Superuser,Manager,Developer,None">
+        <AuthorizeView>
             <Authorized>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="datadashboard">

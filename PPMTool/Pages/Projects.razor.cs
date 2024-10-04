@@ -14,7 +14,7 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class Projects : BasePage
     {
         [Inject]
@@ -117,13 +117,17 @@ namespace PPMTool.Pages
 
         private void LoadProjectData(bool initial)
         {
-            // Get projects from the database
-            var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
-
-            // Only show projects to developers that they are assigned to
-            if (!EditAuthorised && userRole != null)
+            // Initialise the project list -- developers can only see projects to which they are assigned
+            List<Project> proj;
+            if (userRole.RoleType == RoleType.Developer)
             {
-                proj = proj.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person))).ToList();
+                proj = ProjectService.GetAll(context)
+                    .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person)))
+                    .OrderBy(x => x.RTP).ToList();
+            }
+            else
+            {
+                proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
             }
 
             // Remove the ones that are not active if necessary

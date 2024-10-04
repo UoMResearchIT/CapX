@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Globalization;
 using System.Linq;
 using PPMTool.Enums;
 using static PPMTool.Data.ValidationAttributes;
@@ -94,6 +95,11 @@ namespace PPMTool.Data.Entities
         public double ActualLeadershipCosts { get; set; }
 
         /// <summary>
+        /// Timestamp recording when actuals were last updated.
+        /// </summary>
+        public string ActualsLastUpdated { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -105,7 +111,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasStartedInTheLastWeek())),
                 new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek())),
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
-                new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandNowOrInFuture()),
+                new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => Budget == 0),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
@@ -117,8 +123,20 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
+                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Whether this project is active and the actuals updated timestamp shows it hasn't been updated for a month or more
+        /// </summary>
+        /// <returns></returns>
+        private bool ActiveButNotHadActualsUpdatedForAMonth()
+        {
+            if (ProjectStatus != ProjectStatus.Active) return false;
+            DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
+            return lastUpdated.AddMonths(1) < DateTime.Now;
         }
 
         /// <summary>
@@ -195,12 +213,14 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Check whether this project has any tasks with unmet demand excluding tasks that ran in the past
+        /// Check whether this project has any tasks with unmet demand within the window given.
         /// </summary>
+        /// <param name="startDate">If null, assumed to be now</param>
+        /// <param name="endDate">If null, window just considered to be the future</param>
         /// <returns></returns>
-        public bool HasUnmetDemandNowOrInFuture()
+        public bool HasUnmetDemandInWindow(DateTime? startDate = null, DateTime? endDate = null)
         {
-            return SubTasks.Any(x => x.GetUnmetDemandNowAndInFuture() > 0);
+            return SubTasks.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0);
         }
 
         /// <summary>
@@ -258,7 +278,13 @@ namespace PPMTool.Data.Entities
             EndDate = endDate;
 
             // Truncate to 1 DP
-            ActualWorkHours = Math.Round(10 * actualHours) / 10;
+            var newValue = Math.Round(10 * actualHours) / 10;
+            if (newValue != ActualWorkHours)
+            {
+                // Has been updated so store the timestamp
+                ActualsLastUpdated = DateTime.Now.ToString("R");
+            }
+            ActualWorkHours = newValue;
 
             // Truncate the cost to 2 DP as it is currency and add on leadership costs
             ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
@@ -275,14 +301,24 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to calculate the window of subtasks which have unmet demand and 
+        /// Method to return the dates in which there is unmet demand.
         /// </summary>
-        /// <returns></returns>
-        public string GetUnmetDemandWindowDatesAsFormattedString()
+        /// <param name="windowStart">The start of the unmet demand window</param>
+        /// <param name="windowEnd">The end of the unmet demand window</param>
+        public void GetUnmetDemandWindowDates(out DateTime windowStart, out DateTime windowEnd)
         {
-            var tasks = SubTasks.Where(x => x.GetUnmetDemandNowAndInFuture() > 0);
-            var windowStart = tasks.Min(x => x.StartDate);
-            var windowEnd = tasks.Max(x => x.EndDate);
+            var tasks = SubTasks.Where(x => x.GetUnmetDemandInWindow() > 0);
+            windowStart = tasks.Min(x => x.StartDate);
+            windowEnd = tasks.Max(x => x.EndDate);
+        }
+
+        /// <summary>
+        /// Method to return the dates in which there is unmet demand as a formatted string.
+        /// </summary>
+        /// <returns>Dates as a formatted string</returns>
+        public string GetUnmetDemandWindowDates()
+        {
+            GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
             return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
         }
 

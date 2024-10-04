@@ -17,31 +17,37 @@ function clearHighlightInNotes() {
 }
 
 function insertTextAtCaret(text) {
-    var sel, range;
-    if (window.getSelection) {
-        sel = window.getSelection();
-        if (sel.getRangeAt && sel.rangeCount) {
-            range = sel.getRangeAt(0);
-            range.deleteContents();
+    var sel = window.getSelection();
+    var range = sel.getRangeAt(0);
+    var container = range.commonAncestorContainer;
 
-            var textNode = document.createTextNode(text);
-            range.insertNode(textNode);
+    // Get the text content from the start of the container to the cursor position
+    var preCursorRange = range.cloneRange();
+    preCursorRange.selectNodeContents(container);
+    preCursorRange.setEnd(range.endContainer, range.endOffset);
+    var preCursorContent = preCursorRange.toString();
 
-            // Move the cursor to the end of the range
-            range.setStartAfter(textNode);
-            range.setEndAfter(textNode);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    } else if (document.selection && document.selection.createRange) {
-        range = document.selection.createRange();
-        range.text = text;
+    // Find the last '@' character before the cursor
+    var lastAtIndex = preCursorContent.lastIndexOf('@');
 
-        // Move the cursor to the end of the range
-        range.collapse(false);
-        range.select();
-    }
+    // If the last '@' character is not found, return
+    if (lastAtIndex == -1) return;
+
+    // Create a new range starting after the last '@' character
+    var newRange = document.createRange();
+    newRange.setStart(container, lastAtIndex + 1);
+    newRange.setEnd(container, lastAtIndex + 1);
+
+    var textNode = document.createTextNode(text);
+    newRange.insertNode(textNode);
+
+    // Move the cursor to the end of the inserted text
+    newRange.setStartAfter(textNode);
+    newRange.setEndAfter(textNode);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
 }
+
 
 function copyText (text) {
     navigator.clipboard.writeText(text).then(function () {
