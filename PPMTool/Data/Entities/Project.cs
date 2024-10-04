@@ -123,7 +123,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
-                new StatusMessage("This project has is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
+                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -135,7 +135,7 @@ namespace PPMTool.Data.Entities
         private bool ActiveButNotHadActualsUpdatedForAMonth()
         {
             if (ProjectStatus != ProjectStatus.Active) return false;
-            var lastUpdated = DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
+            DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
             return lastUpdated.AddMonths(1) < DateTime.Now;
         }
 
@@ -222,8 +222,6 @@ namespace PPMTool.Data.Entities
         {
             return SubTasks.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0);
         }
-
-
 
         /// <summary>
         /// Updates the project meta data based on the current state of subtasks, resources and actuals
