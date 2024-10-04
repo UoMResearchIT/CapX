@@ -113,7 +113,8 @@ namespace PPMTool.Pages
                             }
                         }
                     }
-                }
+                },
+                Colors = GetColours()
             };
 
             fteChartOptions = new ApexChartOptions<DemandChartItem>
@@ -278,8 +279,9 @@ namespace PPMTool.Pages
                 var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
-                FinancialReference currentFinRef;
+                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, startDate);
                 float recoveryTargetPerWeek = 0f;
+                float proportionOfFY = 0f;
 
                 // For each week
                 while (currentWeekStart < endDate)
@@ -294,6 +296,8 @@ namespace PPMTool.Pages
                     float assignmentUnder = 0f;
                     float assignmentOver = 0f;
                     int numStaff = 0;
+                    float recoverableStaffCosts = 0f;
+                    float recoveryYTD = 0f;
 
                     // If quarter has changed then create a new object for the quarter
                     if (dutyChartItems.Count == 0 || dutyChartItems.Last().Year != currentWeekStart.Year || dutyChartItems.Last().Period != (int)Math.Ceiling(currentWeekStart.Month / 3f))
@@ -314,7 +318,7 @@ namespace PPMTool.Pages
                         currentFY = FinancialReference.GetFinancialYear(currentWeekStart);
 
                         // Compute how many weeks of this FY run within the window of the graph
-                        var proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
+                        proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
                         recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
                     }
 
@@ -440,8 +444,11 @@ namespace PPMTool.Pages
                             {
                                 ChangeDate = currentWeekStart,
                                 Person = person,
-                                ProjectWorkFTE = person.FTE,
-                                Notes = "Default Model"
+                                ProjectWorkFTE = 0.8,
+                                BusinessAsUsualFTE = 0.1,
+                                PersonalDevelopmentFTE = 0.1,
+                                Notes = "Default G6 Model",
+                                Grade = 6
                             };
                         }
 
@@ -452,6 +459,14 @@ namespace PPMTool.Pages
                         wlmPSM += (float)activeModel.ProjectAndServiceManagementFTE;
                         wlmStaff += (float)activeModel.StaffManagementFTE;
                         wlmRSA += (float)activeModel.ArchitectureFTE;
+                        try
+                        {
+                            recoverableStaffCosts += (float)currentFinRef.GetMidGradeCosts(activeModel.Grade) * proportionOfFY / 52;
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Skip if the grade is invalid
+                        }
                         numStaff++;
 
                         // Get assignments for this person and sum for the week
@@ -471,10 +486,10 @@ namespace PPMTool.Pages
 
                     // Get previous item to initialise the next item for the YTD values
                     var previousDemandChartItem = demandChartItems.LastOrDefault();
-                    var recoveryYTD = 0f;
                     if (previousDemandChartItem != null)
                     {
                         recoveryYTD = previousDemandChartItem.RecoveryTargetYTD;
+                        recoverableStaffCosts += previousDemandChartItem.RecoverableStaffCostsYTD;
                         budgetYTD += previousDemandChartItem.BudgetYTD;
                         receivedYTD += previousDemandChartItem.ReceivedFundsYTD;
                         plannedYTD += previousDemandChartItem.PlannedCostYTD;
@@ -516,7 +531,8 @@ namespace PPMTool.Pages
                         BudgetYTD = budgetYTD,
                         ReceivedFundsYTD = receivedYTD,
                         PlannedCostYTD = plannedYTD,
-                        ActualCostsYTD = actualYTD
+                        ActualCostsYTD = actualYTD,
+                        RecoverableStaffCostsYTD = recoverableStaffCosts
                     });
 
                     // Update averages for quarter for duty chart

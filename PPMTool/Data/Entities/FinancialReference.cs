@@ -124,7 +124,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="grade"></param>
         /// <returns></returns>
-        /// <exception cref="Exception">If grade is not a valid grade</exception>
+        /// <exception cref="ArgumentException">If grade is not a valid grade</exception>
         internal double GetMidGradeCosts(int grade)
         {
             if (grade == 4)
@@ -145,7 +145,7 @@ namespace PPMTool.Data.Entities
             }
             else
             {
-                throw new Exception($"Grade {grade} is invalid!");
+                throw new ArgumentException($"Grade {grade} is invalid!");
             }
         }
     }

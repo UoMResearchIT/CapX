@@ -166,5 +166,10 @@
         /// What is the YTD value of the received funds of all the projects on the books
         /// </summary>
         public float ReceivedFundsYTD { get; set; }
+
+        /// <summary>
+        /// This is the weekly amount of staff costs that should be recoverable based on WLMs active that week and the grade of the person (assuming middle of the grade)
+        /// </summary>
+        public float RecoverableStaffCostsYTD { get; set; }
     }
 }
