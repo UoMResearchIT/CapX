@@ -33,7 +33,7 @@ namespace PPMTool.Pages
 
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
-        private int yearsAhead = 3;
+        private int yearsAhead;
         private bool showFinishedAsSeparate = false;
 
         private IEnumerable<Person> people;
@@ -70,9 +70,9 @@ namespace PPMTool.Pages
             people = PersonService.GetAll(context);
             projects = ProjectService.GetAll(context);
 
-            // Default to the first day of the previous financial year
-            var today = DateTime.Today;
-            startDate = new DateTime(today.Month < 8 ? today.Year - 2 : today.Year - 1, 8, 1);
+            // Default to the first day of the current financial year
+            startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
+            yearsAhead = 1;
 
             // Set chart options
             ytdChartOptions = new ApexChartOptions<DemandChartItem>
