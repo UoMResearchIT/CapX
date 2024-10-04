@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -20,7 +21,7 @@ using static PPMTool.Data.ExportHelper;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class Capacity : BasePage
     {
         [Inject]
@@ -140,6 +141,10 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool IsReader => AuthenticationState?.User.IsInRole(RoleType.Reader.ToString()) ?? false;
+
+        private bool ReadOrEditAuthorised => EditAuthorised || IsReader;
+
         private IEnumerable<Project> cachedProjects;
         private IEnumerable<Person> cachedPeople;
         private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
@@ -184,45 +189,42 @@ namespace PPMTool.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender)
+            if (!firstRender) return;
+
+            // Load settings
+            var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
+            ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
+            ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
+            UpdateSelectionState();
+
+            // Reload the dropdown sources if a manager has been chosen
+            if (ChosenManager != null)
             {
-                // Load settings
-                var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
-                ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
-                ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
-                UpdateSelectionState();
-
-                // Reload the dropdown sources if a manager has been chosen
-                if (ChosenManager != null)
-                {
-                    ReloadDropDownSources();
-                }
-
-                // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
-                var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
-                if (temp != null) IncludeLeavers = temp ?? false;
-                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
-                if (temp != null) IncludeUnFunded = temp ?? false;
-                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
-                if (temp != null) IncludeFinished = temp ?? false;
-
-                // Choose the person automatically if not a manager
-                if (!EditAuthorised)
-                {
-                    // Look up the username
-                    var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
-                    ChosenPeople = new List<string>
-                    {
-                        role.Person.Name
-                    };
-                    PeopleSelectionChanged(ChosenPeople);
-                }
-                else
-                {
-                    // Get data for chart
-                    ConfigureChartSource();
-                }
+                ReloadDropDownSources();
             }
+
+            // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
+            var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
+            if (temp != null) IncludeLeavers = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
+            if (temp != null) IncludeUnFunded = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
+            if (temp != null) IncludeFinished = temp ?? false;
+
+            if (EditAuthorised || IsReader)
+            {
+                ConfigureChartSource();
+                return;
+            }
+
+            // Choose the person automatically if not a manager    
+            // Look up the username
+            var role = RoleService.GetByUsername(context, ActiveUserName);
+            ChosenPeople = new List<string>
+            {
+                role.Person.Name
+            };
+            PeopleSelectionChanged(ChosenPeople);
         }
 
         private void SaveManagerState()

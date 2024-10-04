@@ -1,7 +1,6 @@
 ﻿@page "/capacity"
 @inherits BasePage
 @using PPMTool.Pages.Components
-
 @using PPMTool.Data
 
 <div class="container">
@@ -10,11 +9,10 @@
             <h1>Capacity</h1>
         </div>
         <div class="col-auto" style="align-content: center">
-            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!EditAuthorised />
+            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!ReadOrEditAuthorised />
         </div>
     </div>
     <hr />
-
     <h2>Charts</h2>
     <div class="card">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
@@ -22,12 +20,12 @@
                             Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                             Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
-                            LoadData="@LoadFilteredPeople" Disabled=@(!EditAuthorised || Loading) />
+                            LoadData="@LoadFilteredPeople" Disabled=@(!ReadOrEditAuthorised || Loading) />
             <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
                             Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                             Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
-                            LoadData="@LoadFilteredManagers" Disabled=@(!EditAuthorised || Loading) />
+                            LoadData="@LoadFilteredManagers" Disabled=@(!ReadOrEditAuthorised || Loading) />
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
                 <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
@@ -130,7 +128,7 @@
     }
     <hr />
 
-    @if (EditAuthorised)
+    @if (ReadOrEditAuthorised)
     {
         <h2>Availability Query</h2>
         <div class="card">

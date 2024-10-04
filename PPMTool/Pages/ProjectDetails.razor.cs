@@ -22,7 +22,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
@@ -179,7 +179,7 @@ namespace PPMTool.Pages
                 count = allTasks.Count;
                 isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
                     project.ProjectManager?.Name == activeUser.Name;
-                isProjectManager = activeUser == project?.ProjectManager || role.RoleType == RoleType.Superuser;
+                isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && activeUser == project?.ProjectManager);
 
                 ganttChartOptions = new ApexChartOptions<GanttBlock>
                 {

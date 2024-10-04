@@ -25,12 +25,6 @@ namespace PPMTool.Pages
         private float trainingPSMFTE = 0.1f;
         private float otherPSMFTE = 0.5f;
 
-        /// <summary>
-        ///  The amount of money that we are expected to recover:
-        ///  i.e. negative, blue values in Column E of the tracker which represent the salary costs removed from the budget
-        /// </summary>
-        private float recoveryTarget = 1118849;
-
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
         private int yearsAhead;
