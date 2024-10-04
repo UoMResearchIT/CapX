@@ -298,6 +298,31 @@
             </RadzenCard>
         </RadzenColumn>
         <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DemandChartItem"
+                               Title="Cost Recovery (YTD)"
+                               Options="@ytdChartOptions">
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Recovery Target"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RecoveryTargetYTD))" />
+
+                    </ApexChart>
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </RadzenCard>
         </RadzenColumn>
     </RadzenRow>
     <br />

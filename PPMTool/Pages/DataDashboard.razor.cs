@@ -43,6 +43,7 @@ namespace PPMTool.Pages
         private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
         private ApexChartOptions<DemandChartItem> fteChartOptions;
+        private ApexChartOptions<DemandChartItem> ytdChartOptions;
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
 
 
@@ -51,6 +52,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
@@ -71,6 +75,47 @@ namespace PPMTool.Pages
             startDate = new DateTime(today.Month < 8 ? today.Year - 2 : today.Year - 1, 8, 1);
 
             // Set chart options
+            ytdChartOptions = new ApexChartOptions<DemandChartItem>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Line,
+                    Animations = new Animations { Enabled = false }
+                },
+                Xaxis = new XAxis
+                {
+                    Type = XAxisType.Datetime
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return '£' + val.toFixed(0).replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, "","") }"
+                        }
+                    }
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
+                }
+            };
+
             fteChartOptions = new ApexChartOptions<DemandChartItem>
             {
                 Chart = new Chart
@@ -227,11 +272,19 @@ namespace PPMTool.Pages
 
                 // TODO: Pre-compute the weekly values for each project
 
-                // For each week
+                // Tracked values
                 var currentWeekStart = startDate;
+                var currentFY = 0;
+                var endDate = startDate.AddYears(yearsAhead);
+                var startFY = FinancialReference.GetFinancialYear(startDate);
+                var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
-                while (currentWeekStart < startDate.AddYears(yearsAhead))
+                FinancialReference currentFinRef;
+                float recoveryTargetPerWeek = 0f;
+
+                // For each week
+                while (currentWeekStart < endDate)
                 {
                     // Initialise
                     float wlmProject = 0f;
@@ -254,6 +307,17 @@ namespace PPMTool.Pages
                         });
                         numberOfWeeks = 0;
                         dutyXLabels.Add($"Q{dutyChartItems.Last().Period} {dutyChartItems.Last().Year}");
+                    }
+
+                    // If financial year has changed then get the next financial reference and update recovery target
+                    if (currentFY != FinancialReference.GetFinancialYear(currentWeekStart))
+                    {
+                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, currentWeekStart);
+                        currentFY = FinancialReference.GetFinancialYear(currentWeekStart);
+
+                        // Compute how many weeks of this FY run within the window of the graph
+                        var proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
+                        recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
                     }
 
                     // Get the projects that are running during the week (exclude those projects with no tasks as they will have "default" start date)
@@ -385,6 +449,16 @@ namespace PPMTool.Pages
                         }
                     }
 
+                    // Get previous item to initialise the next item for the YTD values
+                    var previousDemandChartItem = demandChartItems.LastOrDefault();
+                    var recoveryYTD = 0f;
+                    if (previousDemandChartItem != null)
+                    {
+                        recoveryYTD = previousDemandChartItem.RecoveryTargetYTD;
+                    }
+                    recoveryYTD += recoveryTargetPerWeek;
+
+
                     // Create a demand item and add it to the list
                     demandChartItems.Add(new DemandChartItem()
                     {
@@ -415,6 +489,7 @@ namespace PPMTool.Pages
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
+                        RecoveryTargetYTD = recoveryYTD
                     });
 
                     // Update averages for quarter for duty chart
