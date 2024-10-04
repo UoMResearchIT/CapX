@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -140,6 +141,10 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool IsReader => AuthenticationState?.User.IsInRole(RoleType.Reader.ToString()) ?? false;
+
+        private bool ReadOrEditAuthorised => EditAuthorised || IsReader;
+
         private IEnumerable<Project> cachedProjects;
         private IEnumerable<Person> cachedPeople;
         private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
@@ -164,9 +169,6 @@ namespace PPMTool.Pages
         private bool peopleChosen;
         private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         private Task configureChartTask = null;
-        private bool IsReader => IsInRole(RoleType.Reader);
-
-
 
         protected override void OnInitialized()
         {
@@ -183,11 +185,6 @@ namespace PPMTool.Pages
             ReloadDropDownSources();
 
             LogInformation($"Viewing capacity page");
-        }
-
-        protected bool IsInRole(RoleType role)
-        {
-            return AuthenticationState?.User.IsInRole(role.ToString()) ?? false;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
