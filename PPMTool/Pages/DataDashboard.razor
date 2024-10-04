@@ -1,5 +1,6 @@
 ﻿@page "/datadashboard"
 @using PPMTool.Data
+@using PPMTool.Data.Entities
 @inherits BasePage
 
 <div class="container">
@@ -76,50 +77,6 @@
                     </div>
                 </div>
             </RadzenAccordionItem>
-            <RadzenAccordionItem Text="Salary Costs" Icon="currency_pound" CollapseTitle="Collapse"
-                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Salary Costs"
-                                 ExpandAriaLabel="Expand the Salary Costs">
-                <div class="row">
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 4.1" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 5.5" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 6.5" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 7.1" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Grade 7.5" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Current Salary Budget" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade41Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade55Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade65Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade71Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="grade75Costs" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="recoveryTarget" Disabled="@(!EditAuthorised)" />
-                    </div>
-                </div>
-            </RadzenAccordionItem>
             <RadzenAccordionItem Text="View Settings" Icon="visibility" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the View Settings"
                                  ExpandAriaLabel="Expand the View Settings" Selected="true">
@@ -134,9 +91,9 @@
                         <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
                     </div>
                 </div>
-                <div class="row">
+                <div class="row align-items-center">
                     <div class="col-2">
-                        <RadzenDatePicker TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
+                        <RadzenDatePicker class="radzen-datepicker" TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
                     </div>
                     <div class="col-2">
                         <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
@@ -154,12 +111,21 @@
             <h2>Charts</h2>
         </div>
         <div class="col-auto">
+            <RadzenButton Text="Last FY" Click="@(() => { startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1); yearsAhead = 1; GenerateCharts();})" Disabled="@Loading" />
+        </div>
+        <div class="col-auto">
+            <RadzenButton Text="Current FY" Click="@(() => { startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1); yearsAhead = 1; GenerateCharts();})" Disabled="@Loading" />
+        </div>
+        <div class="col-auto">
+            <RadzenButton Text="Next FY" Click="@(() => { startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1); yearsAhead = 1; GenerateCharts();})" Disabled="@Loading" />
+        </div>
+        <div class="col-auto">
             <RadzenButton Text="Refresh" Icon="refresh" Click="GenerateCharts" Disabled="@Loading" />
         </div>
     </div>
-    <div class="row">
-        <div class="col-6">
-            <div class="card">
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -240,10 +206,10 @@
                 {
                     <RadzenText Text="Click refresh to generate" />
                 }
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="card">
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -288,13 +254,13 @@
                 {
                     <RadzenText Text="Click refresh to generate" />
                 }
-            </div>
-        </div>
-    </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
     <br />
-    <div class="row">
-        <div class="col-6">
-            <div class="card">
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -339,11 +305,70 @@
                 {
                     <RadzenText Text="Click refresh to generate" />
                 }
-            </div>
-        </div>
-        <div class="col">
-            
-        </div>
-    </div>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DemandChartItem"
+                               Title="Cost Recovery (YTD) Confirmed Projects"
+                               Options="@ytdChartOptions">
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Recovery Target"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RecoveryTargetYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Project Budgets"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.BudgetYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Funds Received"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.ReceivedFundsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Planned Costs"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.PlannedCostYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Actual Costs"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.ActualCostsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Recoverable Staff Costs"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RecoverableStaffCostsYTD))" />
+
+                    </ApexChart>
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
     <br />
 </div>

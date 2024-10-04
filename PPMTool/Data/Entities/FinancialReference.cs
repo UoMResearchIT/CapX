@@ -32,6 +32,62 @@ namespace PPMTool.Data.Entities
             return date.Date.Month < 8 ? date.Date.Year - 1 : date.Date.Year;
         }
 
+        /// <summary>
+        /// Returns a number between 0 and 1 depending on how much of a financial year takes place within the given window
+        /// </summary>
+        /// <param name="currentFY"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <exception cref="ArgumentException">If start date is after end date</exception>
+        /// <returns></returns>
+        internal static float GetProportionOfFinancialYearInRange(int currentFY, DateTime startDate, DateTime endDate)
+        {
+            var startFY = new DateTime(currentFY, 8, 1);
+            var endFY = new DateTime(currentFY + 1, 7, 31);
+            if (startDate.Date > endDate.Date) throw new ArgumentException("Start Date is after the End Date!");
+
+            // Range starts before the FY
+            if (startDate.Date < startFY)
+            {
+                // Range starts and ends before FY starts
+                if (endDate.Date < startFY)
+                {
+                    return 0;
+                }
+
+                // Range starts before FY starts but ends in middle of FY
+                else if (endDate.Date <= endFY)
+                {
+                    return (float)endDate.Subtract(startFY).TotalDays / 365f;
+                }
+
+                // Range starts before FY starts and ends after FY ends so range spans whole FY
+                else
+                {
+                    return 1f;
+                }
+            }
+
+            // Range starts in FY
+            else if (startDate.Date <= endFY)
+            {
+                // Range starts and ends within FY
+                if (endDate.Date <= endFY)
+                {
+                    return (float)endDate.Date.Subtract(startDate.Date).TotalDays / 365f;
+                }
+
+                // Range starts within FY and ends after FY ends
+                else
+                {
+                    return (float)endFY.Subtract(startDate.Date).TotalDays / 365f;
+                }
+            }
+
+            // Range starts after FY ends
+            return 0f;
+        }
+
         public string GetSensibleObjectName()
         {
             return $"Financial Reference [{FinancialReferenceId}] - {FinancialYear}";
@@ -68,7 +124,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="grade"></param>
         /// <returns></returns>
-        /// <exception cref="Exception">If grade is not a valid grade</exception>
+        /// <exception cref="ArgumentException">If grade is not a valid grade</exception>
         internal double GetMidGradeCosts(int grade)
         {
             if (grade == 4)
@@ -89,7 +145,7 @@ namespace PPMTool.Data.Entities
             }
             else
             {
-                throw new Exception($"Grade {grade} is invalid!");
+                throw new ArgumentException($"Grade {grade} is invalid!");
             }
         }
     }

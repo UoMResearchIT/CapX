@@ -25,12 +25,6 @@ namespace PPMTool.Pages
         private float trainingPSMFTE = 0.1f;
         private float otherPSMFTE = 0.5f;
 
-        private float grade41Costs = 33333.55f;
-        private float grade55Costs = 43172.16f;
-        private float grade65Costs = 50935.80f;
-        private float grade71Costs = 57458.16f;
-        private float grade75Costs = 64797.29f;
-
         /// <summary>
         ///  The amount of money that we are expected to recover:
         ///  i.e. negative, blue values in Column E of the tracker which represent the salary costs removed from the budget
@@ -39,7 +33,7 @@ namespace PPMTool.Pages
 
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
-        private int yearsAhead = 3;
+        private int yearsAhead;
         private bool showFinishedAsSeparate = false;
 
         private IEnumerable<Person> people;
@@ -49,6 +43,7 @@ namespace PPMTool.Pages
         private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
         private ApexChartOptions<DemandChartItem> fteChartOptions;
+        private ApexChartOptions<DemandChartItem> ytdChartOptions;
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
 
 
@@ -57,6 +52,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
@@ -72,11 +70,53 @@ namespace PPMTool.Pages
             people = PersonService.GetAll(context);
             projects = ProjectService.GetAll(context);
 
-            // Default to the first day of the previous financial year
-            var today = DateTime.Today;
-            startDate = new DateTime(today.Month < 8 ? today.Year - 2 : today.Year - 1, 8, 1);
+            // Default to the first day of the current financial year
+            startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
+            yearsAhead = 1;
 
             // Set chart options
+            ytdChartOptions = new ApexChartOptions<DemandChartItem>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Line,
+                    Animations = new Animations { Enabled = false }
+                },
+                Xaxis = new XAxis
+                {
+                    Type = XAxisType.Datetime
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return '£' + val.toFixed(0).replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, "","") }"
+                        }
+                    }
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
+                },
+                Colors = GetColours()
+            };
+
             fteChartOptions = new ApexChartOptions<DemandChartItem>
             {
                 Chart = new Chart
@@ -227,15 +267,24 @@ namespace PPMTool.Pages
                 demandChartOptions.Fill.Colors = GetColours();
                 demandChartOptions.Colors = GetColours();
 
-                // Clear the existing demand item list
+                // Clear the existing demand item lists
                 demandChartItems.Clear();
                 dutyChartItems.Clear();
 
-                // For each week
+                // Tracked values
                 var currentWeekStart = startDate;
+                var currentFY = 0;
+                var endDate = startDate.AddYears(yearsAhead);
+                var startFY = FinancialReference.GetFinancialYear(startDate);
+                var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
-                while (currentWeekStart < startDate.AddYears(yearsAhead))
+                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, startDate);
+                float recoveryTargetPerWeek = 0f;
+                float proportionOfFY = 0f;
+
+                // For each week
+                while (currentWeekStart < endDate)
                 {
                     // Initialise
                     float wlmProject = 0f;
@@ -247,6 +296,8 @@ namespace PPMTool.Pages
                     float assignmentUnder = 0f;
                     float assignmentOver = 0f;
                     int numStaff = 0;
+                    float recoverableStaffCosts = 0f;
+                    float recoveryYTD = 0f;
 
                     // If quarter has changed then create a new object for the quarter
                     if (dutyChartItems.Count == 0 || dutyChartItems.Last().Year != currentWeekStart.Year || dutyChartItems.Last().Period != (int)Math.Ceiling(currentWeekStart.Month / 3f))
@@ -260,16 +311,27 @@ namespace PPMTool.Pages
                         dutyXLabels.Add($"Q{dutyChartItems.Last().Period} {dutyChartItems.Last().Year}");
                     }
 
-                    // Get the projects that are running during the week (exclude those projects with no tasks that have default start date)
+                    // If financial year has changed then get the next financial reference and update recovery target
+                    if (currentFY != FinancialReference.GetFinancialYear(currentWeekStart))
+                    {
+                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, currentWeekStart);
+                        currentFY = FinancialReference.GetFinancialYear(currentWeekStart);
+
+                        // Compute how many weeks of this FY run within the window of the graph
+                        proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
+                        recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
+                    }
+
+                    // Get the projects that are running during the week (exclude those projects with no tasks as they will have "default" start date)
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
 
 
-                    // Cancelled //
+                    /// Cancelled ///
                     var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
-                    // All Projects (not cancelled) //
+                    /// All Projects (not cancelled) ///
 
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
@@ -287,7 +349,7 @@ namespace PPMTool.Pages
                     var metDemand = (float)Math.Round(totalDemand - unmetDemand);
 
 
-                    // Finished //
+                    /// Finished ///
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
@@ -297,52 +359,74 @@ namespace PPMTool.Pages
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
-                    // Confirmed //
+                    /// Confirmed ///
 
                     // Get just confirmed projects
-                    var projectsThisWeekConfirmedActive = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
+                    var projectsThisWeekConfirmed = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
 
                     // Remove finished projects if being shown separately
                     if (showFinishedAsSeparate)
                     {
-                        projectsThisWeekConfirmedActive = projectsThisWeekConfirmedActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                        projectsThisWeekConfirmed = projectsThisWeekConfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
                     // Get tasks
-                    var tasksOnConfirmedActiveProjectsThisWeek = projectsThisWeekConfirmedActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Get met and unmet demand for this subset
-                    var unmetDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var totalDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var unmetDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
-                    // Unconfirmed //
+                    /// Unconfirmed ///
 
                     // Get just unconfirmed projects
-                    var projectsThisWeekUnconfirmedButActive = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
+                    var projectsThisWeekUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
 
                     // Remove finished projects if being shown separately
                     if (showFinishedAsSeparate)
                     {
-                        projectsThisWeekUnconfirmedButActive = projectsThisWeekUnconfirmedButActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                        projectsThisWeekUnconfirmed = projectsThisWeekUnconfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
                     // Get tasks
-                    var tasksOnUnconfirmedActiveProjectsThisWeek = projectsThisWeekUnconfirmedButActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Calculate the unconfirmed totals
-                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
-                    // Compute value of confirmed and unconfirmed projects using G7.1 salary costs
-                    var confirmedValue = (float)Math.Round(totalDemandConfirmed * grade71Costs, 2);
-                    var unConfirmedValue = (float)Math.Round(totalDemandUnconfirmed * grade71Costs, 2);
+                    /// Costs ///
+
+                    // Get the expected income for all confirmed projects this week
+                    var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.Budget / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.FundsReceived / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var plannedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.PlannedCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var actualYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.ActualCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
 
 
-                    // People //
+                    /// People ///
 
                     // Get the people who are employed for at least one day during the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));
@@ -360,8 +444,11 @@ namespace PPMTool.Pages
                             {
                                 ChangeDate = currentWeekStart,
                                 Person = person,
-                                ProjectWorkFTE = person.FTE,
-                                Notes = "Default model"
+                                ProjectWorkFTE = 0.8,
+                                BusinessAsUsualFTE = 0.1,
+                                PersonalDevelopmentFTE = 0.1,
+                                Notes = "Default G6 Model",
+                                Grade = 6
                             };
                         }
 
@@ -372,6 +459,14 @@ namespace PPMTool.Pages
                         wlmPSM += (float)activeModel.ProjectAndServiceManagementFTE;
                         wlmStaff += (float)activeModel.StaffManagementFTE;
                         wlmRSA += (float)activeModel.ArchitectureFTE;
+                        try
+                        {
+                            recoverableStaffCosts += (float)currentFinRef.GetMidGradeCosts(activeModel.Grade) * proportionOfFY / 52;
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Skip if the grade is invalid
+                        }
                         numStaff++;
 
                         // Get assignments for this person and sum for the week
@@ -388,6 +483,19 @@ namespace PPMTool.Pages
                             assignmentUnder += (float)(activeModel.ProjectWorkFTE - totalAssignmentFTE);
                         }
                     }
+
+                    // Get previous item to initialise the next item for the YTD values
+                    var previousDemandChartItem = demandChartItems.LastOrDefault();
+                    if (previousDemandChartItem != null)
+                    {
+                        recoveryYTD = previousDemandChartItem.RecoveryTargetYTD;
+                        recoverableStaffCosts += previousDemandChartItem.RecoverableStaffCostsYTD;
+                        budgetYTD += previousDemandChartItem.BudgetYTD;
+                        receivedYTD += previousDemandChartItem.ReceivedFundsYTD;
+                        plannedYTD += previousDemandChartItem.PlannedCostYTD;
+                        actualYTD += previousDemandChartItem.ActualCostsYTD;
+                    }
+                    recoveryYTD += recoveryTargetPerWeek;
 
                     // Create a demand item and add it to the list
                     demandChartItems.Add(new DemandChartItem()
@@ -416,11 +524,15 @@ namespace PPMTool.Pages
                         UnderallocationFTE = assignmentUnder,
                         OverallocationFTE = assignmentOver,
                         BenchProjectFTE = wlmProject - metDemand - unmetDemand,
-                        ConfirmedValue = confirmedValue,
-                        UnconfirmedValue = unConfirmedValue,
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
+                        RecoveryTargetYTD = recoveryYTD,
+                        BudgetYTD = budgetYTD,
+                        ReceivedFundsYTD = receivedYTD,
+                        PlannedCostYTD = plannedYTD,
+                        ActualCostsYTD = actualYTD,
+                        RecoverableStaffCostsYTD = recoverableStaffCosts
                     });
 
                     // Update averages for quarter for duty chart

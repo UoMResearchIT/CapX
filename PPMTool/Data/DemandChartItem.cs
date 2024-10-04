@@ -143,13 +143,33 @@
         // Cost Data //
 
         /// <summary>
-        /// Based on the standard cost model what is the value of the confrimed projects
+        /// What is the YTD value of the recovery target
         /// </summary>
-        public float ConfirmedValue { get; set; }
+        public float RecoveryTargetYTD { get; set; }
 
         /// <summary>
-        /// Based on the standard cost model what is the value of the unconfrimed projects
+        /// What is the YTD value of the budgets of all the projects on the books
         /// </summary>
-        public float UnconfirmedValue { get; set; }
+        public float BudgetYTD { get; set; }
+
+        /// <summary>
+        /// What is the YTD value of the planned costs of all the projects on the books
+        /// </summary>
+        public float PlannedCostYTD { get; set; }
+
+        /// <summary>
+        /// What is the YTD value of the actual costs of all the projects on the books
+        /// </summary>
+        public float ActualCostsYTD { get; set; }
+
+        /// <summary>
+        /// What is the YTD value of the received funds of all the projects on the books
+        /// </summary>
+        public float ReceivedFundsYTD { get; set; }
+
+        /// <summary>
+        /// This is the weekly amount of staff costs that should be recoverable based on WLMs active that week and the grade of the person (assuming middle of the grade)
+        /// </summary>
+        public float RecoverableStaffCostsYTD { get; set; }
     }
 }
