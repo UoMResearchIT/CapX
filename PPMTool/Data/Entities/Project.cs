@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Globalization;
 using System.Linq;
 using PPMTool.Enums;
 using static PPMTool.Data.ValidationAttributes;
@@ -94,6 +95,11 @@ namespace PPMTool.Data.Entities
         public double ActualLeadershipCosts { get; set; }
 
         /// <summary>
+        /// Timestamp recording when actuals were last updated.
+        /// </summary>
+        public string ActualsLastUpdated { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -117,8 +123,20 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
+                new StatusMessage("This project has is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Whether this project is active and the actuals updated timestamp shows it hasn't been updated for a month or more
+        /// </summary>
+        /// <returns></returns>
+        private bool ActiveButNotHadActualsUpdatedForAMonth()
+        {
+            if (ProjectStatus != ProjectStatus.Active) return false;
+            var lastUpdated = DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
+            return lastUpdated.AddMonths(1) < DateTime.Now;
         }
 
         /// <summary>
@@ -262,7 +280,13 @@ namespace PPMTool.Data.Entities
             EndDate = endDate;
 
             // Truncate to 1 DP
-            ActualWorkHours = Math.Round(10 * actualHours) / 10;
+            var newValue = Math.Round(10 * actualHours) / 10;
+            if (newValue != ActualWorkHours)
+            {
+                // Has been updated so store the timestamp
+                ActualsLastUpdated = DateTime.Now.ToString("R");
+            }
+            ActualWorkHours = newValue;
 
             // Truncate the cost to 2 DP as it is currency and add on leadership costs
             ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
