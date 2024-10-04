@@ -1,5 +1,6 @@
 ﻿@page "/datadashboard"
 @using PPMTool.Data
+@using PPMTool.Data.Entities
 @inherits BasePage
 
 <div class="container">
@@ -90,9 +91,9 @@
                         <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
                     </div>
                 </div>
-                <div class="row">
+                <div class="row align-items-center">
                     <div class="col-2">
-                        <RadzenDatePicker TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
+                        <RadzenDatePicker class="radzen-datepicker" TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" />
                     </div>
                     <div class="col-2">
                         <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" />
@@ -108,6 +109,15 @@
     <div class="row">
         <div class="col">
             <h2>Charts</h2>
+        </div>
+        <div class="col-auto">
+            <RadzenButton Text="Last FY" Click="@(() => { startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1); yearsAhead = 1; GenerateCharts();})" Disabled="@Loading" />
+        </div>
+        <div class="col-auto">
+            <RadzenButton Text="Current FY" Click="@(() => { startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1); yearsAhead = 1; GenerateCharts();})" Disabled="@Loading" />
+        </div>
+        <div class="col-auto">
+            <RadzenButton Text="Next FY" Click="@(() => { startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1); yearsAhead = 1; GenerateCharts();})" Disabled="@Loading" />
         </div>
         <div class="col-auto">
             <RadzenButton Text="Refresh" Icon="refresh" Click="GenerateCharts" Disabled="@Loading" />
