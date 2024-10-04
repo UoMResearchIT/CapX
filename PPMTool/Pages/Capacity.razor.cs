@@ -200,19 +200,19 @@ namespace PPMTool.Pages
             ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
             UpdateSelectionState();
 
-                // Reload the dropdown sources if a manager has been chosen
-                if (ChosenManager != null)
-                {
-                    ReloadDropDownSources();
-                }
+            // Reload the dropdown sources if a manager has been chosen
+            if (ChosenManager != null)
+            {
+                ReloadDropDownSources();
+            }
 
-                // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
-                var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
-                if (temp != null) IncludeLeavers = temp ?? false;
-                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
-                if (temp != null) IncludeUnFunded = temp ?? false;
-                temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
-                if (temp != null) IncludeFinished = temp ?? false;
+            // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
+            var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
+            if (temp != null) IncludeLeavers = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
+            if (temp != null) IncludeUnFunded = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
+            if (temp != null) IncludeFinished = temp ?? false;
 
             if (EditAuthorised || IsReader)
             {
