@@ -398,11 +398,27 @@ namespace PPMTool.Pages
                     /// Costs ///
 
                     // Get the expected income for all confirmed projects this week
-                    var budgetYTD = (float)projectsThisWeekNotCancelled.Sum(x =>
+                    var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
-                        // Value per week is budget averaged over the number of weeks the project runs
-                        var weeksProjectRuns = x.EndDate.Subtract(x.StartDate).TotalDays / 7f;
-                        return x.Budget / weeksProjectRuns;
+                        return x.Budget / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.FundsReceived / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var plannedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.PlannedCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var actualYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.ActualCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
 
@@ -460,9 +476,11 @@ namespace PPMTool.Pages
                     {
                         recoveryYTD = previousDemandChartItem.RecoveryTargetYTD;
                         budgetYTD += previousDemandChartItem.BudgetYTD;
+                        receivedYTD += previousDemandChartItem.ReceivedFundsYTD;
+                        plannedYTD += previousDemandChartItem.PlannedCostYTD;
+                        actualYTD += previousDemandChartItem.ActualCostsYTD;
                     }
                     recoveryYTD += recoveryTargetPerWeek;
-
 
                     // Create a demand item and add it to the list
                     demandChartItems.Add(new DemandChartItem()
@@ -495,7 +513,10 @@ namespace PPMTool.Pages
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
                         RecoveryTargetYTD = recoveryYTD,
-                        BudgetYTD = budgetYTD
+                        BudgetYTD = budgetYTD,
+                        ReceivedFundsYTD = receivedYTD,
+                        PlannedCostYTD = plannedYTD,
+                        ActualCostsYTD = actualYTD
                     });
 
                     // Update averages for quarter for duty chart
