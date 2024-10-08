@@ -40,6 +40,9 @@
                         <h2>Current Tasks</h2>
                     </div>
                     <div class="col-auto" style="align-content: center">
+                        <RadzenButton Text="Defaults" Icon="add" Click="@AddDefaults" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                    </div>
+                    <div class="col-auto" style="align-content: center">
                         <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
                     </div>
                 </div>

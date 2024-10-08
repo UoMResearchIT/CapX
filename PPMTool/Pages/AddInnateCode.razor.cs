@@ -96,5 +96,23 @@ namespace PPMTool.Pages
             LogInformation($"Updated row for {entity.GetSensibleObjectName()}");
             Reset();
         }
+
+        private async void AddDefaults()
+        {
+            LogInformation($"Adding default tasks");
+            dataGridEntities.Add(new InnateCodeTask
+            {
+                TaskName = "Management",
+                InnateCode = innateCode,
+                Duty = Enums.Duty.ProjectAndServiceMgmt
+            });
+            dataGridEntities.Add(new InnateCodeTask
+            {
+                TaskName = "Development",
+                InnateCode = innateCode,
+                Duty = Enums.Duty.ProjectWork
+            });
+            await dataGrid.Reload();
+        }
     }
 }
