@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
@@ -26,51 +24,24 @@ namespace PPMTool.Pages
             LogInformation($"Viewing innate code grid");
         }
 
-        private async Task CopyRow(InnateCode entity)
+        private async Task DeleteCode(InnateCode code)
         {
-            InnateCode copy = Activator.CreateInstance(typeof(InnateCode)) as InnateCode;
-            copy.ActivityCode = entity.ActivityCode;
-            copy.ActivityName = entity.ActivityName;
-            entityToInsert = copy;
-            await dataGrid.InsertRow(entityToInsert);
-        }
-
-        protected override async Task DeleteRow(InnateCode entity)
-        {
-            if (await DialogService.Confirm($"You are about to delete innate code {entity.GetCodeAsString()}.", "Delete Code") ?? false)
+            if (await DialogService.Confirm($"You are about to delete innate code {code.GetCodeAsString()}.", "Delete Code") ?? false)
             {
-                await base.DeleteRow(entity);
-                dataGridEntityService.Delete(context, entity);
-                LogInformation($"Deleted innate code {entity.GetCodeAsString()}");
+                await base.DeleteRow(code);
+                dataGridEntityService.Delete(context, code);
+                LogInformation($"Deleted innate code {code.GetCodeAsString()}");
             }
         }
 
-        protected override void OnCreateRow(InnateCode entity)
+        private void EditCode(InnateCode code)
         {
-            var result = InnateCodeService.Add(context, entity);
-            if (result == -1)
-            {
-                dataGridEntities.Remove(entity);
-                dataGrid.Reload();
-                Reset();
-                statusMessage = new StatusMessage("An entry with the same name or code already exists.", StatusMessage.MessageType.Error);
-                return;
-            }
-            LogInformation($"Added innate code {entity.GetCodeAsString()}");
-            Reset();
+            Navigation.NavigateTo($"/addinnatecode/{code.InnateCodeId}");
         }
 
-        protected override void OnUpdateRow(InnateCode entity)
+        private void AddCode()
         {
-            var result = InnateCodeService.Update(context, entity);
-            if (result == -1)
-            {
-                CancelEdit(entity);
-                statusMessage = new StatusMessage("An entry with the same name or code already exists.", StatusMessage.MessageType.Error);
-                return;
-            }
-            LogInformation($"Updated innate code {entity.GetCodeAsString()}");
-            Reset();
+            Navigation.NavigateTo("/addinnatecode/-1");
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -42,7 +43,9 @@ namespace PPMTool.Services
 
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
-            return context.InnateCodes.ToList();
+            return context.InnateCodes
+                .Include(x => x.Tasks)
+                .ToList();
         }
 
         public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
@@ -55,6 +58,11 @@ namespace PPMTool.Services
             context.InnateCodes.Update(entity);
             if (commitChanges) context.SaveChanges();
             return entity.InnateCodeId;
+        }
+
+        internal InnateCode GetById(PPMToolContext context, int innateCodeId)
+        {
+            return GetAll(context).FirstOrDefault(x => x.InnateCodeId == innateCodeId);
         }
     }
 }

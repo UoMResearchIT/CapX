@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using PPMTool.Enums;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -13,14 +13,10 @@ namespace PPMTool.Data.Entities
         [Required]
         public string ActivityName { get; set; }
 
-        [Required]
-        public string TaskName { get; set; }
-
         /// <summary>
-        /// This is the category of work that this timesheet code is calssified as when doing WLM analysis
+        /// The collection of innate code tasks that belong to this code
         /// </summary>
-        [Required]
-        public Duty Duty { get; set; }
+        public ICollection<InnateCodeTask> Tasks { get; set; } = new List<InnateCodeTask>();
 
 
         /// <summary>
