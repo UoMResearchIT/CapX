@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -23,6 +24,15 @@ namespace PPMTool.Pages
                 .OrderBy(x => x.ActivityCode)
                 .ToList();
             LogInformation($"Viewing innate code grid");
+        }
+
+        private async Task CopyRow(InnateCode entity)
+        {
+            InnateCode copy = Activator.CreateInstance(typeof(InnateCode)) as InnateCode;
+            copy.ActivityCode = entity.ActivityCode;
+            copy.ActivityName = entity.ActivityName;
+            entityToInsert = copy;
+            await dataGrid.InsertRow(entityToInsert);
         }
 
         protected override async Task DeleteRow(InnateCode entity)
