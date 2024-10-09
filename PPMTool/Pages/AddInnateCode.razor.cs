@@ -48,10 +48,11 @@ namespace PPMTool.Pages
         {
             if (innateCode != null)
             {
-                // TODO: Validate and exit early
+                // Reset error message
+                errorMessage = null;
 
-                // TODO: Reset error message
-                //errorMessage = null;
+                // Write to the database
+                LogInformation($"Saving innate code {innateCode?.GetCodeAsString()} with tasks {string.Join(",", innateCode?.Tasks)}.");
 
                 // Assign tasks to code
                 innateCode.Tasks.Clear();
@@ -60,16 +61,21 @@ namespace PPMTool.Pages
                     innateCode.Tasks.Add(task);
                 }
 
-                // Write to the database
-                LogInformation($"Saving innate code {innateCode?.GetCodeAsString()} with tasks {string.Join(",", innateCode?.Tasks)}.");
-
+                // Try to add or update
+                int result = -1;
                 if (innateCode?.InnateCodeId != 0)
                 {
-                    InnateCodeService.Update(context, innateCode);
+                    result = InnateCodeService.Update(context, innateCode);
                 }
                 else
                 {
-                    InnateCodeService.Add(context, innateCode);
+                    result = InnateCodeService.Add(context, innateCode);
+                }
+
+                if (result == -1)
+                {
+                    errorMessage = new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error);
+                    return;
                 }
 
                 // Navigate back

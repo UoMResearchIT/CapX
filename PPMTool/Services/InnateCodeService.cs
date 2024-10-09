@@ -29,10 +29,13 @@ namespace PPMTool.Services
 
         public override bool DuplicateDetected(PPMToolContext context, InnateCode entity)
         {
+            // Duplicate detected if the name or the code are the same as another or if any of the tasks within the
+            // code have the same name as another
             return GetAll(context)
                 .Any(x => (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() ||
                     x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower())
-                    && x.InnateCodeId != entity.InnateCodeId);
+                    && x.InnateCodeId != entity.InnateCodeId) ||
+                    entity.Tasks.DistinctBy(x => x.TaskName.Trim().ToLower()).Count() != entity.Tasks.Count;
         }
 
         public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
