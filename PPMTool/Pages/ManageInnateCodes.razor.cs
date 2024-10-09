@@ -19,7 +19,6 @@ namespace PPMTool.Pages
             base.OnInitialized();
             dataGridEntityService = InnateCodeService;
             dataGridEntities = InnateCodeService.GetAll(context)
-                .OrderBy(x => x.ActivityCode)
                 .ToList();
             LogInformation($"Viewing innate code grid");
         }

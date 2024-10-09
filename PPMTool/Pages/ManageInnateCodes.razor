@@ -33,7 +33,7 @@
         <Columns>
             <RadzenDataGridColumn TItem="InnateCode" Property="ActivityCode" Title="Activity Code" Width="15rem" MinWidth="10px"/>
             <RadzenDataGridColumn TItem="InnateCode" Property="ActivityName" Title="Activity Name" Width="20rem" MinWidth="10px"/>
-            <RadzenDataGridColumn TItem="InnateCode" Property="Tasks" Title="Tasks" Width="15rem" MinWidth="10px">
+            <RadzenDataGridColumn TItem="InnateCode" Property="Tasks" Title="Tasks" Width="15rem" MinWidth="10px" Filterable="false">
                 <Template Context="code">
                     @(code.Tasks != null && code.Tasks.Count() > 0 ? string.Join(",", code.Tasks.Select(x => x.TaskName)) : "")
                 </Template>

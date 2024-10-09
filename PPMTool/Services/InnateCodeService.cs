@@ -51,6 +51,7 @@ namespace PPMTool.Services
         {
             return context.InnateCodes
                 .Include(x => x.Tasks)
+                .OrderBy(x => x.ActivityCode)
                 .ToList();
         }
 
