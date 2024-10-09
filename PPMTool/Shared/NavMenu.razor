@@ -35,7 +35,16 @@
                         <span class="oi oi-people" aria-hidden="true"></span> People
                     </NavLink>
                 </li>
-        </Authorized>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Superuser,Manager">
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="wlmanalysis">
+                        <span class="oi oi-bar-chart" aria-hidden="true"></span> Workload Model Analysis
+                    </NavLink>
+                </li>
+            </Authorized>
         </AuthorizeView>
         <AuthorizeView Roles="Superuser,Manager,Developer">
             <Authorized>

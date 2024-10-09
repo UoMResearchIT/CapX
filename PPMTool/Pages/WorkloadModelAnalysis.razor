@@ -1,0 +1,65 @@
+﻿@page "/wlmanalysis"
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@inherits BasePage
+
+<div class="container">
+    <RadzenRow>
+        <RadzenColumn>
+            <h2>Workload Model Analysis</h2>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenText Text="If you upload an appropriately-formatted report downloaded from Innate, this page will generate the workload model analyses for you for each staff member in the report over the period specified in the report, grouped in calendar year quarters." />
+        </RadzenColumn>
+    </RadzenRow>
+    <hr />
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 50rem">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (dutyChartItems != null && dutyChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DutyChartItem"
+                               Title="Duty Demand (FTE)"
+                               Options="@dutyChartOptions">
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Research Software Architecture"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
+                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Staff Management"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
+                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Project and Service Management"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
+                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Project Work"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))" />
+
+                    </ApexChart>
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+    <br />
+</div>
