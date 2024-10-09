@@ -37,6 +37,9 @@ namespace PPMTool.Services
 
         public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
+            // Remove tasks so they are not orphaned
+            var tasks = context.InnateCodeTasks.Where(x => x.InnateCode.InnateCodeId == entity.InnateCodeId);
+            context.InnateCodeTasks.RemoveRange(tasks);
             context.InnateCodes.Remove(entity);
             if (commitChanges) context.SaveChanges();
         }

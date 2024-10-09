@@ -31,10 +31,11 @@ namespace PPMTool.Pages
             }
             else
             {
+                innateCode = new InnateCode();
                 dataGridEntities = new List<InnateCodeTask>();
             }
 
-            LogInformation($"Editing innate code {innateCode?.GetCodeAsString()}");
+            LogInformation($"Adding / Editing innate code {innateCode?.GetCodeAsString()}");
         }
 
         private void DiscardChanges()
