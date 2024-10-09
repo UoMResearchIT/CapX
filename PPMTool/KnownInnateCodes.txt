@@ -68,21 +68,21 @@ S-RES-P071|UoM Library|Open Access Compliance Platform (OACP)|1
 S-RES-P075|GRASS (Meah)|Management|5
 S-RES-P078|Manchester Proteome|Website Maintenance|1
 S-RES-P079|AInostics (Haroon, Azadbakht)|Management|5
-S-RES-P082|RTP-50 LEAP (Chernyavsky/Heazell)|Management|5
-S-RES-P083|RTP-46 KOKU (Stanmore)|Management|5
-S-RES-P093|RTP-40 Transcriptomics (Morias)|Management|5
-S-RES-P095|RTP-173 Mathworks Toolbox Work|PPML|1
-S-RES-P096|RTP-135 TICM (Taylor)|General|1
-S-RES-P096|RTP-135 TICM (Taylor)|Management|5
-S-RES-P098|RTP-145 GiFT (Weightman)|Management|5
-S-RES-P099|RTP-180 Polypharmacy KSS (Tjeerd van staa)|Management|5
-S-RES-P104|RTP-154 NERC Workshop 2023/24|General|1
-S-RES-P104|RTP-154 NERC Workshop 2023/24|Management|5
-S-RES-P105|RTP-18 Productivity Lab Portal (Ortega-Argiles)|Development|1
-S-RES-P105|RTP-18 Productivity Lab Portal (Ortega-Argiles)|Management|5
-S-RES-P105|RTP-18 Productivity Lab Portal (Ortega-Argiles)|Management|5
-S-RES-P106|RTP-98 HearX (Kluk-de Kort)|Development|1
-S-RES-P106|RTP-98 HearX (Kluk-de Kort)|Development|1
+S-RES-RTP-50|LEAP (Chernyavsky/Heazell)|Management|5
+S-RES-RTP-46|KOKU (Stanmore)|Management|5
+S-RES-RTP-40|Transcriptomics (Morias)|Management|5
+S-RES-RTP-173|Mathworks Toolbox Work|PPML|1
+S-RES-RTP-135|TICM (Taylor)|General|1
+S-RES-RTP-135|TICM (Taylor)|Management|5
+S-RES-RTP-145|GiFT (Weightman)|Management|5
+S-RES-RTP-180|Polypharmacy KSS (Tjeerd van staa)|Management|5
+S-RES-RTP-154|NERC Workshop 2023/24|General|1
+S-RES-RTP-154|NERC Workshop 2023/24|Management|5
+S-RES-RTP-18|Productivity Lab Portal (Ortega-Argiles)|Development|1
+S-RES-RTP-18|Productivity Lab Portal (Ortega-Argiles)|Management|5
+S-RES-RTP-18|Productivity Lab Portal (Ortega-Argiles)|Management|5
+S-RES-RTP-98|HearX (Kluk-de Kort)|Development|1
+S-RES-RTP-98|HearX (Kluk-de Kort)|Development|1
 S-RES-RTP-102|CDI (Rattray)|Internal Management|5
 S-RES-RTP-102|CDI (Rattray)|Management|5
 S-RES-RTP-106|LightForm (Materials, Quinta da Fonseca)|LightForm|1

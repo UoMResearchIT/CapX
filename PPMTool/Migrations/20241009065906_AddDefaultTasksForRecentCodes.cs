@@ -58,7 +58,7 @@ namespace PPMTool.Migrations
                         WHERE NOT EXISTS (
                             SELECT 1
                             FROM InnateCodes
-                            WHERE LOWER(TRIM(ActivityCode)) = '{activityCode}'
+                            WHERE LOWER(TRIM(ActivityCode)) = LOWER(TRIM('{activityCode}'))
                         );
                     "
                 );
