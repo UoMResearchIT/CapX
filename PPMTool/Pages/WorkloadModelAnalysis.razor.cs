@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -16,8 +15,19 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser")]
     public partial class WorkloadModelAnalysis : BasePage
     {
+        private class TimesheetReportLine
+        {
+            public string Resource { get; set; }
+            public string Activity { get; set; }
+            public string Task { get; set; }
+            public IList<float> WeeklyValues { get; set; } = new List<float>();
+        }
+
         private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
+        private byte[] file;
+        private string fileName;
+        private long? fileSize;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -42,87 +52,122 @@ namespace PPMTool.Pages
                     }
                 }
             };
-
-            // Start the spinner
-            Loading = true;
         }
 
-        private async void OnClientChange(UploadChangeEventArgs args)
+        void OnError(UploadErrorEventArgs args, string name)
         {
-            Debug.WriteLine("** Client-side upload changed");
+            LogError($"File Upload Failed: {args.Message}");
+        }
 
-            foreach (var file in args.Files)
+        void OnChange(byte[] value, string name)
+        {
+            // Start the spinner
+            Loading = true;
+
+            try
             {
-                if (file.ContentType != "text/plain")
+                // Data
+                var dates = new List<DateTime>();
+                var reportData = new List<TimesheetReportLine>();
+
+                // Bail or read from stream
+                if (value == null)
                 {
-                    throw new Exception("File is not of type text/plain as expected!");
+                    Loading = false;
+                    return;
                 }
 
-                Debug.WriteLine($"** File: {file.Name} / {file.Size} bytes");
+                // Convert text -- arrives as a base64 image bizarrely!
+                var fileText = System.Text.Encoding.Default.GetString(value);
+                string[] dbInfo = fileText.Split("base64,");
+                var base64Contents = dbInfo[1].ToString();
+                byte[] contentsAsBytes = Convert.FromBase64String(base64Contents);
+                fileText = System.Text.Encoding.Default.GetString(contentsAsBytes);
 
-                try
+                // Split into lines
+                var lines = fileText.Split("\n");
+
+                // Read one line at a time
+                bool headersParsed = false;
+                int columnCount = 0;
+                foreach (var line in lines)
                 {
-                    // Open stream
-                    using (var stream = file.OpenReadStream())
+                    // Split line
+                    var values = line.Split("\t");
+
+                    // Continue if no data on the line
+                    if (values.Length < 3) continue;
+
+                    // Continue if the final line
+                    if (values[0] == "Page total") continue;
+
+                    // Error if it is somewhere in the middle of the file and there is something up with the formatting
+                    if (headersParsed && values.Length != columnCount)
                     {
-                        // Bail or read from stream
-                        if (stream == null) throw new IOException("Could not open file!");
-
-                        // Read into memory
-                        var bytes = new byte[stream.Length];
-                        await stream.ReadAsync(bytes);
-
-                        // Convert text
-                        var fileText = System.Text.Encoding.Default.GetString(bytes);
-                        var lines = fileText.Split("\n");
-
-                        // Read one line at a time
-                        var dates = new List<DateTime>();
-                        foreach (var line in lines)
-                        {
-                            // Split line
-                            var values = line.Split("\t");
-
-                            // Continue if no data on the line
-                            if (values.Length == 0) continue;
-
-                            // If the line starts with "Resource"
-                            if (values[0] == "Resource")
-                            {
-                                // Check it has the required neighbouring columns
-                                if (values[1] != "Activity" || values[2] != "Task" || !DateTime.TryParse(values[3], out var temp))
-                                {
-                                    throw new Exception("File needs to have columns named Resource, Activity, Task before the weekly data!");
-                                }
-
-                                // Parse the dates
-                                for (var week = 4; week < values.Length; week++)
-                                {
-                                    dates.Add(DateTime.Parse(values[week]));
-                                }
-
-                                // Move to next line
-                                continue;
-                            }
-
-                            // Generate an object from the line
-
-
-
-                            Debug.WriteLine($"** Read: {line}");
-                        }
+                        throw new Exception($"Line {string.Join("|", new string[] { values[0], values[1], values[2] })} does not have the same number of columns {values.Length} as expected {columnCount}!");
                     }
 
-                    // TODO: Now build the chart data arrays
+                    // If the line starts with "Resource"
+                    if (!headersParsed && values[0] == "Resource")
+                    {
+                        // Check it has the required neighbouring columns
+                        if (values[1] != "Activity" || values[2] != "Task" || !DateTime.TryParse(values[3], out var temp))
+                        {
+                            throw new Exception("File needs to have columns named Resource, Activity, Task before the weekly data!");
+                        }
 
+                        // Parse the dates
+                        for (var week = 3; week < values.Length; week++)
+                        {
+                            dates.Add(DateTime.Parse(values[week]));
+                        }
 
+                        // Move to next line
+                        columnCount = values.Length;
+                        Debug.WriteLine($"** Expecting {values.Length - 3} weeks in the file");
+                        headersParsed = true;
+                        continue;
+                    }
+
+                    // Skip if not yet reached the header row
+                    if (!headersParsed) continue;
+
+                    // Generate an object from the line and stip out double quotes
+                    var obj = new TimesheetReportLine
+                    {
+                        Resource = values[0].Replace("\"", "").Replace("\r", ""),
+                        Activity = values[1].Replace("\"", "").Replace("\r", ""),
+                        Task = values[2].Replace("\"", "").Replace("\r", "")
+                    };
+
+                    // Get weekly data and strip the first three columns
+                    var valuesAsList = values.ToList();
+                    valuesAsList.RemoveRange(0, 3);
+
+                    // Parse to floats and add to object
+                    obj.WeeklyValues = valuesAsList.Select(x =>
+                    {
+                        return float.TryParse(x, out var value) ? value : 0f;
+                    }).ToList();
+                    reportData.Add(obj);
                 }
-                catch (Exception ex)
+
+                // TODO: Now build the chart data arrays
+                Debug.WriteLine("The end!");
+
+                Loading = false;
+
+            }
+            catch (Exception ex)
+            {
+                // Present an error notification to the user
+                ShowNotification(new NotificationMessage
                 {
-                    // TODO: Present an error notification to the user
-
-                    Debug.WriteLine($"** Client-side file read error: {ex.Message}");
-                }
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Upload Issue",
+                    Detail = $"{ex.Message}",
+                    Duration = 4000
+                });
             }
         }
 

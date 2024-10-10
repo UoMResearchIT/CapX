@@ -9,17 +9,16 @@
             <h2>Workload Model Analysis</h2>
         </RadzenColumn>
     </RadzenRow>
-    <RadzenRow>
+    <RadzenRow class="card" Style="flex-direction:unset">
         <RadzenColumn>
-            <RadzenText TextStyle="TextStyle.Body2" Text="If you upload an appropriately-formatted, tab-separated report downloaded from Innate, this page will generate the workload model analyses for you for each staff member in the report over the period specified in the report, grouped in calendar year quarters." />
-        </RadzenColumn>
-    </RadzenRow>
-    <RadzenRow>
-        <RadzenColumn>
-            <RadzenStack class="card">
-                <RadzenText Text="Upload Innate Report" TextStyle="TextStyle.Subtitle1"/>
-                <RadzenUpload Multiple="false" Accept="text/plain" Change=@OnClientChange InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select File" }})" />
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Innate Report Upload" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="If you upload an appropriately-formatted, tab-separated, plain text report downloaded from Innate, this page will generate the workload model analyses for you for each staff member in the report over the period specified in the report, grouped in calendar year quarters." />
             </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn>
+            <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%"
+                                Accept="text/plain" Change=@(args => OnChange(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
         </RadzenColumn>
     </RadzenRow>
     <hr />
