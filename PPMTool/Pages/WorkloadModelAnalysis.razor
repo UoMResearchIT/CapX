@@ -11,7 +11,15 @@
     </RadzenRow>
     <RadzenRow>
         <RadzenColumn>
-            <RadzenText Text="If you upload an appropriately-formatted report downloaded from Innate, this page will generate the workload model analyses for you for each staff member in the report over the period specified in the report, grouped in calendar year quarters." />
+            <RadzenText TextStyle="TextStyle.Body2" Text="If you upload an appropriately-formatted, tab-separated report downloaded from Innate, this page will generate the workload model analyses for you for each staff member in the report over the period specified in the report, grouped in calendar year quarters." />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenStack class="card">
+                <RadzenText Text="Upload Innate Report" TextStyle="TextStyle.Subtitle1"/>
+                <RadzenUpload Multiple="false" Accept="text/plain" Change=@OnClientChange InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select File" }})" />
+            </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
     <hr />
