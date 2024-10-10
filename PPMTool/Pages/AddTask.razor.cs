@@ -364,9 +364,9 @@ namespace PPMTool.Pages
                 IsValid = false;
             };
 
-            if (TaskModel.Demand <= 0)
+            if (TaskModel.OriginalDemand <= 0)
             {
-                error = "Demand for a task must be greater than zero!";
+                error = "Original demand for a task must be greater than zero!";
                 IsValid = false;
             }
 
