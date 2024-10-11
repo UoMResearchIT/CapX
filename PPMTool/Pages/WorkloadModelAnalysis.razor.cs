@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -20,11 +20,12 @@ namespace PPMTool.Pages
             public string Resource { get; set; }
             public string Activity { get; set; }
             public string Task { get; set; }
+            public Duty Duty { get; set; }
             public IList<float> WeeklyValues { get; set; } = new List<float>();
         }
 
-        private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
-        private ApexChartOptions<DutyChartItem> dutyChartOptions;
+        private Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
+        private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
         private byte[] file;
         private string fileName;
         private long? fileSize;
@@ -32,26 +33,12 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private InnateCodeService InnateCodeService { get; set; }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
-            // Chart options
-            dutyChartOptions = new ApexChartOptions<DutyChartItem>
-            {
-                Chart = new Chart
-                {
-                    Type = ChartType.Bar,
-                    Animations = new Animations { Enabled = false }
-                },
-                PlotOptions = new PlotOptions
-                {
-                    Bar = new PlotOptionsBar
-                    {
-                        Horizontal = false
-                    }
-                }
-            };
         }
 
         void OnError(UploadErrorEventArgs args, string name)
@@ -59,7 +46,7 @@ namespace PPMTool.Pages
             LogError($"File Upload Failed: {args.Message}");
         }
 
-        void OnChange(byte[] value, string name)
+        void OnFileChanged(byte[] value, string name)
         {
             // Start the spinner
             Loading = true;
@@ -140,6 +127,15 @@ namespace PPMTool.Pages
                         Task = values[2].Replace("\"", "").Replace("\r", "")
                     };
 
+                    // Look up the duty
+                    int duty = InnateCodeService.FindDutyForTask(context, obj.Activity, obj.Task);
+                    if (duty == -1)
+                    {
+                        // Cannot find this combo in the database
+                        throw new Exception($"Cannot find {obj.Activity}|{obj.Task} in the database of activity|task combinations known to CapX!");
+                    }
+                    obj.Duty = (Duty)duty;
+
                     // Get weekly data and strip the first three columns
                     var valuesAsList = values.ToList();
                     valuesAsList.RemoveRange(0, 3);
@@ -152,8 +148,52 @@ namespace PPMTool.Pages
                     reportData.Add(obj);
                 }
 
-                // TODO: Now build the chart data arrays
-                Debug.WriteLine("The end!");
+                // Group the data by person
+                var groupedData = reportData.GroupBy(x => x.Resource);
+
+                // For each group (person)
+                foreach (var resourceData in groupedData)
+                {
+                    // Initialise a list of data
+                    var data = new List<WLMWeeklyDataChartItem>();
+
+                    // For each week of data
+                    for (var i = 0; i < columnCount; i++)
+                    {
+                        // Create a chart item
+                        var item = new WLMWeeklyDataChartItem();
+
+                        // Loop over each task in the group
+                        foreach (var row in resourceData)
+                        {
+                            // Add the hours for the task to the relevant item in the dictionary
+                            item.WeeklyValuesByDuty[row.Duty] += row.WeeklyValues[i];
+                        }
+
+                        // Find total hours
+                        float totalHours = 0f;
+                        foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                        {
+                            totalHours += item.WeeklyValuesByDuty[duty];
+                        }
+
+                        // Normalise the values so they represent proportions of full time FTE
+                        foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                        {
+                            item.WeeklyValuesByDuty[duty] /= totalHours;
+                            item.WeeklyValuesByDuty[duty] *= 35f;
+                        }
+
+                        // Add to list
+                        data.Add(item);
+                    }
+
+                    // Add items to the chart data dictionary
+                    wlmChartItems.Add(resourceData.Key, data);
+
+                    // Create a chart options object
+                    CreateChartOptions();
+                }
 
                 Loading = false;
 
@@ -171,42 +211,34 @@ namespace PPMTool.Pages
             }
         }
 
-        private void GenerateCharts()
+        private void CreateChartOptions()
         {
-            Loading = true;
-            Task.Run(() =>
+            // Chart options
+            wlmChartOptions.Add(new ApexChartOptions<WLMWeeklyDataChartItem>
             {
-                Debug.WriteLine("** Starting generation...");
-
-                // TODO: Generate the chart items
-
-                // Assign X Labels for duty chart
-                dutyChartOptions.Xaxis = new XAxis
+                Chart = new Chart
                 {
-                    //Categories = dutyXLabels.ToArray()
-                };
-
-                // Determine min and max for y axis of duty chart
-                dutyChartItems.Last().UpdateMinMax();
-                dutyChartOptions.Yaxis = new List<YAxis>
+                    Type = ChartType.Bar,
+                    Animations = new Animations { Enabled = false }
+                },
+                PlotOptions = new PlotOptions
+                {
+                    Bar = new PlotOptionsBar
+                    {
+                        Horizontal = false
+                    }
+                },
+                Yaxis = new List<YAxis>
                 {
                     new YAxis
                     {
-                        Min = dutyChartItems.Min(x => x.Min),
-                        Max = dutyChartItems.Max(x => x.Max),
                         Labels = new YAxisLabels
                         {
                             Formatter = @"function (val, index) { return val.toFixed(2); }"
                         },
                         ForceNiceScale = true
                     }
-                };
-
-            }).ContinueWith(t =>
-            {
-                Debug.WriteLine($"** ...generation finished {t.Status}");
-                Loading = false;
-                InvokeAsync(StateHasChanged);
+                }
             });
         }
     }

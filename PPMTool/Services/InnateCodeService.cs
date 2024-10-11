@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -70,6 +71,27 @@ namespace PPMTool.Services
         internal InnateCode GetById(PPMToolContext context, int innateCodeId)
         {
             return GetAll(context).FirstOrDefault(x => x.InnateCodeId == innateCodeId);
+        }
+
+        /// <summary>
+        /// Looks up a activity and task combination by name and determines the duty it is categorised by.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activity"></param>
+        /// <param name="task"></param>
+        /// <returns>Duty as int or -1 if not match found</returns>
+        internal int FindDutyForTask(PPMToolContext context, string activity, string task)
+        {
+            var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityName.Trim().ToLower() == activity.Trim().ToLower());
+            if (matchAct != null)
+            {
+                var matchTask = context.InnateCodeTasks.FirstOrDefault(x => x.InnateCode.ActivityName == matchAct.ActivityName && x.TaskName.Trim().ToLower() == task.Trim().ToLower());
+                if (matchTask != null)
+                {
+                    return (int)matchTask.Duty;
+                }
+            }
+            return -1;
         }
     }
 }

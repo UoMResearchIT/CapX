@@ -1,6 +1,8 @@
 ﻿@page "/wlmanalysis"
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using DotNetExtensions
 @inherits BasePage
 
 <div class="container">
@@ -18,7 +20,7 @@
         </RadzenColumn>
         <RadzenColumn>
             <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%"
-                                Accept="text/plain" Change=@(args => OnChange(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                                Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
         </RadzenColumn>
     </RadzenRow>
     <hr />
@@ -29,41 +31,26 @@
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
                 }
-                else if (dutyChartItems != null && dutyChartItems.Count > 0)
+                else if (wlmChartItems != null && wlmChartItems.Count > 0)
                 {
-                    <ApexChart TItem="DutyChartItem"
-                               Title="Duty Demand (FTE)"
-                               Options="@dutyChartOptions">
+                    @for (int i = 0; i < wlmChartItems.Count; i++)
+                    {
+                        <ApexChart TItem="WLMWeeklyDataChartItem"
+                                   Title="Duty Demand (FTE)"
+                                   Options="@(wlmChartOptions.ElementAt(i))">
 
-                        <ApexPointSeries TItem="DutyChartItem"
-                                         Items="dutyChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Research Software Architecture"
-                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
-                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))" />
+                            @for (int j = 0; j < Enum.GetValues(typeof(Duty)).Length; j++)
+                            {
+                                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                                 Items="wlmChartItems.ElementAt(i).Value"
+                                                 SeriesType="@SeriesType.Bar"
+                                                 Name="@wlmChartItems.ElementAt(i).Value.First().WeeklyValuesByDuty.Keys.ElementAt(j).GetDescription()"
+                                                 XValue="@(e => (wlmChartOptions.ElementAt(i).Xaxis.Categories as string[])?.ElementAt(j))"
+                                                 YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty[(Duty)j]))" />
+                            }
 
-                        <ApexPointSeries TItem="DutyChartItem"
-                                         Items="dutyChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Staff Management"
-                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
-                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))" />
-
-                        <ApexPointSeries TItem="DutyChartItem"
-                                         Items="dutyChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Project and Service Management"
-                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
-                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))" />
-
-                        <ApexPointSeries TItem="DutyChartItem"
-                                         Items="dutyChartItems"
-                                         SeriesType="@SeriesType.Bar"
-                                         Name="Project Work"
-                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
-                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))" />
-
-                    </ApexChart>
+                        </ApexChart>
+                    }
                 }
             </RadzenCard>
         </RadzenColumn>
