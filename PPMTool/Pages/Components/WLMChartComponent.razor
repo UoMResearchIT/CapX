@@ -1,5 +1,6 @@
 @using DotNetExtensions
 @using PPMTool.Data
+@using PPMTool.Enums
 
 <RadzenColumn Style="min-width: 50rem">
     <RadzenCard>
@@ -109,8 +110,31 @@
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(6).Value)))"
                                  Color="#2E294E" />
             }
-
         </ApexChart>
+        <hr />
+        <RadzenText Text="Average for the Period" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5" />
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
+                        {
+                            <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" /></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
+                        {
+                            <td>
+                                <RadzenText Text="@(Math.Round(ChartItems.Average(x => x.WLMNetByDuty[duty]), 2).ToString())" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(Math.Round(ChartItems.Average(x => x.WLMNetByDuty[duty]), 2)) > 0.1 ? "red" : "green")};")" TextStyle="TextStyle.Subtitle1" />
+                            </td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </RadzenCard>
 </RadzenColumn>
 

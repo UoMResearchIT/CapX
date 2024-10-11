@@ -12,7 +12,7 @@
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                 <h2>Workload Model Analysis</h2>
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Compared to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                     <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
                 </RadzenStack>
             </RadzenStack>
@@ -27,7 +27,8 @@
         </RadzenColumn>
         <RadzenColumn>
             <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
-                                Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
+                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
         </RadzenColumn>
     </RadzenRow>
     <hr />
