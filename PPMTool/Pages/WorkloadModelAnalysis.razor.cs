@@ -31,6 +31,7 @@ namespace PPMTool.Pages
         private byte[] file;
         private string fileName;
         private long? fileSize;
+        private bool compareToWLM = true;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -43,12 +44,17 @@ namespace PPMTool.Pages
             base.OnInitialized();
         }
 
-        void OnError(UploadErrorEventArgs args, string name)
+        private void OnError(UploadErrorEventArgs args, string name)
         {
             LogError($"File Upload Failed: {args.Message}");
         }
 
-        void OnFileChanged(byte[] value, string name)
+        private void DisplayStyleChanged()
+        {
+            StateHasChanged();
+        }
+
+        private void OnFileChanged(byte[] value, string name)
         {
             // Start the spinner
             Loading = true;
@@ -197,7 +203,7 @@ namespace PPMTool.Pages
                                 {
                                     { Duty.Other, 0 },
                                     { Duty.ProjectWork, (float)wlm.ProjectWorkFTE },
-                                    { Duty.BAU, (float)wlm.ProjectWorkFTE },
+                                    { Duty.BAU, (float)wlm.BusinessAsUsualFTE },
                                     { Duty.PersonalDevelopment, (float)wlm.PersonalDevelopmentFTE },
                                     { Duty.StaffMgmt, (float)wlm.StaffManagementFTE },
                                     { Duty.ProjectAndServiceMgmt, (float)wlm.ProjectAndServiceManagementFTE},
@@ -227,8 +233,10 @@ namespace PPMTool.Pages
                             foreach (var duty in item.WeeklyValuesByDuty.Keys)
                             {
                                 item.WeeklyValuesByDuty[duty] /= totalHours == 0 ? 35 : totalHours;
-                                item.WeeklyValuesByDuty[duty] *= 100;
                             }
+
+                            // Compute the net
+                            item.UpdateWLMNetValues();
 
                             // Add to list
                             data.Add(item);
@@ -289,10 +297,10 @@ namespace PPMTool.Pages
                     {
                         Labels = new YAxisLabels
                         {
-                            Formatter = @"function (val, index) { return val.toFixed(0) + '%'; }"
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
                         },
                         ForceNiceScale = true,
-                        Max = 100,
+                        Max = 1,
                         Min = 0
                     }
                 },

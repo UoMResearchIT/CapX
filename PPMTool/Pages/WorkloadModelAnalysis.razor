@@ -9,7 +9,13 @@
 <div class="container">
     <RadzenRow>
         <RadzenColumn>
-            <h2>Workload Model Analysis</h2>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                <h2>Workload Model Analysis</h2>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Compared to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
+                </RadzenStack>
+            </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
     <RadzenRow class="card" Style="flex-direction:unset">
@@ -36,7 +42,8 @@
             {
                 <WLMChartComponent Title="@wlmChartItems.Keys.ElementAt(i)"
                                    ChartOptions="@wlmChartOptions[i]"
-                                   ChartItems="@wlmChartItems.ElementAt(i).Value" />
+                                   ChartItems="@wlmChartItems.ElementAt(i).Value"
+                                   CompareToWorkloadModel="@compareToWLM"/>
             }
         }
         else
