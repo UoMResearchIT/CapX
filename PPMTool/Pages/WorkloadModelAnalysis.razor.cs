@@ -42,6 +42,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            LogInformation($"Viewing WLM analysis page");
         }
 
         private void OnError(UploadErrorEventArgs args, string name)
@@ -60,6 +61,8 @@ namespace PPMTool.Pages
             Loading = true;
             wlmChartItems.Clear();
             wlmChartOptions.Clear();
+
+            if (value != null) LogInformation($"File Uploaded - generating WLM graphs...");
 
             Task.Run(() =>
             {
@@ -268,6 +271,7 @@ namespace PPMTool.Pages
                         Duration = 10000,
                         Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
                     }));
+                    LogError($"{ex.Message}");
 
                 }
             }).ContinueWith(t =>
