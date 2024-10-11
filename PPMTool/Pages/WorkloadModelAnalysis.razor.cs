@@ -56,11 +56,11 @@ namespace PPMTool.Pages
                 // Data
                 var dates = new List<DateTime>();
                 var reportData = new List<TimesheetReportLine>();
+                var matchingFails = new List<string>();
 
                 // Bail or read from stream
                 if (value == null)
                 {
-                    Loading = false;
                     return;
                 }
 
@@ -128,11 +128,12 @@ namespace PPMTool.Pages
                     };
 
                     // Look up the duty
+                    Debug.WriteLine($"** Looking up \"{obj.Activity}\" | \"{obj.Task}\"");
                     int duty = InnateCodeService.FindDutyForTask(context, obj.Activity, obj.Task);
                     if (duty == -1)
                     {
                         // Cannot find this combo in the database
-                        throw new Exception($"Cannot find {obj.Activity}|{obj.Task} in the database of activity|task combinations known to CapX!");
+                        matchingFails.Add($"{obj.Activity}|{obj.Task}");
                     }
                     obj.Duty = (Duty)duty;
 
@@ -146,6 +147,12 @@ namespace PPMTool.Pages
                         return float.TryParse(x, out var value) ? value : 0f;
                     }).ToList();
                     reportData.Add(obj);
+                }
+
+                Debug.WriteLine($"** Finished reading lines.");
+                if (matchingFails.Count > 0)
+                {
+                    throw new Exception($"Cannot find the following \"activity\" | \"task\" combinations in the CapX timesheet DB!\n{string.Join("\n", matchingFails)}");
                 }
 
                 // Group the data by person
@@ -194,9 +201,6 @@ namespace PPMTool.Pages
                     // Create a chart options object
                     CreateChartOptions();
                 }
-
-                Loading = false;
-
             }
             catch (Exception ex)
             {
@@ -206,8 +210,14 @@ namespace PPMTool.Pages
                     Severity = NotificationSeverity.Error,
                     Summary = "Upload Issue",
                     Detail = $"{ex.Message}",
-                    Duration = 4000
+                    Duration = 10000,
+                    Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
                 });
+
+            }
+            finally
+            {
+                Loading = false;
             }
         }
 

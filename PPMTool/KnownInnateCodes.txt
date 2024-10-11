@@ -6,12 +6,16 @@
 06|All IT - General Meetings & Forums|General Meetings & Forums|2
 DMS|Front End Demand Management and Shaping|Front End Demand Management and Shaping|5
 INC|Incidents|Incidents|2
+M&P|Maintenance and Patching|Maintenance and Patching|2
 P&A|Processes and Administration|HR|4
 P&A|Processes and Administration|Processes and Administration|2
 P&A|Processes and Administration|Service Level Management|5
+P&A|Processes and Administration|Product Management|5
 P00658|Digital Image Viewer|P00658-Digital Image Viewer|1
 P00875|Pure Migration Project|Pure Migration Project|1
 RCS02|Research Outreach Activities & Consultancy|Outreach Activities|2
+RCS03|Research Applications|Research Applications|2
+RCS04|Research Software & Data Engineering (RSDE) Support|Management|5
 RCS04|Research Software & Data Engineering (RSDE) Support|Research Software & Data Engineering (RSDE) Support - Consultancy|2
 RCS04|Research Software & Data Engineering (RSDE) Support|Research Software & Data Engineering (RSDE) Support|2
 SPI|Service Provision & Improvements|Service Provision & Improvements|5
@@ -97,6 +101,10 @@ S-RES-RTP-135|TICM (Taylor)|General|1
 S-RES-RTP-135|TICM (Taylor)|Internal Management|5
 S-RES-RTP-135|TICM (Taylor)|Management|5
 S-RES-RTP-135|TICM (Taylor)|Meetings|1
+S-RES-RTP-135|TICM (Taylor)|Project: FIS360|1
+S-RES-RTP-135|TICM (Taylor)|Project: Mindcubes|1
+S-RES-RTP-135|TICM (Taylor)|Project: SentiraXR|1
+S-RES-RTP-135|TICM (Taylor)|Project: VoxANN|1
 S-RES-RTP-137|DARE-FX / HDR-UK (eScience Lab)|Development|1
 S-RES-RTP-137|DARE-FX / HDR-UK (eScience Lab)|Management|5
 S-RES-RTP-14|Researcher Connection Tool (Faroni)|General|1
@@ -120,6 +128,8 @@ S-RES-RTP-183|QinetiQ (John Goodacre)|Management|5
 S-RES-RTP-190|Brain Cancer Detection Tool (Hamerlik)|Management|5
 S-RES-RTP-212|Hydra (Bull)|Management|5
 S-RES-RTP-215|Photon Propagation (Gersabeck/Fitzpatrick)|Management|5
+S-RES-RTP-223|N8 Website Upgrade (Finch)|Management|5
+S-RES-RTP-223|N8 Website Upgrade (Finch)|Development|1
 S-RES-RTP-224|Future Data Services (Mark Elliot)|Management|5
 S-RES-RTP-227|Continental European Books in Early Modern England (Nilani Ganeshwaran)|Management|5
 S-RES-RTP-23|Vaccination Acceptance Analysis (Yu-wang Chen)|General|1
@@ -127,8 +137,13 @@ S-RES-RTP-23|Vaccination Acceptance Analysis (Yu-wang Chen)|Learning|1
 S-RES-RTP-232|VR Mindfulness|Development|1
 S-RES-RTP-233|Flow Simulation and Data Science (FSDS)|Development|1
 S-RES-RTP-241|Web Physician Scraping|Management|5
+S-RES-RTP-247|Nuclear Energy GFA Tool|Management|5
+S-RES-RTP-247|Nuclear Energy GFA Tool|Development|1
 S-RES-RTP-25|Conflict, Memory and Migration (Harte)|General|1
 S-RES-RTP-25|Conflict, Memory and Migration (Harte)|Management|5
+S-RES-RTP-256|Create GUI for Seamly Script|Management|5
+S-RES-RTP-256|Create GUI for Seamly Script|Development|1
+S-RES-RTP-257|GRASS (Phase 2)|Management|5
 S-RES-RTP-264|X-Ray Diffraction Parallelisation|Management|5
 S-RES-RTP-32|DfT Project (Topping)|Management|5
 S-RES-RTP-33|Spanish Plume (Schultz) -- also see S-RES-P061|General|1
@@ -158,6 +173,7 @@ S-RES-RTP-61|Digital Emerging Cancer Medicine Team (AZ/UoM)|General|1
 S-RES-RTP-61|Digital Emerging Cancer Medicine Team (AZ/UoM)|Quality Assurance|1
 S-RES-RTP-61|Digital Emerging Cancer Medicine Team (AZ/UoM)|TARGET|1
 S-RES-RTP-61|Digital Emerging Cancer Medicine Team (AZ/UoM)|Digital Dashboard|1
+S-RES-RTP-61|Digital Emerging Cancer Medicine Team (AZ/UoM)|Project Management|5
 S-RES-RTP-64|NCISH|Management|5
 S-RES-RTP-86|Turner Website Improvement|Development|1
 S-RES-RTP-86|Turner Website Improvement|Management|5
