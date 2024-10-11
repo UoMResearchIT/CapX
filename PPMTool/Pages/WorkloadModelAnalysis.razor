@@ -3,6 +3,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using DotNetExtensions
+@using PPMTool.Pages.Components
 @inherits BasePage
 
 <div class="container">
@@ -19,41 +20,29 @@
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn>
-            <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%"
+            <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
                                 Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
         </RadzenColumn>
     </RadzenRow>
     <hr />
     <RadzenRow>
-        <RadzenColumn Style="min-width: 50rem">
-            <RadzenCard>
-                @if (Loading)
-                {
-                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-                }
-                else if (wlmChartItems != null && wlmChartItems.Count > 0)
-                {
-                    @for (int i = 0; i < wlmChartItems.Count; i++)
-                    {
-                        <ApexChart TItem="WLMWeeklyDataChartItem"
-                                   Title="Duty Demand (FTE)"
-                                   Options="@(wlmChartOptions.ElementAt(i))">
-
-                            @for (int j = 0; j < Enum.GetValues(typeof(Duty)).Length; j++)
-                            {
-                                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                                 Items="wlmChartItems.ElementAt(i).Value"
-                                                 SeriesType="@SeriesType.Bar"
-                                                 Name="@wlmChartItems.ElementAt(i).Value.First().WeeklyValuesByDuty.Keys.ElementAt(j).GetDescription()"
-                                                 XValue="@(e => (wlmChartOptions.ElementAt(i).Xaxis.Categories as string[])?.ElementAt(j))"
-                                                 YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty[(Duty)j]))" />
-                            }
-
-                        </ApexChart>
-                    }
-                }
-            </RadzenCard>
-        </RadzenColumn>
+        @if (Loading)
+        {
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else if (wlmChartItems != null && wlmChartItems.Count > 0)
+        {
+            @for (int i = 0; i < wlmChartItems.Count; ++i)
+            {
+                <WLMChartComponent Title="@wlmChartItems.Keys.ElementAt(i)"
+                                   ChartOptions="@wlmChartOptions[i]"
+                                   ChartItems="@wlmChartItems.ElementAt(i).Value" />
+            }
+        }
+        else
+        {
+            <RadzenText Text="Upload a timesheet data report to generate charts" />
+        }
     </RadzenRow>
     <br />
 </div>

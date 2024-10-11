@@ -4,13 +4,13 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
-    internal class WLMWeeklyDataChartItem
+    public class WLMWeeklyDataChartItem
     {
-        public string PersonName { get; set; }
-
         public DateTime WeekStart { get; set; }
 
         public Dictionary<Duty, float> WeeklyValuesByDuty { get; set; }
+
+        public float TotalHoursForWeek { get; set; }
 
         public WLMWeeklyDataChartItem()
         {
