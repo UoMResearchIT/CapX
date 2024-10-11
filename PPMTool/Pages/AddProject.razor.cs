@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -84,7 +83,7 @@ namespace PPMTool.Pages
             }
 
             // Initially load data
-            innateActivityQuery = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).AsQueryable();
+            innateActivityQuery = InnateCodeService.GetAll(context).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
             faculties = Enum.GetValues<Faculty>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();

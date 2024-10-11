@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20241008065707_AddedTaskNameAndDutyToInnateCode")]
+    partial class AddedTaskNameAndDutyToInnateCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -118,32 +120,16 @@ namespace PPMTool.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("InnateCodeId");
-
-                    b.ToTable("InnateCodes");
-                });
-
-            modelBuilder.Entity("PPMTool.Data.Entities.InnateCodeTask", b =>
-                {
-                    b.Property<int>("InnateCodeTaskId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Duty")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("InnateCodeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TaskName")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("InnateCodeTaskId");
+                    b.HasKey("InnateCodeId");
 
-                    b.HasIndex("InnateCodeId");
-
-                    b.ToTable("InnateCodeTasks");
+                    b.ToTable("InnateCodes");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
@@ -549,15 +535,6 @@ namespace PPMTool.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.InnateCodeTask", b =>
-                {
-                    b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateCode")
-                        .WithMany("Tasks")
-                        .HasForeignKey("InnateCodeId");
-
-                    b.Navigation("InnateCode");
-                });
-
             modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "Author")
@@ -640,11 +617,6 @@ namespace PPMTool.Migrations
                         .HasForeignKey("PersonId");
 
                     b.Navigation("Person");
-                });
-
-            modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
-                {
-                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>

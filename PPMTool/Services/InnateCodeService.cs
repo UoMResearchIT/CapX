@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -28,21 +29,32 @@ namespace PPMTool.Services
 
         public override bool DuplicateDetected(PPMToolContext context, InnateCode entity)
         {
-            return GetAll(context)
-                .Any(x => (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() ||
-                    x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower())
-                    && x.InnateCodeId != entity.InnateCodeId);
+            // Duplicate detected if the name or the code are the same as another or if any of the tasks within the
+            // code have the same name as another
+            var all = GetAll(context);
+            var duplicatesNameOfAnother = all
+            .Any(x => (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() &&
+                x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower())
+                && x.InnateCodeId != entity.InnateCodeId);
+            var duplicatesTasks = entity.Tasks.DistinctBy(x => x.TaskName.Trim().ToLower()).Count() != entity.Tasks.Count;
+            return duplicatesNameOfAnother || duplicatesTasks;
         }
 
         public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
+            // Remove tasks so they are not orphaned
+            var tasks = context.InnateCodeTasks.Where(x => x.InnateCode.InnateCodeId == entity.InnateCodeId);
+            context.InnateCodeTasks.RemoveRange(tasks);
             context.InnateCodes.Remove(entity);
             if (commitChanges) context.SaveChanges();
         }
 
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
-            return context.InnateCodes.ToList();
+            return context.InnateCodes
+                .Include(x => x.Tasks)
+                .OrderBy(x => x.ActivityCode)
+                .ToList();
         }
 
         public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
@@ -55,6 +67,36 @@ namespace PPMTool.Services
             context.InnateCodes.Update(entity);
             if (commitChanges) context.SaveChanges();
             return entity.InnateCodeId;
+        }
+
+        internal InnateCode GetById(PPMToolContext context, int innateCodeId)
+        {
+            return GetAll(context).FirstOrDefault(x => x.InnateCodeId == innateCodeId);
+        }
+
+        /// <summary>
+        /// Looks up a activity and task combination by name and determines the duty it is categorised by.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activity"></param>
+        /// <param name="task"></param>
+        /// <returns>Duty as int or -1 if not match found</returns>
+        internal int FindDutyForTask(PPMToolContext context, string activity, string task)
+        {
+            var activityToMatch = activity.Trim().ToLower();
+            var taskToMatch = task.Trim().ToLower();
+            var splitActivityParams = activityToMatch.Split(" - ", 2);
+            if (splitActivityParams.Length < 2) return -1;
+            var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityCode.Trim().ToLower() == splitActivityParams[0].Trim().ToLower() && x.ActivityName.Trim().ToLower() == splitActivityParams[1].Trim().ToLower());
+            if (matchAct != null)
+            {
+                var matchTask = context.InnateCodeTasks.FirstOrDefault(x => x.InnateCode == matchAct && x.TaskName.Trim().ToLower() == task.Trim().ToLower());
+                if (matchTask != null)
+                {
+                    return (int)matchTask.Duty;
+                }
+            }
+            return -1;
         }
     }
 }

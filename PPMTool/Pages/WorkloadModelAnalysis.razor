@@ -1,0 +1,56 @@
+﻿@page "/wlmanalysis"
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using DotNetExtensions
+@using PPMTool.Pages.Components
+@inherits BasePage
+
+<div class="container">
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                <h2>Workload Model Analysis</h2>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow class="card" Style="flex-direction:unset">
+        <RadzenColumn>
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Innate Report Upload" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="If you upload an appropriately-formatted, tab-separated, plain text report downloaded from Innate, this page will generate the workload model analyses for you for each staff member in the report over the period specified in the report, grouped in calendar year quarters." />
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn>
+            <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
+                Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
+                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+        </RadzenColumn>
+    </RadzenRow>
+    <hr />
+    <RadzenRow>
+        @if (Loading)
+        {
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else if (wlmChartItems != null && wlmChartItems.Count > 0)
+        {
+            @for (int i = 0; i < wlmChartItems.Count; ++i)
+            {
+                <WLMChartComponent Title="@wlmChartItems.Keys.ElementAt(i)"
+                                   ChartOptions="@wlmChartOptions[i]"
+                                   ChartItems="@wlmChartItems.ElementAt(i).Value"
+                                   CompareToWorkloadModel="@compareToWLM"/>
+            }
+        }
+        else
+        {
+            <RadzenText Text="Upload a timesheet data report to generate charts" />
+        }
+    </RadzenRow>
+    <br />
+</div>

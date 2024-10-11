@@ -1,0 +1,181 @@
+@using DotNetExtensions
+@using PPMTool.Data
+@using PPMTool.Enums
+
+<RadzenColumn Style="min-width: 50rem">
+    <RadzenCard>
+        <ApexChart TItem="WLMWeeklyDataChartItem"
+                   Title="@Title"
+                   Options="@ChartOptions"
+                   XAxisType="XAxisType.Datetime"
+                   @ref="chart">
+
+            @if (CompareToWorkloadModel)
+            {
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(1).Value)))"
+                                 Color="#008FFB" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(2).Value)))"
+                                 Color="#00E396" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(3).Value)))"
+                                 Color="#FEB019" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(4).Value)))"
+                                 Color="#FF4560" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(5).Value)))"
+                                 Color="#775DD0" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(6).Value)))"
+                                 Color="#2E294E" />
+            }
+            else
+            {
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(1).Value)))"
+                                 Color="#008FFB" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(2).Value)))"
+                                 Color="#00E396" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(3).Value)))"
+                                 Color="#FEB019" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(4).Value)))"
+                                 Color="#FF4560" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(5).Value)))"
+                                 Color="#775DD0" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(6).Value)))"
+                                 Color="#2E294E" />
+            }
+        </ApexChart>
+        <hr />
+        <RadzenText Text="Average for the Period" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5" />
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
+                        {
+                            <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" /></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
+                        {
+                            <td>
+                                <RadzenText Text="@(Math.Round(ChartItems.Average(x => x.WLMNetByDuty[duty]), 2).ToString())" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(Math.Round(ChartItems.Average(x => x.WLMNetByDuty[duty]), 2)) > 0.1 ? "red" : "green")};")" TextStyle="TextStyle.Subtitle1" />
+                            </td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </RadzenCard>
+</RadzenColumn>
+
+@code
+{
+    [Parameter]
+    public ApexChartOptions<WLMWeeklyDataChartItem> ChartOptions { get; set; }
+
+    [Parameter]
+    public IEnumerable<WLMWeeklyDataChartItem> ChartItems { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    private bool compareToWorkloadModel;
+    [Parameter]
+    public bool CompareToWorkloadModel
+    {
+        get => compareToWorkloadModel;
+        set
+        {
+            if (value != compareToWorkloadModel)
+            {
+                compareToWorkloadModel = value;
+
+                // Recompute the min-max if necessary
+                if (compareToWorkloadModel && Min == null || Max == null)
+                {
+                    Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
+                    Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
+                }
+
+                ChartOptions.Yaxis.First().Min = compareToWorkloadModel ? Min : 0;
+                ChartOptions.Yaxis.First().Max = compareToWorkloadModel ? Max : 1;
+                chart?.UpdateOptionsAsync(true, false, false);
+            }
+        }
+    }
+
+    public float? Min { get; private set; }
+    public float? Max { get; private set; }
+
+    private ApexChart<WLMWeeklyDataChartItem> chart;
+}
