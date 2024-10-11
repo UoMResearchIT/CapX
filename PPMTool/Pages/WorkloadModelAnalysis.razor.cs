@@ -88,6 +88,7 @@ namespace PPMTool.Pages
 
                     // Read one line at a time
                     bool headersParsed = false;
+                    var hasTotalColumn = false;
                     int columnCount = 0;
                     foreach (var line in lines)
                     {
@@ -110,20 +111,25 @@ namespace PPMTool.Pages
                         if (!headersParsed && values[0] == "Resource")
                         {
                             // Check it has the required neighbouring columns
-                            if (values[1] != "Activity" || values[2] != "Task" || !DateTime.TryParse(values[3], out var temp))
+                            if ((values[1] != "Activity" && values[1] != "Project Activity Number & Name") || values[2] != "Task" || !DateTime.TryParse(values[3], out var temp))
                             {
-                                throw new Exception("File needs to have columns named Resource, Activity, Task before the weekly data!");
+                                throw new Exception("File needs to have columns named \"Resource\", \"Activity\" (or \"Project Activity Number & Name\"), \"Task\" before the weekly data!");
                             }
 
                             // Parse the dates
                             for (var week = 3; week < values.Length; week++)
                             {
+                                if (values[week].Replace("\r", "") == "Total")
+                                {
+                                    hasTotalColumn = true;
+                                    continue;
+                                }
                                 dates.Add(DateTime.Parse(values[week]));
                             }
 
                             // Move to next line
                             columnCount = values.Length;
-                            Debug.WriteLine($"** Expecting {values.Length - 3} weeks in the file");
+                            Debug.WriteLine($"** Expecting {columnCount - 3 - (hasTotalColumn ? 1 : 0)} weeks in the file");
                             headersParsed = true;
                             continue;
                         }
@@ -145,13 +151,15 @@ namespace PPMTool.Pages
                         if (duty == -1)
                         {
                             // Cannot find this combo in the database
-                            matchingFails.Add($"{obj.Activity}|{obj.Task}");
+                            var tag = $"{obj.Activity}|{obj.Task}";
+                            if (!matchingFails.Contains(tag)) matchingFails.Add($"{obj.Activity}|{obj.Task}");
                         }
                         obj.Duty = (Duty)duty;
 
-                        // Get weekly data and strip the first three columns
+                        // Get weekly data and strip the first three columns and possibly the last column
                         var valuesAsList = values.ToList();
                         valuesAsList.RemoveRange(0, 3);
+                        if (hasTotalColumn) valuesAsList.Remove(valuesAsList.Last());
 
                         // Parse to floats and add to object
                         obj.WeeklyValues = valuesAsList.Select(x =>
@@ -187,7 +195,7 @@ namespace PPMTool.Pages
                         }
 
                         // For each week of data
-                        for (var i = 0; i < columnCount - 3; i++)
+                        for (var i = 0; i < columnCount - 3 - (hasTotalColumn ? 1 : 0); i++)
                         {
                             // Get the week
                             var weekStart = dates[i];

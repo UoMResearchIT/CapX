@@ -146,8 +146,8 @@ S-RES-RTP-256|Create GUI for Seamly Script|Development|1
 S-RES-RTP-257|GRASS (Phase 2)|Management|5
 S-RES-RTP-264|X-Ray Diffraction Parallelisation|Management|5
 S-RES-RTP-32|DfT Project (Topping)|Management|5
-S-RES-RTP-33|Spanish Plume (Schultz) -- also see S-RES-P061|General|1
-S-RES-RTP-33|Spanish Plume (Schultz) -- also see S-RES-P061|Management|5
+S-RES-RTP-33|Spanish Plume (Schultz)|General|1
+S-RES-RTP-33|Spanish Plume (Schultz)|Management|5
 S-RES-RTP-34|SEEK (Goble)|WorkflowHub|1
 S-RES-RTP-38|Research CFD software in T&L (Revell)|General|1
 S-RES-RTP-40|Transcriptomics (Morias)|Development|1
@@ -185,3 +185,82 @@ S-RES-RTP-97|Sami Kaski World Leading AI Fellowship|General|1
 S-RES-RTP-97|Sami Kaski World Leading AI Fellowship|Management|5
 S-RES-RTP-98|HearX (Kluk-de Kort)|Development|1
 SRQ|Service Requests|Service Requests|2
+S-RES014|Research IT Development and Wellbeing|Induction and Probation|3
+S-RES-RTP-135|TICM (Taylor)|Project: Batolad|1
+S-RES-P045|SALVE (Dinsdale)|General|1
+S-RES-P073|NERC Workshop SDEES (Schultz)|Material Development|1
+S-RES-RTP-149|iHelp Phase 2 (Ken Muir)|WP2: Data Collection Tooling|1
+S-RES-RTP-227|Continental European Books in Early Modern England (Nilani Ganeshwaran)|Development|1
+S-RES-RTP-145|GiFT (Weightman)|General|1
+S-RES-RTP-215|Photon Propagation (Gersabeck/Fitzpatrick)|Development|1
+S-RES-RTP-42|Systemic Sclerosis Imaging (Berks)|General|1
+S-RES-RTP-167|OACP v2 Part 4|Management|5
+S-RES-RTP-182|EBRAINS 2 (Bertozzi)|Development|1
+S-RES-RTP-182|EBRAINS 2 (Bertozzi)|Management|5
+S-RES-RTP-183|QinetiQ (John Goodacre)|Development|1
+S-RES-RTP-197|Personal Exposure Model Rebuild (Topping)|Management|5
+S-RES-RTP-206|Tool Tinder (Walsh)|Management|5
+S-RES-RTP-211|Interactive Web-based Image Annotations|Management|5
+S-RES-RTP-232|VR Mindfulness|Management|5
+S-RES-RTP-89|Human Brain Project (CS, Furber)|Human Brain Project|1
+S-RES-RTP-89|Human Brain Project (CS, Furber)|Management|5
+S-RES-RTP-93|CIDAR (Garcia-Carreras)|Management|5
+S-RES-RTP-128|RADNET (Dickie)|General|1
+S-RES-RTP-168|ECG-X LQTS (Jay)|Management|5
+S-RES-RTP-191|Small Data (Phase 2) (Parkinson)|Management|5
+S-RES-RTP-197|Personal Exposure Model Rebuild (Topping)|Development|1
+S-RES-RTP-203|HEET (Kuriakose)|Consultancy|1
+S-RES-RTP-203|HEET (Kuriakose)|Management|5
+S-RES-RTP-233|Flow Simulation and Data Science (FSDS)|Management|5
+S-RES-RTP-34|SEEK (Goble)|Management|5
+S-RES-RTP-38|Research CFD software in T&L (Revell)|Management|5
+S-RES-RTP-96|ECG-X (Jay)|Management|5
+S-RES-RTP-149|iHelp Phase 2 (Ken Muir)|WP3: HealthGPT Xamarin Port and Development|1
+S-RES-RTP-206|Tool Tinder (Walsh)|Development|1
+04|All IT - Learning, Development and Wellbeing|Personal Learning & Development|3
+S-RES-RTP-16|GRASS (Meah)|General|1
+S-RES-RTP-190|Brain Cancer Detection Tool (Hamerlik)|General|1
+S-RES-RTP-45|Cell-Matrix Platform Support (Lennon)|Development|1
+S-RES-RTP-88|James Baldwin and Britain (Douglas Field)|Development|1
+S-RES-RTP-211|Interactive Web-based Image Annotations|Development|1
+S-RES-RTP-62|NERC Digital Solutions Hub|Tech Team Sprints|1
+S-RES-RTP-62|NERC Digital Solutions Hub|General|1
+S-RES-RTP-62|NERC Digital Solutions Hub|Tech Team Admin / Processes|2
+S-RES-RTP-62|NERC Digital Solutions Hub|Tech Team Non-Sprint Programme Team Requests|1
+S-RES-RTP-33|Spanish Plume (Schultz)|Management|5
+S-RES-RTP-23|Vaccination Acceptance Analysis (Yu-wang Chen)|Management|5
+S-RES-RTP-58|Gene Prediction Tool (Morris)|Management|5
+S-RES-RTP-62|NERC Digital Solutions Hub|Tech Team Training|3
+S-RES-RTP-99|AI Foundry (IDSAI)|Grafmarine|1
+S-RES-RTP-180|Polypharmacy KSS (Tjeerd van staa)|General|1
+S-RES-RTP-33|Spanish Plume (Schultz)|General|1
+S-RES-RTP-212|Hydra (Bull)|Development|1
+S-RES-RTP-140|Chemistry Lab System (Wan)|General|1
+S-RES-RTP-140|Chemistry Lab System (Wan)|Learning|3
+S-RES-RTP-167|OACP v2 Part 4|Development|1
+S-RES-RTP-191|Small Data (Phase 2) (Parkinson)|Development|1
+S-RES-RTP-32|DfT Project (Topping)|General|1
+S-RES-RTP-64|NCISH|Learning|3
+S-RES-RTP-228|Translation Pathways Enhancement|Management|5
+S-RES-RTP-24|Dialectics of Modernity|Management|5
+S-RES-P060|HEET Future Dams (Kuriakose)|General|1
+S-RES-RTP-203|HEET (Kuriakose)|Development|1
+S-RES-RTP-222|ECG-X Web Site (Jay)|Development|1
+S-RES-RTP-46|KOKU (Stanmore)|General|1
+S-RES004|Research IT External Engagement|Research IT External Enhancements|1
+S-RES011|Web Application Development Service|Studiorum - Turner Prints (Velson Horie)|1
+S-RES011|Web Application Development Service|VM & Stack Upgrades|6
+S-RES-RTP-52|Manc Risk Screen (Rogers)|General|1
+RCS04|Research Software & Data Engineering (RSDE) Support|Research Software & Data Engineering (RSDE) Support - Projects|1
+S-RES-RTP-264|X-Ray Diffraction Parallelisation|Development|1
+P00671|Research Networking and Collaboration (E)|P00671-Research Networking and Collaboration|1
+P00770|Research Lifecycle Project G|Research Lifecycle Project G|1
+S-RES-P059|NVIDIA Omniverse Demonstrator (Margetts)|General|1
+S-RES-RTP-123|BioDT (eScience Lab)|Development|1
+S-RES-RTP-48|Data Acquisition Project (Parkinson)|General|1
+S-RES-RTP-224|Future Data Services (Mark Elliot)|Development|1
+S-RES011|Web Application Development Service|Nursing Tech Site|1
+S-RES-RTP-241|Web Physician Scraping|Development|1
+S-RES-RTP-59|AInostics (Haroon, Azadbakht)|Software Dev|1
+S-RES-RTP-222|ECG-X Web Site (Jay)|Management|5
+S-RES-RTP-62|NERC Digital Solutions Hub|Management|5
