@@ -172,13 +172,37 @@ namespace PPMTool.Pages
                         // Initialise a list of data
                         var data = new List<WLMWeeklyDataChartItem>();
 
+                        // Find the WLM active at the beginning of the week for that person
+                        var person = PersonService.GetByName(context, resourceData.Key.Trim());
+
+                        if (person == null)
+                        {
+                            throw new Exception($"Could not find a person in the CapX DB with the name {resourceData.Key}");
+                        }
+
                         // For each week of data
                         for (var i = 0; i < columnCount - 3; i++)
                         {
+                            // Get the week
+                            var weekStart = dates[i];
+
+                            // Get the workload model change in place on the date of the week start
+                            var wlm = person.GetWorkloadModelOnDateOrDefault(weekStart);
+
                             // Create a chart item
                             var item = new WLMWeeklyDataChartItem()
                             {
-                                WeekStart = dates[i]
+                                WeekStart = weekStart,
+                                WLMWeeklyTargetsByDuty = new Dictionary<Duty, float>
+                                {
+                                    { Duty.Other, 0 },
+                                    { Duty.ProjectWork, (float)wlm.ProjectWorkFTE },
+                                    { Duty.BAU, (float)wlm.ProjectWorkFTE },
+                                    { Duty.PersonalDevelopment, (float)wlm.PersonalDevelopmentFTE },
+                                    { Duty.StaffMgmt, (float)wlm.StaffManagementFTE },
+                                    { Duty.ProjectAndServiceMgmt, (float)wlm.ProjectAndServiceManagementFTE},
+                                    { Duty.RSA, (float)wlm.ArchitectureFTE },
+                                }
                             };
 
                             // Loop over each task in the group
@@ -192,14 +216,18 @@ namespace PPMTool.Pages
                             float totalHours = 0f;
                             foreach (var duty in item.WeeklyValuesByDuty.Keys)
                             {
-                                totalHours += item.WeeklyValuesByDuty[duty];
+                                if (duty != Duty.Other)
+                                {
+                                    totalHours += item.WeeklyValuesByDuty[duty];
+                                }
                             }
                             item.TotalHoursForWeek = totalHours;
 
-                            // Normalise the values so they represent proportions of full time FTE
+                            // Normalise the values so they represent proportions of total hours worked FTE
                             foreach (var duty in item.WeeklyValuesByDuty.Keys)
                             {
                                 item.WeeklyValuesByDuty[duty] /= totalHours == 0 ? 35 : totalHours;
+                                item.WeeklyValuesByDuty[duty] *= 100;
                             }
 
                             // Add to list
@@ -244,6 +272,8 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Bar,
+                    Stacked = true,
+                    StackOnlyBar = true,
                     Animations = new Animations { Enabled = false }
                 },
                 PlotOptions = new PlotOptions
@@ -259,9 +289,11 @@ namespace PPMTool.Pages
                     {
                         Labels = new YAxisLabels
                         {
-                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                            Formatter = @"function (val, index) { return val.toFixed(0) + '%'; }"
                         },
-                        ForceNiceScale = true
+                        ForceNiceScale = true,
+                        Max = 100,
+                        Min = 0
                     }
                 },
                 Xaxis = new XAxis

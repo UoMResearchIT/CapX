@@ -5,54 +5,55 @@
     <RadzenCard>
         <ApexChart TItem="WLMWeeklyDataChartItem"
                    Title="@Title"
-                   Options="@ChartOptions">
+                   Options="@ChartOptions"
+                   XAxisType="XAxisType.Datetime">
 
             <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                              Items="ChartItems"
-                             SeriesType="@SeriesType.Line"
+                             SeriesType="@SeriesType.Bar"
                              Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
                              XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty.ElementAt(1).Value))"
+                             YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(1).Value)))"
                              Color="#008FFB" />
 
             <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                              Items="ChartItems"
-                             SeriesType="@SeriesType.Line"
+                             SeriesType="@SeriesType.Bar"
                              Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
                              XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty.ElementAt(2).Value))"
+                             YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(2).Value)))"
                              Color="#00E396" />
 
             <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                              Items="ChartItems"
-                             SeriesType="@SeriesType.Line"
+                             SeriesType="@SeriesType.Bar"
                              Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
                              XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty.ElementAt(3).Value))"
+                             YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(3).Value)))"
                              Color="#FEB019" />
 
             <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                              Items="ChartItems"
-                             SeriesType="@SeriesType.Line"
+                             SeriesType="@SeriesType.Bar"
                              Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
                              XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty.ElementAt(4).Value))"
+                             YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(4).Value)))"
                              Color="#FF4560" />
 
             <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                              Items="ChartItems"
-                             SeriesType="@SeriesType.Line"
+                             SeriesType="@SeriesType.Bar"
                              Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
                              XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty.ElementAt(5).Value))"
+                             YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(5).Value)))"
                              Color="#775DD0" />
 
             <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                              Items="ChartItems"
-                             SeriesType="@SeriesType.Line"
+                             SeriesType="@SeriesType.Bar"
                              Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
                              XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                             YValue="@(e => Convert.ToDecimal(e.WeeklyValuesByDuty.ElementAt(6).Value))"
+                             YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(6).Value)))"
                              Color="#2E294E" />
 
         </ApexChart>
