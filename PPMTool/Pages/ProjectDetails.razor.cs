@@ -177,8 +177,8 @@ namespace PPMTool.Pages
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
                 count = allTasks.Count;
-                isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser.Name) ||
-                    project.ProjectManager?.Name == activeUser.Name;
+                isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser?.Name) ||
+                    project.ProjectManager?.Name == activeUser?.Name;
                 isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && activeUser == project?.ProjectManager);
 
                 ganttChartOptions = new ApexChartOptions<GanttBlock>
