@@ -18,6 +18,8 @@ RCS03|Research Applications|Research Applications|2
 RCS04|Research Software & Data Engineering (RSDE) Support|Management|5
 RCS04|Research Software & Data Engineering (RSDE) Support|Research Software & Data Engineering (RSDE) Support - Consultancy|2
 RCS04|Research Software & Data Engineering (RSDE) Support|Research Software & Data Engineering (RSDE) Support|2
+RCS04|Research Software & Data Engineering (RSDE) Support|Management activities|5
+RCS03|Research Applications|Research Applications - Research applications support|2
 SPI|Service Provision & Improvements|Service Provision & Improvements|5
 S-RES004|Research IT External Engagement|Research IT External Engagement|2
 S-RES006|Research IT Training|Training Course Admin|5
@@ -144,6 +146,7 @@ S-RES-RTP-25|Conflict, Memory and Migration (Harte)|Management|5
 S-RES-RTP-256|Create GUI for Seamly Script|Management|5
 S-RES-RTP-256|Create GUI for Seamly Script|Development|1
 S-RES-RTP-257|GRASS (Phase 2)|Management|5
+S-RES-RTP-257|GRASS (Phase 2)|Development|1
 S-RES-RTP-264|X-Ray Diffraction Parallelisation|Management|5
 S-RES-RTP-32|DfT Project (Topping)|Management|5
 S-RES-RTP-33|Spanish Plume (Schultz)|General|1
