@@ -175,7 +175,7 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Finished reading lines.");
                     if (matchingFails.Count > 0)
                     {
-                        throw new Exception($"Cannot find the following \"activity\" | \"task\" combinations in the CapX timesheet DB!\n{string.Join("\n", matchingFails)}");
+                        throw new Exception($"Cannot find the following \"activity\" | \"task\" combinations in the CapX timesheet DB!\n{string.Join("\r\n", matchingFails)}");
                     }
 
                     // Group the data by person
