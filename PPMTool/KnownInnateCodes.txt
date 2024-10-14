@@ -34,6 +34,7 @@ S-RES007|Mobile Development Service|Prehab|1
 S-RES007|Mobile Development Service|RTP-76 Margarita Panayiotou|1
 S-RES007|Mobile Development Service|RTP-80 PTSD App|1
 S-RES007|Mobile Development Service|RTP-76 So.Me|1
+S-RES007|Mobile Development Service|Kath Watson|1
 S-RES011|Web Application Development Service|Management|5
 S-RES011|Web Application Development Service|Translation Pathway (Claudia Lindner)|1
 S-RES011|Web Application Development Service|Urban Development DB in African Cities (Mitlin)|1
@@ -89,6 +90,7 @@ S-RES-RTP-18|Productivity Lab Portal (Ortega-Argiles)|Management|5
 S-RES-RTP-18|Productivity Lab Portal (Ortega-Argiles)|Management|5
 S-RES-RTP-98|HearX (Kluk-de Kort)|Development|1
 S-RES-RTP-98|HearX (Kluk-de Kort)|Development|1
+S-RES-RTP-99|AI Foundry (IDSAI)|General/Meetings/Other|1
 S-RES-RTP-102|CDI (Rattray)|Internal Management|5
 S-RES-RTP-102|CDI (Rattray)|Management|5
 S-RES-RTP-106|LightForm (Materials, Quinta da Fonseca)|LightForm|1
@@ -143,6 +145,8 @@ S-RES-RTP-247|Nuclear Energy GFA Tool|Management|5
 S-RES-RTP-247|Nuclear Energy GFA Tool|Development|1
 S-RES-RTP-25|Conflict, Memory and Migration (Harte)|General|1
 S-RES-RTP-25|Conflict, Memory and Migration (Harte)|Management|5
+S-RES-RTP-254|Nano Finder|Management|5
+S-RES-RTP-254|Nano Finder|Development|1
 S-RES-RTP-256|Create GUI for Seamly Script|Management|5
 S-RES-RTP-256|Create GUI for Seamly Script|Development|1
 S-RES-RTP-257|GRASS (Phase 2)|Management|5
