@@ -6,7 +6,7 @@ namespace PPMTool.Data
     /// Represents an aggregation of the assignments of a particular person for the purposes of plotting.
     /// Can hold a couple of values that can vary in meaning depending on the chart being used.
     /// </summary>
-    public class ChartItem
+    public class ChartItem : IChartItem
     {
         public DateTime StartDate { get; }
 
@@ -157,6 +157,11 @@ namespace PPMTool.Data
             int b = (int)((bPrime + m) * 255);
 
             return (r, g, b);
+        }
+
+        bool IChartItem.IsHatched()
+        {
+            return IsHatched;
         }
     }
 }

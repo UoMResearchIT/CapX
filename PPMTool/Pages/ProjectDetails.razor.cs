@@ -108,7 +108,7 @@ namespace PPMTool.Pages
         private bool groupLinkedTasks = false;
         private ApexChart<GanttBlock> gantt;
 
-        internal class GanttBlock
+        internal class GanttBlock : IChartItem
         {
             public GanttBlock(SubTask t, string groupName)
             {
@@ -119,6 +119,11 @@ namespace PPMTool.Pages
             public SubTask Task { get; private set; }
 
             public string PredecessorGroupName { get; private set; }
+
+            public bool IsHatched()
+            {
+                return Task.AssignedResources.Any(x => x.IsProvisional);
+            }
         }
 
 
@@ -170,9 +175,16 @@ namespace PPMTool.Pages
                     // Add to the list of blocks
                     allBlocks.Add(new GanttBlock(t, groupName));
                 }
-                confirmedBlocks = allBlocks.Where(x => x.Task.AssignedResources.All(x => !x.IsProvisional)).ToList();
-                provisionalBlocks = allBlocks.Where(x => x.Task.AssignedResources.Any(x => x.IsProvisional)).ToList();
 
+                // Fill in the data
+                ChartHelper.CompleteChartSeries(
+                    allBlocks,
+                    c => new GanttBlock(c.Task, c.PredecessorGroupName),
+                    out confirmedBlocks,
+                    out provisionalBlocks
+                );
+
+                // Update the UI
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
