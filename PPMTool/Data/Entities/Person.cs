@@ -113,5 +113,33 @@ namespace PPMTool.Data.Entities
 
             return availability;
         }
+
+        /// <summary>
+        /// Method to get the current workload model of a person in force at the date given or defaults to a G6 model
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
+        {
+            // Get the workload model that is active at the beginning of the week
+            var activeModel = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderBy(x => x.ChangeDate).LastOrDefault();
+
+            // If no workload model active then default to the standard 100% project work model
+            if (activeModel == null)
+            {
+                activeModel = new WorkloadModelChange()
+                {
+                    ChangeDate = date,
+                    Person = this,
+                    ProjectWorkFTE = 0.8,
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0.1,
+                    Notes = "Default G6 Model",
+                    Grade = 6
+                };
+            }
+
+            return activeModel;
+        }
     }
 }

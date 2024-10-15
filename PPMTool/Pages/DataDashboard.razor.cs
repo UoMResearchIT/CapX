@@ -428,23 +428,8 @@ namespace PPMTool.Pages
                     // Compute people based totals
                     foreach (var person in peopleEmployedThisWeek)
                     {
-                        // Get the workload model that is active at the beginning of the week
-                        var activeModel = person.WorkloadModelChanges.Where(x => x.ChangeDate <= currentWeekStart).OrderBy(x => x.ChangeDate).LastOrDefault();
-
-                        // If no workload model active then default to the standard 100% project work model
-                        if (activeModel == null)
-                        {
-                            activeModel = new WorkloadModelChange()
-                            {
-                                ChangeDate = currentWeekStart,
-                                Person = person,
-                                ProjectWorkFTE = 0.8,
-                                BusinessAsUsualFTE = 0.1,
-                                PersonalDevelopmentFTE = 0.1,
-                                Notes = "Default G6 Model",
-                                Grade = 6
-                            };
-                        }
+                        // Get active WLM or default G6 model
+                        var activeModel = person.GetWorkloadModelOnDateOrDefault(currentWeekStart);
 
                         // Update totals
                         wlmProject += (float)activeModel.ProjectWorkFTE;

@@ -78,16 +78,16 @@
                             ShowPagingSummary="true"
                             Data="@projects"
                             TItem="Project"
-                            ColumnWidth="120px"
+                            ColumnWidth="8rem"
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             @bind-Settings="@Settings">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="100px" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="150px" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="5rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="16rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="14rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="14rem" MinWidth="10px">
                         <Template Context="proj">
                             @(proj.ProjectManager?.Name ?? "Not Set")
                         </Template>
@@ -106,13 +106,13 @@
                         <Template Context="proj">
                             @proj.School.ToNiceString()
                         </Template>
-                    </RadzenDataGridColumn>                    
-                    <RadzenDataGridColumn TItem="Project" Property="CostModel" Title="Cost Model" Width="150px" MinWidth="10px">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="CostModel" Title="Cost Model" Width="14rem" MinWidth="10px">
                         <Template Context="proj">
                             @(proj.CostModel.GetAttribute<DisplayAttribute>().Name)
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="80px" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="8rem" MinWidth="10px">
                         <Template Context="proj">
                             @(proj.CostModel == CostModel.DayRate ? proj.DayRate.ToString("C0") : "N/A")
                         </Template>
@@ -123,7 +123,7 @@
                     <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right">
+                    <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
                         <Template Context="proj">
                             <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />
                         </Template>

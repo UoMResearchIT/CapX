@@ -38,7 +38,10 @@ namespace PPMTool
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddServerSideBlazor();
+            services.AddServerSideBlazor().AddHubOptions(o =>
+            {
+                o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
+            });
 
             services.AddDbContextFactory<PPMToolContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("PPMToolContextConnection"))

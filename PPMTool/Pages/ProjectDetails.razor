@@ -171,20 +171,20 @@
                                 @ref=gantt>
                         <ChildContent>
                             <ApexRangeSeries TItem="GanttBlock"
-                                                Items="confirmedBlocks"
-                                                Name="Resources Confirmed"
-                                                XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                YMaxValue="@(e => e.Task.EndDate.ToUnixTimeMilliseconds())"
-                                                PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             Items="confirmedBlocks"
+                                             Name="Resources Confirmed"
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
                             <ApexRangeSeries TItem="GanttBlock"
-                                                Items="provisionalBlocks"
-                                                Name="Resources Provisional"
-                                                XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                YMaxValue="@(e => e.Task.EndDate.ToUnixTimeMilliseconds())"
-                                                PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             Items="provisionalBlocks"
+                                             Name="Resources Provisional"
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                         </ChildContent>
                         <ApexPointTooltip>
                             <div class="m-2">
@@ -202,7 +202,7 @@
                                         }
                                         <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
+                                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                                     </div>
                                 }
                             </div>
@@ -270,18 +270,18 @@
                             ShowPagingSummary="true"
                             Data="@allTasks"
                             TItem="SubTask"
-                            ColumnWidth="100px"
+                            ColumnWidth="6rem"
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="120px" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
                         <Template Context="t">
                             <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="180px" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="14rem" MinWidth="10px">
                         <Template Context="t">
                             <RadzenText Text=@t.Name />
                         </Template>
@@ -303,21 +303,21 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Planned Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type" Width="10rem" MinWidth="10px">
                         <Template Context="t">
                             @t.TaskType.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
                         <Template Context="t">
                             @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="160px" FrozenPosition="FrozenColumnPosition.Right" Title="Actions">
+                    <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" Width="10rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" FrozenPosition="FrozenColumnPosition.Right" Title="Actions">
                         <Template Context="task">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
                             <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Duplicate"))" />
