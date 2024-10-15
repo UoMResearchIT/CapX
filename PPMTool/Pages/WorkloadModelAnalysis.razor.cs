@@ -14,7 +14,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class WorkloadModelAnalysis : BasePage
     {
         private class TimesheetReportLine
@@ -32,6 +32,7 @@ namespace PPMTool.Pages
         private string fileName;
         private long? fileSize;
         private bool compareToWLM = true;
+        private bool normalisedByTotalHours = false;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -175,7 +176,7 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Finished reading lines.");
                     if (matchingFails.Count > 0)
                     {
-                        throw new Exception($"Cannot find the following \"activity\" | \"task\" combinations in the CapX timesheet DB!\n{string.Join("\r\n", matchingFails)}");
+                        throw new Exception($"Cannot find the following \"activity\" | \"task\" combinations in the CapX timesheet DB! =>\n{string.Join(";\r\n", matchingFails)} => They will need to be added by a CapX admin to the database before the generation will succeed.");
                     }
 
                     // Group the data by person
@@ -194,7 +195,7 @@ namespace PPMTool.Pages
 
                         if (person == null)
                         {
-                            throw new Exception($"Could not find a person in the CapX DB with the name {resourceData.Key}");
+                            throw new Exception($"Could not find a person in the CapX DB with the name {resourceData.Key}. Is their name in Innate and CapX different? If so, change the name in the Innate report to match that in CapX and try again.");
                         }
 
                         // For each week of data
@@ -240,11 +241,8 @@ namespace PPMTool.Pages
                             }
                             item.TotalHoursForWeek = totalHours;
 
-                            // Normalise the values so they represent proportions of total hours worked FTE
-                            foreach (var duty in item.WeeklyValuesByDuty.Keys)
-                            {
-                                item.WeeklyValuesByDuty[duty] /= totalHours == 0 ? 35 : totalHours;
-                            }
+                            // Convert raw hours to FTE using chosen normalisation approach
+                            item.NormaliseHours(normalisedByTotalHours);
 
                             // Compute the net
                             item.UpdateWLMNetValues();
@@ -311,9 +309,7 @@ namespace PPMTool.Pages
                         {
                             Formatter = @"function (val, index) { return val.toFixed(2); }"
                         },
-                        ForceNiceScale = true,
-                        Max = 1,
-                        Min = 0
+                        ForceNiceScale = true
                     }
                 },
                 Xaxis = new XAxis
