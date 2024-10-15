@@ -10,6 +10,15 @@
 
 <div class="@NavMenuCssClass row">
     <ul class="nav flex-column">
+        <AuthorizeView>
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="datadashboard">
+                        <span class="oi oi-dashboard" aria-hidden="true"></span> Data Dashboard
+                    </NavLink>
+                </li>
+            </Authorized>
+        </AuthorizeView>
         <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
             <Authorized>
                 <li class="nav-item px-3">
@@ -37,7 +46,7 @@
                 </li>
             </Authorized>
         </AuthorizeView>
-        <AuthorizeView Roles="Superuser,Manager">
+        <AuthorizeView Roles="Superuser,Manager,Developer">
             <Authorized>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="wlmanalysis">
@@ -87,15 +96,6 @@
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="managefinref">
                         <span class="oi oi-british-pound" aria-hidden="true"></span> Financial Refs
-                    </NavLink>
-                </li>
-            </Authorized>
-        </AuthorizeView>
-        <AuthorizeView>
-            <Authorized>
-                <li class="nav-item px-3">
-                    <NavLink class="nav-link" href="datadashboard">
-                        <span class="oi oi-dashboard" aria-hidden="true"></span> Data Dashboard
                     </NavLink>
                 </li>
             </Authorized>
