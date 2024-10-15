@@ -171,20 +171,20 @@
                                 @ref=gantt>
                         <ChildContent>
                             <ApexRangeSeries TItem="GanttBlock"
-                                                Items="confirmedBlocks"
-                                                Name="Resources Confirmed"
-                                                XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                YMaxValue="@(e => e.Task.EndDate.ToUnixTimeMilliseconds())"
-                                                PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             Items="confirmedBlocks"
+                                             Name="Resources Confirmed"
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
                             <ApexRangeSeries TItem="GanttBlock"
-                                                Items="provisionalBlocks"
-                                                Name="Resources Provisional"
-                                                XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                YMaxValue="@(e => e.Task.EndDate.ToUnixTimeMilliseconds())"
-                                                PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             Items="provisionalBlocks"
+                                             Name="Resources Provisional"
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                         </ChildContent>
                         <ApexPointTooltip>
                             <div class="m-2">
@@ -202,7 +202,7 @@
                                         }
                                         <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
+                                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                                     </div>
                                 }
                             </div>

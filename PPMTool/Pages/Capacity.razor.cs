@@ -654,34 +654,13 @@ namespace PPMTool.Pages
                             )
                         );
 
-                        // Horrible hack required to get the Y-axis sorting to work correctly with multiple series
-                        // by adding zero width entries to ensure both series have the same number of Y categories
-                        var confirmedChartItemsComplete = new List<ChartItem>();
-                        var provisionalChartItemsComplete = new List<ChartItem>();
-
-                        foreach (var c in chartSourceTemp)
-                        {
-                            if (!c.IsHatched)
-                            {
-                                confirmedChartItemsComplete.Add(c);
-                            }
-                            else
-                            {
-                                confirmedChartItemsComplete.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
-                            }
-                        }
-
-                        foreach (var c in chartSourceTemp)
-                        {
-                            if (c.IsHatched)
-                            {
-                                provisionalChartItemsComplete.Add(c);
-                            }
-                            else
-                            {
-                                provisionalChartItemsComplete.Add(new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched));
-                            }
-                        }
+                        // Hack to complete the entries
+                        ChartHelper.CompleteChartSeries(
+                            chartSourceTemp,
+                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched, isFake: true),
+                            out var confirmedChartItemsComplete,
+                            out var provisionalChartItemsComplete
+                        );
 
                         // Add completed chart source to dictionary
                         confirmedChartItems.Add(confirmedChartItemsComplete);

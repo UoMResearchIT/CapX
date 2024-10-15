@@ -431,5 +431,33 @@ namespace PPMTool.Data
             }
             return temp;
         }
+
+        /// <summary>
+        /// Horrible hack required to get the Y-axis sorting to work correctly on Gantt charts with multiple series
+        /// by adding zero width entries to ensure both series have the same number of Y categories
+        /// </summary>
+        /// <param name="mixedItems"></param>
+        /// <param name="defaultObjectConstructor">Function to build a default object where an empty place needs filling in the list</param>
+        /// <param name="confirmedItems"></param>
+        /// <param name="provisionalItems"></param>
+        public static void CompleteChartSeries<T>(IEnumerable<T> mixedItems, Func<T, T> defaultObjectConstructor, out List<T> confirmedItems, out List<T> provisionalItems) where T : IChartItem
+        {
+            confirmedItems = new List<T>();
+            provisionalItems = new List<T>();
+
+            foreach (var c in mixedItems)
+            {
+                if (!c.IsHatched())
+                {
+                    confirmedItems.Add(c);
+                    provisionalItems.Add(defaultObjectConstructor(c));
+                }
+                else
+                {
+                    confirmedItems.Add(defaultObjectConstructor(c));
+                    provisionalItems.Add(c);
+                }
+            }
+        }
     }
 }

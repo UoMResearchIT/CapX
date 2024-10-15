@@ -108,17 +108,30 @@ namespace PPMTool.Pages
         private bool groupLinkedTasks = false;
         private ApexChart<GanttBlock> gantt;
 
-        internal class GanttBlock
+        internal class GanttBlock : IChartItem
         {
-            public GanttBlock(SubTask t, string groupName)
+            public GanttBlock(SubTask t, string groupName, bool isFake = false)
             {
                 Task = t;
                 PredecessorGroupName = groupName;
+                this.isFake = isFake;
             }
 
             public SubTask Task { get; private set; }
 
             public string PredecessorGroupName { get; private set; }
+
+            private bool isFake;
+
+            public bool IsFake()
+            {
+                return isFake;
+            }
+
+            public bool IsHatched()
+            {
+                return Task.AssignedResources.Any(x => x.IsProvisional);
+            }
         }
 
 
@@ -170,9 +183,16 @@ namespace PPMTool.Pages
                     // Add to the list of blocks
                     allBlocks.Add(new GanttBlock(t, groupName));
                 }
-                confirmedBlocks = allBlocks.Where(x => x.Task.AssignedResources.All(x => !x.IsProvisional)).ToList();
-                provisionalBlocks = allBlocks.Where(x => x.Task.AssignedResources.Any(x => x.IsProvisional)).ToList();
 
+                // Fill in the data
+                ChartHelper.CompleteChartSeries(
+                    allBlocks,
+                    c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
+                    out confirmedBlocks,
+                    out provisionalBlocks
+                );
+
+                // Update the UI
                 plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
@@ -223,6 +243,9 @@ namespace PPMTool.Pages
                         }
                     }
                 };
+
+                // Update the Gantt chart axis limits
+                UpdateScheduleChartAxisLimits();
 
                 // Create the burn-up chart items
                 var temp = ChartHelper.AggregateSubTasksByWeek(
@@ -358,19 +381,24 @@ namespace PPMTool.Pages
 
         private void GroupTasksChanged(bool value)
         {
+            UpdateScheduleChartAxisLimits();
+
+            // Redraw the chart
+            gantt?.RenderAsync();
+        }
+
+        private void UpdateScheduleChartAxisLimits()
+        {
             // Set the axis limits?
             ganttChartOptions.Yaxis = new List<YAxis>
             {
                 new YAxis
                 {
-                    Min = confirmedBlocks.Concat(provisionalBlocks).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
-                    Max = confirmedBlocks.Concat(provisionalBlocks).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
+                    Min = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake()).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
+                    Max = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake()).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
                 }
             };
             gantt?.UpdateOptionsAsync(false, false, false);
-
-            // Redraw the chart
-            gantt?.RenderAsync();
         }
 
         /// <summary>
