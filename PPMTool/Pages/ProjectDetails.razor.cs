@@ -244,6 +244,9 @@ namespace PPMTool.Pages
                     }
                 };
 
+                // Update the Gantt chart axis limits
+                UpdateScheduleChartAxisLimits();
+
                 // Create the burn-up chart items
                 var temp = ChartHelper.AggregateSubTasksByWeek(
                     project.GetFullName(),
@@ -378,19 +381,24 @@ namespace PPMTool.Pages
 
         private void GroupTasksChanged(bool value)
         {
+            UpdateScheduleChartAxisLimits();
+
+            // Redraw the chart
+            gantt?.RenderAsync();
+        }
+
+        private void UpdateScheduleChartAxisLimits()
+        {
             // Set the axis limits?
             ganttChartOptions.Yaxis = new List<YAxis>
             {
                 new YAxis
                 {
-                    Min = confirmedBlocks.Concat(provisionalBlocks).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
-                    Max = confirmedBlocks.Concat(provisionalBlocks).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
+                    Min = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake()).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
+                    Max = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake()).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
                 }
             };
             gantt?.UpdateOptionsAsync(false, false, false);
-
-            // Redraw the chart
-            gantt?.RenderAsync();
         }
 
         /// <summary>
