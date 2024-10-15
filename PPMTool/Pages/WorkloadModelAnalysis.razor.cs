@@ -32,6 +32,7 @@ namespace PPMTool.Pages
         private string fileName;
         private long? fileSize;
         private bool compareToWLM = true;
+        private bool normalisedByTotalHours = false;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -240,11 +241,8 @@ namespace PPMTool.Pages
                             }
                             item.TotalHoursForWeek = totalHours;
 
-                            // Normalise the values so they represent proportions of total hours worked FTE
-                            foreach (var duty in item.WeeklyValuesByDuty.Keys)
-                            {
-                                item.WeeklyValuesByDuty[duty] /= totalHours == 0 ? 35 : totalHours;
-                            }
+                            // Convert raw hours to FTE using chosen normalisation approach
+                            item.NormaliseHours(normalisedByTotalHours);
 
                             // Compute the net
                             item.UpdateWLMNetValues();

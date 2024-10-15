@@ -161,15 +161,33 @@
                 compareToWorkloadModel = value;
 
                 // Recompute the min-max if necessary
-                if (compareToWorkloadModel && Min == null || Max == null)
+                UpdateMinMax();
+            }
+        }
+    }
+
+    private bool normalisedByTotalHours;
+    [Parameter]
+    public bool NormalisedByTotalHours
+    {
+        get => normalisedByTotalHours;
+        set
+        {
+            if (value != normalisedByTotalHours)
+            {
+                normalisedByTotalHours = value;
+
+                foreach (var item in ChartItems)
                 {
-                    Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
-                    Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
+                    // Change the normalisation on the data
+                    item.SwitchNormalisation(normalisedByTotalHours);
+
+                    // Recompute the net values
+                    item.UpdateWLMNetValues();
                 }
 
-                ChartOptions.Yaxis.First().Min = compareToWorkloadModel ? Min : 0;
-                ChartOptions.Yaxis.First().Max = compareToWorkloadModel ? Max : 1;
-                chart?.UpdateOptionsAsync(true, false, false);
+                // Recompute the min-max
+                UpdateMinMax();
             }
         }
     }
@@ -178,4 +196,20 @@
     public float? Max { get; private set; }
 
     private ApexChart<WLMWeeklyDataChartItem> chart;
+
+    /// <summary>
+    /// Updates the vertical axis limits based on the limits of the individual chart items
+    /// </summary>
+    private void UpdateMinMax()
+    {
+        // if (compareToWorkloadModel && Min == null || Max == null)
+        // {
+        //     Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
+        //     Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
+        // }
+
+        // ChartOptions.Yaxis.First().Min = compareToWorkloadModel ? Min : 0;
+        // ChartOptions.Yaxis.First().Max = compareToWorkloadModel ? Max : 1;
+        // chart?.UpdateOptionsAsync(true, false, false);        
+    }
 }

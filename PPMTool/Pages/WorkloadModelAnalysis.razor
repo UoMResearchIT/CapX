@@ -14,6 +14,8 @@
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                     <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                     <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
+                    <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
                 </RadzenStack>
             </RadzenStack>
         </RadzenColumn>
@@ -44,7 +46,7 @@
                 <WLMChartComponent Title="@wlmChartItems.Keys.ElementAt(i)"
                                    ChartOptions="@wlmChartOptions[i]"
                                    ChartItems="@wlmChartItems.ElementAt(i).Value"
-                                   CompareToWorkloadModel="@compareToWLM"/>
+                                   CompareToWorkloadModel="@compareToWLM" />
             }
         }
         else
