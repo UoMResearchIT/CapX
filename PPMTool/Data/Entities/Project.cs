@@ -336,44 +336,55 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
-            // What to use for end date -- use current date if looking for actuals and mid-project
-            var endDate = actualCosts ? (DateTime.Today > EndDate ? EndDate : DateTime.Today) : EndDate;
+            // What to use for end date -- use current date if looking for actuals and currently in the middle of a project
+            var endDateOfCalculation = actualCosts ? (DateTime.Today > EndDate ? EndDate : DateTime.Today) : EndDate;
 
             // For each financial year
             var totalCost = 0d;
-            for (var finYear = FinancialReference.GetFinancialYear(StartDate); finYear <= FinancialReference.GetFinancialYear(endDate); finYear++)
+            for (var finYear = FinancialReference.GetFinancialYear(StartDate); finYear <= FinancialReference.GetFinancialYear(endDateOfCalculation); finYear++)
             {
                 // Get a suitable financial reference
                 var reference = financialReferences.GetSuitableFinancialReference(finYear);
                 var yearCost = 0d;
                 var yearFraction = 0d;
 
+                // Compute the fraction of a financial the project runs //
+                // and correct for time tasks run within that period    //
+
                 // Starts this financial year
                 if (FinancialReference.GetFinancialYear(StartDate) == finYear)
                 {
                     // Starts and ends in the same financial year
-                    if (FinancialReference.GetFinancialYear(endDate) == finYear)
+                    if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
                     {
-                        yearFraction = endDate.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction = endDateOfCalculation.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, endDateOfCalculation);
                     }
 
                     // Starts this financial year but goes past the end
                     else
                     {
-                        yearFraction = (new DateTime(finYear + 1, 7, 31)).Subtract(StartDate).TotalDays / 365f;
+                        var tempEndDate = new DateTime(finYear + 1, 7, 31);
+                        yearFraction = tempEndDate.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, tempEndDate);
                     }
                 }
 
                 // Ends this financial year and starts in an earlier year
-                else if (FinancialReference.GetFinancialYear(endDate) == finYear)
+                else if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
                 {
-                    yearFraction = endDate.Subtract(new DateTime(finYear, 8, 1)).TotalDays / 365f;
+                    var tempStartDate = new DateTime(finYear, 8, 1);
+                    yearFraction = endDateOfCalculation.Subtract(tempStartDate).TotalDays / 365f;
+                    yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, endDateOfCalculation);
                 }
 
                 // Starts and ends in different financial years
                 else
                 {
                     yearFraction = 1d;
+                    var tempStartDate = new DateTime(finYear, 8, 1);
+                    var tempEndDate = new DateTime(finYear + 1, 7, 31);
+                    yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, tempEndDate);
                 }
 
                 // Compute cost (0.05 FTE per project)
@@ -385,6 +396,109 @@ namespace PPMTool.Data.Entities
 
             // Return the total cost
             return totalCost < 0 ? 0 : totalCost;
+        }
+
+        /// <summary>
+        /// Computes the fraction of time within the given window where tasks are running
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private double GetFractionOfTimeWithTasksRunning(DateTime startDate, DateTime endDate)
+        {
+            // Obviously if no tasks then no fraction
+            if (SubTasks.Count == 0)
+            {
+                return 0;
+            }
+
+            // Convert tasks to date ranges
+            var dateRanges = SubTasks.Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
+
+            // Get the number of overlapping days in this window
+            var days = CalculateOverlappingDays(dateRanges, startDate, endDate);
+
+            // Return fraction of the days in the window
+            return days / (endDate.Subtract(startDate).TotalDays + 1);
+        }
+
+        /// <summary>
+        /// A helper class to assist with finding how much of the tasks run during a financial year
+        /// </summary>
+        public class DateRange
+        {
+            public DateTime StartDate { get; set; }
+            public DateTime EndDate { get; set; }
+        }
+
+        /// <summary>
+        /// A method to compute how many days overlap between a list of date range objects (assuming they themselves do not overlap) and a window
+        /// </summary>
+        /// <param name="dateRanges">A list of non-overlapping date ranges</param>
+        /// <param name="windowStartDate"></param>
+        /// <param name="windowEndDate"></param>
+        /// <returns></returns>
+        public static int CalculateOverlappingDays(IEnumerable<DateRange> dateRanges, DateTime windowStartDate, DateTime windowEndDate)
+        {
+            // Merge overlapping date ranges
+            var mergedRanges = MergeDateRanges(dateRanges);
+
+            // Count the days overlapping across all tasks
+            int totalDays = 0;
+            foreach (var range in mergedRanges)
+            {
+                DateTime overlapStart = range.StartDate > windowStartDate ? range.StartDate : windowStartDate;
+                DateTime overlapEnd = range.EndDate < windowEndDate ? range.EndDate : windowEndDate;
+
+                if (overlapStart <= overlapEnd)
+                {
+                    totalDays += (overlapEnd - overlapStart).Days + 1;
+                }
+            }
+
+            return totalDays;
+        }
+
+        /// <summary>
+        /// Method to take a bunch of date ranges and merge them into a set of date ranges that do not overlap with each other
+        /// </summary>
+        /// <param name="dateRanges"></param>
+        /// <returns></returns>
+        public static IEnumerable<DateRange> MergeDateRanges(IEnumerable<DateRange> dateRanges)
+        {
+            if (dateRanges.Count() == 0)
+                return new List<DateRange>();
+
+            // Sort the date ranges by start date
+            dateRanges = dateRanges.OrderBy(r => r.StartDate).ToList();
+
+            // Select the initial date range
+            List<DateRange> mergedRanges = new List<DateRange>();
+            DateRange currentRange = dateRanges.First();
+
+            // Loop over remain date ranges and check to see if we extend an existing or create a new block
+            foreach (var range in dateRanges.Skip(1))
+            {
+                // Overlaps
+                if (range.StartDate <= currentRange.EndDate)
+                {
+                    // Extend the current range if overlapping
+                    currentRange.EndDate = currentRange.EndDate > range.EndDate ? currentRange.EndDate : range.EndDate;
+                }
+
+                // Gap between them
+                else
+                {
+                    // Add the current range to the list and start a new range
+                    mergedRanges.Add(currentRange);
+                    currentRange = range;
+                }
+            }
+
+            // Add the last range
+            mergedRanges.Add(currentRange);
+
+            return mergedRanges;
         }
     }
 }
