@@ -110,15 +110,23 @@ namespace PPMTool.Pages
 
         internal class GanttBlock : IChartItem
         {
-            public GanttBlock(SubTask t, string groupName)
+            public GanttBlock(SubTask t, string groupName, bool isFake = false)
             {
                 Task = t;
                 PredecessorGroupName = groupName;
+                this.isFake = isFake;
             }
 
             public SubTask Task { get; private set; }
 
             public string PredecessorGroupName { get; private set; }
+
+            private bool isFake;
+
+            public bool IsFake()
+            {
+                return isFake;
+            }
 
             public bool IsHatched()
             {
@@ -179,7 +187,7 @@ namespace PPMTool.Pages
                 // Fill in the data
                 ChartHelper.CompleteChartSeries(
                     allBlocks,
-                    c => new GanttBlock(c.Task, c.PredecessorGroupName),
+                    c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
                     out confirmedBlocks,
                     out provisionalBlocks
                 );

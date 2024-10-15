@@ -657,7 +657,7 @@ namespace PPMTool.Pages
                         // Hack to complete the entries
                         ChartHelper.CompleteChartSeries(
                             chartSourceTemp,
-                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched),
+                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched, isFake: true),
                             out var confirmedChartItemsComplete,
                             out var provisionalChartItemsComplete
                         );

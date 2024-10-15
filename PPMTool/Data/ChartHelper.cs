@@ -450,22 +450,12 @@ namespace PPMTool.Data
                 if (!c.IsHatched())
                 {
                     confirmedItems.Add(c);
+                    provisionalItems.Add(defaultObjectConstructor(c));
                 }
                 else
                 {
                     confirmedItems.Add(defaultObjectConstructor(c));
-                }
-            }
-
-            foreach (var c in mixedItems)
-            {
-                if (c.IsHatched())
-                {
                     provisionalItems.Add(c);
-                }
-                else
-                {
-                    provisionalItems.Add(defaultObjectConstructor(c));
                 }
             }
         }

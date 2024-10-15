@@ -24,6 +24,8 @@ namespace PPMTool.Data
 
         public string TooltipMessages { get; }
 
+        private bool isFake;
+
         public ChartItem(
             string colour,
             string label,
@@ -32,7 +34,8 @@ namespace PPMTool.Data
             double value1,
             double value2,
             bool isHatched,
-            string tooltipMessages = null)
+            string tooltipMessages = null,
+            bool isFake = false)
         {
             StartDate = start;
             EndDate = end;
@@ -42,6 +45,7 @@ namespace PPMTool.Data
             Colour = colour;
             IsHatched = isHatched;
             TooltipMessages = tooltipMessages;
+            this.isFake = isFake;
         }
 
         /// <summary>
@@ -162,6 +166,11 @@ namespace PPMTool.Data
         bool IChartItem.IsHatched()
         {
             return IsHatched;
+        }
+
+        public bool IsFake()
+        {
+            return isFake;
         }
     }
 }
