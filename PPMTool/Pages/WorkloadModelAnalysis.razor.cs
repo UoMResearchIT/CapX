@@ -309,9 +309,7 @@ namespace PPMTool.Pages
                         {
                             Formatter = @"function (val, index) { return val.toFixed(2); }"
                         },
-                        ForceNiceScale = true,
-                        Max = 1,
-                        Min = 0
+                        ForceNiceScale = true
                     }
                 },
                 Xaxis = new XAxis

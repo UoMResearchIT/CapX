@@ -43,17 +43,13 @@ namespace PPMTool.Data
             // Loop over all the duties but not including the other category
             foreach (var duty in WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
             {
-                // For each weekly value compute the net against the WLM
-                for (int week = 0; week < WeeklyValuesByDuty.Count; week++)
-                {
-                    WLMNetByDuty[duty] = TotalHoursForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
-                }
+                WLMNetByDuty[duty] = TotalHoursForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
             }
 
             // Update the min from the size of the aggregates
-            IEnumerable<float> flattenedData = WLMNetByDuty.Select(x => x.Value < 0 ? x.Value : 0);
+            IEnumerable<float> flattenedData = WLMNetByDuty.Where(x => x.Key != Duty.Other).Select(x => x.Value < 0 ? x.Value : 0);
             MinNet = flattenedData.Sum();
-            flattenedData = WLMNetByDuty.Select(x => x.Value > 0 ? x.Value : 0);
+            flattenedData = WLMNetByDuty.Where(x => x.Key != Duty.Other).Select(x => x.Value > 0 ? x.Value : 0);
             MaxNet = flattenedData.Sum();
         }
 

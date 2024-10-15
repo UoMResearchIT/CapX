@@ -46,7 +46,8 @@
                 <WLMChartComponent Title="@wlmChartItems.Keys.ElementAt(i)"
                                    ChartOptions="@wlmChartOptions[i]"
                                    ChartItems="@wlmChartItems.ElementAt(i).Value"
-                                   CompareToWorkloadModel="@compareToWLM" />
+                                   CompareToWorkloadModel="@compareToWLM"
+                                   NormalisedByTotalHours="@normalisedByTotalHours" />
             }
         }
         else

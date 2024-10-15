@@ -202,14 +202,27 @@
     /// </summary>
     private void UpdateMinMax()
     {
-        // if (compareToWorkloadModel && Min == null || Max == null)
-        // {
-        //     Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
-        //     Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
-        // }
+        if (!compareToWorkloadModel)
+        {
+            if (normalisedByTotalHours)
+            {
+                Min = 0;
+                Max = 1;
+            }
+            else
+            {
+                Min = 0;
+                Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.WeeklyValuesByDuty.Where(x => x.Key != Duty.Other).Sum(x => x.Value))), 1);
+            }
+        }
+        else
+        {
+            Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
+            Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
+        }
 
-        // ChartOptions.Yaxis.First().Min = compareToWorkloadModel ? Min : 0;
-        // ChartOptions.Yaxis.First().Max = compareToWorkloadModel ? Max : 1;
-        // chart?.UpdateOptionsAsync(true, false, false);        
+        ChartOptions.Yaxis.First().Min = Min;
+        ChartOptions.Yaxis.First().Max = Max;
+        chart?.UpdateOptionsAsync(true, false, false);        
     }
 }
