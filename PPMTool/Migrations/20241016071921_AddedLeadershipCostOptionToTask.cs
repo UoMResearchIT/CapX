@@ -13,13 +13,13 @@ namespace PPMTool.Migrations
                 table: "SubTasks",
                 type: "INTEGER",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             // Set all the tasks called "Maintenance" to leadership charges = false
             migrationBuilder.Sql(
                 @"
                     UPDATE SubTasks
-                    SET ChargeLeadership = 1
+                    SET ChargeLeadership = 0
                     WHERE Name = 'Maintenance';
 
                 "
