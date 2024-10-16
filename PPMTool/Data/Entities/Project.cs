@@ -413,7 +413,9 @@ namespace PPMTool.Data.Entities
             }
 
             // Convert tasks to date ranges
-            var dateRanges = SubTasks.Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
+            var dateRanges = SubTasks
+                .Where(x => x.ChargeLeadership)
+                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
 
             // Get the number of overlapping days in this window
             var days = CalculateOverlappingDays(dateRanges, startDate, endDate);
