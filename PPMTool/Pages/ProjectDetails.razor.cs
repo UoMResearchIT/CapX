@@ -389,13 +389,15 @@ namespace PPMTool.Pages
 
         private void UpdateScheduleChartAxisLimits()
         {
-            // Set the axis limits?
+            var allBlocks = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake());
+
+            // Set the axis limits
             ganttChartOptions.Yaxis = new List<YAxis>
             {
                 new YAxis
                 {
-                    Min = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake()).Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
-                    Max = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake()).Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
+                    Min = allBlocks.Count() == 0 ? null : allBlocks.Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
+                    Max = allBlocks.Count() == 0 ? null : allBlocks.Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
                 }
             };
             gantt?.UpdateOptionsAsync(false, false, false);
