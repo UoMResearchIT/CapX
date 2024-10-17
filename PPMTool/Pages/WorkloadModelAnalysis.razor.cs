@@ -163,7 +163,7 @@ namespace PPMTool.Pages
                         // Get weekly data and strip the first three columns and possibly the last column
                         var valuesAsList = values.ToList();
                         valuesAsList.RemoveRange(0, 3);
-                        if (hasTotalColumn) valuesAsList.Remove(valuesAsList.Last());
+                        if (hasTotalColumn) valuesAsList.RemoveAt(valuesAsList.Count - 1);
 
                         // Parse to floats and add to object
                         obj.WeeklyValues = valuesAsList.Select(x =>
