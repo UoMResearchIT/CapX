@@ -18,6 +18,9 @@ namespace PPMTool.Data
         public float? MinNet { get; private set; }
         public float? MaxNet { get; private set; }
 
+        /// <summary>
+        /// Total hours spent on work this week (excludes time spent in Duty.Other category inc. leave and sickness)
+        /// </summary>
         public float? TotalHoursForWeek { get; set; }
 
         public WLMWeeklyDataChartItem()

@@ -62,7 +62,7 @@
                     <Columns>
                         <RadzenDataGridColumn TItem="InnateCodeTask" Property="TaskName" Title="Task Name" Width="15rem" MinWidth="10px">
                             <EditTemplate Context="task">
-                                <RadzenTextBox @bind-Value="task.TaskName" />
+                                <RadzenTextBox class="no-margin"  @bind-Value="task.TaskName" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="InnateCodeTask" Property="Duty" Title="Duty" Width="15rem" MinWidth="10px">
