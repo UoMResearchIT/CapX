@@ -5,6 +5,7 @@ using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -28,7 +29,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             dataGridEntityService = RolesService;
-            dataGridEntities = RolesService.GetAll(context).OrderBy(x => x.Person?.Name).ToList();
+            dataGridEntities = RolesService.GetAll(context).OrderBy(x => x.GetName()).ToList();
 
             // Populate the people and role types for the dropdowns
             roles = Enum.GetValues(typeof(RoleType)).ToDynamicList<RoleType>();
@@ -45,6 +46,23 @@ namespace PPMTool.Pages
                 RolesService.Delete(context, entity);
                 LogInformation($"Deleted access record for {entity.GetSensibleObjectName()}");
             }
+        }
+
+        protected override async Task SaveRow(Role entity)
+        {
+            // Validate
+            if (string.IsNullOrWhiteSpace(entity.CASUserName))
+            {
+                statusMessage = new StatusMessage("You must supply a user name", StatusMessage.MessageType.Error);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(entity.Name))
+            {
+                statusMessage = new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error);
+                return;
+            }
+
+            await base.SaveRow(entity);
         }
     }
 }

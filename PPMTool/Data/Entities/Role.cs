@@ -13,7 +13,25 @@ namespace PPMTool.Data.Entities
         [Required]
         public string CASUserName { get; set; }
 
-        public Person Person { get; set; }
+        [Required]
+        public string Name { get; set; }
+
+        private Person person;
+        public Person Person
+        {
+            get => person;
+            set
+            {
+                if (person != value)
+                {
+                    person = value;
+                    if (person != null)
+                    {
+                        Name = person.Name;
+                    }
+                }
+            }
+        }
 
         public string LastLoggedIn { get; set; }
 
@@ -22,12 +40,25 @@ namespace PPMTool.Data.Entities
 
         public string GetSensibleObjectName()
         {
-            return $"{Person?.Name} ({GetStandardisedUserName()})";
+            return $"{GetName()} ({GetStandardisedUserName()})";
         }
 
+        /// <summary>
+        /// Method to return the trimmed lowercase instance of the CAS user name
+        /// </summary>
+        /// <returns></returns>
         internal string GetStandardisedUserName()
         {
-            return CASUserName.Trim().ToLower();
+            return CASUserName?.Trim().ToLower();
+        }
+
+        /// <summary>
+        /// Gets either the name associated with the person or the manually input name for the role if there is no person attached
+        /// </summary>
+        /// <returns></returns>
+        public string GetName()
+        {
+            return Person?.Name ?? Name;
         }
     }
 }
