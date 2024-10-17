@@ -222,7 +222,7 @@ namespace PPMTool.Pages
             var role = RoleService.GetByUsername(context, ActiveUserName);
             ChosenPeople = new List<string>
             {
-                role.Person.Name
+                role.GetName()
             };
             PeopleSelectionChanged(ChosenPeople);
         }
@@ -269,7 +269,7 @@ namespace PPMTool.Pages
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            managers = cachedPeople.Where(x => roles.Any(y => y.Person == x)).ToList();
+            managers = cachedPeople.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
 
             // Filter out leavers if necessary
             if (!includeLeavers)

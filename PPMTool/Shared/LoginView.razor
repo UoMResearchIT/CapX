@@ -43,7 +43,7 @@
                 // Lookup the person
                 var roles = RoleService.GetAll(ContextFactory.CreateDbContext());
                 var role = roles.FirstOrDefault(x => x.GetStandardisedUserName() == user.Identity.Name.Trim().ToLower());
-                displayName = role?.Person?.Name ?? user.Identity.Name;
+                displayName = role?.GetName() ?? user.Identity.Name;
             }
         }
     }

@@ -25,12 +25,16 @@ namespace PPMTool.Data.Entities
 
         public string GetSensibleObjectName()
         {
-            return $"{Person?.Name} ({GetStandardisedUserName()})";
+            return $"{GetName()} ({GetStandardisedUserName()})";
         }
 
+        /// <summary>
+        /// Method to return the trimmed lowercase instance of the CAS user name
+        /// </summary>
+        /// <returns></returns>
         internal string GetStandardisedUserName()
         {
-            return CASUserName.Trim().ToLower();
+            return CASUserName?.Trim().ToLower();
         }
 
         /// <summary>

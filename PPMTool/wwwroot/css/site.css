@@ -226,3 +226,7 @@ mark {
 .table thead th {
     vertical-align: top
 }
+
+.no-margin {
+    margin: 0
+}

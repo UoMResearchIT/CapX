@@ -408,6 +408,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void ToggleFollowing()
         {
+            if (activeUser == null) return;
             if (project.Followers.Contains(activeUser))
             {
                 project.Followers.Remove(activeUser);
