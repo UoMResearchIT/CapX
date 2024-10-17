@@ -14,6 +14,9 @@ namespace PPMTool.Data.Entities
         public int PersonId { get; set; }
 
         private string name;
+        /// <summary>
+        /// Name of the person
+        /// </summary>
         [Required]
         public string Name
         {
@@ -21,19 +24,30 @@ namespace PPMTool.Data.Entities
             set { name = value; ShortName = GetInitials(value); }
         }
 
-
+        /// <summary>
+        /// Initials of the person -- auto populated but can be edited
+        /// </summary>
         public string ShortName { get; set; }
 
+        /// <summary>
+        /// When they started in post
+        /// </summary>
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Today;
 
+        /// <summary>
+        /// When they left. Null if still in post.
+        /// </summary>
         public DateTime? EndDate { get; set; }
 
+        /// <summary>
+        /// FTE of the post
+        /// </summary>
         [Required]
         public double FTE { get; set; } = 1.0;
 
         /// <summary>
-        /// Any changes to their availability which includes the undertaking of baseline activities
+        /// Any changes to their WLMs
         /// </summary>
         public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
 
@@ -58,6 +72,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [InverseProperty("ProjectManager")]
         public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
+
+        /// <summary>
+        /// List of the competency assessments this person has performed
+        /// </summary>
+        public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
         public Person()
         {
