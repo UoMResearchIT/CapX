@@ -103,7 +103,7 @@ namespace PPMTool.Pages
                         if (values.Length < 3) continue;
 
                         // Continue if the final line
-                        if (values[0] == "Page total") continue;
+                        if (values[0] == "Page total" || values[0] == "Total") continue;
 
                         // Error if it is somewhere in the middle of the file and there is something up with the formatting
                         if (headersParsed && values.Length != columnCount)
@@ -163,7 +163,7 @@ namespace PPMTool.Pages
                         // Get weekly data and strip the first three columns and possibly the last column
                         var valuesAsList = values.ToList();
                         valuesAsList.RemoveRange(0, 3);
-                        if (hasTotalColumn) valuesAsList.Remove(valuesAsList.Last());
+                        if (hasTotalColumn) valuesAsList.RemoveAt(valuesAsList.Count - 1);
 
                         // Parse to floats and add to object
                         obj.WeeklyValues = valuesAsList.Select(x =>
