@@ -1,0 +1,40 @@
+﻿@page "/competencies"
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@inherits BasePage
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2>Development Pathway</h2>
+        </div>
+    </div>
+    <hr />
+    <RadzenCard>
+        Dropdown to select person and wheels showing progress at each grade
+    </RadzenCard>
+    <br />
+    <div class="row">
+        <div class="col">
+            <h2>Framework Contents</h2>
+        </div>
+    </div>
+    <hr />
+    <RadzenAccordion Multiple="true">
+        <Items>
+            <RadzenAccordionItem Text="Grade 5" Icon="work" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 5 Competencies"
+                                 ExpandAriaLabel="Expand the Grade 5 Competencies">
+            </RadzenAccordionItem>
+            <RadzenAccordionItem Text="Grade 6" Icon="visibility" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 6 Competencies"
+                                 ExpandAriaLabel="Expand the Grade 6 Competencies">
+            </RadzenAccordionItem>
+            <RadzenAccordionItem Text="Grade 7" Icon="visibility" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 7 Competencies"
+                                 ExpandAriaLabel="Expand the Grade 7 Competencies">
+            </RadzenAccordionItem>
+        </Items>
+    </RadzenAccordion>
+    <br />
+</div>
