@@ -33,5 +33,10 @@ namespace PPMTool.Services
         {
             throw new System.NotImplementedException();
         }
+
+        internal Competency GetById(PPMToolContext context, int competencyId)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

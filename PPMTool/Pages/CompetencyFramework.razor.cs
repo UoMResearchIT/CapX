@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Superuser,Manager,Developer")]
     public partial class CompetencyFramework : BasePage
     {
         [Inject]

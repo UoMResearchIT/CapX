@@ -1,0 +1,9 @@
+﻿@using PPMTool.Data.Entities
+<RadzenCard>
+    <RadzenText Text="@Competency.Description" />
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public Competency Competency { get; set; }
+}

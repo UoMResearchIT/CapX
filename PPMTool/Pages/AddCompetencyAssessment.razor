@@ -1,0 +1,34 @@
+﻿@page "/addassessment/{CompetencyId:int}/{AssessmentId:int}"
+@inherits BasePage
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using PPMTool.Enums
+@using DotNetExtensions
+
+<div class="container">
+    @if (competency != null)
+    {
+        @if (CompetencyId <= 0)
+        {
+            <h1>Add New Competency</h1>
+        }
+        else
+        {
+            <h1>Edit <i>@(competency?.GetSensibleObjectName())</i></h1>
+        }
+        
+        <hr />
+
+        <CompetencyCard Competency="competency" />
+
+        <hr />
+        <div class="card">
+            <EditForm Model="@assessment" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                
+            </EditForm>
+        </div>
+    }
+</div>

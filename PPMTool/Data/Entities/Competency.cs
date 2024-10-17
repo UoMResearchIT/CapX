@@ -5,7 +5,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public class Competency
+    public class Competency : ILoggableClass
     {
         public int CompetencyId { get; set; }
 
@@ -62,5 +62,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
+        public string GetSensibleObjectName()
+        {
+            return $"{Description} (Rev {Revision})";
+        }
     }
 }

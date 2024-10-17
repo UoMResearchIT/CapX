@@ -4,7 +4,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public class CompetencyAssessment
+    public class CompetencyAssessment : ILoggableClass
     {
         public int CompetencyAssessmentId { get; set; }
 
@@ -40,5 +40,10 @@ namespace PPMTool.Data.Entities
         /// A reference to the person who is authoring this assessment
         /// </summary>
         public Person Person { get; set; }
+
+        public string GetSensibleObjectName()
+        {
+            return $"{Evidence} | {Person?.Name} | {AssociatedCompetency?.GetSensibleObjectName()} | Rev {CompetencyRevision}";
+        }
     }
 }
