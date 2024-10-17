@@ -32,7 +32,7 @@
                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                     ColumnWidth="12rem">
         <Columns>
-            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" MinWidth="10px">
+            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person (RSE)" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.Person" Data="@people" Style="width:100%; display: block;">
                         <Template Context="person">
@@ -40,10 +40,27 @@
                         </Template>
                     </RadzenDropDown>
                 </EditTemplate>
+                <Template Context="role">
+                    @if (role.Person != null)
+                    {
+                        @($"{role.Person?.Name} ({role.Person?.ShortName})")
+                    }
+                    else
+                    {
+                        @("[External]")
+                    }
+                </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Property="Name" Title="Display Name" MinWidth="10px">
                 <EditTemplate Context="role">
-                    <RadzenTextBox class="no-margin" @bind-Value="role.Name" Disabled="@(role.Person != null)" />
+                    @if (role.Person == null)
+                    {
+                        <RadzenTextBox class="no-margin" @bind-Value="role.Name" />
+                    }
+                    else
+                    {
+                        @role.Person.Name
+                    }
                 </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" MinWidth="10px">

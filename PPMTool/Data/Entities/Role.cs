@@ -16,7 +16,22 @@ namespace PPMTool.Data.Entities
         [Required]
         public string Name { get; set; }
 
-        public Person Person { get; set; }
+        private Person person;
+        public Person Person
+        {
+            get => person;
+            set
+            {
+                if (person != value)
+                {
+                    person = value;
+                    if (person != null)
+                    {
+                        Name = person.Name;
+                    }
+                }
+            }
+        }
 
         public string LastLoggedIn { get; set; }
 
