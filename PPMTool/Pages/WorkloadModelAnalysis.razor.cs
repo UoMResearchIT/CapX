@@ -232,17 +232,25 @@ namespace PPMTool.Pages
 
                             // Find total hours
                             float totalHours = 0f;
-                            foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                            foreach (var duty in item.WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
                             {
-                                if (duty != Duty.Other)
-                                {
-                                    totalHours += item.WeeklyValuesByDuty[duty];
-                                }
+                                totalHours += item.WeeklyValuesByDuty[duty];
                             }
                             item.TotalHoursForWeek = totalHours;
 
                             // Convert raw hours to FTE using chosen normalisation approach
                             item.NormaliseHours(normalisedByTotalHours);
+
+                            // If some time has been spent away, then scale WLM targets for the week
+                            if (totalHours > 0f && item.WeeklyValuesByDuty[Duty.Other] > 0f)
+                            {
+                                var totalWLMtargetTime = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value);
+                                var fractionWorking = (totalWLMtargetTime - item.WeeklyValuesByDuty[Duty.Other]) / totalWLMtargetTime;
+                                foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                                {
+                                    item.WLMWeeklyTargetsByDuty[duty] *= fractionWorking;
+                                }
+                            }
 
                             // Compute the net
                             item.UpdateWLMNetValues();
