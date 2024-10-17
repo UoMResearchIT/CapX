@@ -103,7 +103,7 @@ namespace PPMTool.Pages
                         if (values.Length < 3) continue;
 
                         // Continue if the final line
-                        if (values[0] == "Page total") continue;
+                        if (values[0] == "Page total" || values[0] == "Total") continue;
 
                         // Error if it is somewhere in the middle of the file and there is something up with the formatting
                         if (headersParsed && values.Length != columnCount)
