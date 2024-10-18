@@ -43,13 +43,13 @@ namespace PPMTool.Data.Entities
         /// When the competency was originally created (at revision 0)
         /// </summary>
         [Required]
-        public string CreatedDate { get; set; } = DateTime.Today.ToString("R");
+        public string CreatedDate { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
         /// Date of the latest revision of the competency
         /// </summary>
         [Required]
-        public string RevisionDate { get; set; }
+        public string RevisionDate { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
         /// Whether this competency is still active or has been retired
