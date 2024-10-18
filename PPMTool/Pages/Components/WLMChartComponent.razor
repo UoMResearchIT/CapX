@@ -234,7 +234,6 @@
     private double GetTableValue(Duty duty)
     {
         var subset = ChartItems.Where(x => x.TotalHoursForWeek > 0);
-        var values = subset.Select(x => x.WLMNetByDuty[duty]);
         if (compareToWorkloadModel)
         {
             return Math.Round(subset.Average(x => x.WLMNetByDuty[duty]), 2);
