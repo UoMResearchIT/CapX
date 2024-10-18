@@ -10,7 +10,7 @@ namespace PPMTool.Enums
         Communication,
         [Description("Version Control")]
         VersionControl,
-        [Description("Software Architecture")]
+        [Description("Technical Architecture")]
         Architecture,
         [Description("Engineering Process")]
         EngineeringProcess,

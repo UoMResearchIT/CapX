@@ -58,6 +58,11 @@ namespace PPMTool.Data.Entities
         public bool IsActive { get; set; }
 
         /// <summary>
+        /// This is the ID of the competency if it existed in v1.8 of the paper version of the framework
+        /// </summary>
+        public string LegacyId { get; set; }
+
+        /// <summary>
         /// List of assessments that relate to this competency
         /// </summary>
         public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
