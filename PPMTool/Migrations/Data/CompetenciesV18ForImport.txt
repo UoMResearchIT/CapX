@@ -1,6 +1,6 @@
 LegacyId|Grade|Category|Description|Objective
 1.1.1.a|5|0|Able to demonstrate satisfactory completion of RIT Introduction to GitHub.|Yet to be agreed
-1.1.1.b|6|0|Able to demonstrate satisfactory completion of SSI Intermediate Research Software Development or Code Refinery Standard Course.|Yet to be agreed
+1.1.1.b|5|0|Able to demonstrate satisfactory completion of SSI Intermediate Research Software Development or Code Refinery Standard Course.|Yet to be agreed
 1.2.1|5|1|"Able to build professional relationships with colleagues in the RSE department, wider RIT division and the ITS directorate to progress project work."|Yet to be agreed
 1.2.2|5|1|Put into practice the values of the RSE department and follow the Working Together Charter to establish standards of behaviour and conduct.|Yet to be agreed
 1.2.3|5|1|Practice a sympathetic and understanding approach when dealing with customers and colleagues alike.|Yet to be agreed
