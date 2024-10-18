@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore.Migrations;
 using PPMTool.Enums;
 
@@ -17,6 +19,33 @@ namespace PPMTool.Migrations
             public CompetencyCategory Category { get; set; }
             public string Description { get; set; }
             public string Objective { get; set; }
+            public string CreatedDate { get; set; } = DateTime.Now.ToString("R");
+            public string RevisedDate { get; set; } = DateTime.Now.ToString("R");
+            public int Revision { get; set; } = 0;
+        }
+
+        private string Clean(string initial)
+        {
+            return initial.Replace("\"\"", "**").Replace("\"", "").Replace("**", "\"\"").Replace("\r", "");
+        }
+
+        public bool IsValidHtml(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+            {
+                return false;
+            }
+
+            try
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+                return doc.ParseErrors == null || !doc.ParseErrors.Any();
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,34 +64,47 @@ namespace PPMTool.Migrations
 
                 if (values.Length != 5)
                 {
-                    Console.WriteLine($"[ERR] Incorrect number of values => {line}");
-                    continue;
+                    Console.WriteLine($"** [ERR] Incorrect number of values => {line}");
+                    throw new Exception("Incorrect number of entries on line!");
                 }
 
                 // Ignore the header row
-                if (values[0].Replace("\"", "").Replace("\r", "") == "LegacyId") continue;
+                if (Clean(values[0]) == "LegacyId") continue;
+
+                // Check the objective is valid HTML
+                if (!IsValidHtml(Clean(values[4])))
+                {
+                    Console.WriteLine($"** [ERR] Incorrect HTML => {Clean(values[4])}");
+                    throw new Exception("Invalid HTML");
+                }
 
                 // Build objects
                 linesAsObjects.Add(new LineAsObject
                 {
-                    LegacyId = values[0].Replace("\"", "").Replace("\r", ""),
-                    Grade = int.Parse(values[1].Replace("\"", "").Replace("\r", "")),
-                    Category = (CompetencyCategory)int.Parse(values[2].Replace("\"", "").Replace("\r", "")),
-                    Description = values[3].Replace("\"", "").Replace("\r", ""),
-                    Objective = values[4].Replace("\"", "").Replace("\r", "")
+                    LegacyId = Clean(values[0]),
+                    Grade = int.Parse(values[1]),
+                    Category = (CompetencyCategory)int.Parse(values[2]),
+                    Description = Clean(values[3]),
+                    Objective = Clean(values[4])
                 });
             }
 
-            Console.WriteLine($"Read in {lines.Length} lines! Have {linesAsObjects.Count} DB items to add!");
+            Console.WriteLine($"** Read in {lines.Length} lines! Have {linesAsObjects.Count} DB items to add!");
 
             // Now add to the DB
+            foreach (var obj in linesAsObjects)
+            {
+                migrationBuilder.Sql(
+                    $@"
+                        INSERT INTO Competency (LegacyId, Grade, Category, Description, Objective, Revision, CreatedDate, RevisionDate, IsActive)
+                        SELECT '{obj.LegacyId}', {obj.Grade}, {(int)obj.Category}, '{obj.Description}', '{obj.Objective}', {obj.Revision}, '{obj.CreatedDate}', '{obj.RevisedDate}', 1
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM Competency WHERE LegacyId = '{obj.LegacyId}'
+                        );
 
-
-
-
-
-
-
+                    "
+                );
+            }
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

@@ -18,7 +18,7 @@ namespace PPMTool.Data.Entities
         /// Date the assessment was created.
         /// </summary>
         [Required]
-        public string DateCreated { get; set; } = DateTime.Today.ToString("R");
+        public string DateCreated { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
         /// Status of the competency based on this assessment.
@@ -30,6 +30,18 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public int CompetencyRevision { get; set; }
+
+        /// <summary>
+        /// Description of the revision of the competency this assessment is associated with.
+        /// </summary>
+        [Required]
+        public string CompetencyDescription { get; set; }
+
+        /// <summary>
+        /// Objective of the revision of the competency this assessment is associated with.
+        /// </summary>
+        [Required]
+        public string CompetencyObjective { get; set; }
 
         /// <summary>
         /// A reference to the competency this assessment relates to
