@@ -1,6 +1,29 @@
 ﻿@using PPMTool.Data.Entities
 <RadzenCard>
-    <RadzenText Text="@Competency.Description" />
+    <div class="row">
+        <div class="col-10">
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Style="min-height:1rem">
+                    <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
+                    <RadzenText TextStyle="TextStyle.H5">
+                        @((MarkupString)Competency.Description)
+                    </RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Style="min-height:1rem">
+                    <RadzenText Text="Objective" TextStyle="TextStyle.Subtitle1" />
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        @((MarkupString)Competency.Objective)
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </div>
+        <div class="col-2">
+            <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                <RadzenButton Text="Edit Competency" Icon="edit" ButtonStyle="ButtonStyle.Light"/>
+                <RadzenButton Text="Add Assessment" Icon="add" />
+            </RadzenStack>
+        </div>
+    </div>
 </RadzenCard>
 
 @code {

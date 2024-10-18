@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -24,9 +25,14 @@ namespace PPMTool.Services
             throw new System.NotImplementedException();
         }
 
+        /// <summary>
+        /// Return all the competencies in the DB
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public override IEnumerable<Competency> GetAll(PPMToolContext context)
         {
-            throw new System.NotImplementedException();
+            return context.Competencies;
         }
 
         public override int Update(PPMToolContext context, Competency entity, bool commitChanges = true)
@@ -34,9 +40,15 @@ namespace PPMTool.Services
             throw new System.NotImplementedException();
         }
 
+        /// <summary>
+        /// Return a competency by its ID
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="competencyId"></param>
+        /// <returns></returns>
         internal Competency GetById(PPMToolContext context, int competencyId)
         {
-            throw new System.NotImplementedException();
+            return context.Competencies.FirstOrDefault(x => x.CompetencyId == competencyId);
         }
     }
 }

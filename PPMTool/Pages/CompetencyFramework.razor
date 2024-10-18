@@ -1,6 +1,8 @@
 ﻿@page "/competencies"
+@using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 @inherits BasePage
 
 <div class="container">
@@ -24,15 +26,60 @@
         <Items>
             <RadzenAccordionItem Text="Grade 5" Icon="stat_1" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 5 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 5 Competencies">
+                                 ExpandAriaLabel="Expand the Grade 5 Competencies" Selected="true">
+                <Template>
+                    <h3>Foundation Level (Grade 5)</h3>
+                </Template>
+                <ChildContent>
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="1rem">
+                        @foreach (var group in competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category))
+                        {
+                            <h4>@group.Key.GetDescription()</h4>
+                            @foreach (var competency in group)
+                            {
+                                <CompetencyCard Competency="competency" />
+                            }
+                        }
+                    </RadzenStack>
+                </ChildContent>
             </RadzenAccordionItem>
             <RadzenAccordionItem Text="Grade 6" Icon="stat_2" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 6 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 6 Competencies">
+                                 ExpandAriaLabel="Expand the Grade 6 Competencies" Selected="true">
+                <Template>
+                    <h3>Advanced Level (Grade 6)</h3>
+                </Template>
+                <ChildContent>
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="1rem">
+                        @foreach (var group in competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category))
+                        {
+                            <h4>@group.Key.GetDescription()</h4>
+                            @foreach (var competency in group)
+                            {
+                                <CompetencyCard Competency="competency" />
+                            }
+                        }
+                    </RadzenStack>
+                </ChildContent>
             </RadzenAccordionItem>
             <RadzenAccordionItem Text="Grade 7" Icon="stat_3" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 7 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 7 Competencies">
+                                 ExpandAriaLabel="Expand the Grade 7 Competencies" Selected="true">
+                <Template>
+                    <h3>Leadership Level (Grade 7)</h3>
+                </Template>
+                <ChildContent>
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="1rem">
+                        @foreach (var group in competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category))
+                        {
+                            <h4>@group.Key.GetDescription()</h4>
+                            @foreach (var competency in group)
+                            {
+                                <CompetencyCard Competency="competency" />
+                            }
+                        }
+                    </RadzenStack>
+                </ChildContent>
             </RadzenAccordionItem>
         </Items>
     </RadzenAccordion>

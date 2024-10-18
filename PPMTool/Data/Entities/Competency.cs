@@ -71,5 +71,14 @@ namespace PPMTool.Data.Entities
         {
             return $"{Description} (Rev {Revision})";
         }
+
+        /// <summary>
+        /// Get a suitable coded ID for the competency based on hierarchy
+        /// </summary>
+        /// <returns></returns>
+        public string GetHierarchyId()
+        {
+            return $"{Grade - 4}.{(int)Category + 1}.{999}";
+        }
     }
 }
