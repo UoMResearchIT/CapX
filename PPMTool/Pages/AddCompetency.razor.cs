@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -15,6 +20,9 @@ namespace PPMTool.Pages
         private CompetencyService CompetencyService { get; set; }
 
         private Competency competency;
+        private CompetencyCategory? originalCategory = null;
+        private int? originalNumber = null;
+        private IEnumerable<Competency> competencies;
 
         protected override void OnInitialized()
         {
@@ -23,6 +31,9 @@ namespace PPMTool.Pages
             if (CompetencyId > 0)
             {
                 competency = CompetencyService.GetById(context, CompetencyId);
+                originalCategory = competency?.Category;
+                originalNumber = competency?.Number;
+                competencies = CompetencyService.GetAll(context);
             }
             else
             {
@@ -46,18 +57,61 @@ namespace PPMTool.Pages
                 LogInformation($"Saving competency {competency?.GetSensibleObjectName()}.");
 
                 // Try to add or update
+                errorMessage = null;
+
+                // Validate
+                if (competency.Grade < 5 || competency.Grade > 7)
+                {
+                    errorMessage = new StatusMessage("Competency framework only supports grades 5-7 at the moment!", StatusMessage.MessageType.Error);
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(competency.Description) || string.IsNullOrWhiteSpace(competency.Objective))
+                {
+                    errorMessage = new StatusMessage("Every competency needs a description and an objective!", StatusMessage.MessageType.Error);
+                    return;
+                }
+
                 int result = -1;
                 if (competency?.CompetencyId != 0)
                 {
+                    // Increment the revision and set the revision date
+                    competency.Revision++;
+                    competency.RevisionDate = DateTime.Now.ToString("R");
                     result = CompetencyService.Update(context, competency);
+
                 }
                 else
                 {
                     result = CompetencyService.Add(context, competency);
                 }
 
+                if (result == -1)
+                {
+                    errorMessage = new StatusMessage("???", StatusMessage.MessageType.Error);
+                    return;
+                }
+
                 // Navigate back
                 Navigation.NavigateTo($"competencies");
+            }
+        }
+
+        /// <summary>
+        /// Method invoked when the competency category is changed to auto-increment the number if necessary
+        /// </summary>
+        private void CategoryChanged()
+        {
+            if (competency.Category == originalCategory)
+            {
+                competency.Number = originalNumber ?? 0;
+            }
+            else
+            {
+                var allCompetenciesInThisCategory = competencies
+                    .Where(x => x.Grade == competency.Grade && x.Category == competency.Category)
+                    .OrderBy(x => x.Number);
+                var lastNumber = allCompetenciesInThisCategory.LastOrDefault()?.Number ?? 0;
+                competency.Number = lastNumber + 1;
             }
         }
     }

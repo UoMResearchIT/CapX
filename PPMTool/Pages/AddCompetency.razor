@@ -23,8 +23,53 @@
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
-                
+                <div class="row">
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Grade" /><br />
+                        <RadzenNumeric class="radzen-numeric" TValue="int" @bind-Value="competency.Grade" />
+                    </div>
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Category" /><br />
+                        <RadzenDropDown class="radzen-dropdown" Data="Enum.GetValues<CompetencyCategory>()" TValue="CompetencyCategory" @bind-Value="competency.Category" Change="CategoryChanged" />
+                    </div>
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Legacy ID" /><br />
+                        <RadzenTextBox @bind-Value="competency.LegacyId" />
+                    </div>
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Number" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="This is determined automatically by any existing competencies in the chosen category" /><br />
+                        <RadzenNumeric class="radzen-numeric" TValue="int" @bind-Value="competency.Number" Disabled="true" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-auto">
+                        <RadzenLabel class="radzen-form-label" Text="Active" /><br />
+                        <RadzenSwitch @bind-Value="competency.IsActive" />
+                    </div>
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Description (HTML)" /><br />
+                        <RadzenTextBox @bind-Value="competency.Description" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Objective" /><br />
+                        <RadzenHtmlEditor @bind-Value="@competency.Objective" Style="min-height: 10rem" Placeholder="Formatted objective to demonstrate this competecny that can be added to PDRs." />
+                    </div>
+                </div>
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                    </div>
+                </div>
             </EditForm>
         </div>
+        @if (errorMessage != null)
+        {
+            <br />
+            <StatusMessageComponent Message=@errorMessage />
+        }
     }
 </div>
