@@ -22,6 +22,8 @@ namespace PPMTool.Migrations
             public string CreatedDate { get; set; } = DateTime.Now.ToString("R");
             public string RevisedDate { get; set; } = DateTime.Now.ToString("R");
             public int Revision { get; set; } = 0;
+
+            public int Number { get; set; }
         }
 
         private string Clean(string initial)
@@ -62,7 +64,7 @@ namespace PPMTool.Migrations
                 // Split the line by the delimiter
                 var values = line.Split('|');
 
-                if (values.Length != 5)
+                if (values.Length != 6)
                 {
                     Console.WriteLine($"** [ERR] Incorrect number of values => {line}");
                     throw new Exception("Incorrect number of entries on line!");
@@ -85,7 +87,8 @@ namespace PPMTool.Migrations
                     Grade = int.Parse(values[1]),
                     Category = (CompetencyCategory)int.Parse(values[2]),
                     Description = Clean(values[3]),
-                    Objective = Clean(values[4])
+                    Objective = Clean(values[4]),
+                    Number = int.Parse(values[5])
                 });
             }
 
@@ -96,8 +99,8 @@ namespace PPMTool.Migrations
             {
                 migrationBuilder.Sql(
                     $@"
-                        INSERT INTO Competency (LegacyId, Grade, Category, Description, Objective, Revision, CreatedDate, RevisionDate, IsActive)
-                        SELECT '{obj.LegacyId}', {obj.Grade}, {(int)obj.Category}, '{obj.Description}', '{obj.Objective}', {obj.Revision}, '{obj.CreatedDate}', '{obj.RevisedDate}', 1
+                        INSERT INTO Competency (LegacyId, Grade, Category, Description, Objective, Revision, CreatedDate, RevisionDate, IsActive, Number)
+                        SELECT '{obj.LegacyId}', {obj.Grade}, {(int)obj.Category}, '{obj.Description}', '{obj.Objective}', {obj.Revision}, '{obj.CreatedDate}', '{obj.RevisedDate}', 1, {obj.Number}
                         WHERE NOT EXISTS (
                             SELECT 1 FROM Competency WHERE LegacyId = '{obj.LegacyId}'
                         );

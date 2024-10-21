@@ -95,6 +95,9 @@ namespace PPMTool.Migrations
                     b.Property<string>("LegacyId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Number")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Objective")
                         .IsRequired()
                         .HasColumnType("TEXT");

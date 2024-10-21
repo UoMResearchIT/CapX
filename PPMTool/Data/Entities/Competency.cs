@@ -63,6 +63,11 @@ namespace PPMTool.Data.Entities
         public string LegacyId { get; set; }
 
         /// <summary>
+        /// The number of the competency within the category-grade combination
+        /// </summary>
+        public int Number { get; set; }
+
+        /// <summary>
         /// List of assessments that relate to this competency
         /// </summary>
         public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
