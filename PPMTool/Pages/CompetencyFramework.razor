@@ -31,16 +31,26 @@
                     <h3>Foundation Level (Grade 5)</h3>
                 </Template>
                 <ChildContent>
-                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="1rem">
+                    <RadzenAccordion Multiple="true">
+                        <Items>
                         @foreach (var group in competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category))
                         {
-                            <h4>@group.Key.GetDescription()</h4>
-                            @foreach (var competency in group)
-                            {
-                                <CompetencyCard Competency="competency" />
-                            }
+                            <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")" Icon="stat_1" CollapseTitle="Collapse"
+                                                 ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                 ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")">
+                                <Template>
+                                    <h4>@group.Key.GetDescription()</h4>
+                                </Template>
+                                <ChildContent>
+                                @foreach (var competency in group)
+                                {
+                                    <CompetencyCard Competency="competency" />
+                                }
+                                </ChildContent>
+                            </RadzenAccordionItem>
                         }
-                    </RadzenStack>
+                        </Items>
+                    </RadzenAccordion>
                 </ChildContent>
             </RadzenAccordionItem>
             <RadzenAccordionItem Text="Grade 6" Icon="stat_2" CollapseTitle="Collapse"
@@ -50,16 +60,26 @@
                     <h3>Advanced Level (Grade 6)</h3>
                 </Template>
                 <ChildContent>
-                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="1rem">
-                        @foreach (var group in competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category))
-                        {
-                            <h4>@group.Key.GetDescription()</h4>
-                            @foreach (var competency in group)
+                    <RadzenAccordion Multiple="true">
+                        <Items>
+                            @foreach (var group in competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category))
                             {
-                                <CompetencyCard Competency="competency" />
+                                <RadzenAccordionItem Text="@($"Grade 6 {group.Key.GetDescription()} Competencies")" Icon="stat_1" CollapseTitle="Collapse"
+                                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 6 {group.Key.GetDescription()} Competencies")"
+                                                     ExpandAriaLabel="@($"Expand the Grade 6 {group.Key.GetDescription()} Competencies")">
+                                    <Template>
+                                        <h4>@group.Key.GetDescription()</h4>
+                                    </Template>
+                                    <ChildContent>
+                                        @foreach (var competency in group)
+                                        {
+                                            <CompetencyCard Competency="competency" />
+                                        }
+                                    </ChildContent>
+                                </RadzenAccordionItem>
                             }
-                        }
-                    </RadzenStack>
+                        </Items>
+                    </RadzenAccordion>
                 </ChildContent>
             </RadzenAccordionItem>
             <RadzenAccordionItem Text="Grade 7" Icon="stat_3" CollapseTitle="Collapse"
@@ -69,16 +89,26 @@
                     <h3>Leadership Level (Grade 7)</h3>
                 </Template>
                 <ChildContent>
-                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="1rem">
-                        @foreach (var group in competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category))
-                        {
-                            <h4>@group.Key.GetDescription()</h4>
-                            @foreach (var competency in group)
+                    <RadzenAccordion Multiple="true">
+                        <Items>
+                            @foreach (var group in competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category))
                             {
-                                <CompetencyCard Competency="competency" />
+                                <RadzenAccordionItem Text="@($"Grade 7 {group.Key.GetDescription()} Competencies")" Icon="stat_1" CollapseTitle="Collapse"
+                                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 7 {group.Key.GetDescription()} Competencies")"
+                                                     ExpandAriaLabel="@($"Expand the Grade 7 {group.Key.GetDescription()} Competencies")">
+                                    <Template>
+                                        <h4>@group.Key.GetDescription()</h4>
+                                    </Template>
+                                    <ChildContent>
+                                        @foreach (var competency in group)
+                                        {
+                                            <CompetencyCard Competency="competency" />
+                                        }
+                                    </ChildContent>
+                                </RadzenAccordionItem>
                             }
-                        }
-                    </RadzenStack>
+                        </Items>
+                    </RadzenAccordion>
                 </ChildContent>
             </RadzenAccordionItem>
         </Items>
