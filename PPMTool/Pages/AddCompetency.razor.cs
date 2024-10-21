@@ -27,13 +27,13 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            competencies = CompetencyService.GetAll(context);
 
             if (CompetencyId > 0)
             {
                 competency = CompetencyService.GetById(context, CompetencyId);
                 originalCategory = competency?.Category;
                 originalNumber = competency?.Number;
-                competencies = CompetencyService.GetAll(context);
             }
             else
             {
