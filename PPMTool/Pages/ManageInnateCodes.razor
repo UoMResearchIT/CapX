@@ -14,9 +14,9 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddCode" />
         </div>
     </div>
-    @if (statusMessage != null)
+    @if (errorMessage != null)
     {
-        <StatusMessageComponent Message="statusMessage" />
+        <StatusMessageComponent Message="errorMessage" />
     }
     <hr />
     <RadzenDataGrid @ref="dataGrid"

@@ -18,7 +18,6 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         private InnateCode innateCode;
-        private StatusMessage errorMessage;
 
         protected override void OnInitialized()
         {

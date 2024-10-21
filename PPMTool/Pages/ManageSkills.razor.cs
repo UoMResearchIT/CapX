@@ -22,10 +22,10 @@ namespace PPMTool.Pages
         {
             if (TagService.DuplicateDetected(context, entity))
             {
-                statusMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
+                errorMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
                 return true;
             }
-            statusMessage = null;
+            errorMessage = null;
             return false;
         }
 
