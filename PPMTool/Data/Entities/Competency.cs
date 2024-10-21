@@ -83,7 +83,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public string GetHierarchyId()
         {
-            return $"{Grade - 4}.{(int)Category + 1}.{999}";
+            return $"{Grade - 4}.{(int)Category + 1}.{Number}";
         }
     }
 }

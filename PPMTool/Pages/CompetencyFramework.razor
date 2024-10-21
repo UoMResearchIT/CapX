@@ -3,6 +3,7 @@
 @using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+@using PPMTool.Enums
 @inherits BasePage
 
 <div class="container">
@@ -35,17 +36,19 @@
                         <Items>
                         @foreach (var group in competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category))
                         {
-                            <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")" Icon="stat_1" CollapseTitle="Collapse"
+                                <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
                                                  ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                  ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")">
                                 <Template>
                                     <h4>@group.Key.GetDescription()</h4>
                                 </Template>
                                 <ChildContent>
-                                @foreach (var competency in group)
-                                {
-                                    <CompetencyCard Competency="competency" />
-                                }
+                                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                                        @foreach (var competency in group)
+                                        {
+                                            <CompetencyCard Competency="competency" />
+                                        }
+                                    </RadzenStack>
                                 </ChildContent>
                             </RadzenAccordionItem>
                         }
@@ -64,17 +67,19 @@
                         <Items>
                             @foreach (var group in competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category))
                             {
-                                <RadzenAccordionItem Text="@($"Grade 6 {group.Key.GetDescription()} Competencies")" Icon="stat_1" CollapseTitle="Collapse"
+                                <RadzenAccordionItem Text="@($"Grade 6 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
                                                      ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 6 {group.Key.GetDescription()} Competencies")"
                                                      ExpandAriaLabel="@($"Expand the Grade 6 {group.Key.GetDescription()} Competencies")">
                                     <Template>
                                         <h4>@group.Key.GetDescription()</h4>
                                     </Template>
                                     <ChildContent>
-                                        @foreach (var competency in group)
-                                        {
-                                            <CompetencyCard Competency="competency" />
-                                        }
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                                            @foreach (var competency in group)
+                                            {
+                                                <CompetencyCard Competency="competency" />
+                                            }
+                                        </RadzenStack>
                                     </ChildContent>
                                 </RadzenAccordionItem>
                             }
@@ -93,17 +98,19 @@
                         <Items>
                             @foreach (var group in competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category))
                             {
-                                <RadzenAccordionItem Text="@($"Grade 7 {group.Key.GetDescription()} Competencies")" Icon="stat_1" CollapseTitle="Collapse"
+                                <RadzenAccordionItem Text="@($"Grade 7 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
                                                      ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 7 {group.Key.GetDescription()} Competencies")"
                                                      ExpandAriaLabel="@($"Expand the Grade 7 {group.Key.GetDescription()} Competencies")">
                                     <Template>
                                         <h4>@group.Key.GetDescription()</h4>
                                     </Template>
                                     <ChildContent>
-                                        @foreach (var competency in group)
-                                        {
-                                            <CompetencyCard Competency="competency" />
-                                        }
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                                            @foreach (var competency in group)
+                                            {
+                                                <CompetencyCard Competency="competency" />
+                                            }
+                                        </RadzenStack>
                                     </ChildContent>
                                 </RadzenAccordionItem>
                             }
