@@ -1,29 +1,23 @@
 ﻿@using PPMTool.Data.Entities
-<RadzenCard>
-    <div class="row">
-        <div class="col-10">
-            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Style="min-height:1rem">
-                    <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
-                    <RadzenText TextStyle="TextStyle.H5">
-                        @((MarkupString)Competency.Description)
-                    </RadzenText>
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Style="min-height:1rem">
-                    <RadzenText Text="Objective" TextStyle="TextStyle.Subtitle1" />
-                    <RadzenText TextStyle="TextStyle.Body1">
-                        @((MarkupString)Competency.Objective)
-                    </RadzenText>
-                </RadzenStack>
+<RadzenCard Style="min-height:1rem">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
+            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" />
+        </RadzenStack>
+        <RadzenText TextStyle="TextStyle.H5">
+            @((MarkupString)Competency.Description)
+        </RadzenText>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                <RadzenText Text="Objective" TextStyle="TextStyle.Subtitle1" />
+                <RadzenText TextStyle="TextStyle.Body1">
+                    @((MarkupString)Competency.Objective)
+                </RadzenText>
             </RadzenStack>
-        </div>
-        <div class="col-2">
-            <RadzenStack Orientation="Radzen.Orientation.Vertical">
-                <RadzenButton Text="Edit Competency" Icon="edit" ButtonStyle="ButtonStyle.Light"/>
-                <RadzenButton Text="Add Assessment" Icon="add" />
-            </RadzenStack>
-        </div>
-    </div>
+            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" />
+        </RadzenStack>
+    </RadzenStack>
 </RadzenCard>
 
 @code {

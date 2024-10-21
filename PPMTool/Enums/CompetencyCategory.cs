@@ -8,7 +8,7 @@ namespace PPMTool.Enums
         [Icon("article")]
         General,
         [Description("Department Culture and Cohesion")]
-        [Icon("diversity_")]
+        [Icon("diversity_1")]
         Culture,
         [Icon("forum")]
         Communication,
