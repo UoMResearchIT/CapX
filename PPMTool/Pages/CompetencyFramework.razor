@@ -21,6 +21,9 @@
         <div class="col">
             <h2>Framework Contents</h2>
         </div>
+        <div class="col-auto">
+            <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!EditAuthorised" />
+        </div>
     </div>
     <hr />
     <RadzenAccordion Multiple="true">
@@ -34,24 +37,28 @@
                 <ChildContent>
                     <RadzenAccordion Multiple="true">
                         <Items>
-                        @foreach (var group in competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category))
-                        {
+                            @foreach (var group in competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category))
+                            {
                                 <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
-                                                 ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
-                                                 ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")">
-                                <Template>
-                                    <h4>@group.Key.GetDescription()</h4>
-                                </Template>
-                                <ChildContent>
-                                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                                        @foreach (var competency in group)
-                                        {
-                                            <CompetencyCard Competency="competency" />
-                                        }
-                                    </RadzenStack>
-                                </ChildContent>
-                            </RadzenAccordionItem>
-                        }
+                                                    ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                    ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")">
+                                    <Template>
+                                        <h4>@group.Key.GetDescription()</h4>
+                                    </Template>
+                                    <ChildContent>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                                            @foreach (var competency in group)
+                                            {
+                                                <CompetencyCard Competency="competency"
+                                                                EditAuthorised="userIsSuperuser"
+                                                                EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                AddAssessmentAction="@((competency) => AddAssessment(competency))"
+                                                                ShowTooltip="@((arg, message) => ShowTooltip(arg, message))" />
+                                            }
+                                        </RadzenStack>
+                                    </ChildContent>
+                                </RadzenAccordionItem>
+                            }
                         </Items>
                     </RadzenAccordion>
                 </ChildContent>
@@ -77,7 +84,11 @@
                                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                                             @foreach (var competency in group)
                                             {
-                                                <CompetencyCard Competency="competency" />
+                                                <CompetencyCard Competency="competency"
+                                                                EditAuthorised="userIsSuperuser"
+                                                                EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                AddAssessmentAction="@((competency) => AddAssessment(competency))"
+                                                                ShowTooltip="@((arg, message) => ShowTooltip(arg, message))" />
                                             }
                                         </RadzenStack>
                                     </ChildContent>
@@ -108,7 +119,11 @@
                                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                                             @foreach (var competency in group)
                                             {
-                                                <CompetencyCard Competency="competency" />
+                                                <CompetencyCard Competency="competency"
+                                                                EditAuthorised="userIsSuperuser"
+                                                                EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                AddAssessmentAction="@((competency) => AddAssessment(competency))"
+                                                                ShowTooltip="@((arg, message) => ShowTooltip(arg, message))" />
                                             }
                                         </RadzenStack>
                                     </ChildContent>

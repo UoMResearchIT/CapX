@@ -3,7 +3,10 @@
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
-            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" />
+            @if (EditAuthorised)
+            {
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditCompetencyAction?.Invoke(Competency))" MouseEnter="@(args => ShowTooltip(args, "Revise"))" />
+            }
         </RadzenStack>
         <RadzenText TextStyle="TextStyle.H5">
             @((MarkupString)Competency.Description)
@@ -15,7 +18,7 @@
                     @((MarkupString)Competency.Objective)
                 </RadzenText>
             </RadzenStack>
-            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" />
+            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="@(() => AddAssessmentAction?.Invoke(Competency))" />
         </RadzenStack>
     </RadzenStack>
 </RadzenCard>
@@ -23,4 +26,16 @@
 @code {
     [Parameter]
     public Competency Competency { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
+
+    [Parameter]
+    public Action<Competency> AddAssessmentAction { get; set; }
+
+    [Parameter]
+    public Action<Competency> EditCompetencyAction { get; set; }
+
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
 }

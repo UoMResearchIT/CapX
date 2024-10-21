@@ -10,6 +10,9 @@ namespace PPMTool.Pages
     public partial class CompetencyFramework : BasePage
     {
         [Inject]
+        private RolesService RolesService { get; set; }
+
+        [Inject]
         private PersonService PersonService { get; set; }
 
         [Inject]
@@ -17,16 +20,41 @@ namespace PPMTool.Pages
 
         private IEnumerable<Person> people;
         private IEnumerable<Competency> competencies;
+        private bool userIsSuperuser;
 
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            // Check user permissions
+            var role = RolesService.GetByUsername(context, ActiveUserName);
+            userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
+
             // Get starting lists from the DB
             people = PersonService.GetAll(context);
             competencies = CompetencyService.GetAll(context);
 
+        }
+
+        private void AddAssessment(Competency competency)
+        {
+            Navigation.NavigateTo($"addassessment/{competency?.CompetencyId}/-1");
+        }
+
+        private void EditAssessment(Competency competency, CompetencyAssessment assessment)
+        {
+            Navigation.NavigateTo($"addassessment/{competency?.CompetencyId}/{assessment?.CompetencyAssessmentId}");
+        }
+
+        private void AddCompetency()
+        {
+            Navigation.NavigateTo("addcompetency/-1");
+        }
+
+        private void EditCompetency(Competency competency)
+        {
+            Navigation.NavigateTo($"addcompetency/{competency?.CompetencyId}");
         }
     }
 }
