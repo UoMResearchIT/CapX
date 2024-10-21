@@ -55,7 +55,7 @@ namespace PPMTool.Data.Entities
         /// Whether this competency is still active or has been retired
         /// </summary>
         [Required]
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
 
         /// <summary>
         /// This is the ID of the competency if it existed in v1.8 of the paper version of the framework
