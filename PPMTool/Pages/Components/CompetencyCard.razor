@@ -1,6 +1,7 @@
 ﻿@using PPMTool.Data.Entities
 @using DotNetExtensions
 @using PPMTool.Enums
+@using PPMTool.Services
 
 <RadzenCard Style="min-height:1rem">
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
@@ -25,10 +26,36 @@
         </RadzenStack>
         @if (assessmentToEdit != null)
         {
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" />
-                <RadzenBadge BadgeStyle="@(assessmentToEdit.Status.GetBadgeStyle())" Text="@(assessmentToEdit.Status.GetDescription())" />
+            <RadzenStack class="radzen-group" Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" Gap="0.5rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="New Status:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                        <RadzenDropDown Data="@(Enum.GetValues<AssessmentStatus>())" @bind-Value="@assessmentToEdit.Status" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(assessmentToEdit.CompetencyAssessmentId <= 0 ? UpdateAssessment : SaveAssessment)" />
+                        <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardAssessment" />
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add some evidence here to support your assessment" />
             </RadzenStack>
+        }
+        @if (Competency?.Assessments != null && Competency.Assessments.Count > 0)
+        {
+            foreach (var assessment in Competency.Assessments)
+            {
+                <RadzenStack class="radzen-group" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly">
+                    <RadzenText Text="Date Updated:" TextStyle="TextStyle.Subtitle1" />
+                    <RadzenText Text="@assessment.DateCreated" TextStyle="TextStyle.Body1" />
+                    <RadzenText Text="Evidence:" TextStyle="TextStyle.Subtitle1" />
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        @((MarkupString)assessment.Evidence)
+                    </RadzenText>
+                    <RadzenText Text="Status:" TextStyle="TextStyle.Subtitle1" />
+                    <RadzenBadge Text="@assessment.Status.GetDescription()" BadgeStyle="@assessment.Status.GetBadgeStyle()" />
+                    <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditAssessment(assessment))" Disabled="@(SelectedPerson?.PersonId != ActiveUserId)" />
+                </RadzenStack>
+            }
         }
     </RadzenStack>
 </RadzenCard>
@@ -39,6 +66,12 @@
 
     [Parameter]
     public Person SelectedPerson { get; set; }
+
+    [Parameter]
+    public int ActiveUserId { get; set; }
+
+    [Parameter]
+    public CompetencyService CompetencyService { get; set; }
 
     [Parameter]
     public bool EditAuthorised { get; set; }
@@ -63,8 +96,25 @@
         };
     }
 
-    private void EditAssessment(int AssessmnentId)
+    private void EditAssessment(CompetencyAssessment assessment)
     {
-        
+
+    }
+
+    private void SaveAssessment()
+    {
+        // TODO: Callback
+        assessmentToEdit = null;
+    }
+
+    private void UpdateAssessment()
+    {
+        // TODO: Callback
+        assessmentToEdit = null;
+    }
+
+    private void DiscardAssessment()
+    {
+        assessmentToEdit = null;
     }
 }

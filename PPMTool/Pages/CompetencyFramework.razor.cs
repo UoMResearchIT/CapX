@@ -21,6 +21,7 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
+        private int activeUserId;
         private Person selectedPerson = null;
 
 
@@ -31,6 +32,7 @@ namespace PPMTool.Pages
             // Check user permissions
             var role = RolesService.GetByUsername(context, ActiveUserName);
             userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
+            activeUserId = role?.Person.PersonId ?? 0;
 
             // Get the active user by default
             selectedPerson = role?.Person;

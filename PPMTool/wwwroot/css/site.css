@@ -230,3 +230,8 @@ mark {
 .no-margin {
     margin: 0
 }
+
+.radzen-group {
+    border: 1px solid var(--rz-base-500);
+    padding: 0.5rem;
+}
