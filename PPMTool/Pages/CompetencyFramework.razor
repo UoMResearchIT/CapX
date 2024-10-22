@@ -9,7 +9,7 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <h2>Development Pathway</h2>
+            <h2>Development Journey</h2>
         </div>
     </div>
     <hr />
@@ -17,9 +17,9 @@
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
                 <RadzenText Text="Show Pathway For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" />
+                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" Disabled="!EditAuthorised" />
             </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
                 <PathwayGaugeComponent AssessmentsForGradeAndPerson="@(competencies.Where(x => x.Grade == 5).SelectMany(x => x.Assessments).Where(x => x.Person.PersonId == selectedPerson.PersonId))"
                                        TotalNumberOfCompetenciesInGrade="@(competencies.Where(x => x.Grade == 5).Count())"
                                        Title="Foundation Level (Grade 5)" />
@@ -38,7 +38,7 @@
             <h2>Framework Contents</h2>
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!EditAuthorised" />
+            <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
         </div>
     </div>
     <hr />
@@ -52,7 +52,7 @@
                         <h3 style="margin-bottom:0.2rem">Foundation Level (Grade 5)</h3>
                         <RadzenProgressBar Value="competencies.Where(x => x.Grade == 5).SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
                                            Max="@(competencies.Where(x => x.Grade == 5).Count())"
-                                           Unit="@($" fully met out of {competencies.Where(x => x.Grade == 5).Count()}")"
+                                           Unit="@($" out of {competencies.Where(x => x.Grade == 5).Count()} complete")"
                                            ProgressBarStyle="ProgressBarStyle.Success"
                                            Style="width: 50%"
                                            class="mx-5" />
@@ -71,7 +71,7 @@
                                             <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
                                             <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
                                                                Max="@(group.Count())"
-                                                               Unit="@($" fully met out of {group.Count()}")"
+                                                               Unit="@($" out of {group.Count()} complete")"
                                                                ProgressBarStyle="ProgressBarStyle.Primary"
                                                                Style="width: 50%"
                                                                class="mx-5" />
@@ -106,7 +106,7 @@
                         <h3 style="margin-bottom:0.2rem">Advanced Level (Grade 6)</h3>
                         <RadzenProgressBar Value="competencies.Where(x => x.Grade == 6).SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
                                            Max="@(competencies.Where(x => x.Grade == 6).Count())"
-                                           Unit="@($" fully met out of {competencies.Where(x => x.Grade == 6).Count()}")"
+                                           Unit="@($" out of {competencies.Where(x => x.Grade == 6).Count()} complete")"
                                            ProgressBarStyle="ProgressBarStyle.Success"
                                            Style="width: 50%"
                                            class="mx-5" />
@@ -125,7 +125,7 @@
                                             <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
                                             <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
                                                                Max="@(group.Count())"
-                                                               Unit="@($" fully met out of {group.Count()}")"
+                                                               Unit="@($" out of {group.Count()} complete")"
                                                                ProgressBarStyle="ProgressBarStyle.Primary"
                                                                Style="width: 50%"
                                                                class="mx-5" />
@@ -160,7 +160,7 @@
                         <h3 style="margin-bottom:0.2rem">Leadership Level (Grade 7)</h3>
                         <RadzenProgressBar Value="competencies.Where(x => x.Grade == 7).SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
                                            Max="@(competencies.Where(x => x.Grade == 7).Count())"
-                                           Unit="@($" fully met out of {competencies.Where(x => x.Grade == 7).Count()}")"
+                                           Unit="@($" out of {competencies.Where(x => x.Grade == 7).Count()} complete")"
                                            ProgressBarStyle="ProgressBarStyle.Success"
                                            Style="width: 50%"
                                            class="mx-5" />
@@ -179,7 +179,7 @@
                                             <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
                                             <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
                                                                Max="@(group.Count())"
-                                                               Unit="@($" fully met out of {group.Count()}")"
+                                                               Unit="@($" out of {group.Count()} complete")"
                                                                ProgressBarStyle="ProgressBarStyle.Primary"
                                                                Style="width: 50%"
                                                                class="mx-5" />
