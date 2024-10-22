@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -38,7 +39,7 @@ namespace PPMTool.Pages
             selectedPerson = role?.Person;
 
             // Get starting lists from the DB
-            people = PersonService.GetAll(context);
+            people = PersonService.GetAll(context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
             competencies = CompetencyService.GetAll(context);
 
             LogInformation("Viewing competencies framework");
@@ -63,6 +64,11 @@ namespace PPMTool.Pages
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             CompetencyService.UpdateAssessment(context, assessment);
+            StateHasChanged();
+        }
+
+        private void PersonSelected()
+        {
             StateHasChanged();
         }
     }

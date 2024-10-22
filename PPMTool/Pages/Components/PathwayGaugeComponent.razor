@@ -1,0 +1,74 @@
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
+
+@if (dataItems != null)
+{
+    <ApexChart TItem="DataItem"
+               Title="@Title">
+
+        <ApexPointSeries TItem="DataItem"
+                         Items="dataItems"
+                         Name="Assessments"
+                         XValue="@(e => e.Status)"
+                         YValue="@(e => e.Value)"
+                         SeriesType="SeriesType.Donut" />
+    </ApexChart>
+}
+
+@* <div>
+    <Table Items="forecasts">
+        <Column Item="WeatherForecast" Property="e=> e.Summary" />
+        <Column Item="WeatherForecast" Property="e=> e.TemperatureC" />
+    </Table>
+</div> *@
+
+@code {
+
+    [Parameter]
+    public IEnumerable<CompetencyAssessment> AssessmentsForGradeAndPerson { get; set; }
+
+    [Parameter]
+    public int TotalNumberOfCompetenciesInGrade { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    private class DataItem
+    {
+        public AssessmentStatus Status { get; set; }
+        public int Value { get; set; }
+    }
+
+    private List<DataItem> dataItems;
+    private List<CompetencyAssessment> latestAssessmentsByCompetencyId;
+
+    protected override void OnInitialized()
+    {
+        // Get the latest status of each distinct competency with assessments
+        latestAssessmentsByCompetencyId = new List<CompetencyAssessment>();
+        var temp = AssessmentsForGradeAndPerson.GroupBy(x => x.AssociatedCompetency.CompetencyId);
+        foreach (var group in temp)
+        {
+            var latest = group.OrderBy(x => x.DateCreated).Last();
+            latestAssessmentsByCompetencyId.Add(latest);
+        }
+
+        // Populate the data items
+        dataItems = new List<DataItem>();
+        dataItems.Add(new DataItem
+        {
+            Status = AssessmentStatus.PartiallyMet,
+            Value = latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.PartiallyMet).Count()
+        });
+        dataItems.Add(new DataItem
+        {
+            Status = AssessmentStatus.FullyMet,
+            Value = latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.FullyMet).Count()
+        });
+        dataItems.Add(new DataItem
+        {
+            Status = AssessmentStatus.Unmet,
+            Value = TotalNumberOfCompetenciesInGrade - AssessmentsForGradeAndPerson.Where(x => x.Status == AssessmentStatus.PartiallyMet || x.Status == AssessmentStatus.FullyMet).Count()
+        });
+    }
+}
