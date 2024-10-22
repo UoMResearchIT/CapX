@@ -33,7 +33,7 @@
                         <RadzenDropDown Data="@(Enum.GetValues<AssessmentStatus>())" @bind-Value="@assessmentToEdit.Status" />
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(assessmentToEdit.CompetencyAssessmentId <= 0 ? UpdateAssessment : SaveAssessment)" />
+                        <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@((assessmentToEdit?.CompetencyAssessmentId ?? 0) > 0 ? UpdateAssessment : SaveAssessment)" />
                         <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardAssessment" />
                     </RadzenStack>
                 </RadzenStack>
@@ -42,18 +42,27 @@
         }
         @if (Competency?.Assessments != null && Competency.Assessments.Count > 0)
         {
-            foreach (var assessment in Competency.Assessments)
+            <RadzenText Text="Assessments" TextStyle="TextStyle.Subtitle1" />
+            foreach (var assessment in Competency.Assessments.OrderBy(x => DateTime.Parse(x.DateCreated)))
             {
-                <RadzenStack class="radzen-group" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceEvenly">
-                    <RadzenText Text="Date Updated:" TextStyle="TextStyle.Subtitle1" />
-                    <RadzenText Text="@assessment.DateCreated" TextStyle="TextStyle.Body1" />
-                    <RadzenText Text="Evidence:" TextStyle="TextStyle.Subtitle1" />
-                    <RadzenText TextStyle="TextStyle.Body1">
-                        @((MarkupString)assessment.Evidence)
-                    </RadzenText>
-                    <RadzenText Text="Status:" TextStyle="TextStyle.Subtitle1" />
-                    <RadzenBadge Text="@assessment.Status.GetDescription()" BadgeStyle="@assessment.Status.GetBadgeStyle()" />
-                    <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditAssessment(assessment))" Disabled="@(SelectedPerson?.PersonId != ActiveUserId)" />
+                <RadzenStack class="radzen-group radzen-shaded" Style="@(assessment.Status.GetBackgroundCss())" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="2rem">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText Text="Date Created:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                            <RadzenText Text="@(DateTime.Parse(assessment.DateCreated).ToShortDateString())" TextStyle="TextStyle.Body1" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText Text="Status:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                            <RadzenBadge Text="@assessment.Status.GetDescription()" BadgeStyle="@assessment.Status.GetBadgeStyle()" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText Text="Evidence:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @((MarkupString)assessment.Evidence)
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                    <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditAssessment(assessment))" Disabled="@(SelectedPerson?.PersonId != ActiveUserId || assessmentToEdit != null)" />
                 </RadzenStack>
             }
         }

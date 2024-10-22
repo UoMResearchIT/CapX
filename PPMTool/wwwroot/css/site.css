@@ -235,3 +235,9 @@ mark {
     border: 1px solid var(--rz-base-500);
     padding: 0.5rem;
 }
+
+.radzen-shaded {
+    border: none;
+    padding: 0.5rem;
+    background-color: var(--rz-base-200);
+}

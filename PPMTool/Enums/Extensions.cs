@@ -96,5 +96,25 @@ namespace PPMTool.Enums
             }
             return BadgeStyle.Danger;
         }
+
+        /// <summary>
+        /// Returns a CSS background-color tag
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static string GetBackgroundCss(this AssessmentStatus status)
+        {
+            if (status == AssessmentStatus.FullyMet)
+            {
+                return "background-color: var(--rz-success-lighter);";
+            }
+            else if (status == AssessmentStatus.PartiallyMet)
+            {
+                return "background-color: var(--rz-warning-lighter);";
+            }
+            return "background-color: var(--rz-danger-lighter);";
+        }
+
+
     }
 }
