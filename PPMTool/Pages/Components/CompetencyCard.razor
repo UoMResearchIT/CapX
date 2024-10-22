@@ -1,4 +1,7 @@
 ﻿@using PPMTool.Data.Entities
+@using DotNetExtensions
+@using PPMTool.Enums
+
 <RadzenCard Style="min-height:1rem">
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
@@ -18,8 +21,15 @@
                     @((MarkupString)Competency.Objective)
                 </RadzenText>
             </RadzenStack>
-            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="@(() => AddAssessmentAction?.Invoke(Competency))" />
+            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="AddAssessment" Disabled="@(assessmentToEdit != null || SelectedPerson == null)" />
         </RadzenStack>
+        @if (assessmentToEdit != null)
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" />
+                <RadzenBadge BadgeStyle="@(assessmentToEdit.Status.GetBadgeStyle())" Text="@(assessmentToEdit.Status.GetDescription())" />
+            </RadzenStack>
+        }
     </RadzenStack>
 </RadzenCard>
 
@@ -28,14 +38,33 @@
     public Competency Competency { get; set; }
 
     [Parameter]
-    public bool EditAuthorised { get; set; }
+    public Person SelectedPerson { get; set; }
 
     [Parameter]
-    public Action<Competency> AddAssessmentAction { get; set; }
+    public bool EditAuthorised { get; set; }
 
     [Parameter]
     public Action<Competency> EditCompetencyAction { get; set; }
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
+
+    private CompetencyAssessment assessmentToEdit = null;
+
+    private void AddAssessment()
+    {
+        assessmentToEdit = new CompetencyAssessment
+        {
+            AssociatedCompetency = Competency,
+            CompetencyDescription = Competency.Description,
+            CompetencyObjective = Competency.Objective,
+            CompetencyRevision = Competency.Revision,
+            Person = SelectedPerson
+        };
+    }
+
+    private void EditAssessment(int AssessmnentId)
+    {
+        
+    }
 }

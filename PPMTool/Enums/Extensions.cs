@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using DotNetExtensions;
+using Radzen;
 
 namespace PPMTool.Enums
 {
@@ -24,6 +25,76 @@ namespace PPMTool.Enums
                             .GetMember(enumValue.ToString())
                             .First()
                             .GetCustomAttribute<TAttribute>();
+        }
+
+        /// <summary>
+        /// Project status is one of the cancelled states or finished
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool IsFinishedOrCancelled(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.Finished ||
+                status == ProjectStatus.CancelledByCustomer ||
+                status == ProjectStatus.CancelledBidFailed ||
+                status == ProjectStatus.CancelledNoResource;
+        }
+
+        /// <summary>
+        /// Project status is one of the cancelled states
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool IsCancelled(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.CancelledByCustomer ||
+                status == ProjectStatus.CancelledBidFailed ||
+                status == ProjectStatus.CancelledNoResource;
+        }
+
+        /// <summary>
+        /// Project status is unfunded or cancelled
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool IsUnconfirmed(this ProjectStatus status)
+        {
+            return
+                status.IsCancelled() ||
+                status.IsUnfunded();
+        }
+
+        /// <summary>
+        /// Project status is one of the pre-funded statuses
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool IsUnfunded(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.NewRequest ||
+                status == ProjectStatus.AwaitingSubmission ||
+                status == ProjectStatus.AwaitingOutcome;
+        }
+
+        /// <summary>
+        /// Method to return a badge style based on status
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static BadgeStyle GetBadgeStyle(this AssessmentStatus status)
+        {
+            if (status == AssessmentStatus.FullyMet)
+            {
+                return BadgeStyle.Success;
+            }
+            else if (status == AssessmentStatus.PartiallyMet)
+            {
+                return BadgeStyle.Warning;
+            }
+            return BadgeStyle.Danger;
         }
     }
 }

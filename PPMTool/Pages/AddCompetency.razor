@@ -26,11 +26,11 @@
                 <div class="row">
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Grade" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="int" @bind-Value="competency.Grade" />
+                        <RadzenNumeric class="radzen-numeric" TValue="int" @bind-Value="competency.Grade" Change="CategoryOrGradeChanged" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Category" /><br />
-                        <RadzenDropDown class="radzen-dropdown" Data="Enum.GetValues<CompetencyCategory>()" TValue="CompetencyCategory" @bind-Value="competency.Category" Change="CategoryChanged" />
+                        <RadzenDropDown class="radzen-dropdown" Data="Enum.GetValues<CompetencyCategory>()" TValue="CompetencyCategory" @bind-Value="competency.Category" Change="CategoryOrGradeChanged" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Legacy ID" /><br />

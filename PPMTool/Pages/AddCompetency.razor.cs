@@ -22,6 +22,7 @@ namespace PPMTool.Pages
         private Competency competency;
         private CompetencyCategory? originalCategory = null;
         private int? originalNumber = null;
+        private int? originalGrade = null;
         private IEnumerable<Competency> competencies;
 
         protected override void OnInitialized()
@@ -34,6 +35,7 @@ namespace PPMTool.Pages
                 competency = CompetencyService.GetById(context, CompetencyId);
                 originalCategory = competency?.Category;
                 originalNumber = competency?.Number;
+                originalGrade = competency?.Grade;
             }
             else
             {
@@ -97,20 +99,20 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method invoked when the competency category is changed to auto-increment the number if necessary
+        /// Method invoked when the competency category or grade is changed to auto-increment the number if necessary
         /// </summary>
-        private void CategoryChanged()
+        private void CategoryOrGradeChanged()
         {
-            if (competency.Category == originalCategory)
+            if (competency.Category == originalCategory && competency.Grade == originalGrade)
             {
                 competency.Number = originalNumber ?? 0;
             }
             else
             {
-                var allCompetenciesInThisCategory = competencies
-                    .Where(x => x.Grade == competency.Grade && x.Category == competency.Category)
+                var allCompetenciesInThisCategoryAndGrade = competencies
+                    .Where(x => x.Grade == competency.Grade && x.Category == competency.Category && x.CompetencyId != competency.CompetencyId)
                     .OrderBy(x => x.Number);
-                var lastNumber = allCompetenciesInThisCategory.LastOrDefault()?.Number ?? 0;
+                var lastNumber = allCompetenciesInThisCategoryAndGrade.LastOrDefault()?.Number ?? 0;
                 competency.Number = lastNumber + 1;
             }
         }

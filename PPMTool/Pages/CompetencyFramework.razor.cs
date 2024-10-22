@@ -21,6 +21,7 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
+        private Person selectedPerson = null;
 
 
         protected override void OnInitialized()
@@ -31,20 +32,12 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(context, ActiveUserName);
             userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
 
+            // Get the active user by default
+            selectedPerson = role?.Person;
+
             // Get starting lists from the DB
             people = PersonService.GetAll(context);
             competencies = CompetencyService.GetAll(context);
-
-        }
-
-        private void AddAssessment(Competency competency)
-        {
-            Navigation.NavigateTo($"addassessment/{competency?.CompetencyId}/-1");
-        }
-
-        private void EditAssessment(Competency competency, CompetencyAssessment assessment)
-        {
-            Navigation.NavigateTo($"addassessment/{competency?.CompetencyId}/{assessment?.CompetencyAssessmentId}");
         }
 
         private void AddCompetency()
