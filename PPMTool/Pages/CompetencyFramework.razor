@@ -30,7 +30,7 @@
         <Items>
             <RadzenAccordionItem Text="Grade 5" Icon="counter_1" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 5 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 5 Competencies" Selected="true">
+                                 ExpandAriaLabel="Expand the Grade 5 Competencies">
                 <Template>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                         <h3 style="margin-bottom:0.2rem">Foundation Level (Grade 5)</h3>
@@ -51,8 +51,14 @@
                                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                     ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")">
                                     <Template>
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="width:100%">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                                             <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
+                                            <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
+                                                               Max="@(group.Count())"
+                                                               Unit="@($" fully met out of {group.Count()}")"
+                                                               ProgressBarStyle="ProgressBarStyle.Primary"
+                                                               Style="width: 50%"
+                                                               class="mx-5" />
                                         </RadzenStack>
                                     </Template>
                                     <ChildContent>
@@ -78,7 +84,7 @@
             </RadzenAccordionItem>
             <RadzenAccordionItem Text="Grade 6" Icon="counter_2" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 6 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 6 Competencies" Selected="true">
+                                 ExpandAriaLabel="Expand the Grade 6 Competencies">
                 <Template>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                         <h3 style="margin-bottom:0.2rem">Advanced Level (Grade 6)</h3>
@@ -99,8 +105,14 @@
                                                      ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 6 {group.Key.GetDescription()} Competencies")"
                                                      ExpandAriaLabel="@($"Expand the Grade 6 {group.Key.GetDescription()} Competencies")">
                                     <Template>
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="width:100%">
-                                            <h4 style ="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
+                                            <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
+                                            <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
+                                                               Max="@(group.Count())"
+                                                               Unit="@($" fully met out of {group.Count()}")"
+                                                               ProgressBarStyle="ProgressBarStyle.Primary"
+                                                               Style="width: 50%"
+                                                               class="mx-5" />
                                         </RadzenStack>
                                     </Template>
                                     <ChildContent>
@@ -126,7 +138,7 @@
             </RadzenAccordionItem>
             <RadzenAccordionItem Text="Grade 7" Icon="counter_3" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 7 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 7 Competencies" Selected="true">
+                                 ExpandAriaLabel="Expand the Grade 7">
                 <Template>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                         <h3 style="margin-bottom:0.2rem">Leadership Level (Grade 7)</h3>
@@ -147,8 +159,14 @@
                                                      ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 7 {group.Key.GetDescription()} Competencies")"
                                                      ExpandAriaLabel="@($"Expand the Grade 7 {group.Key.GetDescription()} Competencies")">
                                     <Template>
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="width:100%">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                                             <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
+                                            <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
+                                                               Max="@(group.Count())"
+                                                               Unit="@($" fully met out of {group.Count()}")"
+                                                               ProgressBarStyle="ProgressBarStyle.Primary"
+                                                               Style="width: 50%"
+                                                               class="mx-5" />
                                         </RadzenStack>
                                     </Template>
                                     <ChildContent>
