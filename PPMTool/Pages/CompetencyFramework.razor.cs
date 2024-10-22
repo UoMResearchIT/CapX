@@ -57,11 +57,13 @@ namespace PPMTool.Pages
         private void AddAssessment(CompetencyAssessment assessment)
         {
             CompetencyService.AddAssessment(context, assessment);
+            StateHasChanged();
         }
 
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             CompetencyService.UpdateAssessment(context, assessment);
+            StateHasChanged();
         }
     }
 }
