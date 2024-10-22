@@ -52,6 +52,8 @@
                                                 <CompetencyCard Competency="competency"
                                                                 EditAuthorised="userIsSuperuser"
                                                                 EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                AddAssessmentAction="@(assessment => AddAssessment(assessment))"
+                                                                UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
                                                                 ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
                                                                 SelectedPerson="selectedPerson"
                                                                 ActiveUserId="activeUserId"/>

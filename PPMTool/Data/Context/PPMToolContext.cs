@@ -20,6 +20,7 @@ namespace PPMTool.Data.Context
         public DbSet<Note> Notes { get; set; }
         public DbSet<FinancialReference> FinancialReferences { get; set; }
         public DbSet<Competency> Competencies { get; set; }
+        public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; }
 
         /// <summary>
         /// Inject options.

@@ -80,7 +80,6 @@ namespace PPMTool.Pages
                     competency.Revision++;
                     competency.RevisionDate = DateTime.Now.ToString("R");
                     result = CompetencyService.Update(context, competency);
-
                 }
                 else
                 {
@@ -89,7 +88,7 @@ namespace PPMTool.Pages
 
                 if (result == -1)
                 {
-                    errorMessage = new StatusMessage("???", StatusMessage.MessageType.Error);
+                    errorMessage = new StatusMessage("Competency with the same Legacy ID exists already!", StatusMessage.MessageType.Error);
                     return;
                 }
 

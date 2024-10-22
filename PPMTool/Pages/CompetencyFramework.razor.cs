@@ -40,6 +40,8 @@ namespace PPMTool.Pages
             // Get starting lists from the DB
             people = PersonService.GetAll(context);
             competencies = CompetencyService.GetAll(context);
+
+            LogInformation("Viewing competencies framework");
         }
 
         private void AddCompetency()
@@ -50,6 +52,16 @@ namespace PPMTool.Pages
         private void EditCompetency(Competency competency)
         {
             Navigation.NavigateTo($"addcompetency/{competency?.CompetencyId}");
+        }
+
+        private void AddAssessment(CompetencyAssessment assessment)
+        {
+            CompetencyService.AddAssessment(context, assessment);
+        }
+
+        private void UpdateAssessment(CompetencyAssessment assessment)
+        {
+            CompetencyService.UpdateAssessment(context, assessment);
         }
     }
 }

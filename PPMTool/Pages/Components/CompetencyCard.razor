@@ -71,13 +71,16 @@
     public int ActiveUserId { get; set; }
 
     [Parameter]
-    public CompetencyService CompetencyService { get; set; }
-
-    [Parameter]
     public bool EditAuthorised { get; set; }
 
     [Parameter]
     public Action<Competency> EditCompetencyAction { get; set; }
+
+    [Parameter]
+    public Action<CompetencyAssessment> AddAssessmentAction { get; set; }
+
+    [Parameter]
+    public Action<CompetencyAssessment> UpdateAssessmentAction { get; set; }
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
@@ -98,18 +101,18 @@
 
     private void EditAssessment(CompetencyAssessment assessment)
     {
-
+        assessmentToEdit = assessment;
     }
 
     private void SaveAssessment()
     {
-        // TODO: Callback
+        AddAssessmentAction?.Invoke(assessmentToEdit);
         assessmentToEdit = null;
     }
 
     private void UpdateAssessment()
     {
-        // TODO: Callback
+        UpdateAssessmentAction?.Invoke(assessmentToEdit);
         assessmentToEdit = null;
     }
 
