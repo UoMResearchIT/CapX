@@ -241,8 +241,11 @@ namespace PPMTool.Pages
                             // How many hours expected from WLM
                             var wlmTargetTotalHours = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value) * 35f;
 
-                            // Convert raw hours to FTE using chosen normalisation approach
-                            item.NormaliseHours(normalisedByTotalHours);
+                            // Convert raw hours to FTE based on standard week
+                            foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                            {
+                                item.WeeklyValuesByDuty[duty] /= 35f;
+                            }
 
                             // If underbooked due to time on leave or we are on a shorter working week then scale WLM targets for the week
                             if (totalHours < wlmTargetTotalHours)
