@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -24,7 +28,9 @@ namespace PPMTool.Pages
         private bool userIsSuperuser;
         private int activeUserId;
         private Person selectedPerson = null;
-
+        private byte[] file;
+        private string fileName;
+        private long? fileSize;
 
         protected override void OnInitialized()
         {
@@ -70,6 +76,74 @@ namespace PPMTool.Pages
         private void PersonSelected()
         {
             StateHasChanged();
+        }
+
+        private void OnError(UploadErrorEventArgs args, string name)
+        {
+            LogError($"File Upload Failed: {args.Message}");
+        }
+
+        private void OnFileChanged(byte[] value, string name)
+        {
+            // Start the spinner
+            Loading = true;
+
+            if (value != null) LogInformation($"File Uploaded - adding competency assessments...");
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    // Bail or read from stream
+                    if (value == null)
+                    {
+                        return;
+                    }
+
+                    // Convert text -- arrives as a base64 image bizarrely!
+                    var fileText = System.Text.Encoding.Default.GetString(value);
+                    string[] dbInfo = fileText.Split("base64,");
+                    var base64Contents = dbInfo[1].ToString();
+                    byte[] contentsAsBytes = Convert.FromBase64String(base64Contents);
+                    fileText = System.Text.Encoding.Default.GetString(contentsAsBytes);
+
+                    // Split into lines
+                    var lines = fileText.Split("\n");
+
+                    // Read one line at a time
+                    foreach (var line in lines)
+                    {
+                        // Split line
+                        var values = line.Split("\t");
+
+
+
+                    }
+
+                    Debug.WriteLine($"** Finished reading lines.");
+                }
+                catch (Exception ex)
+                {
+                    // Present an error notification to the user
+                    InvokeAsync(() => ShowNotification(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Upload Issue",
+                        Detail = $"{ex.Message}",
+                        Duration = 10000,
+                        Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                    }));
+                    LogError($"{ex.Message}");
+
+                }
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }
