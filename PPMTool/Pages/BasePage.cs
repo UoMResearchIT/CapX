@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using Radzen;
 
@@ -54,6 +55,8 @@ namespace PPMTool.Pages
         protected string ActiveUserName { get; private set; } = "None";
 
         protected PPMToolContext context;
+
+        protected StatusMessage errorMessage;
 
         protected override void OnInitialized()
         {

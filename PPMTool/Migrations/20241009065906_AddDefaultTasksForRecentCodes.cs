@@ -21,7 +21,7 @@ namespace PPMTool.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Path to delimited file
-            var filePath = "./KnownInnateCodes.txt";
+            var filePath = "./Migrations/Data/KnownInnateCodes.txt";
 
             // Read all lines from the file
             var lines = File.ReadAllLines(filePath);

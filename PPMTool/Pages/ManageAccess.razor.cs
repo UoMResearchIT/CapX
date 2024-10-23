@@ -53,12 +53,12 @@ namespace PPMTool.Pages
             // Validate
             if (string.IsNullOrWhiteSpace(entity.CASUserName))
             {
-                statusMessage = new StatusMessage("You must supply a user name", StatusMessage.MessageType.Error);
+                errorMessage = new StatusMessage("You must supply a user name", StatusMessage.MessageType.Error);
                 return;
             }
             if (string.IsNullOrWhiteSpace(entity.Name))
             {
-                statusMessage = new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error);
+                errorMessage = new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error);
                 return;
             }
 

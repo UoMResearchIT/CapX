@@ -16,7 +16,6 @@ namespace PPMTool.Pages
         protected T entityToInsert;
         protected T entityToUpdate;
         protected IEntityService<T> dataGridEntityService;
-        protected StatusMessage statusMessage;
 
         [Inject]
         protected DialogService DialogService { get; set; }
@@ -30,7 +29,7 @@ namespace PPMTool.Pages
         {
             entityToInsert = null;
             entityToUpdate = null;
-            statusMessage = null;
+            errorMessage = null;
         }
 
         protected async virtual Task EditRow(T entity)
