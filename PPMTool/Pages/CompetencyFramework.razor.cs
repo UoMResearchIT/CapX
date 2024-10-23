@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -94,6 +96,11 @@ namespace PPMTool.Pages
             {
                 try
                 {
+                    // Create a context to be accesed on this thread
+                    var threadContext = ContextFactory.CreateDbContext();
+                    var localCompetencies = CompetencyService.GetAll(threadContext);
+                    var localPerson = PersonService.GetById(threadContext, selectedPerson.PersonId);
+
                     // Bail or read from stream
                     if (value == null)
                     {
@@ -111,26 +118,108 @@ namespace PPMTool.Pages
                     var lines = fileText.Split("\n");
 
                     // Read one line at a time
+                    string legacyId1 = null;
+                    string legacyId2 = null;
+                    string legacyId3 = null;
                     foreach (var line in lines)
                     {
-                        // Split line
-                        var values = Clean(line).Split("\t");
+                        // Split line initially after first | since we replaced all NBSP with | characters
+                        var values = Clean(line).Split("|");
 
-                        // TODO: If the value is of the pattern 1.1 then store as this is the first two digits of the legacy ID
+                        // Continue if line is shorter than expected then reset the ID tracker
+                        if (values.Length < 2)
+                        {
+                            legacyId1 = null;
+                            legacyId2 = null;
+                            legacyId3 = null;
+                            continue;
+                        }
 
-                        // TODO: If the value is of the pattern 1. then append as this completed the legacy ID
+                        // If the value is of the pattern 1.1 then restart as this is the first two digits of the legacy ID
+                        var test = values[0] + "|";
+                        if (Regex.IsMatch(test, @"\d+\.\d+\|"))
+                        {
+                            legacyId2 = null;
+                            legacyId3 = null;
+                            legacyId1 = values[0].Trim();
+                        }
+                        // If the value is of the pattern 1. then append as this completed the legacy ID for top level items
+                        else if (Regex.IsMatch(test, @"\d+\.\|"))
+                        {
+                            legacyId3 = null;
+                            legacyId2 = values[0].Replace(".", "").Trim();
+                        }
+                        // If the value is of the pattern a. then append as this completes the legacy ID for sub items
+                        else if (Regex.IsMatch(test, @"[a-z]\.\|"))
+                        {
+                            legacyId3 = values[0].Replace(".", "").Trim();
+                        }
 
-                        // TODO: If the value is of the pattern a. then append as this completes the legacy ID
+                        // If no legacy ID then move to next line
+                        if (legacyId1 == null || legacyId2 == null) continue;
 
-                        // TODO: If there is an "x" or "X" then this represents a selection and can infer a status
+                        // Look at the rest of the line
+                        var valuesRest = values[values.Length - 1].Split("\t");
 
-                        // TODO: Cross check line against competencies to see if LegacyId matches
+                        // Check number of values
+                        if (valuesRest.Length != 5) continue;
 
-                        // TODO: Check the existing assessments to see if this represents a change from the latest
+                        // If there is an "x" or "X" then this represents a selection and can infer a status
+                        AssessmentStatus status = default;
+                        if (valuesRest[1].Trim().ToLower() == "x")
+                        {
+                            status = AssessmentStatus.Unmet;
+                        }
+                        else if (valuesRest[2].Trim().ToLower() == "x")
+                        {
+                            status = AssessmentStatus.PartiallyMet;
+                        }
+                        else if (valuesRest[3].Trim().ToLower() == "x")
+                        {
+                            status = AssessmentStatus.FullyMet;
+                        }
+                        else
+                        {
+                            continue;
+                        }
 
-                        // TODO: Add assessment to DB
+                        // Cross check line against competencies to see if LegacyId matches
+                        var legacyId = string.Join(".", new string[] { legacyId1, legacyId2, legacyId3 });
+                        if (legacyId.EndsWith("."))
+                        {
+                            // Strip trailing dot if necessary
+                            legacyId = legacyId.Substring(0, legacyId.Length - 1);
+                        }
+                        var matchingCompetency = localCompetencies.FirstOrDefault(x => x.LegacyId.Trim().ToLower() == legacyId.Trim().ToLower());
+                        if (matchingCompetency == null)
+                        {
+                            LogWarning($"Valid competency but no matching competency in the DB. LegacyId = {legacyId}");
+                            continue;
+                        }
 
+                        // Check the existing assessments to see if this represents a change from the latest
+                        var latestAssessment = matchingCompetency.Assessments.Where(x => x.Person.PersonId == localPerson.PersonId).OrderBy(x => x.DateCreated).LastOrDefault();
+                        if (latestAssessment != null)
+                        {
+                            if (status == latestAssessment.Status)
+                            {
+                                LogWarning($"Assessment not imported as not a change based on the latest assessment for the competency with LegacyId = {legacyId} | Status = {status}");
+                                continue;
+                            }
+                        }
 
+                        // Add assessment to DB
+                        LogInformation($"Adding assessment against competency LegacyId {legacyId} for {localPerson.Name} to the DB");
+                        CompetencyService.AddAssessment(threadContext, new CompetencyAssessment
+                        {
+                            AssociatedCompetency = matchingCompetency,
+                            CompetencyDescription = matchingCompetency.Description,
+                            CompetencyObjective = matchingCompetency.Objective,
+                            CompetencyRevision = matchingCompetency.Revision,
+                            Person = localPerson,
+                            Status = status,
+                            Evidence = string.IsNullOrWhiteSpace(valuesRest[4]) ? "No evidence supplied" : valuesRest[4].Trim()
+                        });
                     }
 
                     Debug.WriteLine($"** Finished reading lines.");
@@ -166,7 +255,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private string Clean(string line)
         {
-            return line.Replace("&nbsp;", " ").Replace("\"", "");
+            return line.Replace("\r", "").Replace("\"", "");
         }
     }
 }

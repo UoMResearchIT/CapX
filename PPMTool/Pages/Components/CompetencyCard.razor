@@ -7,10 +7,7 @@
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
-            @if (EditAuthorised)
-            {
-                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditCompetencyAction?.Invoke(Competency))" MouseEnter="@(args => ShowTooltip(args, "Revise"))" />
-            }
+            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditCompetencyAction?.Invoke(Competency))" MouseEnter="@(args => ShowTooltip(args, "Revise"))" Disabled="!EditAuthorised" />
         </RadzenStack>
         <RadzenText TextStyle="TextStyle.H5">
             @((MarkupString)Competency.Description)

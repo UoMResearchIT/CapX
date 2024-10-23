@@ -9,15 +9,20 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <h2>Development Journey</h2>
+            <h2>Development Journey Summary</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <RadzenText Text="Your development journey and competency framework assessments are only visible to you and system super-users. It is designed as a tool for personal reflection and a mechanism to monitor your own development journey as an RSE. You may wish to share this with you line manager to assist with the setting of Role-Based Objectives as part of your Personal Development Review (PDR)." TextStyle="TextStyle.Body2" />
         </div>
     </div>
     <hr />
     <RadzenCard>
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
-                <RadzenText Text="Show Pathway For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" Disabled="!EditAuthorised" />
+                <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
+                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" Disabled="!userIsSuperuser" />
                 <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
                 <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
                                  Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
@@ -39,7 +44,7 @@
     <br />
     <div class="row">
         <div class="col">
-            <h2>Framework Contents</h2>
+            <h2>Competencies Framework Assessment</h2>
         </div>
         <div class="col-auto">
             <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
