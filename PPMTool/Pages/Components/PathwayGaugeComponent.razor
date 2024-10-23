@@ -18,7 +18,7 @@
                              SeriesType="SeriesType.Donut"
                              PointColor="@(e => e.Colour)" />
         </ApexChart>
-        <RadzenText Text="@($"{Math.Round(dataItems.FirstOrDefault(x => x.Status == AssessmentStatus.FullyMet)?.Value ?? 0f / (float)TotalNumberOfCompetenciesInGrade, 2)}% Complete")" TextStyle="TextStyle.DisplayH6" />
+        <RadzenText Text="@($"{percentComplete}% Complete")" TextStyle="TextStyle.DisplayH6" />
     </RadzenStack>
 }
 
@@ -56,6 +56,7 @@
     private List<CompetencyAssessment> latestAssessmentsByCompetencyId;
     private ApexChartOptions<DataItem> options = new();
     private ApexChart<DataItem> chart;
+    private float percentComplete;
 
     protected override void OnInitialized()
     {
@@ -110,5 +111,9 @@
             Value = TotalNumberOfCompetenciesInGrade - latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.PartiallyMet || x.Status == AssessmentStatus.FullyMet).Count(),
             Colour = "#f44336"
         });
+
+        // Compute percent complete
+        var valueComplete = dataItems.FirstOrDefault(x => x.Status == AssessmentStatus.FullyMet)?.Value ?? 0f;
+        percentComplete = (float)Math.Round(valueComplete / (float)TotalNumberOfCompetenciesInGrade, 2) * 100f;
     }
 }
