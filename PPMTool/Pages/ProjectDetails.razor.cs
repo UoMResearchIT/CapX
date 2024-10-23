@@ -259,7 +259,7 @@ namespace PPMTool.Pages
                     (assignments, currentWeek) =>
                     {
                         // Value 2 is corrected for the unmet demand on the task
-                        return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand)));
+                        return assignments.RoundedSum(task => task.Demand == 0 ? 0 : (task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand))));
                     }
                 ).ToList();
 

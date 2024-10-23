@@ -144,18 +144,18 @@
                                 Options="burnUpChartOptions">
 
                         <ApexPointSeries TItem="ChartItem"
-                                            Items="burnUpChartSource"
-                                            SeriesType="@SeriesType.Area"
-                                            Name="Planned Work"
-                                            XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YValue="@(e => Convert.ToDecimal(e.Value1))" />
+                                         Items="burnUpChartSource"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work"
+                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YValue="@(e => Convert.ToDecimal(e.Value1))" />
 
                         <ApexPointSeries TItem="ChartItem"
-                                            Items="burnUpChartSource"
-                                            SeriesType="@SeriesType.Area"
-                                            Name="Planned Work (Adjusted for Unmet Demand)"
-                                            XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YValue="@(e => Convert.ToDecimal(e.Value2))" />
+                                         Items="burnUpChartSource"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work (Adjusted for Unmet Demand)"
+                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YValue="@(e => Convert.ToDecimal(e.Value2))" />
 
                     </ApexChart>
                 </RadzenCard>
