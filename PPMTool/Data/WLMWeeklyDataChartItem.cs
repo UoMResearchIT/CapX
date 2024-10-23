@@ -57,33 +57,6 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Method which loops over the <see cref="WeeklyValuesByDuty"/> and normalises them using one of two approaches.
-        /// </summary>
-        /// <param name="byTotalHours">If true, will normalise with respect to total hours per week rather than 35 hour standard</param>
-        /// <exception cref="Exception"></exception>
-        internal void NormaliseHours(bool byTotalHours)
-        {
-            if (byTotalHours && TotalHoursForWeek == null)
-            {
-                throw new Exception("The total hours for the week for this item has never been set!");
-            }
-
-            // Assume standard 35 hour = 1.0 FTE to begin with
-            var normalisingParameter = 35f;
-
-            // If using total hours then convert to TotalHours = 1.0 FTE
-            if (byTotalHours)
-            {
-                normalisingParameter = (TotalHoursForWeek ?? 0) == 0 ? 35 : (TotalHoursForWeek ?? 0);
-            }
-
-            foreach (var duty in WeeklyValuesByDuty.Keys)
-            {
-                WeeklyValuesByDuty[duty] /= normalisingParameter;
-            }
-        }
-
-        /// <summary>
         /// Method to switch between normalisation approaches
         /// </summary>
         /// <param name="toTotalHours">Assumes data is already normalised to standard 35 and converts to normalising by total hours and vice versa</param>
