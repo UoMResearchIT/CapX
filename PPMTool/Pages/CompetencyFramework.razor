@@ -15,7 +15,7 @@
     <hr />
     <RadzenCard>
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
+            <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
                 <RadzenText Text="Show Pathway For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
                 <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" Disabled="!EditAuthorised" />
                 <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />

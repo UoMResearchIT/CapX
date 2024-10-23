@@ -114,8 +114,21 @@ namespace PPMTool.Pages
                     foreach (var line in lines)
                     {
                         // Split line
-                        var values = line.Split("\t");
+                        var values = Clean(line).Split("\t");
 
+                        // TODO: If the value is of the pattern 1.1 then store as this is the first two digits of the legacy ID
+
+                        // TODO: If the value is of the pattern 1. then append as this completed the legacy ID
+
+                        // TODO: If the value is of the pattern a. then append as this completes the legacy ID
+
+                        // TODO: If there is an "x" or "X" then this represents a selection and can infer a status
+
+                        // TODO: Cross check line against competencies to see if LegacyId matches
+
+                        // TODO: Check the existing assessments to see if this represents a change from the latest
+
+                        // TODO: Add assessment to DB
 
 
                     }
@@ -144,6 +157,16 @@ namespace PPMTool.Pages
                     StateHasChanged();
                 });
             });
+        }
+
+        /// <summary>
+        /// Method to strip out the expected (non-compliant) input characters and replace with something standard
+        /// </summary>
+        /// <param name="line"></param>
+        /// <returns></returns>
+        private string Clean(string line)
+        {
+            return line.Replace("&nbsp;", " ").Replace("\"", "");
         }
     }
 }

@@ -232,12 +232,12 @@ mark {
 }
 
 .radzen-group {
-    border: 1px solid var(--rz-base-500);
+    border: 1px solid var(--rz-base-400);
     padding: 0.5rem;
 }
 
 .radzen-shaded {
     border: none;
     padding: 0.5rem;
-    background-color: var(--rz-base-200);
+    background-color: var(--rz-base-100);
 }
