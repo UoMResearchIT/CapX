@@ -1,0 +1,119 @@
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using DotNetExtensions
+
+@if (dataItems != null)
+{
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+        <ApexChart TItem="DataItem"
+                   Title="@Title"
+                   Options="@options"
+                   @ref="chart">
+
+            <ApexPointSeries TItem="DataItem"
+                             Items="dataItems"
+                             Name="Assessments"
+                             XValue="@(e => e.Status.GetDescription())"
+                             YValue="@(e => e.Value)"
+                             SeriesType="SeriesType.Donut"
+                             PointColor="@(e => e.Colour)" />
+        </ApexChart>
+        <RadzenText Text="@($"{percentComplete}% Complete")" TextStyle="TextStyle.DisplayH6" />
+    </RadzenStack>
+}
+
+@code {
+    private IEnumerable<CompetencyAssessment> assessmentsForGradeAndPerson;
+    [Parameter]
+    public IEnumerable<CompetencyAssessment> AssessmentsForGradeAndPerson
+    {
+        get => assessmentsForGradeAndPerson;
+        set
+        {
+            if (value != assessmentsForGradeAndPerson)
+            {
+                assessmentsForGradeAndPerson = value;
+                LoadData();
+                chart?.RenderAsync();
+            }
+        }
+    }
+
+    [Parameter]
+    public int TotalNumberOfCompetenciesInGrade { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    private class DataItem
+    {
+        public AssessmentStatus Status { get; set; }
+        public int Value { get; set; }
+        public string Colour { get; set; }
+    }
+
+    private List<DataItem> dataItems;
+    private List<CompetencyAssessment> latestAssessmentsByCompetencyId;
+    private ApexChartOptions<DataItem> options = new();
+    private ApexChart<DataItem> chart;
+    private float percentComplete;
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+
+        options.PlotOptions = new PlotOptions
+        {
+            Pie = new PlotOptionsPie
+            {
+                Donut = new PlotOptionsDonut
+                {
+                    Size = "40"
+                }
+            }
+        };
+        options.Legend = new Legend
+        {
+
+            Formatter = @"function(seriesName, opts) { return [seriesName, ' (', opts.w.globals.series[opts.seriesIndex], ')'] }"
+
+        };
+    }
+
+    private void LoadData()
+    {
+        // Get the latest status of each distinct competency with assessments
+        latestAssessmentsByCompetencyId = new List<CompetencyAssessment>();
+        var temp = AssessmentsForGradeAndPerson.GroupBy(x => x.AssociatedCompetency.CompetencyId);
+        foreach (var group in temp)
+        {
+            var latest = group.OrderBy(x => x.DateCreated).Last();
+            latestAssessmentsByCompetencyId.Add(latest);
+        }
+
+        // Populate the data items
+        dataItems = new List<DataItem>();
+        dataItems.Add(new DataItem
+        {
+            Status = AssessmentStatus.FullyMet,
+            Value = latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.FullyMet).Count(),
+            Colour = "#4caf50"
+        });
+        dataItems.Add(new DataItem
+        {
+            Status = AssessmentStatus.PartiallyMet,
+            Value = latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.PartiallyMet).Count(),
+            Colour = "#ff9800"
+        });
+        dataItems.Add(new DataItem
+        {
+            Status = AssessmentStatus.Unmet,
+            Value = TotalNumberOfCompetenciesInGrade - latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.PartiallyMet || x.Status == AssessmentStatus.FullyMet).Count(),
+            Colour = "#f44336"
+        });
+
+        // Compute percent complete
+        var valueComplete = dataItems.FirstOrDefault(x => x.Status == AssessmentStatus.FullyMet)?.Value ?? 0f;
+        percentComplete = (float)Math.Round(valueComplete / (float)TotalNumberOfCompetenciesInGrade * 100f, 0);
+    }
+}

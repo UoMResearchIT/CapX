@@ -43,7 +43,7 @@ namespace PPMTool.Pages
                 dataGridEntities.Remove(entity);
                 dataGrid.Reload();
                 Reset();
-                statusMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                errorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
                 return;
             }
             LogInformation($"Added finref {entity.GetSensibleObjectName()}");
@@ -56,7 +56,7 @@ namespace PPMTool.Pages
             if (result == -1)
             {
                 CancelEdit(entity);
-                statusMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                errorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
                 return;
             }
             LogInformation($"Updated finref {entity.GetSensibleObjectName()}");

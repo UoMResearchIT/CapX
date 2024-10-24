@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20241017185738_AddedComptencyFrameworkDataModels")]
+    partial class AddedComptencyFrameworkDataModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
@@ -92,12 +94,6 @@ namespace PPMTool.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("LegacyId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Objective")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -111,7 +107,7 @@ namespace PPMTool.Migrations
 
                     b.HasKey("CompetencyId");
 
-                    b.ToTable("Competencies");
+                    b.ToTable("Competency");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.CompetencyAssessment", b =>
@@ -122,14 +118,6 @@ namespace PPMTool.Migrations
 
                     b.Property<int?>("AssociatedCompetencyCompetencyId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("CompetencyDescription")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CompetencyObjective")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("CompetencyRevision")
                         .HasColumnType("INTEGER");
@@ -154,7 +142,7 @@ namespace PPMTool.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("CompetencyAssessments");
+                    b.ToTable("CompetencyAssessment");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.FinancialReference", b =>

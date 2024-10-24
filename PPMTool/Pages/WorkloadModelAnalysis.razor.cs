@@ -230,7 +230,7 @@ namespace PPMTool.Pages
                                 item.WeeklyValuesByDuty[row.Duty] += row.WeeklyValues[i];
                             }
 
-                            // Find total hours
+                            // Find total hours worked (excluding leave)
                             float totalHours = 0f;
                             foreach (var duty in item.WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
                             {
@@ -238,14 +238,19 @@ namespace PPMTool.Pages
                             }
                             item.TotalHoursForWeek = totalHours;
 
-                            // Convert raw hours to FTE using chosen normalisation approach
-                            item.NormaliseHours(normalisedByTotalHours);
+                            // How many hours expected from WLM
+                            var wlmTargetTotalHours = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value) * 35f;
 
-                            // If some time has been spent away, then scale WLM targets for the week
-                            if (totalHours > 0f && item.WeeklyValuesByDuty[Duty.Other] > 0f)
+                            // Convert raw hours to FTE based on standard week
+                            foreach (var duty in item.WeeklyValuesByDuty.Keys)
                             {
-                                var totalWLMtargetTime = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value);
-                                var fractionWorking = (totalWLMtargetTime - item.WeeklyValuesByDuty[Duty.Other]) / totalWLMtargetTime;
+                                item.WeeklyValuesByDuty[duty] /= 35f;
+                            }
+
+                            // If underbooked due to time on leave or we are on a shorter working week then scale WLM targets for the week
+                            if (totalHours < wlmTargetTotalHours)
+                            {
+                                var fractionWorking = totalHours / wlmTargetTotalHours;
                                 foreach (var duty in item.WeeklyValuesByDuty.Keys)
                                 {
                                     item.WLMWeeklyTargetsByDuty[duty] *= fractionWorking;
