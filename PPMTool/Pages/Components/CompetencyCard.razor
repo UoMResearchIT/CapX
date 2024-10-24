@@ -19,7 +19,7 @@
                     @((MarkupString)Competency.Objective)
                 </RadzenText>
             </RadzenStack>
-            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="AddAssessment" Disabled="@(assessmentToEdit != null || SelectedPerson == null)" />
+            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="AddAssessment" Disabled="@(assessmentToEdit != null || SelectedPerson == null || (SelectedPerson?.PersonId != ActiveUserId && !EditAuthorised))" />
         </RadzenStack>
         @if (assessmentToEdit != null)
         {

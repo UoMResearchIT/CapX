@@ -99,13 +99,11 @@ namespace PPMTool.Services
 
         public Role GetByUsername(PPMToolContext context, string username)
         {
-            _logger.LogInformation($"GetRoleByUsername({username})");
             return GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
         }
 
         public RoleType GetRoleTypeForUsername(PPMToolContext context, string username)
         {
-            _logger.LogInformation($"GetRoleTypeForUsername({username})");
             Role match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
             if (match != null)
             {

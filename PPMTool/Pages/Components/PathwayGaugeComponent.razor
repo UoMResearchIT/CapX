@@ -114,6 +114,6 @@
 
         // Compute percent complete
         var valueComplete = dataItems.FirstOrDefault(x => x.Status == AssessmentStatus.FullyMet)?.Value ?? 0f;
-        percentComplete = (float)Math.Round(valueComplete / (float)TotalNumberOfCompetenciesInGrade, 2) * 100f;
+        percentComplete = (float)Math.Round(valueComplete / (float)TotalNumberOfCompetenciesInGrade * 100f, 0);
     }
 }

@@ -65,12 +65,14 @@ namespace PPMTool.Pages
 
         private void AddAssessment(CompetencyAssessment assessment)
         {
+            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
             CompetencyService.AddAssessment(context, assessment);
             StateHasChanged();
         }
 
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
+            LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
             CompetencyService.UpdateAssessment(context, assessment);
             StateHasChanged();
         }
@@ -90,7 +92,7 @@ namespace PPMTool.Pages
             // Start the spinner
             Loading = true;
 
-            if (value != null) LogInformation($"File Uploaded - adding competency assessments...");
+            if (value != null) LogInformation($"File Uploaded - adding competency assessments for {selectedPerson?.Name} from the file...");
 
             Task.Run(() =>
             {
