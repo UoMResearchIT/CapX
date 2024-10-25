@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using DotNetExtensions;
@@ -15,7 +14,6 @@ namespace PPMTool.Data
         /// </summary>
         public class AssignmentChunk
         {
-            [DisplayName("Name")]
             public string EmployeeName { get; set; }
 
             public int Grade { get; set; }
@@ -23,6 +21,8 @@ namespace PPMTool.Data
             public double FTE { get; set; }
 
             public string Project { get; set; }
+
+            public string LeadRSE { get; set; }
 
             public string Task { get; set; }
 
@@ -32,10 +32,21 @@ namespace PPMTool.Data
 
             public string School { get; set; }
 
-            [DisplayName("Salary Cost Estimate")]
             public double SalaryCostEstimate { get; set; }
 
-            public DateTime StartDate { get; set; }
+            private DateTime startDate;
+            public DateTime StartDate
+            {
+                get => startDate;
+                set
+                {
+                    if (startDate != value)
+                    {
+                        startDate = value;
+                        FinancialYear = FinancialReference.GetFinancialYear(startDate);
+                    }
+                }
+            }
 
             public DateTime EndDate { get; set; }
 
@@ -52,6 +63,7 @@ namespace PPMTool.Data
                 Grade = taskToCopy.Grade;
                 FTE = taskToCopy.FTE;
                 Project = taskToCopy.Project;
+                LeadRSE = taskToCopy.LeadRSE;
                 Faculty = taskToCopy.Faculty;
                 School = taskToCopy.School;
                 PI = taskToCopy.PI;
@@ -129,6 +141,7 @@ namespace PPMTool.Data
                     Grade = defaultWLM.Grade,
                     FTE = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE,
                     Project = project.GetFullName(),
+                    LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
                     School = project.School.GetDescription(),
                     PI = project.PI,
@@ -231,9 +244,6 @@ namespace PPMTool.Data
                     if (chunk.StartDate < startDate)
                     {
                         chunk.StartDate = startDate;
-
-                        // Update financial year
-                        chunk.FinancialYear = FinancialReference.GetFinancialYear(chunk.StartDate);
                     }
                     if (chunk.EndDate > endDate)
                     {
