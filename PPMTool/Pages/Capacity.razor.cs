@@ -16,7 +16,6 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using static PPMTool.Data.ExportHelper;
 
 namespace PPMTool.Pages
 {
@@ -34,6 +33,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
@@ -1008,24 +1010,25 @@ namespace PPMTool.Pages
         /// </summary>
         private async void ExportCapacityData()
         {
-            LogInformation($"Exporting capacity data");
+            LogInformation($"** Exporting financial report...");
 
             // Create blank list of data
-            var allData = new List<TaskData>();
+            var allData = new List<ExportHelper.AssignmentChunk>();
 
-            // Set the report length (previous, current and next financial years)
+            // Set the report length (previous, current and next financial years?)
             var startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
             var endDate = startDate.AddDays(365);
 
             // Get data for each person
-            foreach (var p in cachedPeople)
+            foreach (var person in cachedPeople)
             {
                 // Get the data by month
                 var data = ExportHelper.GetExportDataForPerson(
-                    p,
+                    person,
                     ProjectService.GetAll(context),
                     startDate,
-                    endDate
+                    endDate,
+                    FinancialReferenceService.GetAll(context)
                 );
                 allData.AddRange(data);
             }
@@ -1033,7 +1036,6 @@ namespace PPMTool.Pages
 
             try
             {
-
                 // Write to CSV file
                 var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
                 var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
@@ -1042,53 +1044,30 @@ namespace PPMTool.Pages
                 using (var writer = new StreamWriter(path))
                 {
 
-                    // Get all public properties
-                    var props = typeof(TaskData).GetProperties();
+                    // Write header row
+                    var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
                     var propNames = props.Select(x => x.Name);
+                    var headers = propNames.ToList();
+                    writer.WriteLine(string.Join(",", headers));
 
-                    //// Create header row
-                    //var headers = propNames.ToList();
-                    //var d = startDate;
-                    //while (d < startDate.AddMonths(numMonths))
-                    //{
-                    //    // Convert month number to name for the column heading
-                    //    headers.Add($"{d.ToString("MMM-yyyy", CultureInfo.InvariantCulture)} %");
+                    // Write rows one at a time
+                    foreach (var record in allData)
+                    {
+                        // Write properties
+                        var valuesAsStrings = new List<string>();
+                        foreach (var name in propNames)
+                        {
+                            string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
 
-                    //    // Increment month
-                    //    d = d.AddMonths(1);
-                    //}
+                            // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
+                            valuesAsStrings.Add(value.Replace(",", ";"));
+                        }
 
-                    //// Write header row
-                    //writer.WriteLine(string.Join(",", headers));
-
-                    //// Write rows one at a time
-                    //foreach (var record in allData)
-                    //{
-                    //    // Write properties
-                    //    var valuesAsStrings = new List<string>();
-                    //    foreach (var name in propNames)
-                    //    {
-                    //        string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-                    //        valuesAsStrings.Add(value.Replace(",", ";"));
-                    //    }
-
-                    //    // Write expanded values for months
-                    //    d = startDate;
-                    //    while (d < startDate.AddMonths(numMonths))
-                    //    {
-                    //        // Add the monthly value
-                    //        valuesAsStrings.Add(record.SetValueForWeek(d.Month, d.Year)?.ToString() ?? string.Empty);
-
-                    //        // Increment month
-                    //        d = d.AddMonths(1);
-                    //    }
-
-                    //    // Write the row
-                    //    writer.WriteLine(string.Join(",", valuesAsStrings));
-                    //}
+                        // Write the row
+                        writer.WriteLine(string.Join(",", valuesAsStrings));
+                    }
                 }
                 Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
-
 
                 // Get file stream
                 using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
