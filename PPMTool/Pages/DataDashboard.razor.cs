@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -42,7 +43,7 @@ namespace PPMTool.Pages
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
 
         private bool exportRunning;
-
+        private ViewOption viewOption;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -56,6 +57,17 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
+        private enum ViewOption
+        {
+            [Description("Last FY")]
+            LastFY,
+            [Description("Current FY")]
+            CurrentFY,
+            [Description("Next FY")]
+            NextFY,
+            Custom
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -66,10 +78,6 @@ namespace PPMTool.Pages
             // Get starting lists from the DB
             people = PersonService.GetAll(context);
             projects = ProjectService.GetAll(context);
-
-            // Default to the first day of the current financial year
-            startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
-            yearsAhead = 1;
 
             // Set chart options
             ytdChartOptions = new ApexChartOptions<DemandChartItem>
@@ -230,7 +238,6 @@ namespace PPMTool.Pages
                 }
             };
 
-            // Start the spinners
             Loading = true;
         }
 
@@ -241,8 +248,9 @@ namespace PPMTool.Pages
             {
                 await JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
 
-                // Generate the charts
-                GenerateCharts();
+                // Set the initial settings and generate the charts
+                viewOption = ViewOption.CurrentFY;
+                ViewOptionChanged();
             }
         }
 
@@ -448,6 +456,7 @@ namespace PPMTool.Pages
                         catch (ArgumentException)
                         {
                             // Skip if the grade is invalid
+                            Debug.WriteLine($"** Grade {activeModel.Grade} is invalid!");
                         }
                         numStaff++;
 
@@ -599,6 +608,54 @@ namespace PPMTool.Pages
                     "#00F5D4",
                     "#000",
                 };
+        }
+
+        /// <summary>
+        /// Callback when the view option is changed in the select bar
+        /// </summary>
+        private void ViewOptionChanged()
+        {
+            switch (viewOption)
+            {
+                case ViewOption.LastFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
+                    yearsAhead = 1;
+                    GenerateCharts();
+                    break;
+
+                case ViewOption.CurrentFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
+                    yearsAhead = 1;
+                    GenerateCharts();
+                    break;
+
+                case ViewOption.NextFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1);
+                    yearsAhead = 1;
+                    GenerateCharts();
+                    break;
+
+                case ViewOption.Custom:
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Callback when the start date is changed through the UI
+        /// </summary>
+        private void StartDateChanged()
+        {
+            Debug.WriteLine("** Start Date Changed -- changing to Custom view option");
+            viewOption = ViewOption.Custom;
+        }
+
+        /// <summary>
+        /// Callback when the years ahead is changed through the UI
+        /// </summary>
+        private void YearsAheadChanged()
+        {
+            Debug.WriteLine("** Years Ahead Changed -- changing to Custom view option");
+            viewOption = ViewOption.Custom;
         }
 
         /// <summary>
