@@ -829,6 +829,25 @@ namespace PPMTool.Pages
                     {
                         Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                     }
+                },
+                Chart = new Chart
+                {
+                    Events = new Dictionary<string, object>
+                    {
+                        {"mouseWheelZoom", "function(event, chartContext, config) { event.preventDefault(); }" }
+                    },
+                    Toolbar = new Toolbar
+                    {
+                        Tools = new Tools
+                        {
+                            Zoom = true,
+                            Zoomin = true,
+                            Zoomout = true,
+                            Pan = true,
+                            Reset = true,
+                            Download = true
+                        }
+                    }
                 }
             };
         }

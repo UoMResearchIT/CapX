@@ -305,7 +305,23 @@ namespace PPMTool.Pages
                     Type = ChartType.Bar,
                     Stacked = true,
                     StackOnlyBar = true,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        Enabled = false,
+                    },
+                    Toolbar = new Toolbar
+                    {
+                        Tools = new Tools
+                        {
+                            Zoom = true,
+                            Zoomin = true,
+                            Zoomout = true,
+                            Pan = true,
+                            Reset = true,
+                            Download = true
+                        }
+                    }
                 },
                 PlotOptions = new PlotOptions
                 {

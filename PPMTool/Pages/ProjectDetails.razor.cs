@@ -203,6 +203,25 @@ namespace PPMTool.Pages
 
                 ganttChartOptions = new ApexChartOptions<GanttBlock>
                 {
+                    Chart = new Chart
+                    {
+                        Zoom = new Zoom
+                        {
+                            Enabled = false,
+                        },
+                        Toolbar = new Toolbar
+                        {
+                            Tools = new Tools
+                            {
+                                Zoom = true,
+                                Zoomin = true,
+                                Zoomout = true,
+                                Pan = true,
+                                Reset = true,
+                                Download = true
+                            }
+                        }
+                    },
                     PlotOptions = new PlotOptions
                     {
                         Bar = new PlotOptionsBar
@@ -289,6 +308,25 @@ namespace PPMTool.Pages
                 // Set options
                 burnUpChartOptions = new ApexChartOptions<ChartItem>
                 {
+                    Chart = new Chart
+                    {
+                        Zoom = new Zoom
+                        {
+                            Enabled = false,
+                        },
+                        Toolbar = new Toolbar
+                        {
+                            Tools = new Tools
+                            {
+                                Zoom = true,
+                                Zoomin = true,
+                                Zoomout = true,
+                                Pan = true,
+                                Reset = true,
+                                Download = true
+                            }
+                        }
+                    },
                     Stroke = new Stroke
                     {
                         Curve = new CurveSelections(new Curve[] { Curve.Straight })

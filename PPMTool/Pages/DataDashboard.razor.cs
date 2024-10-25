@@ -85,7 +85,23 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        Enabled = false,
+                    },
+                    Toolbar = new Toolbar
+                    {
+                        Tools = new Tools
+                        {
+                            Zoom = true,
+                            Zoomin = true,
+                            Zoomout = true,
+                            Pan = true,
+                            Reset = true,
+                            Download = true
+                        }
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -127,7 +143,23 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        Enabled = false,
+                    },
+                    Toolbar = new Toolbar
+                    {
+                        Tools = new Tools
+                        {
+                            Zoom = true,
+                            Zoomin = true,
+                            Zoomout = true,
+                            Pan = true,
+                            Reset = true,
+                            Download = true
+                        }
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -168,7 +200,23 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Area,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        Enabled = false,
+                    },
+                    Toolbar = new Toolbar
+                    {
+                        Tools = new Tools
+                        {
+                            Zoom = true,
+                            Zoomin = true,
+                            Zoomout = true,
+                            Pan = true,
+                            Reset = true,
+                            Download = true
+                        }
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -227,7 +275,23 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Bar,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        Enabled = false,
+                    },
+                    Toolbar = new Toolbar
+                    {
+                        Tools = new Tools
+                        {
+                            Zoom = true,
+                            Zoomin = true,
+                            Zoomout = true,
+                            Pan = true,
+                            Reset = true,
+                            Download = true
+                        }
+                    }
                 },
                 PlotOptions = new PlotOptions
                 {
