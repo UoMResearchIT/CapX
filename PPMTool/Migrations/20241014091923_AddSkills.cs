@@ -22,7 +22,7 @@ namespace PPMTool.Migrations
         
         protected  bool IsDuplicatedSkill(string toInsertSkill, IEnumerable<string> existingSkills)
         {
-            Regex rgx = new Regex("[^a-zA-Z0-9]");
+            Regex rgx = new Regex("[^a-zA-Z0-9 .#]");
             foreach (var existingSkill in existingSkills)
             {
                 var cleanedToInsertSkill = rgx.Replace(toInsertSkill.Trim().ToLower(), "");
