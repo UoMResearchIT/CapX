@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +15,6 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using static PPMTool.Data.ExportHelper;
 
 namespace PPMTool.Pages
 {
@@ -32,9 +29,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private ProjectService ProjectService { get; set; }
-
-        [Inject]
-        private SubTaskService SubTaskService { get; set; }
 
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
@@ -1002,133 +996,6 @@ namespace PPMTool.Pages
                 },
                 tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
-        }
-
-        /// <summary>
-        /// Method to export the capacity information in a format suitable for ITS GaDMO reporting
-        /// </summary>
-        private async void ExportCapacityData()
-        {
-            LogInformation($"Exporting capacity data");
-
-            // Create blank list of data
-            var allData = new List<TaskData>();
-
-            // Set the report length (previous, current and next financial years)
-            const int numMonths = 36;
-            var currentFinancialYear = DateTime.Today.Month < 8 ? DateTime.Today.AddYears(-2).Year : DateTime.Today.AddYears(-1).Year;
-            var startDate = new DateTime(currentFinancialYear, 8, 1);
-
-            // Get data for each person
-            foreach (var p in cachedPeople)
-            {
-                // Get the data by month
-                var data = ExportHelper.GetExportDataForPerson(
-                    p,
-                    SubTaskService.GetAll(context).Where(x => x.AssignedResources.Any(x => x.Person == p)),
-                    ProjectService.GetAll(context),
-                    startDate,
-                    numMonths
-                );
-                allData.AddRange(data);
-            }
-
-            // Remove duplicates of unmet demand entries
-            var tempList = new List<TaskData>();
-            foreach (var data in allData)
-            {
-                // If not unmet demand entry then copy over
-                if (data.EmployeeName != "Unmet Demand")
-                {
-                    tempList.Add(data);
-                    continue;
-                }
-                else
-                {
-                    // If unmet demand entry but already in list then skip
-                    if (tempList.Any(x => x.ProjectAndTaskName == data.ProjectAndTaskName && x.EmployeeName == "Unmet Demand"))
-                    {
-                        continue;
-                    }
-                    // Must be a new unmet demand entry
-                    else
-                    {
-                        tempList.Add(data);
-                    }
-                }
-            }
-            allData = tempList;
-            allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
-
-            try
-            {
-
-                // Write to CSV file
-                var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
-                var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                Directory.CreateDirectory(folder);
-                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
-                using (var writer = new StreamWriter(path))
-                {
-
-                    // Get all public properties
-                    var props = typeof(TaskData).GetProperties();
-                    var propNames = props.Select(x => x.Name);
-
-                    // Create header row
-                    var headers = propNames.ToList();
-                    var d = startDate;
-                    while (d < startDate.AddMonths(numMonths))
-                    {
-                        // Convert month number to name for the column heading
-                        headers.Add($"{d.ToString("MMM-yyyy", CultureInfo.InvariantCulture)} %");
-
-                        // Increment month
-                        d = d.AddMonths(1);
-                    }
-
-                    // Write header row
-                    writer.WriteLine(string.Join(",", headers));
-
-                    // Write rows one at a time
-                    foreach (var record in allData)
-                    {
-                        // Write properties
-                        var valuesAsStrings = new List<string>();
-                        foreach (var name in propNames)
-                        {
-                            string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-                            valuesAsStrings.Add(value.Replace(",", ";"));
-                        }
-
-                        // Write expanded values for months
-                        d = startDate;
-                        while (d < startDate.AddMonths(numMonths))
-                        {
-                            // Add the monthly value
-                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month, d.Year)?.ToString() ?? string.Empty);
-
-                            // Increment month
-                            d = d.AddMonths(1);
-                        }
-
-                        // Write the row
-                        writer.WriteLine(string.Join(",", valuesAsStrings));
-                    }
-                }
-                Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
-
-
-                // Get file stream
-                using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
-
-                // Invoke JS on the client to download the file
-                await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-            }
-            catch (Exception ex)
-            {
-                LogError($"Could not download file: {ex}");
-            }
         }
     }
 }
