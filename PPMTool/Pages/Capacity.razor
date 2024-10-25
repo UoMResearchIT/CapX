@@ -9,7 +9,7 @@
             <h1>Capacity</h1>
         </div>
         <div class="col-auto" style="align-content: center">
-            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!ReadOrEditAuthorised />
+            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled="@(!ReadOrEditAuthorised || exportRunning)" />
         </div>
     </div>
     <hr />

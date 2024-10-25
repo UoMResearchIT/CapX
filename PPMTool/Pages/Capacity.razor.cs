@@ -170,6 +170,7 @@ namespace PPMTool.Pages
         private bool peopleChosen;
         private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         private Task configureChartTask = null;
+        private bool exportRunning;
 
         protected override void OnInitialized()
         {
@@ -1008,77 +1009,93 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to export the capacity information in a format suitable for Research Finance
         /// </summary>
-        private async void ExportCapacityData()
+        private void ExportCapacityData()
         {
             LogInformation($"Exporting financial report...");
 
-            // Create blank list of data
-            var allData = new List<ExportHelper.AssignmentChunk>();
+            exportRunning = true;
 
-            // Set the report length (previous, current and next financial years?)
-            var startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
-            var endDate = startDate.AddDays(365);
-
-            // Get data for each person
-            foreach (var person in cachedPeople)
+            Task.Run(async () =>
             {
-                // Get the data by month
-                var data = ExportHelper.GetExportDataForPerson(
-                    person,
-                    ProjectService.GetAll(context),
-                    startDate,
-                    endDate,
-                    FinancialReferenceService.GetAll(context)
-                );
-                allData.AddRange(data);
-            }
-            allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+                // Create a context to be accesed on this thread
+                var threadContext = ContextFactory.CreateDbContext();
 
-            try
-            {
-                // Write to CSV file
-                var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
-                var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                Directory.CreateDirectory(folder);
-                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
-                using (var writer = new StreamWriter(path))
+                // Create blank list of data
+                var allData = new List<ExportHelper.AssignmentChunk>();
+
+                // Set the report length (previous, current and next financial years?)
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
+                var endDate = startDate.AddDays(365);
+
+                // Get data for each person
+                foreach (var person in cachedPeople)
                 {
-
-                    // Write header row
-                    var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
-                    var propNames = props.Select(x => x.Name);
-                    var headers = propNames.ToList();
-                    writer.WriteLine(string.Join(",", headers));
-
-                    // Write rows one at a time
-                    foreach (var record in allData)
-                    {
-                        // Write properties
-                        var valuesAsStrings = new List<string>();
-                        foreach (var name in propNames)
-                        {
-                            string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-
-                            // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
-                            valuesAsStrings.Add(value.Replace(",", ";"));
-                        }
-
-                        // Write the row
-                        writer.WriteLine(string.Join(",", valuesAsStrings));
-                    }
+                    // Get the data by month
+                    var data = ExportHelper.GetExportDataForPerson(
+                        person,
+                        ProjectService.GetAll(threadContext),
+                        startDate,
+                        endDate,
+                        FinancialReferenceService.GetAll(threadContext)
+                    );
+                    allData.AddRange(data);
                 }
-                Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+                allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
 
-                // Get file stream
-                using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+                try
+                {
+                    // Write to CSV file
+                    var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                    var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                    Directory.CreateDirectory(folder);
+                    var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
+                    using (var writer = new StreamWriter(path))
+                    {
 
-                // Invoke JS on the client to download the file
-                await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-            }
-            catch (Exception ex)
+                        // Write header row
+                        var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
+                        var propNames = props.Select(x => x.Name);
+                        var headers = propNames.ToList();
+                        writer.WriteLine(string.Join(",", headers));
+
+                        // Write rows one at a time
+                        foreach (var record in allData)
+                        {
+                            // Write properties
+                            var valuesAsStrings = new List<string>();
+                            foreach (var name in propNames)
+                            {
+                                string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+
+                                // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
+                                valuesAsStrings.Add(value.Replace(",", ";"));
+                            }
+
+                            // Write the row
+                            writer.WriteLine(string.Join(",", valuesAsStrings));
+                        }
+                    }
+                    Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+                    // Get file stream
+                    using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                    // Invoke JS on the client to download the file
+                    await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Could not download file: {ex}");
+                }
+
+            }).ContinueWith(t =>
             {
-                LogError($"Could not download file: {ex}");
-            }
+                InvokeAsync(() =>
+                {
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }

@@ -85,7 +85,7 @@ namespace PPMTool.Data
                 .Where(x => x.IsWithin(startDate, endDate));
 
             // Get WLM changes for this person that take place during the window
-            var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate);
+            var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();
 
             // Set default WLM to be G6
             WorkloadModelChange defaultWLM = new WorkloadModelChange()
@@ -105,7 +105,7 @@ namespace PPMTool.Data
                 }
 
                 // Add the start WLM to the list of WLMs active in the window
-                wlms.Append(defaultWLM);
+                wlms.Add(defaultWLM);
             }
 
             // Are there any changes in grade for this person?
@@ -120,13 +120,12 @@ namespace PPMTool.Data
             foreach (var task in tasksInWindow)
             {
                 var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
-                IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>();
                 var initialChunk = new AssignmentChunk
                 {
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
                     FTE = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE,
-                    Project = project.Name,
+                    Project = project.GetFullName(),
                     Faculty = project.Faculty.GetDescription(),
                     School = project.School.GetDescription(),
                     PI = project.PI,
@@ -135,43 +134,47 @@ namespace PPMTool.Data
                     EndDate = task.EndDate,
                     FinancialYear = FinancialReference.GetFinancialYear(task.StartDate)
                 };
+                IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
+                {
+                    initialChunk
+                };
 
                 // Are there any changes to grade for this person at all
                 if (changesInGrade)
                 {
+                    var tempChunks = new List<AssignmentChunk>();
+
                     // Find changes that are within the chunk
                     var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate);
 
                     foreach (var change in changes)
                     {
-                        // Get previous by looking at day before change
+                        // Get previous WLM by looking at day before change
                         var wlmBefore = person.GetWorkloadModelOnDateOrDefault(change.ChangeDate.AddDays(-1));
 
                         // Define a new task chunk for before period if necessary
                         if (wlmBefore.Grade != change.Grade)
                         {
-                            taskChunks.Add(new AssignmentChunk(initialChunk)
+                            tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
+                                StartDate = tempChunks.Count > 0 ? new DateTime(tempChunks.Last().StartDate.AddDays(1).Ticks) : new DateTime(initialChunk.StartDate.Ticks),
                                 EndDate = change.ChangeDate.AddDays(-1)
                             });
                         }
                     }
 
                     // If we did a split then need to add the final task chunk
-                    if (taskChunks.Count > 0)
+                    if (tempChunks.Count > 0)
                     {
-                        taskChunks.Add(new AssignmentChunk(initialChunk)
+                        tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
-                            StartDate = new DateTime(taskChunks.Last().EndDate.AddDays(1).Ticks),
+                            StartDate = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks),
                             EndDate = new DateTime(initialChunk.EndDate.Ticks)
                         });
                     }
 
-                    // If not then the initial chunk remains the only chunk
-                    else
-                    {
-                        taskChunks.Add(initialChunk);
-                    }
+                    // Replace the list with the new list of chunks
+                    taskChunks = tempChunks;
                 }
 
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
@@ -180,6 +183,7 @@ namespace PPMTool.Data
                 if (changesInFinancialYear)
                 {
                     var tempChunks = new List<AssignmentChunk>();
+
                     // Loop over chunks and see if a financial year change lands in the middle
                     foreach (var chunk in taskChunks)
                     {
@@ -194,8 +198,8 @@ namespace PPMTool.Data
                             {
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
-                                    StartDate = fyStart == i ? chunk.StartDate : new DateTime(i, 8, 1),
-                                    EndDate = fyEnd == i ? chunk.EndDate : new DateTime(i, 7, 31),
+                                    StartDate = fyStart == i ? new DateTime(chunk.StartDate.Ticks) : new DateTime(i, 8, 1),
+                                    EndDate = fyEnd == i ? new DateTime(chunk.EndDate.Ticks) : new DateTime(i + 1, 7, 31),
                                     FinancialYear = i
                                 });
                             }
@@ -232,8 +236,8 @@ namespace PPMTool.Data
 
                     // Compute cost estimate
                     var annualCosts = finrefs.GetSuitableFinancialReference(chunk.FinancialYear).GetMidGradeCosts(chunk.Grade);
-                    var fractionOfYear = chunk.EndDate.Date.Subtract(chunk.StartDate).TotalDays / 365d;
-                    chunk.SalaryCostEstimate = annualCosts * chunk.FTE * fractionOfYear;
+                    var fractionOfYear = (chunk.EndDate.Date.Subtract(chunk.StartDate.Date).TotalDays + 1) / 365d;
+                    chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0);
                 }
 
                 // Add task to master list
