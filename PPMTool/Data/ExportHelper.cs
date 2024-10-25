@@ -95,18 +95,18 @@ namespace PPMTool.Data
                 Grade = 6
             };
 
-            // If they started before the window, get the WLM from before and overwrite default settings
-            if (person.StartDate < startDate)
+            // If there isn't a WLM change on the first day of the window then create one
+            if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
             {
                 var tempWlm = person.GetWorkloadModelOnDateOrDefault(startDate);
                 if (tempWlm != null)
                 {
                     defaultWLM.Grade = tempWlm.Grade;
                 }
-            }
 
-            // Add the start WLM to the list of WLMs active in the window
-            wlms.Append(defaultWLM);
+                // Add the start WLM to the list of WLMs active in the window
+                wlms.Append(defaultWLM);
+            }
 
             // Are there any changes in grade for this person?
             var changesInGrade = wlms.DistinctBy(x => x.Grade).Count() > 1;
@@ -174,7 +174,7 @@ namespace PPMTool.Data
                     }
                 }
 
-                Debug.WriteLine($"** {project.GetFullName} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
 
                 // Are there any financial year changes within the window
                 if (changesInFinancialYear)
@@ -210,12 +210,12 @@ namespace PPMTool.Data
                     taskChunks = tempChunks;
                 }
 
-                Debug.WriteLine($"** {project.GetFullName} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
 
                 // Filter task chunk list to just those that intersect the window
                 taskChunks = taskChunks.Where(x => x.StartDate <= endDate && x.EndDate >= startDate).ToList();
 
-                Debug.WriteLine($"** {project.GetFullName} => {task.Name} | {taskChunks.Count} chunks run during the window");
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks run during the window");
 
                 // Update the data for the filtered chunks
                 foreach (var chunk in taskChunks)

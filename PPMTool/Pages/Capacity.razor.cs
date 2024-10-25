@@ -1010,7 +1010,7 @@ namespace PPMTool.Pages
         /// </summary>
         private async void ExportCapacityData()
         {
-            LogInformation($"** Exporting financial report...");
+            LogInformation($"Exporting financial report...");
 
             // Create blank list of data
             var allData = new List<ExportHelper.AssignmentChunk>();
