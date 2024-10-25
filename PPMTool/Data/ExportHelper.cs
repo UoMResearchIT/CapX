@@ -77,6 +77,8 @@ namespace PPMTool.Data
             // New list
             var data = new List<AssignmentChunk>();
 
+            Debug.WriteLine($"** Building data for {person.Name}...");
+
             // Filter list of tasks to those running during the window
             var tasksInWindow = projects
                 .SelectMany(x => x.SubTasks)
@@ -120,6 +122,7 @@ namespace PPMTool.Data
             foreach (var task in tasksInWindow)
             {
                 var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
                 var initialChunk = new AssignmentChunk
                 {
                     EmployeeName = person.Name,
@@ -145,7 +148,7 @@ namespace PPMTool.Data
                     var tempChunks = new List<AssignmentChunk>();
 
                     // Find changes that are within the chunk
-                    var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate);
+                    var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate).OrderBy(x => x.ChangeDate);
 
                     foreach (var change in changes)
                     {
@@ -157,7 +160,7 @@ namespace PPMTool.Data
                         {
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
-                                StartDate = tempChunks.Count > 0 ? new DateTime(tempChunks.Last().StartDate.AddDays(1).Ticks) : new DateTime(initialChunk.StartDate.Ticks),
+                                StartDate = tempChunks.Count > 0 ? new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) : new DateTime(initialChunk.StartDate.Ticks),
                                 EndDate = change.ChangeDate.AddDays(-1)
                             });
                         }
@@ -174,7 +177,7 @@ namespace PPMTool.Data
                     }
 
                     // Replace the list with the new list of chunks
-                    taskChunks = tempChunks;
+                    if (tempChunks.Count > 0) taskChunks = tempChunks;
                 }
 
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
@@ -211,7 +214,7 @@ namespace PPMTool.Data
                     }
 
                     // Replace the list with the new list of chunks
-                    taskChunks = tempChunks;
+                    if (tempChunks.Count > 0) taskChunks = tempChunks;
                 }
 
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
@@ -228,16 +231,26 @@ namespace PPMTool.Data
                     if (chunk.StartDate < startDate)
                     {
                         chunk.StartDate = startDate;
+
+                        // Update financial year
+                        chunk.FinancialYear = FinancialReference.GetFinancialYear(chunk.StartDate);
                     }
                     if (chunk.EndDate > endDate)
                     {
                         chunk.EndDate = endDate;
                     }
 
-                    // Compute cost estimate
-                    var annualCosts = finrefs.GetSuitableFinancialReference(chunk.FinancialYear).GetMidGradeCosts(chunk.Grade);
-                    var fractionOfYear = (chunk.EndDate.Date.Subtract(chunk.StartDate.Date).TotalDays + 1) / 365d;
-                    chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0);
+                    // Compute cost estimate -- will fail for invalid grades so put in try catch
+                    try
+                    {
+                        var annualCosts = finrefs.GetSuitableFinancialReference(chunk.FinancialYear).GetMidGradeCosts(chunk.Grade);
+                        var fractionOfYear = (chunk.EndDate.Date.Subtract(chunk.StartDate.Date).TotalDays + 1) / 365d;
+                        chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.ToString());
+                    }
                 }
 
                 // Add task to master list

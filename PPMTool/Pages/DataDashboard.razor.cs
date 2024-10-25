@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -39,6 +40,8 @@ namespace PPMTool.Pages
         private ApexChartOptions<DemandChartItem> fteChartOptions;
         private ApexChartOptions<DemandChartItem> ytdChartOptions;
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
+
+        private bool exportRunning;
 
 
         [Inject]
@@ -596,6 +599,104 @@ namespace PPMTool.Pages
                     "#00F5D4",
                     "#000",
                 };
+        }
+
+        /// <summary>
+        /// Method to export a financial report for Research Finance
+        /// </summary>
+        private void ExportFinancialReport()
+        {
+            LogInformation($"Exporting financial report...");
+
+            exportRunning = true;
+
+            Task.Run(async () =>
+            {
+                // Create a context to be accesed on this thread
+                var threadContext = ContextFactory.CreateDbContext();
+
+                // Create blank list of data
+                var allData = new List<ExportHelper.AssignmentChunk>();
+
+                // Set the report length (previous, current and next financial years?)
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
+                var endDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 7, 31);
+
+                // Get data for each person active in the window
+                var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+                foreach (var person in peopleActive)
+                {
+                    // Get the row data
+                    var data = ExportHelper.GetExportDataForPerson(
+                        person,
+                        ProjectService.GetAll(threadContext),
+                        startDate,
+                        endDate,
+                        FinancialReferenceService.GetAll(threadContext)
+                    );
+                    allData.AddRange(data);
+                }
+                allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Write to CSV file
+                        var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
+                        using (var writer = new StreamWriter(path))
+                        {
+
+                            // Write header row
+                            var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
+                            var propNames = props.Select(x => x.Name);
+                            var headers = propNames.ToList();
+                            writer.WriteLine(string.Join(",", headers));
+
+                            // Write rows one at a time
+                            foreach (var record in allData)
+                            {
+                                // Write properties
+                                var valuesAsStrings = new List<string>();
+                                foreach (var name in propNames)
+                                {
+                                    string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+
+                                    // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
+                                    valuesAsStrings.Add(value.Replace(",", ";"));
+                                }
+
+                                // Write the row
+                                writer.WriteLine(string.Join(",", valuesAsStrings));
+                            }
+                        }
+                        Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }

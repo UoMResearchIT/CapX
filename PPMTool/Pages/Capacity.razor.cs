@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,12 +29,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private ProjectService ProjectService { get; set; }
-
-        [Inject]
-        private SubTaskService SubTaskService { get; set; }
-
-        [Inject]
-        private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
@@ -170,7 +163,6 @@ namespace PPMTool.Pages
         private bool peopleChosen;
         private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         private Task configureChartTask = null;
-        private bool exportRunning;
 
         protected override void OnInitialized()
         {
@@ -1004,98 +996,6 @@ namespace PPMTool.Pages
                 },
                 tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
-        }
-
-        /// <summary>
-        /// Method to export the capacity information in a format suitable for Research Finance
-        /// </summary>
-        private void ExportCapacityData()
-        {
-            LogInformation($"Exporting financial report...");
-
-            exportRunning = true;
-
-            Task.Run(async () =>
-            {
-                // Create a context to be accesed on this thread
-                var threadContext = ContextFactory.CreateDbContext();
-
-                // Create blank list of data
-                var allData = new List<ExportHelper.AssignmentChunk>();
-
-                // Set the report length (previous, current and next financial years?)
-                var startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
-                var endDate = startDate.AddDays(365);
-
-                // Get data for each person
-                foreach (var person in cachedPeople)
-                {
-                    // Get the data by month
-                    var data = ExportHelper.GetExportDataForPerson(
-                        person,
-                        ProjectService.GetAll(threadContext),
-                        startDate,
-                        endDate,
-                        FinancialReferenceService.GetAll(threadContext)
-                    );
-                    allData.AddRange(data);
-                }
-                allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
-
-                try
-                {
-                    // Write to CSV file
-                    var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
-                    var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                    Directory.CreateDirectory(folder);
-                    var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
-                    using (var writer = new StreamWriter(path))
-                    {
-
-                        // Write header row
-                        var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
-                        var propNames = props.Select(x => x.Name);
-                        var headers = propNames.ToList();
-                        writer.WriteLine(string.Join(",", headers));
-
-                        // Write rows one at a time
-                        foreach (var record in allData)
-                        {
-                            // Write properties
-                            var valuesAsStrings = new List<string>();
-                            foreach (var name in propNames)
-                            {
-                                string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-
-                                // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
-                                valuesAsStrings.Add(value.Replace(",", ";"));
-                            }
-
-                            // Write the row
-                            writer.WriteLine(string.Join(",", valuesAsStrings));
-                        }
-                    }
-                    Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
-
-                    // Get file stream
-                    using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
-
-                    // Invoke JS on the client to download the file
-                    await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                }
-                catch (Exception ex)
-                {
-                    LogError($"Could not download file: {ex}");
-                }
-
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    exportRunning = false;
-                    StateHasChanged();
-                });
-            });
         }
     }
 }

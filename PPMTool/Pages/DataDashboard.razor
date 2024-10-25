@@ -6,14 +6,23 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <h2>Reference Data</h2>
+            <h2>Reporting</h2>
+        </div>
+        <div class="col-auto" style="align-content: center">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+                @if (exportRunning)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export Finance Report" Icon="download" Disabled="@(!EditAuthorised || exportRunning)" />
+            </RadzenStack>
         </div>
     </div>
     <RadzenAccordion Multiple="true">
         <Items>
-            <RadzenAccordionItem Text="Workload Models" Icon="work" CollapseTitle="Collapse"
-                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Workload Models"
-                                 ExpandAriaLabel="Expand the Workload Models">
+            <RadzenAccordionItem Text="Model Variables" Icon="work" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Model Variables"
+                                 ExpandAriaLabel="Expand the Model Variables">
                 <div class="row">
                     <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Person Dev Allowance (FTE)" />
