@@ -77,7 +77,7 @@ namespace PPMTool.Migrations
             // Write the skills to a .txt file
             if (!File.Exists(LocalFilePath))
             {
-                // Write the skills to a .txt file, replacing it if it exists
+                // file does not exist: write skills to a .txt file
                 File.WriteAllLines(LocalFilePath, toInsertSkills);
                 Console.WriteLine($"toInsertSkills have been written to {LocalFilePath}");
             }
