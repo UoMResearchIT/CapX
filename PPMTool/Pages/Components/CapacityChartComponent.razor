@@ -64,13 +64,4 @@
 
     [Parameter]
     public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
-
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender) return;
-
-        Debug.WriteLine($"** Disabling mouse wheel zoom on chart {ChartOptions?.Chart?.Id}");
-        await JSRuntime.InvokeVoidAsync("disableMouseWheelZoom", ChartOptions.Chart.Id);
-    }
 }

@@ -10,7 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blazor-ApexCharts" Version="3.5.0" />
     <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
     <PackageReference Include="DotNetExtensions" Version="1.2.0" />
     <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
@@ -34,6 +33,10 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Blazor-ApexCharts\src\Blazor-ApexCharts\Blazor-ApexCharts.csproj" />
   </ItemGroup>
 
 </Project>

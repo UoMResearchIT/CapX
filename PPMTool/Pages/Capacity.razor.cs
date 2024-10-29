@@ -834,21 +834,7 @@ namespace PPMTool.Pages
                 {
                     Zoom = new Zoom
                     {
-                        Enabled = true,
-                        Type = AxisType.Xy
-                    },
-                    Toolbar = new Toolbar
-                    {
-                        Show = true,
-                        Tools = new Tools
-                        {
-                            Zoom = true,
-                            Zoomin = true,
-                            Zoomout = true,
-                            Pan = true,
-                            Reset = true,
-                            Download = true
-                        }
+                        AllowMouseWheelZoom = false
                     }
                 }
             };
