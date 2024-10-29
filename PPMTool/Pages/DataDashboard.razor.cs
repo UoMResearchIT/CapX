@@ -88,19 +88,7 @@ namespace PPMTool.Pages
                     Animations = new Animations { Enabled = false },
                     Zoom = new Zoom
                     {
-                        Enabled = false,
-                    },
-                    Toolbar = new Toolbar
-                    {
-                        Tools = new Tools
-                        {
-                            Zoom = true,
-                            Zoomin = true,
-                            Zoomout = true,
-                            Pan = true,
-                            Reset = true,
-                            Download = true
-                        }
+                        AllowMouseWheelZoom = false
                     }
                 },
                 Xaxis = new XAxis
@@ -146,19 +134,7 @@ namespace PPMTool.Pages
                     Animations = new Animations { Enabled = false },
                     Zoom = new Zoom
                     {
-                        Enabled = false,
-                    },
-                    Toolbar = new Toolbar
-                    {
-                        Tools = new Tools
-                        {
-                            Zoom = true,
-                            Zoomin = true,
-                            Zoomout = true,
-                            Pan = true,
-                            Reset = true,
-                            Download = true
-                        }
+                        AllowMouseWheelZoom = false
                     }
                 },
                 Xaxis = new XAxis
@@ -203,19 +179,7 @@ namespace PPMTool.Pages
                     Animations = new Animations { Enabled = false },
                     Zoom = new Zoom
                     {
-                        Enabled = false,
-                    },
-                    Toolbar = new Toolbar
-                    {
-                        Tools = new Tools
-                        {
-                            Zoom = true,
-                            Zoomin = true,
-                            Zoomout = true,
-                            Pan = true,
-                            Reset = true,
-                            Download = true
-                        }
+                        AllowMouseWheelZoom = false
                     }
                 },
                 Xaxis = new XAxis
@@ -278,19 +242,7 @@ namespace PPMTool.Pages
                     Animations = new Animations { Enabled = false },
                     Zoom = new Zoom
                     {
-                        Enabled = false,
-                    },
-                    Toolbar = new Toolbar
-                    {
-                        Tools = new Tools
-                        {
-                            Zoom = true,
-                            Zoomin = true,
-                            Zoomout = true,
-                            Pan = true,
-                            Reset = true,
-                            Download = true
-                        }
+                        AllowMouseWheelZoom = false
                     }
                 },
                 PlotOptions = new PlotOptions

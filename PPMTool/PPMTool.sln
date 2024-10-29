@@ -5,7 +5,7 @@ VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PPMTool", "PPMTool.csproj", "{87AEF871-663B-4941-A0C4-B0AA805AD982}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazor-ApexCharts", "..\..\Blazor-ApexCharts\src\Blazor-ApexCharts\Blazor-ApexCharts.csproj", "{338E563D-0B27-48F7-9BAD-172ACDAFCCF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazor-ApexCharts", "..\Blazor-ApexCharts\src\Blazor-ApexCharts\Blazor-ApexCharts.csproj", "{338E563D-0B27-48F7-9BAD-172ACDAFCCF7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

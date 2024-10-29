@@ -207,19 +207,7 @@ namespace PPMTool.Pages
                     {
                         Zoom = new Zoom
                         {
-                            Enabled = false,
-                        },
-                        Toolbar = new Toolbar
-                        {
-                            Tools = new Tools
-                            {
-                                Zoom = true,
-                                Zoomin = true,
-                                Zoomout = true,
-                                Pan = true,
-                                Reset = true,
-                                Download = true
-                            }
+                            AllowMouseWheelZoom = false
                         }
                     },
                     PlotOptions = new PlotOptions
@@ -312,19 +300,7 @@ namespace PPMTool.Pages
                     {
                         Zoom = new Zoom
                         {
-                            Enabled = false,
-                        },
-                        Toolbar = new Toolbar
-                        {
-                            Tools = new Tools
-                            {
-                                Zoom = true,
-                                Zoomin = true,
-                                Zoomout = true,
-                                Pan = true,
-                                Reset = true,
-                                Download = true
-                            }
+                            AllowMouseWheelZoom = false
                         }
                     },
                     Stroke = new Stroke
