@@ -832,12 +832,14 @@ namespace PPMTool.Pages
                 },
                 Chart = new Chart
                 {
-                    Events = new Dictionary<string, object>
+                    Zoom = new Zoom
                     {
-                        {"mouseWheelZoom", "function(event, chartContext, config) { event.preventDefault(); }" }
+                        Enabled = true,
+                        Type = AxisType.Xy
                     },
                     Toolbar = new Toolbar
                     {
+                        Show = true,
                         Tools = new Tools
                         {
                             Zoom = true,
