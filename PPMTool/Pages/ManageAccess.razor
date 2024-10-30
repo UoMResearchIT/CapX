@@ -12,9 +12,9 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null) />
         </div>
     </div>
-    @if (errorMessage != null)
+    @if (ErrorMessage != null)
     {
-        <StatusMessageComponent Message="errorMessage" />
+        <StatusMessageComponent Message="ErrorMessage" />
     }
     <hr />
     <RadzenDataGrid @ref="dataGrid"

@@ -25,7 +25,7 @@ namespace PPMTool.Pages
 
             if (InnateCodeId > 0)
             {
-                innateCode = InnateCodeService.GetById(context, InnateCodeId);
+                innateCode = InnateCodeService.GetById(Context, InnateCodeId);
                 dataGridEntities = innateCode.Tasks.ToList();
             }
             else
@@ -48,7 +48,7 @@ namespace PPMTool.Pages
             if (innateCode != null)
             {
                 // Reset error message
-                errorMessage = null;
+                ErrorMessage = null;
 
                 // Write to the database
                 LogInformation($"Saving innate code {innateCode?.GetCodeAsString()} with tasks {string.Join(",", innateCode?.Tasks)}.");
@@ -64,16 +64,16 @@ namespace PPMTool.Pages
                 int result = -1;
                 if (innateCode?.InnateCodeId != 0)
                 {
-                    result = InnateCodeService.Update(context, innateCode);
+                    result = InnateCodeService.Update(Context, innateCode);
                 }
                 else
                 {
-                    result = InnateCodeService.Add(context, innateCode);
+                    result = InnateCodeService.Add(Context, innateCode);
                 }
 
                 if (result == -1)
                 {
-                    errorMessage = new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error);
+                    ErrorMessage = new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error);
                     return;
                 }
 
@@ -86,7 +86,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Cancel edit row for {entity.GetSensibleObjectName()}");
             Reset();
-            InnateCodeService.RestoreModel(context, ref entity);
+            InnateCodeService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
         }
 

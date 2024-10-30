@@ -170,10 +170,10 @@ namespace PPMTool.Pages
             Loading = true;
 
             // Get all projects not finished or cancelled
-            cachedProjects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsCancelled());
+            cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
 
             // Cache all the people
-            cachedPeople = PersonService.GetAll(context).OrderBy(x => x.Name);
+            cachedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
 
             // Refresh the dropdown
             ReloadDropDownSources();
@@ -213,7 +213,7 @@ namespace PPMTool.Pages
 
             // Choose the person automatically if not a manager    
             // Look up the username
-            var role = RoleService.GetByUsername(context, ActiveUserName);
+            var role = RoleService.GetByUsername(Context, ActiveUserName);
             ChosenPeople = new List<string>
             {
                 role.GetName()
@@ -258,7 +258,7 @@ namespace PPMTool.Pages
             }
 
             // Add managers
-            var roles = RolesService.GetAll(context)
+            var roles = RolesService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
@@ -344,7 +344,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
 
                 // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(context).FirstOrDefault(x => x.GetFullName() == projectName);
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
                 if (project != null)
                 {
                     Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");

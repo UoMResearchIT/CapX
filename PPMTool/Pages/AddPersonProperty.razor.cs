@@ -22,7 +22,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Cancel row edit for {entity?.GetSensibleObjectName()}");
             Reset();
-            PersonService.RestoreModel(context, ref entity);
+            PersonService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
         }
 

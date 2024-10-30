@@ -73,10 +73,10 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                     </div>
                 </div>
-                @if (errorMessage != null)
+                @if (ErrorMessage != null)
                 {
                     <br />
-                    <StatusMessageComponent Message=@errorMessage />
+                    <StatusMessageComponent Message=@ErrorMessage />
                 }
             </EditForm>
         </div>
