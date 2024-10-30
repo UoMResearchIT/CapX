@@ -829,6 +829,13 @@ namespace PPMTool.Pages
                     {
                         Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
                     }
+                },
+                Chart = new Chart
+                {
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 }
             };
         }

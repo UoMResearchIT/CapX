@@ -1,0 +1,3 @@
+[submodule "Blazor-ApexCharts"]
+	path = Blazor-ApexCharts
+	url = https://github.com/aharwood2/Blazor-ApexCharts.git

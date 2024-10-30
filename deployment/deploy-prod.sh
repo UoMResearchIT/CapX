@@ -4,6 +4,7 @@
 cd ~/CapX
 git fetch
 git checkout release
+git submodule update --init --recursive
 git pull
 
 # Publish the application to folder
