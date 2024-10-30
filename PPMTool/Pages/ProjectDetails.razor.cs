@@ -138,11 +138,11 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            var role = RolesService.GetByUsername(context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             activeUser = role?.Person;
-            allProjects = ProjectService.GetAll(context).ToList();
+            allProjects = ProjectService.GetAll(Context).ToList();
 
-            cachedMentionables = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
+            cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
             FilterMentionables();
 
             // Query string only consulted when Project ID is not specified in URL
@@ -426,14 +426,14 @@ namespace PPMTool.Pages
             if (project.Followers.Contains(activeUser))
             {
                 project.Followers.Remove(activeUser);
-                ProjectService.Update(context, project);
+                ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
                 LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
                 project.Followers.Add(activeUser);
-                ProjectService.Update(context, project);
+                ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
                 LogInformation($"Now following project {project.GetFullName()}");
             }
@@ -543,7 +543,7 @@ namespace PPMTool.Pages
 
         private void PopulateNotes()
         {
-            allNotes = NoteService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId).ToList();
+            allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
             if (sortByDueDate) allNotes = allNotes.Where(x => x.DueDate != null).OrderBy(x => x.DueDate).Concat(allNotes.Where(x => x.DueDate == null)).ToList();
@@ -655,7 +655,7 @@ namespace PPMTool.Pages
             LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
             if (isEditExistingNote)
             {
-                NoteService.RestoreModel(context, ref noteModel);
+                NoteService.RestoreModel(Context, ref noteModel);
             }
             isEditExistingNote = false;
             PopulateNotes();
@@ -673,11 +673,11 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            var role = RolesService.GetByUsername(context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             noteModel.Author = role.Person;
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
-            NoteService.Add(context, noteModel);
+            NoteService.Add(Context, noteModel);
             LogInformation($"Added note for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
@@ -688,12 +688,12 @@ namespace PPMTool.Pages
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            var role = RolesService.GetByUsername(context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             noteModel.Editor = role.Person;
             ResolveMentionsInCurrentNoteModel();
-            NoteService.Update(context, noteModel, false);
-            var listOfNoteChanges = NoteService.GetDiffList<Note>(context);
-            NoteService.Update(context, noteModel, true);
+            NoteService.Update(Context, noteModel, false);
+            var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
+            NoteService.Update(Context, noteModel, true);
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             PopulateNotes();
             ShowOrHideEditor(false);
@@ -718,7 +718,7 @@ namespace PPMTool.Pages
             if (confirmed)
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
-                NoteService.Delete(context, noteToDelete);
+                NoteService.Delete(Context, noteToDelete);
                 PopulateNotes();
                 StateHasChanged();
             }
@@ -734,7 +734,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
             note.CompletedDate = DateTime.Now;
-            NoteService.Update(context, note);
+            NoteService.Update(Context, note);
             StateHasChanged();
         }
 
@@ -749,7 +749,7 @@ namespace PPMTool.Pages
             newMentions.AddRange(matches.Select(x => x.Value).Distinct());
 
             // Load in the list of managers
-            var managers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            var managers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
             foreach (var m in newMentions)
@@ -907,7 +907,7 @@ namespace PPMTool.Pages
 
                 // Set timestamp and save to DB
                 project.ActualsLastUpdated = DateTime.Now.ToString("R");
-                ProjectService.Update(context, project);
+                ProjectService.Update(Context, project);
                 StateHasChanged();
             }
         }

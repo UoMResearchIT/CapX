@@ -39,7 +39,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Check user permissions
-            var role = RolesService.GetByUsername(context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
             activeUserId = role?.Person.PersonId ?? 0;
 
@@ -47,8 +47,8 @@ namespace PPMTool.Pages
             selectedPerson = role?.Person;
 
             // Get starting lists from the DB
-            people = PersonService.GetAll(context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
-            competencies = CompetencyService.GetAll(context);
+            people = PersonService.GetAll(Context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
+            competencies = CompetencyService.GetAll(Context);
 
             LogInformation("Viewing competencies framework");
         }
@@ -66,14 +66,14 @@ namespace PPMTool.Pages
         private void AddAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
-            CompetencyService.AddAssessment(context, assessment);
+            CompetencyService.AddAssessment(Context, assessment);
             StateHasChanged();
         }
 
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
-            CompetencyService.UpdateAssessment(context, assessment);
+            CompetencyService.UpdateAssessment(Context, assessment);
             StateHasChanged();
         }
 

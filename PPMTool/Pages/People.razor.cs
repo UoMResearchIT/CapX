@@ -63,7 +63,7 @@ namespace PPMTool.Pages
         private void LoadData(LoadDataArgs args)
         {
             // Order by name by default
-            var loadedPeople = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            var loadedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
             // Reduce to just current people
             if (!IncludeLeavers)
@@ -74,7 +74,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
+                var role = RoleService.GetByUsername(Context, AuthenticationState.User.Identity.Name.Trim().ToLower());
 
                 // Only show the person themselves if in developer view
                 loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();

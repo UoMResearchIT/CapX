@@ -76,8 +76,8 @@ namespace PPMTool.Pages
             EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
 
             // Get starting lists from the DB
-            people = PersonService.GetAll(context);
-            projects = ProjectService.GetAll(context);
+            people = PersonService.GetAll(Context);
+            projects = ProjectService.GetAll(Context);
 
             // Set chart options
             ytdChartOptions = new ApexChartOptions<DemandChartItem>
@@ -300,7 +300,7 @@ namespace PPMTool.Pages
                 var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
-                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, startDate);
+                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, startDate);
                 float recoveryTargetPerWeek = 0f;
                 float proportionOfFY = 0f;
 
@@ -335,7 +335,7 @@ namespace PPMTool.Pages
                     // If financial year has changed then get the next financial reference and update recovery target
                     if (currentFY != FinancialReference.GetFinancialYear(currentWeekStart))
                     {
-                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, currentWeekStart);
+                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, currentWeekStart);
                         currentFY = FinancialReference.GetFinancialYear(currentWeekStart);
 
                         // Compute how many weeks of this FY run within the window of the graph

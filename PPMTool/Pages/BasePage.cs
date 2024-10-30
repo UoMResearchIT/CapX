@@ -16,7 +16,7 @@ namespace PPMTool.Pages
     public abstract class BasePage : ComponentBase
     {
         [Inject]
-        private ILogger Logger { get; set; }
+        protected ILogger Logger { get; set; }
 
         [Inject]
         protected NavigationManager Navigation { get; set; }
@@ -54,16 +54,18 @@ namespace PPMTool.Pages
 
         protected string ActiveUserName { get; private set; } = "None";
 
-        protected PPMToolContext context;
+        protected PPMToolContext Context { get; set; }
 
-        protected StatusMessage errorMessage;
+        protected StatusMessage ErrorMessage { get; set; }
+
+        protected string Title { get; set; }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             // Create the context on every page
-            context = ContextFactory.CreateDbContext();
+            Context = ContextFactory.CreateDbContext();
 
             // Get authentication state
             AuthenticationState = AuthenticationStateTask.Result;

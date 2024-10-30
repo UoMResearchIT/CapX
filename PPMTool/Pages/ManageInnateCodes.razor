@@ -4,6 +4,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
+<PageTitle>Manage Innate Codes - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
@@ -14,9 +15,9 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddCode" />
         </div>
     </div>
-    @if (errorMessage != null)
+    @if (ErrorMessage != null)
     {
-        <StatusMessageComponent Message="errorMessage" />
+        <StatusMessageComponent Message="ErrorMessage" />
     }
     <hr />
     <RadzenDataGrid @ref="dataGrid"

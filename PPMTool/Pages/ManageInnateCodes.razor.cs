@@ -18,7 +18,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             dataGridEntityService = InnateCodeService;
-            dataGridEntities = InnateCodeService.GetAll(context)
+            dataGridEntities = InnateCodeService.GetAll(Context)
                 .ToList();
             LogInformation($"Viewing innate code grid");
         }
@@ -28,7 +28,7 @@ namespace PPMTool.Pages
             if (await DialogService.Confirm($"You are about to delete innate code {code.GetCodeAsString()}.", "Delete Code") ?? false)
             {
                 await base.DeleteRow(code);
-                dataGridEntityService.Delete(context, code);
+                dataGridEntityService.Delete(Context, code);
                 LogInformation($"Deleted innate code {code.GetCodeAsString()}");
             }
         }

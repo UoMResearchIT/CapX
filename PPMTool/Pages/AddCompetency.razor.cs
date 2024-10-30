@@ -28,11 +28,11 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            competencies = CompetencyService.GetAll(context);
+            competencies = CompetencyService.GetAll(Context);
 
             if (CompetencyId > 0)
             {
-                competency = CompetencyService.GetById(context, CompetencyId);
+                competency = CompetencyService.GetById(Context, CompetencyId);
                 originalCategory = competency?.Category;
                 originalNumber = competency?.Number;
                 originalGrade = competency?.Grade;
@@ -59,17 +59,17 @@ namespace PPMTool.Pages
                 LogInformation($"Saving competency {competency?.GetSensibleObjectName()}.");
 
                 // Try to add or update
-                errorMessage = null;
+                ErrorMessage = null;
 
                 // Validate
                 if (competency.Grade < 5 || competency.Grade > 7)
                 {
-                    errorMessage = new StatusMessage("Competency framework only supports grades 5-7 at the moment!", StatusMessage.MessageType.Error);
+                    ErrorMessage = new StatusMessage("Competency framework only supports grades 5-7 at the moment!", StatusMessage.MessageType.Error);
                     return;
                 }
                 if (string.IsNullOrWhiteSpace(competency.Description) || string.IsNullOrWhiteSpace(competency.Objective))
                 {
-                    errorMessage = new StatusMessage("Every competency needs a description and an objective!", StatusMessage.MessageType.Error);
+                    ErrorMessage = new StatusMessage("Every competency needs a description and an objective!", StatusMessage.MessageType.Error);
                     return;
                 }
 
@@ -79,16 +79,16 @@ namespace PPMTool.Pages
                     // Increment the revision and set the revision date
                     competency.Revision++;
                     competency.RevisionDate = DateTime.Now.ToString("R");
-                    result = CompetencyService.Update(context, competency);
+                    result = CompetencyService.Update(Context, competency);
                 }
                 else
                 {
-                    result = CompetencyService.Add(context, competency);
+                    result = CompetencyService.Add(Context, competency);
                 }
 
                 if (result == -1)
                 {
-                    errorMessage = new StatusMessage("Competency with the same Legacy ID exists already!", StatusMessage.MessageType.Error);
+                    ErrorMessage = new StatusMessage("Competency with the same Legacy ID exists already!", StatusMessage.MessageType.Error);
                     return;
                 }
 

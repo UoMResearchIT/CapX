@@ -41,15 +41,15 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Find out if superuser for delete button
-            isSuperUser = RolesService.GetRoleTypeForUsername(context, ActiveUserName) == Enums.RoleType.Superuser;
+            isSuperUser = RolesService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
 
             // Map entities to checkbox list items
-            availableTags = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
+            availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
             // Load the person model if necessary
             if (PersonId > 0)
             {
-                personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
+                personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
                 // Update the chosen tags
                 if (personModel != null)
@@ -133,7 +133,7 @@ namespace PPMTool.Pages
                     LogInformation($"Saving person {personModel?.Name}...");
 
                     // Edit
-                    var res = PersonService.Update(context, personModel);
+                    var res = PersonService.Update(Context, personModel);
                     if (res < 0)
                     {
                         // Duplicate found so show error message
@@ -152,7 +152,7 @@ namespace PPMTool.Pages
                 else
                 {
                     // Add new
-                    var res = PersonService.Add(context, personModel);
+                    var res = PersonService.Add(Context, personModel);
                     if (res < 0)
                     {
                         // Duplicate found so show error message
@@ -188,7 +188,7 @@ namespace PPMTool.Pages
                     LogInformation($"Deleting person {personModel.Name}, ID {personModel.PersonId}");
 
                     // Delete from DB
-                    PersonService.Delete(context, personModel);
+                    PersonService.Delete(Context, personModel);
 
                     // Navigate back to the people list
                     Navigation.NavigateTo("people");
