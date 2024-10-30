@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Blazor-ApexCharts\src\Blazor-ApexCharts\Blazor-ApexCharts.csproj" />
+    <ProjectReference Include="..\Blazor-ApexCharts\src\Blazor-ApexCharts\Blazor-ApexCharts.csproj" />
   </ItemGroup>
 
 </Project>
