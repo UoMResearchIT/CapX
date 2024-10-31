@@ -22,12 +22,51 @@
     </RadzenHeader>
     <RadzenSidebar Responsive="false" Style="width: max-content">
         <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
-            <RadzenPanelMenuItem Text="Overview" Icon="home" />
-            <RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" />
-            <RadzenPanelMenuItem Text="UI Fundamentals" Icon="auto_awesome">
-                <RadzenPanelMenuItem Text="Themes" Icon="color_lens" />
-                <RadzenPanelMenuItem Text="Colors" Icon="invert_colors" />
-            </RadzenPanelMenuItem>
+            <AuthorizeView>
+                <Authorized>
+                    <RadzenPanelMenuItem Path="datadashboard" Text="Data Dashboard" Icon="speed" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Projects" Icon="work">
+                        <RadzenPanelMenuItem Path="projects" Text="Projects" Icon="assignment" />
+                        <AuthorizeView Roles="Superuser,Manager,Developer">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+                <Authorized>
+                    <RadzenPanelMenuItem Path="capacity" Text="Capacity" Icon="lists" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Superuser,Manager,Developer">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="People" Icon="people">
+                        <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
+                        <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
+                        <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
+                        <AuthorizeView Roles="Superuser,Manager">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>            
+            <AuthorizeView Roles="Superuser">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
+                        <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
+                        <RadzenPanelMenuItem Path="managecodes" Text="Timesheet Codes" Icon="punch_clock" />
+                        <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
+                    </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>
         </RadzenPanelMenu>
     </RadzenSidebar>
     <RadzenBody>
