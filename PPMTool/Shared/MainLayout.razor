@@ -1,27 +1,56 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Hosting;
+@using Microsoft.Extensions.Configuration
 @using Microsoft.Extensions.Hosting;
 @inject IWebHostEnvironment Environment
+@inject IConfiguration Configuration
 
 <RadzenComponents />
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <div class="main">
-        <div class="top-row px-4 auth spaced-header">
-            <div class="col-auto mr-auto">
-                @if (Environment.IsDevelopment())
-                {
-                    <h1 style="color: var(--rz-warning)">&#x26A0; DEVELOPMENT VERSION &#x26A0;</h1>
-                }
-            </div>
+<RadzenLayout>
+    <RadzenHeader Style="background-color: #609">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                <RadzenText TextStyle="TextStyle.DisplayH5" style="margin-bottom: 0; color: white">CapX - RSE Operational Management Tool</RadzenText>
+            </RadzenStack>
+            @if (Environment.IsDevelopment())
+            {
+                <RadzenText TextStyle="TextStyle.DisplayH3" style="color: var(--rz-warning); margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
+            }
             <LoginView />
-        </div>
-
-        <div class="content px-4">
+        </RadzenStack>
+    </RadzenHeader>
+    <RadzenSidebar Responsive="false" Style="width: max-content">
+        <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+            <RadzenPanelMenuItem Text="Overview" Icon="home" />
+            <RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" />
+            <RadzenPanelMenuItem Text="UI Fundamentals" Icon="auto_awesome">
+                <RadzenPanelMenuItem Text="Themes" Icon="color_lens" />
+                <RadzenPanelMenuItem Text="Colors" Icon="invert_colors" />
+            </RadzenPanelMenuItem>
+        </RadzenPanelMenu>
+    </RadzenSidebar>
+    <RadzenBody>
+        <div class="rz-p-4">
             @Body
         </div>
-    </div>
-</div>
+    </RadzenBody>
+    <RadzenFooter Style="background-color: #609">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="@versionString" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester" />
+        </RadzenStack>
+    </RadzenFooter>
+</RadzenLayout>
+
+@code
+{
+    private bool sidebarExpanded = true;
+    private string versionString;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        versionString = $"v{Configuration["VersionNumber"]}";
+    }
+}

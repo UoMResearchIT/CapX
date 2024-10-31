@@ -241,3 +241,8 @@ mark {
     padding: 0.5rem;
     background-color: var(--rz-base-100);
 }
+
+:root {
+    --rz-primary: #609;
+    --rz-on-primary-lighter: #609;
+}
