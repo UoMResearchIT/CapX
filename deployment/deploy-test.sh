@@ -9,7 +9,7 @@ git pull
 
 # Publish the application to folder
 cd PPMTool
-dotnet publish -c Release
+dotnet publish -c Release -f net6.0
 
 # Sync DB from production
 cd ~/
