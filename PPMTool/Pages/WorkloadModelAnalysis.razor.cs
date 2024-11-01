@@ -151,7 +151,7 @@ namespace PPMTool.Pages
 
                         // Look up the duty
                         Debug.WriteLine($"** Looking up \"{obj.Activity}\" | \"{obj.Task}\"");
-                        int duty = InnateCodeService.FindDutyForTask(context, obj.Activity, obj.Task);
+                        int duty = InnateCodeService.FindDutyForTask(Context, obj.Activity, obj.Task);
                         if (duty == -1)
                         {
                             // Cannot find this combo in the database
@@ -191,7 +191,7 @@ namespace PPMTool.Pages
                         var data = new List<WLMWeeklyDataChartItem>();
 
                         // Find the WLM active at the beginning of the week for that person
-                        var person = PersonService.GetByName(context, resourceData.Key.Trim());
+                        var person = PersonService.GetByName(Context, resourceData.Key.Trim());
 
                         if (person == null)
                         {
@@ -305,7 +305,11 @@ namespace PPMTool.Pages
                     Type = ChartType.Bar,
                     Stacked = true,
                     StackOnlyBar = true,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 PlotOptions = new PlotOptions
                 {

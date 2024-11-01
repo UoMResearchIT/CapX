@@ -1,27 +1,95 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Hosting;
+@using Microsoft.Extensions.Configuration
 @using Microsoft.Extensions.Hosting;
 @inject IWebHostEnvironment Environment
+@inject IConfiguration Configuration
 
 <RadzenComponents />
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <div class="main">
-        <div class="top-row px-4 auth spaced-header">
-            <div class="col-auto mr-auto">
-                @if (Environment.IsDevelopment())
-                {
-                    <h1 style="color: var(--rz-warning)">&#x26A0; DEVELOPMENT VERSION &#x26A0;</h1>
-                }
-            </div>
+<RadzenLayout>
+    <RadzenHeader Style="background-color: #609">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                <RadzenText TextStyle="TextStyle.DisplayH5" style="margin-bottom: 0; color: white">CapX - RSE Operational Management Tool</RadzenText>
+            </RadzenStack>
+            @if (Environment.IsDevelopment())
+            {
+                <RadzenText TextStyle="TextStyle.DisplayH3" style="color: var(--rz-warning); margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
+            }
             <LoginView />
-        </div>
-
-        <div class="content px-4">
+        </RadzenStack>
+    </RadzenHeader>
+    <RadzenSidebar Responsive="false" Style="width: max-content">
+        <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+            <AuthorizeView>
+                <Authorized>
+                    <RadzenPanelMenuItem Path="datadashboard" Text="Data Dashboard" Icon="speed" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Projects" Icon="work">
+                        <RadzenPanelMenuItem Path="projects" Text="Projects" Icon="assignment" />
+                        <AuthorizeView Roles="Superuser,Manager,Developer">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+                <Authorized>
+                    <RadzenPanelMenuItem Path="capacity" Text="Capacity" Icon="lists" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Superuser,Manager,Developer">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="People" Icon="people">
+                        <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
+                        <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
+                        <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
+                        <AuthorizeView Roles="Superuser,Manager">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
+                            </Authorized>
+                        </AuthorizeView>
+                    </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>            
+            <AuthorizeView Roles="Superuser">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
+                        <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
+                        <RadzenPanelMenuItem Path="managecodes" Text="Timesheet Codes" Icon="punch_clock" />
+                        <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
+                    </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>
+        </RadzenPanelMenu>
+    </RadzenSidebar>
+    <RadzenBody>
+        <div class="rz-p-4">
             @Body
         </div>
-    </div>
-</div>
+    </RadzenBody>
+    <RadzenFooter Style="background-color: #609">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="@versionString" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
+        </RadzenStack>
+    </RadzenFooter>
+</RadzenLayout>
+
+@code
+{
+    private bool sidebarExpanded = true;
+    private string versionString;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        versionString = $"v{Configuration["VersionNumber"]}";
+    }
+}

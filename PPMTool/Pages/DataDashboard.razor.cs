@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -40,6 +42,8 @@ namespace PPMTool.Pages
         private ApexChartOptions<DemandChartItem> ytdChartOptions;
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
 
+        private bool exportRunning;
+        private ViewOption viewOption;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -53,6 +57,17 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
+        private enum ViewOption
+        {
+            [Description("Last FY")]
+            LastFY,
+            [Description("Current FY")]
+            CurrentFY,
+            [Description("Next FY")]
+            NextFY,
+            Custom
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -61,12 +76,8 @@ namespace PPMTool.Pages
             EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
 
             // Get starting lists from the DB
-            people = PersonService.GetAll(context);
-            projects = ProjectService.GetAll(context);
-
-            // Default to the first day of the current financial year
-            startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
-            yearsAhead = 1;
+            people = PersonService.GetAll(Context);
+            projects = ProjectService.GetAll(Context);
 
             // Set chart options
             ytdChartOptions = new ApexChartOptions<DemandChartItem>
@@ -74,7 +85,11 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -116,7 +131,11 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -157,7 +176,11 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Area,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -216,7 +239,11 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Bar,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 PlotOptions = new PlotOptions
                 {
@@ -227,7 +254,6 @@ namespace PPMTool.Pages
                 }
             };
 
-            // Start the spinners
             Loading = true;
         }
 
@@ -238,8 +264,9 @@ namespace PPMTool.Pages
             {
                 await JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
 
-                // Generate the charts
-                GenerateCharts();
+                // Set the initial settings and generate the charts
+                viewOption = ViewOption.CurrentFY;
+                ViewOptionChanged();
             }
         }
 
@@ -273,7 +300,7 @@ namespace PPMTool.Pages
                 var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
-                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, startDate);
+                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, startDate);
                 float recoveryTargetPerWeek = 0f;
                 float proportionOfFY = 0f;
 
@@ -308,7 +335,7 @@ namespace PPMTool.Pages
                     // If financial year has changed then get the next financial reference and update recovery target
                     if (currentFY != FinancialReference.GetFinancialYear(currentWeekStart))
                     {
-                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(context, currentWeekStart);
+                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, currentWeekStart);
                         currentFY = FinancialReference.GetFinancialYear(currentWeekStart);
 
                         // Compute how many weeks of this FY run within the window of the graph
@@ -445,6 +472,7 @@ namespace PPMTool.Pages
                         catch (ArgumentException)
                         {
                             // Skip if the grade is invalid
+                            Debug.WriteLine($"** Grade {activeModel.Grade} is invalid!");
                         }
                         numStaff++;
 
@@ -596,6 +624,152 @@ namespace PPMTool.Pages
                     "#00F5D4",
                     "#000",
                 };
+        }
+
+        /// <summary>
+        /// Callback when the view option is changed in the select bar
+        /// </summary>
+        private void ViewOptionChanged()
+        {
+            switch (viewOption)
+            {
+                case ViewOption.LastFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
+                    yearsAhead = 1;
+                    break;
+
+                case ViewOption.CurrentFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
+                    yearsAhead = 1;
+                    break;
+
+                case ViewOption.NextFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1);
+                    yearsAhead = 1;
+                    break;
+
+                case ViewOption.Custom:
+                    return;
+            }
+            GenerateCharts();
+        }
+
+        /// <summary>
+        /// Callback when the start date is changed through the UI
+        /// </summary>
+        private void StartDateChanged()
+        {
+            Debug.WriteLine("** Start Date Changed -- changing to Custom view option");
+            viewOption = ViewOption.Custom;
+            GenerateCharts();
+        }
+
+        /// <summary>
+        /// Callback when the years ahead is changed through the UI
+        /// </summary>
+        private void YearsAheadChanged()
+        {
+            Debug.WriteLine("** Years Ahead Changed -- changing to Custom view option");
+            viewOption = ViewOption.Custom;
+            GenerateCharts();
+        }
+
+        /// <summary>
+        /// Method to export a financial report for Research Finance
+        /// </summary>
+        private void ExportFinancialReport()
+        {
+            LogInformation($"Exporting financial report...");
+
+            exportRunning = true;
+
+            Task.Run(async () =>
+            {
+                // Create a context to be accesed on this thread
+                var threadContext = ContextFactory.CreateDbContext();
+
+                // Create blank list of data
+                var allData = new List<ExportHelper.AssignmentChunk>();
+
+                // Set the report length
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) - 1, 8, 1);
+                var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
+
+                // Get data for each person active in the window
+                var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+                foreach (var person in peopleActive)
+                {
+                    // Get the row data
+                    var data = ExportHelper.GetExportDataForPerson(
+                        person,
+                        ProjectService.GetAll(threadContext),
+                        startDate,
+                        endDate,
+                        FinancialReferenceService.GetAll(threadContext)
+                    );
+                    allData.AddRange(data);
+                }
+                allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Write to CSV file
+                        var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
+                        using (var writer = new StreamWriter(path))
+                        {
+
+                            // Write header row
+                            var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
+                            var propNames = props.Select(x => x.Name);
+                            var headers = propNames.ToList();
+                            writer.WriteLine(string.Join(",", headers));
+
+                            // Write rows one at a time
+                            foreach (var record in allData)
+                            {
+                                // Write properties
+                                var valuesAsStrings = new List<string>();
+                                foreach (var name in propNames)
+                                {
+                                    string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+
+                                    // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
+                                    valuesAsStrings.Add(value.Replace(",", ";"));
+                                }
+
+                                // Write the row
+                                writer.WriteLine(string.Join(",", valuesAsStrings));
+                            }
+                        }
+                        Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }

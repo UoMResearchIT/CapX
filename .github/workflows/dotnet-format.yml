@@ -26,7 +26,7 @@ jobs:
       with:
         dotnet-version: 6.0.x
     - name: Format
-      run: dotnet format PPMTool.sln --verify-no-changes --no-restore --verbosity diagnostic
+      run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity diagnostic
       
   build:
   

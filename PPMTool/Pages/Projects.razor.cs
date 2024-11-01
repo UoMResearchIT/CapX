@@ -82,7 +82,7 @@ namespace PPMTool.Pages
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            userRole = RoleService.GetByUsername(context, uname);
+            userRole = RoleService.GetByUsername(Context, uname);
 
             // Log any time there is no role returned?
             if (userRole == null)
@@ -121,13 +121,13 @@ namespace PPMTool.Pages
             List<Project> proj;
             if (userRole.RoleType == RoleType.Developer)
             {
-                proj = ProjectService.GetAll(context)
+                proj = ProjectService.GetAll(Context)
                     .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person)))
                     .OrderBy(x => x.RTP).ToList();
             }
             else
             {
-                proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
+                proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
             }
 
             // Remove the ones that are not active if necessary
@@ -176,7 +176,7 @@ namespace PPMTool.Pages
             ownedProjectsAndDueNotes = new Dictionary<Project, IEnumerable<Note>>();
             foreach (var p in tempProj)
             {
-                ownedProjectsAndDueNotes.Add(p, NoteService.GetDueNotesForProject(context, p.ProjectId));
+                ownedProjectsAndDueNotes.Add(p, NoteService.GetDueNotesForProject(Context, p.ProjectId));
             }
 
             // Disable spinner now load complete

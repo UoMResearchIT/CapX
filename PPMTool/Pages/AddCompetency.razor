@@ -4,6 +4,7 @@
 @using PPMTool.Pages.Components
 @using PPMTool.Enums
 @using DotNetExtensions
+<PageTitle>Add Competency - CapX</PageTitle>
 
 <div class="container">
     @if (competency != null)
@@ -66,10 +67,10 @@
                 </div>
             </EditForm>
         </div>
-        @if (errorMessage != null)
+        @if (ErrorMessage != null)
         {
             <br />
-            <StatusMessageComponent Message=@errorMessage />
+            <StatusMessageComponent Message=@ErrorMessage />
         }
     }
 </div>

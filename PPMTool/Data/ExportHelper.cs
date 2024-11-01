@@ -1,281 +1,274 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using FluentDateTime;
+using DotNetExtensions;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
-    public abstract class ExportHelper
+    public static class ExportHelper
     {
         /// <summary>
-        /// Represents a task (row on the export sheet)
+        /// Represents a chunk of an assignemnt with a constant grade and financial year
         /// </summary>
-        public class TaskData
+        public class AssignmentChunk
         {
-            public string EmployeeNumber { get; set; }
-
-            public string RRAR { get; set; }
-
-            public string Domain { get; set; } = "RIT";
-
-            public string Team { get; set; } = "Research IT/Research Software Engineering";
-
-            [DisplayName("Full Name")]
             public string EmployeeName { get; set; }
+
+            public int Grade { get; set; }
 
             public double FTE { get; set; }
 
-            public string Manager { get; set; }
+            public string Project { get; set; }
 
-            public string ProjectAndTaskName { get; set; }
+            public string LeadRSE { get; set; }
 
-            public string InnateActivity { get; set; }
+            public string Task { get; set; }
 
-            public string BaselineOrProject { get; private set; } = "Project";
+            public string PI { get; set; }
 
-            public bool GetIsBaseline()
+            public string Faculty { get; set; }
+
+            public string School { get; set; }
+
+            public double SalaryCostEstimate { get; set; }
+
+            private DateTime startDate;
+            public DateTime StartDate
             {
-                return BaselineOrProject == "Baseline";
-            }
-
-            public void SetIsBaseline(bool value)
-            {
-                BaselineOrProject = value ? "Baseline" : "Project";
-            }
-
-
-            private Dictionary<string, int?> dataByMonth = new Dictionary<string, int?>();
-
-            public int? GetMonthlyValue(int month, int year)
-            {
-                var key = EncodeKey(month, year);
-                if (dataByMonth.TryGetValue(key, out var data))
+                get => startDate;
+                set
                 {
-                    return data;
-                }
-                return 0;
-            }
-
-            public void SetMonthlyValue(int month, int year, int? value)
-            {
-                var key = EncodeKey(month, year);
-                if (dataByMonth.ContainsKey(key))
-                {
-                    dataByMonth[key] = value;
-                }
-                else
-                {
-                    dataByMonth.Add(key, value);
+                    if (startDate != value)
+                    {
+                        startDate = value;
+                        FinancialYear = FinancialReference.GetFinancialYear(startDate);
+                    }
                 }
             }
 
-            private string EncodeKey(int month, int year)
+            public DateTime EndDate { get; set; }
+
+            public int FinancialYear { get; set; }
+
+            public AssignmentChunk()
             {
-                return $"{month}-{year}";
+
             }
 
-            /// <summary>
-            /// Special comparer to only recognise two entries as being the same if they represent unmet demand
-            /// </summary>
-            public class TaskDataUnmetDemandEntryEqualityCompararer : IEqualityComparer<TaskData>
+            public AssignmentChunk(AssignmentChunk taskToCopy)
             {
-                public bool Equals(TaskData x, TaskData y)
-                {
-                    return
-                        x.EmployeeName == "Unmet Demand" &&
-                        y.EmployeeName == "Unmet Demand" &&
-                        x.ProjectAndTaskName == y.ProjectAndTaskName;
-                }
-
-                public int GetHashCode([DisallowNull] TaskData obj)
-                {
-                    return obj.GetHashCode();
-                }
+                EmployeeName = taskToCopy.EmployeeName;
+                Grade = taskToCopy.Grade;
+                FTE = taskToCopy.FTE;
+                Project = taskToCopy.Project;
+                LeadRSE = taskToCopy.LeadRSE;
+                Faculty = taskToCopy.Faculty;
+                School = taskToCopy.School;
+                PI = taskToCopy.PI;
+                Task = taskToCopy.Task;
+                StartDate = new DateTime(taskToCopy.StartDate.Ticks);
+                EndDate = new DateTime(taskToCopy.EndDate.Ticks);
+                FinancialYear = taskToCopy.FinancialYear;
             }
+
         }
 
         /// <summary>
-        /// Test to see whether a date is within a particular month
-        /// </summary>
-        /// <param name="dateToTest"></param>
-        /// <param name="currentMonth"></param>
-        /// <returns></returns>
-        private static bool IsWithinMonth(DateTime dateToTest, DateTime currentMonth)
-        {
-            return dateToTest.Date >= currentMonth.BeginningOfMonth().Date && dateToTest.Date <= currentMonth.EndOfMonth().Date;
-        }
-
-        /// <summary>
-        /// Given a person, prepare data from database with a monthly granularity
+        /// Given a person, prepare data from database with a weekly granularity
         /// </summary>
         /// <param name="person">Person who is being exported</param>
-        /// <param name="subTasks">All subtasks where person is an assigned resource</param>
         /// <param name="projects">All projects as retrieved from the project service</param>
-        /// <param name="numMonthsIntoFuture">Number of months into the future we want data for</param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="finrefs">All the financial references</param>
         /// <returns>List of data items</returns>
-        public static IEnumerable<TaskData> GetExportDataForPerson(Person person, IEnumerable<SubTask> subTasks, IEnumerable<Project> projects, DateTime startDate, int numMonthsIntoFuture)
+        public static IEnumerable<AssignmentChunk> GetExportDataForPerson(Person person, IEnumerable<Project> projects, DateTime startDate, DateTime endDate, IEnumerable<FinancialReference> finrefs)
         {
             // New list
-            var data = new List<TaskData>();
+            var data = new List<AssignmentChunk>();
 
-            // Set reference data
-            var endDate = startDate.AddMonths(numMonthsIntoFuture);
-            var currentDate = startDate.Date;
-            var availabilityChanges = person.WorkloadModelChanges.ToList();
+            Debug.WriteLine($"** Building data for {person.Name}...");
 
-            // Configure a baseline task if there is an availability change in place that takes them below the post FTE
-            var latestChange = availabilityChanges.Where(x => x.ChangeDate <= currentDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-            if (latestChange != null && latestChange.ProjectWorkFTE < person.FTE)
+            // Filter list of tasks to those running during the window
+            var tasksInWindow = projects
+                .SelectMany(x => x.SubTasks)
+                .Where(x => x.AssignedResources
+                .Any(x => x.Person.PersonId == person.PersonId))
+                .Where(x => x.IsWithin(startDate, endDate));
+
+            // Get WLM changes for this person that take place during the window
+            var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();
+
+            // Set default WLM to be G6
+            WorkloadModelChange defaultWLM = new WorkloadModelChange()
             {
-                // Add a baseline task
-                var task = new TaskData
+                Person = person,
+                ChangeDate = startDate,
+                Grade = 6
+            };
+
+            // If there isn't a WLM change on the first day of the window then create one
+            if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
+            {
+                var tempWlm = person.GetWorkloadModelOnDateOrDefault(startDate);
+                if (tempWlm != null)
                 {
-                    ProjectAndTaskName = latestChange.Notes,
-                    EmployeeName = person.Name,
-                    FTE = person.FTE
-                };
-                task.SetIsBaseline(true);
-                task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * (person.FTE - latestChange.ProjectWorkFTE)));
-                data.Add(task);
+                    defaultWLM.Grade = tempWlm.Grade;
+                }
+
+                // Add the start WLM to the list of WLMs active in the window
+                wlms.Add(defaultWLM);
             }
 
-            // March forward month by month
-            while (currentDate < endDate)
+            // Are there any changes in grade for this person?
+            var changesInGrade = wlms.DistinctBy(x => x.Grade).Count() > 1;
+
+            // Are there any changes in financial year in the window?
+            var startFY = FinancialReference.GetFinancialYear(startDate);
+            var endFY = FinancialReference.GetFinancialYear(endDate);
+            var changesInFinancialYear = startFY != endFY;
+
+            // Each assignment is at least one row of the report
+            foreach (var task in tasksInWindow)
             {
-                // Check for new availability changes in the current month which would constitute a new baseline task
-                var currentMonthAvailabilityChanges = availabilityChanges.Where(x => IsWithinMonth(x.ChangeDate, currentDate)).ToList();
-                if (currentMonthAvailabilityChanges.Count > 0)
+                var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
+                var initialChunk = new AssignmentChunk
                 {
-                    // Get the lowest availability for the month as the focus for the month
-                    var focus = currentMonthAvailabilityChanges.OrderByDescending(x => x.ProjectWorkFTE).FirstOrDefault();
+                    EmployeeName = person.Name,
+                    Grade = defaultWLM.Grade,
+                    FTE = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE,
+                    Project = project.GetFullName(),
+                    LeadRSE = project.ProjectManager?.Name ?? "Unknown",
+                    Faculty = project.Faculty.GetDescription(),
+                    School = project.School.GetDescription(),
+                    PI = project.PI,
+                    Task = task.Name,
+                    StartDate = task.StartDate,
+                    EndDate = task.EndDate,
+                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate)
+                };
+                IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
+                {
+                    initialChunk
+                };
 
-                    // Add a new baseline task and value
-                    var task = new TaskData
+                // Are there any changes to grade for this person at all
+                if (changesInGrade)
+                {
+                    var tempChunks = new List<AssignmentChunk>();
+
+                    // Find changes that are within the chunk
+                    var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate).OrderBy(x => x.ChangeDate);
+
+                    foreach (var change in changes)
                     {
-                        ProjectAndTaskName = focus.Notes,
-                        EmployeeName = person.Name,
-                        FTE = person.FTE
-                    };
-                    task.SetIsBaseline(true);
-                    task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(100 * focus.ProjectWorkFTE));
-                    data.Add(task);
+                        // Get previous WLM by looking at day before change
+                        var wlmBefore = person.GetWorkloadModelOnDateOrDefault(change.ChangeDate.AddDays(-1));
+
+                        // Define a new task chunk for before period if necessary
+                        if (wlmBefore.Grade != change.Grade)
+                        {
+                            tempChunks.Add(new AssignmentChunk(initialChunk)
+                            {
+                                StartDate = tempChunks.Count > 0 ? new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) : new DateTime(initialChunk.StartDate.Ticks),
+                                EndDate = change.ChangeDate.AddDays(-1)
+                            });
+                        }
+                    }
+
+                    // If we did a split then need to add the final task chunk
+                    if (tempChunks.Count > 0)
+                    {
+                        tempChunks.Add(new AssignmentChunk(initialChunk)
+                        {
+                            StartDate = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks),
+                            EndDate = new DateTime(initialChunk.EndDate.Ticks)
+                        });
+                    }
+
+                    // Replace the list with the new list of chunks
+                    if (tempChunks.Count > 0) taskChunks = tempChunks;
                 }
 
-                // If no change to availability then update the monthly value for the latest baseline task with the same value as the previous month
-                // as long as this isn't the first month
-                else if (currentDate != startDate.Date)
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
+
+                // Are there any financial year changes within the window
+                if (changesInFinancialYear)
                 {
-                    var existing = data.LastOrDefault(x => x.GetIsBaseline());
-                    existing?.SetMonthlyValue(currentDate.Month, currentDate.Year, existing?.GetMonthlyValue(currentDate.AddMonths(-1).Month, currentDate.AddMonths(-1).Year));
-                }
+                    var tempChunks = new List<AssignmentChunk>();
 
-
-                // Find all subtasks that run in this month based on the following conditions:
-                // 1. Starts before month and finishes after month
-                // 2. Starts this month
-                // 3. Ends this month
-                var tasksThisMonth = GetAllTasksRunningThisMonth(subTasks, currentDate);
-
-                // Loop over the tasks in this month
-                foreach (var t in tasksThisMonth)
-                {
-                    // Build task name
-                    var proj = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == t.SubTaskId));
-                    if (proj == null)
+                    // Loop over chunks and see if a financial year change lands in the middle
+                    foreach (var chunk in taskChunks)
                     {
-                        Debug.WriteLine($"** We have a task without a project that has a resource! Task ID = {t.SubTaskId}, Task Name = {t.Name}, Person = {person.Name}!");
-                        continue;
-                    }
-                    var name = $"{proj.GetFullName()} : {t.Name}";
+                        // Get financial year the chunk starts and finishes in
+                        var fyStart = FinancialReference.GetFinancialYear(chunk.StartDate);
+                        var fyEnd = FinancialReference.GetFinancialYear(chunk.EndDate);
 
-                    // Add / update a row for every task running in the month
-                    var existing = data.FirstOrDefault(x => x.ProjectAndTaskName == name);
-                    if (existing != null)
-                    {
-                        // Add new month entry for existing task
-                        existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
-                    }
-                    else
-                    {
-                        // Add new task
-                        var task = new TaskData
+                        if (fyStart != fyEnd)
                         {
-                            EmployeeName = person.Name,
-                            FTE = person.FTE,
-                            ProjectAndTaskName = name,
-                            InnateActivity = proj.InnateActivity?.GetCodeAsString() ?? "Not Set",
-                        };
-                        task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.AssignedResources.First(x => x.Person == person).AssignmentFTE * 100));
-                        data.Add(task);
-                    }
-
-                    // Add / update a task for unmet demand
-                    if (t.HasUnmetDemand())
-                    {
-                        existing = data.FirstOrDefault(x => x.EmployeeName == "Unmet Demand" && x.ProjectAndTaskName == name);
-                        if (existing != null)
-                        {
-                            // Add new month entry for existing task
-                            existing.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.UnmetDemand * 100));
+                            // For each financial year falling within the task, add chunks
+                            for (var i = fyStart; i <= fyEnd; i++)
+                            {
+                                tempChunks.Add(new AssignmentChunk(chunk)
+                                {
+                                    StartDate = fyStart == i ? new DateTime(chunk.StartDate.Ticks) : new DateTime(i, 8, 1),
+                                    EndDate = fyEnd == i ? new DateTime(chunk.EndDate.Ticks) : new DateTime(i + 1, 7, 31),
+                                    FinancialYear = i
+                                });
+                            }
                         }
                         else
                         {
-                            // Add new task
-                            var task = new TaskData
-                            {
-                                EmployeeName = "Unmet Demand",
-                                FTE = 0,
-                                ProjectAndTaskName = name,
-                                InnateActivity = proj.InnateActivity?.GetCodeAsString() ?? "Not Set"
-                            };
-                            task.SetMonthlyValue(currentDate.Month, currentDate.Year, (int)Math.Round(t.UnmetDemand * 100));
-                            data.Add(task);
+                            tempChunks.Add(chunk);
                         }
                     }
-                }
-                currentDate = currentDate.AddMonths(1).Date;
-            }
 
-            // Block out tasks after they leave or before they start
-            currentDate = startDate.Date;
-            while (currentDate < endDate)
-            {
-                // If person hasn't started yet by this month or has already left then set values of their tasks to null
-                if (person.StartDate > currentDate.EndOfMonth() || (person.EndDate != null && person.EndDate < currentDate))
+                    // Replace the list with the new list of chunks
+                    if (tempChunks.Count > 0) taskChunks = tempChunks;
+                }
+
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
+
+                // Filter task chunk list to just those that intersect the window
+                taskChunks = taskChunks.Where(x => x.StartDate <= endDate && x.EndDate >= startDate).ToList();
+
+                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks run during the window");
+
+                // Update the data for the filtered chunks
+                foreach (var chunk in taskChunks)
                 {
-                    foreach (var task in data)
+                    // Truncate dates if extends beyond window
+                    if (chunk.StartDate < startDate)
                     {
-                        task.SetMonthlyValue(currentDate.Month, currentDate.Year, null);
+                        chunk.StartDate = startDate;
+                    }
+                    if (chunk.EndDate > endDate)
+                    {
+                        chunk.EndDate = endDate;
+                    }
+
+                    // Compute cost estimate -- will fail for invalid grades so put in try catch
+                    try
+                    {
+                        var annualCosts = finrefs.GetSuitableFinancialReference(chunk.FinancialYear).GetMidGradeCosts(chunk.Grade);
+                        var fractionOfYear = (chunk.EndDate.Date.Subtract(chunk.StartDate.Date).TotalDays + 1) / 365d;
+                        chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.ToString());
                     }
                 }
-                currentDate = currentDate.AddMonths(1).Date;
+
+                // Add task to master list
+                data.AddRange(taskChunks);
             }
 
-            Debug.WriteLine($"** Exported {data.Count} rows for {person.Name}");
+            Debug.WriteLine($"** Built {data.Count} rows for {person.Name}");
             return data;
-        }
-
-        /// <summary>
-        /// Finds all subtasks that run in this month based on the following conditions:
-        /// 1. Starts before month and finishes after month
-        /// 2. Starts this month
-        /// 3. Ends this month
-        /// </summary>
-        /// <param name="subTasks"></param>
-        /// <param name="firstOfTheMonth"></param>
-        /// <returns></returns>
-        private static IEnumerable<SubTask> GetAllTasksRunningThisMonth(IEnumerable<SubTask> subTasks, DateTime firstOfTheMonth)
-        {
-
-            return subTasks.Where(x =>
-                (x.StartDate <= firstOfTheMonth && x.EndDate >= firstOfTheMonth) ||
-                (x.StartDate >= firstOfTheMonth && x.StartDate < firstOfTheMonth.AddMonths(1)) ||
-                (x.EndDate >= firstOfTheMonth && x.EndDate < firstOfTheMonth.AddMonths(1))
-            );
         }
     }
 }

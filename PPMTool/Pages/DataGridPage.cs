@@ -29,7 +29,7 @@ namespace PPMTool.Pages
         {
             entityToInsert = null;
             entityToUpdate = null;
-            errorMessage = null;
+            ErrorMessage = null;
         }
 
         protected async virtual Task EditRow(T entity)
@@ -49,7 +49,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Cancel edit row for <{entity?.GetSensibleObjectName()}>");
             Reset();
-            dataGridEntityService.RestoreModel(context, ref entity);
+            dataGridEntityService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
         }
 
@@ -79,14 +79,14 @@ namespace PPMTool.Pages
         {
             Reset();
             LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
-            dataGridEntityService.Add(context, entity);
+            dataGridEntityService.Add(Context, entity);
         }
 
         protected virtual void OnUpdateRow(T entity)
         {
             Reset();
             LogInformation($"Update row for <{entity?.GetSensibleObjectName()}>");
-            dataGridEntityService.Update(context, entity);
+            dataGridEntityService.Update(Context, entity);
         }
     }
 }

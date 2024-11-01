@@ -1,27 +1,27 @@
 ﻿@using PPMTool.Data
 @using System.Diagnostics
+@using ApexCharts
 
-<ApexChart @ref="@chart"
-           Title="@Title"
-           TItem="ChartItem"
-           Options=@ChartOptions
-           XAxisType="XAxisType.Datetime"
-           OnDataPointSelection=@OnDataPointSelection
-           OnZoomed="@OnChartZoomed">
+<ApexChart Title="@Title"
+            TItem="ChartItem"
+            Options=@ChartOptions
+            XAxisType="XAxisType.Datetime"
+            OnDataPointSelection=@OnDataPointSelection
+            OnZoomed="@OnChartZoomed">
     <ChildContent>
         <ApexRangeSeries TItem="ChartItem"
-                         Items="@ConfirmedChartItems"
-                         XValue="@(e => e.Label)"
-                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                         PointColor="@(e => e.Colour)" />
+                            Items="@ConfirmedChartItems"
+                            XValue="@(e => e.Label)"
+                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                            PointColor="@(e => e.Colour)" />
 
         <ApexRangeSeries TItem="ChartItem"
-                         Items="@ProvisionalChartItems"
-                         XValue="@(e => e.Label)"
-                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                         PointColor="@(e => e.Colour)" />
+                            Items="@ProvisionalChartItems"
+                            XValue="@(e => e.Label)"
+                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                            PointColor="@(e => e.Colour)" />
     </ChildContent>
     <ApexPointTooltip>
         <div class="m-2">
@@ -44,6 +44,9 @@
 
 @code
 {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
     [Parameter]
     public ApexChartOptions<ChartItem> ChartOptions { get; set; }
 
@@ -55,12 +58,10 @@
 
     [Parameter]
     public Action<SelectedData<ChartItem>> OnDataPointSelection { get; set; }   
-    
+
     [Parameter]
     public string Title { get; set; }
 
     [Parameter]
     public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
-
-    private ApexChart<ChartItem> chart;
 }

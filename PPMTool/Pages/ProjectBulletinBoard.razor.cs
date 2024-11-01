@@ -90,7 +90,7 @@ namespace PPMTool.Pages
         private void LoadProjectData()
         {
             // Get projects from the database
-            var proj = ProjectService.GetAll(context).OrderBy(x => x.RTP).ToList();
+            var proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
 
             // Filter to just projects that are active with current or future unmet demand
             allProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandInWindow() && x.ProjectStatus != ProjectStatus.Paused);

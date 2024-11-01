@@ -4,11 +4,12 @@
 cd ~/CapX
 git fetch
 git checkout dev
+git submodule update --init --recursive
 git pull
 
 # Publish the application to folder
 cd PPMTool
-dotnet publish -c Release
+dotnet publish -c Release -f net6.0
 
 # Sync DB from production
 cd ~/
