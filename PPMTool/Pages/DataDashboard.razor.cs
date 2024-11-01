@@ -636,24 +636,22 @@ namespace PPMTool.Pages
                 case ViewOption.LastFY:
                     startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
                     yearsAhead = 1;
-                    GenerateCharts();
                     break;
 
                 case ViewOption.CurrentFY:
                     startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
                     yearsAhead = 1;
-                    GenerateCharts();
                     break;
 
                 case ViewOption.NextFY:
                     startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1);
                     yearsAhead = 1;
-                    GenerateCharts();
                     break;
 
                 case ViewOption.Custom:
-                    break;
+                    return;
             }
+            GenerateCharts();
         }
 
         /// <summary>
@@ -663,6 +661,7 @@ namespace PPMTool.Pages
         {
             Debug.WriteLine("** Start Date Changed -- changing to Custom view option");
             viewOption = ViewOption.Custom;
+            GenerateCharts();
         }
 
         /// <summary>
@@ -672,6 +671,7 @@ namespace PPMTool.Pages
         {
             Debug.WriteLine("** Years Ahead Changed -- changing to Custom view option");
             viewOption = ViewOption.Custom;
+            GenerateCharts();
         }
 
         /// <summary>
@@ -691,9 +691,9 @@ namespace PPMTool.Pages
                 // Create blank list of data
                 var allData = new List<ExportHelper.AssignmentChunk>();
 
-                // Set the report length (previous, current and next financial years?)
-                var startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
-                var endDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 7, 31);
+                // Set the report length
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) - 1, 8, 1);
+                var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
 
                 // Get data for each person active in the window
                 var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
