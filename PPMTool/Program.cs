@@ -38,7 +38,7 @@ namespace PPMTool
                             l.WriteTo.File(context.Configuration.GetValue<string>("LogPath"),
                                 rollingInterval: RollingInterval.Day,
                                 retainedFileCountLimit: null,
-                                retainedFileTimeLimit: TimeSpan.FromDays(365));
+                                retainedFileTimeLimit: TimeSpan.FromDays(60));
                         })
                         .CreateLogger();
                     logging.AddSerilog();

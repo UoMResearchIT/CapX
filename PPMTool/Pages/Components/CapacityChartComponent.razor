@@ -1,0 +1,67 @@
+﻿@using PPMTool.Data
+@using System.Diagnostics
+@using ApexCharts
+
+<ApexChart Title="@Title"
+            TItem="ChartItem"
+            Options=@ChartOptions
+            XAxisType="XAxisType.Datetime"
+            OnDataPointSelection=@OnDataPointSelection
+            OnZoomed="@OnChartZoomed">
+    <ChildContent>
+        <ApexRangeSeries TItem="ChartItem"
+                            Items="@ConfirmedChartItems"
+                            XValue="@(e => e.Label)"
+                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                            PointColor="@(e => e.Colour)" />
+
+        <ApexRangeSeries TItem="ChartItem"
+                            Items="@ProvisionalChartItems"
+                            XValue="@(e => e.Label)"
+                            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                            PointColor="@(e => e.Colour)" />
+    </ChildContent>
+    <ApexPointTooltip>
+        <div class="m-2">
+            @{
+                var point = (ListPoint<ChartItem>)context.DataPoint;
+                <div class="m-0 p-3">
+                    @if (point.Items.FirstOrDefault()?.TooltipMessages != null)
+                    {
+                        @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
+                    }
+                    <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
+                    <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
+                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                </div>
+            }
+        </div>
+    </ApexPointTooltip>
+</ApexChart>
+
+@code
+{
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    [Parameter]
+    public ApexChartOptions<ChartItem> ChartOptions { get; set; }
+
+    [Parameter]
+    public IEnumerable<ChartItem> ConfirmedChartItems { get; set; }
+
+    [Parameter]
+    public IEnumerable<ChartItem> ProvisionalChartItems { get; set; }
+
+    [Parameter]
+    public Action<SelectedData<ChartItem>> OnDataPointSelection { get; set; }   
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
+}

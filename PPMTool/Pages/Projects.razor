@@ -1,25 +1,61 @@
 ﻿@page "/projects"
 @page "/"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using static PPMTool.Enums.Extensions
+@using System.ComponentModel.DataAnnotations
+<PageTitle>Projects - CapX</PageTitle>
+
+@if (userRole.RoleType == RoleType.Superuser || userRole.RoleType == RoleType.Manager)
+{
+    <div class="container">
+        <h1>My Projects</h1>
+        <hr />
+        @if (ownedProjectsAndDueNotes == null)
+        {
+            <LoadingComponent />            
+        }
+        else if (ownedProjectsAndDueNotes.Count() == 0)
+        {
+            <RadzenText Text="You don't have any projects to manage!" />
+        }
+        else
+        {
+            foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
+            {
+                <ProjectSummaryComponent Project="projectAndNotes.Key"
+                                         EditAuthorised="EditAuthorised"
+                                         DetailsButtonClicked="DetailsButtonClicked"
+                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
+                                         DueButtonClicked="DueButtonClicked"
+                                         ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+            }
+        }
+    </div>
+    <br />
+}
 
 <div class="container">
     <div class="row">
         <div class="col-auto mr-auto">
-            <h1>Projects</h1>
+            <h1>@($"{((userRole.RoleType == RoleType.Superuser || userRole.RoleType == RoleType.Manager || userRole.RoleType == RoleType.Reader) ? "All" : "My")} Projects")</h1>
         </div>
         <div class="col-auto">
             <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled=!EditAuthorised />
         </div>
-        <!-- This is a temporary button to be used one time to migrate the RTP codes from the names -->
-        @*<div class="col-auto">
-                <button class="btn btn-primary" @onclick=@Migrate><i class="oi oi-plus" /> Migrate</button>
-            </div>*@
     </div>
-
-    @if (projects == null)
+    <hr />
+    @if (Loading)
     {
+        <LoadingComponent />
+    }
+    else if (projects == null)
+    {
+        <spinner> </spinner>
         <div class="card">
             <p class="lead">No data to show</p>
         </div>
@@ -27,15 +63,13 @@
     else
     {
         <div class="card">
-            <div class="row align-items-center mb-3">
-                <div class="col-auto">
-                    Exclude Completed?:
-                </div>
-                <div class="col-auto" style="display: flex">
-                    <RadzenSwitch @bind-Value="@showActiveOnly" Change=@(args => OnChange(args)) />
-                </div>
-            </div>
-            <RadzenDataGrid AllowFiltering="true"
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
+                <RadzenSwitch @bind-Value="@IncludeFinished" />
+            </RadzenStack>
+        </div>
+        <div class="card">
+            <RadzenDataGrid AllowFiltering="@(projects != null && projects.Count() > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             EditMode="DataGridEditMode.Single"
@@ -45,77 +79,56 @@
                             ShowPagingSummary="true"
                             Data="@projects"
                             TItem="Project"
-                            ColumnWidth="120px"
+                            ColumnWidth="8rem"
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            LogicalFilterOperator="LogicalFilterOperator.And">
+                            LogicalFilterOperator="LogicalFilterOperator.And"
+                            @bind-Settings="@Settings">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Project" Title="Status" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
-                        <Template Context="proj">
-                            @if (proj.ScheduleStatus == ScheduleStatus.OnSchedule)
-                            {
-                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="Project On Schedule" />
-                            }
-                            else if (proj.ScheduleStatus == ScheduleStatus.Ahead)
-                            {
-                                <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title="Project Ahead" />
-                            }
-                            else
-                            {
-                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Project Late" />
-                            }
-                            @if (proj.BudgetStatus == BudgetStatus.OnBudget)
-                            {
-                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="On Budget" />
-                            }
-                            else if (proj.BudgetStatus == BudgetStatus.Underspend)
-                            {
-                                <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title="Underspent" />
-                            }
-                            else
-                            {
-                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Overspent" />
-                            }
-                            @if (proj.FundsReceived < proj.Budget)
-                            {
-                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="Funding Shortfall" />
-                            }
-                            else
-                            {
-                                <RadzenIcon Icon="verified" IconStyle="IconStyle.Success" title="Fully Funded" />
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
-                        <Template Context="proj">
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => ProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="100px" />
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="180px" />
-                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="150px" />
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="150px">
+                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="5rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="16rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="14rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="14rem" MinWidth="10px">
                         <Template Context="proj">
                             @(proj.ProjectManager?.Name ?? "Not Set")
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status">
+                    <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status" MinWidth="10px">
                         <Template Context="proj">
                             @proj.ProjectStatus.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Portfolio" Title="Portfolio">
+                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px">
                         <Template Context="proj">
-                            @proj.Portfolio.ToNiceString()
+                            @proj.Faculty.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" />
+                    <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px">
+                        <Template Context="proj">
+                            @proj.School.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="CostModel" Title="Cost Model" Width="14rem" MinWidth="10px">
+                        <Template Context="proj">
+                            @(proj.CostModel.GetAttribute<DisplayAttribute>().Name)
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="8rem" MinWidth="10px">
+                        <Template Context="proj">
+                            @(proj.CostModel == CostModel.DayRate ? proj.DayRate.ToString("C0") : "N/A")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="proj">
+                            <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />
+                        </Template>
+                    </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
         </div>

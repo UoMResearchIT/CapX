@@ -7,25 +7,50 @@ using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
-    public class ProjectService : BaseService<Project>
+    public class ProjectService : BaseEntityService<Project>
     {
         /// <summary>
         /// Adds a project. If duplicate found based on name, does not add but returns false.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
-        /// <returns></returns>
-        public override int Add(PPMToolContext context, Project projectModel)
+        /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
+        public override int Add(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
-            if (context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim()) || context.Projects.Any(x => x.RTP == projectModel.RTP))
+            if (DuplicateDetected(context, projectModel))
             {
-                // Duplicate found
                 return -1;
+            }
+            if (DuplicateRTPDetected(context, projectModel))
+            {
+                return -2;
             }
 
             context.Projects.Add(projectModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return projectModel.ProjectId;
+        }
+
+        /// <summary>
+        /// Duplicate determined by name
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectModel"></param>
+        /// <returns></returns>
+        public override bool DuplicateDetected(PPMToolContext context, Project projectModel)
+        {
+            return context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim() && projectModel.ProjectId != p.ProjectId);
+        }
+
+        /// <summary>
+        /// Duplicate determined by RTP
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectModel"></param>
+        /// <returns></returns>
+        private bool DuplicateRTPDetected(PPMToolContext context, Project projectModel)
+        {
+            return context.Projects.Any(x => x.RTP == projectModel.RTP && projectModel.ProjectId != x.ProjectId);
         }
 
         /// <summary>
@@ -45,14 +70,24 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
-        public override void Update(PPMToolContext context, Project projectModel)
+        /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
+        public override int Update(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
+            if (DuplicateDetected(context, projectModel))
+            {
+                return -1;
+            }
+            if (DuplicateRTPDetected(context, projectModel))
+            {
+                return -2;
+            }
             context.Projects.Update(projectModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
+            return projectModel.ProjectId;
         }
 
         /// <summary>
-        /// Gets all the projects
+        /// Gets all the projects with all their related tables -- pretty heavy operation now!
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -60,9 +95,16 @@ namespace PPMTool.Services
         {
             return context.Projects
                 .Include(p => p.SubTasks)
-                .ThenInclude(s => s.AssignedResources)
-                .ThenInclude(r => r.Person)
+                    .ThenInclude(s => s.AssignedResources)
+                        .ThenInclude(r => r.Person)
+                            .ThenInclude(r => r.WorkloadModelChanges)
+                .Include(p => p.SubTasks)
+                    .ThenInclude(s => s.AssignedResources)
+                        .ThenInclude(r => r.Person)
+                            .ThenInclude(pp => pp.Absences)
                 .Include(p => p.ProjectManager)
+                .Include(p => p.InnateActivity)
+                .Include(p => p.Followers)
                 .ToList();
         }
 
@@ -73,7 +115,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Project> GetUnfundedProjects(PPMToolContext context)
         {
-            return GetAll(context).Where(p => p.ProjectStatus == ProjectStatus.Unfunded);
+            return GetAll(context).Where(p => p.ProjectStatus.IsUnfunded());
         }
 
         /// <summary>
@@ -81,10 +123,22 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
-        public override void Delete(PPMToolContext context, Project projectModel)
+        public override void Delete(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             context.Projects.Remove(projectModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Get the project by its RTP number
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="RTP"></param>
+        /// <returns></returns>
+        internal Project GetByRTP(PPMToolContext context, int? RTP)
+        {
+            return RTP == null ? null : GetAll(context)
+                .FirstOrDefault(p => p.RTP == RTP);
         }
     }
 }

@@ -1,0 +1,42 @@
+﻿@using PPMTool.Data.Entities
+
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
+    <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" />
+    <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? scrumText : null) Icon="view_kanban" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, scrumText))" Disabled="@(!hasScrumLink)" />
+</RadzenStack>
+
+@code {
+
+    [Parameter]
+    public Project Project { get; set; }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
+
+    private bool hasScrumLink;
+    private bool hasRequestDoc;
+    private string scrumText;
+    private string requestText;
+
+    private async Task ViewRequestDocClickedAsync(Project project)
+    {
+        await JSRuntime.InvokeAsync<object>("open", $"{project?.RequestDocLink}", "_blank");
+    }
+
+    private async Task ViewScrumBoardClickedAsync(Project project)
+    {
+        await JSRuntime.InvokeAsync<object>("open", $"{project?.ScrumProjectLink}", "_blank");
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        hasScrumLink = !string.IsNullOrWhiteSpace(Project?.ScrumProjectLink);
+        hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
+        scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
+        requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";
+    }
+}

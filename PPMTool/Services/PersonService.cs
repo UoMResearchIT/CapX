@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -7,24 +7,51 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class PersonService : BaseService<Person>
+    public class PersonService : BaseEntityService<Person>
     {
         /// <summary>
         /// Adds a person to the DB.
         /// </summary>
         /// <param name="personModel"></param>
         /// <returns>False if an entry with the same name exists already.</returns>
-        public override int Add(PPMToolContext context, Person personModel)
+        public override int Add(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
-            if (context.People.Any(p => p.Name.ToLower().Trim() == personModel.Name.ToLower().Trim()))
+            if (DuplicateDetected(context, personModel))
             {
                 // Duplicate found
                 return -1;
             }
+            if (DuplicateInitialsDetected(context, personModel))
+            {
+                // Duplicate found
+                return -2;
+            }
 
             context.People.Add(personModel);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return personModel.PersonId;
+        }
+
+        /// <summary>
+        /// Duplicate determined by name
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public override bool DuplicateDetected(PPMToolContext context, Person entity)
+        {
+            return context.People.Any(p => p.Name.ToLower().Trim() == entity.Name.ToLower().Trim() && p.PersonId != entity.PersonId);
+        }
+
+        /// <summary>
+        /// Duplicate determined by initials
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public bool DuplicateInitialsDetected(PPMToolContext context, Person entity)
+        {
+            return context.People.Any(p => p.ShortName.ToLower().Trim() == entity.ShortName.ToLower().Trim() && p.PersonId != entity.PersonId);
         }
 
         /// <summary>
@@ -35,7 +62,8 @@ namespace PPMTool.Services
         {
             return context.People
                 .Include(p => p.SkillTags)
-                .Include(p => p.AvailabilityChanges)
+                .Include(p => p.WorkloadModelChanges)
+                .Include(p => p.Absences)
                 .ToList();
         }
 
@@ -54,23 +82,89 @@ namespace PPMTool.Services
         /// Update an exist person in the DB
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="person"></param>
-        public override void Update(PPMToolContext context, Person person)
+        /// <param name="personModel"></param>
+        public override int Update(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
-            context.People.Update(person);
-            context.SaveChanges();
+            if (DuplicateDetected(context, personModel))
+            {
+                // Duplicate found
+                return -1;
+            }
+            if (DuplicateInitialsDetected(context, personModel))
+            {
+                // Duplicate found
+                return -2;
+            }
+            context.People.Update(personModel);
+            if (commitChanges) context.SaveChanges();
+            return personModel.PersonId;
         }
 
         /// <summary>
-        /// Not yet implemented
+        /// Deletes the person and everything associated with them including notes they have authored or edited.
+        /// Maintains projects they owned but unsets the PM.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void Delete(PPMToolContext context, Person entity)
+        public override void Delete(PPMToolContext context, Person entity, bool commitChanges = true)
         {
-            Debug.Write("** Delete Person not implemented!");
-            throw new System.NotImplementedException();
+            // Set project manager on all projects owned by person to null
+            foreach (var project in context.Projects.Where(x => x.ProjectManager.PersonId == entity.PersonId))
+            {
+                project.ProjectManager = null;
+            }
+
+            // Delete all the resources that have been created against this person
+            context.Resources.RemoveRange(context.Resources.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all absences created against the person
+            context.Absence.RemoveRange(context.Absence.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all workload models created against the person
+            context.WorkloadModelChanges.RemoveRange(context.WorkloadModelChanges.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all roles created against the person
+            context.Roles.RemoveRange(context.Roles.Where(x => x.Person.PersonId == entity.PersonId));
+
+            // Delete all notes created or edited by the person
+            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.PersonId == entity.PersonId || x.Editor.PersonId == entity.PersonId));
+
+            // Remove entity from the skills tag list
+            foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))
+            {
+                skill.People.Remove(entity);
+            }
+
+            // Remove the person from the table
+            context.People.Remove(entity);
+
+            // Save changes as required
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of absences in the DB for the people provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="people"></param>
+        /// <returns></returns>
+        internal IEnumerable<Absence> GetAbsencesForPeople(PPMToolContext context, IEnumerable<Person> people)
+        {
+            return context.Absence.Where(x => people.Select(x => x.PersonId).Contains(x.Person.PersonId));
+        }
+
+        /// <summary>
+        /// Get a person based on their name
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        internal Person GetByName(PPMToolContext context, string name)
+        {
+            return context.People.Where(x => x.Name == name).Include(x => x.WorkloadModelChanges).FirstOrDefault();
         }
     }
 }

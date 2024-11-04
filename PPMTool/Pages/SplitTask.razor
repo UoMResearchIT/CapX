@@ -1,0 +1,96 @@
+﻿@page "/splittask/{ProjectId:int}/{SubTaskId:int}"
+@inherits BasePage
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+@using PPMTool.Services
+<PageTitle>Split Task - CapX</PageTitle>
+
+<div class="row">
+    <div class="col">
+        <h1>Split <i>@(originalAddTaskComponent?.TaskModel.Name)</i></h1>
+    </div>
+</div>
+
+@if (!EditAuthorised)
+{
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
+        <ProjectManagerOnlyComponent />
+    </RadzenStack>
+}
+<hr />
+
+<RadzenStack Gap="1rem" Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+    <RadzenText TextStyle="TextStyle.Body1">This task currently runs from <b>@originalStartDate.ToShortDateString()</b> to <b>@originalEndDate.ToShortDateString()</b></RadzenText>
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+        <RadzenText TextStyle="TextStyle.Body1">Choose how to split the task:</RadzenText>
+        <RadzenSelectBar TValue="bool" @bind-Value="@splitOnDate">
+            <Items>
+                <RadzenSelectBarItem Text="Date" Value="true" />
+                <RadzenSelectBarItem Text="Days" Value="false" />
+            </Items>
+        </RadzenSelectBar>
+    </RadzenStack>
+    @if(splitOnDate)
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.Body1">First day of the new task:</RadzenText>
+            <RadzenDatePicker ShowTime="false" DateFormat="dd/MM/yyyy" @bind-Value="@splitDate" />
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.Body1">Number of days retained in original task:</RadzenText>
+            <RadzenNumeric TValue="double?" @bind-Value="@splitValue" Min="@Convert.ToDecimal(0.5)" Step="0.5" />
+            <RadzenText TextStyle="TextStyle.Body1">days</RadzenText>
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+        <RadzenText TextStyle="TextStyle.Body1">Choose how to share the actuals:</RadzenText>
+        <RadzenSelectBar TValue="ActualsLogic" @bind-Value="@selectedActualsLogic">
+            <Items>
+                <RadzenSelectBarItem Text="Overflow to Split Task" Value="ActualsLogic.Overflow" />
+                <RadzenSelectBarItem Text="Divide by Split Proportion" Value="ActualsLogic.Divide" />
+                <RadzenSelectBarItem Text="Leave All on Original" Value="ActualsLogic.Leave" />
+            </Items>
+        </RadzenSelectBar>
+    </RadzenStack>
+</RadzenStack>
+<hr />
+
+<RadzenStack Gap=".5rem" Orientation="Radzen.Orientation.Vertical">
+    <RadzenText TextStyle="TextStyle.Body1">Click the button below to initialise two new tasks based on the split configuration. <b> Note that this will re-initialise the editors below and reset any manual changes you have made!</b></RadzenText>
+    @if (statusMessages != null && statusMessages.Count > 0)
+    {
+        <MessageSummaryComponent Messages="@statusMessages" IgnoreStatus="true" />
+    }
+    <div class="col-auto" style="margin-left: -1rem">
+        <RadzenButton Click="SplitTasks" Text="Split Task" Icon="settings_ethernet" />
+    </div>
+</RadzenStack>
+<hr />
+
+<div class="row">
+    <div class="col-6">
+        <AddTask @ref="@originalAddTaskComponent" IsSplit="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+    </div>
+    <div class="col-6 vr">
+        <AddTask @ref="@newAddTaskComponent" IsSplit="true" IsCopy="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+    </div>
+</div>
+<hr />
+
+<div class="row">
+    <div class="col-auto">
+        <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="refresh" />
+    </div>
+    <div class="col"></div>
+    <div class="col-auto">
+        <RadzenStack JustifyContent="JustifyContent.End" Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" Style="width:100%">
+            <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="check" Disabled=!EditAuthorised />
+            <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="close" />
+        </RadzenStack>
+    </div>
+</div>
+<hr />

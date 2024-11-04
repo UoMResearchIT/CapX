@@ -15,7 +15,22 @@ namespace PPMTool.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.19");
+            modelBuilder.HasAnnotation("ProductVersion", "6.0.27");
+
+            modelBuilder.Entity("PersonProject", b =>
+                {
+                    b.Property<int>("FollowedProjectsProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FollowersPersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("FollowedProjectsProjectId", "FollowersPersonId");
+
+                    b.HasIndex("FollowersPersonId");
+
+                    b.ToTable("PersonProject");
+                });
 
             modelBuilder.Entity("PersonSkillTag", b =>
                 {
@@ -32,29 +47,236 @@ namespace PPMTool.Migrations
                     b.ToTable("PersonSkillTag");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.AvailabilityChange", b =>
+            modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
-                    b.Property<int>("AvailabilityChangeId")
+                    b.Property<int>("AbsenceId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("AvailabilityFTE")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("BaselineActivities")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("ChangeDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("AvailabilityChangeId");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("AbsenceId");
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("AvailabilityChanges");
+                    b.ToTable("Absence");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>
+                {
+                    b.Property<int>("CompetencyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreatedDate")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Grade")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LegacyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Objective")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RevisionDate")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("CompetencyId");
+
+                    b.ToTable("Competencies");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.CompetencyAssessment", b =>
+                {
+                    b.Property<int>("CompetencyAssessmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("AssociatedCompetencyCompetencyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CompetencyDescription")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CompetencyObjective")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompetencyRevision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DateCreated")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Evidence")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("CompetencyAssessmentId");
+
+                    b.HasIndex("AssociatedCompetencyCompetencyId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("CompetencyAssessments");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.FinancialReference", b =>
+                {
+                    b.Property<int>("FinancialReferenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FinancialYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float>("Grade41Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade51Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade55Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade65Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade71Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("Grade75Costs")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("RecoveryTarget")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("FinancialReferenceId");
+
+                    b.ToTable("FinancialReferences");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
+                {
+                    b.Property<int>("InnateCodeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActivityCode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActivityName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("InnateCodeId");
+
+                    b.ToTable("InnateCodes");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.InnateCodeTask", b =>
+                {
+                    b.Property<int>("InnateCodeTaskId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Duty")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("InnateCodeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TaskName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("InnateCodeTaskId");
+
+                    b.HasIndex("InnateCodeId");
+
+                    b.ToTable("InnateCodeTasks");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
+                {
+                    b.Property<int>("NoteId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AuthorPersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EditedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EditorPersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("HtmlContent")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsFinanceInfo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("NoteId");
+
+                    b.HasIndex("AuthorPersonId");
+
+                    b.HasIndex("EditorPersonId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Notes");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
@@ -62,9 +284,6 @@ namespace PPMTool.Migrations
                     b.Property<int>("PersonId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<double>("DayRate")
-                        .HasColumnType("REAL");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("TEXT");
@@ -96,24 +315,39 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualCost")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ActualLeadershipCosts")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
+
+                    b.Property<string>("ActualsLastUpdated")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("Budget")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("BudgetStatus")
+                    b.Property<int>("CostModel")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("DayRate")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Faculty")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("FundsReceived")
                         .HasColumnType("REAL");
 
-                    b.Property<string>("InnateActivity")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("InnateActivityInnateCodeId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -126,11 +360,11 @@ namespace PPMTool.Migrations
                     b.Property<double>("PlannedCost")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("PlannedWorkHours")
+                    b.Property<double>("PlannedLeadershipCosts")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("Portfolio")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("PlannedWorkHours")
+                        .HasColumnType("REAL");
 
                     b.Property<int?>("ProjectManagerPersonId")
                         .HasColumnType("INTEGER");
@@ -141,13 +375,22 @@ namespace PPMTool.Migrations
                     b.Property<int>("RTP")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ScheduleStatus")
+                    b.Property<string>("RequestDocLink")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("School")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ScrumProjectLink")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.HasKey("ProjectId");
+
+                    b.HasIndex("InnateActivityInnateCodeId");
 
                     b.HasIndex("ProjectManagerPersonId");
 
@@ -159,6 +402,12 @@ namespace PPMTool.Migrations
                     b.Property<int>("ResourceId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("ActualCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ActualWorkHours")
+                        .HasColumnType("REAL");
 
                     b.Property<double>("AssignmentFTE")
                         .HasColumnType("REAL");
@@ -172,10 +421,16 @@ namespace PPMTool.Migrations
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<double>("PlannedCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PlannedWorkHours")
+                        .HasColumnType("REAL");
+
                     b.Property<int?>("SubTaskId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("UseDefaultDayRate")
+                    b.Property<bool>("UseProjectDayRate")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("ResourceId");
@@ -194,6 +449,16 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CASUserName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmailAddress")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastLoggedIn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -236,10 +501,13 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("BudgetStatus")
+                    b.Property<bool>("ChargeLeadership")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("DurationBusinessDays")
+                    b.Property<double>("Demand")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("DurationBillableDays")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("DurationDays")
@@ -248,21 +516,21 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("HasFixedEndDate")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsDone")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsEndDateDriven")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsWorkDriven")
+                    b.Property<int>("Lag")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("OriginalDemand")
+                        .HasColumnType("REAL");
 
                     b.Property<double>("PlannedCost")
                         .HasColumnType("REAL");
@@ -276,14 +544,14 @@ namespace PPMTool.Migrations
                     b.Property<int?>("ProjectId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ScheduleStatus")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double>("UnmetDemand")
+                        .HasColumnType("REAL");
 
                     b.HasKey("SubTaskId");
 
@@ -292,6 +560,64 @@ namespace PPMTool.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("SubTasks");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.WorkloadModelChange", b =>
+                {
+                    b.Property<int>("WorkloadModelChangeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("ArchitectureFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("BusinessAsUsualFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime>("ChangeDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Grade")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("PersonalDevelopmentFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ProjectAndServiceManagementFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ProjectWorkFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("StaffManagementFTE")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("WorkloadModelChangeId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("WorkloadModelChanges");
+                });
+
+            modelBuilder.Entity("PersonProject", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("FollowedProjectsProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPMTool.Data.Entities.Person", null)
+                        .WithMany()
+                        .HasForeignKey("FollowersPersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PersonSkillTag", b =>
@@ -309,20 +635,75 @@ namespace PPMTool.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.AvailabilityChange", b =>
+            modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "Person")
-                        .WithMany("AvailabilityChanges")
+                        .WithMany("Absences")
                         .HasForeignKey("PersonId");
 
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.CompetencyAssessment", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Competency", "AssociatedCompetency")
+                        .WithMany("Assessments")
+                        .HasForeignKey("AssociatedCompetencyCompetencyId");
+
+                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
+                        .WithMany("Assessments")
+                        .HasForeignKey("PersonId");
+
+                    b.Navigation("AssociatedCompetency");
+
+                    b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.InnateCodeTask", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateCode")
+                        .WithMany("Tasks")
+                        .HasForeignKey("InnateCodeId");
+
+                    b.Navigation("InnateCode");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Person", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorPersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPMTool.Data.Entities.Person", "Editor")
+                        .WithMany()
+                        .HasForeignKey("EditorPersonId");
+
+                    b.HasOne("PPMTool.Data.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Editor");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.Person", "ProjectManager")
+                    b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateActivity")
                         .WithMany()
+                        .HasForeignKey("InnateActivityInnateCodeId");
+
+                    b.HasOne("PPMTool.Data.Entities.Person", "ProjectManager")
+                        .WithMany("ManagedProjects")
                         .HasForeignKey("ProjectManagerPersonId");
+
+                    b.Navigation("InnateActivity");
 
                     b.Navigation("ProjectManager");
                 });
@@ -362,9 +743,34 @@ namespace PPMTool.Migrations
                     b.Navigation("Predecessor");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.WorkloadModelChange", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
+                        .WithMany("WorkloadModelChanges")
+                        .HasForeignKey("PersonId");
+
+                    b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>
+                {
+                    b.Navigation("Assessments");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
+                {
+                    b.Navigation("Tasks");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
                 {
-                    b.Navigation("AvailabilityChanges");
+                    b.Navigation("Absences");
+
+                    b.Navigation("Assessments");
+
+                    b.Navigation("ManagedProjects");
+
+                    b.Navigation("WorkloadModelChanges");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>

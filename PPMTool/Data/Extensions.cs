@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using PPMTool.Data.Entities;
+using Radzen;
 
 namespace PPMTool.Data
 {
@@ -76,10 +78,66 @@ namespace PPMTool.Data
             }
         }
 
+        /// <summary>
+        /// Find the sum of a value in a collection, rounded to a specified number of decimal places.
+        /// </summary>
+        /// <typeparam name="TSource"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="selector"></param>
+        /// <param name="decimalPlaces"></param>
+        /// <returns></returns>
         public static double RoundedSum<TSource>(this IEnumerable<TSource> source,
-            Func<TSource, double> selector)
+            Func<TSource, double> selector, int decimalPlaces = 3)
         {
-            return Math.Round(100 * source.Sum(selector)) / 100;
+            return Math.Round(source.Sum(selector), decimalPlaces);
+        }
+
+        /// <summary>
+        /// Method to extract a suitable financial reference from a list of references given a financial year
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception">If no suitable references can be found</exception>
+        public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, int year)
+        {
+            // Try find matching reference
+            var match = list.FirstOrDefault(x => x.FinancialYear == year);
+
+            // If not then look for the earliest
+            if (match == null)
+            {
+                match = list.Where(x => x.FinancialYear < year).OrderByDescending(x => x.FinancialYear).FirstOrDefault();
+            }
+
+            // If not then use the next latest
+            if (match == null)
+            {
+                match = list.Where(x => x.FinancialYear > year).OrderBy(x => x.FinancialYear).FirstOrDefault();
+            }
+
+            // If there are no matches then there are no references so throw exception
+            if (match == null)
+            {
+                throw new Exception("No suitable financial references can be found!");
+            }
+
+            return match;
+        }
+
+        /// <summary>
+        /// Method to extract a suitable financial reference from a list of references given a date
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, DateTime date)
+        {
+            // Get financial year from date
+            int year = FinancialReference.GetFinancialYear(date);
+
+            // Call the other method
+            return GetSuitableFinancialReference(list, year);
         }
     }
 }

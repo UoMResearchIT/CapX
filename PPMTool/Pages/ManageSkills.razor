@@ -1,6 +1,8 @@
 ﻿@page "/manageskills"
 @inherits DataGridPage<SkillTag>
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+<PageTitle>Manage Skills - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
@@ -11,31 +13,40 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null)" />
         </div>
     </div>
-
-    <RadzenDataGrid @ref="dataGrid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
-                    Data="@dataGridEntities" TItem="SkillTag" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+    @if (ErrorMessage != null)
+    {
+        <StatusMessageComponent Message="ErrorMessage" />
+    }
+    <hr />
+    <RadzenDataGrid @ref="dataGrid"
+                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                    AllowPaging="true"
+                    PageSize="15"
+                    AllowSorting="true"
+                    EditMode="DataGridEditMode.Single"
+                    Data="@dataGridEntities"
+                    TItem="SkillTag"
+                    RowUpdate="@OnUpdateRow"
+                    RowCreate="@OnCreateRow"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
         <Columns>
-            <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px">
+            <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px">
                 <EditTemplate Context="tag">
-                    <RadzenTextBox @bind-Value="tag.Name" ValueProperty="Name" />
+                    <RadzenTextBox class="no-margin" @bind-Value="tag.Name" ValueProperty="Name" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="180px">
+            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
                 <Template Context="tag">
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true">
-                    </RadzenButton>
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true">
-                    </RadzenButton>
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
                 </Template>
                 <EditTemplate Context="tag">
-                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))">
-                    </RadzenButton>
-                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))">
-                    </RadzenButton>
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))">
-                    </RadzenButton>
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
                 </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
+    <br />
 </div>

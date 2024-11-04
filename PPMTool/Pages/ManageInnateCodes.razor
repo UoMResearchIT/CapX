@@ -1,0 +1,51 @@
+﻿@page "/managecodes"
+@inherits DataGridPage<InnateCode>
+@using DotNetExtensions
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+<PageTitle>Manage Innate Codes - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h1>Manage Innate Codes</h1>
+        </div>
+        <div class="col-auto">
+            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddCode" />
+        </div>
+    </div>
+    @if (ErrorMessage != null)
+    {
+        <StatusMessageComponent Message="ErrorMessage" />
+    }
+    <hr />
+    <RadzenDataGrid @ref="dataGrid"
+                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                    AllowPaging="true"
+                    PageSize="15"
+                    AllowSorting="true"
+                    ShowPagingSummary="true"
+                    EditMode="DataGridEditMode.Single"
+                    FilterMode="FilterMode.Simple"
+                    Data="@dataGridEntities"
+                    TItem="InnateCode"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+        <Columns>
+            <RadzenDataGridColumn TItem="InnateCode" Property="ActivityCode" Title="Activity Code" Width="15rem" MinWidth="10px"/>
+            <RadzenDataGridColumn TItem="InnateCode" Property="ActivityName" Title="Activity Name" Width="20rem" MinWidth="10px"/>
+            <RadzenDataGridColumn TItem="InnateCode" Property="Tasks" Title="Tasks" Width="15rem" MinWidth="10px" Filterable="false">
+                <Template Context="code">
+                    @(code.Tasks != null && code.Tasks.Count() > 0 ? string.Join(",", code.Tasks.Select(x => x.TaskName)) : "")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TItem="InnateCode" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" MinWidth="10px" Title="Actions">
+                <Template Context="code">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditCode(code))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteCode(code))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+    <br />
+</div>

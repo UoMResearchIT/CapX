@@ -1,19 +1,134 @@
 ﻿@page "/capacity"
 @inherits BasePage
-
+@using PPMTool.Pages.Components
 @using PPMTool.Data
+<PageTitle>Capacity - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
         <div class="col">
             <h1>Capacity</h1>
         </div>
-        <div class="col-auto" style="align-content: center">
-            <RadzenButton ButtonType="ButtonType.Button" Click="ExportCapacityData" Text="Export" Icon="download" Disabled=!EditAuthorised />
-        </div>
     </div>
-    @if (EditAuthorised)
+    <hr />
+    <h2>Charts</h2>
+    <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenDropDown @bind-Value=@chosenPeople Data=@filteredPeople TextProperty="Name" ValueProperty="Name"
+                            Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))"
+                            LoadData="@LoadFilteredPeople" Disabled=@(!ReadOrEditAuthorised || Loading) />
+            <RadzenDropDown @bind-Value=@chosenManager Data=@filteredManagers TextProperty="Name"
+                            Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))"
+                            LoadData="@LoadFilteredManagers" Disabled=@(!ReadOrEditAuthorised || Loading) />
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Unfunded:
+                <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Leavers:
+                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" />
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Finished:
+                <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" />
+            </RadzenStack>
+        </RadzenStack>
+    </div>
+    
+    @if (Loading)
     {
+        <LoadingComponent />
+    }
+    else if (confirmedChartItems == null || confirmedChartItems.Count < 1)
+    {
+        <div class="card">
+            <p class="lead">No data to show for the selected people.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Legend -->
+        <div class="card">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
+                    <RadzenText Text="Capacity:" TextStyle="TextStyle.Subtitle1" class="center-text" />
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(49)" /></svg>
+                        <RadzenText Text="&lt;50%" class="center-text" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(74)" /></svg>
+                        <RadzenText Text="&lt;75%" class="center-text" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(99)" /></svg>
+                        <RadzenText Text="&lt;100%" class="center-text" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg>
+                        <RadzenText Text="=100%" class="center-text" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(101)" /></svg>
+                        <RadzenText Text="&gt;100%" class="center-text" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(126)" /></svg>
+                        <RadzenText Text="&gt;125%" class="center-text" />
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(151)" /></svg>
+                        <RadzenText Text="&gt;150%" class="center-text" />
+                    </RadzenStack>
+                </RadzenStack>
+                @if (ChosenPeople != null && ChosenPeople.Count() > 0)
+                {
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
+                        <RadzenText Text="Assignments:" TextStyle="TextStyle.Subtitle1" class="center-text" />
+                        <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <RadzenText Text="0 FTE" class="center-text" />
+                            <svg width=200 height=20 xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="Gradient1">
+                                        <stop offset="0%" stop-color="@ChartItem.GetColourStringPercentage(0, true)" />
+                                        <stop offset="100%" stop-color="@ChartItem.GetColourStringPercentage(100, true)" />
+                                    </linearGradient>
+                                </defs>
+                                <rect width="200" height="20" rx="15" fill="url(#Gradient1)" />
+                            </svg>
+                            <RadzenText Text="1.0 FTE" class="center-text" />
+                        </RadzenStack>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </div>
+
+        <!-- Chart -->
+        <div class="card">
+            <div class="row">
+                @for (int i = 0; i < chartTitles.Count; ++i)
+                {
+                    <div class="@(chartTitles.Count == 1 ? "col" : "col-6")">
+                            <CapacityChartComponent Title=@chartTitles[i]
+                                                    ChartOptions="@chartOptions[i]"
+                                                    ConfirmedChartItems="@confirmedChartItems[i]"
+                                                    ProvisionalChartItems="@provisionalChartItems[i]"
+                                                    OnDataPointSelection="@DataPointsSelected"
+                                                    OnChartZoomed="@OnChartZoomed" />
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <hr />
+
+    @if (ReadOrEditAuthorised)
+    {
+        <h2>Availability Query</h2>
         <div class="card">
             <EditForm Model="this">
                 <div class="row align-items-center">
@@ -53,10 +168,10 @@
                         <RadzenSwitch @bind-Value="@IncludeLeavers" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQueryAsync Text="Run" Icon="directions_run"/>
+                        <RadzenButton ButtonType="ButtonType.Submit" Click=@RunQuery Text="Run" Icon="directions_run" Disabled="@Loading" />
                     </div>
                     <div class="col-auto">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@ClearQueryAsync Text="Clear" Icon="close"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Click=@(() => ClearQuery(true)) Text="Clear" Icon="close" Disabled="@Loading" />
                     </div>
                 </div>
             </EditForm>
@@ -71,113 +186,25 @@
                 @if (fullMatch.Count > 0)
                 {
                     <b>Full Match</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in fullMatch)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="fullMatch" />
                 }
 
                 @if (partialMatchPercent.Count > 0)
                 {
                     <b>Partial Match (FTE)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchPercent)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchPercent" />
                 }
 
                 @if (partialMatchDuration.Count > 0)
                 {
                     <b>Partial Match (Duration)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchDuration)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchDuration" />
                 }
 
                 @if (partialMatchBoth.Count > 0)
                 {
                     <b>Partial Match (FTE and Duration)</b>
-                    <table class="table table-sm table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Skills</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Availability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var res in partialMatchBoth)
-                            {
-                                <tr>
-                                    <td>@res.Person.Name</td>
-                                    <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
-                                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(res.AvailabilityPercent) FTE</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <CapacityQueryTableComponent Results="partialMatchBoth" />
                 }
             }
             else
@@ -187,79 +214,4 @@
         </div>
     }
     <hr />
-    <h2>Charts</h2>
-    <div class="card">
-        <div class="row align-items-center">
-            <div class="col-auto mr-auto">
-                <RadzenDropDown @bind-Value=@chosenPeople Data=@people TextProperty="Name" ValueProperty="Name"
-                                Multiple=true AllowClear=true Placeholder="Filter RSE" Chips=true
-                                Style="width: 100%; max-width: 400px;" Change="@(args => PeopleSelectionChanged(args))" Disabled=!EditAuthorised />
-            </div>
-            <div class="col-auto mr-auto">
-                <RadzenDropDown @bind-Value=@chosenManager Data=@managers TextProperty="Name"
-                                Multiple=false AllowClear=true Placeholder="Filter Manager" Chips=true
-                                Style="width: 100%; max-width: 400px;" Change="@(args => ManagerSelectionChanged(args))" Disabled=!EditAuthorised />
-            </div>
-            <div class="col-auto">
-                Include Unfunded:
-            </div>
-            <div class="col-auto" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeUnFunded" />
-            </div>
-            <div class="col-auto">
-                Include Leavers:
-            </div>
-            <div class="col" style="display: flex">
-                <RadzenSwitch @bind-Value="@IncludeLeavers" />
-            </div>
-        </div>
-    </div>
-    <div class="card">
-        @if (chartSource == null || chartSource.Count < 1)
-        {
-            <p class="lead">No data to show</p>
-        }
-        else
-        {
-            <!-- Legend -->
-            <div class="row">
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(49)"></rect> </svg> &lt;50%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(74)"></rect> </svg> &lt;75%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(99)"></rect> </svg> &lt;100%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(100)"></rect> </svg> =100%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(101)"></rect> </svg> &gt;100%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(126)"></rect> </svg> &gt;125%</div>
-                <div class="col-auto"><svg width=20 height=20> <rect width="20" height="20" fill="@ChartItem.GetColourStringPercentage(151)"></rect> </svg> &gt;150%</div>
-            </div>
-
-            <!-- Chart -->
-            <ApexChart @ref="chart"
-                        TItem="ChartItem"
-                        Options=options
-                        XAxisType="XAxisType.Datetime"
-                        OnDataPointSelection=DataPointsSelected>
-                <ChildContent>
-                    <ApexRangeSeries TItem="ChartItem"
-                                        Items="chartSource"
-                                        XValue="@(e => e.Label)"
-                                        YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                        YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                                        PointColor="@(e => e.Colour)" />
-                </ChildContent>
-                <ApexPointTooltip>
-                    <div class="m-2">
-                        @{
-                            var point = (ListPoint<ChartItem>)context.DataPoint;
-                            <div class="m-0 p-3 @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "bg-warning" : "bg-transparent")">
-                                <h3>@point.Items.FirstOrDefault()?.Value1 FTE @(point.Items.FirstOrDefault()?.IsHatched ?? false ? "(Provisional)" : "")</h3>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).ToString("dd MMM yyy")</span>
-                            </div>
-                        }
-                    </div>
-                </ApexPointTooltip>
-            </ApexChart>
-
-        }
-    </div>
 </div>

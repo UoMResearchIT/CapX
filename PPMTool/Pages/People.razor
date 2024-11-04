@@ -2,18 +2,57 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+<PageTitle>People - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
         <div class="col-auto mr-auto">
             <h1>People</h1>
         </div>
+    </div>
+    <hr />
+    @if (EditAuthorised)
+    {
+        <div class="row">
+            <div class="col">
+                <h2>Absent Today</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                @if (currentAbsences == null)
+            {
+                <LoadingComponent />            
+            }
+            else if (currentAbsences.Count() == 0)
+            {
+                <RadzenText Text="There is no-one currently absent." />
+            }
+            else
+            {
+                foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
+                {
+                    <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
+                }
+            }
+                </div>
+            </div>
+        <hr/>
+    }
+    <div class="row">
+        <div class="col">
+            <h2>All People</h2>
+        </div>
         <div class="col-auto">
             <RadzenButton Text="Add" Icon="add" Click="@AddPerson" Disabled=!EditAuthorised />
         </div>
-        <div class="col-auto">
-            <RadzenButton Text="Tags" Icon="style" Click="@ManageSkills" Disabled=!EditAuthorised />
-        </div>
+    </div>
+    <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
+            <RadzenSwitch @bind-Value="@IncludeLeavers" />
+        </RadzenStack>
     </div>
     <div class="card">
         @if (people == null)
@@ -22,7 +61,7 @@
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="true"
+            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
@@ -34,31 +73,43 @@
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             AllowPaging="true"
                             PageSize="@pageCount"
-                            PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Person" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.Contains" MinWidth="10px">
                         <Template Context="p">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled=!EditAuthorised>
-                            </RadzenButton>
+                            <span style="display: flex; align-items: center">
+                                @if (p.IsCurrentlyAbsent())
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="info" IconStyle="IconStyle.Info" title=@($"Person is currently absent!") />
+                                }
+                                @p.Name
+                            </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.Contains" />
-                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" FilterOperator="FilterOperator.StartsWith" />
-                    <RadzenDataGridColumn TItem="Person" Property="DayRate" Title="Day Rate" FormatString="{0:C0}" Filterable="false" />
-                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" FormatString="{0:d}" />
-                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="FTE" />
-                    <RadzenDataGridColumn TItem="Person" Property="AvailabilityChanges" Title="Availability Changes" Sortable="false">
+                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="FTE" Title="Post FTE" Width="50px" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Project Work FTE" Width="50px" MinWidth="10px" Sortable="false">
                         <Template Context="p">
-                            @string.Join(" | ", p.AvailabilityChanges.Select(d => $"{d.ChangeDate.ToShortDateString()} to {d.AvailabilityFTE}"))
+                            @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.ProjectWorkFTE
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false">
+                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Grade" Width="50px" MinWidth="10px" Sortable="false">
+                        <Template Context="p">
+                            @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.Grade
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
                         <Template Context="p">
                             @string.Join(',', p.SkillTags.Select(t => t.Name))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
+                        <Template Context="p">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>

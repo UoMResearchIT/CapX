@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ApexCharts;
+using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -18,6 +18,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class Capacity : BasePage
     {
         [Inject]
@@ -30,13 +31,13 @@ namespace PPMTool.Pages
         private ProjectService ProjectService { get; set; }
 
         [Inject]
-        private SubTaskService SubTaskService { get; set; }
-
-        [Inject]
-        private IJSRuntime JS { get; set; }
+        private IJSRuntime JSRuntime { get; set; }
 
         [Inject]
         private RolesService RolesService { get; set; }
+
+        [Inject]
+        private ISessionStorageService SessionStorage { get; set; }
 
         private bool includeUnFunded = true;
         public bool IncludeUnFunded
@@ -47,9 +48,10 @@ namespace PPMTool.Pages
                 if (includeUnFunded != value)
                 {
                     includeUnFunded = value;
+                    SessionStorage.SetItemAsync<bool?>("capacity-include-unfunded", includeUnFunded);
 
                     // Update the chart source
-                    InvokeAsync(async () => await ConfigureSourceAsync());
+                    ConfigureChartSource();
                 }
             }
         }
@@ -63,17 +65,36 @@ namespace PPMTool.Pages
                 if (includeLeavers != value)
                 {
                     includeLeavers = value;
+                    SessionStorage.SetItemAsync<bool?>("capacity-include-leavers", includeLeavers);
 
                     // Refresh the people source
                     ReloadDropDownSources();
 
                     // Update the chart source
-                    InvokeAsync(async () => await ConfigureSourceAsync());
+                    ConfigureChartSource();
+
                 }
             }
         }
 
-        private DateTime queryStartDate = DateTime.Now.Date;
+        private bool includeFinished = false;
+        public bool IncludeFinished
+        {
+            get => includeFinished;
+            set
+            {
+                if (includeFinished != value)
+                {
+                    includeFinished = value;
+                    SessionStorage.SetItemAsync<bool?>("capacity-include-finished", includeFinished);
+
+                    // Update the chart source
+                    ConfigureChartSource();
+                }
+            }
+        }
+
+        private DateTime queryStartDate = DateTime.Today;
         public DateTime QueryStartDate
         {
             get => queryStartDate;
@@ -86,17 +107,50 @@ namespace PPMTool.Pages
             }
         }
 
-        private IDictionary<object, IEnumerable<SubTask>> groupedSubTasks;
-        private ApexChart<ChartItem> chart;
-        private List<ChartItem> chartSource;
-        private ApexChartOptions<ChartItem> options;
+        private Person chosenManager;
+        public Person ChosenManager
+        {
+            get => chosenManager;
+            set
+            {
+                if (chosenManager != value)
+                {
+                    chosenManager = value;
+                    SaveManagerState();
+                }
+            }
+        }
+
+        private IEnumerable<string> chosenPeople = new List<string>();
+        public IEnumerable<string> ChosenPeople
+        {
+            get => chosenPeople;
+            set
+            {
+                if (chosenPeople != value)
+                {
+                    chosenPeople = value;
+                    SavePeopleState();
+                }
+            }
+        }
+
+        private bool IsReader => AuthenticationState?.User.IsInRole(RoleType.Reader.ToString()) ?? false;
+
+        private bool ReadOrEditAuthorised => EditAuthorised || IsReader;
+
+        private IEnumerable<Project> cachedProjects;
+        private IEnumerable<Person> cachedPeople;
+        private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
+        private IList<List<ChartItem>> confirmedChartItems;
+        private IList<List<ChartItem>> provisionalChartItems;
+        private IList<string> chartTitles;
+        private IList<ApexChartOptions<ChartItem>> chartOptions;
         private List<Person> people;
         private List<Person> managers;
-        private string chartTitle;
-        private PPMToolContext context;
-        private DateTime queryEndDate = DateTime.Now.Date.AddDays(7);
-        private IEnumerable<string> chosenPeople = new List<string>();
-        private Person chosenManager;
+        private List<Person> filteredPeople;
+        private List<Person> filteredManagers;
+        private DateTime queryEndDate = DateTime.Today.AddDays(7);
         private bool queryResultsAvailable;
         private string queryErrorMessage;
         private bool queryActive;
@@ -107,65 +161,80 @@ namespace PPMTool.Pages
         private List<CapacityQueryItem> partialMatchBoth;
         private bool managerChosen;
         private bool peopleChosen;
+        private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
+        private Task configureChartTask = null;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            context = new PPMToolContext();
-            options = new ApexChartOptions<ChartItem>
-            {
-                PlotOptions = new PlotOptions
-                {
-                    Bar = new PlotOptionsBar
-                    {
-                        Horizontal = true,
-                        RangeBarOverlap = true
-                    }
-                },
-                Legend = new Legend
-                {
-                    Show = false
-                },
-                Xaxis = new XAxis { },
-                Fill = new Fill
-                {
-                    Pattern = new FillPattern
-                    {
-                        Style = FillPatternStyle.SlantedLines
-                    }
-                }
-            };
+            Loading = true;
 
+            // Get all projects not finished or cancelled
+            cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
 
-        }
+            // Cache all the people
+            cachedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
 
-        protected override async Task OnInitializedAsync()
-        {
             // Refresh the dropdown
             ReloadDropDownSources();
 
-            // Choose the person automatically if not a manager
-            if (!EditAuthorised)
+            LogInformation($"Viewing capacity page");
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender) return;
+
+            // Load settings
+            var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
+            ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
+            ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
+            UpdateSelectionState();
+
+            // Reload the dropdown sources if a manager has been chosen
+            if (ChosenManager != null)
             {
-                // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name);
-                chosenPeople = new List<string>
-                {
-                    role.Person.Name
-                };
-                PeopleSelectionChanged(chosenPeople);
+                ReloadDropDownSources();
             }
-            else
+
+            // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
+            var temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-leavers");
+            if (temp != null) IncludeLeavers = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-unfunded");
+            if (temp != null) IncludeUnFunded = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("capacity-include-finished");
+            if (temp != null) IncludeFinished = temp ?? false;
+
+            if (EditAuthorised || IsReader)
             {
-                // Get data for chart
-                await ConfigureSourceAsync();
+                ConfigureChartSource();
+                return;
             }
+
+            // Choose the person automatically if not a manager    
+            // Look up the username
+            var role = RoleService.GetByUsername(Context, ActiveUserName);
+            ChosenPeople = new List<string>
+            {
+                role.GetName()
+            };
+            PeopleSelectionChanged(ChosenPeople);
+        }
+
+        private void SaveManagerState()
+        {
+            SessionStorage.SetItemAsync("capacity-chosen-manager", chosenManager == null ? null : chosenManager.Name);
+        }
+
+        private void SavePeopleState()
+        {
+            SessionStorage.SetItemAsync("capacity-chosen-people", chosenPeople);
         }
 
         private void UpdateSelectionState()
         {
-            managerChosen = chosenManager != null;
-            peopleChosen = chosenPeople != null && chosenPeople.Count() > 0;
+            managerChosen = ChosenManager != null;
+            peopleChosen = ChosenPeople != null && ChosenPeople.Count() > 0;
         }
 
         /// <summary>
@@ -173,23 +242,90 @@ namespace PPMTool.Pages
         /// </summary>
         private void ReloadDropDownSources()
         {
-            // Get dropdown options
-            people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
-            var roles = RolesService.GetAll(context)
+            Debug.WriteLine("** Reloading dropdown sources...");
+
+            // Get people and filter if PM selected
+            people = cachedPeople.ToList();
+            if (chosenManager != null)
+            {
+                var validProjects = GetValidProjects();
+
+                // Get flattened list of all resources for the valid projects
+                people = validProjects.SelectMany(x => x.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person)))
+                    .DistinctBy(x => x.PersonId)
+                    .OrderBy(x => x.Name)
+                    .ToList();
+            }
+
+            // Add managers
+            var roles = RolesService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            managers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
+            managers = cachedPeople.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
 
             // Filter out leavers if necessary
             if (!includeLeavers)
             {
                 people = people
-                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now.Date)
+                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
+                    .OrderBy(x => x.Name)
+                    .ToList();
+
+                managers = managers
+                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
                     .OrderBy(x => x.Name)
                     .ToList();
             }
+
+            // Apply autocomplete box filters
+            LoadFilteredPeople(new LoadDataArgs());
+            LoadFilteredManagers(new LoadDataArgs());
+
+            // Remove any people not in the dropdown source from the selected people list
+            if (chosenPeople != null)
+            {
+                var temp = new List<string>();
+                foreach (var p in chosenPeople)
+                {
+                    if (filteredPeople.Any(x => x.Name == p))
+                    {
+                        temp.Add(p);
+                    }
+                }
+                chosenPeople = temp;
+            }
+        }
+
+        /// <summary>
+        /// Use the master list of people to filter the data source for the dropdown based on user typing
+        /// </summary>
+        /// <param name="args"></param>
+        void LoadFilteredPeople(LoadDataArgs args)
+        {
+            var temp = people.AsQueryable();
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
+            }
+            filteredPeople = temp.ToList();
+            InvokeAsync(StateHasChanged);
+        }
+
+        /// <summary>
+        /// Use the master list of managers to filter the data source for the dropdown based on user typing
+        /// </summary>
+        /// <param name="args"></param>
+        void LoadFilteredManagers(LoadDataArgs args)
+        {
+            var temp = managers.AsQueryable();
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
+            }
+            filteredManagers = temp.ToList();
+            InvokeAsync(StateHasChanged);
         }
 
         /// <summary>
@@ -208,7 +344,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
 
                 // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(context).FirstOrDefault(x => x.GetFullName() == projectName);
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
                 if (project != null)
                 {
                     Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");
@@ -216,17 +352,17 @@ namespace PPMTool.Pages
             }
 
             // When in people ("All") mode then add person to selection and update the chart
-            else if (dataPoint.IsSelected && !peopleChosen && !managerChosen)
+            else if (dataPoint.IsSelected && !peopleChosen)
             {
                 var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
                 Debug.WriteLine($"** Selected {personName}. Updating selection...");
                 var match = people.FirstOrDefault(x => x.Name == personName);
                 if (match != null)
                 {
-                    var temp = peopleChosen ? new List<string>(chosenPeople) : new List<string>();
+                    var temp = peopleChosen ? new List<string>(ChosenPeople) : new List<string>();
                     temp.Add(personName);
-                    chosenPeople = temp;
-                    PeopleSelectionChanged(chosenPeople);
+                    ChosenPeople = temp;
+                    PeopleSelectionChanged(ChosenPeople);
                 }
             }
         }
@@ -235,7 +371,7 @@ namespace PPMTool.Pages
         /// Fire and forget when selection of the multi-drop down changes
         /// </summary>
         /// <param name="selectedOptions"></param>
-        private async void PeopleSelectionChanged(object selectedOptions)
+        private void PeopleSelectionChanged(object selectedOptions)
         {
             var items = selectedOptions as IEnumerable<string>;
             Debug.WriteLine("** Selected People:");
@@ -247,40 +383,55 @@ namespace PPMTool.Pages
                 }
             }
 
+            // Save the new state
+            SavePeopleState();
+
             // Regenerate the chart data
-            await ConfigureSourceAsync();
+            ConfigureChartSource();
+
+            LogInformation($"Selected people: {(items == null ? "" : string.Join("|", items))}");
         }
 
         /// <summary>
         /// Manager selected from the dropdown
         /// </summary>
         /// <param name="selectedOptions"></param>
-        private async void ManagerSelectionChanged(object selectedOptions)
+        private void ManagerSelectionChanged(object selectedOptions)
         {
             var item = selectedOptions as Person;
             Debug.WriteLine($"** Selected Manager: {item?.Name}");
 
+            // Save the new state
+            SaveManagerState();
+
+            // Reload the people to include just those working on projects that PM manages
+            ReloadDropDownSources();
+
             // Regenerate the chart data
-            await ConfigureSourceAsync();
+            ConfigureChartSource();
+
+            LogInformation($"Selected manager: {item?.Name}");
         }
 
         /// <summary>
         /// Resets the page to its initial state
         /// </summary>
-        private async Task ClearQueryAsync()
+        private void ClearQuery(bool regenerateChart = true)
         {
             Debug.WriteLine("** Clearing Query...");
             queryResultsAvailable = false;
             queryErrorMessage = null;
             queryActive = false;
-            chosenPeople = new List<string>();
-            await ConfigureSourceAsync();
+            ChosenPeople = new List<string>();
+            if (regenerateChart) ConfigureChartSource();
+
+            LogInformation($"Query cleared");
         }
 
         /// <summary>
         /// Runs the capacity query and updates the query result property
         /// </summary>
-        private async void RunQueryAsync()
+        private void RunQuery()
         {
             Debug.WriteLine("** Running query...");
 
@@ -291,55 +442,15 @@ namespace PPMTool.Pages
                 return;
             }
 
-            // Reset query results
-            await ClearQueryAsync();
+            // Reset query results but don't regenerate the chart as we are going to do it again in a minute
+            ClearQuery(false);
+
+            // Start query state
             queryActive = true;
-            queryErrorMessage = null;
-            var results = new List<CapacityQueryItem>();
+            LogInformation($"Query running.");
 
-            // Update the chart source as this is used
-            await ConfigureSourceAsync();
-
-            // Convert the chart results to capcity query results
-            foreach (var item in chartSource)
-            {
-                // Get person from item label
-                var person = people.FirstOrDefault(p => p.Name == item.Label);
-                if (person == null)
-                {
-                    Debug.WriteLine($"** Couldn't find person {item.Label}");
-                    continue;
-                }
-
-                // Availability of individual is value 2 in the chart item
-                var availabilityFTE = item.Value2;
-
-                // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
-                var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
-
-                // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-                if (item.StartDate != item.EndDate && unassignedFTE > 0)
-                {
-                    // Add to range
-                    results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
-                }
-            }
-
-            // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
-            fullMatch = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-            partialMatchPercent = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-            partialMatchDuration = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-            partialMatchBoth = OrganiseResults(results
-                .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-
-            // Results available
-            queryResultsAvailable = results.Count() > 0;
-
-            // Update the UI
-            StateHasChanged();
+            // Update the chart source as this is used to drive the query results
+            ConfigureChartSource(true);
         }
 
         private List<CapacityQueryItem> OrganiseResults(IEnumerable<CapacityQueryItem> results)
@@ -352,326 +463,546 @@ namespace PPMTool.Pages
 
         /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
-        /// Can specific a start and end date to restrict the data window
         /// </summary>
-        private async Task ConfigureSourceAsync()
+        private void ConfigureChartSource(bool presentQueryResults = false)
         {
             Debug.WriteLine("** Configuring Chart Source...");
+            Loading = true;
+            StateHasChanged();
 
-            // Reset source
-            chartSource = new List<ChartItem>();
-
-            // Need some people for this to work
-            if (people.Count() == 0)
+            // Before kicking off a new task here we need to cancel the previous one
+            if (configureChartTaskCancellationTokenSource != null)
             {
-                Logger.LogError("People database is empty!");
-                Debug.WriteLine("** No people registered in the database!");
-                return;
+                Debug.WriteLine("** Cancelling existing task...");
+                configureChartTaskCancellationTokenSource.Cancel();
             }
 
-            // Get projects from the database ignoring finished or cancelled projects
-            var projects = ProjectService.GetAll(context).Where(x => !x.ProjectStatus.IsProjectFinishedOrCancelled());
-            if (!IncludeUnFunded)
+            // Wait for the task to be finished
+            while (!configureChartTask?.IsCompleted ?? false)
             {
-                projects = projects.Where(p => p.ProjectStatus != ProjectStatus.Unfunded);
+                Debug.WriteLine("** Waiting for completion...");
+                Task.Delay(1000);
             }
 
-            // Filter the project source if a manager selected
-            if (chosenManager != null)
+            // Create new cancellation token and task
+            configureChartTaskCancellationTokenSource = new CancellationTokenSource();
+            configureChartTask = Task.Run(new Func<Task>(() =>
             {
-                projects = projects.Where(x => x.ProjectManager == chosenManager);
-            }
+                Debug.WriteLine("** Running new configure task...");
 
-            // Get the window from the start and end dates of the projects included in the source
-            var safeProjects = projects.Where(x => x.StartDate.Year > 2000);
-            if (safeProjects.Count() == 0)
-            {
-                Debug.WriteLine("** No projects found that match the chosen options!");
-                return;
-            }
-            var startDate = safeProjects.Min(x => x.StartDate);
-            var endDate = safeProjects.Max(x => x.EndDate);
+                // Initialise the dictionaries
+                confirmedChartItems = new List<List<ChartItem>>();
+                provisionalChartItems = new List<List<ChartItem>>();
+                groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
+                chartTitles = new List<string>();
+                chartOptions = new List<ApexChartOptions<ChartItem>>();
+                IEnumerable<Project> validProjects = cachedProjects;
 
-            // Reinitialise dictionary
-            groupedSubTasks = new Dictionary<object, IEnumerable<SubTask>>();
-
-            // Determine state
-            UpdateSelectionState();
-
-            // -------------- PERSON MODE -------------- //
-
-            // Flatten subtasks and group by person if "All" chosen
-            if (!managerChosen && !peopleChosen)
-            {
-                Debug.WriteLine("** Chart in PERSON MODE.");
-                foreach (var person in people)
+                // Need some people for this to work
+                if (people.Count() == 0)
                 {
-                    // Create a list of subtasks to which this person is assigned
-                    var assignments = new List<SubTask>();
-                    foreach (var project in projects)
+                    LogError("People database is empty!");
+                    Debug.WriteLine("** No people registered in the database!");
+                    Loading = false;
+                    return Task.CompletedTask;
+                }
+
+                // Update the valid projects
+                validProjects = GetValidProjects();
+
+                // Get the window from the start and end dates of the projects included in the source
+                // Avoids including malformed projects without a proper start date
+                validProjects = validProjects.Where(x => x.StartDate.Year > 2000);
+                if (validProjects.Count() == 0)
+                {
+                    Debug.WriteLine("** No projects found that match the chosen options!");
+                    Loading = false;
+                    return Task.CompletedTask;
+                }
+                var startDate = validProjects.Min(x => x.StartDate);
+                var endDate = validProjects.Max(x => x.EndDate);
+
+                // Determine state based on drop down selections
+                UpdateSelectionState();
+
+                // -------------- PERSON MODE -------------- //
+
+                // Flatten subtasks and group by person if "All" chosen
+                if (!peopleChosen)
+                {
+                    Debug.WriteLine("** Chart in PERSON MODE.");
+
+                    // Create temporary list of chart items
+                    var chartSourceTemp = new List<ChartItem>();
+
+                    // Build chart items for each person
+                    foreach (var person in people)
                     {
-                        foreach (var subTask in project.SubTasks)
+                        // Create a list of subtasks to which this person is assigned
+                        var assignments = new List<Assignment>();
+                        foreach (var project in validProjects)
                         {
-                            if (subTask.AssignedResources.Any(z => z.Person == person))
+                            foreach (var subTask in project.SubTasks)
                             {
-                                assignments.Add(subTask);
+                                if (subTask.AssignedResources.Any(z => z.Person == person))
+                                {
+                                    assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                                }
                             }
                         }
+
+                        // Add dictionary entry with person as key
+                        groupedAssignments.Add(person, assignments);
                     }
 
-                    // Add dictionary entry with person as key
-                    groupedSubTasks.Add(person, assignments);
-                }
-
-                // Build chart source from the grouped data
-                foreach (var group in groupedSubTasks)
-                {
-                    var items = ChartHelper.ConvertSubTasksToChartItemsForPerson(
-                        group.Key as Person,
-                        group.Value,
-                        x =>
-                        {
-                            var resource = x.AssignedResources.First(x => x.Person.Name == (group.Key as Person).Name);
-                            return resource.AssignmentFTE;
-                        },
-                        (x, y) =>
-                        {
-                            return ChartItem.GetColourStringFTE(x, y);
-                        },
-                        (group.Key as Person).Name,
-                        queryActive ? QueryStartDate : startDate,
-                        queryActive ? queryEndDate : endDate,
-                        x =>
-                        {
-                            return x.AssignedResources.First(x => x.Person == group.Key).IsProvisional;
-                        },
-                        (x, w) =>
-                        {
-                            return (group.Key as Person)?.GetAvailabilityOnDate(w) ?? 1.0;
-                        }
-                    ).ToList();
-
-                    // Add the range for this person
-                    chartSource.AddRange(items);
-                }
-            }
-
-            // -------------- PROJECT MODE -------------- //
-
-            // Filter by people chosen, flatten and group by project if in project mode
-            else if (peopleChosen)
-            {
-                Debug.WriteLine("** Chart in PROJECT MODE.");
-
-                // Create a list of subtasks for each project these people are assigned to
-                foreach (var project in projects)
-                {
-                    var assignments = new List<SubTask>();
-                    foreach (var subTask in project.SubTasks)
+                    // Build chart source from the grouped data
+                    foreach (var group in groupedAssignments)
                     {
-                        // Only include subtasks with the selected people assigned as resources
-                        if (subTask.AssignedResources.Any(z => chosenPeople.Contains(z.Person.Name)))
-                        {
-                            assignments.Add(subTask);
-                        }
+                        // Add the range for this person
+                        chartSourceTemp.AddRange(
+                            GetPersonModeChartItemsFromAssignments(
+                                group.Key as Person,
+                                group.Value,
+                                queryActive ? QueryStartDate : startDate,
+                                queryActive ? queryEndDate : endDate
+                            )
+                        );
                     }
 
-                    // Add dictionary entry with project name as key
-                    if (assignments.Count > 0) groupedSubTasks.Add(project, assignments);
+                    // Add data
+                    confirmedChartItems.Add(chartSourceTemp.Where(x => !x.IsHatched).ToList());
+                    provisionalChartItems.Add(chartSourceTemp.Where(x => x.IsHatched).ToList());
+
+                    // Chart title
+                    var chartTitle = $"Load for All {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
+                    chartTitles.Add(chartTitle);
+
+                    // Chart options
+                    chartOptions.Add(BuildNewChartOptionsObject());
                 }
 
-                // Build chart source from the grouped data
-                foreach (var group in groupedSubTasks)
-                {
+                // -------------- PROJECT MODE -------------- //
 
-                    chartSource.AddRange(
-                        GetProjectModeChartItemsFromTasks((group.Key as Project).GetFullName(), group, startDate, endDate)
-                    );
+                // Filter by people chosen, flatten and group by project if in project mode
+                else if (managerChosen || peopleChosen)
+                {
+                    Debug.WriteLine("** Chart in PROJECT MODE.");
+
+                    // For each person selected
+                    foreach (var name in ChosenPeople)
+                    {
+                        // Create temporary list of chart items
+                        var chartSourceTemp = new List<ChartItem>();
+
+                        // Get person object
+                        var person = people.First(x => x.Name == name);
+
+                        // Reset the grouped subtasks list for the next person
+                        groupedAssignments.Clear();
+
+                        // Create a list of subtasks for each project this person is assigned to
+                        foreach (var project in validProjects)
+                        {
+                            var assignments = new List<Assignment>();
+                            foreach (var subTask in project.SubTasks)
+                            {
+                                // Only include subtasks with this person assigned as a resource
+                                if (subTask.AssignedResources.Any(x => name == x.Person.Name))
+                                {
+                                    assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                                }
+                            }
+
+                            // Add dictionary entry with project name as key
+                            if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
+                        }
+
+                        // Build chart source from the grouped data
+                        Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+                        foreach (var group in groupedAssignments)
+                        {
+                            // Compute chart items from the grouped assignments
+                            var seriesName = (group.Key as Project).GetFullName();
+                            chartSourceTemp.AddRange(
+                                GetProjectModeChartItemsFromAssignments(
+                                    seriesName,
+                                    group,
+                                    startDate,
+                                    endDate,
+                                    person
+                                )
+                            );
+                        }
+
+                        // Total row needs to repeat the above logic but on the flattened set of subtasks
+                        var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
+                        var rowName = "Total";
+                        chartSourceTemp.AddRange(
+                            GetProjectModeChartItemsFromAssignments(
+                                rowName,
+                                new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
+                                startDate,
+                                endDate,
+                                person,
+                                isTotalRow: true
+                            )
+                        );
+
+                        // Hack to complete the entries
+                        ChartHelper.CompleteChartSeries(
+                            chartSourceTemp,
+                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched, isFake: true),
+                            out var confirmedChartItemsComplete,
+                            out var provisionalChartItemsComplete
+                        );
+
+                        // Add completed chart source to dictionary
+                        confirmedChartItems.Add(confirmedChartItemsComplete);
+                        provisionalChartItems.Add(provisionalChartItemsComplete);
+
+                        // Title
+                        var chartTitle = $"Load for {name} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
+                        chartTitles.Add(chartTitle);
+
+                        // Options
+                        chartOptions.Add(BuildNewChartOptionsObject());
+                    }
                 }
 
-                // Total row needs to repeat the above logic but on the whole set of subtasks
-                var allProjectSubTasks = groupedSubTasks.SelectMany(x => x.Value);
-                var name = "Total";
-                chartSource.AddRange(
-                    GetProjectModeChartItemsFromTasks(
-                        name,
-                        new KeyValuePair<object, IEnumerable<SubTask>>(name, allProjectSubTasks),
-                        startDate,
-                        endDate
-                    )
-                );
-            }
+                Debug.WriteLine($"** Done. Unfunded = {IncludeUnFunded} | Leavers = {IncludeLeavers} | Finished = {IncludeFinished}.");
 
-            chartTitle = $"Load for {(peopleChosen ? string.Join(",", chosenPeople) : (!managerChosen ? "All" : "None"))} " +
-                $"{(managerChosen ? " with manager " + chosenManager.Name : "")}";
-            Debug.WriteLine($"** ...Finished configuring {chartTitle}. Include unfunded = {includeUnFunded}! Include leavers = {includeLeavers}!");
-
-            // Format X Axis range
-            options.Xaxis.Min = !queryActive ? DateTime.Now.Date.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
-            options.Xaxis.Max = !queryActive ? null : queryEndDate.ToUnixTimeMilliseconds();
-
-            // First time this is called, there is no reference to the chart
-            if (chart != null)
-            {
-                Debug.WriteLine($"** Re-renderering chart! {options.Xaxis.Min} to {options.Xaxis.Max}");
-                await RefreshChartAsync();
-            }
-
-            Debug.WriteLine($"** ChartSource has {chartSource?.Count()} entries!");
-        }
-
-        private IEnumerable<ChartItem> GetProjectModeChartItemsFromTasks(
-            string seriesName,
-            KeyValuePair<object, IEnumerable<SubTask>> group,
-            DateTime startDate,
-            DateTime endDate
-        )
-        {
-            return ChartHelper.ConvertSubTasksToChartItems(
-                group.Value,
-                // Value 1 for each block is the sum of the effort across all chosen people
-                x =>
+                // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
+                var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
+                long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
+                foreach (var opt in chartOptions)
                 {
-                    var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                    return resources.RoundedSum(x => x.AssignmentFTE);
-                },
-                // Shading function based on value 1 and value 2
-                (x, y) =>
+                    opt.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
+                    opt.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
+                }
+                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartOptions.FirstOrDefault()?.Xaxis?.Min} to {chartOptions.FirstOrDefault()?.Xaxis?.Max}");
+
+                return Task.CompletedTask;
+
+            }), configureChartTaskCancellationTokenSource.Token)
+                .ContinueWith(task =>
                 {
-                    return ChartItem.GetColourStringFTE(x, y);
-                },
-                seriesName,
-                queryActive ? QueryStartDate : startDate,
-                queryActive ? queryEndDate : endDate,
-                // Hatched value is whether any assignee is provisional
-                x =>
-                {
-                    var resources = x.AssignedResources.Where(x => chosenPeople.Contains(x.Person.Name));
-                    return resources.Any(x => x.IsProvisional);
-                },
-                // Value 2 for each block is based on the sum of the availability of all chosen people
-                (x, w) =>
-                {
-                    var peo = people.Where(y => chosenPeople.Contains(y.Name));
-                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(w));
+                    Debug.WriteLine($"** ...task complete. Status = {task.Status}");
+
+                    if (presentQueryResults)
+                    {
+                        // Convert the chart results to capacity query results
+                        var results = new List<CapacityQueryItem>();
+                        var mergedItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).ToList();
+                        foreach (var item in mergedItems)
+                        {
+                            // Get person from item label
+                            var person = people.FirstOrDefault(p => p.Name == item.Label);
+                            if (person == null)
+                            {
+                                Debug.WriteLine($"** Couldn't find person {item.Label}");
+                                continue;
+                            }
+
+                            // Availability of individual is value 2 in the chart item
+                            var availabilityFTE = item.Value2;
+
+                            // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
+                            var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
+
+                            // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
+                            if (item.StartDate != item.EndDate && unassignedFTE > 0)
+                            {
+                                // Add to range
+                                results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
+                            }
+                        }
+
+                        // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
+                        fullMatch = OrganiseResults(results
+                            .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+                        partialMatchPercent = OrganiseResults(results
+                            .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+                        partialMatchDuration = OrganiseResults(results
+                            .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+                        partialMatchBoth = OrganiseResults(results
+                            .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+
+                        // Results available
+                        queryResultsAvailable = results.Count() > 0;
+
+                        LogInformation("Query results generated.");
+                    }
+
+                    InvokeAsync(() =>
+                    {
+                        // Reset the state
+                        Loading = false;
+                        configureChartTask = null;
+                        StateHasChanged();
+                    });
+
+                    Debug.WriteLine($"** There are {chartTitles.Count} chart(s)!");
                 });
         }
 
         /// <summary>
-        /// Method to force the chart to update
+        /// Takes the cached projects on the page and filters them based on the state of the switches and dropdowns
         /// </summary>
         /// <returns></returns>
-        private async Task RefreshChartAsync()
+        private IEnumerable<Project> GetValidProjects(bool filterBasedOnSelectedManager = true)
         {
-            // Update the options
-            await chart.UpdateOptionsAsync(true, false, false);
+            var validProjects = cachedProjects;
 
-            // HACK: Not sure why we have to call this twice but we do!
-            await chart.UpdateSeriesAsync(false);
-            //await chart.UpdateSeriesAsync(false);
+            // Filter projects based on finished
+            if (!IncludeFinished)
+            {
+                Debug.WriteLine("** Removing finished projects...");
+                validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
+            }
 
-            // Force blazor redraw
-            await InvokeAsync(StateHasChanged);
+            // Filter projects based on unfunded
+            if (!IncludeUnFunded)
+            {
+                Debug.WriteLine("** Removing unfunded projects...");
+                validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
+            }
+
+            // Filter the project source if a manager selected
+            if (ChosenManager != null && filterBasedOnSelectedManager)
+            {
+                Debug.WriteLine("** Removing projects not belonging to selected manager...");
+                validProjects = validProjects.Where(x => x.ProjectManager.PersonId == ChosenManager.PersonId);
+            }
+
+            return validProjects;
+        }
+
+        private void OnChartZoomed(ZoomedData<ChartItem> zoomedData)
+        {
+            if (zoomedData != null)
+            {
+                Debug.WriteLine($"** {zoomedData.Chart.ChartId} Zoomed {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+
+                // Go through all the chart options objects and for all not associated with the chart making this call
+                // and whose values of the X limits differ from those give can then be updated.
+                foreach (var opt in chartOptions)
+                {
+                    if (opt != zoomedData.Chart.Options)
+                    {
+                        if (opt.Xaxis.Min as decimal? != zoomedData.XAxis.Min || opt.Xaxis.Max as decimal? != zoomedData.XAxis.Max)
+                        {
+                            Debug.WriteLine($"** Updating zoom for {opt.Chart.Id}: {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+                            JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, zoomedData.XAxis.Min, zoomedData.XAxis.Max);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
-        /// Method to export the capacity information in a format suitable for ITS GaDMO reporting
+        /// Creates a standard chart object to be pass to all chart instances -- they cannot share the same object
         /// </summary>
-        private async void ExportCapacityData()
+        /// <returns></returns>
+        private ApexChartOptions<ChartItem> BuildNewChartOptionsObject()
         {
-            // Get all the people
-            var people = PersonService.GetAll(context).OrderBy(x => x.Name);
-
-            // Create blank list of data
-            var allData = new List<ExportHelper.TaskData>();
-
-            // Set the report length
-            const int numMonths = 6;
-
-            // Get data for each person
-            var helper = new ExportHelper();
-            foreach (var p in people)
+            return new ApexChartOptions<ChartItem>
             {
-                // Assume 6 months for now
-                var data = helper.GetExportDataForPerson(
-                    p,
-                    SubTaskService.GetAll(context).Where(x => x.AssignedResources.Any(x => x.Person == p)),
-                    ProjectService.GetAll(context),
-                    numMonths
-                );
-                allData.AddRange(data);
-            }
-
-            try
-            {
-
-                // Write to CSV file
-                var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
-                var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                Directory.CreateDirectory(folder);
-                var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
-                using (var writer = new StreamWriter(path))
+                PlotOptions = new PlotOptions
                 {
-
-                    // Get all public properties
-                    var props = typeof(ExportHelper.TaskData).GetProperties();
-                    var propNames = props.Select(x => x.Name);
-
-                    // Create header row
-                    var headers = propNames.ToList();
-                    var startDate = DateTime.Now.Date;
-                    var d = startDate;
-                    while (d < startDate.AddMonths(numMonths))
+                    Bar = new PlotOptionsBar
                     {
-                        // Convert month number to name for the column heading
-                        headers.Add($"{d.ToString("MMM", CultureInfo.InvariantCulture)} %");
-
-                        // Increment month
-                        d = d.AddMonths(1);
+                        Horizontal = true,
+                        RangeBarOverlap = true,
+                        RangeBarGroupRows = true
                     }
-
-                    // Write header row
-                    writer.WriteLine(string.Join(",", headers));
-
-                    // Write rows one at a time
-                    foreach (var record in allData)
+                },
+                Legend = new Legend
+                {
+                    Show = false
+                },
+                Xaxis = new XAxis { },
+                Fill = new Fill
+                {
+                    Opacity = 1,
+                    Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                    Pattern = new FillPattern
                     {
-                        // Write properties
-                        var valuesAsStrings = new List<string>();
-                        foreach (var name in propNames)
-                        {
-                            string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-                            valuesAsStrings.Add(value.Replace(",", ";"));
-                        }
-
-                        // Write expanded values for months
-                        d = startDate;
-                        while (d < startDate.AddMonths(numMonths))
-                        {
-                            // Add the monthly value
-                            valuesAsStrings.Add(record.GetMonthlyValue(d.Month, d.Year)?.ToString() ?? string.Empty);
-
-                            // Increment month
-                            d = d.AddMonths(1);
-                        }
-
-                        // Write the row
-                        writer.WriteLine(string.Join(",", valuesAsStrings));
+                        Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                    }
+                },
+                Chart = new Chart
+                {
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
                     }
                 }
-                Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+            };
+        }
 
+        /// <summary>
+        /// Method only called in project mode to generate chart items
+        /// </summary>
+        /// <param name="seriesName"></param>
+        /// <param name="groupedAssignments"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="person"></param>
+        /// <param name="isTotalRow"></param>
+        /// <returns></returns>
+        private IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
+            string seriesName,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
+            DateTime startDate,
+            DateTime endDate,
+            Person person,
+            bool isTotalRow = false
+        )
+        {
+            return ChartHelper.ConvertAssignmentsToChartItems(
+                groupedAssignments.Value,
+                // Value 1 for each block
+                assignments =>
+                {
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        // Value is the effort of the chosen person
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource.AssignmentFTE;
+                    });
+                },
+                // Colour function
+                (value1, value2) =>
+                {
+                    // Shading function based on value 1 and value 2
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);
+                },
+                seriesName,
+                queryActive ? QueryStartDate : startDate,
+                queryActive ? queryEndDate : endDate,
+                // Hatched function
+                assignments =>
+                {
+                    return assignments.Any(assignment =>
+                    {
+                        // Get the set of resources to check the condition against
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person == person);
 
-                // Get file stream
-                using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+                        // If resource is marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return assignment.ProjectStatus.IsUnconfirmed() || resource.IsProvisional;
+                    });
+                },
+                // Value 2 for each block
+                (assignments, value1, currentDay) =>
+                {
+                    var peo = people.Where(y => y == person);
 
-                // Invoke JS on the client to download the file
-                await JS.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-            }
-            catch (Exception ex)
+                    // The total availability of the person becomes value 2
+                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
+                },
+                // Accepts list of assignments for the block to determine tooltip messages for the block
+                assignmentsWithinBlock =>
+                {
+                    var messages = string.Empty;
+
+                    // When not a total row, the group key will be a project.
+                    var projectForRow = groupedAssignments.Key as Project;
+                    if (projectForRow != null)
+                    {
+                        // Always return the project manager on the tooltip for project rows
+                        messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
+
+                        // Check whether this project has unmet demand on the tasks to which this person is assigned
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == person));
+                        if (assignedWithinBlockWithChosenPerson.Any(x => x.SubTask.HasUnmetDemand()))
+                        {
+                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x.SubTask.UnmetDemand);
+                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                        }
+                    }
+
+                    // Generate further, universal messages
+                    messages = GenerateTooltipMessages(assignmentsWithinBlock, person, messages);
+
+                    return messages;
+                }
+            );
+        }
+
+        /// <summary>
+        /// Generates tooltip messages for the chart items (blocks) based on a series of conditions.
+        /// </summary>
+        /// <param name="assignmentsWithinBlock">List of assignments that have contributed to the block</param>
+        /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
+        /// <param name="messages">Messages to add to</param>
+        /// <returns></returns>
+        private string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        {
+            // Add the project unconfirmed warning to the tooltip if project is unconfirmed
+            if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
             {
-                Logger.LogError($"Could not download file: {ex}");
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
             }
+
+            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
+            if (assignmentsWithinBlock.Any(x => x.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional)))
+            {
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
+            }
+
+            return messages;
+        }
+
+        /// <summary>
+        /// Only called in person mode per person to generate chart items
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="assignments"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
+            Person person,
+            IEnumerable<Assignment> assignments,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+                person,
+                assignments,
+                assignments =>
+                {
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource.AssignmentFTE;
+                    });
+                },
+                (value1, value2) =>
+                {
+                    return ChartItem.GetColourStringFTE(value1, value2);
+                },
+                person.Name,
+                queryActive ? QueryStartDate : startDate,
+                queryActive ? queryEndDate : endDate,
+                assignments =>
+                {
+                    return assignments.Any(assignment =>
+                    {
+                        // If any resources are marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return
+                            assignment.ProjectStatus.IsUnconfirmed() ||
+                            assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                    });
+                },
+                (assignments, value1, currentDay) =>
+                {
+                    return person.GetAvailabilityOnDate(currentDay);
+                },
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+            );
         }
     }
 }

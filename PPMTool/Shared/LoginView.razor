@@ -1,20 +1,30 @@
-﻿@using PPMTool.Data.Context;
+﻿@using Microsoft.EntityFrameworkCore
+@using PPMTool.Data.Context;
 @using PPMTool.Services;
 
 <AuthorizeView>
     <Authorized>
-        Hello, @(displayName)!
-        <a class="btn btn-secondary mx-2" href="/Account/Logout">Log out</a>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+            <RadzenText Text="@($"Hello, {displayName}!")" Style="color: white; margin-bottom: 0;"/>
+            @* Chose to wrap links here but could use a force reload on NavigateTo as well: https://stackoverflow.com/questions/71725951/navigationmanager-redirect-to-identity-cshtml-not-working-properly*@
+            <a href="/Account/Logout"><RadzenButton class="mx-2" Text="Log out" ButtonStyle="ButtonStyle.Light" /></a>
+        </RadzenStack>
     </Authorized>
     <NotAuthorized>
-        <a class="btn btn-secondary mx-2" href="/Account/Login">Log in</a>
+        <a href="/Account/Login?returnUrl=@(Navigation?.Uri)"><RadzenButton class="mx-2" Text="Log in" ButtonStyle="ButtonStyle.Secondary" /></a>
     </NotAuthorized>
 </AuthorizeView>
 
 @code
 {
     [Inject]
+    private NavigationManager Navigation { get; set; }
+
+    [Inject]
     private RolesService RoleService { get; set; }
+
+    [Inject]
+    private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationState { get; set; }
@@ -23,6 +33,9 @@
 
     protected override void OnInitialized()
     {
+        // Subscribe to the navigation manager's location changed event to force a rerender of the login view
+        Navigation.LocationChanged += HandleLocationChanged;
+
         if (authenticationState is not null)
         {
             var authState = authenticationState.GetAwaiter().GetResult();
@@ -31,10 +44,22 @@
             if (user?.Identity is not null && user.Identity.IsAuthenticated)
             {
                 // Lookup the person
-                var roles = RoleService.GetAll(new PPMToolContext());
+                var roles = RoleService.GetAll(ContextFactory.CreateDbContext());
                 var role = roles.FirstOrDefault(x => x.GetStandardisedUserName() == user.Identity.Name.Trim().ToLower());
-                displayName = role?.Person?.Name ?? user.Identity.Name;
+                displayName = role?.GetName() ?? user.Identity.Name;
             }
         }
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        // Force a rerender of the login view
+        StateHasChanged();
     }
 }

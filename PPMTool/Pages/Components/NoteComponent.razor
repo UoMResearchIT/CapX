@@ -1,0 +1,91 @@
+﻿@using PPMTool.Data.Entities
+
+<div class="card" id="@($"note_{Note.NoteId}")">
+    <div class="row">
+        <div class="col">
+            <div class="row-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
+                    @if (Note.IsFinanceInfo)
+                    {
+                        <div class="badge badge-info" style="margin-bottom:0.4rem">Finance Info</div>
+                    }
+                    @if (Note.IsDue() && !Note.IsCompleted())
+                    {
+                        <div class="badge badge-warning" style="margin-bottom:0.4rem">Note Due</div>
+                    }
+                    @if (Note.IsOverDue() && !Note.IsCompleted())
+                    {
+                        <div class="badge badge-danger" style="margin-bottom:0.4rem">Note Overdue</div>
+                    }
+                    @if (Note.IsCompleted())
+                    {
+                        <div class="badge badge-success" style="margin-bottom:0.4rem">Note Complete</div>
+                    }
+                </RadzenStack>
+            </div>
+            <div class="row-auto note-content">
+                <RadzenText>
+                    @((MarkupString)Note.HtmlContent)
+                </RadzenText>
+            </div>
+            <div class="row-auto">
+                <RadzenText TextStyle="TextStyle.Body2" Text="@Note.GetNoteEditorText()" Style="font-weight:lighter" />
+            </div>
+        </div>
+        <div class="col-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+                    @if (EditAuthorised)
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit"))" />
+                    }
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Copy Link"))" />
+                    @if (EditAuthorised)
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Delete"))" />
+                    }
+                </RadzenStack>
+                @if (Note.DueDate != null && !Note.IsCompleted())
+                {
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Due: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
+                        <RadzenText Text="@Note.DueDate.Value.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="@($"margin-bottom: -0.1rem; {(Note.IsOverDue() ? "color: red" : "")}")" />
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Text="Done" Icon="check" Size="ButtonSize.Small" class="ms-1" Click="@(args => MarkComplete?.Invoke(Note))" Disabled="@(!EditAuthorised)"/>
+                }
+                @if (Note.IsCompleted())
+                {
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Completed: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
+                        <RadzenText Text="@Note.DueDate.Value.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public Note Note { get; set; }
+
+    [Parameter]
+    public Action<Note> DeleteNote { get; set; }
+
+    [Parameter]
+    public Action<Note> EditNote { get; set; }
+
+    [Parameter]
+    public Action<Note> CopyLinkToClipboard { get; set; }
+
+    [Parameter]
+    public Action<Note> MarkComplete { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
+
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
+}

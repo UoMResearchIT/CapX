@@ -1,0 +1,48 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Services
+@using System.Diagnostics
+
+<div class="card my-1">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="0.7rem">
+                <RadzenText TextStyle="TextStyle.H5" Text="@Absence.Person.Name" />
+                @{
+                    if (Absence.EndDate != null && Absence.StartDate <= DateTime.Today)
+                    {
+                        var returnsInDays = Absence.EndDate.Value.Subtract(DateTime.Today).TotalDays + 1;
+                        string text = returnsInDays == 1 ? "tomorrow" : $"in {returnsInDays} days";
+                        if (returnsInDays > -1)
+                        {
+                            <div class="badge badge-info" style="margin-bottom: 0.3rem">@($"Returns {text}")</div>
+                        }
+                    }
+                }
+            </RadzenStack>
+            <RadzenButton Click=@(args => EditPerson?.Invoke(Absence.Person)) Text="Edit Absences" Icon="edit" />
+        </RadzenStack>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Gap="0.7rem">
+            <RadzenText Text="@($"{Absence.StartDate.ToString("dddd dd MMMM yyyy")}")" TextStyle="TextStyle.Subtitle1" />
+            <RadzenText Text="to" />
+            <RadzenText Text="@($"{Absence.EndDate?.ToString("dddd dd MMMM yyyy") ?? "Now"}")" TextStyle="TextStyle.Subtitle1" />
+        </RadzenStack>
+    </RadzenStack>
+</div>
+
+@code {
+
+    [Parameter]
+    public Absence Absence { get; set; }
+
+    [Parameter]
+    public Action<Person> EditPerson { get; set; }
+
+
+    override protected void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+}

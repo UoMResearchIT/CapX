@@ -6,13 +6,14 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
-    public class ChartHelper
+    public abstract class ChartHelper
     {
         /// <summary>
-        /// For a given person, convert subtasks into an aggregated set of blocks for the timeline graph
+        /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.
+        /// Adds special logic to pad whitespace in the timelines and adjust for person start and end dates.
         /// </summary>
         /// <param name="person">Person of interest</param>
-        /// <param name="subTasks">Set of subtasks to aggregate</param>
+        /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
         /// <param name="label">Chart axis label for the data</param>
@@ -20,17 +21,19 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertSubTasksToChartItemsForPerson(
+        public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
-            IEnumerable<SubTask> subTasks,
-            Func<SubTask, double> valueFunction,
+            IEnumerable<Assignment> assignments,
+            Func<IEnumerable<Assignment>, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<SubTask, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             // If person starts after the start date then reset the start date to that date
@@ -42,13 +45,13 @@ namespace PPMTool.Data
             // If person leaves before the end date then reset the end date to that date
             if (person.EndDate != null && person.EndDate < endDate)
             {
-                endDate = person.EndDate?.AddDays(1) ?? DateTime.Now.Date;
+                endDate = person.EndDate?.AddDays(1) ?? DateTime.Today;
             }
 
             // Get the chart items
-            var chartItems = AggregateSubTasksIntoBlocks(
-                subTasks, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function
+            var chartItems = AggregateAssignmentsIntoBlocks(
+                assignments, valueFunction, colourFunction, label, startDate,
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
 
@@ -63,14 +66,12 @@ namespace PPMTool.Data
                 var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
 
                 // Generate the items
-                Debug.WriteLine($"** Generating extra items at the beginning for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));
             }
 
             // If there is a gap after the last chart item and the end date then fill in
             if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
             {
-                Debug.WriteLine($"** Generating extra items at the end for {person.Name}");
                 extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate, endDate));
             }
 
@@ -93,7 +94,6 @@ namespace PPMTool.Data
                     if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
                     {
                         // Generate chart items from availability to fill the gap
-                        Debug.WriteLine($"** Filling gap between {chartItems[i].EndDate} and {chartItems[i + 1].StartDate} for {person.Name}");
                         extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
                     }
                 }
@@ -111,9 +111,9 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// For a given set of subtasks, convert subtasks into an aggregated set of blocks for the timeline graph
+        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph.
         /// </summary>
-        /// <param name="subTasks">Set of subtasks to aggregate</param>
+        /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
         /// <param name="label">Chart axis label for the data</param>
@@ -121,26 +121,28 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertSubTasksToChartItems(
-            IEnumerable<SubTask> subTasks,
-            Func<SubTask, double> valueFunction,
+        public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
+            IEnumerable<Assignment> assignments,
+            Func<IEnumerable<Assignment>, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<SubTask, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
-            return AggregateSubTasksIntoBlocks(
-                subTasks, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function
+            return AggregateAssignmentsIntoBlocks(
+                assignments, valueFunction, colourFunction, label, startDate,
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
         }
 
         /// <summary>
-        /// Method to take the availability changes of a person and create chart items to represent "zero assignment" for the period specified
+        /// Method to take the workload model changes of a person and create chart items to represent "zero assignment" for the period specified.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="startDate"></param>
@@ -150,17 +152,17 @@ namespace PPMTool.Data
         {
             var blocks = new List<ChartItem>();
 
-            // Get any availability changes in force at the beginning of the query or during it
-            var changes = person.AvailabilityChanges.Where(x => x.ChangeDate < endDate).ToList();
+            // Get any workload model changes in force at the beginning of the query or during it
+            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
 
             // Add to the changes any leaving date within the window as a zero availability
             if (person.EndDate != null)
             {
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
-                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Now.Date,
-                    AvailabilityFTE = 0
+                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Today,
+                    ProjectWorkFTE = 0
                 });
 
                 // Keep only changes on or before the end date
@@ -170,22 +172,22 @@ namespace PPMTool.Data
             // Add to the changes any start date within the window as post FTE (if no availablity change on the start date)
             if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
             {
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = person.StartDate,
-                    AvailabilityFTE = person.FTE
+                    ProjectWorkFTE = person.FTE
                 });
 
                 // Keep only changes on or after the start date
                 changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
 
                 // Enforce a zero availability before they start
-                changes.Add(new AvailabilityChange()
+                changes.Add(new WorkloadModelChange()
                 {
                     Person = person,
                     ChangeDate = startDate,
-                    AvailabilityFTE = 0
+                    ProjectWorkFTE = 0
                 });
             }
 
@@ -202,7 +204,7 @@ namespace PPMTool.Data
                 );
             }
 
-            // Work through the availability changes to establish blocks of availability
+            // Work through the workload model changes to establish blocks of availability
             else
             {
                 // We need to establish the availability at the beginning of the query window which will be post FTE by default
@@ -211,7 +213,7 @@ namespace PPMTool.Data
                 // Find the change immediately before the query window or on day one
                 // if there is one on the first day of the query window
                 var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (changeBefore != null) initialFTE = changeBefore.AvailabilityFTE;
+                if (changeBefore != null) initialFTE = changeBefore.ProjectWorkFTE;
 
                 // Any relevant changes after must be after the start of the window but before the end
                 var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
@@ -229,9 +231,9 @@ namespace PPMTool.Data
                 {
                     // If the last change then use query end date for block end otherwise it is date of next change
                     blocks.Add(
-                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].AvailabilityFTE), person.Name, changesAfter[i].ChangeDate,
+                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].ProjectWorkFTE), person.Name, changesAfter[i].ChangeDate,
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            0, changesAfter[i].AvailabilityFTE, false
+                            0, changesAfter[i].ProjectWorkFTE, false
                         )
                     );
                 }
@@ -241,27 +243,29 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Time-marching method for summing up the contribution across sub tasks based on the value function provided.
+        /// Time-marching method for summing up the contribution across assignments based on the value function provided.
         /// The results are arranged into irregular blocks of the same continuous value.
         /// </summary>
         /// <param name="label"></param>
-        /// <param name="subTasks">Assignments to aggregate</param>
-        /// <param name="valueFunction">Function used to generate the value for the block by summing the value returned by the function over the sub tasks</param>
+        /// <param name="assignments">Assignments to aggregate</param>
+        /// <param name="valueFunction">Function used to generate the value for the block</param>
         /// <param name="colourFunction">Function used to generate the colour for the block based on value and value2</param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
-        /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
+        /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
+        /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <returns></returns>
-        private static IEnumerable<ChartItem> AggregateSubTasksIntoBlocks(
-            IEnumerable<SubTask> subTasks,
-            Func<SubTask, double> valueFunction,
+        private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
+            IEnumerable<Assignment> assignments,
+            Func<IEnumerable<Assignment>, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<SubTask, bool> hatchedFunction = null,
-            Func<double, DateTime, double> value2Function = null
+            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
         )
         {
             // Each block is considered an element of a series.
@@ -272,7 +276,7 @@ namespace PPMTool.Data
             var temp = new List<ChartItem>();
 
             // If no subtasks in the list
-            if (subTasks.Count() < 1)
+            if (assignments.Count() < 1)
             {
                 // Return no blocks
                 return temp;
@@ -295,16 +299,16 @@ namespace PPMTool.Data
             while (currentDay < endDate)
             {
                 // Find assignments running on current day
-                var within = subTasks.Where(x => x.IsWithin(currentDay));
+                var within = assignments.Where(x => x.SubTask.IsWithin(currentDay));
 
                 // Sum value for the current day -- truncate to 2 DP
-                valueDay = within.RoundedSum(x => valueFunction(x));
+                valueDay = valueFunction(within);
 
                 // Set hatched for the current day
-                hatchedDay = hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false;
+                hatchedDay = hatchedFunction != null ? hatchedFunction(within) : false;
 
                 // Set value2 for the current day
-                value2Day = value2Function != null ? value2Function(valueDay, currentDay) : 0;
+                value2Day = value2Function != null ? value2Function(within, valueDay, currentDay) : 0;
 
                 // Set colour state for the first time
                 if (value2Tracked == -1d) value2Tracked = value2Day;
@@ -321,6 +325,7 @@ namespace PPMTool.Data
                     // Only add a block if its value is non-zero
                     if (valueTracked != 0d)
                     {
+                        var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
                         temp.Add(new ChartItem(
                             colourFunction(valueTracked, value2Tracked),
@@ -329,7 +334,8 @@ namespace PPMTool.Data
                             currentDay,
                             valueTracked,
                             value2Tracked,
-                            hatchedTracked ?? false
+                            hatchedTracked ?? false,
+                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                         ));
                     }
                     currentBlockStartDay = currentDay;
@@ -345,6 +351,8 @@ namespace PPMTool.Data
             // Add the final block if it had a non-zero value
             if (valueTracked != 0d)
             {
+                // Consider the end date to be inclusive of the final block so do not move back a day like above
+                var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay));
                 temp.Add(new ChartItem(
                     colourFunction(valueDay, value2Day),
                     label,
@@ -352,7 +360,8 @@ namespace PPMTool.Data
                     currentDay,
                     valueDay,
                     value2Day,
-                    hatchedDay
+                    hatchedDay,
+                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                 ));
             }
             return temp;
@@ -364,16 +373,16 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="label"></param>
         /// <param name="subTasks"></param>
-        /// <param name="value1Function">Function to determine a value summed over subtasks in the current week</param>
-        /// <param name="value2Function">Function to determine a second value summed over subtasks in the current week></param>
-        /// <param name="hatchedFunction">Function to determine whether any of the subtasks evaluate the function to true</param>
+        /// <param name="value1Function">Function to determine a value for subtasks in the current week</param>
+        /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
+        /// <param name="hatchedFunction">Function to determine hatched status for subtasks in the current week</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
             string label,
             IEnumerable<SubTask> subTasks,
-            Func<SubTask, double> value1Function,
-            Func<SubTask, double> value2Function = null,
-            Func<SubTask, bool> hatchedFunction = null
+            Func<IEnumerable<SubTask>, DateTime, double> value1Function,
+            Func<IEnumerable<SubTask>, DateTime, double> value2Function = null,
+            Func<IEnumerable<SubTask>, bool> hatchedFunction = null
         )
         {
             // Initialise
@@ -383,33 +392,72 @@ namespace PPMTool.Data
             // Get earliest assignment to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
 
-            // Get latest assignment finish so we know when to stop
-            DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate;
+            // Move to a Monday
+            start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
+
+            // Get latest assignment finish, adding a day so it is the first day when no work will be done.
+            DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
+
+            // Move to the next Sunday if not already a Sunday
+            if (end.DayOfWeek != DayOfWeek.Sunday)
+            {
+                end = end.AddDays((6 - (int)end.DayOfWeek) % 7);
+            }
 
             // Start marching at a 1 week resolution
-            DateTime currentWeek = start;
-            while (currentWeek < end)
+            DateTime startOfWeek = start;
+            DateTime endOfWeek = start.AddDays(6);
+            while (startOfWeek < end)
             {
-                // Find assignments within current week
-                var within = subTasks.Where(x => x.IsWithin(currentWeek));
+                // Find assignments that run within current week
+                var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
                 temp.Add(
                     new ChartItem(
                         null,
                         label,
-                        currentWeek,
-                        currentWeek.AddDays(7),
-                        within.RoundedSum(x => value1Function(x)),
-                        value2Function != null ? within.RoundedSum(x => value2Function(x)) : 0,
-                        hatchedFunction != null ? within.Any(x => hatchedFunction(x)) : false
+                        startOfWeek,
+                        endOfWeek,
+                        value1Function(within, startOfWeek),
+                        value2Function != null ? value2Function(within, startOfWeek) : 0,
+                        hatchedFunction != null ? hatchedFunction(within) : false
                     )
                 );
 
                 // Increment by 1 week
-                currentWeek = currentWeek.AddDays(7);
+                startOfWeek = startOfWeek.AddDays(7);
+                endOfWeek = endOfWeek.AddDays(7);
             }
             return temp;
+        }
+
+        /// <summary>
+        /// Horrible hack required to get the Y-axis sorting to work correctly on Gantt charts with multiple series
+        /// by adding zero width entries to ensure both series have the same number of Y categories
+        /// </summary>
+        /// <param name="mixedItems"></param>
+        /// <param name="defaultObjectConstructor">Function to build a default object where an empty place needs filling in the list</param>
+        /// <param name="confirmedItems"></param>
+        /// <param name="provisionalItems"></param>
+        public static void CompleteChartSeries<T>(IEnumerable<T> mixedItems, Func<T, T> defaultObjectConstructor, out List<T> confirmedItems, out List<T> provisionalItems) where T : IChartItem
+        {
+            confirmedItems = new List<T>();
+            provisionalItems = new List<T>();
+
+            foreach (var c in mixedItems)
+            {
+                if (!c.IsHatched())
+                {
+                    confirmedItems.Add(c);
+                    provisionalItems.Add(defaultObjectConstructor(c));
+                }
+                else
+                {
+                    confirmedItems.Add(defaultObjectConstructor(c));
+                    provisionalItems.Add(c);
+                }
+            }
         }
     }
 }

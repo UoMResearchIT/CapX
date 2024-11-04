@@ -1,13 +1,35 @@
 ﻿@page "/addperson/{PersonId:int}"
 @inherits BasePage
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+<PageTitle>Add Person - CapX</PageTitle>
 
 <div class="container">
-    <h1>Add Person</h1>
+    <div class="row">
+        <div class="col mr-auto">
+            @if (personModel == null)
+            {
+                <h1>Add Person</h1>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col">
+                        <h1>Edit <i>@personModel.Name</i></h1>
+                        <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
+                    </div>
+                </div>
+                <hr />
+            }
+        </div>
+    </div>
+    <hr />
+
     <div class="card">
-        <EditForm EditContext="editContext" OnValidSubmit="@HandleValidSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <EditForm EditContext="editContext" OnSubmit="@HandleSubmit">
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br>
@@ -33,23 +55,24 @@
                     <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" />
                 </div>
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Default Day Rate (£)" /><br>
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="1" Placeholder="0" @bind-Value="personModel.DayRate" />
-                </div>
             </div>
             <hr />
             <div class="row">
                 <div class="col">
-                    <h3>Skill Tags</h3>
+                    <div class="row">
+                        <div class="col-auto mr-auto py-2">
+                            <h3>Skill Tags</h3>
+                        </div>
+                    </div>
+                    <hr />
                     <div class="row">
                         <div class="col-auto flexbox">
                             <RadzenIcon Icon="search" />
                         </div>
-                        <div class="col flexbox pr-1 pl-0">
+                        <div class="col flexbox pr-3 pl-0">
                         <RadzenAutoComplete
                             @bind-Value=@autoCompleteText
-                            Placeholder="Search for Skill Tags"
+                            Placeholder="Search for Skill Tags to Add"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             Data=@availableTags
                             TextProperty="Name"
@@ -60,7 +83,7 @@
                     <div class="row">
                         <RadzenDataList
                             AllowVirtualization=true
-                            Style="height:250px; overflow:auto; width:100%"
+                            class="full-height-list"
                             WrapItems="false"
                             AllowPaging="false"
                             Data="@chosenTags"
@@ -71,10 +94,10 @@
                                         @tag.Name
                                     </div>
                                     <div class="col">
-                                        @($"{tag.People.Count} other(s) with this tag")
+                                        @($"{tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0} other(s) with this tag")
                                     </div>
                                     <div class="col-auto">
-                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                                     </div>
                                 </div>
                             </Template>
@@ -83,31 +106,101 @@
                 </div>
                 <div class="col">
                     <div class="row">
-                        <div class="col-auto mr-auto">
-                            <h3>Availability Changes</h3>
+                        <div class="col-auto mr-auto py-2">
+                            <h3>Workload Model Changes</h3>
                         </div>
                         <div class="col-auto">
                             <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" />
                         </div>
                     </div>
-                    @foreach (var d in personModel.AvailabilityChanges)
-                    {
-                        <div class="row">
-                            <div class="col-3">
-                                @d.ChangeDate.ToShortDateString()
+                    <hr />
+                    <RadzenDataList AllowVirtualization=true
+                                    class="half-height-list"
+                                    WrapItems="false"
+                                    AllowPaging="false"
+                                    Data="@personModel.WorkloadModelChanges.OrderByDescending(x => x.ChangeDate)"
+                                    TItem="WorkloadModelChange">
+                        <Template Context="d">
+                            <div style="width:100%">
+                                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenText Text="@d.ChangeDate.ToShortDateString()" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                         BadgeStyle="BadgeStyle.Primary"
+                                                         Text="@($"Grade {d.Grade}")" />
+                                            <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                         BadgeStyle="BadgeStyle.Primary"
+                                                         Text="@(d.Total().ToString("F1") + " FTE")" />
+                                        </RadzenStack>
+                                        <RadzenText Text="@d.Notes" TextStyle="TextStyle.Body2"/>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceAround" AlignItems="AlignItems.Center">
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="Project Work" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="BAU" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="Personal Dev" TextStyle="TextStyle.Subtitle1" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="@d.ProjectWorkFTE.ToString()" />
+                                            <RadzenText Text="@d.BusinessAsUsualFTE.ToString()" />
+                                            <RadzenText Text="@d.PersonalDevelopmentFTE.ToString()" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="Project and Service" TextStyle="TextStyle.Subtitle1" />
+                                            <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                                            <RadzenText Text="@d.StaffManagementFTE.ToString()" />
+                                            <RadzenText Text="@d.ProjectAndServiceManagementFTE.ToString()" />
+                                            <RadzenText Text="@d.ArchitectureFTE.ToString()" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenStack>
                             </div>
-                            <div class="col-3">
-                                @d.AvailabilityFTE
-                            </div>
-                            <div class="col-6">
-                                <p>@d.BaselineActivities</p>
-                            </div>
-                            <br />
+                        </Template>
+                    </RadzenDataList>
+                    <br /><br />
+                    <div class="row">
+                        <div class="col-auto mr-auto py-2">
+                            <h3>Absence</h3>
                         </div>
-                    }
+                        <div class="col-auto">
+                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" />
+                        </div>
+                    </div>
+                    <hr />
+                    <RadzenDataList AllowVirtualization=true
+                                    class="half-height-list"
+                                    WrapItems="false"
+                                    AllowPaging="false"
+                                    Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
+                                    TItem="Absence">
+                        <Template Context="a">
+                            <div class="row flexbox p-0">
+                                <div class="col-3">
+                                    @a.StartDate.ToShortDateString()
+                                </div>
+                                <div class="col-3">
+                                    to
+                                </div>
+                                <div class="col-3">
+                                    @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                                </div>
+                            </div>
+                        </Template>
+                    </RadzenDataList>
                 </div>
             </div>
-            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row">
+                <div class="col">
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                </div>
+            </div>
         </EditForm>
     </div>
 </div>

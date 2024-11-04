@@ -1,0 +1,73 @@
+﻿@page "/projectbulletinboard"
+@inherits PPMTool.Pages.BasePage
+@using PPMTool.Data
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using static PPMTool.Enums.Extensions
+<PageTitle>Available Projects - CapX</PageTitle>
+
+<div class="container">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <h1>Available Projects</h1>
+            @if (availableProjects != null)
+            {
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"({availableProjects.Count()} project(s) with unmet demand)")" Style="margin-bottom: -0.2rem" />
+            }
+        </RadzenStack>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <RadzenLabel Text="Date Range" Component="StartDate" class="rz-ms-2" />
+            <RadzenDatePicker @bind-Value="startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="StartDate" AllowClear="true" Change="FilterProjects" />
+            <RadzenLabel Text="to" Component="EndDate" class="rz-ms-2" />
+            <RadzenDatePicker @bind-Value="endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="EndDate" AllowClear="true" Change="FilterProjects" />
+            <RadzenLabel Text="Group By Status" Component="CheckBox1" class="rz-ms-2" />
+            <RadzenCheckBox TValue="bool" Value=@groupByStatus Change=@(args => { groupByStatus = args; FilterProjects(); }) Name="CheckBox1" />
+        </RadzenStack>
+    </RadzenStack>
+    <hr />
+    @if (availableProjects == null)
+    {
+        <LoadingComponent />            
+    }
+    else if (availableProjects.Count() == 0)
+    {
+        <RadzenText Text="There are currently no projects requiring RSE resource." />
+    }
+    else
+    {
+        @if (groupByStatus)
+        {
+            foreach (var group in availableProjectsGrouped.OrderByDescending(x => x.Key))
+            {
+                <h3>@(group.Key.ToNiceString())</h3>
+                <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                    @foreach (var project in group.OrderBy(x =>
+                    {
+                        x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                        return windowStart;
+                    }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                    {
+                        <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
+                    }
+                </RadzenStack>
+                <hr />
+            }
+        }
+        else
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                @foreach (var project in availableProjects.OrderBy(x =>
+                {
+                   x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                   return windowStart;
+                }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                {
+                    <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
+                }
+            </RadzenStack>
+            <hr />
+        }
+    }
+</div>

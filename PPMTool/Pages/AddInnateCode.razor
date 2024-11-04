@@ -1,0 +1,106 @@
+﻿@page "/addinnatecode/{InnateCodeId:int}"
+@inherits DataGridPage<InnateCodeTask>
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using PPMTool.Enums
+@using DotNetExtensions
+<PageTitle>Add Innate Code - CapX</PageTitle>
+
+<div class="container">
+    @if (innateCode != null)
+    {
+        @if (InnateCodeId <= 0)
+        {
+            <h1>Add New Innate Code</h1>
+        }
+        else
+        {
+            <h1>Edit <i>@(innateCode?.GetSensibleObjectName())</i></h1>
+        }
+        
+        <hr />
+        <div class="card">
+            <EditForm Model="@innateCode" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row">
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Activity Code" /><br />
+                        <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityCode" />
+                    </div>
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label" Text="Activity Name" /><br />
+                        <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityName" />
+                    </div>
+                </div>
+
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <h2>Current Tasks</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton Text="Defaults" Icon="add" Click="@AddDefaults" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                    </div>
+                </div>
+                <RadzenDataGrid @ref="dataGrid"
+                                AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                                AllowPaging="true"
+                                PageSize="15"
+                                AllowSorting="true"
+                                ShowPagingSummary="true"
+                                EditMode="DataGridEditMode.Single"
+                                FilterMode="FilterMode.Simple"
+                                Data="@dataGridEntities"
+                                TItem="InnateCodeTask"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="InnateCodeTask" Property="TaskName" Title="Task Name" Width="15rem" MinWidth="10px">
+                            <EditTemplate Context="task">
+                                <RadzenTextBox class="no-margin"  @bind-Value="task.TaskName" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="InnateCodeTask" Property="Duty" Title="Duty" Width="15rem" MinWidth="10px">
+                            <Template Context="task">
+                                @(task.Duty.GetDescription())
+                            </Template>
+                            <EditTemplate Context="task">
+                                <RadzenDropDown @bind-Value="task.Duty" Data="@Enum.GetValues(typeof(Duty))" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="InnateCodeTask" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" MinWidth="10px" Title="Actions">
+                            <Template Context="c">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                            </Template>
+                            <EditTemplate Context="c">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))" MouseEnter="@(args => ShowTooltip(args, "Save"))"/>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(c))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))"/>
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                    </div>
+                </div>
+                @if (ErrorMessage != null)
+                {
+                    <br />
+                    <StatusMessageComponent Message=@ErrorMessage />
+                }
+            </EditForm>
+        </div>
+    }
+</div>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using FluentDateTime;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -14,7 +14,19 @@ namespace PPMTool.Data.Entities
         public SubTask()
         {
             // Set default value
-            StartDate = DateTime.Now.Date;
+            StartDate = DateTime.Today;
+
+            // List of status messages to check for each task which will drive icons
+            statusMessages = new List<StatusMessage>()
+            {
+                new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
+                new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
+                new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => HasAbsentResourcesAndStartsWithinAWeek()),
+                new StatusMessage("Task has resources with absence during or near the start of this task.", StatusMessage.MessageType.Info, () => IsAffectedByAbsence()),
+                new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
+                new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
+                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
+            };
         }
 
         public int SubTaskId { get; set; }
@@ -29,24 +41,6 @@ namespace PPMTool.Data.Entities
                 {
                     taskType = value;
                     OnTaskTypeChanged(new EventArgs());
-                }
-            }
-        }
-
-        private bool isDone;
-        /// <summary>
-        /// Represents whether a task is complete or not. It can be marked as complete any time whether the full budget for 
-        /// the task has been used or not. It will then allow tasks to be completed early without it affecting the definition of "Late".
-        /// </summary>
-        public bool IsDone
-        {
-            get => isDone;
-            set
-            {
-                if (isDone != value)
-                {
-                    isDone = value;
-                    OnDoneChanged(new EventArgs());
                 }
             }
         }
@@ -76,81 +70,98 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to determine whether a date [startDate endDate].
-        /// If end date and start date are the same evaluates against start date.
-        /// The end date is assumed to be a working day for the task so it included in the test.
-        /// </summary>
-        /// <param name="testDate">Date to test</param>
-        /// <returns></returns>
-        internal bool IsWithin(DateTime testDate)
-        {
-            return StartDate == EndDate ? testDate == StartDate : testDate >= StartDate && testDate <= EndDate;
-        }
-
-
-        /// <summary>
         /// Used to drive the end date from the start date assuming 7 hour days. This is includes weekends.
         /// </summary>
         public int DurationDays { get; set; }
 
         /// <summary>
-        /// Used to drive the work assuming 7 hour days. This is excludes weekends.
+        /// Used to drive the work assuming each day is 220 billable days spread over the year of 365 days so roughly 4.22 hours per calendar day.
         /// </summary>
-        public int DurationBusinessDays { get; set; }
+        public int DurationBillableDays { get; set; }
 
-        private bool isWorkDriven;
+        private bool hasFixedEndDate;
         /// <summary>
-        /// For fixed unit tasks indicates whether the work should be used to drive the duration or the other way round
+        /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round (i.e. the end date is fixed)
         /// </summary>
-        public bool IsWorkDriven
+        public bool HasFixedEndDate
         {
-            get => isWorkDriven;
+            get => hasFixedEndDate;
             set
             {
-                if (isWorkDriven != value)
+                if (hasFixedEndDate != value)
                 {
-                    isWorkDriven = value;
-                    OnWorkDrivenChanged(new EventArgs());
-                }
-            }
-        }
-
-        private bool isEndDateDriven = true;
-        /// <summary>
-        /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round
-        /// </summary>
-        public bool IsEndDateDriven
-        {
-            get => isEndDateDriven;
-            set
-            {
-                if (isEndDateDriven != value)
-                {
-                    isEndDateDriven = value;
+                    hasFixedEndDate = value;
 
                     // Update the end date to match the start date plus a day
-                    if (!isEndDateDriven && EndDate <= StartDate)
+                    if (hasFixedEndDate && EndDate <= StartDate)
                     {
-                        EndDate = StartDate.AddDays(1);
+                        EndDate = StartDate.Date.AddDays(1);
                     }
-                    OnEndDateDrivenChanged(new EventArgs());
+                    OnHasFixedEndDateChanged(new EventArgs());
                 }
             }
         }
+
+        private double demand;
+        /// <summary>
+        /// The minimum demand required to complete this task in FTE.
+        /// </summary>
+        [Required]
+        public double Demand
+        {
+            get => demand;
+            set
+            {
+                if (demand != value)
+                {
+                    demand = value;
+                    UpdateUnmetDemand();
+                }
+            }
+        }
+
+        /// <summary>
+        /// This is the original demand of the task when we took the request. The current demand (if the requirement has changed) is recorded in the <see cref="Demand"/> property.
+        /// </summary>
+        [Required]
+        public double OriginalDemand { get; set; }
+
+        /// <summary>
+        /// The difference between the demand and the sum of the assigned resources.
+        /// </summary>
+        public double UnmetDemand { get; set; }
+
+        /// <summary>
+        /// The amount the start date of this task lags its predecessor. Only used if a predecessor is set.
+        /// </summary>
+        public int Lag { get; set; }
+
+        /// <summary>
+        /// If using a cost model that charges leadership, should it be charged on this task.
+        /// Typically disabled for maintenance tasks.
+        /// </summary>
+        public bool ChargeLeadership { get; set; } = true;
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
-        /// <param name="permitUndrivenEndToMove">Whether we can move the end date to maintain 
-        /// the duration if the end date is not driven. Only applies to fixed duration tasks.</param>
+        /// <param name="permitEndDateToMove">Whether we can move the end date to maintain 
+        /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
+        /// <param name="project">Project owning the subtask</param>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule(bool permitUndrivenEndToMove)
+        public string Schedule(bool permitEndDateToMove, Project project)
         {
             try
             {
-                // Sum up assigned resources and determine latest start date of assigned resources
+                // Start is driven by predecessor
+                if (Predecessor != null)
+                {
+                    StartDate = Predecessor.EndDate.Date.AddDays(Lag + 1);
+                }
+
+                // Sum up assigned resources as units and determine latest start date of assigned resources
                 double units = 0d;
                 DateTime latestStart = default;
                 string latestStarter = string.Empty;
@@ -164,86 +175,53 @@ namespace PPMTool.Data.Entities
                     }
                 }
 
-                // Start date is fixed
-                if (HasFixedStart)
+                // If no resources assigned then use the demand to schedule the task
+                if (AssignedResources.Count == 0)
                 {
-                    // If we assign someone who doesn't start until after the date then error
-                    if (units > 0d && latestStart > StartDate)
-                    {
-                        return $"This task has a fixed start date of {StartDate}. " +
-                            $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
-                    }
+                    units = Demand;
                 }
 
-                // Start date driven by predecessor, resources or just leave at default
-                else
+                // If we assign someone who doesn't start until after the date then error
+                if (AssignedResources.Count > 0 && latestStart > StartDate)
                 {
-                    // From predecessor
-                    if (Predecessor != null)
-                    {
-                        // Correct the end date to start on the next working day if necessary
-                        StartDate = TaskType == TaskType.FixedWork ? GetNextWorkingDay(Predecessor.EndDate) : Predecessor.EndDate.AddDays(1);
-                    }
-
-                    // Check whether we need to drive from resources
-                    if (units > 0d && latestStart > StartDate)
-                    {
-                        latestStart = TaskType == TaskType.FixedWork ? GetNextWorkingDay(latestStart) : Predecessor.EndDate.AddDays(1);
-                        Debug.WriteLine($"** Start date being changed to {latestStart.Date.ToShortDateString()}, driven by resource {latestStarter}");
-                        StartDate = latestStart.Date;
-                    }
+                    return $"This task has a fixed start date of {StartDate}. " +
+                        $"{latestStarter} is assigned to this task but they do not start until {latestStart.Date.ToShortDateString()}";
                 }
 
-                // Update core parameters
-                if (TaskType == TaskType.FixedUnits)
-                {
-                    // End date must be driven
-                    IsEndDateDriven = true;
-
-                    // Which one is updated based on preference
-                    if (IsWorkDriven)
-                    {
-                        UpdateDuration(units);
-                    }
-                    else
-                    {
-                        UpdateWork(units);
-                    }
-
-                }
-                else if (TaskType == TaskType.FixedWork)
+                // Fixed Work Update
+                if (TaskType == TaskType.FixedWork)
                 {
                     // End Date must be driven
-                    IsEndDateDriven = true;
+                    HasFixedEndDate = false;
 
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
                 }
+
+                // Fixed Duration Update
                 else
                 {
                     // Make sure the duration is at least zero or greater
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
-                    // If we are allowed to move the end date to maintain the current duration then set the end date now
-                    if (!IsEndDateDriven && permitUndrivenEndToMove) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
+                    // If we are allowed to move the end date to maintain the current duration despite being marked as fixed then set the end date now
+                    if (HasFixedEndDate && permitEndDateToMove) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
-                    // If the end date is not driven then set duration here from the start and end dates
-                    if (!IsEndDateDriven) UpdateDurationFromEndDate();
+                    // If the end date is fixed then set duration here from the start and end dates
+                    if (HasFixedEndDate) UpdateDurationFromEndDate();
 
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
                 }
 
-                // Update cost
-                PlannedCost = 0d;
+                // Update hours on the resources
                 foreach (var res in AssignedResources)
                 {
-                    // Assume 7 hours in a day; fallback on default day rate if resource day rate is null
-                    PlannedCost += (res.AssignmentFTE / units) * PlannedWorkHours * ((res.DayRate ?? res.Person.DayRate) / 7f);
+                    res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
                 }
 
                 // Set end date from the duration
-                if (IsEndDateDriven) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
+                if (!HasFixedEndDate) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
                 return null;
             }
@@ -257,7 +235,6 @@ namespace PPMTool.Data.Entities
         {
             // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
             DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
-            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, EndDate);
         }
 
         private void UpdateDuration(double units)
@@ -265,79 +242,46 @@ namespace PPMTool.Data.Entities
             if (units == 0)
             {
                 DurationDays = 0;
-                DurationBusinessDays = 0;
+                DurationBillableDays = 0;
             }
             else
             {
-                // Correct for annual leave etc. with the 0.84
-                DurationBusinessDays = (int)Math.Ceiling(PlannedWorkHours / (7 * units * .84));
-                var estimatedEndDate = StartDate.AddBusinessDays(DurationBusinessDays);
-
-                // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
-                DurationDays = (int)Math.Round(estimatedEndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
+                // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
+                var billableDays = PlannedWorkHours / (7 * units);
+                DurationDays = (int)Math.Ceiling(GetNumberOfCalendarDays(billableDays));
+                DurationBillableDays = (int)Math.Ceiling(billableDays);
             }
         }
 
         private void UpdateWork(double units)
         {
-            // Duration input is calendar days so need to compute business days to get work
+            // Duration input is calendar days so need to compute billable days to get work
             var endDate = StartDate.AddDays(DurationDays);
-            DurationBusinessDays = GetNumberOfBusinessDays(StartDate, endDate);
-
-            // Correct for annual leave etc. with the 0.84 and truncate to 1 DP
-            PlannedWorkHours = Math.Ceiling(10 * DurationBusinessDays * 7 * units * 0.84) / 10;
+            var billableDays = GetNumberOfBillableDays(StartDate, endDate);
+            PlannedWorkHours = (int)Math.Floor(billableDays * 7 * units);
+            DurationBillableDays = (int)Math.Ceiling(billableDays);
         }
 
-        private DateTime GetNextWorkingDay(DateTime date)
+        /// <summary>
+        /// Use 220 billable days per year to estimate the number of billable days between two dates.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        internal static double GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
         {
-            if (date.DayOfWeek == DayOfWeek.Saturday) return date.AddDays(2);
-            else if (date.DayOfWeek == DayOfWeek.Friday) return date.AddDays(3);
-            return date.AddDays(1);
+            var calendarDays = endDate.Date.Subtract(startDate.Date).Days;
+            return (calendarDays / 365f) * 220f;
         }
 
-
-        private int GetNumberOfBusinessDays(DateTime startDate, DateTime endDate)
+        /// <summary>
+        /// Converts the number of billable days into a duration of calendar days assuming 220 billable days per 365 day year.
+        /// </summary>
+        /// <param name="billableDays"></param>
+        /// <returns></returns>
+        private double GetNumberOfCalendarDays(double billableDays)
         {
-            // Same day returns zero
-            if (startDate.Date == endDate.Date)
-            {
-                return 0;
-            }
-
-            // Cannot start a fixed work task on a weekend
-            if (TaskType == TaskType.FixedWork && (startDate.DayOfWeek == DayOfWeek.Saturday || startDate.DayOfWeek == DayOfWeek.Sunday))
-            {
-                throw new Exception("Cannot start a task on a weekend!");
-            }
-
-            // If end date is a weekend day then move on to the following Monday
-            if (endDate.DayOfWeek == DayOfWeek.Saturday || endDate.DayOfWeek == DayOfWeek.Sunday) endDate = GetNextWorkingDay(endDate);
-
-            // Work out the number of normal days
-            int normalDays = (int)Math.Round(endDate.Date.Subtract(startDate.Date).TotalDays);
-
-            // Best guess at business days is to take 2 days off for every week
-            int guess = normalDays - (normalDays / 7) * 2;
-            int lastGuess = guess;
-
-            // Iterate
-            int error = int.MaxValue;
-            while (error > 0 && guess != 0)
-            {
-                // Compute error
-                var guessedEndDate = startDate.Date.AddBusinessDays(guess);
-                error = (int)Math.Round(guessedEndDate.Date.Subtract(endDate.Date).TotalDays);
-
-                // Break out early if found the answer
-                if (error == 0) return guess;
-
-                // Update guess by 1 day in the correct direction
-                lastGuess = guess;
-                guess = lastGuess - (error / Math.Abs(error));
-            }
-
-            // Shouldn't end up here
-            return lastGuess;
+            return (billableDays / 220f) * 365f;
         }
 
         /// <summary>
@@ -361,20 +305,10 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Event invoked when the work driven setting is changed
-        /// </summary>
-        public event EventHandler WorkDrivenChanged;
-        protected virtual void OnWorkDrivenChanged(EventArgs e)
-        {
-            EventHandler handler = WorkDrivenChanged;
-            handler?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Event invoked when the end date driven setting is changed
+        /// Event invoked when the end date fixed setting is changed
         /// </summary>
         public event EventHandler EndDateDrivenChanged;
-        protected virtual void OnEndDateDrivenChanged(EventArgs e)
+        protected virtual void OnHasFixedEndDateChanged(EventArgs e)
         {
             EventHandler handler = EndDateDrivenChanged;
             handler?.Invoke(this, e);
@@ -391,35 +325,195 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to update the budget and schedule status flags for this task
+        /// Updates the unmet demand value for this task.
         /// </summary>
-        public void UpdateStatusFlags()
+        /// <param name="assignedResources">List of resources to use in the update. If not supplied will use the resources saved on the entity.</param>
+        public void UpdateUnmetDemand(IEnumerable<Resource> assignedResources = null)
         {
-            // Update the schedule status and set the flag based on a tolerance of 10% either way
-            var endDate = DateTime.Now.Date > EndDate ? EndDate : DateTime.Now.Date;
-            var daysIntoTask = endDate.Subtract(StartDate.Date).TotalDays;
-            var expectedWorkToDate = (PlannedWorkHours / DurationDays) * daysIntoTask;
-            var maxWork = expectedWorkToDate * 1.1;
-            var minWork = expectedWorkToDate * 0.9;
+            if (assignedResources == null)
+            {
+                assignedResources = AssignedResources;
+            }
+            UnmetDemand = Math.Round(Demand - assignedResources.RoundedSum(r => r.AssignmentFTE, 3), 3);
+            if (UnmetDemand < 0) UnmetDemand = 0;
+        }
 
-            // If a task is done, it can be regarded as being on schedule regardless on when it was actually completed.
-            if (IsDone) ScheduleStatus = ScheduleStatus.OnSchedule;
+        /// <summary>
+        /// Checks whether the task has any provisional resources assigned to it.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasProvisionalResources()
+        {
+            return AssignedResources.Any(r => r.IsProvisional);
+        }
 
-            // Simple condition for late
-            else if (ActualWorkHours < minWork) ScheduleStatus = ScheduleStatus.Late;
+        /// <summary>
+        /// Checks whether the task has any unmet demand.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasUnmetDemand()
+        {
+            return UnmetDemand > 0;
+        }
 
-            // Can't be ahead if you have done all the planned work already
-            else if (ActualWorkHours > maxWork && ActualWorkHours < PlannedWorkHours) ScheduleStatus = ScheduleStatus.Ahead;
+        /// <summary>
+        /// Checks whether the task has any absent resources and the task is running or will start in 7 days.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasAbsentResourcesAndStartsWithinAWeek()
+        {
+            return AssignedResources.Any(r => r.Person.IsCurrentlyAbsent()) && DateTime.Today.AddDays(7) >= StartDate && DateTime.Today <= EndDate;
+        }
 
-            // Within tolerance or already working beyond the planned work which will be reflected in the budget flag
-            else ScheduleStatus = ScheduleStatus.OnSchedule;
+        /// <summary>
+        /// Returns the percentage of the minimum demand that is unmet.
+        /// </summary>
+        /// <returns></returns>
+        public double GetPercentageUnmetDemand()
+        {
+            return Math.Round(UnmetDemand / Demand * 100);
+        }
 
-            // Effort is somewhat related to costs except you can spend more than the planned amount
-            // which would not be captured by a schedule flag
-            if (ScheduleStatus == ScheduleStatus.Late) BudgetStatus = BudgetStatus.Underspend;
-            else if (ActualWorkHours > PlannedWorkHours) BudgetStatus = BudgetStatus.Overspend;
-            else BudgetStatus = BudgetStatus.OnBudget;
+        /// <summary>
+        /// Checks whether this task will start within the next month
+        /// </summary>
+        /// <returns></returns>
+        public bool WillStartWithinAMonth()
+        {
+            return StartDate.Date > DateTime.Today && StartDate.Date.AddMonths(-1) <= DateTime.Today;
+        }
 
+        /// <summary>
+        /// Checks whether this task has started within the last week
+        /// </summary>
+        /// <returns></returns>
+        public bool HasStartedInTheLastWeek()
+        {
+            return StartDate.Date <= DateTime.Today && StartDate.Date >= DateTime.Today.AddDays(-7);
+        }
+
+        /// <summary>
+        /// Checks whether this task is currently running
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentlyRunning()
+        {
+            return StartDate.Date <= DateTime.Today && EndDate.Date >= DateTime.Today;
+        }
+
+        /// <summary>
+        /// Checks whether the absence record provided encroaches on the scheduled task period and up to 7 days before.
+        /// </summary>
+        /// <param name="absence"></param>
+        /// <param name="id">Id of the person with whom the absence is associated (deleted absences have no person to get this from)</param>
+        /// <returns></returns>
+        public bool IsAffectedByAbsence(Absence absence, int? id = null)
+        {
+            if (id == null)
+            {
+                id = absence.Person.PersonId;
+            }
+            return AssignedResources.Any(r => r.Person.PersonId == id) && absence.StartDate.Date.AddDays(7) >= StartDate.Date && absence.StartDate.Date <= EndDate.Date;
+        }
+
+        /// <summary>
+        /// Check whether any resources on this subtask have a planned period of absence which affects the task.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsAffectedByAbsence()
+        {
+            foreach (var r in AssignedResources)
+            {
+                foreach (var a in r.Person.Absences)
+                {
+                    if (IsAffectedByAbsence(a))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the unmet demand of a task within the window given.
+        /// </summary>
+        /// <param name="startDate">If null, assumed to be now</param>
+        /// <param name="endDate">If null, window just considered to be the future</param>
+        /// <returns></returns>
+        public double GetUnmetDemandInWindow(DateTime? startDate = null, DateTime? endDate = null)
+        {
+            // If no end date then include tasks where they end after the start of the window
+            // as this is any task that runs now or in the future
+            if (endDate == null && EndDate.Date >= (startDate ?? DateTime.Today))
+            {
+                return UnmetDemand;
+            }
+
+            // If we have a defined window then include tasks where any part of the task runs in the window
+            return IsWithin(startDate ?? DateTime.Today, endDate ?? DateTime.Today) ? UnmetDemand : 0;
+        }
+
+        /// <summary>
+        /// Method to get the amount of work planned for this task from its start to the end of the week
+        /// assuming the date time provided is a Monday.
+        /// </summary>
+        /// <param name="currentWeek"></param>
+        /// <returns></returns>
+        public double GetPlannedWorkWithinCurrentWeek(DateTime currentWeek)
+        {
+            // Current week DateTime needs to be a Monday
+            if (currentWeek.DayOfWeek != DayOfWeek.Monday)
+                throw new Exception("This method requires the day to be a Monday!");
+
+            // Daily work is average planned work
+            var workPerDay = PlannedWorkHours / DurationDays;
+
+            // Compute the duration of the task in days in this week
+            // Assume runs for full week initially (i.e. starts before the week and ends after the week)
+            var daysUpToEndOfWeek = 7d;
+            if (StartDate.Date >= currentWeek.Date && StartDate.Date < currentWeek.Date.AddDays(7) &&
+                EndDate.Date >= currentWeek.Date && EndDate.Date < currentWeek.Date.AddDays(7))
+            {
+                // Starts and finishes in the week
+                daysUpToEndOfWeek = EndDate.Date.Subtract(StartDate.Date).TotalDays;
+            }
+            else if (StartDate.Date >= currentWeek.Date && StartDate.Date < currentWeek.Date.AddDays(7))
+            {
+                // Starts in the week
+                daysUpToEndOfWeek = currentWeek.Date.AddDays(7).Subtract(StartDate.Date).TotalDays;
+            }
+            else if (EndDate.Date >= currentWeek.Date && EndDate.Date < currentWeek.Date.AddDays(7))
+            {
+                // Ends in the week (end date inclusive)
+                daysUpToEndOfWeek = EndDate.Date.Subtract(currentWeek.Date).TotalDays + 1;
+            }
+
+            return daysUpToEndOfWeek * workPerDay;
+        }
+
+        /// <summary>
+        /// Updates the actual or planned technical costs of the task based on the resources, model and financial references provided
+        /// </summary>
+        /// <param name="costModel"></param>
+        /// <param name="financialReference"></param>
+        /// <param name="projectDayRate"></param>
+        /// <returns></returns>
+        internal void UpdateSubTaskCosts(CostModel costModel, double? projectDayRate, FinancialReference financialReference)
+        {
+            // Reset the totals for this sub task
+            ActualCost = 0;
+            PlannedCost = 0;
+
+            // For each resource assigned, update the costs
+            foreach (var res in AssignedResources)
+            {
+                res.UpdateResourceCosts(costModel, StartDate, EndDate, projectDayRate, financialReference);
+
+                // Sum up the result post-update
+                ActualCost += res.ActualCost;
+                PlannedCost += res.PlannedCost;
+            }
         }
     }
 }

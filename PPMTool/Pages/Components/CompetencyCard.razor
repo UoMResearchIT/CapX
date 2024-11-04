@@ -1,0 +1,129 @@
+﻿@using PPMTool.Data.Entities
+@using DotNetExtensions
+@using PPMTool.Enums
+@using PPMTool.Services
+
+<RadzenCard Style="min-height:1rem">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
+            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditCompetencyAction?.Invoke(Competency))" MouseEnter="@(args => ShowTooltip(args, "Revise"))" Disabled="!EditAuthorised" />
+        </RadzenStack>
+        <RadzenText TextStyle="TextStyle.H5">
+            @((MarkupString)Competency.Description)
+        </RadzenText>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                <RadzenText Text="Objective" TextStyle="TextStyle.Subtitle1" />
+                <RadzenText TextStyle="TextStyle.Body1">
+                    @((MarkupString)Competency.Objective)
+                </RadzenText>
+            </RadzenStack>
+            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="AddAssessment" Disabled="@(assessmentToEdit != null || SelectedPerson == null || (SelectedPerson?.PersonId != ActiveUserId && !EditAuthorised))" />
+        </RadzenStack>
+        @if (assessmentToEdit != null)
+        {
+            <RadzenStack class="radzen-group" Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" Gap="0.5rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="New Status:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                        <RadzenDropDown Data="@(Enum.GetValues<AssessmentStatus>())" @bind-Value="@assessmentToEdit.Status" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@((assessmentToEdit?.CompetencyAssessmentId ?? 0) > 0 ? UpdateAssessment : SaveAssessment)" />
+                        <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardAssessment" />
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add some evidence here to support your assessment" />
+            </RadzenStack>
+        }
+        @if (Competency?.Assessments != null && Competency.Assessments.Where(x => x.Person.PersonId == SelectedPerson.PersonId).Count() > 0)
+        {
+            <RadzenText Text="Assessments" TextStyle="TextStyle.Subtitle1" />
+            foreach (var assessment in Competency.Assessments.Where(x => x.Person.PersonId == SelectedPerson.PersonId).OrderBy(x => DateTime.Parse(x.DateCreated)))
+            {
+                <RadzenStack class="radzen-group radzen-shaded" Style="@(assessment.Status.GetBackgroundCss())" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="2rem">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText Text="Date Created:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                            <RadzenText Text="@(DateTime.Parse(assessment.DateCreated).ToShortDateString())" TextStyle="TextStyle.Body1" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText Text="Status:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                            <RadzenBadge Text="@assessment.Status.GetDescription()" BadgeStyle="@assessment.Status.GetBadgeStyle()" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText Text="Evidence:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @((MarkupString)assessment.Evidence)
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                    <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditAssessment(assessment))" Disabled="@(SelectedPerson?.PersonId != ActiveUserId || assessmentToEdit != null)" />
+                </RadzenStack>
+            }
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public Competency Competency { get; set; }
+
+    [Parameter]
+    public Person SelectedPerson { get; set; }
+
+    [Parameter]
+    public int ActiveUserId { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
+
+    [Parameter]
+    public Action<Competency> EditCompetencyAction { get; set; }
+
+    [Parameter]
+    public Action<CompetencyAssessment> AddAssessmentAction { get; set; }
+
+    [Parameter]
+    public Action<CompetencyAssessment> UpdateAssessmentAction { get; set; }
+
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
+
+    private CompetencyAssessment assessmentToEdit = null;
+
+    private void AddAssessment()
+    {
+        assessmentToEdit = new CompetencyAssessment
+        {
+            AssociatedCompetency = Competency,
+            CompetencyDescription = Competency.Description,
+            CompetencyObjective = Competency.Objective,
+            CompetencyRevision = Competency.Revision,
+            Person = SelectedPerson
+        };
+    }
+
+    private void EditAssessment(CompetencyAssessment assessment)
+    {
+        assessmentToEdit = assessment;
+    }
+
+    private void SaveAssessment()
+    {
+        AddAssessmentAction?.Invoke(assessmentToEdit);
+        assessmentToEdit = null;
+    }
+
+    private void UpdateAssessment()
+    {
+        UpdateAssessmentAction?.Invoke(assessmentToEdit);
+        assessmentToEdit = null;
+    }
+
+    private void DiscardAssessment()
+    {
+        assessmentToEdit = null;
+    }
+}

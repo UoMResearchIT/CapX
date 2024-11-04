@@ -1,3 +1,6 @@
+@using PPMTool.Pages.Components
+
+<HeadOutlet />
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
         <Found Context="routeData">
@@ -5,7 +8,7 @@
         </Found>
         <NotFound>
             <LayoutView Layout="@typeof(MainLayout)">
-                <p>Sorry, there's nothing at this address.</p>
+                <NothingHereComponent />
             </LayoutView>
         </NotFound>
     </Router>

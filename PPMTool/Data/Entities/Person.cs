@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
 namespace PPMTool.Data.Entities
@@ -8,11 +9,14 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person
+    public class Person : ObjectWithStatusMessages
     {
         public int PersonId { get; set; }
 
         private string name;
+        /// <summary>
+        /// Name of the person
+        /// </summary>
         [Required]
         public string Name
         {
@@ -20,27 +24,77 @@ namespace PPMTool.Data.Entities
             set { name = value; ShortName = GetInitials(value); }
         }
 
-
+        /// <summary>
+        /// Initials of the person -- auto populated but can be edited
+        /// </summary>
         public string ShortName { get; set; }
 
+        /// <summary>
+        /// When they started in post
+        /// </summary>
         [Required]
-        [DataType(DataType.Currency)]
-        public double DayRate { get; set; }
+        public DateTime StartDate { get; set; } = DateTime.Today;
 
-        [Required]
-        public DateTime StartDate { get; set; } = DateTime.Now.Date;
-
+        /// <summary>
+        /// When they left. Null if still in post.
+        /// </summary>
         public DateTime? EndDate { get; set; }
 
+        /// <summary>
+        /// FTE of the post
+        /// </summary>
         [Required]
         public double FTE { get; set; } = 1.0;
 
         /// <summary>
-        /// Any changes to their availability which includes the undertaking of baseline activities
+        /// Any changes to their WLMs
         /// </summary>
-        public ICollection<AvailabilityChange> AvailabilityChanges { get; set; } = new List<AvailabilityChange>();
+        public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
 
-        public ICollection<SkillTag> SkillTags { get; set; }
+        /// <summary>
+        /// Collection of skills
+        /// </summary>
+        public ICollection<SkillTag> SkillTags { get; set; } = new List<SkillTag>();
+
+        /// <summary>
+        /// Collection of absences
+        /// </summary>
+        public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+
+        /// <summary>
+        /// List of projects this person is following
+        /// </summary>
+        [InverseProperty("Followers")]
+        public ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
+
+        /// <summary>
+        /// List of projects this person manages
+        /// </summary>
+        [InverseProperty("ProjectManager")]
+        public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
+
+        /// <summary>
+        /// List of the competency assessments this person has performed
+        /// </summary>
+        public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
+
+        public Person()
+        {
+            // Generate status messages to be maintained against a project
+            statusMessages = new List<StatusMessage>
+            {
+                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
+            };
+        }
+
+        /// <summary>
+        /// Checks whether this person is currently absent.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCurrentlyAbsent()
+        {
+            return Absences.Any(x => x.IsCurrentAbsence());
+        }
 
         /// <summary>
         /// Updates the initials of the person.
@@ -59,7 +113,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Get the availability of the person on the current date from their availability changes profile
+        /// Get the availability of the person on the current date from their workload model changes profile
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
@@ -69,14 +123,51 @@ namespace PPMTool.Data.Entities
             var availability = FTE;
 
             // If there are changes then check them
-            if (AvailabilityChanges.Count > 0)
+            if (WorkloadModelChanges.Count > 0)
             {
                 // Get availability based on the most recent change before the date provided
-                var latestChange = AvailabilityChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (latestChange != null) availability = latestChange.AvailabilityFTE;
+                var latestChange = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                if (latestChange != null) availability = latestChange.ProjectWorkFTE;
             }
 
             return availability;
+        }
+
+        /// <summary>
+        /// Method to get the current workload model of a person in force at the date given or defaults to a G6 model
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
+        {
+            // Get the workload model that is active at the beginning of the week
+            var activeModel = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderBy(x => x.ChangeDate).LastOrDefault();
+
+            // If no workload model active then default to the standard 100% project work model
+            if (activeModel == null)
+            {
+                activeModel = new WorkloadModelChange()
+                {
+                    ChangeDate = date,
+                    Person = this,
+                    ProjectWorkFTE = 0.8,
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0.1,
+                    Notes = "Default G6 Model",
+                    Grade = 6
+                };
+            }
+
+            return activeModel;
+        }
+
+        /// <summary>
+        /// Is the current staff member a current staff member at the moment
+        /// </summary>
+        /// <returns></returns>
+        internal bool IsCurrentStaff()
+        {
+            return StartDate <= DateTime.Today && (EndDate == null || EndDate > DateTime.Today);
         }
     }
 }

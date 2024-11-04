@@ -1,30 +1,46 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
-    public class RolesService : BaseService<Role>
+    public class RolesService : BaseEntityService<Role>
     {
-        public override int Add(PPMToolContext context, Role entity)
+
+        private ILogger<RolesService> _logger;
+        private IDbContextFactory<PPMToolContext> _contextFactory;
+
+        public RolesService(ILogger<RolesService> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
-            if (GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName()))
+            _logger = logger;
+            _contextFactory = contextFactory;
+        }
+
+        public override int Add(PPMToolContext context, Role entity, bool commitChanges = true)
+        {
+            if (DuplicateDetected(context, entity))
             {
-                // Duplicate found
                 return -1;
             }
-
             context.Roles.Add(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
             return entity.RoleId;
         }
 
-        public override void Delete(PPMToolContext context, Role entity)
+        public override bool DuplicateDetected(PPMToolContext context, Role entity)
+        {
+            return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.RoleId != entity.RoleId);
+        }
+
+        public override void Delete(PPMToolContext context, Role entity, bool commitChanges = true)
         {
             context.Roles.Remove(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
         }
 
         public override IEnumerable<Role> GetAll(PPMToolContext context)
@@ -34,31 +50,47 @@ namespace PPMTool.Services
                 .ToList();
         }
 
-        public override void Update(PPMToolContext context, Role entity)
+        public override int Update(PPMToolContext context, Role entity, bool commitChanges = true)
         {
+            if (DuplicateDetected(context, entity))
+            {
+                return -1;
+            }
             context.Roles.Update(entity);
-            context.SaveChanges();
+            if (commitChanges) context.SaveChanges();
+            return entity.RoleId;
         }
 
-        public void SeedSuperUser()
+        public void SeedSuperUser(string username, string personName)
         {
             // Check if I am in the role database already
-            var context = new PPMToolContext();
-            var match = GetByUsername(context, "mbgm6ah3");
+            var context = _contextFactory.CreateDbContext();
+            var match = GetByUsername(context, username);
+
             if (match == null)
             {
                 match = new Role()
                 {
-                    CASUserName = "mbgm6ah3",
+                    CASUserName = username,
                     RoleType = RoleType.Superuser
                 };
+                match.Person = new Person { Name = personName };
                 context.Roles.Add(match);
             }
-
-            // See if I need to be changed to a superuser
-            else if (match.RoleType != RoleType.Superuser)
+            else
             {
-                match.RoleType = RoleType.Superuser;
+                // See if I need to be changed to a superuser
+                if (match.RoleType != RoleType.Superuser)
+                {
+                    match.RoleType = RoleType.Superuser;
+                }
+
+                // See if there is a person attached to the user and correct if not
+                if (match.Person == null)
+                {
+                    match.Person = new Person { Name = personName };
+                }
+
                 context.Roles.Update(match);
             }
 
@@ -78,6 +110,13 @@ namespace PPMTool.Services
                 return match.RoleType;
             }
             return RoleType.None;
+        }
+
+        public void UpdateLastLoggedIn(PPMToolContext context, Role roleEntity)
+        {
+            roleEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Roles.Update(roleEntity);
+            context.SaveChanges();
         }
     }
 }

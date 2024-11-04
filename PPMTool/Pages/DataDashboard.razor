@@ -1,0 +1,390 @@
+﻿@page "/datadashboard"
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@inherits BasePage
+<PageTitle>Data Dashboard - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2>Reporting</h2>
+        </div>
+    </div>
+    <RadzenAccordion Multiple="true">
+        <Items>
+            <RadzenAccordionItem Text="Model Variables" Icon="work" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Model Variables"
+                                 ExpandAriaLabel="Expand the Model Variables">
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Person Dev Allowance (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Research Software Architecture per Project (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Project / Service Management per Project (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Staff Management per Person (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Coaching Demand per G4/5 (FTE)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Staff Managed by HoRSE" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="App Support Leadership (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Training Leadership (FTE)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Other PSM Leadership (FTE)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="appSupportPSMFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="trainingPSMFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="otherPSMFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenButton Text="Refresh" Icon="refresh" Click="GenerateCharts" Disabled="@Loading" />
+                    </div>
+                </div>
+            </RadzenAccordionItem>
+            <RadzenAccordionItem Text="View Settings" Icon="visibility" CollapseTitle="Collapse"
+                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the View Settings"
+                                 ExpandAriaLabel="Expand the View Settings" Selected="true">
+                <div class="row align-items-center">
+                    <div class="col-2">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                            <RadzenLabel class="radzen-form-label" Text="Start Date" />
+                            <RadzenDatePicker class="radzen-datepicker" TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" Change="StartDateChanged" />
+                        </RadzenStack>
+                    </div>
+                    <div class="col-2">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                            <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
+                            <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" Change="YearsAheadChanged" />
+                        </RadzenStack>
+                    </div>
+                    <div class="col-2">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                            <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
+                            <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
+                        </RadzenStack>
+                    </div>
+                    <div class="col-auto">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                            <RadzenLabel class="radzen-form-label" Text="View Options" />
+                            <RadzenSelectBar TValue="ViewOption" Size="ButtonSize.Medium" @bind-Value="@viewOption" Change="() => ViewOptionChanged()" Disabled="@Loading">
+                                <Items>
+                                    <RadzenSelectBarItem Value="ViewOption.LastFY" Text="Last FY" />
+                                    <RadzenSelectBarItem Value="ViewOption.CurrentFY" Text="Current FY" />
+                                    <RadzenSelectBarItem Value="ViewOption.NextFY" Text="Next FY" />
+                                    <RadzenSelectBarItem Value="ViewOption.Custom" Text="Custom" />
+                                </Items>
+                            </RadzenSelectBar>
+                        </RadzenStack>
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                            <RadzenLabel class="radzen-form-label" Text="Finance Report for Period" />
+                            @if (exportRunning)
+                            {
+                                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                            }
+                            else
+                            {
+                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="!EditAuthorised" />
+                            }
+                        </RadzenStack>
+                    </div>
+                </div>
+            </RadzenAccordionItem>
+        </Items>
+    </RadzenAccordion>
+    <hr />
+    <div class="row">
+        <div class="col">
+            <h2>Charts</h2>
+        </div>
+    </div>
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DemandChartItem"
+                               Title="Demand (FTE)"
+                               Options="@demandChartOptions">
+                        <ChildContent>
+                            @if (showFinishedAsSeparate)
+                            {
+                                <ApexPointSeries TItem="DemandChartItem"
+                                                 Items="demandChartItems"
+                                                 SeriesType="@SeriesType.Area"
+                                                 Name="Finished Unmet"
+                                                 XValue="@(e => e.WeekStart)"
+                                                 YValue="@(e => Convert.ToDecimal(e.FinishedUnmetDemand + e.FinishedMetDemand + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                            }
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Cancelled"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.CancelledDemand + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Unconfirmed Unmet"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedUnmetDemandFTE + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Unconfirmed Met"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.UnconfirmedMetDemandFTE + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Confirmed Unmet"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedUnmetDemandFTE + e.ConfirmedMetDemandFTE))" />
+                        
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Confirmed Met"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal((showFinishedAsSeparate ? e.FinishedMetDemand : 0) + e.ConfirmedMetDemandFTE))" />
+
+                            @if (showFinishedAsSeparate)
+                            {
+                                <ApexPointSeries TItem="DemandChartItem"
+                                                 Items="demandChartItems"
+                                                 SeriesType="@SeriesType.Area"
+                                                 Name="Finished Met"
+                                                 XValue="@(e => e.WeekStart)"
+                                                 YValue="@(e => Convert.ToDecimal(e.FinishedMetDemand))" />
+                            }
+
+                            <ApexPointSeries TItem="DemandChartItem"
+                                             Items="demandChartItems"
+                                             SeriesType="@SeriesType.Line"
+                                             Name="RSE Available"
+                                             XValue="@(e => e.WeekStart)"
+                                             YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+                        </ChildContent>
+                         
+                    </ApexChart>
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DemandChartItem"
+                               Title="RSE Allocation (FTE)"
+                               Options="@fteChartOptions">
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Allocation"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.MetDemandFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Available"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Underallocation"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.UnderallocationFTE))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="RSE Overallocation"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.OverallocationFTE))" />
+
+                    </ApexChart>
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+    <br />
+    <RadzenRow>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (dutyChartItems != null && dutyChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DutyChartItem"
+                               Title="Duty Demand (FTE)"
+                               Options="@dutyChartOptions">
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Research Software Architecture"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
+                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Staff Management"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
+                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Project and Service Management"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
+                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))" />
+
+                        <ApexPointSeries TItem="DutyChartItem"
+                                         Items="dutyChartItems"
+                                         SeriesType="@SeriesType.Bar"
+                                         Name="Project Work"
+                                         XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))" />
+
+                    </ApexChart>
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Style="min-width: 500px">
+            <RadzenCard>
+                @if (Loading)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (demandChartItems != null && demandChartItems.Count > 0)
+                {
+                    <ApexChart TItem="DemandChartItem"
+                               Title="Cost Recovery (YTD) Confirmed Projects"
+                               Options="@ytdChartOptions">
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Recovery Target"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RecoveryTargetYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Project Budgets"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.BudgetYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Funds Received"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.ReceivedFundsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Planned Costs"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.PlannedCostYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Actual Costs"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.ActualCostsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Recoverable Staff Costs"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RecoverableStaffCostsYTD))" />
+
+                    </ApexChart>
+                }
+                else
+                {
+                    <RadzenText Text="Click refresh to generate" />
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+    <br />
+</div>

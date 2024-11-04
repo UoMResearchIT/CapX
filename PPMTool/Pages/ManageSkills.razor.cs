@@ -2,8 +2,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -16,41 +18,55 @@ namespace PPMTool.Pages
         [Inject]
         private TagService TagService { get; set; }
 
+        private bool IsDuplicatedSkill(SkillTag entity)
+        {
+            if (TagService.DuplicateDetected(Context, entity))
+            {
+                ErrorMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
+                return true;
+            }
+            ErrorMessage = null;
+            return false;
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
-            // Set up the base page
             dataGridEntityService = TagService;
-            dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
+            dataGridEntities = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            LogInformation($"Viewing skills tags");
+        }
+
+        protected override async Task EditRow(SkillTag entity)
+        {
+            if (IsDuplicatedSkill(entity)) return;
+            await base.EditRow(entity);
+
+        }
+
+        protected override async Task SaveRow(SkillTag entity)
+        {
+            if (IsDuplicatedSkill(entity)) return;
+            await base.SaveRow(entity);
         }
 
         protected override async Task DeleteRow(SkillTag entity)
         {
-            if (entity == entityToInsert)
+            if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
             {
-                entityToInsert = null;
-            }
-
-            if (dataGridEntities.Contains(entity))
-            {
+                await base.DeleteRow(entity);
 
                 // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(entity));
+                var people = PersonService.GetAll(Context).Where(x => x.SkillTags.Contains(entity));
                 foreach (var person in people)
                 {
+                    LogInformation($"Removing skills tag {entity.GetSensibleObjectName()} from {person.Name}");
                     person.SkillTags.Remove(entity);
-                    PersonService.Update(context, person);
+                    PersonService.Update(Context, person);
                 }
 
-                // Remove tag
-                dataGridEntityService.Delete(context, entity);
-
-                await dataGrid.Reload();
-            }
-            else
-            {
-                dataGrid.CancelEditRow(entity);
+                dataGridEntityService.Delete(Context, entity);
+                LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }
         }
     }
