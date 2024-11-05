@@ -7,20 +7,20 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["PPMTool.csproj", "."]
-COPY ["nuget.config", "."]
+COPY . .
 
 ARG GITHUB_USERNAME
 ARG GITHUB_PASSWORD
 
 RUN dotnet nuget update source UoMResearchITGitHub --username "$GITHUB_USERNAME" --password "$GITHUB_PASSWORD" --store-password-in-clear-text
 
-RUN dotnet restore "PPMTool.csproj"
-COPY . .
-RUN dotnet build "PPMTool.csproj" -c Debug -o /app/build
+RUN dotnet restore "PPMTool/PPMTool.sln"
+RUN dotnet tool restore
+RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
-RUN dotnet publish "PPMTool.csproj" -c Debug -o /app/publish
+RUN dotnet publish -c Local -o /app/publish -f net6.0 "PPMTool/PPMTool.sln"
+COPY PPMTool/PPMTool.db /app/publish
 
 FROM base AS final
 WORKDIR /app
