@@ -20,7 +20,7 @@ RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
 RUN dotnet publish -c Local -o /app/publish -f net6.0 "PPMTool/PPMTool.sln"
-COPY PPMTool/PPMTool.db /app/publish
+RUN cp PPMTool/PPMTool.db /app/publish
 
 FROM base AS final
 WORKDIR /app
