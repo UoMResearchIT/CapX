@@ -15,7 +15,19 @@ CapX makes use of automated deployment. As the VMs are on the University private
 All documentation is now available in the Wiki associated with this repository rather than the Readme as before.
 
 ## Running with Docker
-CapX can be run from a Docker container. To run CapX with Docker execute `docker compose up` from the `PPMTool` directory where the `dockerfile` and `compose.yml` files live.
+CapX can be run from a Docker container. To run CapX with Docker, build the image with:
+
+```bash
+docker build --build-arg GITHUB_USERNAME=<your_github_username> --build-arg GITHUB_PASSWORD=<your_access_token_with_package_read_scope> -t capx . 
+```
+
+Once built, run a container from the image and map to the exposed ports:
+
+```bash
+docker run -p <your_port>:80 -p <your_ssl_port>:443 capx
+```
+
+You can then access the app via a web browser at `localhost:<your_port>`.
 
 ### Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
