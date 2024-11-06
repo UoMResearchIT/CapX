@@ -12,7 +12,10 @@ The production version of CapX uses the DS CAS and users with a standard UoM use
 CapX makes use of automated deployment. As the VMs are on the University private network, they are not visible to GitHub so we cannot simply use a GitHub action to auto-deploy. Instead, the VMs run a cron job which long-polls the repository every 10 minutes, using `git fetch` and `git status` to determine programmtically whether the source code on the VM is behind the remote. If it is, it will pull the latest source code for the `release` branch (production VM) or `dev` branch (development VM), authenticating with GitHub using an SSH key, and then build the software, apply database migrations and restart the web services. The development build script additionally copies the database from the production VM prior to applying migrations to ensure the development version is tested on real data. The production database is also backed-up as part of the deployment process in case of failure. Deployment scripts can be found in the `deployment` folder in the repo.
 
 ## Documentation and User Guides
-All documentation is now available in the Wiki associated with this repository rather than the Readme as before.
+Documentation of features and how to use them is available in the Wiki associated with this repository.
+
+## Building from Source
+The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`.
 
 ## Running with Docker
 CapX can be run from a Docker container. To run CapX with Docker, build the image with:
