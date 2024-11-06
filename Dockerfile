@@ -7,15 +7,23 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY . .
+COPY nuget.config nuget.config
 
 ARG GITHUB_USERNAME
 ARG GITHUB_PASSWORD
 
 RUN dotnet nuget update source UoMResearchITGitHub --username "$GITHUB_USERNAME" --password "$GITHUB_PASSWORD" --store-password-in-clear-text
 
+COPY Blazor-ApexCharts Blazor-ApexCharts
+COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
+COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
+
 RUN dotnet restore "PPMTool/PPMTool.sln"
+
+COPY .config .config
 RUN dotnet tool restore
+
+COPY PPMTool PPMTool
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
