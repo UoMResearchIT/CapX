@@ -9,10 +9,9 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY nuget.config nuget.config
 
-ARG GITHUB_USERNAME
-ARG GITHUB_PASSWORD
+ARG GITHUB_TOKEN
 
-RUN dotnet nuget update source UoMResearchITGitHub --username "$GITHUB_USERNAME" --password "$GITHUB_PASSWORD" --store-password-in-clear-text
+RUN dotnet nuget update source UoMResearchITGitHub --username "xxx-unused" --password "$GITHUB_TOKEN" --store-password-in-clear-text
 
 COPY Blazor-ApexCharts Blazor-ApexCharts
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj

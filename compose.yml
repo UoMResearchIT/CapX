@@ -3,8 +3,7 @@ services:
     build:
       context: .
       args:
-        GITHUB_USERNAME: "$PPMTOOL_GITHUB_USERNAME"
-        GITHUB_PASSWORD: "$PPMTOOL_GITHUB_PASSWORD"
+        GITHUB_TOKEN: ${GITHUB_TOKEN:?}
     ports:
       - 80:80
       - 443:443

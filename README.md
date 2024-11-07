@@ -37,10 +37,9 @@ You can then access the app via a web browser at `localhost:<your_port>`.
 To run with Docker Compose, enter your GitHub credentials as environment variables:
 
 ```bash
-export GITHUB_USERNAME=mygithubuser
-read -s GITHUB_PASSWORD
+read -s GITHUB_TOKEN
 <type your github token with package read permission>
-export GITHUB_PASSWORD
+export GITHUB_TOKEN
 ```
 and then build and bring up the container:
 ```bash
