@@ -32,6 +32,28 @@ docker run -p <your_port>:80 -p <your_ssl_port>:443 capx
 
 You can then access the app via a web browser at `localhost:<your_port>`.
 
+## Running with Docker Compose
+
+To run with Docker Compose, enter your GitHub credentials as environment variables:
+
+```bash
+export GITHUB_USERNAME=mygithubuser
+read -s GITHUB_PASSWORD
+<type your github token with package read permission>
+export GITHUB_PASSWORD
+```
+and then build and bring up the container:
+```bash
+docker compose up --build
+```
+Use Ctrl-C to bring the container down. The database state will be maintained in a docker volume. To wipe the volume and start from the initial state, use
+```bash
+docker volume rm capx_state
+```
+once the container has been brought down.
+
+Since the image is being built each time you run "docker compose up --build", any changes to source files will be picked up and included.
+
 ### Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
 2. Use of the Bitwarden browser plugin has been know to slow down the response of the interactive graphs. See [Issue 302](https://github.com/UoMResearchIT/CapX/issues/302) for details.
