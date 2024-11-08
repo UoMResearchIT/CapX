@@ -67,3 +67,4 @@ Since the image is being built each time you run "docker compose up --build", an
 ### Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
 2. Use of the Bitwarden browser plugin has been know to slow down the response of the interactive graphs. See [Issue 302](https://github.com/UoMResearchIT/CapX/issues/302) for details.
+3. CapX does not work properly in Safari on macOS when run from Docker.
