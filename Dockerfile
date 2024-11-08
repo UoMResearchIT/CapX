@@ -9,15 +9,13 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY nuget.config nuget.config
 
-ARG GITHUB_TOKEN
-
-RUN dotnet nuget update source UoMResearchITGitHub --username "xxx-unused" --password "$GITHUB_TOKEN" --store-password-in-clear-text
-
 COPY Blazor-ApexCharts Blazor-ApexCharts
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
 
-RUN dotnet restore "PPMTool/PPMTool.sln"
+RUN --mount=type=secret,id=github_token \
+    NuGetPackageSourceCredentials_UoMResearchITGitHub="Username=none;Password=$(cat /run/secrets/github_token)" \
+    dotnet restore "PPMTool/PPMTool.sln"
 
 COPY .config .config
 RUN dotnet tool restore

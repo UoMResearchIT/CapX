@@ -2,8 +2,8 @@ services:
   capx:
     build:
       context: .
-      args:
-        GITHUB_TOKEN: ${GITHUB_TOKEN:?}
+      secrets:
+        - github_token
     ports:
       - 80:80
       - 443:443
@@ -12,3 +12,7 @@ services:
 
 volumes:
   state:
+
+secrets:
+  github_token:
+    environment: GITHUB_TOKEN
