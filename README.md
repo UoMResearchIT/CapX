@@ -43,7 +43,7 @@ once the container has been brought down.
 
 ## Running with Docker Compose
 
-To run with Docker Compose, enter your GitHub credentials as environment variables:
+To run with Docker Compose, provide your GitHub token as an environment variable:
 
 ```bash
 read -s GITHUB_TOKEN
@@ -54,6 +54,8 @@ and then build and bring up the container:
 ```bash
 docker compose up --build
 ```
+You can then access the app via a web browser at `http://localhost:3000`. You can change the port by setting the environment variable CAPX_PORT, either in a .env file or in the environment.
+
 Use Ctrl-C to bring the container down. The database state will be maintained in a docker volume. To wipe the volume and start from the initial state, use
 ```bash
 docker volume rm capx_state
