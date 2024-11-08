@@ -18,19 +18,28 @@ Documentation of features and how to use them is available in the Wiki associate
 The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`.
 
 ## Running with Docker
-CapX can be run from a Docker container. To run CapX with Docker, build the image with:
+CapX can be run from a Docker container. To build and run CapX with Docker, build the image with:
 
 ```bash
-docker build --build-arg GITHUB_USERNAME=<your_github_username> --build-arg GITHUB_PASSWORD=<your_access_token_with_package_read_scope> -t capx . 
+read -s GITHUB_TOKEN
+<type your github token with package read permission>
+export GITHUB_TOKEN
+docker build --secret id=github_token,env=GITHUB_TOKEN -t capx . 
 ```
 
-Once built, run a container from the image and map to the exposed ports:
+Once built, run a container from the image, map to the exposed ports and keep the database in a Docker volume so it persists past the lifetime of the run command:
 
 ```bash
-docker run -p <your_port>:80 -p <your_ssl_port>:443 capx
+docker run -p <your_port>:80 -v capx_state:/app/state capx
 ```
 
 You can then access the app via a web browser at `localhost:<your_port>`.
+
+To wipe the volume and start from the initial state, use
+```bash
+docker volume rm capx_state
+```
+once the container has been brought down.
 
 ## Running with Docker Compose
 
