@@ -26,10 +26,13 @@
                 <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" Disabled="!userIsSuperuser" />
                 @if (userIsSuperuser || activeUserId == selectedPerson.PersonId)
                 {
-                    <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
-                    <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
-                                     Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
-                                     InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
+                        <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
+                        <RadzenText Text="This feature is deprecated and will be removed in a future release. This could be your last chance to import your competency grid from the legacy Excel spreadsheet!" TextStyle="TextStyle.Body2" Style="margin-bottom: 0rem" />
+                        <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
+                                         Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
+                                         InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                    </RadzenStack>
                 }
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
@@ -54,8 +57,20 @@
             <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
         </div>
     </div>
+    <div class="row">
+        <div class="col">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
+                <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                <RadzenTextBox @bind-Value=@competencySearchTerms
+                                Placeholder="Search Competencies"
+                                Change=@FilterCompetencies
+                                Style="width:100%" />
+                <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+            </RadzenStack>
+        </div>
+    </div>
     <hr />
-    <RadzenAccordion Multiple="true">
+    <RadzenAccordion class="competency" Multiple="true">
         <Items>
             <RadzenAccordionItem Text="Grade 5" Icon="counter_1" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 5 Competencies"

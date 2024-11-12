@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -25,6 +26,9 @@ namespace PPMTool.Pages
         [Inject]
         private CompetencyService CompetencyService { get; set; }
 
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
         private IEnumerable<Person> people;
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
@@ -33,6 +37,7 @@ namespace PPMTool.Pages
         private byte[] file;
         private string fileName;
         private long? fileSize;
+        private string competencySearchTerms;
 
         protected override void OnInitialized()
         {
@@ -258,6 +263,39 @@ namespace PPMTool.Pages
         private string Clean(string line)
         {
             return line.Replace("\r", "").Replace("\"", "");
+        }
+
+        /// <summary>
+        /// Filter the visible competencies based on the search terms
+        /// </summary>
+        private void FilterCompetencies()
+        {
+            LogInformation($"Searching for competencies with: {competencySearchTerms}");
+
+            if (string.IsNullOrWhiteSpace(competencySearchTerms))
+            {
+                JSRuntime.InvokeVoidAsync("clearHighlightInCompetencies");
+            }
+            else
+            {
+                // Collapse all the accordions
+
+                // Find competencies with matching string
+
+                // Expand the accordions for those matching
+
+                // Highlight matching text on the page with a JS call
+                JSRuntime.InvokeVoidAsync("highlightInCompetencies", competencySearchTerms.Trim());
+            }
+        }
+
+        /// <summary>
+        /// Clear the competency search box and re-filter
+        /// </summary>
+        private void ClearSearch()
+        {
+            competencySearchTerms = string.Empty;
+            FilterCompetencies();
         }
     }
 }
