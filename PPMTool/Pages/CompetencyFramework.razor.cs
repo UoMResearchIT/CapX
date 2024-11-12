@@ -39,6 +39,15 @@ namespace PPMTool.Pages
         private long? fileSize;
         private string competencySearchTerms;
 
+        private Dictionary<int, bool> gradeAccordionSelected;
+        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade5Competencies;
+        private Dictionary<CompetencyCategory, bool> grade5CategoriesSelected = new();
+        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade6Competencies;
+        private Dictionary<CompetencyCategory, bool> grade6CategoriesSelected = new();
+        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade7Competencies;
+        private Dictionary<CompetencyCategory, bool> grade7CategoriesSelected = new();
+
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -54,6 +63,29 @@ namespace PPMTool.Pages
             // Get starting lists from the DB
             people = PersonService.GetAll(Context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
             competencies = CompetencyService.GetAll(Context);
+
+            // Prepare the bindings for the expansion setting of the accordions
+            groupedGrade5Competencies = competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category).OrderBy(x => x.Key);
+            foreach (var category in groupedGrade5Competencies.Select(x => x.Key))
+            {
+                grade5CategoriesSelected.Add(category, false);
+            }
+            groupedGrade6Competencies = competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category).OrderBy(x => x.Key);
+            foreach (var category in groupedGrade6Competencies.Select(x => x.Key))
+            {
+                grade6CategoriesSelected.Add(category, false);
+            }
+            groupedGrade7Competencies = competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category).OrderBy(x => x.Key);
+            foreach (var category in groupedGrade7Competencies.Select(x => x.Key))
+            {
+                grade7CategoriesSelected.Add(category, false);
+            }
+            gradeAccordionSelected = new Dictionary<int, bool>
+            {
+                { 5, false },
+                { 6, false },
+                { 7, false }
+            };
 
             LogInformation("Viewing competencies framework");
         }
@@ -280,13 +312,46 @@ namespace PPMTool.Pages
             {
                 if (!string.IsNullOrWhiteSpace(competencySearchTerms))
                 {
-                    // TODO: Collapse all the accordions
+                    // Collapse all the accordions
+                    foreach (var grade in gradeAccordionSelected.Keys)
+                    {
+                        gradeAccordionSelected[grade] = false;
+                    }
+                    foreach (var category in grade5CategoriesSelected.Keys.Distinct())
+                    {
+                        grade5CategoriesSelected[category] = false;
+                    }
+                    foreach (var category in grade6CategoriesSelected.Keys.Distinct())
+                    {
+                        grade6CategoriesSelected[category] = false;
+                    }
+                    foreach (var category in grade7CategoriesSelected.Keys.Distinct())
+                    {
+                        grade7CategoriesSelected[category] = false;
+                    }
 
                     // Find competencies with matching string
                     var term = competencySearchTerms.Trim().ToLower();
                     var matching = competencies.Where(x => x.GetHierarchyId().Contains(term) || x.Description.ToLower().Contains(term) || x.Objective.ToLower().Contains(term));
 
-                    // TODO: Expand the accordions for those matching
+                    // Expand the accordions for those matching
+                    foreach (var grade in matching.Select(x => x.Grade).Distinct())
+                    {
+                        gradeAccordionSelected[grade] = true;
+                    };
+                    foreach (var category in matching.Where(x => x.Grade == 5).Select(x => x.Category).Distinct())
+                    {
+                        grade5CategoriesSelected[category] = true;
+                    }
+                    foreach (var category in matching.Where(x => x.Grade == 6).Select(x => x.Category).Distinct())
+                    {
+                        grade6CategoriesSelected[category] = true;
+                    }
+                    foreach (var category in matching.Where(x => x.Grade == 7).Select(x => x.Category).Distinct())
+                    {
+                        grade7CategoriesSelected[category] = true;
+                    }
+                    await InvokeAsync(StateHasChanged);
 
                     // Highlight matching text on the page with a JS call
                     await JSRuntime.InvokeVoidAsync("highlightInCompetencies", competencySearchTerms.Trim());
