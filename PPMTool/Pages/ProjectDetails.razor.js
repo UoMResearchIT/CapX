@@ -48,7 +48,6 @@ function insertTextAtCaret(text) {
     sel.addRange(newRange);
 }
 
-
 function copyText (text) {
     navigator.clipboard.writeText(text).then(function () {
         alert("Link to note copied to clipboard!");

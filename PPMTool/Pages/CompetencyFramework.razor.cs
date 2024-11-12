@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -25,6 +26,9 @@ namespace PPMTool.Pages
         [Inject]
         private CompetencyService CompetencyService { get; set; }
 
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
         private IEnumerable<Person> people;
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
@@ -33,6 +37,16 @@ namespace PPMTool.Pages
         private byte[] file;
         private string fileName;
         private long? fileSize;
+        private string competencySearchTerms;
+
+        private Dictionary<int, bool> gradeAccordionSelected;
+        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade5Competencies;
+        private Dictionary<CompetencyCategory, bool> grade5CategoriesSelected = new();
+        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade6Competencies;
+        private Dictionary<CompetencyCategory, bool> grade6CategoriesSelected = new();
+        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade7Competencies;
+        private Dictionary<CompetencyCategory, bool> grade7CategoriesSelected = new();
+
 
         protected override void OnInitialized()
         {
@@ -49,6 +63,29 @@ namespace PPMTool.Pages
             // Get starting lists from the DB
             people = PersonService.GetAll(Context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
             competencies = CompetencyService.GetAll(Context);
+
+            // Prepare the bindings for the expansion setting of the accordions
+            groupedGrade5Competencies = competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category).OrderBy(x => x.Key);
+            foreach (var category in groupedGrade5Competencies.Select(x => x.Key))
+            {
+                grade5CategoriesSelected.Add(category, false);
+            }
+            groupedGrade6Competencies = competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category).OrderBy(x => x.Key);
+            foreach (var category in groupedGrade6Competencies.Select(x => x.Key))
+            {
+                grade6CategoriesSelected.Add(category, false);
+            }
+            groupedGrade7Competencies = competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category).OrderBy(x => x.Key);
+            foreach (var category in groupedGrade7Competencies.Select(x => x.Key))
+            {
+                grade7CategoriesSelected.Add(category, false);
+            }
+            gradeAccordionSelected = new Dictionary<int, bool>
+            {
+                { 5, false },
+                { 6, false },
+                { 7, false }
+            };
 
             LogInformation("Viewing competencies framework");
         }
@@ -258,6 +295,77 @@ namespace PPMTool.Pages
         private string Clean(string line)
         {
             return line.Replace("\r", "").Replace("\"", "");
+        }
+
+        /// <summary>
+        /// Filter the visible competencies based on the search terms
+        /// </summary>
+        private void FilterCompetencies()
+        {
+            LogInformation($"Searching for competencies with: {competencySearchTerms}");
+
+            // Clear existing highlighting
+            InvokeAsync(async () =>
+            {
+                await JSRuntime.InvokeVoidAsync("clearHighlightInCompetencies");
+            }).ContinueWith(async t =>
+            {
+                if (!string.IsNullOrWhiteSpace(competencySearchTerms))
+                {
+                    // Collapse all the accordions
+                    foreach (var grade in gradeAccordionSelected.Keys)
+                    {
+                        gradeAccordionSelected[grade] = false;
+                    }
+                    foreach (var category in grade5CategoriesSelected.Keys.Distinct())
+                    {
+                        grade5CategoriesSelected[category] = false;
+                    }
+                    foreach (var category in grade6CategoriesSelected.Keys.Distinct())
+                    {
+                        grade6CategoriesSelected[category] = false;
+                    }
+                    foreach (var category in grade7CategoriesSelected.Keys.Distinct())
+                    {
+                        grade7CategoriesSelected[category] = false;
+                    }
+
+                    // Find competencies with matching string
+                    var term = competencySearchTerms.Trim().ToLower();
+                    var matching = competencies.Where(x => x.GetHierarchyId().Contains(term) || x.Description.ToLower().Contains(term) || x.Objective.ToLower().Contains(term));
+
+                    // Expand the accordions for those matching
+                    foreach (var grade in matching.Select(x => x.Grade).Distinct())
+                    {
+                        gradeAccordionSelected[grade] = true;
+                    };
+                    foreach (var category in matching.Where(x => x.Grade == 5).Select(x => x.Category).Distinct())
+                    {
+                        grade5CategoriesSelected[category] = true;
+                    }
+                    foreach (var category in matching.Where(x => x.Grade == 6).Select(x => x.Category).Distinct())
+                    {
+                        grade6CategoriesSelected[category] = true;
+                    }
+                    foreach (var category in matching.Where(x => x.Grade == 7).Select(x => x.Category).Distinct())
+                    {
+                        grade7CategoriesSelected[category] = true;
+                    }
+                    await InvokeAsync(StateHasChanged);
+
+                    // Highlight matching text on the page with a JS call
+                    await JSRuntime.InvokeVoidAsync("highlightInCompetencies", competencySearchTerms.Trim());
+                }
+            });
+        }
+
+        /// <summary>
+        /// Clear the competency search box and re-filter
+        /// </summary>
+        private void ClearSearch()
+        {
+            competencySearchTerms = string.Empty;
+            FilterCompetencies();
         }
     }
 }
