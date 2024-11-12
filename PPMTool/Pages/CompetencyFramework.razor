@@ -70,7 +70,7 @@
         </div>
     </div>
     <hr />
-    <RadzenAccordion class="competency" Multiple="true">
+    <RadzenAccordion Multiple="true">
         <Items>
             <RadzenAccordionItem Text="Grade 5" Icon="counter_1" CollapseTitle="Collapse"
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 5 Competencies"
@@ -109,14 +109,14 @@
                                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                                             @foreach (var competency in group)
                                             {
-                                                <CompetencyCard Competency="competency"
-                                                                EditAuthorised="userIsSuperuser"
-                                                                EditCompetencyAction="@(competency => EditCompetency(competency))"
-                                                                AddAssessmentAction="@(assessment => AddAssessment(assessment))"
-                                                                UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
-                                                                ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
-                                                                SelectedPerson="selectedPerson"
-                                                                ActiveUserId="activeUserId" />
+                                                <CompetencyCardComponent Competency="competency"
+                                                                         EditAuthorised="userIsSuperuser"
+                                                                         EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                         AddAssessmentAction="@(assessment => AddAssessment(assessment))"
+                                                                         UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
+                                                                         ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
+                                                                         SelectedPerson="selectedPerson"
+                                                                         ActiveUserId="activeUserId" />
                                             }
                                         </RadzenStack>
                                     </ChildContent>
@@ -163,14 +163,14 @@
                                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                                             @foreach (var competency in group)
                                             {
-                                                <CompetencyCard Competency="competency"
-                                                                EditAuthorised="userIsSuperuser"
-                                                                EditCompetencyAction="@(competency => EditCompetency(competency))"
-                                                                AddAssessmentAction="@(assessment => AddAssessment(assessment))"
-                                                                UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
-                                                                ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
-                                                                SelectedPerson="selectedPerson"
-                                                                ActiveUserId="activeUserId" />
+                                                <CompetencyCardComponent Competency="competency"
+                                                                         EditAuthorised="userIsSuperuser"
+                                                                         EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                         AddAssessmentAction="@(assessment => AddAssessment(assessment))"
+                                                                         UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
+                                                                         ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
+                                                                         SelectedPerson="selectedPerson"
+                                                                         ActiveUserId="activeUserId" />
                                             }
                                         </RadzenStack>
                                     </ChildContent>
@@ -217,14 +217,14 @@
                                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                                             @foreach (var competency in group)
                                             {
-                                                <CompetencyCard Competency="competency"
-                                                                EditAuthorised="userIsSuperuser"
-                                                                EditCompetencyAction="@(competency => EditCompetency(competency))"
-                                                                AddAssessmentAction="@(assessment => AddAssessment(assessment))"
-                                                                UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
-                                                                ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
-                                                                SelectedPerson="selectedPerson"
-                                                                ActiveUserId="activeUserId" />
+                                                <CompetencyCardComponent Competency="competency"
+                                                                         EditAuthorised="userIsSuperuser"
+                                                                         EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                         AddAssessmentAction="@(assessment => AddAssessment(assessment))"
+                                                                         UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
+                                                                         ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
+                                                                         SelectedPerson="selectedPerson"
+                                                                         ActiveUserId="activeUserId" />
                                             }
                                         </RadzenStack>
                                     </ChildContent>

@@ -272,21 +272,26 @@ namespace PPMTool.Pages
         {
             LogInformation($"Searching for competencies with: {competencySearchTerms}");
 
-            if (string.IsNullOrWhiteSpace(competencySearchTerms))
+            // Clear existing highlighting
+            InvokeAsync(async () =>
             {
-                JSRuntime.InvokeVoidAsync("clearHighlightInCompetencies");
-            }
-            else
+                await JSRuntime.InvokeVoidAsync("clearHighlightInCompetencies");
+            }).ContinueWith(async t =>
             {
-                // Collapse all the accordions
+                if (!string.IsNullOrWhiteSpace(competencySearchTerms))
+                {
+                    // TODO: Collapse all the accordions
 
-                // Find competencies with matching string
+                    // Find competencies with matching string
+                    var term = competencySearchTerms.Trim().ToLower();
+                    var matching = competencies.Where(x => x.GetHierarchyId().Contains(term) || x.Description.ToLower().Contains(term) || x.Objective.ToLower().Contains(term));
 
-                // Expand the accordions for those matching
+                    // TODO: Expand the accordions for those matching
 
-                // Highlight matching text on the page with a JS call
-                JSRuntime.InvokeVoidAsync("highlightInCompetencies", competencySearchTerms.Trim());
-            }
+                    // Highlight matching text on the page with a JS call
+                    await JSRuntime.InvokeVoidAsync("highlightInCompetencies", competencySearchTerms.Trim());
+                }
+            });
         }
 
         /// <summary>
