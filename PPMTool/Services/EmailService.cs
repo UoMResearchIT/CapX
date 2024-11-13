@@ -64,7 +64,6 @@ namespace PPMTool.Services
             try
             {
                 client.Send(mailMessage);
-                
             }
             catch (Exception e)
             {
