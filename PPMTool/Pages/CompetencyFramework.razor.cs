@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -46,7 +47,6 @@ namespace PPMTool.Pages
         private Dictionary<CompetencyCategory, bool> grade6CategoriesSelected = new();
         private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade7Competencies;
         private Dictionary<CompetencyCategory, bool> grade7CategoriesSelected = new();
-
 
         protected override void OnInitialized()
         {
@@ -103,15 +103,43 @@ namespace PPMTool.Pages
         private void AddAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
-            CompetencyService.AddAssessment(Context, assessment);
+            if (ValidateAssessment(assessment, out var message)) CompetencyService.AddAssessment(Context, assessment);
+            else NotificationService.Notify(NotificationSeverity.Error, "Validation Error", message);
             StateHasChanged();
         }
 
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
-            CompetencyService.UpdateAssessment(Context, assessment);
+            if (ValidateAssessment(assessment, out var message)) CompetencyService.UpdateAssessment(Context, assessment);
+            else NotificationService.Notify(NotificationSeverity.Error, "Validation Error", message);
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Check the assessment model is correct before adding or updating
+        /// </summary>
+        /// <param name="assessment"></param>
+        /// <returns></returns>
+        private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
+        {
+            if (string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
+            {
+                message = "Evidence is required!";
+                return false;
+            }
+            else if (string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyDescription)))
+            {
+                message = "Competency description is required!";
+                return false;
+            }
+            else if (string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyObjective)))
+            {
+                message = "Competency objective is required!";
+                return false;
+            }
+            message = string.Empty;
+            return true;
         }
 
         private void PersonSelected()
@@ -249,7 +277,7 @@ namespace PPMTool.Pages
 
                         // Add assessment to DB
                         LogInformation($"Adding assessment against competency LegacyId {legacyId} for {localPerson.Name} to the DB");
-                        CompetencyService.AddAssessment(threadContext, new CompetencyAssessment
+                        var assessment = new CompetencyAssessment
                         {
                             AssociatedCompetency = matchingCompetency,
                             CompetencyDescription = matchingCompetency.Description,
@@ -258,7 +286,16 @@ namespace PPMTool.Pages
                             Person = localPerson,
                             Status = status,
                             Evidence = string.IsNullOrWhiteSpace(valuesRest[4]) ? "No evidence supplied" : valuesRest[4].Trim()
-                        });
+                        };
+
+                        if (ValidateAssessment(assessment, out var message))
+                        {
+                            CompetencyService.AddAssessment(threadContext, assessment);
+                        }
+                        else
+                        {
+                            LogError($"Assessment validation failed {message}!");
+                        }
                     }
 
                     Debug.WriteLine($"** Finished reading lines.");
