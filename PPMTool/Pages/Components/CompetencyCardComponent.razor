@@ -5,17 +5,17 @@
 
 <RadzenCard Style="min-height:1rem">
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
-            <RadzenText Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText class="competency-highlightable" Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditCompetencyAction?.Invoke(Competency))" MouseEnter="@(args => ShowTooltip(args, "Revise"))" Disabled="!EditAuthorised" />
         </RadzenStack>
-        <RadzenText TextStyle="TextStyle.H5">
+        <RadzenText class="competency-highlightable" TextStyle="TextStyle.H5">
             @((MarkupString)Competency.Description)
         </RadzenText>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                 <RadzenText Text="Objective" TextStyle="TextStyle.Subtitle1" />
-                <RadzenText TextStyle="TextStyle.Body1">
+                <RadzenText class="competency-highlightable" TextStyle="TextStyle.Body1">
                     @((MarkupString)Competency.Objective)
                 </RadzenText>
             </RadzenStack>
@@ -42,8 +42,8 @@
             <RadzenText Text="Assessments" TextStyle="TextStyle.Subtitle1" />
             foreach (var assessment in Competency.Assessments.Where(x => x.Person.PersonId == SelectedPerson.PersonId).OrderBy(x => DateTime.Parse(x.DateCreated)))
             {
-                <RadzenStack class="radzen-group radzen-shaded" Style="@(assessment.Status.GetBackgroundCss())" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="2rem">
+                <RadzenStack class="radzen-group radzen-shaded" Style="@(assessment.Status.GetBackgroundCss())" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenText Text="Date Created:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom:0rem" />
                             <RadzenText Text="@(DateTime.Parse(assessment.DateCreated).ToShortDateString())" TextStyle="TextStyle.Body1" />

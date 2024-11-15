@@ -836,6 +836,24 @@ namespace PPMTool.Pages
                     {
                         AllowMouseWheelZoom = false
                     }
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
                 }
             };
         }

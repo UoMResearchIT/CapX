@@ -373,7 +373,9 @@
                         <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
                             @foreach (var person in mentionables)
                             {
-                                <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))" MouseLeave="@(args => UnHighlightMention(person))" Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
+                                <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))"
+                                            MouseLeave="@(args => UnHighlightMention(person))"
+                                            Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
                                     <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
                                             <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
@@ -396,7 +398,8 @@
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                     <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
                                     <RadzenDatePicker @bind-Value="@noteModel.DueDate" Disabled="@noteModel.IsCompleted()"/>
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })" Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })"
+                                                  Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                                 </RadzenStack>
                                 @if (noteModel.IsCompleted())
                                 {
@@ -459,7 +462,13 @@
                 {
                     @foreach (var note in filteredNotes)
                     {
-                        <NoteComponent Note="note" DeleteNote="DeleteNote" EditNote="EditNote" CopyLinkToClipboard="CopyLinkToNoteToClipboard" MarkComplete="@(args => MarkComplete(note))" EditAuthorised="@(isProjectManager ||activeUser == note.Author)" ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
+                        <NoteComponent Note="note"
+                                       DeleteNote="DeleteNote"
+                                       EditNote="EditNote"
+                                       CopyLinkToClipboard="CopyLinkToNoteToClipboard"
+                                       MarkComplete="@(args => MarkComplete(note))"
+                                       EditAuthorised="@(isProjectManager || activeUser == note.Author)"
+                                       ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
                     }
                 }
             </RadzenStack>

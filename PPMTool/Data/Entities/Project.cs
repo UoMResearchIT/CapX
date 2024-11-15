@@ -269,13 +269,13 @@ namespace PPMTool.Data.Entities
                 }
             }
 
+            // Update project dates
+            StartDate = startDate;
+            EndDate = endDate;
+
             // Add the leadership costs
             ActualLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(true, financialReferences)) / 100;
             PlannedLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(false, financialReferences)) / 100;
-
-            // Update project
-            StartDate = startDate;
-            EndDate = endDate;
 
             // Truncate to 1 DP
             var newValue = Math.Round(10 * actualHours) / 10;
@@ -421,7 +421,8 @@ namespace PPMTool.Data.Entities
             var days = CalculateOverlappingDays(dateRanges, startDate, endDate);
 
             // Return fraction of the days in the window
-            return days / (endDate.Subtract(startDate).TotalDays + 1);
+            var windowSize = endDate.Subtract(startDate).TotalDays + 1;
+            return days / windowSize;
         }
 
         /// <summary>
