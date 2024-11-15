@@ -29,6 +29,6 @@ namespace PPMTool.Enums
         /// Timesheets that have been rejected
         /// </summary>
         [Description("Rejected")]
-        Rejected,   
+        Rejected
     }
 }
