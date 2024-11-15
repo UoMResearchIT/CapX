@@ -8,12 +8,15 @@ namespace PPMTool.Data.Context
     public class PPMToolContext : DbContext
     {
         public DbSet<Absence> Absence { get; set; }
+        public DbSet<ActivityTimeRecord> ActivityTimeRecords { get; set; }
         public DbSet<InnateCode> InnateCodes { get; set; }
         public DbSet<InnateCodeTask> InnateCodeTasks { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<SubTask> SubTasks { get; set; }
+        public DbSet<Timesheet> Timesheets { get; set; }
+        public DbSet<TimesheetWorkflow> TimesheetWorkflows { get; set; }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<SkillTag> SkillTags { get; set; }
         public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
