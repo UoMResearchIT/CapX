@@ -7,7 +7,6 @@ namespace PPMTool.Enums
     /// </summary>
     public enum TimesheetWorkflowStatus
     {
-
         /// <summary>
         /// A new timesheet that 
         /// </summary>
@@ -30,8 +29,6 @@ namespace PPMTool.Enums
         /// Timesheets that have been rejected
         /// </summary>
         [Description("Rejected")]
-        Rejected,
-
-        
+        Rejected,   
     }
 }
