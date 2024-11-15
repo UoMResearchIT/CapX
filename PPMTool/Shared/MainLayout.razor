@@ -35,10 +35,15 @@
             </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Projects" Icon="work" Path="projects">
-                        <RadzenPanelMenuItem Path="projects" Text="My Projects" Icon="assignment" />
-                        <AuthorizeView Roles="Superuser,Manager,Developer">
+                    <RadzenPanelMenuItem Text="Projects" Icon="work" Path="myprojects">
+                        <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" Selected="true" />
+                        <AuthorizeView Roles="Superuser,Manager,Developer">
+                            <Authorized Context="sub_context_1">
                                 <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
                             </Authorized>
                         </AuthorizeView>

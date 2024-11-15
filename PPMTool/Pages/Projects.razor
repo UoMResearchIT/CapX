@@ -1,6 +1,5 @@
 ﻿@page "/projects"
-@page "/"
-@inherits PPMTool.Pages.BasePage
+@inherits PPMTool.Pages.BaseProjectPage
 @using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
@@ -9,40 +8,10 @@
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Projects - CapX</PageTitle>
 
-@if (userRole.RoleType == RoleType.Superuser || userRole.RoleType == RoleType.Manager)
-{
-    <div class="container">
-        <h1>My Projects</h1>
-        <hr />
-        @if (ownedProjectsAndDueNotes == null)
-        {
-            <LoadingComponent />            
-        }
-        else if (ownedProjectsAndDueNotes.Count() == 0)
-        {
-            <RadzenText Text="You don't have any projects to manage!" />
-        }
-        else
-        {
-            foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
-            {
-                <ProjectSummaryComponent Project="projectAndNotes.Key"
-                                         EditAuthorised="EditAuthorised"
-                                         DetailsButtonClicked="DetailsButtonClicked"
-                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
-                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
-                                         DueButtonClicked="DueButtonClicked"
-                                         ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
-            }
-        }
-    </div>
-    <br />
-}
-
 <div class="container">
     <div class="row">
         <div class="col-auto mr-auto">
-            <h1>@($"{((userRole.RoleType == RoleType.Superuser || userRole.RoleType == RoleType.Manager || userRole.RoleType == RoleType.Reader) ? "All" : "My")} Projects")</h1>
+            <h1>@($"Manage Projects")</h1>
         </div>
         <div class="col-auto">
             <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled=!EditAuthorised />

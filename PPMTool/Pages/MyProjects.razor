@@ -1,0 +1,46 @@
+﻿@page "/myprojects"
+@page "/"
+@inherits PPMTool.Pages.BaseProjectPage
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using System.ComponentModel.DataAnnotations
+<PageTitle>My Projects - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>My Projects</h1>
+        </div>
+        <div class="col-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
+                <RadzenSwitch @bind-Value="@IncludeFinished" />
+            </RadzenStack>
+        </div>
+    </div>
+    <hr />
+    @if (ownedProjectsAndDueNotes == null)
+    {
+        <LoadingComponent />            
+    }
+    else if (ownedProjectsAndDueNotes.Count() == 0)
+    {
+        <RadzenText Text="You don't have any projects to manage!" />
+    }
+    else
+    {
+        foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
+        {
+            <ProjectSummaryComponent Project="projectAndNotes.Key"
+                                     EditAuthorised="EditAuthorised"
+                                     DetailsButtonClicked="DetailsButtonClicked"
+                                     OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                     DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
+                                     DueButtonClicked="DueButtonClicked"
+                                     ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+        }
+    }
+</div>
+<br/>
