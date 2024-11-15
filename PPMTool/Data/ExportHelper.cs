@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using DotNetExtensions;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
@@ -93,10 +94,13 @@ namespace PPMTool.Data
 
             // Filter list of tasks to those running during the window
             var tasksInWindow = projects
+                .Where(x => !x.ProjectStatus.IsCancelled())
                 .SelectMany(x => x.SubTasks)
                 .Where(x => x.AssignedResources
-                .Any(x => x.Person.PersonId == person.PersonId))
+                    .Any(x => x.Person.PersonId == person.PersonId)
+                )
                 .Where(x => x.IsWithin(startDate, endDate));
+            Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
 
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();

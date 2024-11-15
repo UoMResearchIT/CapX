@@ -31,10 +31,12 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal bool IsWithin(DateTime startDate, DateTime endDate)
         {
+            // If end or start of the window falls within the task duration then the task runs within the window.
+            // If not then task still runs within the window if the whole task duration falls within the window.
             return
                 IsWithin(endDate) ||
                 IsWithin(startDate) ||
-                StartDate.Date <= startDate.Date && EndDate.Date >= endDate.Date;
+                (StartDate.Date > startDate.Date && EndDate.Date < endDate.Date);
         }
     }
 }
