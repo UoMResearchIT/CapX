@@ -68,6 +68,16 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Gets people table entities without any includes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetAllShallow(PPMToolContext context)
+        {
+            return context.People;
+        }
+
+        /// <summary>
         /// Get a person based on their ID
         /// </summary>
         /// <param name="context"></param>
