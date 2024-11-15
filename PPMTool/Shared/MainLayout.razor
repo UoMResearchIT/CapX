@@ -1,7 +1,13 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Hosting;
+@using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.Configuration
 @using Microsoft.Extensions.Hosting;
+@using System.Diagnostics
+@using System.Linq
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
 
@@ -29,8 +35,8 @@
             </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Projects" Icon="work">
-                        <RadzenPanelMenuItem Path="projects" Text="Projects" Icon="assignment" />
+                    <RadzenPanelMenuItem Text="Projects" Icon="work" Path="projects">
+                        <RadzenPanelMenuItem Path="projects" Text="My Projects" Icon="assignment" />
                         <AuthorizeView Roles="Superuser,Manager,Developer">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
@@ -46,7 +52,7 @@
             </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager,Developer">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="People" Icon="people">
+                    <RadzenPanelMenuItem Text="People" Icon="people" Path="people">
                         <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
@@ -75,8 +81,15 @@
         </div>
     </RadzenBody>
     <RadzenFooter Style="background-color: #609">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10rem" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="@versionString" />
+            <RadzenAutoComplete @bind-Value=@searchTerm
+                                Placeholder="Navigate to a Project or Person..."
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Data=@sourceData
+                                TextProperty="DisplayName"
+                                Change=@OnSearchTermEntered
+                                Style="width:100%" />
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
         </RadzenStack>
     </RadzenFooter>
@@ -86,10 +99,85 @@
 {
     private bool sidebarExpanded = true;
     private string versionString;
+    private string searchTerm;
+    private PPMToolContext context;
+    private List<MagicBarItem> sourceData = new();
+
+    [Inject]
+    private PersonService PersonService { get; set; }
+
+    [Inject]
+    private ProjectService ProjectService{ get; set; }
+
+    [Inject]
+    protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         versionString = $"v{Configuration["VersionNumber"]}";
+        context = ContextFactory.CreateDbContext();
+    }
+
+    private void OnSearchTermEntered()
+    {
+        // Do nothing if the search term is empty
+        if (string.IsNullOrWhiteSpace(searchTerm.Trim()))
+        {
+            return;
+        }
+
+        // Pull the source and present results
+        var matchingPeople = PersonService.GetAllShallow(context)
+        .Where(x =>
+            x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
+            x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())
+        );
+        var matchingProjects = ProjectService.GetAllShallow(context)
+        .Where(x =>
+            x.GetFullName().ToLower().Contains(searchTerm.Trim().ToLower()) ||
+            x.PI.ToLower().Contains(searchTerm.Trim().ToLower())
+        );
+
+        // Add to source
+        sourceData.Clear();
+        foreach (var person in matchingPeople)
+        {
+            sourceData.Add(new MagicBarItem(person));
+        }
+        foreach (var project in matchingProjects)
+        {
+            sourceData.Add(new MagicBarItem(project));
+        }
+        sourceData.OrderBy(x => x.DisplayName);
+
+        Debug.WriteLine($"** Source data contains {sourceData.Count} items!");
+    }
+
+    private class MagicBarItem
+    {
+        public int EntityId { get; }
+
+        public string Name { get; }
+
+        public string DisplayName { get; }
+
+        public Type ItemType { get; }
+
+        public MagicBarItem(Person person)
+        {
+            EntityId = person.PersonId;
+            Name = person.Name;
+            DisplayName = $"Person: {person.Name} ({person.ShortName})";
+            ItemType = typeof(Person);
+        }
+
+        public MagicBarItem(Project project)
+        {
+            EntityId = project.ProjectId;
+            Name = project.Name;
+            DisplayName = $"Project: {project.GetFullName()} ({project.PI})";
+            ItemType = typeof(Project);
+        }
     }
 }
