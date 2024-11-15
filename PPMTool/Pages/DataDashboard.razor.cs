@@ -692,7 +692,7 @@ namespace PPMTool.Pages
                 var allData = new List<ExportHelper.AssignmentChunk>();
 
                 // Set the report length
-                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) - 1, 8, 1);
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1);
                 var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
 
                 // Get data for each person active in the window
