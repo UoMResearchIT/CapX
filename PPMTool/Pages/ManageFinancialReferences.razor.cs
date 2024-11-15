@@ -9,7 +9,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Superuser")]
+    [Authorize(Roles = "Superuser,Manager")]
     public partial class ManageFinancialReferences : DataGridPage<FinancialReference>
     {
         [Inject]
@@ -22,6 +22,9 @@ namespace PPMTool.Pages
             dataGridEntities = FinancialReferenceService.GetAll(Context)
                 .OrderBy(x => x.FinancialYear)
                 .ToList();
+
+            // Only superusers can edit financial references
+            EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
             LogInformation($"Viewing finref grid");
         }
 
