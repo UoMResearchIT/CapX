@@ -58,11 +58,15 @@
                     </RadzenPanelMenuItem>
                 </Authorized>
             </AuthorizeView>            
-            <AuthorizeView Roles="Superuser">
+            <AuthorizeView Roles="Superuser,Manager">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
-                        <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
-                        <RadzenPanelMenuItem Path="managecodes" Text="Timesheet Codes" Icon="punch_clock" />
+                        <AuthorizeView Roles="Superuser">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
+                                <RadzenPanelMenuItem Path="managecodes" Text="Timesheet Codes" Icon="punch_clock" />
+                            </Authorized>
+                        </AuthorizeView>
                         <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
                     </RadzenPanelMenuItem>
                 </Authorized>
