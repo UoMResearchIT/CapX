@@ -32,7 +32,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public DateTime StartDate { get; set; }
-          
+        
         /// <summary>
         /// Additional information about the timesheet
         /// </summary>
