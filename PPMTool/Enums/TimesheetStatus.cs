@@ -5,13 +5,8 @@ namespace PPMTool.Enums
     /// <summary>
     /// The status of a timesheet
     /// </summary>
-    public enum TimesheetWorkflowStatus
+    public enum TimesheetStatus
     {
-        /// <summary>
-        /// A new timesheet that 
-        /// </summary>
-        [Description("New")]
-        NewTimesheet,
 
         /// <summary>
         /// Timesheets that have been submitted but not yet approved

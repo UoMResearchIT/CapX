@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
     /// <summary>
-    /// Represents a timesheet entity
+    /// Represents a timesheet entity, which is a one calendar week of time records.
     /// </summary>
     public class Timesheet
     {
@@ -27,34 +28,39 @@ namespace PPMTool.Data.Entities
         public DateTime CreateDate { get; set; }
 
         /// <summary>
-        /// The start date of the timesheet period
+        /// The start date of the timesheet period (Monday)
         /// </summary>
         [Required]
         public DateTime StartDate { get; set; }
-
-        /// <summary>
-        /// The total hours worked in the timesheet period
-        /// </summary>
-        public int TotalHours { get; set; }
-
+          
         /// <summary>
         /// Additional information about the timesheet
         /// </summary>
         public string Info { get; set; }
 
         /// <summary>
-        /// The minimum hours required for the timesheet period
+        /// The minimum hours a person is expected to work in a week (i.e. 35)
         /// </summary>
         public int MinHours { get; set; }
 
         /// <summary>
-        /// Navigation property for related DailyEntries
+        /// Represents the status of the timesheet (submitted, approved, rejected, etc.)
         /// </summary>
-        public ICollection<ActivityTimeRecord> TimesheetEntries { get; set; } = new List<ActivityTimeRecord>();
+        public TimesheetStatus Status { get; set; }
 
         /// <summary>
-        /// Navigation property for workflow history
+        /// Represents the date of the status change.
         /// </summary>
-        public ICollection<TimesheetWorkflow> Workflows { get; set; } = new List<TimesheetWorkflow>();
+        public DateTime DateChanged { get; set; }
+
+        /// <summary>
+        /// Represents the person who made the status change.
+        /// </summary>
+        public Person ChangedBy { get; set; }
+
+        /// <summary>
+        /// Represents the records of hours spent on tasks on the days associated with the specific timesheet.
+        /// </summary>
+        public ICollection<TimesheetActivity> TimesheetEntries { get; set; } = new List<TimesheetActivity>();
     }
 }

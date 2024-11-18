@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20241114160618_AddTimesheetTables")]
+    [Migration("20241118170326_AddTimesheetTables")]
     partial class AddTimesheetTables
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -69,36 +69,6 @@ namespace PPMTool.Migrations
                     b.HasIndex("PersonId");
 
                     b.ToTable("Absence");
-                });
-
-            modelBuilder.Entity("PPMTool.Data.Entities.ActivityTimeRecord", b =>
-                {
-                    b.Property<int>("ActivityTimeRecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DayType")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("Hours")
-                        .HasColumnType("REAL");
-
-                    b.Property<int?>("InnateCodeTaskId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("TimesheetId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("ActivityTimeRecordId");
-
-                    b.HasIndex("InnateCodeTaskId");
-
-                    b.HasIndex("TimesheetId");
-
-                    b.ToTable("ActivityTimeRecords");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>
@@ -600,7 +570,13 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("ChangedByPersonId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateChanged")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Info")
@@ -615,44 +591,43 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("TotalHours")
+                    b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("TimesheetId");
+
+                    b.HasIndex("ChangedByPersonId");
 
                     b.HasIndex("PersonId");
 
                     b.ToTable("Timesheets");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.TimesheetWorkflow", b =>
+            modelBuilder.Entity("PPMTool.Data.Entities.TimesheetActivity", b =>
                 {
-                    b.Property<int>("TimesheetWorkflowId")
+                    b.Property<int>("TimesheetActivityId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ChangedByPersonId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Comment")
+                    b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("DateChanged")
-                        .HasColumnType("TEXT");
+                    b.Property<double>("Hours")
+                        .HasColumnType("REAL");
 
-                    b.Property<int>("Status")
+                    b.Property<int?>("InnateCodeTaskId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("TimesheetId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("TimesheetWorkflowId");
+                    b.HasKey("TimesheetActivityId");
 
-                    b.HasIndex("ChangedByPersonId");
+                    b.HasIndex("InnateCodeTaskId");
 
                     b.HasIndex("TimesheetId");
 
-                    b.ToTable("TimesheetWorkflows");
+                    b.ToTable("TimesheetActivities");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.WorkloadModelChange", b =>
@@ -735,21 +710,6 @@ namespace PPMTool.Migrations
                         .HasForeignKey("PersonId");
 
                     b.Navigation("Person");
-                });
-
-            modelBuilder.Entity("PPMTool.Data.Entities.ActivityTimeRecord", b =>
-                {
-                    b.HasOne("PPMTool.Data.Entities.InnateCodeTask", "InnateCodeTask")
-                        .WithMany()
-                        .HasForeignKey("InnateCodeTaskId");
-
-                    b.HasOne("PPMTool.Data.Entities.Timesheet", "Timesheet")
-                        .WithMany("TimesheetEntries")
-                        .HasForeignKey("TimesheetId");
-
-                    b.Navigation("InnateCodeTask");
-
-                    b.Navigation("Timesheet");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.CompetencyAssessment", b =>
@@ -853,26 +813,32 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Timesheet", b =>
                 {
+                    b.HasOne("PPMTool.Data.Entities.Person", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedByPersonId");
+
                     b.HasOne("PPMTool.Data.Entities.Person", "Person")
                         .WithMany()
                         .HasForeignKey("PersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("ChangedBy");
+
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.TimesheetWorkflow", b =>
+            modelBuilder.Entity("PPMTool.Data.Entities.TimesheetActivity", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.Person", "ChangedBy")
+                    b.HasOne("PPMTool.Data.Entities.InnateCodeTask", "InnateCodeTask")
                         .WithMany()
-                        .HasForeignKey("ChangedByPersonId");
+                        .HasForeignKey("InnateCodeTaskId");
 
                     b.HasOne("PPMTool.Data.Entities.Timesheet", "Timesheet")
-                        .WithMany("Workflows")
+                        .WithMany("TimesheetEntries")
                         .HasForeignKey("TimesheetId");
 
-                    b.Navigation("ChangedBy");
+                    b.Navigation("InnateCodeTask");
 
                     b.Navigation("Timesheet");
                 });
@@ -920,8 +886,6 @@ namespace PPMTool.Migrations
             modelBuilder.Entity("PPMTool.Data.Entities.Timesheet", b =>
                 {
                     b.Navigation("TimesheetEntries");
-
-                    b.Navigation("Workflows");
                 });
 #pragma warning restore 612, 618
         }
