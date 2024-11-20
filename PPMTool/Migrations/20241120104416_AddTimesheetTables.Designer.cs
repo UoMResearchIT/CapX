@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20241118170326_AddTimesheetTables")]
+    [Migration("20241120104416_AddTimesheetTables")]
     partial class AddTimesheetTables
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
