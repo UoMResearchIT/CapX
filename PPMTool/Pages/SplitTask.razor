@@ -60,13 +60,17 @@
 <hr />
 
 <RadzenStack Gap=".5rem" Orientation="Radzen.Orientation.Vertical">
-    <RadzenText TextStyle="TextStyle.Body1">Click the button below to initialise two new tasks based on the split configuration. <b> Note that this will re-initialise the editors below and reset any manual changes you have made!</b></RadzenText>
+    <RadzenText TextStyle="TextStyle.Body1">Click the button below to initialise two new tasks based on the split configuration.</RadzenText>
+    @if (splitLogicInitialised)
+    {
+        <RadzenText TextStyle="TextStyle.Body1"><b> Note that this will re-initialise the editors below and reset any manual changes you have made!</b></RadzenText>
+    }
     @if (statusMessages != null && statusMessages.Count > 0)
     {
         <MessageSummaryComponent Messages="@statusMessages" IgnoreStatus="true" />
     }
     <div class="col-auto" style="margin-left: -1rem">
-        <RadzenButton Click="SplitTasks" Text="Split Task" Icon="settings_ethernet" />
+        <RadzenButton Click="SplitTasks" Text="Split Task" Icon="settings_ethernet" Disabled="@((splitOnDate && splitDate == null) || (!splitOnDate && splitValue == null))" />
     </div>
 </RadzenStack>
 <hr />
