@@ -96,11 +96,14 @@
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="@versionString" />
             <AuthorizeView>
                 <Authorized>
-                    <div id="magic-bar" style="width: 100%">
-                        <RadzenTextBox @bind-Value=@searchTerm
-                                       Placeholder="Navigate to a Project or Person..."
-                                       Change=@OnSearchTermEntered />
-                    </div>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="width: 100%">
+                        <div id="magic-bar" style="width: 100%">
+                            <RadzenTextBox @bind-Value=@searchTerm
+                            Placeholder="Navigate to a Project or Person..."
+                            Change=@OnSearchTermEntered />
+                        </div>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" ButtonType="ButtonType.Button" Click="ClearMagicBar" Icon="close" />
+                    </RadzenStack>
                 </Authorized>
             </AuthorizeView>
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
@@ -136,6 +139,12 @@
         base.OnInitialized();
         versionString = $"v{Configuration["VersionNumber"]}";
         context = ContextFactory.CreateDbContext();
+    }
+
+    private void ClearMagicBar()
+    {
+        searchTerm = string.Empty;
+        OnSearchTermEntered();
     }
 
     private async void OnSearchTermEntered()
