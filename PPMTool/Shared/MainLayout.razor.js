@@ -1,4 +1,4 @@
-﻿function toggleAutocompletePopup(visible, suggestions) {
+﻿function toggleAutocompletePopup(visible, suggestions, razorComponentReference) {
     console.log('Toggling autocomplete...')
     const magicBar = document.getElementById('magic-bar');
     let popup = document.getElementById('autocomplete-popup');
@@ -40,9 +40,8 @@
             item.classList.add('autocomplete-item');
             item.addEventListener('click', () => {
                 if (!popup) return;
-                popup.style.display = 'none';
                 console.log(`Selected: ${suggestion}`);
-                item
+                razorComponentReference.invokeMethodAsync('OnItemSelected', suggestion);
             });
             popup.appendChild(item);
         });

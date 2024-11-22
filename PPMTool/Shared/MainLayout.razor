@@ -118,6 +118,7 @@
     private string searchTerm;
     private PPMToolContext context;
     private List<MagicBarItem> sourceData = new();
+    private DotNetObjectReference<MainLayout> razorComponentReference;
 
     [Inject]
     private PersonService PersonService { get; set; }
@@ -134,17 +135,22 @@
     [Inject]
     private ILogger<MainLayout> Logger { get; set; }
 
+    [Inject]
+    private  NavigationManager Navigation { get; set; }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
         versionString = $"v{Configuration["VersionNumber"]}";
         context = ContextFactory.CreateDbContext();
+        razorComponentReference = DotNetObjectReference.Create(this);
     }
 
     private void ClearMagicBar()
     {
         searchTerm = string.Empty;
         OnSearchTermEntered();
+        StateHasChanged();
     }
 
     private async void OnSearchTermEntered()
@@ -154,7 +160,7 @@
         {
             // Hide the popup if it is visible
             Logger?.LogInformation("Hiding magic bar popup...");
-            await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", false, null);
+            await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", false, null, razorComponentReference);
             return;
         }
 
@@ -186,7 +192,31 @@
 
         // Send the source data to JS to have it display it in a popup
         Logger?.LogInformation("Updating magic bar popup...");
-        await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName));
+        await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName), razorComponentReference);
+    }
+
+    [JSInvokable]
+    public void OnItemSelected(string selectedItem)
+    {
+        Debug.WriteLine($"** Selected item: {selectedItem}");
+        var match = sourceData.FirstOrDefault(x => x.DisplayName == selectedItem);
+        if (match != null)
+        {
+            if (match.ItemType == typeof(Project))
+            {
+                Navigation.NavigateTo($"projectdetails/{match.EntityId}");
+            }
+            else
+            {
+                Navigation.NavigateTo($"addperson/{match.EntityId}");
+            }
+        }
+        ClearMagicBar();
+    }
+
+    public void Dispose()
+    {
+        razorComponentReference?.Dispose();
     }
 
     private class MagicBarItem
