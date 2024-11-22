@@ -2,42 +2,18 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
-    public partial class Projects : BasePage
+    public partial class Projects : BaseProjectPage
     {
-        [Inject]
-        private ProjectService ProjectService { get; set; }
-
-        [Inject]
-        private RolesService RoleService { get; set; }
-
-        [Inject]
-        private NoteService NoteService { get; set; }
-
-        [Inject]
-        private ISessionStorageService SessionStorage { get; set; }
-
-        [Inject]
-        private IJSRuntime JSRuntime { get; set; }
-
-        [Parameter]
-        [SupplyParameterFromQuery(Name = "pm")]
-        public string ProjectManagerShortName { get; set; }
-
         private IEnumerable<Project> projects;
-        private IDictionary<Project, IEnumerable<Note>> ownedProjectsAndDueNotes;
         private Role userRole;
 
         private bool includeFinished;
@@ -136,94 +112,15 @@ namespace PPMTool.Pages
             // Assign data for the data grid
             projects = proj;
 
-            // Filter owned projects to only show active ones
-            var tempProj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
-
-            // Extract the owned projects and their due notes
-            if (ProjectManagerShortName != null)
-            {
-                if (ProjectManagerShortName.ToLower() == "alerts")
-                {
-                    // Show just the list of alerts for all
-                    tempProj = tempProj.Where(x =>
-                    {
-                        x.UpdateStatusMessages();
-                        return x.HasActiveStatusMessages();
-                    }).ToList();
-                }
-                else if (ProjectManagerShortName.ToLower() == "errors")
-                {
-                    // Show just the list of errors for all
-                    tempProj = tempProj.Where(x =>
-                    {
-                        x.UpdateStatusMessages();
-                        return x.HasActiveErrorMessages();
-                    }).ToList();
-                }
-                else
-                {
-                    // Use query string to see someone else's list of cards
-                    tempProj = tempProj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
-                }
-            }
-            else
-            {
-                // Show just the logged in user's projects
-                tempProj = tempProj.Where(x => x.ProjectManager == userRole.Person).ToList();
-            }
-
-            // Build the dictionary
-            ownedProjectsAndDueNotes = new Dictionary<Project, IEnumerable<Note>>();
-            foreach (var p in tempProj)
-            {
-                ownedProjectsAndDueNotes.Add(p, NoteService.GetDueNotesForProject(Context, p.ProjectId));
-            }
-
             // Disable spinner now load complete
             Loading = false;
 
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
 
-        private void NavigateToProjectDetails(int id, bool newWindow = false, bool filterDueNotes = false)
-        {
-            string url = $"/projectdetails/{id}";
-
-            if (filterDueNotes)
-            {
-                url += "?filterDueNotes=true";
-            }
-
-            if (newWindow)
-            {
-                JSRuntime.InvokeAsync<object>("open", url, "_blank");
-            }
-            else
-            {
-                Navigation.NavigateTo(url);
-            }
-        }
-
         private void AddProject()
         {
             Navigation.NavigateTo($"/addproject/-1");
-        }
-
-        private void DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
-        {
-            if (item == null)
-            {
-                NavigateToProjectDetails(project.ProjectId);
-            }
-            else if (item.Value == "NewWindow")
-            {
-                NavigateToProjectDetails(project.ProjectId, true);
-            }
-        }
-
-        private void DueButtonClicked(Project project)
-        {
-            NavigateToProjectDetails(project.ProjectId, filterDueNotes: true);
         }
     }
 }

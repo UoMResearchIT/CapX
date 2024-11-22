@@ -39,6 +39,11 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "filterid")]
+        public int? FilterPersonId { get; set; }
+
+
         private bool includeUnFunded = true;
         public bool IncludeUnFunded
         {
@@ -189,6 +194,21 @@ namespace PPMTool.Pages
             var managerName = await SessionStorage.GetItemAsync<string>("capacity-chosen-manager");
             ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
             ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>("capacity-chosen-people");
+
+            // If there is a query parameter then use it
+            if (FilterPersonId != null)
+            {
+                var matchingPerson = cachedPeople.FirstOrDefault(x => x.PersonId == FilterPersonId);
+                if (matchingPerson != null)
+                {
+                    ChosenPeople = new List<string>
+                    {
+                        matchingPerson.Name
+                    };
+                }
+            }
+
+            // Force the selection logic to run
             UpdateSelectionState();
 
             // Reload the dropdown sources if a manager has been chosen

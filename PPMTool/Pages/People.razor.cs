@@ -22,7 +22,6 @@ namespace PPMTool.Pages
 
         private bool tableEmpty;
         private IEnumerable<Person> people;
-        private IEnumerable<Absence> currentAbsences;
         private int count;
         private int pageCount = 10;
 
@@ -80,11 +79,6 @@ namespace PPMTool.Pages
                 loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
             }
 
-            // Current absences
-            currentAbsences = loadedPeople
-                .Where(x => x.IsCurrentlyAbsent())
-                .Select(x => x.Absences.FirstOrDefault(x => x.IsCurrentAbsence()));
-
             // Set the table empty flag
             tableEmpty = loadedPeople.Count == 0;
 
@@ -128,11 +122,6 @@ namespace PPMTool.Pages
             {
                 people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
-        }
-
-        private void EditAbsence(Person person)
-        {
-            Navigation.NavigateTo($"/addabsence/{person.PersonId}");
         }
     }
 }

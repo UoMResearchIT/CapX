@@ -203,5 +203,13 @@ namespace PPMTool.Pages
             // Navigate back to the people list
             Navigation.NavigateTo("people");
         }
+
+        /// <summary>
+        /// Method to navigate to the capacity page for this person
+        /// </summary>
+        private void ViewCapacity()
+        {
+            Navigation.NavigateTo($"capacity?filterid={personModel.PersonId}");
+        }
     }
 }
