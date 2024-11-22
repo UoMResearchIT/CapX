@@ -52,6 +52,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public SubTask Predecessor { get; set; }
 
+        /// <summary>
+        /// Represents the list of tasks for which this task is a predecessor
+        /// </summary>
+        public ICollection<SubTask> Successors { get; set; } = new List<SubTask>();
+
         private bool hasFixedStart;
         /// <summary>
         /// Basically a simplified constraint type of "Start No Earlier Than" otherwise will be "As Soon As Possible" based on the predecessor end dates

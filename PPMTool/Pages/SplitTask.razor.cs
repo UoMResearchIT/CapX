@@ -81,6 +81,16 @@ namespace PPMTool.Pages
             // Check for fixed work warnings
             CheckForFixedWorkWarnings();
 
+            // Set the original task as the predecessor of the new task
+            newAddTaskComponent.TaskModel.HasFixedStart = false;
+            newAddTaskComponent.TaskModel.Predecessor = originalAddTaskComponent.TaskModel;
+
+            // Find the tasks for which the original task was the predecessor and update them to have the new task as its predecessor
+            foreach (var task in originalAddTaskComponent.TaskModel.Successors)
+            {
+                task.Predecessor = newAddTaskComponent.TaskModel;
+            }
+
             // Tell Blazor to redraw the page
             StateHasChanged();
 
