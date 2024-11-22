@@ -91,15 +91,13 @@
         </div>
     </RadzenBody>
     <RadzenFooter Style="background-color: #609">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10rem" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="8rem" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="@versionString" />
-            <RadzenAutoComplete @bind-Value=@searchTerm
-                                Placeholder="Navigate to a Project or Person..."
-                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                Data=@sourceData
-                                TextProperty="DisplayName"
-                                Change=@OnSearchTermEntered
-                                Style="width:100%" />
+            <div id="magic-bar" style="width: 100%">
+                <RadzenTextBox @bind-Value=@searchTerm
+                Placeholder="Navigate to a Project or Person..."
+                Change=@OnSearchTermEntered />
+            </div>
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
         </RadzenStack>
     </RadzenFooter>
@@ -122,6 +120,9 @@
     [Inject]
     protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
 
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -131,13 +132,15 @@
 
     private void OnSearchTermEntered()
     {
-        // Do nothing if the search term is empty
+        // If nothing being typed
         if (string.IsNullOrWhiteSpace(searchTerm.Trim()))
         {
+            // Hide the popup if it is visible
+            JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", new object[] { false, null });
             return;
         }
 
-        // Pull the source and present results
+        // Pull the sources from the DB
         var matchingPeople = PersonService.GetAllShallow(context)
         .Where(x =>
             x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
@@ -162,6 +165,9 @@
         sourceData.OrderBy(x => x.DisplayName);
 
         Debug.WriteLine($"** Source data contains {sourceData.Count} items!");
+
+        // Send the source data to JS to have it display it in a popup
+        JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", new object[] { sourceData.Count > 0, sourceData });
     }
 
     private class MagicBarItem
