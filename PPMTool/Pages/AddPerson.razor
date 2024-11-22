@@ -18,9 +18,15 @@
                         <h1>Edit <i>@personModel.Name</i></h1>
                         <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
                     </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
-                    </div>
+                    @if (PersonId > 0)
+                    {
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" Disabled=!EditAuthorised />
+                        </div>
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
+                        </div>
+                    }
                 </div>
                 <hr />
             }
