@@ -442,5 +442,13 @@ namespace PPMTool.Pages
             filteredPeople = temp.Where(x => !dataGridEntities.Any(y => y.Person.PersonId == x.PersonId)).ToList();
             InvokeAsync(StateHasChanged);
         }
+
+        /// <summary>
+        /// Navigates to the split task page
+        /// </summary>
+        private void SplitSubTask()
+        {
+            Navigation.NavigateTo($"splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
+        }
     }
 }

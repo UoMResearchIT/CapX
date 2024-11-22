@@ -30,6 +30,9 @@
             @if (!IsSplit)
             {
                 <div class="col-auto" style="align-content: center">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="SplitSubTask" Text="Split" Icon="settings_ethernet" Disabled=!EditAuthorised />
+                </div>
+                <div class="col-auto" style="align-content: center">
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
                 </div>
             }
