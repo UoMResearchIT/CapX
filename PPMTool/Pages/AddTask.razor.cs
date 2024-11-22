@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -89,8 +90,19 @@ namespace PPMTool.Pages
             InitialiseComponent();
         }
 
-        public void InitialiseComponent(bool restoreModels = true)
+        /// <summary>
+        /// Initialises the component with the project and task models.
+        /// </summary>
+        /// <param name="referenceContext">Overwrite the current context with a new context of your choice (erase tracking information)</param>
+        /// <param name="restoreModels">Restore the model based on its current context object</param>
+        public void InitialiseComponent(PPMToolContext referenceContext = null, bool restoreModels = true)
         {
+            // Overwrite the context
+            if (referenceContext != null && referenceContext != Context)
+            {
+                Context = referenceContext;
+            }
+
             people = PersonService.GetAll(Context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
@@ -127,7 +139,7 @@ namespace PPMTool.Pages
                 TaskModel = IsCopy ? SubTaskService.Clone(Context, referenceTask) : referenceTask;
 
                 // Assign the predecessor option
-                if (TaskModel.Predecessor != null) selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
+                InitialisePredecessorBinding();
 
                 // Assign resources
                 foreach (var r in TaskModel.AssignedResources)
@@ -162,6 +174,14 @@ namespace PPMTool.Pages
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+        }
+
+        /// <summary>
+        /// Initialise the binding of the predecessor ID in the dropdown
+        /// </summary>
+        public void InitialisePredecessorBinding()
+        {
+            if (TaskModel.Predecessor != null) selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -430,7 +450,7 @@ namespace PPMTool.Pages
         /// Method to update the source for the resource dropdown to filter out based on search text
         /// </summary>
         /// <param name="args"></param>
-        void UpdatePeopleDropdownSource(LoadDataArgs args)
+        private void UpdatePeopleDropdownSource(LoadDataArgs args)
         {
             var temp = people.AsQueryable();
             if (!string.IsNullOrEmpty(args.Filter))
@@ -449,6 +469,15 @@ namespace PPMTool.Pages
         private void SplitSubTask()
         {
             Navigation.NavigateTo($"splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
+        }
+
+        /// <summary>
+        /// Return the EF context being used to track entities for this component
+        /// </summary>
+        /// <returns></returns>
+        internal PPMToolContext GetContext()
+        {
+            return Context;
         }
     }
 }

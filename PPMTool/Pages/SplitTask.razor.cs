@@ -31,10 +31,13 @@ namespace PPMTool.Pages
         private double origProportion = 0;
         private DateTime originalStartDate;
         private DateTime originalEndDate;
+        private bool splitLogicInitialised;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            statusMessages.Add(new StatusMessage("Set your parameters and click Split Task to configure the two halves of the tasks automatically!", StatusMessage.MessageType.Warning, () => !splitLogicInitialised));
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -64,7 +67,7 @@ namespace PPMTool.Pages
 
             // Reinitialise the components from the DB
             originalAddTaskComponent.InitialiseComponent();
-            newAddTaskComponent.InitialiseComponent();
+            newAddTaskComponent.InitialiseComponent(originalAddTaskComponent.GetContext());
 
             // Apply the logic to split the task and actuals
             ApplySplitLogic();
@@ -84,6 +87,7 @@ namespace PPMTool.Pages
             // Set the original task as the predecessor of the new task
             newAddTaskComponent.TaskModel.HasFixedStart = false;
             newAddTaskComponent.TaskModel.Predecessor = originalAddTaskComponent.TaskModel;
+            newAddTaskComponent.InitialisePredecessorBinding();
 
             // Find the tasks for which the original task was the predecessor and update them to have the new task as its predecessor
             foreach (var task in originalAddTaskComponent.TaskModel.Successors)
@@ -91,7 +95,8 @@ namespace PPMTool.Pages
                 task.Predecessor = newAddTaskComponent.TaskModel;
             }
 
-            // Tell Blazor to redraw the page
+            // Set the flag and redraw the view
+            splitLogicInitialised = true;
             StateHasChanged();
 
             Debug.WriteLine($"** {statusMessages.Count} status message(s).");
