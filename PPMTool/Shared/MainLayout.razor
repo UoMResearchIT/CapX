@@ -5,6 +5,7 @@
 @using Microsoft.Extensions.Hosting;
 @using System.Diagnostics
 @using System.Linq
+@using Microsoft.Extensions.Logging
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
 @using PPMTool.Services
@@ -93,11 +94,15 @@
     <RadzenFooter Style="background-color: #609">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="8rem" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="@versionString" />
-            <div id="magic-bar" style="width: 100%">
-                <RadzenTextBox @bind-Value=@searchTerm
-                Placeholder="Navigate to a Project or Person..."
-                Change=@OnSearchTermEntered />
-            </div>
+            <AuthorizeView>
+                <Authorized>
+                    <div id="magic-bar" style="width: 100%">
+                        <RadzenTextBox @bind-Value=@searchTerm
+                                       Placeholder="Navigate to a Project or Person..."
+                                       Change=@OnSearchTermEntered />
+                    </div>
+                </Authorized>
+            </AuthorizeView>
             <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
         </RadzenStack>
     </RadzenFooter>
@@ -123,6 +128,9 @@
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
 
+    [Inject]
+    private ILogger<MainLayout> Logger { get; set; }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -130,13 +138,14 @@
         context = ContextFactory.CreateDbContext();
     }
 
-    private void OnSearchTermEntered()
+    private async void OnSearchTermEntered()
     {
         // If nothing being typed
         if (string.IsNullOrWhiteSpace(searchTerm.Trim()))
         {
             // Hide the popup if it is visible
-            JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", new object[] { false, null });
+            Logger?.LogInformation("Hiding magic bar popup...");
+            await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", false, null);
             return;
         }
 
@@ -167,7 +176,8 @@
         Debug.WriteLine($"** Source data contains {sourceData.Count} items!");
 
         // Send the source data to JS to have it display it in a popup
-        JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", new object[] { sourceData.Count > 0, sourceData });
+        Logger?.LogInformation("Updating magic bar popup...");
+        await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName));
     }
 
     private class MagicBarItem
@@ -184,7 +194,7 @@
         {
             EntityId = person.PersonId;
             Name = person.Name;
-            DisplayName = $"Person: {person.Name} ({person.ShortName})";
+            DisplayName = $"{person.Name} ({person.ShortName})";
             ItemType = typeof(Person);
         }
 
@@ -192,7 +202,7 @@
         {
             EntityId = project.ProjectId;
             Name = project.Name;
-            DisplayName = $"Project: {project.GetFullName()} ({project.PI})";
+            DisplayName = $"{project.GetFullName()} ({project.PI})";
             ItemType = typeof(Project);
         }
     }
