@@ -7,6 +7,11 @@ namespace PPMTool.Enums
     /// </summary>
     public enum TimesheetStatus
     {
+        /// <summary>
+        /// Timesheets that have not yet been submitted
+        /// </summary>
+        [Description("New/Unsubmitted")]
+        New,
 
         /// <summary>
         /// Timesheets that have been submitted but not yet approved
