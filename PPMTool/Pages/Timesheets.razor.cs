@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
@@ -15,16 +18,14 @@ namespace PPMTool.Pages
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
-        //[Parameter]
-        //[SupplyParameterFromQuery(Name = "pm")]
-        //public string ProjectManagerShortName { get; set; }
-
-        private IDictionary<Project, IEnumerable<Note>> ownedProjectsAndDueNotes;
         private Role userRole;
 
-        protected override void OnInitialized()
+        RadzenDataGrid<Timesheet> timesheetsGrid;
+        private IEnumerable<Timesheet> timesheets;
+
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
             Loading = true;
 
             // Look up the username
@@ -44,21 +45,26 @@ namespace PPMTool.Pages
             }
 
             LogInformation("Viewing timesheets");
+
+
+            timesheets = TimesheetService.GetAll(Context).OrderBy(x => x.StartDate).ToList();
+            timesheets = timesheets.Where(x => x.Person?.PersonId == userRole.Person?.PersonId).ToList();
         }
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+
+        void AddTimesheet()
         {
+            // Calculate the date for the next timesheet
+            timesheets = timesheets.OrderBy(x => x.StartDate);
+            DateTime lastTimesheetDate = timesheets.Last().StartDate;
 
-        }
+            DateTime nextTimesheetStartDate = lastTimesheetDate.AddDays(7);
+            Timesheet newTimesheet = new Timesheet();
+            newTimesheet.Person = userRole.Person;
+            newTimesheet.StartDate = nextTimesheetStartDate;
+            newTimesheet.Status = TimesheetStatus.New;
 
-        private void LoadProjectData(bool initial)
-        {
-            // Initialise the project list
-            List<Timesheet> sheets = TimesheetService.GetAll(Context).OrderBy(x => x.StartDate).ToList();
-
-            // Disable spinner now load complete
-            Loading = false;
-            StateHasChanged();
+            Debug.WriteLine($"New timesheet start date = {nextTimesheetStartDate.ToString("dd/MM/yyyy")}");
         }
     }
 }

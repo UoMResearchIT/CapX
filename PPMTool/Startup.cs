@@ -158,6 +158,7 @@ namespace PPMTool
 
             // Seed the superuser
             roleService.SeedSuperUser("mbgm6ah3", "Adrian Harwood");
+            roleService.SeedSuperUser("mbgm6ah3", "Adrian Harwood");
         }
 
         private async Task OnCreatingTicket(CasCreatingTicketContext context)

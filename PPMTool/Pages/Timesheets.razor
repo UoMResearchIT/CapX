@@ -10,7 +10,42 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <h1>Timesheets</h1>
+            <h1>My Timesheets</h1>
+            <RadzenDataGrid @ref="timesheetsGrid" 
+                            AllowAlternatingRows="true" 
+                            AllowPaging="true" 
+                            PageSize="10" 
+                            PagerHorizontalAlign="HorizontalAlign.Right"
+                            AllowSorting="true" 
+                            Data="@timesheets" 
+                            TItem="Timesheet" 
+                            GridLines="DataGridGridLines.Horizontal">
+                <HeaderTemplate>
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="add_circle" Text="Add timesheet" Click="@AddTimesheet" />
+                </HeaderTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="StartDate" Title="Week commencing" FormatString="{0:d}" />
+                    <RadzenDataGridColumn Property="Status" Title="Status">
+                        <Template Context="data">
+                            <!-- PHB ** Duplicated code : need to implement with a variable for the styling being set -->
+                            @if(data.Status == TimesheetStatus.New)
+                            {
+                                <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Info" Style="padding: 8px;" Text="@data.Status.ToString()" />
+                            }
+
+                            @if(data.Status == TimesheetStatus.Submitted)
+                            {
+                                <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Primary" Style="padding: 8px;" Text="@data.Status.ToString()" />
+                            }
+
+                            @if (data.Status == TimesheetStatus.Rejected)
+                            {
+                                <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Danger" Style="padding: 8px;" Text="@data.Status.ToString()" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
         </div>
     </div>
 </div>
