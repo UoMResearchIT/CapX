@@ -69,29 +69,32 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the Timesheets with all their related tables -- pretty heavy operation now!
+        /// Gets all the Timesheets with related data
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Timesheet> GetRelevant(PPMToolContext context)
+        {
+            return context.Timesheets
+                .Where(t => t.Status != TimesheetStatus.Approved && t.Status != TimesheetStatus.Submitted)
+                .Include(t => t.TimesheetEntries)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets all the Timesheets with related data
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
         public override IEnumerable<Timesheet> GetAll(PPMToolContext context)
         {
             return context.Timesheets
-                //.Include(t => t.SubTasks)
-                //    .ThenInclude(s => s.AssignedResources)
-                //        .ThenInclude(r => r.Person)
-                //            .ThenInclude(r => r.WorkloadModelChanges)
-                //.Include(t => t.SubTasks)
-                //    .ThenInclude(s => s.AssignedResources)
-                //        .ThenInclude(r => r.Person)
-                //            .ThenInclude(pt => tp.Absences)
-                //.Include(t => t.TimesheetManager)
-                //.Include(t => t.InnateActivity)
-                //.Include(t => t.Followers)
+                .Include(t => t.TimesheetEntries)
                 .ToList();
         }
 
         /// <summary>
-        /// Gets Timesheet table entities without any includes
+        /// Gets just the Timesheet table entities
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
