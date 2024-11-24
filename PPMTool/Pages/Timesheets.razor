@@ -39,26 +39,7 @@
             <RadzenDataGridColumn Property="StartDate" Title="Week commencing" FormatString="{0:d}" />
             <RadzenDataGridColumn Property="Status" Title="Status" TextAlign="TextAlign.Right">
                 <Template Context="data">
-                    <!-- PHB ** Duplicated code : need to implement with a variable for the styling being set -->
-                    @if(data.Status == TimesheetStatus.New)
-                    {
-                        <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Info" Style="border-radius: 5px; width: 8rem; padding: 0.5rem;" Text="@data.Status.ToString()" />
-                    }
-
-                    @if(data.Status == TimesheetStatus.Submitted)
-                    {
-                        <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Primary" Style="border-radius: 5px; width: 8rem; padding: 0.5rem;" Text="@data.Status.ToString()" />
-                    }
-
-                    @if (data.Status == TimesheetStatus.Rejected)
-                    {
-                        <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Danger" Style="border-radius: 5px; width: 8rem; padding: 0.5rem;" Text="@data.Status.ToString()" />
-                    }
-
-                    @if (data.Status == TimesheetStatus.Approved)
-                    {
-                        <RadzenBadge IsPill="true" BadgeStyle="BadgeStyle.Success" Style="border-radius: 5px; width: 8rem; padding: 0.5rem;" Text="@data.Status.ToString()" />
-                    }
+                    <RadzenBadge IsPill="true" BadgeStyle="@mapBadgeStyle[@data.Status]" class="timesheet-status-style" Text="@data.Status.ToString()" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>

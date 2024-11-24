@@ -19,6 +19,7 @@ namespace PPMTool.Pages
         private TimesheetService TimesheetService { get; set; }
 
         private Role userRole;
+        private Dictionary<TimesheetStatus, BadgeStyle> mapBadgeStyle = new Dictionary<TimesheetStatus, BadgeStyle>();
 
         private bool showAll;
         public bool ShowAll
@@ -42,6 +43,15 @@ namespace PPMTool.Pages
             await base.OnInitializedAsync();
             Loading = true;
 
+            // Populate the dictionary used by the status badges in the grid
+            if (mapBadgeStyle.Count == 0)
+            {
+                mapBadgeStyle.Add(TimesheetStatus.New, BadgeStyle.Info);
+                mapBadgeStyle.Add(TimesheetStatus.Submitted, BadgeStyle.Primary);
+                mapBadgeStyle.Add(TimesheetStatus.Rejected, BadgeStyle.Danger);
+                mapBadgeStyle.Add(TimesheetStatus.Approved, BadgeStyle.Success);
+            }
+
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
             userRole = RoleService.GetByUsername(Context, uname);
@@ -60,12 +70,10 @@ namespace PPMTool.Pages
 
             LogInformation("Viewing timesheets");
             LoadData(ShowAll);
-
         }
 
         private void LoadData(bool showAll) 
         {
-
             // PHB [24/11/24] : Only currently need to show New or Rejected timesheets to be available to Edit. 
             // Will need to take into account timesheets of direct reports when management hierarchy is
             // available in the database. Perhaps show a second datagrid for those of staff and
@@ -77,6 +85,8 @@ namespace PPMTool.Pages
             { 
                 timesheets = timesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
             }
+
+            Loading = false;
         }
 
         void AddTimesheet()
