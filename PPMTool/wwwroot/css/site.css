@@ -249,3 +249,9 @@ mark {
 
 .competency-highlightable {
 }
+
+.timesheet-status-style {
+    border-radius: 5px;
+    width: 8rem;
+    padding: 0.5rem;
+}
