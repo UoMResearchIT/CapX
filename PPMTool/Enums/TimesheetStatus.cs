@@ -20,15 +20,15 @@ namespace PPMTool.Enums
         Submitted,
 
         /// <summary>
-        /// Timesheets that have been approved
-        /// </summary>
-        [Description("Approved")]
-        Approved,
-
-        /// <summary>
         /// Timesheets that have been rejected
         /// </summary>
         [Description("Rejected")]
-        Rejected
+        Rejected,        
+            
+        /// <summary>
+        /// Timesheets that have been approved
+        /// </summary>
+        [Description("Approved")]
+        Approved
     }
 }
