@@ -41,21 +41,23 @@
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br>
                     <RadzenTextBox TValue="string" @bind-Value="personModel.Name" />
                 </div>
-            </div>
-            <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Initials" /><br>
                     <RadzenTextBox TValue="string" @bind-Value="personModel.ShortName" />
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Line Manager" /><br>
+                    <RadzenDropDown class="radzen-dropdown" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" />
                 </div>
             </div>
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Start Date" /><br>
-                    <RadzenDatePicker @bind-Value="personModel.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="End Date" /><br>
-                    <RadzenDatePicker @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>

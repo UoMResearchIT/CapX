@@ -31,6 +31,7 @@ namespace PPMTool.Pages
         private Person personModel = new();
         private IEnumerable<SkillTag> availableTags;
         private IList<SkillTag> chosenTags = new List<SkillTag>();
+        private IList<Person> managers = new List<Person>();
         private string autoCompleteText;
         private EditContext editContext;
         private ValidationMessageStore messageStore;
@@ -45,6 +46,14 @@ namespace PPMTool.Pages
 
             // Map entities to checkbox list items
             availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+
+            // Map the list of managers for drop down
+            managers = RolesService.GetAll(Context)
+                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
+                .Select(x => x.Person)
+                .DistinctBy(x => x.PersonId)
+                .OrderBy(x => x.Name)
+                .ToList();
 
             // Load the person model if necessary
             if (PersonId > 0)
