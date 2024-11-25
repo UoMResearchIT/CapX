@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -35,7 +31,6 @@ namespace PPMTool.Pages
             }
         }
 
-        RadzenDataGrid<Timesheet> timesheetsGrid;
         private IEnumerable<Timesheet> timesheets;
 
         protected override async Task OnInitializedAsync()
@@ -72,17 +67,17 @@ namespace PPMTool.Pages
             LoadData(ShowAll);
         }
 
-        private void LoadData(bool showAll) 
+        private void LoadData(bool showAll)
         {
             // PHB [24/11/24] : Only currently need to show New or Rejected timesheets to be available to Edit. 
             // Will need to take into account timesheets of direct reports when management hierarchy is
             // available in the database. Perhaps show a second datagrid for those of staff and
             // show/hide based on user's role?
             timesheets = TimesheetService.GetAll(Context).OrderByDescending(x => x.StartDate).ToList();
-            timesheets = timesheets.Where(x => x.Person?.PersonId == userRole.Person?.PersonId).ToList();
+            timesheets = timesheets.Where(x => x.Owner?.PersonId == userRole.Person?.PersonId).ToList();
 
-            if(!ShowAll) 
-            { 
+            if (!ShowAll)
+            {
                 timesheets = timesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
             }
 
