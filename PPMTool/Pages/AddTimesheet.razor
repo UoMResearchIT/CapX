@@ -1,5 +1,6 @@
 ﻿@page "/addtimesheet/{TimesheetId:int}"
-@inherits PPMTool.Pages.BasePage
+@inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
+@using DotNetExtensions
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using PPMTool.Services
@@ -24,19 +25,78 @@
     }
     <hr />
     <div class="card">
-        <EditForm Model="timesheet" OnSubmit="HandleSubmit">
-            @* Implement here *@
-            <hr />
+        <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <div>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenButton ButtonType="ButtonType.Button" Text="Add Entry" Icon="add" Click="AddEntry" />
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.1rem">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Text="Discard" Icon="close" Click="DiscardTimesheet" />
-                    </RadzenStack>
-                </RadzenStack>
+            <div class="row">
+                <div class="col">
+                    <h2>Timesheet Entries</h2>
+                </div>
+                <div class="col-auto" style="align-content: center">
+                    <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                </div>
+            </div>
+            <RadzenDataGrid @ref="dataGrid"
+                            AllowFiltering="false"
+                            AllowPaging="false"
+                            AllowSorting="true"
+                            EditMode="DataGridEditMode.Single"
+                            Data="@dataGridEntities"
+                            TItem="TimesheetEntry"
+                            RowUpdate="@OnUpdateRow"
+                            RowCreate="@OnCreateRow"
+                            ColumnWidth="10rem">
+                <Columns>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px">
+                        <Template Context="entry">
+                            <RadzenTextBox Value="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%" Disabled="true" />
+                        </Template>
+                        <EditTemplate Context="entry">
+                            <RadzenDropDown TValue="InnateCode" Data="@innateCodes" TextProperty="ActivityName" Style="width: 100%" Change="@(args => InnateCodeChanged(args))" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px">
+                        <Template Context="entry">
+                            <RadzenTextBox Value="@entry.InnateCodeTask.TaskName" Style="width: 100%" Disabled="true" />
+                        </Template>
+                        <EditTemplate Context="entry">
+                            <RadzenDropDown TValue="InnateCodeTask" Data="@innateCodeTasks" TextProperty="TaskName" Style="width: 100%" @bind-Value="entry.InnateCodeTask" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Duty" MinWidth="10px">
+                        <Template Context="entry">
+                            <RadzenLabel Text="@entry.InnateCodeTask?.Duty.GetDescription()" />
+                        </Template>
+                        <EditTemplate Context="entry">
+                            <RadzenLabel Text="@entry.InnateCodeTask?.Duty.GetDescription()" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Mon" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Tue" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Wed" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Thu" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Fri" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Sat" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Sun" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="10rem" MinWidth="10px" Title="Actions">
+                        <Template Context="entry">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                        </Template>
+                        <EditTemplate Context="entry">
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+            <hr />
+            <div class="row">
+                <div class="col">
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardTimesheet" Text="Discard" Icon="close" />
+                </div>
             </div>
             @if (ErrorMessage != null)
             {

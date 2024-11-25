@@ -79,7 +79,7 @@ namespace PPMTool.Pages
 
         void AddTimesheet()
         {
-            Navigation.NavigateTo("/addtimesheet/");
+            Navigation.NavigateTo("addtimesheet/-1");
 
             //// Calculate the date for the next timesheet
             //timesheets = timesheets.OrderBy(x => x.StartDate);

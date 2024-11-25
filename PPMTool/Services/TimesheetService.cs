@@ -103,7 +103,6 @@ namespace PPMTool.Services
             return context.Timesheets;
         }
 
-
         /// <summary>
         /// Delete the Timesheet from the database.
         /// </summary>
@@ -113,6 +112,20 @@ namespace PPMTool.Services
         {
             context.Timesheets.Remove(timesheetModel);
             if (commitChanges) context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Returns the last timesheet in the DB for the person supplied
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="owner"></param>
+        /// <returns></returns>
+        internal Timesheet GetLastForUser(PPMToolContext context, Person owner)
+        {
+            return context.Timesheets
+                .Where(t => t.Owner.PersonId == owner.PersonId)
+                .OrderByDescending(t => t.StartDate)
+                .FirstOrDefault();
         }
     }
 }
