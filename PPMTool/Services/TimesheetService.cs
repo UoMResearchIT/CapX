@@ -73,11 +73,22 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<Timesheet> GetRelevant(PPMToolContext context)
+        public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
         {
             return context.Timesheets
-                .Where(t => t.Status != TimesheetStatus.Approved && t.Status != TimesheetStatus.Submitted)
-                .Include(t => t.TimesheetEntries)
+                .Where(t => t.Owner.PersonId == user.PersonId)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets all the Timesheets for direct reports
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Timesheet> GetMyStaffTimesheets(PPMToolContext context, Person user)
+        {
+            return context.Timesheets
+                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId))
                 .ToList();
         }
 
