@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -19,7 +20,8 @@ namespace PPMTool.Data.Entities
         /// The person associated with the timesheet
         /// </summary>
         [Required]
-        public Person Person { get; set; }
+        [InverseProperty("Timesheets")]
+        public Person Owner { get; set; }
 
         /// <summary>
         /// The date when the timesheet was created
@@ -56,7 +58,8 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Represents the person who made the status change.
         /// </summary>
-        public Person ChangedBy { get; set; }
+        [InverseProperty("TimesheetsChanged")]
+        public Person StatusChangedBy { get; set; }
 
         /// <summary>
         /// Represents the records of hours spent on tasks on the days associated with the specific timesheet.

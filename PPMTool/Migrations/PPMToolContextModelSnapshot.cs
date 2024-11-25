@@ -583,7 +583,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("MinHours")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("PersonId")
+                    b.Property<int>("OwnerPersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")
@@ -592,11 +592,14 @@ namespace PPMTool.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("StatusChangedByPersonId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("TimesheetId");
 
-                    b.HasIndex("ChangedByPersonId");
+                    b.HasIndex("OwnerPersonId");
 
-                    b.HasIndex("PersonId");
+                    b.HasIndex("StatusChangedByPersonId");
 
                     b.ToTable("Timesheets");
                 });
@@ -811,19 +814,19 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Timesheet", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.Person", "ChangedBy")
-                        .WithMany()
-                        .HasForeignKey("ChangedByPersonId");
-
-                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
-                        .WithMany()
-                        .HasForeignKey("PersonId")
+                    b.HasOne("PPMTool.Data.Entities.Person", "Owner")
+                        .WithMany("Timesheets")
+                        .HasForeignKey("OwnerPersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ChangedBy");
+                    b.HasOne("PPMTool.Data.Entities.Person", "StatusChangedBy")
+                        .WithMany("TimesheetsChanged")
+                        .HasForeignKey("StatusChangedByPersonId");
 
-                    b.Navigation("Person");
+                    b.Navigation("Owner");
+
+                    b.Navigation("StatusChangedBy");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.TimesheetActivity", b =>
@@ -867,6 +870,10 @@ namespace PPMTool.Migrations
                     b.Navigation("Assessments");
 
                     b.Navigation("ManagedProjects");
+
+                    b.Navigation("Timesheets");
+
+                    b.Navigation("TimesheetsChanged");
 
                     b.Navigation("WorkloadModelChanges");
                 });
