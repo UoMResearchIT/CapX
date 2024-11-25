@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -17,23 +18,39 @@ namespace PPMTool.Pages
         private TimesheetService TimesheetService { get; set; }
 
         private Role userRole;
+        private bool hideStaffResults = true;
         private Dictionary<TimesheetStatus, BadgeStyle> mapBadgeStyle = new Dictionary<TimesheetStatus, BadgeStyle>();
 
-        private bool showAll;
-        public bool ShowAll
+        private bool showAllMyTimesheets;
+        public bool ShowAllMyTimesheets
         {
-            get => showAll;
+            get => showAllMyTimesheets;
             private set
             {
-                if (value != showAll)
+                if (value != showAllMyTimesheets)
                 {
-                    showAll = value;
-                    LoadData(ShowAll);
+                    showAllMyTimesheets = value;
+                    LoadData();
                 }
             }
         }
 
-        private IEnumerable<Timesheet> timesheets;
+        private bool showAllMyStaffTimesheets;
+        public bool ShowAllMyStaffTimesheets
+        {
+            get => showAllMyStaffTimesheets;
+            private set
+            {
+                if (value != showAllMyStaffTimesheets)
+                {
+                    showAllMyStaffTimesheets = value;
+                    LoadData();
+                }
+            }
+        }
+
+        private List<Timesheet> myTimesheets;
+        private List<Timesheet> myStaffTimesheets;
 
         protected override async Task OnInitializedAsync()
         {
@@ -59,26 +76,45 @@ namespace PPMTool.Pages
                 LogError($"{uname}: Role is null!");
             }
 
-            LogInformation("Viewing timesheets");
-            LoadData(ShowAll);
+            LogInformation("Viewing myTimesheets");
+            LoadData();
         }
 
         /// <summary>
         /// Load in the timesheet data from the service
         /// </summary>
         /// <param name="showAll"></param>
-        private void LoadData(bool showAll)
+        private void LoadData()
         {
-            // PHB [24/11/24] : Only currently need to show New or Rejected timesheets to be available to Edit. 
-            // Will need to take into account timesheets of direct reports when management hierarchy is
-            // available in the database. Perhaps show a second datagrid for those of staff and
-            // show/hide based on user's role?
-            timesheets = TimesheetService.GetAll(Context).OrderByDescending(x => x.StartDate).ToList();
-            timesheets = timesheets.Where(x => x.Person?.PersonId == userRole.Person?.PersonId).ToList();
+            // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
+            myTimesheets = new List<Timesheet>(); // Initialise the list
+            myTimesheets = TimesheetService.GetMyTimesheets(Context, userRole.Person).OrderByDescending(t => t.StartDate).ToList();
 
-            if (!ShowAll)
+            if (!ShowAllMyTimesheets)
             {
-                timesheets = timesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
+                // Remove items with Submitted or Approved status
+                myTimesheets = myTimesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
+            }
+
+            // Show second grid if user manages staff - need to see the timesheets they have submitted.
+            if (userRole.Person.PeopleManaged.Count > 0)  // Is a manager
+            {
+                hideStaffResults = false;  // Show/Hide the second grid based on this
+                myStaffTimesheets = new List<Timesheet>();
+
+                foreach (Person p in userRole.Person.PeopleManaged)
+                {
+                    myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
+                }
+
+                if (!ShowAllMyStaffTimesheets)
+                {
+                    // Filter the list to only show items with Submitted status
+                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted).ToList();
+                }
+
+                // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
+                myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
             }
 
             Loading = false;
@@ -90,18 +126,14 @@ namespace PPMTool.Pages
         void AddTimesheet()
         {
             Navigation.NavigateTo("addtimesheet/-1");
+        }
 
-            //// Calculate the date for the next timesheet
-            //timesheets = timesheets.OrderBy(x => x.StartDate);
-            //DateTime lastTimesheetDate = timesheets.Last().StartDate;
-
-            //DateTime nextTimesheetStartDate = lastTimesheetDate.AddDays(7);
-            //Timesheet newTimesheet = new Timesheet();
-            //newTimesheet.Person = userRole.Person;
-            //newTimesheet.StartDate = nextTimesheetStartDate;
-            //newTimesheet.Status = TimesheetStatus.New;
-
-            //Debug.WriteLine($"New timesheet start date = {nextTimesheetStartDate.ToString("dd/MM/yyyy")}");
+        /// <summary>
+        /// Navigate to the specific timesheet to view/edit it
+        /// </summary>
+        private void EditTimesheet(Timesheet timesheet)
+        {
+            Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
         }
     }
 }
