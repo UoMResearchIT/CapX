@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Superuser,Manager,Developer")]
     public partial class Timesheets : BaseProjectPage
     {
         [Inject]
@@ -35,7 +33,6 @@ namespace PPMTool.Pages
             }
         }
 
-        RadzenDataGrid<Timesheet> timesheetsGrid;
         private IEnumerable<Timesheet> timesheets;
 
         protected override async Task OnInitializedAsync()
@@ -62,17 +59,15 @@ namespace PPMTool.Pages
                 LogError($"{uname}: Role is null!");
             }
 
-            if (userRole.RoleType != RoleType.Superuser && userRole.RoleType != RoleType.Manager && userRole.RoleType != RoleType.Developer)
-            {
-                LogInformation($"{uname}: Role is not Manager, Superuser or Developer. Redirecting...");
-                Navigation.NavigateTo("/capacity");
-            }
-
             LogInformation("Viewing timesheets");
             LoadData(ShowAll);
         }
 
-        private void LoadData(bool showAll) 
+        /// <summary>
+        /// Load in the timesheet data from the service
+        /// </summary>
+        /// <param name="showAll"></param>
+        private void LoadData(bool showAll)
         {
             // PHB [24/11/24] : Only currently need to show New or Rejected timesheets to be available to Edit. 
             // Will need to take into account timesheets of direct reports when management hierarchy is
@@ -81,17 +76,20 @@ namespace PPMTool.Pages
             timesheets = TimesheetService.GetAll(Context).OrderByDescending(x => x.StartDate).ToList();
             timesheets = timesheets.Where(x => x.Person?.PersonId == userRole.Person?.PersonId).ToList();
 
-            if(!ShowAll) 
-            { 
+            if (!ShowAll)
+            {
                 timesheets = timesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
             }
 
             Loading = false;
         }
 
+        /// <summary>
+        /// Add a new timesheet
+        /// </summary>
         void AddTimesheet()
         {
-            Navigation.NavigateTo("/addtimesheet/");
+            Navigation.NavigateTo("addtimesheet/-1");
 
             //// Calculate the date for the next timesheet
             //timesheets = timesheets.OrderBy(x => x.StartDate);
