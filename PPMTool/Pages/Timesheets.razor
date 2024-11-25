@@ -1,16 +1,17 @@
 ﻿@page "/timesheets"
-@inherits PPMTool.Pages.BaseProjectPage
+@inherits PPMTool.Pages.BasePage
 @using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
+@using DotNetExtensions
 <PageTitle>Timesheets - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
         <div class="col-auto mr-auto">
-            <h1>My timesheets</h1>
+            <h1>My Timesheets</h1>
         </div>
         <div class="col-auto">
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
@@ -35,10 +36,10 @@
                     GridLines="DataGridGridLines.Horizontal">
 
         <Columns>
-            <RadzenDataGridColumn Property="StartDate" Title="Week commencing" FormatString="{0:d}" />
+            <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" />
             <RadzenDataGridColumn Property="Status" Title="Status" TextAlign="TextAlign.Right">
                 <Template Context="data">
-                    <RadzenBadge BadgeStyle="@mapBadgeStyle[@data.Status]" class="timesheet-status-style" Text="@data.Status.ToString()" />
+                    <RadzenBadge BadgeStyle="@data.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@data.Status.GetDescription()" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>

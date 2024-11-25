@@ -115,6 +115,14 @@ namespace PPMTool.Enums
             return "background-color: var(--rz-danger-lighter);";
         }
 
-
+        /// <summary>
+        /// Gets the badge style of a timesheet status based on the attribute
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static BadgeStyle GetBadgeStyle(this TimesheetStatus status)
+        {
+            return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
+        }
     }
 }
