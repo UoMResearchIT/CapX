@@ -28,14 +28,14 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Duplicate determined by owner and timesheet start date
+        /// Duplicate if same owner and timesheet start date but not itself
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Timesheet timesheetModel)
         {
-            return context.Timesheets.Any(t=> t.Person == timesheetModel.Person && timesheetModel.StartDate != t.StartDate);
+            return context.Timesheets.Any(t => t.Owner.PersonId == timesheetModel.Owner.PersonId && timesheetModel.StartDate == t.StartDate && timesheetModel.TimesheetId != t.TimesheetId);
         }
 
         /// <summary>
