@@ -30,9 +30,13 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div>
-                <RadzenButton ButtonType="ButtonType.Button" Text="Add Entry" Icon="add" Click="AddEntry" />
-                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Text="Discard" Icon="close" Click="DiscardTimesheet" />
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenButton ButtonType="ButtonType.Button" Text="Add Entry" Icon="add" Click="AddEntry" />
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.1rem">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Text="Discard" Icon="close" Click="DiscardTimesheet" />
+                    </RadzenStack>
+                </RadzenStack>
             </div>
             @if (ErrorMessage != null)
             {

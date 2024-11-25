@@ -58,7 +58,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void DiscardTimesheet()
         {
-            Navigation.NavigateTo("/timesheets");
+            Navigation.NavigateTo("timesheets");
         }
 
         private async void DeleteTimesheet()
@@ -98,7 +98,7 @@ namespace PPMTool.Pages
                 TimesheetService.Add(Context, timesheet);
 
             }
-            Navigation.NavigateTo("/timesheets");
+            Navigation.NavigateTo("timesheets");
         }
     }
 }
