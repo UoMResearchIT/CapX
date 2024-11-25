@@ -35,7 +35,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Timesheet timesheetModel)
         {
-            return context.Timesheets.Any(t=> t.Person == timesheetModel.Person && timesheetModel.StartDate != t.StartDate);
+            return context.Timesheets.Any(t=> t.Owner == timesheetModel.Owner && timesheetModel.StartDate != t.StartDate);
         }
 
         /// <summary>
