@@ -78,6 +78,18 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
+        /// <summary>
+        /// The collection of timesheets this person owns
+        /// </summary>
+        [InverseProperty("Owner")]
+        public ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
+
+        /// <summary>
+        /// The collection of timesheets this person was last to change the status of
+        /// </summary>
+        [InverseProperty("StatusChangedBy")]
+        public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
+
         public Person()
         {
             // Generate status messages to be maintained against a project

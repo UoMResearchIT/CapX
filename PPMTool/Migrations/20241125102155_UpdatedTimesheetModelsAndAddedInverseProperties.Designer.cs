@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20241125102155_UpdatedTimesheetModelsAndAddedInverseProperties")]
+    partial class UpdatedTimesheetModelsAndAddedInverseProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -622,7 +624,7 @@ namespace PPMTool.Migrations
 
                     b.HasIndex("TimesheetId");
 
-                    b.ToTable("TimesheetEntries");
+                    b.ToTable("TimesheetActivities");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.WorkloadModelChange", b =>
