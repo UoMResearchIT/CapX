@@ -16,7 +16,7 @@
     {
         <div class="row">
             <div class="col">
-                <h1>Edit Timesheet <i>@timesheet.StartDate.ToShortDateString()</i></h1>
+                <h1>Edit Timesheet <i>@timesheet.StartDate.ToShortDateString() - @timesheet.StartDate.AddDays(6).ToShortDateString()</i></h1>
             </div>
             <div class="col-auto" style="align-content: center">
                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
@@ -45,25 +45,32 @@
                             TItem="TimesheetEntry"
                             RowUpdate="@OnUpdateRow"
                             RowCreate="@OnCreateRow"
-                            ColumnWidth="10rem">
+                            ColumnWidth="6.5rem">
                 <Columns>
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="15rem">
                         <Template Context="entry">
-                            <RadzenTextBox Value="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%" Disabled="true" />
+                            <RadzenLabel Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%" />
                         </Template>
                         <EditTemplate Context="entry">
-                            <RadzenDropDown TValue="InnateCode" Data="@innateCodes" TextProperty="ActivityName" Style="width: 100%" Change="@(args => InnateCodeChanged(args))" />
+                            <RadzenDropDown TValue="string"
+                                            FilterOperator="StringFilterOperator.Contains"
+                                            AllowFiltering="true"
+                                            Placeholder="Search for Innate Code"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                            Data="@innateCodes.Select(x => x.GetCodeAsString())"
+                                            Style="width: 100%"
+                                            Change="@(args => InnateCodeChanged(args))" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px" Width="15rem">
                         <Template Context="entry">
-                            <RadzenTextBox Value="@entry.InnateCodeTask.TaskName" Style="width: 100%" Disabled="true" />
+                            <RadzenLabel Text="@entry.InnateCodeTask.TaskName" Style="width: 100%" />
                         </Template>
                         <EditTemplate Context="entry">
                             <RadzenDropDown TValue="InnateCodeTask" Data="@innateCodeTasks" TextProperty="TaskName" Style="width: 100%" @bind-Value="entry.InnateCodeTask" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Duty" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Duty" MinWidth="10px" Width="15rem">
                         <Template Context="entry">
                             <RadzenLabel Text="@entry.InnateCodeTask?.Duty.GetDescription()" />
                         </Template>
@@ -71,20 +78,56 @@
                             <RadzenLabel Text="@entry.InnateCodeTask?.Duty.GetDescription()" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Mon" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Tue" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Wed" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Thu" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Fri" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Sat" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Sun" Width="5rem" MinWidth="10px" FormatString="{0:F2}" />
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="10rem" MinWidth="10px" Title="Actions">
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.MondayHours" Change="HoursChanged" />
+                        </EditTemplate>
+                        <FooterTemplate>
+                            <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                        </FooterTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.TuesdayHours" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.WednesdayHours" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.ThursdayHours" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.FridayHours" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SaturdayHours" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}">
+                        <EditTemplate Context="entry">
+                            <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SundayHours" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Title="Total" MinWidth="10px" FormatString="{0:F2}">
+                        <Template Context="entry">
+                            <RadzenText Text="0.00" TextStyle="TextStyle.Subtitle1" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="10rem" MinWidth="10px" Title="Actions">
                         <Template Context="entry">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
                         </Template>
                         <EditTemplate Context="entry">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.InnateCodeTask == null" />
                             <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
                         </EditTemplate>

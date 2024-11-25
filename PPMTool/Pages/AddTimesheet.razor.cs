@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -28,10 +29,21 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RolesService { get; set; }
 
-        private Timesheet timesheet = new Timesheet();
+        [Inject]
+        private InnateCodeService InnateCodeService { get; set; }
+
+        private Timesheet timesheet;
         private IEnumerable<InnateCode> innateCodes = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTasks = new List<InnateCodeTask>();
         private Person activeUser;
+        private double mondayHours;
+        private double tuesdayHours;
+        private double wednesdayHours;
+        private double thursdayHours;
+        private double fridayHours;
+        private double saturdayHours;
+        private double sundayHours;
+        private double totalHours;
 
         protected override void OnInitialized()
         {
@@ -49,6 +61,9 @@ namespace PPMTool.Pages
                 return;
             }
 
+            // Load the innate codes
+            innateCodes = InnateCodeService.GetAll(Context);
+
             // If there is an ID, then lookup the timesheet
             if ((TimesheetId ?? 0) > 0)
             {
@@ -60,10 +75,12 @@ namespace PPMTool.Pages
                     timesheet.Owner.PersonId == activeUser.PersonId ||
                     timesheet.Owner.LineManager.PersonId == activeUser.PersonId;
             }
-            else
+
+            // If no timesheet
+            if (timesheet == null)
             {
                 var lastTimesheetForThisUser = TimesheetService.GetLastForUser(Context, activeUser);
-
+                TimesheetId = -1;
                 timesheet = new Timesheet()
                 {
                     Owner = activeUser,
@@ -71,8 +88,25 @@ namespace PPMTool.Pages
                 };
             }
             dataGridEntities = timesheet.TimesheetEntries.ToList();
+            HoursChanged();
 
             LogInformation($"Viewing timesheet {timesheet.TimesheetId} for {timesheet.Owner?.Name}");
+        }
+
+        /// <summary>
+        /// Method to sum up the total hours per day and for the whoel timesheet
+        /// </summary>
+        private void HoursChanged()
+        {
+            mondayHours = dataGridEntities.Sum(x => x.MondayHours);
+            tuesdayHours = dataGridEntities.Sum(x => x.TuesdayHours);
+            wednesdayHours = dataGridEntities.Sum(x => x.WednesdayHours);
+            thursdayHours = dataGridEntities.Sum(x => x.ThursdayHours);
+            fridayHours = dataGridEntities.Sum(x => x.FridayHours);
+            saturdayHours = dataGridEntities.Sum(x => x.SaturdayHours);
+            sundayHours = dataGridEntities.Sum(x => x.SundayHours);
+            totalHours = mondayHours + tuesdayHours + wednesdayHours + thursdayHours + fridayHours + saturdayHours + sundayHours;
+            StateHasChanged();
         }
 
         /// <summary>
@@ -83,6 +117,9 @@ namespace PPMTool.Pages
             Navigation.NavigateTo("timesheets");
         }
 
+        /// <summary>
+        /// Delete a timesheet with prompt
+        /// </summary>
         private async void DeleteTimesheet()
         {
             if (TimesheetId > 0)
@@ -127,15 +164,19 @@ namespace PPMTool.Pages
             else
             {
                 TimesheetService.Add(Context, timesheet);
-
             }
             Navigation.NavigateTo("timesheets");
         }
 
+        /// <summary>
+        /// Handle a change in the code on the first dropdown
+        /// </summary>
+        /// <param name="value"></param>
         private void InnateCodeChanged(object value)
         {
-            // TODO: Load the innate tasks associated with the selected innate code
-            Debug.WriteLine(value);
+            // Load the innate tasks associated with the selected innate code
+            Debug.WriteLine($"** Selected {value}");
+            innateCodeTasks = innateCodes.FirstOrDefault(x => x.GetCodeAsString() == (value as string)).Tasks;
         }
 
         /// <summary>
@@ -145,6 +186,7 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(TimesheetEntry entity)
         {
             Reset();
+            dataGridEntities.Add(entity);
             LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
         }
 
@@ -168,6 +210,16 @@ namespace PPMTool.Pages
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
+        }
+
+        protected override async Task InsertRow()
+        {
+            entityToInsert = new TimesheetEntry
+            {
+                Timesheet = timesheet
+            };
+            await dataGrid.InsertRow(entityToInsert);
+            Debug.WriteLine($"** Datagrid insert row {entityToInsert.GetSensibleObjectName()}; Count = {dataGridEntities.Count}");
         }
     }
 }
