@@ -1,0 +1,44 @@
+﻿@page "/addtimesheet/{TimesheetId:int}"
+@inherits PPMTool.Pages.BasePage
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using PPMTool.Services
+@using Radzen.Blazor
+<PageTitle>Add Timesheet - CapX</PageTitle>
+
+<div class="container">
+    @if (TimesheetId <= 0)
+    {
+        <h1>Add Timesheet</h1>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <h1>Edit Timesheet <i>@timesheet.StartDate.ToShortDateString()</i></h1>
+            </div>
+            <div class="col-auto" style="align-content: center">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+            </div>
+        </div>
+    }
+    <hr />
+    <div class="card">
+        <EditForm Model="timesheet" OnSubmit="HandleSubmit">
+            @* Implement here *@
+            <hr />
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <RadzenButton ButtonType="ButtonType.Button" Text="Add Entry" Icon="add" Click="AddEntry" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Text="Discard" Icon="close" Click="DiscardTimesheet" />
+            </div>
+            @if (ErrorMessage != null)
+            {
+                <br />
+                <StatusMessageComponent Message=@ErrorMessage />
+            }
+        </EditForm>
+    </div>
+</div>
