@@ -102,7 +102,7 @@ namespace PPMTool.Data.Entities
 
         public Person()
         {
-            // Generate status messages to be maintained against a project
+            // Generate status messages to be maintained against a person
             statusMessages = new List<StatusMessage>
             {
                 new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
