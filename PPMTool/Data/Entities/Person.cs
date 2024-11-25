@@ -47,6 +47,11 @@ namespace PPMTool.Data.Entities
         public double FTE { get; set; } = 1.0;
 
         /// <summary>
+        /// Line manager of this person
+        /// </summary>
+        public Person LineManager { get; set; }
+
+        /// <summary>
         /// Any changes to their WLMs
         /// </summary>
         public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
@@ -89,6 +94,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [InverseProperty("StatusChangedBy")]
         public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
+
+        /// <summary>
+        /// List of people that this person manages as their line manager
+        /// </summary>
+        public ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
 
         public Person()
         {
