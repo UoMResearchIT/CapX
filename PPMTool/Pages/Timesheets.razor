@@ -37,12 +37,13 @@
                         GridLines="DataGridGridLines.Horizontal">
 
             <Columns>
-                <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" />
-                <RadzenDataGridColumn Property="Status" Title="Status" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem" />
+                <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                     <Template Context="data">
                         <RadzenBadge BadgeStyle="@mapBadgeStyle[@data.Status]" class="timesheet-status-style" Text="@data.Status.ToString()" />
                     </Template>
                 </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Info" Title="Notes" />
                 <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
                     <Template Context="data">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTimesheet(data))" @onclick:stopPropagation="true" Disabled="@(data.Status == TimesheetStatus.Approved || data.Status == TimesheetStatus.Submitted)" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
@@ -79,13 +80,14 @@
                             GridLines="DataGridGridLines.Horizontal">
 
                 <Columns>
-                    <RadzenDataGridColumn Property="Owner.Name" Title="Staff member" />
-                    <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" />
-                    <RadzenDataGridColumn Property="Status" Title="Status" TextAlign="TextAlign.Right">
+                    <RadzenDataGridColumn Property="Owner.Name" Title="Staff member" Width="20rem"/>
+                    <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem"/>
+                    <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                         <Template Context="data">
                             <RadzenBadge BadgeStyle="@mapBadgeStyle[@data.Status]" class="timesheet-status-style" Text="@data.Status.ToString()" />
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Info" Title="Notes" />
                     <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
                         <Template Context="data">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTimesheet(data))" @onclick:stopPropagation="true" Disabled="@(data.Status == TimesheetStatus.Rejected || data.Status == TimesheetStatus.Approved)" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
