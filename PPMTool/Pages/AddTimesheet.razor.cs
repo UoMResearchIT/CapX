@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -215,6 +216,13 @@ namespace PPMTool.Pages
                         timesheet.TimesheetEntries.Add(entry);
                     }
                 }
+            }
+
+            // Set status changed information
+            if (timesheet.Status != TimesheetStatus.New)
+            {
+                timesheet.DateStatusChanged = DateTime.Now;
+                timesheet.StatusChangedBy = activeUser;
             }
 
             // Save to database
