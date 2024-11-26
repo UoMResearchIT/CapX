@@ -245,6 +245,7 @@ mark {
 :root {
     --rz-primary: #609;
     --rz-on-primary-lighter: #609;
+    --rz-grid-cell-padding: 0.5rem;
 }
 
 .competency-highlightable {

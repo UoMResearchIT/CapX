@@ -76,36 +76,53 @@ namespace PPMTool.Pages
                     timesheet.Owner.LineManager.PersonId == activeUser.PersonId;
             }
 
-            // If no timesheet
-            if (timesheet == null)
+            // If no timesheet and intention is create
+            if (timesheet == null && TimesheetId == -1)
             {
                 var lastTimesheetForThisUser = TimesheetService.GetLastForUser(Context, activeUser);
-                TimesheetId = -1;
                 timesheet = new Timesheet()
                 {
                     Owner = activeUser,
                     StartDate = lastTimesheetForThisUser?.StartDate.AddDays(7).Date ?? activeUser.StartDate.Date
                 };
-            }
-            dataGridEntities = timesheet.TimesheetEntries.ToList();
-            HoursChanged();
 
-            LogInformation($"Viewing timesheet {timesheet.TimesheetId} for {timesheet.Owner?.Name}");
+                // Immediately save the timesheet to the DB
+                TimesheetService.Add(Context, timesheet);
+            }
+
+            if (timesheet != null)
+            {
+                dataGridEntities = timesheet.TimesheetEntries.ToList();
+                HoursChanged();
+            }
+
+            LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
         }
 
         /// <summary>
-        /// Method to sum up the total hours per day and for the whoel timesheet
+        /// Method to sum up the total hours per day and for the whole timesheet
         /// </summary>
         private void HoursChanged()
         {
-            mondayHours = dataGridEntities.Sum(x => x.MondayHours);
-            tuesdayHours = dataGridEntities.Sum(x => x.TuesdayHours);
-            wednesdayHours = dataGridEntities.Sum(x => x.WednesdayHours);
-            thursdayHours = dataGridEntities.Sum(x => x.ThursdayHours);
-            fridayHours = dataGridEntities.Sum(x => x.FridayHours);
-            saturdayHours = dataGridEntities.Sum(x => x.SaturdayHours);
-            sundayHours = dataGridEntities.Sum(x => x.SundayHours);
+            // The entity to add has not been included in the datagrid entites list yet
+            var allEntities = dataGridEntities;
+            Debug.WriteLine($"** Datagrid count = {dataGridEntities.Count}");
+            if (entityToInsert != null && !allEntities.Contains(entityToInsert))
+            {
+                Debug.WriteLine($"** Added entity, all entities count = {allEntities.Count}");
+                allEntities.Add(entityToInsert);
+            }
+
+            // Now sum up the hours
+            mondayHours = allEntities.Sum(x => x.MondayHours);
+            tuesdayHours = allEntities.Sum(x => x.TuesdayHours);
+            wednesdayHours = allEntities.Sum(x => x.WednesdayHours);
+            thursdayHours = allEntities.Sum(x => x.ThursdayHours);
+            fridayHours = allEntities.Sum(x => x.FridayHours);
+            saturdayHours = allEntities.Sum(x => x.SaturdayHours);
+            sundayHours = allEntities.Sum(x => x.SundayHours);
             totalHours = mondayHours + tuesdayHours + wednesdayHours + thursdayHours + fridayHours + saturdayHours + sundayHours;
+            Debug.WriteLine($"** Count = {allEntities.Count} Monday hours = {mondayHours}; Tuesday hours = {tuesdayHours}");
             StateHasChanged();
         }
 
@@ -186,8 +203,8 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(TimesheetEntry entity)
         {
             Reset();
-            dataGridEntities.Add(entity);
             LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
+            TimesheetService.AddEntry(Context, entity);
         }
 
         /// <summary>
@@ -198,6 +215,7 @@ namespace PPMTool.Pages
         {
             Reset();
             LogInformation($"Update row for <{entity?.GetSensibleObjectName()}>");
+            TimesheetService.UpdateEntry(Context, entity);
         }
 
         /// <summary>
@@ -212,14 +230,14 @@ namespace PPMTool.Pages
             dataGrid.CancelEditRow(entity);
         }
 
+        /// <summary>
+        /// Override to make sure we add the timesheet reference to the entry
+        /// </summary>
+        /// <returns></returns>
         protected override async Task InsertRow()
         {
-            entityToInsert = new TimesheetEntry
-            {
-                Timesheet = timesheet
-            };
-            await dataGrid.InsertRow(entityToInsert);
-            Debug.WriteLine($"** Datagrid insert row {entityToInsert.GetSensibleObjectName()}; Count = {dataGridEntities.Count}");
+            await base.InsertRow();
+            entityToInsert.Timesheet = timesheet;
         }
     }
 }

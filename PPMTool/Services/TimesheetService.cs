@@ -127,5 +127,45 @@ namespace PPMTool.Services
                 .OrderByDescending(t => t.StartDate)
                 .FirstOrDefault();
         }
+
+        /// <summary>
+        /// Method to add a timesheet entry
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entry"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        public int AddEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
+        {
+            context.TimesheetEntries.Add(entry);
+            if (commitChanges) context.SaveChanges();
+            return entry.TimesheetEntryId;
+        }
+
+        /// <summary>
+        /// Method to update an existing timesheet entry
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entry"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        public int UpdateEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
+        {
+            context.TimesheetEntries.Update(entry);
+            if (commitChanges) context.SaveChanges();
+            return entry.TimesheetEntryId;
+        }
+
+        /// <summary>
+        /// Method to delete a timesheet entry
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entry"></param>
+        /// <param name="commitChanges"></param>
+        public void DeleteEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
+        {
+            context.TimesheetEntries.Remove(entry);
+            if (commitChanges) context.SaveChanges();
+        }
     }
 }

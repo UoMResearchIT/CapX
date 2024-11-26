@@ -1,4 +1,6 @@
-﻿namespace PPMTool.Data.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace PPMTool.Data.Entities
 {
     /// <summary>
     /// Represents an entry in the timesheet indicating the number of hours worked on a particular timesheet task on a given day
@@ -13,11 +15,13 @@
         /// <summary>
         /// Represents the timesheet which owns the timesheet entry
         /// </summary>
+        [Required]
         public Timesheet Timesheet { get; set; }
 
         /// <summary>
         /// Represents the innate code task associated with the timesheet entry.
         /// </summary>
+        [Required]
         public InnateCodeTask InnateCodeTask { get; set; }
 
         /// <summary>
@@ -61,7 +65,7 @@
         /// <returns></returns>
         public string GetSensibleObjectName()
         {
-            return $"TimesheetEntry: Timesheet: {Timesheet?.TimesheetId} | Owner: {Timesheet?.Owner.Name} | Task: {InnateCodeTask?.GetSensibleObjectName()}";
+            return $"TimesheetEntry: Entry: {TimesheetEntryId} | Timesheet: {Timesheet?.TimesheetId} | Owner: {Timesheet?.Owner.Name} | Task: {InnateCodeTask?.GetSensibleObjectName()}";
         }
     }
 }
