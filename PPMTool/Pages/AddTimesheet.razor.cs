@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentDateTime;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -180,7 +181,13 @@ namespace PPMTool.Pages
             // Reset error message
             ErrorMessage = null;
 
-            // TODO: Some kind of validation on minimum hours etc. and show a status message
+            // Validation on minimum hours etc. and show a status message
+            if (timesheet.Status == TimesheetStatus.Submitted && dataGridEntities.Count == 0)
+            {
+                ErrorMessage = new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error);
+                timesheet.Status = TimesheetStatus.New;
+                return;
+            }
 
             // Decide what to do based on the status of the timesheet
             if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted)
@@ -201,6 +208,18 @@ namespace PPMTool.Pages
             if (timesheet.Status != TimesheetStatus.New)
             {
                 Navigation.NavigateTo("timesheets");
+            }
+            else
+            {
+                // SHow notification for save action
+                ShowNotification(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Saved",
+                    Detail = $"Your timesheet has been saved.",
+                    Duration = 3000,
+                    Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                });
             }
         }
 
