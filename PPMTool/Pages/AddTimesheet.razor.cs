@@ -43,6 +43,7 @@ namespace PPMTool.Pages
         private double fridayHours;
         private double saturdayHours;
         private double sundayHours;
+        private double totalHours;
         private Role activeUserRole;
 
         protected override void OnInitialized()
@@ -132,6 +133,7 @@ namespace PPMTool.Pages
             fridayHours = allEntities.Sum(x => x.FridayHours);
             saturdayHours = allEntities.Sum(x => x.SaturdayHours);
             sundayHours = allEntities.Sum(x => x.SundayHours);
+            totalHours = mondayHours + tuesdayHours + wednesdayHours + thursdayHours + fridayHours + saturdayHours + sundayHours;
 
             // Manually update the total hours on the entities. Urgh!
             foreach (var entity in allEntities)

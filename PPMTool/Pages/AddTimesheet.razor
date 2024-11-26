@@ -26,7 +26,7 @@
                 {
                     <h1>Edit Timesheet</h1>
                 }
-                <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")"  TextStyle="TextStyle.Subtitle1"/>
+                <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")" TextStyle="TextStyle.Subtitle1" />
             </div>
             <div class="col-auto" style="align-content: center">
                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
@@ -190,6 +190,7 @@
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                 <h4>Status</h4>
+                                <RadzenText Text="@($"Total Hours = {totalHours.ToString("F2")}")" TextStyle="TextStyle.H6" />
                                 <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
                             </RadzenStack>
                             <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
