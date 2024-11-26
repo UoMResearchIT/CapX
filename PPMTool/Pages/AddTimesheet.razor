@@ -199,16 +199,16 @@
                 <div class="row">
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        @if (IsLineManager())
-                        {
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" />
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" />
-                        }
-                        else
-                        {
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" Icon="check" ButtonStyle="ButtonStyle.Primary" />
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" ButtonStyle="ButtonStyle.Light" />
-                        }
+                            @if (IsLineManager())
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
+                            }
+                            else
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" ButtonStyle="ButtonStyle.Light" />
+                            }
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardTimesheet" Text="Discard" Icon="close" />
                         </RadzenStack>
                     </div>

@@ -177,20 +177,31 @@ namespace PPMTool.Pages
         /// </summary>
         private void HandleValidSubmit()
         {
-            // TODO: Some kind of validation and show a status message
+            // Reset error message
             ErrorMessage = null;
 
-            // Add the timesheet entries from the datagrid to the timesheet model
-            timesheet.TimesheetEntries.Clear();
-            foreach (var entry in dataGridEntities)
+            // TODO: Some kind of validation on minimum hours etc. and show a status message
+
+            // Decide what to do based on the status of the timesheet
+            if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted)
             {
-                timesheet.TimesheetEntries.Add(entry);
+                // Add the timesheet entries from the datagrid to the timesheet model
+                timesheet.TimesheetEntries.Clear();
+                foreach (var entry in dataGridEntities)
+                {
+                    timesheet.TimesheetEntries.Add(entry);
+                }
             }
 
-            // Carry out DB actions
-            LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}...");
+            // Save to database
+            LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            Navigation.NavigateTo("timesheets");
+
+            // Only navigate away if the status is new as this means the save button has been clicked
+            if (timesheet.Status != TimesheetStatus.New)
+            {
+                Navigation.NavigateTo("timesheets");
+            }
         }
 
         /// <summary>
