@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentDateTime;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -83,7 +84,7 @@ namespace PPMTool.Pages
                 timesheet = new Timesheet()
                 {
                     Owner = activeUser,
-                    StartDate = lastTimesheetForThisUser?.StartDate.AddDays(7).Date ?? activeUser.StartDate.Date
+                    StartDate = lastTimesheetForThisUser?.StartDate.AddDays(7).Date ?? activeUser.StartDate.Date.FirstDayOfWeek()
                 };
 
                 // Immediately save the timesheet to the DB
@@ -181,14 +182,7 @@ namespace PPMTool.Pages
 
             // Carry out DB actions
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}...");
-            if (TimesheetId > 0)
-            {
-                TimesheetService.Update(Context, timesheet);
-            }
-            else
-            {
-                TimesheetService.Add(Context, timesheet);
-            }
+            TimesheetService.Update(Context, timesheet);
             Navigation.NavigateTo("timesheets");
         }
 
@@ -249,6 +243,17 @@ namespace PPMTool.Pages
         {
             await base.InsertRow();
             entityToInsert.Timesheet = timesheet;
+        }
+
+        /// <summary>
+        /// Remove the entity from the DB table
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        protected override async Task DeleteRow(TimesheetEntry entity)
+        {
+            TimesheetService.DeleteEntry(Context, entity);
+            await base.DeleteRow(entity);
         }
     }
 }

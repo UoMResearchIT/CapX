@@ -15,22 +15,22 @@
     }
     else
     {
-        @if (TimesheetId <= 0)
-        {
-            <h1>Add Timesheet</h1>
-        }
-        else
-        {
-            <div class="row">
-                <div class="col">
+        <div class="row">
+            <div class="col">
+                @if (TimesheetId <= 0)
+                {
+                    <h1>Add Timesheet</h1>
+                }
+                else
+                {
                     <h1>Edit Timesheet</h1>
-                    <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")"  TextStyle="TextStyle.Subtitle1"/>
-                </div>
-                <div class="col-auto" style="align-content: center">
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
-                </div>
+                }
+                <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")"  TextStyle="TextStyle.Subtitle1"/>
             </div>
-        }
+            <div class="col-auto" style="align-content: center">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+            </div>
+        </div>
         <hr />
         <div class="card">
             <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
@@ -60,14 +60,21 @@
                                 <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
                             </Template>
                             <EditTemplate Context="entry">
-                                <RadzenDropDown TValue="string"
-                                                FilterOperator="StringFilterOperator.Contains"
-                                                AllowFiltering="true"
-                                                Placeholder="Search for Innate Code"
-                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                Data="@innateCodes.Select(x => x.GetCodeAsString())"
-                                                Style="width: 100%"
-                                                Change="@(args => InnateCodeChanged(args))" />
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    FilterOperator="StringFilterOperator.Contains"
+                                                    AllowFiltering="true"
+                                                    Placeholder="Search for Innate Code"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    Data="@innateCodes.Select(x => x.GetCodeAsString())"
+                                                    Style="width: 100%"
+                                                    Change="@(args => InnateCodeChanged(args))" />
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                                }
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px" Width="12rem">
@@ -81,7 +88,24 @@
                                 </RadzenStack>
                             </Template>
                             <EditTemplate Context="entry">
-                                <RadzenDropDown TValue="InnateCodeTask" Data="@innateCodeTasks" TextProperty="TaskName" Style="width: 100%" @bind-Value="entry.InnateCodeTask" />
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="InnateCodeTask"
+                                                    Data="@innateCodeTasks"
+                                                    TextProperty="TaskName"
+                                                    Style="width: 100%"
+                                                    @bind-Value="entry.InnateCodeTask" />
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                        @if (entry.InnateCodeTask != null)
+                                        {
+                                            <svg width=1.1rem height=1.1rem xmlns="http://www.w3.org/2000/svg" title="@entry.InnateCodeTask?.Duty.GetDescription()"> <circle r=".5rem" cx=".5rem" cy=".5rem" fill="@(entry.InnateCodeTask?.Duty.GetAttribute<ColourAttribute>().ColourCode ?? "#609")" /></svg>
+                                        }
+                                        <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.TaskName" Style="width: 100%; white-space:pre-wrap; margin-bottom: 0" />
+                                    </RadzenStack>
+                                }
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
