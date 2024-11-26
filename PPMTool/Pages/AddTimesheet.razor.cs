@@ -44,7 +44,6 @@ namespace PPMTool.Pages
         private double fridayHours;
         private double saturdayHours;
         private double sundayHours;
-        private double totalHours;
 
         protected override void OnInitialized()
         {
@@ -61,9 +60,6 @@ namespace PPMTool.Pages
                 ErrorMessage = new StatusMessage("You do not have a person record. Please contact your line manager.", MessageType.Error);
                 return;
             }
-
-            // Load the innate codes
-            innateCodes = InnateCodeService.GetAll(Context);
 
             // If there is an ID, then lookup the timesheet
             if ((TimesheetId ?? 0) > 0)
@@ -95,6 +91,7 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = timesheet.TimesheetEntries.ToList();
                 HoursChanged();
+                innateCodes = InnateCodeService.GetAll(Context);
             }
 
             LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
@@ -107,7 +104,7 @@ namespace PPMTool.Pages
         {
             // The entity to add has not been included in the datagrid entites list yet
             var allEntities = dataGridEntities;
-            Debug.WriteLine($"** Datagrid count = {dataGridEntities.Count}");
+            Debug.WriteLine($"** Hours changed, datagrid count = {dataGridEntities.Count}");
             if (entityToInsert != null && !allEntities.Contains(entityToInsert))
             {
                 Debug.WriteLine($"** Added entity, all entities count = {allEntities.Count}");
@@ -122,8 +119,6 @@ namespace PPMTool.Pages
             fridayHours = allEntities.Sum(x => x.FridayHours);
             saturdayHours = allEntities.Sum(x => x.SaturdayHours);
             sundayHours = allEntities.Sum(x => x.SundayHours);
-            totalHours = mondayHours + tuesdayHours + wednesdayHours + thursdayHours + fridayHours + saturdayHours + sundayHours;
-            Debug.WriteLine($"** Count = {allEntities.Count} Monday hours = {mondayHours}; Tuesday hours = {tuesdayHours}");
 
             // Manually update the total hours on the entities. Urgh!
             foreach (var entity in allEntities)
@@ -194,7 +189,14 @@ namespace PPMTool.Pages
         {
             // Load the innate tasks associated with the selected innate code
             Debug.WriteLine($"** Selected {value}");
-            innateCodeTasks = innateCodes.FirstOrDefault(x => x.GetCodeAsString() == (value as string)).Tasks;
+            var tasks = innateCodes.FirstOrDefault(x => x.GetCodeAsString() == (value as string)).Tasks.ToList();
+
+            // Find all exsiting entries that use this same code
+            var tasksInUse = dataGridEntities.Where(x => x.InnateCodeTask.InnateCode.GetCodeAsString() == (value as string)).Select(x => x.InnateCodeTask).ToList();
+
+            // Remove the tasks from the list that are already in use
+            tasks.RemoveAll(x => tasksInUse.Contains(x));
+            innateCodeTasks = tasks;
         }
 
         /// <summary>
