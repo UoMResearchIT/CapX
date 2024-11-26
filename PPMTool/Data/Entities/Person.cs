@@ -84,13 +84,13 @@ namespace PPMTool.Data.Entities
         public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
         /// <summary>
-        /// The collection of myTimesheets this person owns
+        /// The collection of Timesheets this person owns
         /// </summary>
         [InverseProperty("Owner")]
         public ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
 
         /// <summary>
-        /// The collection of myTimesheets this person was last to change the status of
+        /// The collection of Timesheets this person was last to change the status of
         /// </summary>
         [InverseProperty("StatusChangedBy")]
         public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
