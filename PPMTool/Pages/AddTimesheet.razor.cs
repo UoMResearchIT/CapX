@@ -123,6 +123,13 @@ namespace PPMTool.Pages
             sundayHours = allEntities.Sum(x => x.SundayHours);
             totalHours = mondayHours + tuesdayHours + wednesdayHours + thursdayHours + fridayHours + saturdayHours + sundayHours;
             Debug.WriteLine($"** Count = {allEntities.Count} Monday hours = {mondayHours}; Tuesday hours = {tuesdayHours}");
+
+            // Manually update the total hours on the entities. Urgh!
+            foreach (var entity in allEntities)
+            {
+                entity.UpdateTotalHours();
+            }
+
             StateHasChanged();
         }
 
@@ -228,6 +235,10 @@ namespace PPMTool.Pages
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
+
+            // Update the totals
+            HoursChanged();
+            entity.UpdateTotalHours();
         }
 
         /// <summary>

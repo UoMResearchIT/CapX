@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PPMTool.Data.Entities
 {
@@ -58,6 +59,21 @@ namespace PPMTool.Data.Entities
         /// Represents the number of hours spent on the task on Sunday.
         /// </summary>
         public double SundayHours { get; set; }
+
+        /// <summary>
+        /// Total
+        /// </summary>
+        [NotMapped]
+        public double TotalHours { get; private set; }
+
+        /// <summary>
+        /// Method to sum up the hours in the entry
+        /// </summary>
+        /// <returns></returns>
+        public void UpdateTotalHours()
+        {
+            TotalHours = MondayHours + TuesdayHours + WednesdayHours + ThursdayHours + FridayHours + SaturdayHours + SundayHours;
+        }
 
         /// <summary>
         /// Returns a useful string to identify the entity
