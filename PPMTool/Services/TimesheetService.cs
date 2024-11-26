@@ -3,7 +3,6 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -35,7 +34,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Timesheet timesheetModel)
         {
-            return context.Timesheets.Any(t=> t.Owner == timesheetModel.Owner && timesheetModel.StartDate != t.StartDate);
+            return context.Timesheets.Any(t => t.Owner == timesheetModel.Owner && timesheetModel.StartDate != t.StartDate);
         }
 
         /// <summary>
