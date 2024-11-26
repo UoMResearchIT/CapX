@@ -41,7 +41,7 @@
                 <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem" />
                 <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                     <Template Context="data">
-                        <RadzenBadge BadgeStyle="@data.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@data.Status.ToString()" />
+                        <RadzenBadge BadgeStyle="@data.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@data.Status.ToNiceString()" />
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="Info" Title="Notes" />

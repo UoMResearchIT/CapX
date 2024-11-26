@@ -1,6 +1,7 @@
 ﻿@page "/addtimesheet/{TimesheetId:int}"
 @inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
 @using DotNetExtensions
+@using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
@@ -11,7 +12,7 @@
 <div class="container">
     @if (TimesheetId > 0 && timesheet == null)
     {
-        <RadzenText Text="No timesheet with this ID found in the database!" />
+        <StatusMessageComponent Message="@(new StatusMessage("Either you are not permitted to view this timesheet or a timesheet with the given ID is not present in the database!", StatusMessage.MessageType.Error))" />
     }
     else
     {
@@ -41,7 +42,7 @@
                         <h2>Timesheet Entries</h2>
                     </div>
                     <div class="col-auto" style="align-content: center">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || IsLineManager()) />
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
@@ -82,7 +83,7 @@
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                     @if (entry.InnateCodeTask != null)
                                     {
-                                        <svg width=1.1rem height=1.1rem xmlns="http://www.w3.org/2000/svg" title="@entry.InnateCodeTask?.Duty.GetDescription()"> <circle r=".5rem" cx=".5rem" cy=".5rem" fill="@(entry.InnateCodeTask?.Duty.GetAttribute<ColourAttribute>().ColourCode ?? "#609")" /></svg>
+                                        <svg width=1.2rem height=1.2rem xmlns="http://www.w3.org/2000/svg" title="@entry.InnateCodeTask?.Duty.GetDescription()"> <circle r=".5rem" cx=".5rem" cy=".5rem" fill="@(entry.InnateCodeTask?.Duty.GetAttribute<ColourAttribute>().ColourCode ?? "#609")" /></svg>
                                     }
                                     <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.TaskName" Style="width: 100%; white-space:pre-wrap; margin-bottom: 0" />
                                 </RadzenStack>
@@ -171,13 +172,13 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="9.5rem" MinWidth="10px" Title="Actions">
                             <Template Context="entry">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="IsLineManager()" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="IsLineManager()" />
                             </Template>
                             <EditTemplate Context="entry">
-                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.InnateCodeTask == null" />
-                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.InnateCodeTask == null || IsLineManager()" />
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="IsLineManager()" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" Disabled="IsLineManager()" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -185,23 +186,31 @@
                 <hr />
                 <div class="row">
                     <div class="col">
-                        <h4>Status</h4>
+                        
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
-                            <RadzenDropDown @bind-Value="timesheet.Status"
-                                            TValue="TimesheetStatus"
-                                            Data="Enum.GetValues<TimesheetStatus>()">
-                                <Template Context="item">
-                                    <RadzenBadge BadgeStyle="@(((TimesheetStatus)item).GetBadgeStyle())" class="timesheet-status-style" Style="width:auto" Text="@(((TimesheetStatus)item).ToNiceString())" />
-                                </Template>
-                            </RadzenDropDown>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                <h4>Status</h4>
+                                <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
+                            </RadzenStack>
                             <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
                         </RadzenStack>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Update" Icon="check" />
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        @if (IsLineManager())
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" />
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" />
+                        }
+                        else
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" Icon="check" ButtonStyle="ButtonStyle.Primary" />
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" ButtonStyle="ButtonStyle.Light" />
+                        }
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardTimesheet" Text="Discard" Icon="close" />
+                        </RadzenStack>
                     </div>
                 </div>
                 @if (ErrorMessage != null)

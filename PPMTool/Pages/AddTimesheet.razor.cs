@@ -4,12 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentDateTime;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
-using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -44,20 +42,23 @@ namespace PPMTool.Pages
         private double fridayHours;
         private double saturdayHours;
         private double sundayHours;
+        private Role activeUserRole;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             // Get the person associated with the active user
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            activeUser = role.Person;
+            activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
+            activeUser = activeUserRole.Person;
+
+            // Only superusers can delete a timesheet
+            EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
 
             // Handle if the user is not found
             if (activeUser == null)
             {
                 LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
-                ErrorMessage = new StatusMessage("You do not have a person record. Please contact your line manager.", MessageType.Error);
                 return;
             }
 
@@ -65,12 +66,12 @@ namespace PPMTool.Pages
             if ((TimesheetId ?? 0) > 0)
             {
                 timesheet = TimesheetService.GetById(Context, TimesheetId);
+            }
 
-                // Only superusers, owner or line manager of owner can edit the timesheet
-                EditAuthorised =
-                    role.RoleType == RoleType.Superuser ||
-                    timesheet.Owner.PersonId == activeUser.PersonId ||
-                    timesheet.Owner.LineManager.PersonId == activeUser.PersonId;
+            // Check whether this user should have access or not
+            if (timesheet != null && !IsPermittedToView())
+            {
+                timesheet = null;
             }
 
             // If no timesheet and intention is create
@@ -95,6 +96,17 @@ namespace PPMTool.Pages
             }
 
             LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
+        }
+
+        /// <summary>
+        /// Should this user be allowed to view the timesheet. Only superusers, the owner or the line manager.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsPermittedToView()
+        {
+            return timesheet?.Owner?.PersonId == activeUser?.PersonId ||
+                timesheet?.Owner?.LineManager?.PersonId == activeUser?.PersonId ||
+                activeUserRole.RoleType == RoleType.Superuser;
         }
 
         /// <summary>
@@ -179,6 +191,15 @@ namespace PPMTool.Pages
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}...");
             TimesheetService.Update(Context, timesheet);
             Navigation.NavigateTo("timesheets");
+        }
+
+        /// <summary>
+        /// Checks to see if the active user is the line manager of the timesheet owner
+        /// </summary>
+        /// <returns></returns>
+        private bool IsLineManager()
+        {
+            return activeUser.PersonId != (timesheet?.Owner?.PersonId ?? 0) && (activeUserRole.RoleType == RoleType.Superuser || activeUser.PersonId == (timesheet?.Owner?.LineManager?.PersonId ?? 0));
         }
 
         /// <summary>
