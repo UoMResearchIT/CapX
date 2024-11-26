@@ -1,0 +1,20 @@
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
+<RadzenBadge Text="@Entry.InnateCodeTask.TaskName"
+             Style="@($"width: 100%; white-space:pre-wrap; background-color: {backgroundColour}")" />
+
+@code {
+
+    [Parameter]
+    public TimesheetEntry Entry { get; set; }
+
+    private string backgroundColour;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        backgroundColour = (Entry?.InnateCodeTask?.Duty.GetAttribute<ColourAttribute>().ColourCode ?? "#609");
+    }
+
+}
