@@ -178,7 +178,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Handle the validation of the timesheet
         /// </summary>
-        private void HandleValidSubmit()
+        private async void HandleValidSubmit()
         {
             // Reset error message
             ErrorMessage = null;
@@ -194,11 +194,26 @@ namespace PPMTool.Pages
             // Decide what to do based on the status of the timesheet
             if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted)
             {
-                // Add the timesheet entries from the datagrid to the timesheet model
+                // Reset the timesheet entries on the model
                 timesheet.TimesheetEntries.Clear();
-                foreach (var entry in dataGridEntities)
+
+                // Take a copy as the datagrid entities will change inside a foreach loop
+                var temp = dataGridEntities.ToList();
+
+                // Add the timesheet entries from the datagrid to the timesheet model
+                foreach (var entry in temp)
                 {
-                    timesheet.TimesheetEntries.Add(entry);
+                    // If a timesheet entry has no hours associated with it then
+                    // delete it from the database and do not add it to the model
+                    if (entry.TotalHours == 0)
+                    {
+                        LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName}...");
+                        await DeleteRow(entry);
+                    }
+                    else
+                    {
+                        timesheet.TimesheetEntries.Add(entry);
+                    }
                 }
             }
 
@@ -213,16 +228,20 @@ namespace PPMTool.Pages
             }
             else
             {
-                // SHow notification for save action
+                // Show notification for save action
                 ShowNotification(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
                     Summary = "Saved",
-                    Detail = $"Your timesheet has been saved.",
+                    Detail = "Your timesheet has been saved. Any blank entries have been automatically removed.",
                     Duration = 3000,
                     Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
                 });
             }
+
+            // Refresh the data grid
+            await dataGrid.Reload();
+            StateHasChanged();
         }
 
         /// <summary>
