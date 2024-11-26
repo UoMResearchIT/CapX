@@ -186,7 +186,16 @@
                 <div class="row">
                     <div class="col">
                         <h4>Status</h4>
-                        <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
+                            <RadzenDropDown @bind-Value="timesheet.Status"
+                                            TValue="TimesheetStatus"
+                                            Data="Enum.GetValues<TimesheetStatus>()">
+                                <Template Context="item">
+                                    <RadzenBadge BadgeStyle="@(((TimesheetStatus)item).GetBadgeStyle())" class="timesheet-status-style" Style="width:auto" Text="@(((TimesheetStatus)item).ToNiceString())" />
+                                </Template>
+                            </RadzenDropDown>
+                            <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
+                        </RadzenStack>
                     </div>
                 </div>
                 <div class="row">
