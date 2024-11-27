@@ -49,6 +49,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Line manager of this person
         /// </summary>
+        [Required]
         public Person LineManager { get; set; }
 
         /// <summary>
