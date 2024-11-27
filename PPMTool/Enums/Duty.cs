@@ -9,25 +9,25 @@ namespace PPMTool.Enums
     public enum Duty
     {
         [Description("Other (inc. leave)")]
-        [Colour("#CCC")]
+        [Colour("#CCC", "#000")]
         Other,
         [Description("Project Work")]
-        [Colour("#FF4560")]
+        [Colour("#008FFB")]
         ProjectWork,
         [Description("BAU, Training Delivery, Community Work and Coaching")]
-        [Colour("#CCC")]
+        [Colour("#00E396", "#000")]
         BAU,
         [Description("Personal Development")]
-        [Colour("#CCC")]
+        [Colour("#FEB019", "#000")]
         PersonalDevelopment,
         [Description("Staff Management")]
-        [Colour("#00E396")]
+        [Colour("#FF4560")]
         StaffMgmt,
         [Description("Project and Service Management")]
-        [Colour("#FEB019")]
+        [Colour("#775DD0")]
         ProjectAndServiceMgmt,
         [Description("Research Software Architecture")]
-        [Colour("#008FFB")]
+        [Colour("#2E294E")]
         RSA
     }
 
@@ -36,11 +36,13 @@ namespace PPMTool.Enums
     /// </summary>
     public class ColourAttribute : Attribute
     {
-        public string ColourCode { get; }
+        public string BackgroundColourCode { get; }
+        public string TextColourCode { get; }
 
-        public ColourAttribute(string colourCode)
+        public ColourAttribute(string backgroundColourCode, string textColourCode = "#FFF")
         {
-            ColourCode = colourCode;
+            BackgroundColourCode = backgroundColourCode;
+            TextColourCode = textColourCode;
         }
     }
 }
