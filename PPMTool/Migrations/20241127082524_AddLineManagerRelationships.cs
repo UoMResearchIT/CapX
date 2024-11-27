@@ -51,7 +51,16 @@ namespace PPMTool.Migrations
                 migrationBuilder.Sql(
                     $@"
                         UPDATE People
-                        SET LineManagerPersonId = {obj.LineManagerId}
+                        SET LineManagerPersonId = (
+                            CASE
+                                WHEN EXISTS (SELECT 1 FROM People WHERE PersonId = {obj.PersonId}) THEN
+                                    CASE
+                                        WHEN EXISTS (SELECT 1 FROM People WHERE PersonId = {obj.LineManagerId}) THEN {obj.LineManagerId}
+                                        ELSE 1
+                                    END
+                                ELSE LineManagerPersonId
+                            END
+                        )
                         WHERE PersonId = {obj.PersonId} AND LineManagerPersonId IS NULL;
                     "
                 );
@@ -61,7 +70,12 @@ namespace PPMTool.Migrations
             migrationBuilder.Sql(
                 $@"
                     UPDATE People
-                    SET LineManagerPersonId = 38
+                    SET LineManagerPersonId = (
+                        CASE
+                            WHEN EXISTS (SELECT 1 FROM People WHERE PersonId = 38) THEN 38
+                            ELSE 1
+                        END
+                    )
                     WHERE LineManagerPersonId IS NULL;
                 "
             );
