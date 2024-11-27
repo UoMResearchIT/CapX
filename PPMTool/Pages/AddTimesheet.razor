@@ -37,8 +37,9 @@
             }
         </div>
         <hr />
-        <div class="card">
-            <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
+        
+        <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
+                <div class="card">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">
@@ -188,27 +189,27 @@
                         <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet" Icon="check" ButtonStyle="ButtonStyle.Light" />
                     </div>
                 </div>
-            </EditForm>
-        </div>
-        <div class="row" style="margin-top: 1rem;">
-            <div class="col">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    @if (IsLineManager())
-                    {
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
-                    }
-                    else
-                    {
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
-                    }
-                </RadzenStack>
             </div>
-        </div>
-        @if (ErrorMessage != null)
-        {
-            <br />
-            <StatusMessageComponent Message=@ErrorMessage />
-        }
+            <div class="row" style="margin-top: 1rem;">
+                <div class="col">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        @if (IsLineManager())
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
+                        }
+                        else
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
+                        }
+                    </RadzenStack>
+                </div>
+            </div>
+            @if (ErrorMessage != null)
+            {
+                <br />
+                <StatusMessageComponent Message=@ErrorMessage />
+            }
+            </EditForm>
     }
 </div>
