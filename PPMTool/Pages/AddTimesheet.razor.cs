@@ -206,7 +206,7 @@ namespace PPMTool.Pages
                 {
                     // If a timesheet entry has no hours associated with it then
                     // delete it from the database and do not add it to the model
-                    if (entry.TotalHours == 0)
+                    if (entry.TotalHours == 0 && timesheet.Status == TimesheetStatus.Submitted)
                     {
                         LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName}...");
                         await DeleteRow(entry);

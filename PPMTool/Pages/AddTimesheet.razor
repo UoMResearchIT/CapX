@@ -27,10 +27,14 @@
                     <h1>Edit Timesheet</h1>
                 }
                 <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")" TextStyle="TextStyle.Subtitle1" />
+                <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
             </div>
-            <div class="col-auto" style="align-content: center">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
-            </div>
+            @if (EditAuthorised)
+            {
+                <div class="col-auto" style="align-content: center">
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+                </div>
+            }
         </div>
         <hr />
         <div class="card">
@@ -155,8 +159,11 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Title="Total" MinWidth="10px" FormatString="{0:F2}" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
                             <Template Context="entry">
-                                <RadzenText Text="@entry.TotalHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                                <RadzenText Text="@entry.TotalHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </Template>
+                            <FooterTemplate>
+                                <RadzenText Text="@($"{totalHours.ToString("F2")}")" Style="font-weight: bold;"/>
+                            </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="9.5rem" MinWidth="10px" Title="Actions">
                             <Template Context="entry">
@@ -170,44 +177,38 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
+
                 </RadzenDataGrid>
                 <hr />
                 <div class="row">
                     <div class="col">
-                        
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                <h4>Status</h4>
-                                <RadzenText Text="@($"Total Hours = {totalHours.ToString("F2")}")" TextStyle="TextStyle.H6" />
-                                <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
-                            </RadzenStack>
                             <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
                         </RadzenStack>
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet" Icon="check" ButtonStyle="ButtonStyle.Light" />
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            @if (IsLineManager())
-                            {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
-                            }
-                            else
-                            {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" ButtonStyle="ButtonStyle.Light" />
-                            }
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardTimesheet" Text="Discard" Icon="close" />
-                        </RadzenStack>
-                    </div>
-                </div>
-                @if (ErrorMessage != null)
-                {
-                    <br />
-                    <StatusMessageComponent Message=@ErrorMessage />
-                }
             </EditForm>
         </div>
+        <div class="row" style="margin-top: 1rem;">
+            <div class="col">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    @if (IsLineManager())
+                    {
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
+                    }
+                    else
+                    {
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
+                    }
+                </RadzenStack>
+            </div>
+        </div>
+        @if (ErrorMessage != null)
+        {
+            <br />
+            <StatusMessageComponent Message=@ErrorMessage />
+        }
     }
 </div>
