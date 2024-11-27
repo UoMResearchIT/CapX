@@ -56,6 +56,15 @@ namespace PPMTool.Migrations
                     "
                 );
             }
+
+            // Make me the line manager of everyone who is left
+            migrationBuilder.Sql(
+                $@"
+                    UPDATE People
+                    SET LineManagerPersonId = 38
+                    WHERE LineManagerPersonId IS NULL;
+                "
+            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
