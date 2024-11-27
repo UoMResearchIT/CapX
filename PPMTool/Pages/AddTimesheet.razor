@@ -196,9 +196,12 @@
                         @if (IsLineManager())
                         {
                             <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
+                        }
+                        @if (IsLineManagerButNotOwner())
+                        {
                             <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
                         }
-                        @if (IsOwner())
+                        @if (IsOwner() && !IsLineManager())
                         {
                             <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
                         }
