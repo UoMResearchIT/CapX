@@ -27,14 +27,14 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Duplicate determined by owner and timesheet start date
+        /// Duplicate if same owner and timesheet start date but not itself
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Timesheet timesheetModel)
         {
-            return context.Timesheets.Any(t => t.Owner == timesheetModel.Owner && timesheetModel.StartDate != t.StartDate);
+            return context.Timesheets.Any(t => t.Owner.PersonId == timesheetModel.Owner.PersonId && timesheetModel.StartDate == t.StartDate && timesheetModel.TimesheetId != t.TimesheetId);
         }
 
         /// <summary>
@@ -113,7 +113,6 @@ namespace PPMTool.Services
             return context.Timesheets;
         }
 
-
         /// <summary>
         /// Delete the Timesheet from the database.
         /// </summary>
@@ -122,6 +121,60 @@ namespace PPMTool.Services
         public override void Delete(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
             context.Timesheets.Remove(timesheetModel);
+            if (commitChanges) context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Returns the last timesheet in the DB for the person supplied
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="owner"></param>
+        /// <returns></returns>
+        internal Timesheet GetLastForUser(PPMToolContext context, Person owner)
+        {
+            return context.Timesheets
+                .Where(t => t.Owner.PersonId == owner.PersonId)
+                .OrderByDescending(t => t.StartDate)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Method to add a timesheet entry
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entry"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        public int AddEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
+        {
+            context.TimesheetEntries.Add(entry);
+            if (commitChanges) context.SaveChanges();
+            return entry.TimesheetEntryId;
+        }
+
+        /// <summary>
+        /// Method to update an existing timesheet entry
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entry"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        public int UpdateEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
+        {
+            context.TimesheetEntries.Update(entry);
+            if (commitChanges) context.SaveChanges();
+            return entry.TimesheetEntryId;
+        }
+
+        /// <summary>
+        /// Method to delete a timesheet entry
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entry"></param>
+        /// <param name="commitChanges"></param>
+        public void DeleteEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
+        {
+            context.TimesheetEntries.Remove(entry);
             if (commitChanges) context.SaveChanges();
         }
     }

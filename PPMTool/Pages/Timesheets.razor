@@ -1,11 +1,18 @@
-﻿@page "/Timesheets"
-@inherits PPMTool.Pages.BaseProjectPage
+﻿@page "/timesheets"
+@inherits PPMTool.Pages.BasePage
 @using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
+@using DotNetExtensions
 <PageTitle>Timesheets - CapX</PageTitle>
+
+<style>
+    .rz-text-body2 {
+        background-color: yellow;
+    }
+</style>
 
 <div class="container">
     <div class="row">
@@ -40,7 +47,7 @@
                 <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem" />
                 <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                     <Template Context="data">
-                        <RadzenBadge BadgeStyle="@mapBadgeStyle[@data.Status]" class="timesheet-status-style" Text="@data.Status.ToString()" />
+                        <RadzenBadge BadgeStyle="@data.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@data.Status.ToNiceString()" />
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="Info" Title="Notes" />
@@ -84,7 +91,7 @@
                     <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem"/>
                     <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                         <Template Context="data">
-                            <RadzenBadge BadgeStyle="@mapBadgeStyle[@data.Status]" class="timesheet-status-style" Text="@data.Status.ToString()" />
+                            <RadzenBadge BadgeStyle="@data.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@data.Status.ToString()" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Info" Title="Notes" />

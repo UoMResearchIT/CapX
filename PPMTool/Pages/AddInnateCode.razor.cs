@@ -60,6 +60,13 @@ namespace PPMTool.Pages
                     innateCode.Tasks.Add(task);
                 }
 
+                // Has to have at least one task
+                if (innateCode.Tasks.Count == 0)
+                {
+                    ErrorMessage = new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error);
+                    return;
+                }
+
                 // Try to add or update
                 int result = -1;
                 if (innateCode?.InnateCodeId != 0)

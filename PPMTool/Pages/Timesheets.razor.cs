@@ -12,15 +12,16 @@ using Radzen;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Superuser,Manager,Developer")]
-    public partial class Timesheets : BaseProjectPage
+    public partial class Timesheets : BasePage
     {
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
+        [Inject]
+        private RolesService RolesService { get; set; }
+
         private Role userRole;
         private bool hideStaffResults = true;
-        private Dictionary<TimesheetStatus, BadgeStyle> mapBadgeStyle = new Dictionary<TimesheetStatus, BadgeStyle>();
-
         private bool showAllMyTimesheets;
         public bool ShowAllMyTimesheets
         {
@@ -57,18 +58,9 @@ namespace PPMTool.Pages
             await base.OnInitializedAsync();
             Loading = true;
 
-            // Populate the dictionary used by the status badges in the grid
-            if (mapBadgeStyle.Count == 0)
-            {
-                mapBadgeStyle.Add(TimesheetStatus.New, BadgeStyle.Info);
-                mapBadgeStyle.Add(TimesheetStatus.Submitted, BadgeStyle.Primary);
-                mapBadgeStyle.Add(TimesheetStatus.Rejected, BadgeStyle.Danger);
-                mapBadgeStyle.Add(TimesheetStatus.Approved, BadgeStyle.Success);
-            }
-
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            userRole = RoleService.GetByUsername(Context, uname);
+            userRole = RolesService.GetByUsername(Context, uname);
 
             // Log any time there is no role returned?
             if (userRole == null)
