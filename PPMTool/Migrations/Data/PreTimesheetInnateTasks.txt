@@ -1,168 +1,168 @@
-04 - All IT - Learning, Development and Wellbeing|Wellbeing
-ITS011 - External Assignment|External Assignment
-ITS014 - Unpaid Leave|Unpaid Leave
-ITS015 - Induction|Induction
-ITS04 - Training/Conference (Attendance)|Training/Conference (Attendance)
-ITS05 - Management (Assignment Management)|Management (Assignment Management)
-ITS06 - Meetings (Attendance)|Meetings (Attendance)
-ITS07 - Staff Focus Groups|Staff Focus Groups
-ITS08 - Recruitment/Interviews|Recruitment/Interviews
-ITS09 - Non-Allocated Time|Non-Allocated Time
-MJIN - Major Incidents|Cyber Incident
-P00547 - Mnemosyne - Digital Humanities|Mnemosyne - Digital Humanities
-P00547 - Mnemosyne - Digital Humanities|New Task
-P00635 - Research Lifecycle|Project Work
-P00673 - Databases for Research (RLP Project N1)|Databases for Research (RLP Project N1)
-P00711 - Enhancing support for research: End-to-end processes (A)|End-to-end processes (A)
-P00720 - Application Delivery Mechanisms|Application Delivery Mechanisms
-P00798 - Booth St East Refurb|Project
-P00829 - Evolve: Integration|Integration Project
-RCS01 - Research Computing|Research Computing
-RCS02 - Research Outreach Activities & Consultancy|Research Grant Consultancy
-RCS02 - Research Outreach Activities & Consultancy|Research Outreach Activities & Consultancy
-RCS03 - Research Applications|Research Applications - Visualisation and Data analytics applications
-RCS05 - Servers and Data Services|Servers and Data Services
-RCS05 - Servers and Data Services|Servers and Data Services - Data Safe Haven
-S-RES-P002 - IDInteraction (CS, Jay)|IDInteraction
-S-RES-P004 - SYNBIOCHEM (MIB, Le Feuvre; CS, Goble)|SYNBIOCHEM
-S-RES-P008 - Food Pathogens (Hum, Rigby)|Food Pathogens
-S-RES-P010 - ESRC/NIHR Neighbourhoods and Dementia Study (Nursing, Hall)|Neighbourhoods and Dementia Study
-S-RES-P011 - Research Lifecycle Predefine|S-RES-P011 - Research Lifecycle Predefine
-S-RES-P013 - CityVerve|Data Management and Analytics (Ann)
-S-RES-P015 - Digital Humanities|General
-S-RES-P015 - Digital Humanities|Minerva - general development work
-S-RES-P015 - Digital Humanities|Project Management
-S-RES-P015 - Digital Humanities|Training - development and delivery
-S-RES-P016 - REVISIT|REVISIT
-S-RES-P017 - PROCAS-2|PROCAS-2
-S-RES-P022 - Institute of Coding|Learning Analytics
-S-RES-P022 - Institute of Coding|Teaching Tools
-S-RES-P023 - GCRF Brazil Breathing|General
-S-RES-P024 - QPlus (Parisio; EEE)|QPlus
-S-RES-P025 - AuditCloud|Define and requirements
-S-RES-P025 - AuditCloud|Project management
-S-RES-P026 - Data viz for smarter mid-trial decisions (AZ/UoM)|Research and development
-S-RES-P027 - PINGR - CHI (Jung, Brown)|Acute Kidney Injury (Jung)
-S-RES-P027 - PINGR - CHI (Jung, Brown)|Fellowship (Brown)
-S-RES-P028 - Connected Health - CHI (Machin)|General
-S-RES-P029 - MOVING (Vigo)|Data Analysis
-S-RES-P030 - Urban Observatory (Evans, Topping)|EMEP boot-up
-S-RES-P030 - Urban Observatory (Evans, Topping)|Initialize
-S-RES-P032 - Radiography Probabilistic Planning (Christie, Osorio)|General
-S-RES-P033 - PICo (Haroon, Azadbakht)|Modernization and optimization
-S-RES-P034 - Home Offshore (Nenadic)|General
-S-RES-P035 - MACE handover (Adrian)|MACE handover
-S-RES-P036 - CALM pipe analysis|Concept Understanding
-S-RES-P037 - BioExcel (Goble)|General
-S-RES-P038 - Stoller Backfill|General
-S-RES-P040 - Caroline Jay Turing Fellowship|Data analysis
-S-RES-P040 - Caroline Jay Turing Fellowship|Environmental modelling
-S-RES-P041 - HiLeMMS (Revell)|General
-S-RES-P042 - MuSTEM (Eric Prestat)|General
-S-RES-P046 - NDEC|General
-S-RES-P048 - RIT COVID-19 Response|SCRC CoronaBICI
-S-RES-P050 - ExposureBee (Launder-Polya)|General
-S-RES-P051 - Memories of the Gay Village (Balmer, Barron)|General
-S-RES-P053 - Recovery, Renewal, Resilient (Shaw)|General
-S-RES-P054 - COVID TTI Simulation (Jay)|General
-S-RES-P056 - N8-CIR|General
-S-RES-P057 - BRIAN Imaris Plugin (Milosavljevic)|General
-S-RES-P061 - Spanish Plume (Schultz)|General
-S-RES-P064 - Vaccination Data Analytics (Chen)|General
-S-RES-P066 - ARCHER2 eCSE (Revell)|General
-S-RES-P068 - Air Quality Prediction (Topping)|General
-S-RES-P071 - UoM Library|My Open Research (MOR)
-S-RES-P072 - EOSC Life (Goble)|General
-S-RES-P073 - NERC Workshop SDEES (Schultz)|Admin
-S-RES-P073 - NERC Workshop SDEES (Schultz)|General
-S-RES-P073 - NERC Workshop SDEES (Schultz)|Teaching
-S-RES-P076 - Python GUI for CPF (Hunt)|General
-S-RES-RTP-100 - KWN Deformation Tool (Joao Quinta da Fonseca)|General
-S-RES-RTP-105 - GPU / ML Data Compression (Camps Santasmasas)|General
-S-RES-RTP-115 - Health Data Science (Lai)|General
-S-RES-RTP-122 - Text Mining Tool (Kasmire)|General
-S-RES-RTP-126 - WRF and AI|Part 1 (Turing)
-S-RES-RTP-129 - VR Trust Game (Clinch)|General
-S-RES-RTP-135 - TICM (Taylor)|Project: Artemis
-S-RES-RTP-135 - TICM (Taylor)|Project: GrafMarine
-S-RES-RTP-135 - TICM (Taylor)|Project: WhichPLM
-S-RES-RTP-149 - iHelp Phase 2 (Ken Muir)|WP4: Web App Data Analysis Dashboard and Notification System
-S-RES-RTP-24 - Dialectics of Modernity|Development
-S-RES-RTP-267 - Infervision UK|Development
-S-RES-RTP-267 - Infervision UK|Management
-S-RES-RTP-31 - Royce Catalogue (Race)|General
-S-RES-RTP-41 - Biologic Studies Group (Kath Watson)|JIA Hub
-S-RES-RTP-48 - Data Acquisition Project (Parkinson)|Management
-S-RES-RTP-61 - Digital Emerging Cancer Medicine Team (AZ/UoM)|cBioPortal
-S-RES-RTP-61 - Digital Emerging Cancer Medicine Team (AZ/UoM)|CORONET
-S-RES-RTP-61 - Digital Emerging Cancer Medicine Team (AZ/UoM)|REACT
-S-RES-RTP-64 - NCISH|General
-S-RES-RTP-99 - AI Foundry (IDSAI)|AInostics
-S-RES-RTP-99 - AI Foundry (IDSAI)|Aria PC
-S-RES-RTP-99 - AI Foundry (IDSAI)|Business Powerpack
-S-RES-RTP-99 - AI Foundry (IDSAI)|Cyberliver
-S-RES-RTP-99 - AI Foundry (IDSAI)|Cytix
-S-RES-RTP-99 - AI Foundry (IDSAI)|DustID
-S-RES-RTP-99 - AI Foundry (IDSAI)|Hazaar
-S-RES-RTP-99 - AI Foundry (IDSAI)|Little Nudge
-S-RES-RTP-99 - AI Foundry (IDSAI)|MD Healthcare
-S-RES-RTP-99 - AI Foundry (IDSAI)|Monaia
-S-RES-RTP-99 - AI Foundry (IDSAI)|Morris Hargreaves McIntire
-S-RES-RTP-99 - AI Foundry (IDSAI)|Nicola Cassidy
-S-RES-RTP-99 - AI Foundry (IDSAI)|Nuntiare Media
-S-RES-RTP-99 - AI Foundry (IDSAI)|REPIC
-S-RES-RTP-99 - AI Foundry (IDSAI)|Send Code
-S-RES-RTP-99 - AI Foundry (IDSAI)|SoSquared
-S-RES-RTP-99 - AI Foundry (IDSAI)|Spread Like Wildfire (Wildfire Project 2)
-S-RES-RTP-99 - AI Foundry (IDSAI)|Thundr.ai
-S-RES-RTP-99 - AI Foundry (IDSAI)|Wildfire
-S-RES-RTP-99 - AI Foundry (IDSAI)|Workshops
-S-RES001 - Research Consultancy (short term)|Community Detection (AMBS)
-S-RES001 - Research Consultancy (short term)|CReDo (UKDT)
-S-RES001 - Research Consultancy (short term)|PAFA Data Science (Couch/Mills)
-S-RES001 - Research Consultancy (short term)|PROMOTE and UDARA (McFiggans)
-S-RES001 - Research Consultancy (short term)|Research Consultancy
-S-RES001 - Research Consultancy (short term)|Resource Consultancy
-S-RES001 - Research Consultancy (short term)|SSI Inequality Paper (Jay)
-S-RES002 - Research Assignments|Research Assignments
-S-RES002 - Research Assignments|Resource Assignments
-S-RES003 - Research Infrastructure|CIGMR-LIMS
-S-RES003 - Research Infrastructure|Research Infrastructure General
-S-RES006 - Research IT Training|CompSci Tutorials
-S-RES007 - Mobile Development Service|AgroDoc
-S-RES007 - Mobile Development Service|Alex Casson
-S-RES007 - Mobile Development Service|Andrew Jones
-S-RES007 - Mobile Development Service|Angela Davies
-S-RES007 - Mobile Development Service|Brighter Time 2
-S-RES007 - Mobile Development Service|BrighterTime
-S-RES007 - Mobile Development Service|CIN-CITY
-S-RES007 - Mobile Development Service|Claire Mumford
-S-RES007 - Mobile Development Service|Desk Space
-S-RES007 - Mobile Development Service|DRiFT
-S-RES007 - Mobile Development Service|DRiFT 2
-S-RES007 - Mobile Development Service|ELOPER
-S-RES007 - Mobile Development Service|Form2
-S-RES007 - Mobile Development Service|iCaPIED
-S-RES007 - Mobile Development Service|Jamie Anderson
-S-RES007 - Mobile Development Service|JBlockCreator
-S-RES007 - Mobile Development Service|Jonny Huck
-S-RES007 - Mobile Development Service|LDART2
-S-RES007 - Mobile Development Service|LinguaSnapp
-S-RES007 - Mobile Development Service|Mandi Banks-Gatenby
-S-RES007 - Mobile Development Service|ManUniCast
-S-RES007 - Mobile Development Service|Mary Pegington
-S-RES007 - Mobile Development Service|Michael Read
-S-RES007 - Mobile Development Service|NeMO
-S-RES007 - Mobile Development Service|PACT2
-S-RES007 - Mobile Development Service|PACTApp
-S-RES007 - Mobile Development Service|RTP-122 MDS Android 12 Audit and Update - Internal
-S-RES007 - Mobile Development Service|Sewon Lee
-S-RES007 - Mobile Development Service|Skin Atlas
-S-RES007 - Mobile Development Service|SleepOT
-S-RES007 - Mobile Development Service|TARN
-S-RES007 - Mobile Development Service|Virtual Wind Tunnel
-S-RES008 - Visualization and Data Analysis Lab|General
-S-RES011 - Web Application Development Service|RTP-138 Nuclear Reactor Sim
-S-RES011 - Web Application Development Service|Sharing Student Projects (Sarah MacQuarrie)
-S-RES011 - Web Application Development Service|SLT - RADAR Report (Laura Ashcroft Clarke)
-S-RES011 - Web Application Development Service|ThinkingWare (Tippet)
+04 - All IT - Learning, Development and Wellbeing|Wellbeing|2
+ITS011 - External Assignment|External Assignment|1
+ITS014 - Unpaid Leave|Unpaid Leave|0
+ITS015 - Induction|Induction|2
+ITS04 - Training/Conference (Attendance)|Training/Conference (Attendance)|3
+ITS05 - Management (Assignment Management)|Management (Assignment Management)|5
+ITS06 - Meetings (Attendance)|Meetings (Attendance)|2
+ITS07 - Staff Focus Groups|Staff Focus Groups|2
+ITS08 - Recruitment/Interviews|Recruitment/Interviews|4
+ITS09 - Non-Allocated Time|Non-Allocated Time|2
+MJIN - Major Incidents|Cyber Incident|2
+P00547 - Mnemosyne - Digital Humanities|Mnemosyne - Digital Humanities|1
+P00547 - Mnemosyne - Digital Humanities|New Task|1
+P00635 - Research Lifecycle|Project Work|1
+P00673 - Databases for Research (RLP Project N1)|Databases for Research (RLP Project N1)|1
+P00711 - Enhancing support for research: End-to-end processes (A)|End-to-end processes (A)|1
+P00720 - Application Delivery Mechanisms|Application Delivery Mechanisms|1
+P00798 - Booth St East Refurb|Project|1
+P00829 - Evolve: Integration|Integration Project|1
+RCS01 - Research Computing|Research Computing|2
+RCS02 - Research Outreach Activities & Consultancy|Research Grant Consultancy|5
+RCS02 - Research Outreach Activities & Consultancy|Research Outreach Activities & Consultancy|2
+RCS03 - Research Applications|Research Applications - Visualisation and Data analytics applications|1
+RCS05 - Servers and Data Services|Servers and Data Services|1
+RCS05 - Servers and Data Services|Servers and Data Services - Data Safe Haven|1
+S-RES-P002 - IDInteraction (CS, Jay)|IDInteraction|1
+S-RES-P004 - SYNBIOCHEM (MIB, Le Feuvre; CS, Goble)|SYNBIOCHEM|1
+S-RES-P008 - Food Pathogens (Hum, Rigby)|Food Pathogens|1
+S-RES-P010 - ESRC/NIHR Neighbourhoods and Dementia Study (Nursing, Hall)|Neighbourhoods and Dementia Study|1
+S-RES-P011 - Research Lifecycle Predefine|S-RES-P011 - Research Lifecycle Predefine|1
+S-RES-P013 - CityVerve|Data Management and Analytics (Ann)|1
+S-RES-P015 - Digital Humanities|General|1
+S-RES-P015 - Digital Humanities|Minerva - general development work|1
+S-RES-P015 - Digital Humanities|Project Management|5
+S-RES-P015 - Digital Humanities|Training - development and delivery|2
+S-RES-P016 - REVISIT|REVISIT|1
+S-RES-P017 - PROCAS-2|PROCAS-2|1
+S-RES-P022 - Institute of Coding|Learning Analytics|1
+S-RES-P022 - Institute of Coding|Teaching Tools|1
+S-RES-P023 - GCRF Brazil Breathing|General|1
+S-RES-P024 - QPlus (Parisio; EEE)|QPlus|1
+S-RES-P025 - AuditCloud|Define and requirements|1
+S-RES-P025 - AuditCloud|Project management|5
+S-RES-P026 - Data viz for smarter mid-trial decisions (AZ/UoM)|Research and development|1
+S-RES-P027 - PINGR - CHI (Jung, Brown)|Acute Kidney Injury (Jung)|1
+S-RES-P027 - PINGR - CHI (Jung, Brown)|Fellowship (Brown)|1
+S-RES-P028 - Connected Health - CHI (Machin)|General|1
+S-RES-P029 - MOVING (Vigo)|Data Analysis|1
+S-RES-P030 - Urban Observatory (Evans, Topping)|EMEP boot-up|1
+S-RES-P030 - Urban Observatory (Evans, Topping)|Initialize|1
+S-RES-P032 - Radiography Probabilistic Planning (Christie, Osorio)|General|1
+S-RES-P033 - PICo (Haroon, Azadbakht)|Modernization and optimization|1
+S-RES-P034 - Home Offshore (Nenadic)|General|1
+S-RES-P035 - MACE handover (Adrian)|MACE handover|1
+S-RES-P036 - CALM pipe analysis|Concept Understanding|1
+S-RES-P037 - BioExcel (Goble)|General|1
+S-RES-P038 - Stoller Backfill|General|1
+S-RES-P040 - Caroline Jay Turing Fellowship|Data analysis|1
+S-RES-P040 - Caroline Jay Turing Fellowship|Environmental modelling|1
+S-RES-P041 - HiLeMMS (Revell)|General|1
+S-RES-P042 - MuSTEM (Eric Prestat)|General|1
+S-RES-P046 - NDEC|General|1
+S-RES-P048 - RIT COVID-19 Response|SCRC CoronaBICI|1
+S-RES-P050 - ExposureBee (Launder-Polya)|General|1
+S-RES-P051 - Memories of the Gay Village (Balmer, Barron)|General|1
+S-RES-P053 - Recovery, Renewal, Resilient (Shaw)|General|1
+S-RES-P054 - COVID TTI Simulation (Jay)|General|1
+S-RES-P056 - N8-CIR|General|1
+S-RES-P057 - BRIAN Imaris Plugin (Milosavljevic)|General|1
+S-RES-P061 - Spanish Plume (Schultz)|General|1
+S-RES-P064 - Vaccination Data Analytics (Chen)|General|1
+S-RES-P066 - ARCHER2 eCSE (Revell)|General|1
+S-RES-P068 - Air Quality Prediction (Topping)|General|1
+S-RES-P071 - UoM Library|My Open Research (MOR)|1
+S-RES-P072 - EOSC Life (Goble)|General|1
+S-RES-P073 - NERC Workshop SDEES (Schultz)|Admin|2
+S-RES-P073 - NERC Workshop SDEES (Schultz)|General|1
+S-RES-P073 - NERC Workshop SDEES (Schultz)|Teaching|1
+S-RES-P076 - Python GUI for CPF (Hunt)|General|1
+S-RES-RTP-100 - KWN Deformation Tool (Joao Quinta da Fonseca)|General|1
+S-RES-RTP-105 - GPU / ML Data Compression (Camps Santasmasas)|General|1
+S-RES-RTP-115 - Health Data Science (Lai)|General|1
+S-RES-RTP-122 - Text Mining Tool (Kasmire)|General|1
+S-RES-RTP-126 - WRF and AI|Part 1 (Turing)|1
+S-RES-RTP-129 - VR Trust Game (Clinch)|General|1
+S-RES-RTP-135 - TICM (Taylor)|Project: Artemis|1
+S-RES-RTP-135 - TICM (Taylor)|Project: GrafMarine|1
+S-RES-RTP-135 - TICM (Taylor)|Project: WhichPLM|1
+S-RES-RTP-149 - iHelp Phase 2 (Ken Muir)|WP4: Web App Data Analysis Dashboard and Notification System|1
+S-RES-RTP-24 - Dialectics of Modernity|Development|1
+S-RES-RTP-267 - Infervision UK|Development|1
+S-RES-RTP-267 - Infervision UK|Management|5
+S-RES-RTP-31 - Royce Catalogue (Race)|General|1
+S-RES-RTP-41 - Biologic Studies Group (Kath Watson)|JIA Hub|1
+S-RES-RTP-48 - Data Acquisition Project (Parkinson)|Management|5
+S-RES-RTP-61 - Digital Emerging Cancer Medicine Team (AZ/UoM)|cBioPortal|1
+S-RES-RTP-61 - Digital Emerging Cancer Medicine Team (AZ/UoM)|CORONET|1
+S-RES-RTP-61 - Digital Emerging Cancer Medicine Team (AZ/UoM)|REACT|1
+S-RES-RTP-64 - NCISH|General|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|AInostics|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Aria PC|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Business Powerpack|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Cyberliver|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Cytix|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|DustID|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Hazaar|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Little Nudge|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|MD Healthcare|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Monaia|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Morris Hargreaves McIntire|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Nicola Cassidy|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Nuntiare Media|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|REPIC|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Send Code|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|SoSquared|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Spread Like Wildfire (Wildfire Project 2)|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Thundr.ai|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Wildfire|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Workshops|1
+S-RES001 - Research Consultancy (short term)|Community Detection (AMBS)|1
+S-RES001 - Research Consultancy (short term)|CReDo (UKDT)|1
+S-RES001 - Research Consultancy (short term)|PAFA Data Science (Couch/Mills)|1
+S-RES001 - Research Consultancy (short term)|PROMOTE and UDARA (McFiggans)|1
+S-RES001 - Research Consultancy (short term)|Research Consultancy|1
+S-RES001 - Research Consultancy (short term)|Resource Consultancy|1
+S-RES001 - Research Consultancy (short term)|SSI Inequality Paper (Jay)|1
+S-RES002 - Research Assignments|Research Assignments|1
+S-RES002 - Research Assignments|Resource Assignments|1
+S-RES003 - Research Infrastructure|CIGMR-LIMS|1
+S-RES003 - Research Infrastructure|Research Infrastructure General|2
+S-RES006 - Research IT Training|CompSci Tutorials|2
+S-RES007 - Mobile Development Service|AgroDoc|1
+S-RES007 - Mobile Development Service|Alex Casson|1
+S-RES007 - Mobile Development Service|Andrew Jones|1
+S-RES007 - Mobile Development Service|Angela Davies|1
+S-RES007 - Mobile Development Service|Brighter Time 2|1
+S-RES007 - Mobile Development Service|BrighterTime|1
+S-RES007 - Mobile Development Service|CIN-CITY|1
+S-RES007 - Mobile Development Service|Claire Mumford|1
+S-RES007 - Mobile Development Service|Desk Space|1
+S-RES007 - Mobile Development Service|DRiFT|1
+S-RES007 - Mobile Development Service|DRiFT 2|1
+S-RES007 - Mobile Development Service|ELOPER|1
+S-RES007 - Mobile Development Service|Form2|1
+S-RES007 - Mobile Development Service|iCaPIED|1
+S-RES007 - Mobile Development Service|Jamie Anderson|1
+S-RES007 - Mobile Development Service|JBlockCreator|1
+S-RES007 - Mobile Development Service|Jonny Huck|1
+S-RES007 - Mobile Development Service|LDART2|1
+S-RES007 - Mobile Development Service|LinguaSnapp|1
+S-RES007 - Mobile Development Service|Mandi Banks-Gatenby|1
+S-RES007 - Mobile Development Service|ManUniCast|1
+S-RES007 - Mobile Development Service|Mary Pegington|1
+S-RES007 - Mobile Development Service|Michael Read|1
+S-RES007 - Mobile Development Service|NeMO|1
+S-RES007 - Mobile Development Service|PACT2|1
+S-RES007 - Mobile Development Service|PACTApp|1
+S-RES007 - Mobile Development Service|RTP-122 MDS Android 12 Audit and Update - Internal|6
+S-RES007 - Mobile Development Service|Sewon Lee|1
+S-RES007 - Mobile Development Service|Skin Atlas|1
+S-RES007 - Mobile Development Service|SleepOT|1
+S-RES007 - Mobile Development Service|TARN|1
+S-RES007 - Mobile Development Service|Virtual Wind Tunnel|1
+S-RES008 - Visualization and Data Analysis Lab|General|1
+S-RES011 - Web Application Development Service|RTP-138 Nuclear Reactor Sim|1
+S-RES011 - Web Application Development Service|Sharing Student Projects (Sarah MacQuarrie)|1
+S-RES011 - Web Application Development Service|SLT - RADAR Report (Laura Ashcroft Clarke)|1
+S-RES011 - Web Application Development Service|ThinkingWare (Tippet)|1
