@@ -186,7 +186,7 @@
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
                             <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
                         </RadzenStack>
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet" Icon="check" ButtonStyle="ButtonStyle.Light" />
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet" Icon="check" ButtonStyle="ButtonStyle.Light" Click="@(()=> { timesheet.Status = TimesheetStatus.New; })" />
                     </div>
                 </div>
             </div>
