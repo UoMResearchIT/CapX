@@ -21,6 +21,8 @@ namespace PPMTool.Pages
         [Parameter]
         public int? TimesheetId { get; set; }
 
+        private bool IsSavingTimesheetProgress { get; set; } = false;
+
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
@@ -211,6 +213,24 @@ namespace PPMTool.Pages
             // Reset error message
             ErrorMessage = null;
 
+            // If saving the timesheet progress just update the db for any changed notes
+            if (IsSavingTimesheetProgress)
+            {
+                TimesheetService.Update(Context, timesheet);
+                Debug.WriteLine("Timesheet ptogress saved");
+
+                // Show notification for save action
+                ShowNotification(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Saved",
+                    Detail = "Your timesheet progress has been saved.",
+                    Duration = 3000,
+                    Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                });
+                return;
+            }
+
             // Validation on minimum hours etc. and show a status message
             if (timesheet.Status == TimesheetStatus.Submitted && dataGridEntities.Count == 0)
             {
@@ -227,6 +247,7 @@ namespace PPMTool.Pages
 
                 // Take a copy as the datagrid entities will change inside a foreach loop
                 var temp = dataGridEntities.ToList();
+                Debug.WriteLine($"** {temp.Count} items in the datagrid");
 
                 // Add the timesheet entries from the datagrid to the timesheet model
                 foreach (var entry in temp)
@@ -240,6 +261,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
+                        Debug.WriteLine($"** Adding entry {entry.GetSensibleObjectName()} to timesheet");
                         timesheet.TimesheetEntries.Add(entry);
                     }
                 }
@@ -260,18 +282,6 @@ namespace PPMTool.Pages
             if (timesheet.Status != TimesheetStatus.New)
             {
                 Navigation.NavigateTo("timesheets");
-            }
-            else
-            {
-                // Show notification for save action
-                ShowNotification(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Saved",
-                    Detail = "Your timesheet has been saved. Any blank entries have been automatically removed.",
-                    Duration = 3000,
-                    Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
-                });
             }
 
             // Refresh the data grid
@@ -304,7 +314,7 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(TimesheetEntry entity)
         {
             Reset();
-            LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
         }
 
@@ -315,7 +325,7 @@ namespace PPMTool.Pages
         protected override void OnUpdateRow(TimesheetEntry entity)
         {
             Reset();
-            LogInformation($"Update row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.UpdateEntry(Context, entity);
         }
 
@@ -325,7 +335,7 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void CancelEdit(TimesheetEntry entity)
         {
-            LogInformation($"Cancel edit row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Cancel Edit row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
@@ -354,6 +364,7 @@ namespace PPMTool.Pages
         {
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
+            HoursChanged();
         }
     }
 }

@@ -9,11 +9,11 @@ namespace PPMTool.Services
     public class TimesheetService : BaseEntityService<Timesheet>
     {
         /// <summary>
-        /// Adds a timesheet. If duplicate found does not add but returns false.
+        /// Adds a timesheet. If duplicate found does not add but returns -1 otherwise returns ID of added timesheet.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
-        /// <returns>-1 if a duplicate</returns>
+        /// <returns>-1 if a duplicate or the id of the timesheet</returns>
         public override int Add(PPMToolContext context, Timesheet timesheetmodel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, timesheetmodel))
@@ -50,7 +50,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Update an existing Timesheet
+        /// Update an existing timesheet and returns the ID of the updated timesheet
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
@@ -68,7 +68,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the Timesheets with related data
+        /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -80,7 +80,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the Timesheets for direct reports
+        /// Gets all the timesheets for direct reports
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -92,7 +92,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the Timesheets with related data
+        /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -104,7 +104,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets just the Timesheet table entities
+        /// Gets just the timesheet table entities
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -114,7 +114,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Delete the Timesheet from the database.
+        /// Delete the timesheet from the database
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
