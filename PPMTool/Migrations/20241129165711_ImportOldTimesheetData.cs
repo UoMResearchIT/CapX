@@ -239,12 +239,6 @@ namespace PPMTool.Migrations
                         context.Timesheets.Add(timesheet);
                     }
 
-                    // Clean up Innate codes by removing those that have no tasks
-                    foreach (var code in context.InnateCodes.Where(x => x.Tasks.Count == 0))
-                    {
-                        context.InnateCodes.Remove(code);
-                    }
-
                     // Save the changes
                     context.SaveChanges();
                 }

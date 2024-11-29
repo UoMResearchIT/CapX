@@ -69,9 +69,10 @@ namespace PPMTool.Migrations
                     {
                         context.InnateCodes.Add(obj);
                     }
-
-                    context.SaveChanges();
                 }
+
+                // Save changes
+                context.SaveChanges();
             }
         }
 

@@ -92,6 +92,14 @@ namespace PPMTool.Migrations
                         context.InnateCodeTasks.Add(task);
                     }
                 }
+
+                // Clean up Innate codes by removing those that have no tasks
+                foreach (var code in context.InnateCodes.Where(x => x.Tasks.Count == 0))
+                {
+                    context.InnateCodes.Remove(code);
+                }
+
+                // Save
                 context.SaveChanges();
             }
         }
