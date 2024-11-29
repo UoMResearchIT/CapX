@@ -172,7 +172,7 @@
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="IsLineManagerButNotOwner()" />
                             </Template>
                             <EditTemplate Context="entry">
-                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.InnateCodeTask == null || IsLineManagerButNotOwner()" />
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || IsLineManagerButNotOwner()" />
                                 <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="IsLineManagerButNotOwner()" />
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" Disabled="IsLineManagerButNotOwner()" />
                             </EditTemplate>
@@ -195,7 +195,7 @@
                         <div>
                             @if(timesheet.Status == TimesheetStatus.New)
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet progress" Icon="check" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" Click="@(()=> { SavingNote = true; })" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet progress" Icon="check" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" Click="@(()=> { IsSavingTimesheetProgress = true; })" />
                             }
                         </div>
                         <div>
