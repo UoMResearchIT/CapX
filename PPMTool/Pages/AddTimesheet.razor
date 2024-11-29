@@ -186,25 +186,29 @@
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
                             <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" />
                         </RadzenStack>
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet" Icon="check" ButtonStyle="ButtonStyle.Light" />
                     </div>
                 </div>
             </div>
             <div class="row" style="margin-top: 1rem;">
                 <div class="col">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        @if (IsLineManager())
-                        {
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" />
-                        }
-                        @if (IsLineManagerButNotOwner())
-                        {
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" />
-                        }
-                        @if (IsOwner() && !IsLineManager())
-                        {
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" />
-                        }
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" JustifyContent="JustifyContent.SpaceBetween">
+                        <div>
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save timesheet progress" Icon="check" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" />
+                        </div>
+                        <div>
+                            @if (IsLineManager())
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" Style="margin-left: 0.5rem;"/>
+                            }
+                            @if (IsLineManagerButNotOwner())
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" />
+                            }
+                            @if (IsOwner() && !IsLineManager())
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" Style="margin-left: 0.5rem;" />
+                            }
+                        </div>
                     </RadzenStack>
                 </div>
             </div>
