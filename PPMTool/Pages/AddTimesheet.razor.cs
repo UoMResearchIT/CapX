@@ -247,6 +247,7 @@ namespace PPMTool.Pages
 
                 // Take a copy as the datagrid entities will change inside a foreach loop
                 var temp = dataGridEntities.ToList();
+                Debug.WriteLine($"** {temp.Count} items in the datagrid");
 
                 // Add the timesheet entries from the datagrid to the timesheet model
                 foreach (var entry in temp)
@@ -260,6 +261,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
+                        Debug.WriteLine($"** Adding entry {entry.GetSensibleObjectName()} to timesheet");
                         timesheet.TimesheetEntries.Add(entry);
                     }
                 }
@@ -312,7 +314,7 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(TimesheetEntry entity)
         {
             Reset();
-            LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
         }
 
@@ -323,7 +325,7 @@ namespace PPMTool.Pages
         protected override void OnUpdateRow(TimesheetEntry entity)
         {
             Reset();
-            LogInformation($"Update row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.UpdateEntry(Context, entity);
         }
 
@@ -333,7 +335,7 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void CancelEdit(TimesheetEntry entity)
         {
-            LogInformation($"Cancel edit row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Cancel Edit row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
