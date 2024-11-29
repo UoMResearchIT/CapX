@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using FluentDateTime;
@@ -157,7 +156,6 @@ namespace PPMTool.Migrations
                     {
                         if (innateCodes.FirstOrDefault(x => x.GetCodeAsString() == row.Activity) == null)
                         {
-                            Debug.WriteLine($"Activity {row.Activity} does not exist in the database!");
                             var val = row.Activity;
                             if (!missingTaskCodes.Contains(val))
                             {
@@ -167,7 +165,6 @@ namespace PPMTool.Migrations
 
                         if (innateCodeTasks.FirstOrDefault(x => x.TaskName == row.Task && x.InnateCode.GetCodeAsString() == row.Activity) == null)
                         {
-                            Debug.WriteLine($"Task {row.Task} for {row.Activity} does not exist in the database!");
                             var val = $"{row.Activity}|{row.Task}";
                             if (!missingTaskCodes.Contains(val))
                             {
@@ -180,8 +177,8 @@ namespace PPMTool.Migrations
                 // Stop migration if data is missing from the DB
                 if (missingActivityCodes.Count > 0 || missingTaskCodes.Count > 0)
                 {
-                    Debug.WriteLine($"** Missing activity codes:\n{string.Join("\n", missingActivityCodes)}");
-                    Debug.WriteLine($"** Missing task codes:\n{string.Join("\n", missingTaskCodes)}");
+                    Console.WriteLine($"** Missing activity codes:\n{string.Join("\n", missingActivityCodes)}");
+                    Console.WriteLine($"** Missing task codes:\n{string.Join("\n", missingTaskCodes)}");
                     throw new Exception($"Missing activity / task codes! Cannot continue until they are added!");
                 }
 
