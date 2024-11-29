@@ -44,6 +44,9 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        [Required]
+        public SubTask SubTask { get; set; }
+
         public string GetSensibleObjectName()
         {
             return $"{Person?.Name} (Resource)";
