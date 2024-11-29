@@ -239,13 +239,11 @@ namespace PPMTool.Migrations
                         context.Timesheets.Add(timesheet);
                     }
 
-                    // Clean up Innate Code by removing those that have no tasks
+                    // Clean up Innate codes by removing those that have no tasks
                     foreach (var code in context.InnateCodes.Where(x => x.Tasks.Count == 0))
                     {
                         context.InnateCodes.Remove(code);
                     }
-
-                    throw new Exception("Got this far!");
 
                     // Save the changes
                     context.SaveChanges();
@@ -257,8 +255,8 @@ namespace PPMTool.Migrations
         {
             migrationBuilder.Sql(
                 @"
-            DELETE FROM Timesheets;
-        "
+                    DELETE FROM Timesheets;
+                "
             );
         }
     }
