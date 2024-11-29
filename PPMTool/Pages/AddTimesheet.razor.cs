@@ -306,7 +306,7 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(TimesheetEntry entity)
         {
             Reset();
-            LogInformation($"Create row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
         }
 
@@ -317,7 +317,7 @@ namespace PPMTool.Pages
         protected override void OnUpdateRow(TimesheetEntry entity)
         {
             Reset();
-            LogInformation($"Update row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.UpdateEntry(Context, entity);
         }
 
@@ -327,7 +327,7 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void CancelEdit(TimesheetEntry entity)
         {
-            LogInformation($"Cancel edit row for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Cancel Edit row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
