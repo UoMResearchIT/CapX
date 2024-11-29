@@ -218,7 +218,7 @@ namespace PPMTool.Pages
             {
                 TimesheetService.Update(Context, timesheet);
                 Debug.WriteLine("Timesheet ptogress saved");
-                
+
                 // Show notification for save action
                 ShowNotification(new NotificationMessage
                 {
