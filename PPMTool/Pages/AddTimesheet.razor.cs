@@ -227,6 +227,7 @@ namespace PPMTool.Pages
 
                 // Take a copy as the datagrid entities will change inside a foreach loop
                 var temp = dataGridEntities.ToList();
+                Debug.WriteLine($"** {temp.Count} items in the datagrid");
 
                 // Add the timesheet entries from the datagrid to the timesheet model
                 foreach (var entry in temp)
@@ -240,6 +241,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
+                        Debug.WriteLine($"** Adding entry {entry.GetSensibleObjectName()} to timesheet");
                         timesheet.TimesheetEntries.Add(entry);
                     }
                 }
