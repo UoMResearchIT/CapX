@@ -220,7 +220,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("Duty")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("InnateCodeId")
+                    b.Property<int?>("InnateCodeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TaskName")
@@ -423,7 +423,7 @@ namespace PPMTool.Migrations
                     b.Property<bool>("IsProvisional")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("PersonId")
+                    b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("PlannedCost")
@@ -432,7 +432,7 @@ namespace PPMTool.Migrations
                     b.Property<double>("PlannedWorkHours")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("SubTaskId")
+                    b.Property<int?>("SubTaskId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("UseProjectDayRate")
@@ -746,9 +746,7 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateCode")
                         .WithMany("Tasks")
-                        .HasForeignKey("InnateCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("InnateCodeId");
 
                     b.Navigation("InnateCode");
                 });
@@ -808,19 +806,13 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "Person")
                         .WithMany()
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PersonId");
 
-                    b.HasOne("PPMTool.Data.Entities.SubTask", "SubTask")
+                    b.HasOne("PPMTool.Data.Entities.SubTask", null)
                         .WithMany("AssignedResources")
-                        .HasForeignKey("SubTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SubTaskId");
 
                     b.Navigation("Person");
-
-                    b.Navigation("SubTask");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Role", b =>
