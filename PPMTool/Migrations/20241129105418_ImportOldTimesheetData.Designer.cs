@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20241128100602_ImportOldTimesheetData")]
+    [Migration("20241129105418_ImportOldTimesheetData")]
     partial class ImportOldTimesheetData
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
