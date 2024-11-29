@@ -58,11 +58,12 @@ namespace PPMTool.Migrations
                     var code = new InnateCode
                     {
                         ActivityCode = codeValues[0].Trim(),
-                        ActivityName = string.Join(" - ", codeValues.ToArray().Skip(1).ToArray()).Trim()
+                        ActivityName = codeValues.Length == 2 ? codeValues[1] : string.Join(" - ", codeValues.Skip(1)).Trim()
                     };
 
                     // Retrieve code from the database
                     var knownInnateCodes = context.InnateCodes.ToList();
+                    var knownTasks = context.InnateCodeTasks.Include(x => x.InnateCode).ToList();
                     var matchingCode = knownInnateCodes.FirstOrDefault(x => x.GetCodeAsString() == code.GetCodeAsString());
                     if (matchingCode == null)
                     {
@@ -72,17 +73,17 @@ namespace PPMTool.Migrations
                     // Now build task and attache code
                     var task = new InnateCodeTask
                     {
-                        TaskName = values[2].Trim(),
-                        Duty = (Duty)int.Parse(values[3]),
+                        TaskName = values[1].Trim(),
+                        Duty = (Duty)int.Parse(values[2]),
                         InnateCode = matchingCode
                     };
 
                     // Check no duplicate on task before trying to add it
                     if (context.InnateCodes.Any(i => i.ActivityCode == task.InnateCode.ActivityCode &&
                         i.ActivityName == task.InnateCode.ActivityName) &&
-                        context.InnateCodeTasks.Any(x => x.TaskName == task.TaskName))
+                        knownTasks.Any(x => x.TaskName == task.TaskName && x.InnateCode.GetCodeAsString() == matchingCode.GetCodeAsString()))
                     {
-                        throw new Exception($"Existing code/task combination already in the DB {matchingCode.GetCodeAsString()} | {task.TaskName}!");
+                        Console.WriteLine($"Existing code/task combination already in the DB {matchingCode.GetCodeAsString()} | {task.TaskName} => Not adding it again");
                     }
 
                     // Add the task
@@ -90,9 +91,8 @@ namespace PPMTool.Migrations
                     {
                         context.InnateCodeTasks.Add(task);
                     }
-
-                    context.SaveChanges();
                 }
+                context.SaveChanges();
             }
         }
 
