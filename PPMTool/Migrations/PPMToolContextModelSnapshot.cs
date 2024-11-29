@@ -432,7 +432,7 @@ namespace PPMTool.Migrations
                     b.Property<double>("PlannedWorkHours")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("SubTaskId")
+                    b.Property<int>("SubTaskId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("UseProjectDayRate")
@@ -812,11 +812,15 @@ namespace PPMTool.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PPMTool.Data.Entities.SubTask", null)
+                    b.HasOne("PPMTool.Data.Entities.SubTask", "SubTask")
                         .WithMany("AssignedResources")
-                        .HasForeignKey("SubTaskId");
+                        .HasForeignKey("SubTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Person");
+
+                    b.Navigation("SubTask");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Role", b =>

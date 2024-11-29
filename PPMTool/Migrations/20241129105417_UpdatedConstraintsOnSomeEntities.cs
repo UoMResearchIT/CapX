@@ -16,6 +16,20 @@ namespace PPMTool.Migrations
                 name: "FK_Resources_People_PersonId",
                 table: "Resources");
 
+            migrationBuilder.DropForeignKey(
+                name: "FK_Resources_SubTasks_SubTaskId",
+                table: "Resources");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "SubTaskId",
+                table: "Resources",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: 0,
+                oldClrType: typeof(int),
+                oldType: "INTEGER",
+                oldNullable: true);
+
             migrationBuilder.AlterColumn<int>(
                 name: "PersonId",
                 table: "Resources",
@@ -51,6 +65,14 @@ namespace PPMTool.Migrations
                 principalTable: "People",
                 principalColumn: "PersonId",
                 onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Resources_SubTasks_SubTaskId",
+                table: "Resources",
+                column: "SubTaskId",
+                principalTable: "SubTasks",
+                principalColumn: "SubTaskId",
+                onDelete: ReferentialAction.Cascade);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -62,6 +84,18 @@ namespace PPMTool.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_Resources_People_PersonId",
                 table: "Resources");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Resources_SubTasks_SubTaskId",
+                table: "Resources");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "SubTaskId",
+                table: "Resources",
+                type: "INTEGER",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "INTEGER");
 
             migrationBuilder.AlterColumn<int>(
                 name: "PersonId",
@@ -92,6 +126,13 @@ namespace PPMTool.Migrations
                 column: "PersonId",
                 principalTable: "People",
                 principalColumn: "PersonId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Resources_SubTasks_SubTaskId",
+                table: "Resources",
+                column: "SubTaskId",
+                principalTable: "SubTasks",
+                principalColumn: "SubTaskId");
         }
     }
 }
