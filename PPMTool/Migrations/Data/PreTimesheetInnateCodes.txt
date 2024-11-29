@@ -1,0 +1,25 @@
+ITS011|External Assignment
+ITS014|Unpaid Leave
+ITS015|Induction
+ITS04|Training/Conference (Attendance)
+ITS05|Management (Assignment Management)
+ITS06|Meetings (Attendance)
+ITS07|Staff Focus Groups
+ITS08|Recruitment/Interviews
+ITS09|Non-Allocated Time
+MJIN|Major Incidents
+P00547|Mnemosyne - Digital Humanities
+P00635|Research Lifecycle
+P00673|Databases for Research (RLP Project N1)
+P00711|Enhancing support for research: End-to-end processes (A)
+P00720|Application Delivery Mechanisms
+P00798|Booth St East Refurb
+P00829|Evolve: Integration
+RCS01|Research Computing
+RCS05|Servers and Data Services
+S-RES003|Research Infrastructure
+S-RES-RTP-100|KWN Deformation Tool (Joao Quinta da Fonseca)
+S-RES-RTP-105|GPU / ML Data Compression (Camps Santasmasas)
+S-RES-RTP-115|Health Data Science (Lai)
+S-RES-RTP-122|Text Mining Tool (Kasmire)
+S-RES-RTP-126|WRF and AI
