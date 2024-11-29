@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20241129123917_AddedCorrectInversePropertyWithRequiredForResourceSubTask")]
+    partial class AddedCorrectInversePropertyWithRequiredForResourceSubTask
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -220,7 +222,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("Duty")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("InnateCodeId")
+                    b.Property<int?>("InnateCodeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TaskName")
@@ -746,9 +748,7 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateCode")
                         .WithMany("Tasks")
-                        .HasForeignKey("InnateCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("InnateCodeId");
 
                     b.Navigation("InnateCode");
                 });
