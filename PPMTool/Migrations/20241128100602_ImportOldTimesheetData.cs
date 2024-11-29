@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using FluentDateTime;
@@ -134,9 +135,9 @@ namespace PPMTool.Migrations
                 // Group records by person
                 var groupedRows = listOfRowObjects.GroupBy(x => x.Resource);
 
-                // First timesheet is going to be 7th January 2019
-                var firstWeek = new DateTime(2019, 1, 7);
-
+                // Check existence of dependent data
+                var missingActivityCodes = new List<string>();
+                var missingTaskCodes = new List<string>();
                 foreach (var person in groupedRows)
                 {
                     Console.WriteLine($"** Have {person.Count()} rows for {person.First().Resource}");
@@ -152,14 +153,40 @@ namespace PPMTool.Migrations
                     {
                         if (context.InnateCodes.FirstOrDefault(x => x.GetCodeAsString() == row.Activity) == null)
                         {
-                            throw new Exception($"Activity {row.Activity} does not exist in the database!");
+                            Debug.WriteLine($"Activity {row.Activity} does not exist in the database!");
+                            var val = row.Activity;
+                            if (!missingTaskCodes.Contains(val))
+                            {
+                                missingTaskCodes.Add(val);
+                            }
                         }
 
-                        if (context.TimesheetEntries.FirstOrDefault(x => x.InnateCodeTask.TaskName == row.Task) == null)
+                        if (context.InnateCodeTasks.FirstOrDefault(x => x.TaskName == row.Task && x.InnateCode.GetCodeAsString() == row.Activity) == null)
                         {
-                            throw new Exception($"Task {row.Task} does not exist in the database!");
+                            Debug.WriteLine($"Task {row.Task} for {row.Activity} does not exist in the database!");
+                            var val = $"{row.Activity}|{row.Task}";
+                            if (!missingTaskCodes.Contains(val))
+                            {
+                                missingTaskCodes.Add(val);
+                            }
                         }
                     }
+                }
+
+                // Stop migration if data is missing from the DB
+                if (missingActivityCodes.Count > 0 || missingTaskCodes.Count > 0)
+                {
+                    Debug.WriteLine($"** Missing activity codes:\n{string.Join("\n", missingActivityCodes)}");
+                    Debug.WriteLine($"** Missing task codes:\n{string.Join("\n", missingTaskCodes)}");
+                    throw new Exception($"Missing activity / task codes! Cannot continue until they are added!");
+                }
+
+                // We have everything we need in the DB so can go ahead and add
+                foreach (var person in groupedRows)
+                {
+
+                    // First timesheet is going to be 7th January 2019
+                    var firstWeek = new DateTime(2019, 1, 7);
 
                     // Last entry for this person
                     var lastWeek = person.OrderByDescending(x => x.Entries.Max(y => y.Date)).First().Entries.Max(y => y.Date).FirstDayOfWeek();
@@ -209,7 +236,6 @@ namespace PPMTool.Migrations
 
                         // Add the timesheet to the DB
                         context.Timesheets.Add(timesheet);
-
                     }
 
                     // Clean up Innate Code by removing those that have no tasks
