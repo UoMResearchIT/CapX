@@ -93,13 +93,22 @@ namespace PPMTool.Migrations
                     }
                 }
 
+                // Save the new tasks
+                context.SaveChanges();
+
                 // Clean up Innate codes by removing those that have no tasks
-                foreach (var code in context.InnateCodes.Where(x => x.Tasks.Count == 0))
+                foreach (var code in context.InnateCodes.Include(x => x.Tasks).Where(x => x.Tasks.Count == 0).ToList())
                 {
+                    if (context.Projects.Include(x => x.InnateActivity).Any(x => x.InnateActivity.InnateCodeId == code.InnateCodeId))
+                    {
+                        throw new Exception($"Code {code.GetCodeAsString()} has projects associated with it and will not be deleted!");
+                    }
+
+                    Console.WriteLine($"Deleting code {code.GetCodeAsString()} as it has no tasks!");
                     context.InnateCodes.Remove(code);
                 }
 
-                // Save
+                // Save the delete
                 context.SaveChanges();
             }
         }

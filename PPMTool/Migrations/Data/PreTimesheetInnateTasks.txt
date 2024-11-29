@@ -110,6 +110,7 @@ S-RES-RTP-99 - AI Foundry (IDSAI)|Monaia|1
 S-RES-RTP-99 - AI Foundry (IDSAI)|Morris Hargreaves McIntire|1
 S-RES-RTP-99 - AI Foundry (IDSAI)|Nicola Cassidy|1
 S-RES-RTP-99 - AI Foundry (IDSAI)|Nuntiare Media|1
+S-RES-RTP-99 - AI Foundry (IDSAI)|Prin-D|1
 S-RES-RTP-99 - AI Foundry (IDSAI)|REPIC|1
 S-RES-RTP-99 - AI Foundry (IDSAI)|Send Code|1
 S-RES-RTP-99 - AI Foundry (IDSAI)|SoSquared|1
