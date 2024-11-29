@@ -19,6 +19,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The code which owns this task
         /// </summary>
+        [Required]
         public InnateCode InnateCode { get; set; }
 
         public string GetSensibleObjectName()

@@ -12,6 +12,7 @@ namespace PPMTool.Data.Entities
     {
         public int ResourceId { get; set; }
 
+        [Required]
         public Person Person { get; set; }
 
         /// <summary>
