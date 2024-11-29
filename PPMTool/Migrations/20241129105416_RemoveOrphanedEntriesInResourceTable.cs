@@ -8,7 +8,15 @@ namespace PPMTool.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("DELETE FROM Resources WHERE PersonId IS NULL OR SubTaskId IS NULL;");
+            migrationBuilder.Sql(
+                @"
+                    DELETE FROM Resources
+                    WHERE PersonId IS NULL
+                       OR SubTaskId IS NULL
+                       OR PersonId NOT IN (SELECT PersonId FROM People)
+                       OR SubTaskId NOT IN (SELECT SubTaskId FROM SubTasks);
+                "
+            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
