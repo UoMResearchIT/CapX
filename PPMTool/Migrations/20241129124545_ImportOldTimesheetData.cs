@@ -135,6 +135,10 @@ namespace PPMTool.Migrations
                 // Group records by person
                 var groupedRows = listOfRowObjects.GroupBy(x => x.Resource);
 
+                // Avoid non-translatable issues with LINQ by copying the data to lists
+                var innateCodes = context.InnateCodes.ToList();
+                var innateCodeTasks = context.InnateCodeTasks.Include(x => x.InnateCode).ToList();
+
                 // Check existence of dependent data
                 var missingActivityCodes = new List<string>();
                 var missingTaskCodes = new List<string>();
@@ -151,7 +155,7 @@ namespace PPMTool.Migrations
                     // Check to see if all the activity/task codes exist that the timesheet references
                     foreach (var row in person)
                     {
-                        if (context.InnateCodes.FirstOrDefault(x => x.GetCodeAsString() == row.Activity) == null)
+                        if (innateCodes.FirstOrDefault(x => x.GetCodeAsString() == row.Activity) == null)
                         {
                             Debug.WriteLine($"Activity {row.Activity} does not exist in the database!");
                             var val = row.Activity;
@@ -161,7 +165,7 @@ namespace PPMTool.Migrations
                             }
                         }
 
-                        if (context.InnateCodeTasks.FirstOrDefault(x => x.TaskName == row.Task && x.InnateCode.GetCodeAsString() == row.Activity) == null)
+                        if (innateCodeTasks.FirstOrDefault(x => x.TaskName == row.Task && x.InnateCode.GetCodeAsString() == row.Activity) == null)
                         {
                             Debug.WriteLine($"Task {row.Task} for {row.Activity} does not exist in the database!");
                             var val = $"{row.Activity}|{row.Task}";
@@ -219,7 +223,7 @@ namespace PPMTool.Migrations
                                 var entry = new TimesheetEntry()
                                 {
                                     Timesheet = timesheet,
-                                    InnateCodeTask = context.InnateCodeTasks.FirstOrDefault(x => x.TaskName == row.Task && x.InnateCode.GetCodeAsString() == row.Activity),
+                                    InnateCodeTask = innateCodeTasks.FirstOrDefault(x => x.TaskName == row.Task && x.InnateCode.GetCodeAsString() == row.Activity),
                                     MondayHours = entries.FirstOrDefault(x => x.Date.DayOfWeek == DayOfWeek.Monday)?.Hours ?? 0,
                                     TuesdayHours = entries.FirstOrDefault(x => x.Date.DayOfWeek == DayOfWeek.Tuesday)?.Hours ?? 0,
                                     WednesdayHours = entries.FirstOrDefault(x => x.Date.DayOfWeek == DayOfWeek.Wednesday)?.Hours ?? 0,
