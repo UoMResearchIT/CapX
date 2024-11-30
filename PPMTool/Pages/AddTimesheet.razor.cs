@@ -91,6 +91,10 @@ namespace PPMTool.Pages
 
                 // Immediately save the timesheet to the DB
                 TimesheetService.Add(Context, timesheet);
+
+                // Redirect to the newly created Timesheet so refrshing the page
+                // with the -1 parameter doesn't create another new timesheet.
+                Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
             }
 
             if (timesheet != null)
