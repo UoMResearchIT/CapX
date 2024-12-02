@@ -61,7 +61,7 @@
                                 RowCreate="@OnCreateRow"
                                 ColumnWidth="5rem">
                     <Columns>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem" Sortable="false">
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
                             </Template>
@@ -83,7 +83,7 @@
                                 }
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px" Width="12rem">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px" Width="12rem" Sortable="false">
                             <Template Context="entry">
                                 <TimesheetEntryTaskComponent Entry="@entry" />
                             </Template>
