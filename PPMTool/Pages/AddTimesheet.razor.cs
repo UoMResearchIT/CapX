@@ -74,7 +74,7 @@ namespace PPMTool.Pages
             }
 
             // Check whether this user should have access or not
-            if (timesheet != null && !IsPermittedToView())
+            if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
             {
                 timesheet = null;
             }
@@ -117,38 +117,11 @@ namespace PPMTool.Pages
         /// Should this user be allowed to view the timesheet. Only superusers, the owner or the line manager.
         /// </summary>
         /// <returns></returns>
-        private bool IsPermittedToView()
+        private bool IsPermittedToViewTimesheetDetailsPage()
         {
-            return IsOwner() ||
-                IsLineManager() ||
+            return (timesheet?.IsOwner(activeUser) ?? false) ||
+                (timesheet?.IsLineManager(activeUser) ?? false) ||
                 activeUserRole.RoleType == RoleType.Superuser;
-        }
-
-        /// <summary>
-        /// Checks to see if the active user is the line manager of the timesheet owner
-        /// </summary>
-        /// <returns></returns>
-        private bool IsLineManager()
-        {
-            return activeUser?.PersonId == (timesheet?.Owner?.LineManager?.PersonId ?? 0);
-        }
-
-        /// <summary>
-        /// Checks to see if the active user is the owner of the timesheet
-        /// </summary>
-        /// <returns></returns>
-        private bool IsOwner()
-        {
-            return activeUser?.PersonId == (timesheet?.Owner?.PersonId ?? 0);
-        }
-
-        /// <summary>
-        /// Checks to see if the active user is the line manager of the timesheet owner but not the owner
-        /// </summary>
-        /// <returns></returns>
-        private bool IsLineManagerButNotOwner()
-        {
-            return IsLineManager() && !IsOwner();
         }
 
         /// <summary>

@@ -23,7 +23,8 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
-        private Role userRole;
+        private Person activeUser;
+        private Role activeUserRole;
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
         public bool ShowAllMyTimesheets
@@ -65,15 +66,18 @@ namespace PPMTool.Pages
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            userRole = RolesService.GetByUsername(Context, uname);
+            activeUserRole = RolesService.GetByUsername(Context, uname);
+
+            // Get the person associated with the active user
+            activeUser = activeUserRole?.Person;
 
             // Log any time there is no role returned?
-            if (userRole == null)
+            if (activeUserRole == null)
             {
                 LogError($"{uname}: Role is null!");
             }
 
-            LogInformation("Viewing myTimesheets");
+            LogInformation("Viewing Timesheets");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -96,7 +100,7 @@ namespace PPMTool.Pages
         {
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
-            myTimesheets = TimesheetService.GetMyTimesheets(Context, userRole.Person).OrderByDescending(t => t.StartDate).ToList();
+            myTimesheets = TimesheetService.GetMyTimesheets(Context, activeUserRole.Person).OrderByDescending(t => t.StartDate).ToList();
 
             if (!ShowAllMyTimesheets)
             {
@@ -105,12 +109,12 @@ namespace PPMTool.Pages
             }
 
             // Show second grid if user manages staff - need to see the timesheets they have submitted.
-            if (userRole.Person.PeopleManaged.Count > 0)  // Is a manager
+            if (activeUserRole.Person.PeopleManaged.Count > 0)  // Is a manager
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
                 myStaffTimesheets = new List<Timesheet>();
 
-                foreach (Person p in userRole.Person.PeopleManaged)
+                foreach (Person p in activeUserRole.Person.PeopleManaged)
                 {
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
                 }
