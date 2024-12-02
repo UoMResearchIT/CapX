@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -20,6 +20,9 @@ namespace PPMTool.Pages
         [Inject]
         private RolesService RolesService { get; set; }
 
+        [Inject]
+        private ISessionStorageService SessionStorage { get; set; }
+
         private Role userRole;
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
@@ -31,6 +34,7 @@ namespace PPMTool.Pages
                 if (value != showAllMyTimesheets)
                 {
                     showAllMyTimesheets = value;
+                    SessionStorage.SetItemAsync<bool?>("timesheets-showall-mine", showAllMyTimesheets);
                     LoadData();
                 }
             }
@@ -45,6 +49,7 @@ namespace PPMTool.Pages
                 if (value != showAllMyStaffTimesheets)
                 {
                     showAllMyStaffTimesheets = value;
+                    SessionStorage.SetItemAsync<bool?>("timesheets-showall-reports", showAllMyStaffTimesheets);
                     LoadData();
                 }
             }
@@ -53,9 +58,9 @@ namespace PPMTool.Pages
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
-            await base.OnInitializedAsync();
+            base.OnInitialized();
             Loading = true;
 
             // Look up the username
@@ -69,6 +74,17 @@ namespace PPMTool.Pages
             }
 
             LogInformation("Viewing myTimesheets");
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender) return;
+
+            // Load state from session storage and once finished, load the data
+            var temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-mine");
+            if (temp != null) ShowAllMyTimesheets = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
+            if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
             LoadData();
         }
 
@@ -110,6 +126,7 @@ namespace PPMTool.Pages
             }
 
             Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>
