@@ -60,5 +60,75 @@ namespace PPMTool.Data.Entities
         /// Represents the records of hours spent on tasks on the days associated with the specific timesheet.
         /// </summary>
         public ICollection<TimesheetEntry> TimesheetEntries { get; set; } = new List<TimesheetEntry>();
+
+        /// <summary>
+        /// Checks to see if the user is the line manager of the timesheet owner
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsLineManager(Person user)
+        {
+            return user?.PersonId == (Owner?.LineManager?.PersonId ?? 0);
+        }
+
+        /// <summary>
+        /// Checks to see if the user is the owner of the timesheet
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsOwner(Person user)
+        {
+            return user?.PersonId == (Owner?.PersonId ?? 0);
+        }
+
+        /// <summary>
+        /// Checks to see if the user is the line manager of the timesheet owner but not the owner
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsLineManagerButNotOwner(Person user)
+        {
+            return IsLineManager(user) && !IsOwner(user);
+        }
+
+        /// <summary>
+        /// Checks to see if the user is both the line manager of the timesheet owner and the owner (a self-approver)
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsSelfApprover(Person user)
+        {
+            return IsOwner(user) && IsLineManager(user);
+        }
+
+        /// <summary>
+        /// Checks to see whether this timesheet is in a state that permits editing of entries by the user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsPermittedToEditEntries(Person user)
+        {
+            return IsOwner(user) || IsSelfApprover(user);
+        }
+
+        /// <summary>
+        /// Checks to see whether this timesheet is in a state that permits submission of the timesheet by the user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsPermittedToSubmit(Person user)
+        {
+            return IsOwner(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected);
+        }
+
+        /// <summary>
+        /// Checks to see whether this timesheet is in a state that permits approval/rejection of the timesheet by the user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsPermittedToApproveOrReject(Person user)
+        {
+            return IsLineManager(user) && Status == TimesheetStatus.Submitted;
+        }
     }
 }
