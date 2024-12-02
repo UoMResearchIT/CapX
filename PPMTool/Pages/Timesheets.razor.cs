@@ -58,16 +58,10 @@ namespace PPMTool.Pages
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
-            await base.OnInitializedAsync();
+            base.OnInitialized();
             Loading = true;
-
-            // Load state from session storage
-            var temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-mine");
-            if (temp != null) ShowAllMyTimesheets = temp ?? false;
-            temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
-            if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
@@ -80,6 +74,17 @@ namespace PPMTool.Pages
             }
 
             LogInformation("Viewing myTimesheets");
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender) return;
+
+            // Load state from session storage and once finished, load the data
+            var temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-mine");
+            if (temp != null) ShowAllMyTimesheets = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
+            if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
             LoadData();
         }
 
@@ -121,6 +126,7 @@ namespace PPMTool.Pages
             }
 
             Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>
