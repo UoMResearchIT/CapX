@@ -211,6 +211,22 @@ namespace PPMTool.Pages
             }
         }
 
+        public void NoteChanged()
+        {
+            TimesheetService.Update(Context, timesheet);
+
+            // Show notification for save action
+            ShowNotification(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Saved",
+                Detail = "Your timesheet has been updated.",
+                Duration = 3000,
+                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+            });
+            return;
+        }
+
         /// <summary>
         /// Handle the validation of the timesheet
         /// </summary>
