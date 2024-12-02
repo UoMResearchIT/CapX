@@ -92,7 +92,7 @@ namespace PPMTool.Pages
                 // Immediately save the timesheet to the DB
                 int newId = TimesheetService.Add(Context, timesheet);
 
-                if(newId == -1) { throw new Exception("Error creating new timesheet!"); }
+                if (newId == -1) { throw new Exception("Error creating new timesheet!"); }
 
                 // Redirect to the newly created Timesheet so refrshing the page
                 // with the -1 parameter doesn't create another new timesheet.
