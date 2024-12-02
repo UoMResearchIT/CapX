@@ -254,3 +254,7 @@ mark {
 .timesheet-status-style {
     width: 8rem;
 }
+
+:not(.rz-form-field-content) > .rz-textarea:disabled {
+    color: #777
+}
