@@ -102,33 +102,35 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks to see whether this timesheet is in a state that permits editing of entries by the user
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public bool IsPermittedToEditEntries(Person user)
-        {
-            return IsOwner(user) || IsSelfApprover(user);
-        }
-
-        /// <summary>
         /// Checks to see whether this timesheet is in a state that permits submission of the timesheet by the user
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsPermittedToSubmit(Person user)
+        public bool IsPermittedToEditEntriesAndSubmit(Person user)
         {
             return IsOwner(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected);
         }
 
         /// <summary>
-        /// Checks to see whether this timesheet is in a state that permits approval/rejection of the timesheet by the user
+        /// Checks to see whether this timesheet is in a state that permits approval/rejection of the timesheet by the user.
+        /// Note that lilne managers can use the reject button to unapprove a previously approved timesheet.
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
         public bool IsPermittedToApproveOrReject(Person user)
         {
-            return IsLineManager(user) && Status == TimesheetStatus.Submitted;
+            return (IsLineManager(user) && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved)) ||
+                (IsSelfApprover(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected || Status == TimesheetStatus.Approved));
+        }
+
+        /// <summary>
+        /// If user may be able to edit in certain circumstance, this checks to see whether based on the current timesheet state whether they are allowed to only view
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool IsPermittedToViewOnly(Person user)
+        {
+            return (IsOwner(user) && !IsPermittedToEditEntriesAndSubmit(user)) || (IsLineManager(user) && !IsPermittedToApproveOrReject(user));
         }
     }
 }

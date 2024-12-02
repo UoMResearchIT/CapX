@@ -51,9 +51,12 @@
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="Info" Title="Notes" />
-                <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
+                <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                     <Template Context="timesheet">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTimesheet(timesheet))" @onclick:stopPropagation="true" Disabled="@(!timesheet.IsOwner(activeUser) && !timesheet.IsLineManager(activeUser))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                        <TimesheetDashboardButtonComponent Timesheet="@timesheet"
+                                                           ActiveUser="@activeUser"
+                                                           EditTimesheet="@EditTimesheet"
+                                                           ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
@@ -90,14 +93,17 @@
                     <RadzenDataGridColumn Property="Owner.Name" Title="Staff member" Width="20rem"/>
                     <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem"/>
                     <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
-                        <Template Context="data">
-                            <RadzenBadge BadgeStyle="@data.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@data.Status.ToString()" />
+                        <Template Context="timesheet">
+                            <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToString()" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Info" Title="Notes" />
-                    <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
-                        <Template Context="data">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTimesheet(data))" @onclick:stopPropagation="true" Disabled="@(data.Status == TimesheetStatus.Rejected || data.Status == TimesheetStatus.Approved)" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                    <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
+                        <Template Context="timesheet">
+                            <TimesheetDashboardButtonComponent Timesheet="@timesheet"
+                                                               ActiveUser="@activeUser"
+                                                               EditTimesheet="@EditTimesheet"
+                                                               ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>

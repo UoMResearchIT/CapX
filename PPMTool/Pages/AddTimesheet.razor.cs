@@ -74,7 +74,7 @@ namespace PPMTool.Pages
             }
 
             // Check whether this user should have access or not
-            if (timesheet != null && !IsPermittedToView())
+            if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
             {
                 timesheet = null;
             }
@@ -117,7 +117,7 @@ namespace PPMTool.Pages
         /// Should this user be allowed to view the timesheet. Only superusers, the owner or the line manager.
         /// </summary>
         /// <returns></returns>
-        private bool IsPermittedToView()
+        private bool IsPermittedToViewTimesheetDetailsPage()
         {
             return (timesheet?.IsOwner(activeUser) ?? false) ||
                 (timesheet?.IsLineManager(activeUser) ?? false) ||
