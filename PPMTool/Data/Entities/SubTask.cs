@@ -178,7 +178,8 @@ namespace PPMTool.Data.Entities
                 // If no resources assigned then use the demand to schedule the task
                 if (AssignedResources.Count == 0)
                 {
-                    units = Demand;
+                    // Cannot schedule using zero demand so schedule according to original demand if necessary
+                    units = Demand == 0 ? OriginalDemand : Demand;
                 }
 
                 // If we assign someone who doesn't start until after the date then error
