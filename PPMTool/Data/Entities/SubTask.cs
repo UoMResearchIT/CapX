@@ -26,6 +26,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("Task has zero demand.", StatusMessage.MessageType.Info, () => HasZeroDemandAndNoResources()),
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
+                new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Warning, () => HasZeroDemandButResourced()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -444,6 +445,15 @@ namespace PPMTool.Data.Entities
         public bool HasZeroDemandAndNoResources()
         {
             return Demand == 0 && AssignedResources.Count == 0;
+        }
+
+        /// <summary>
+        /// Determines whether the task has zero demand but still has resources assigned.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasZeroDemandButResourced()
+        {
+            return Demand == 0 && AssignedResources.Count > 0;
         }
 
         /// <summary>
