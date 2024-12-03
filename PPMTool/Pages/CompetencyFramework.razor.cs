@@ -104,7 +104,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
             if (ValidateAssessment(assessment, out var message)) CompetencyService.AddAssessment(Context, assessment);
-            else NotificationService.Notify(NotificationSeverity.Error, "Validation Error", message);
+            else ShowValidationError(message);
             StateHasChanged();
         }
 
@@ -112,8 +112,21 @@ namespace PPMTool.Pages
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
             if (ValidateAssessment(assessment, out var message)) CompetencyService.UpdateAssessment(Context, assessment);
-            else NotificationService.Notify(NotificationSeverity.Error, "Validation Error", message);
+            else ShowValidationError(message);
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// General method to show a validation error notification
+        /// </summary>
+        /// <param name="message"></param>
+        private void ShowValidationError(string message)
+        {
+            ShowNotification(new CapXNotificationMessage
+            {
+                Summary = "Validation Error",
+                Detail = message
+            });
         }
 
         /// <summary>
@@ -303,13 +316,11 @@ namespace PPMTool.Pages
                 catch (Exception ex)
                 {
                     // Present an error notification to the user
-                    InvokeAsync(() => ShowNotification(new NotificationMessage
+                    InvokeAsync(() => ShowNotification(new CapXNotificationMessage
                     {
-                        Severity = NotificationSeverity.Error,
                         Summary = "Upload Issue",
                         Detail = $"{ex.Message}",
-                        Duration = 10000,
-                        Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                        Duration = 10000
                     }));
                     LogError($"{ex.Message}");
 
