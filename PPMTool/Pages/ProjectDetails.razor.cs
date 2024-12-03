@@ -357,7 +357,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectId == null) Navigation.NavigateTo("nothinghere");
 
             if (firstRender)
             {

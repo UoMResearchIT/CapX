@@ -169,7 +169,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
 
         private string GetNiceString(Enum x)
