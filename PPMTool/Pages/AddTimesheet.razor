@@ -104,7 +104,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.MondayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.MondayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -112,7 +112,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.TuesdayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.TuesdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@tuesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -120,7 +120,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.WednesdayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.WednesdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@wednesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -128,7 +128,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.ThursdayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.ThursdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@thursdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -136,7 +136,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.FridayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.FridayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@fridayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -144,7 +144,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SaturdayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SaturdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@saturdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -152,7 +152,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
                             <EditTemplate Context="entry">
-                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SundayHours" Change="HoursChanged" />
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SundayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
                                 <RadzenText Text="@sundayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
@@ -197,7 +197,7 @@
                             {
                                 <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(activeUser) ?? true))" Style="margin-left: 0.5rem;" />
                             }
-                            @if (timesheet?.IsLineManagerButNotOwner(activeUser) ?? false)
+                            @if ((timesheet?.IsLineManagerButNotOwner(activeUser) ?? false) || (timesheet?.IsSelfApprover(activeUser) ?? false))
                             {
                                 <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(!timesheet?.IsPermittedToApproveOrReject(activeUser) ?? true)" />
                             }
