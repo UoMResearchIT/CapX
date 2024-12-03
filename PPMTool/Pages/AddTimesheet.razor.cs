@@ -193,13 +193,11 @@ namespace PPMTool.Pages
             TimesheetService.Update(Context, timesheet);
 
             // Show notification for save action
-            ShowNotification(new NotificationMessage
+            ShowNotification(new CapXNotificationMessage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Saved",
-                Detail = "Your timesheet has been updated.",
-                Duration = 3000,
-                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                Detail = "Your timesheet has been updated."
             });
             return;
         }
@@ -219,13 +217,11 @@ namespace PPMTool.Pages
                 Debug.WriteLine("Timesheet ptogress saved");
 
                 // Show notification for save action
-                ShowNotification(new NotificationMessage
+                ShowNotification(new CapXNotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
                     Summary = "Saved",
-                    Detail = "Your timesheet progress has been saved.",
-                    Duration = 3000,
-                    Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                    Detail = "Your timesheet progress has been saved."
                 });
                 return;
             }

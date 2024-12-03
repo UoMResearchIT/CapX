@@ -53,8 +53,8 @@ function copyText(text) {
         navigator.clipboard.writeText(text).then(function () {
             alert("Link to note copied to clipboard!");
         })
-            .catch(function (error) {
-                alert(error);
-            });
+        .catch(function (error) {
+            alert(error);
+        });
     }, 0);
 };
