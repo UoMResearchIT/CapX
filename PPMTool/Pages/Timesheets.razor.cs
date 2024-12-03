@@ -138,7 +138,7 @@ namespace PPMTool.Pages
         /// </summary>
         void AddTimesheet()
         {
-            Navigation.NavigateTo("addtimesheet/-1");
+            Navigation.NavigateTo("timesheets/addedit/-1");
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void EditTimesheet(Timesheet timesheet)
         {
-            Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+            Navigation.NavigateTo($"timesheets/managetimesheet/{timesheet.TimesheetId}");
         }
     }
 }
