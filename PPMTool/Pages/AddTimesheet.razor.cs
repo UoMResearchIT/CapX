@@ -106,7 +106,7 @@ namespace PPMTool.Pages
             if (timesheet != null)
             {
                 dataGridEntities = timesheet.TimesheetEntries.ToList();
-                HoursChanged();
+                UpdateDailyTotals();
                 innateCodes = InnateCodeService.GetAll(Context);
             }
 
@@ -127,15 +127,15 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to sum up the total hours per day and for the whole timesheet
         /// </summary>
-        private void HoursChanged()
+        private void UpdateDailyTotals()
         {
             // The entity to add has not been included in the datagrid entites list yet
             var allEntities = dataGridEntities;
             Debug.WriteLine($"** Hours changed, datagrid count = {dataGridEntities.Count}");
             if (entityToInsert != null && !allEntities.Contains(entityToInsert))
             {
-                Debug.WriteLine($"** Added entity, all entities count = {allEntities.Count}");
                 allEntities.Add(entityToInsert);
+                Debug.WriteLine($"** Added entity, all entities count = {allEntities.Count}");
             }
 
             // Now sum up the hours
@@ -155,14 +155,6 @@ namespace PPMTool.Pages
             }
 
             StateHasChanged();
-        }
-
-        /// <summary>
-        /// Discard changes
-        /// </summary>
-        private void DiscardTimesheet()
-        {
-            Navigation.NavigateTo("timesheets");
         }
 
         /// <summary>
@@ -335,8 +327,16 @@ namespace PPMTool.Pages
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
 
+            // Remove entries that have not been added to the DB
+            var itemsToRemove = dataGridEntities.Where(x => x.TimesheetEntryId == 0).ToList();
+            foreach (var e in itemsToRemove)
+            {
+                Debug.WriteLine($"** Removing empty entry {e.GetSensibleObjectName()}");
+                dataGridEntities.Remove(e);
+            }
+
             // Update the totals
-            HoursChanged();
+            UpdateDailyTotals();
             entity.UpdateTotalHours();
         }
 
@@ -359,7 +359,7 @@ namespace PPMTool.Pages
         {
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
-            HoursChanged();
+            UpdateDailyTotals();
         }
     }
 }
