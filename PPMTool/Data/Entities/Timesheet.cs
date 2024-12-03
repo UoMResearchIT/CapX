@@ -130,7 +130,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool IsPermittedToViewOnly(Person user)
         {
-            return (IsOwner(user) && !IsPermittedToEditEntriesAndSubmit(user)) || (IsLineManager(user) && !IsPermittedToApproveOrReject(user));
+            return !IsSelfApprover(user) && ((IsOwner(user) && !IsPermittedToEditEntriesAndSubmit(user)) || (IsLineManager(user) && !IsPermittedToApproveOrReject(user)));
         }
     }
 }
