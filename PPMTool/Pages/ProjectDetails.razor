@@ -201,6 +201,10 @@
                                         {
                                             <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h3>
                                         }
+                                        @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
+                                        {
+                                            <h4 class="me-1 text-info">[Currently No Demand]</h4>
+                                        }
                                         <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
