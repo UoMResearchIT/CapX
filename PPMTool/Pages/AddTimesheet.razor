@@ -1,4 +1,4 @@
-﻿@page "/addtimesheet/{TimesheetId:int}"
+﻿@page "/timesheets/managetimesheet/{TimesheetId:int}"
 @inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
 @using DotNetExtensions
 @using PPMTool.Data
@@ -178,7 +178,6 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
-
                 </RadzenDataGrid>
                 <hr />
                 <div class="row">
