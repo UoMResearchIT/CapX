@@ -47,6 +47,12 @@ namespace PPMTool.Data.Entities
         public double FTE { get; set; } = 1.0;
 
         /// <summary>
+        /// Line manager of this person
+        /// </summary>
+        [Required]
+        public Person LineManager { get; set; }
+
+        /// <summary>
         /// Any changes to their WLMs
         /// </summary>
         public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
@@ -78,9 +84,26 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
+        /// <summary>
+        /// The collection of Timesheets this person owns
+        /// </summary>
+        [InverseProperty("Owner")]
+        public ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
+
+        /// <summary>
+        /// The collection of Timesheets this person was last to change the status of
+        /// </summary>
+        [InverseProperty("StatusChangedBy")]
+        public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
+
+        /// <summary>
+        /// List of people that this person manages as their line manager
+        /// </summary>
+        public ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
+
         public Person()
         {
-            // Generate status messages to be maintained against a project
+            // Generate status messages to be maintained against a person
             statusMessages = new List<StatusMessage>
             {
                 new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)

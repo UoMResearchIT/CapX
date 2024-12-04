@@ -45,7 +45,6 @@ namespace PPMTool.Pages.Account
         {
             // Local debugging so just sign in
             var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, "mbgm6ah3"));
             identity.AddClaim(new Claim(ClaimTypes.Name, "mbgm6ah3"));
 
             // Add roles from DB for this user

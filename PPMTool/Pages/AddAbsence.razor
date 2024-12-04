@@ -35,7 +35,7 @@
                                 RowCreate="@OnCreateRow"
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                     <Columns>
-                        <RadzenDataGridColumn TItem="Absence" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="Absence" Filterable="false" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="Absence" Property="StartDate" Title="Start of Absence" Width="180px" MinWidth="10px">
                             <Template Context="a">

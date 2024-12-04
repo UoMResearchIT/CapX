@@ -357,7 +357,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectId == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectId == null) Navigation.NavigateTo("nothinghere");
 
             if (firstRender)
             {
@@ -762,12 +762,10 @@ namespace PPMTool.Pages
                 else
                 {
                     // Warning if the mention cannot be resolved
-                    ShowNotification(new NotificationMessage
+                    ShowNotification(new CapXNotificationMessage
                     {
-                        Severity = NotificationSeverity.Error,
                         Summary = "Mention Failure",
-                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct.",
-                        Duration = 4000
+                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
@@ -803,12 +801,10 @@ namespace PPMTool.Pages
                 else
                 {
                     // Warning if the reference cannot be resolved
-                    ShowNotification(new NotificationMessage
+                    ShowNotification(new CapXNotificationMessage
                     {
-                        Severity = NotificationSeverity.Error,
                         Summary = "RTP Reference Failure",
-                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct.",
-                        Duration = 4000
+                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct."
                     });
                 }
             }

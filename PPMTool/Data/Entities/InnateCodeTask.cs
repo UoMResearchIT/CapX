@@ -11,7 +11,7 @@ namespace PPMTool.Data.Entities
         public string TaskName { get; set; }
 
         /// <summary>
-        /// This is the category of work that this timesheet code is calssified as when doing WLM analysis
+        /// This is the category of work that this timesheet code is classified as when doing WLM analysis
         /// </summary>
         [Required]
         public Duty Duty { get; set; }
@@ -19,6 +19,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The code which owns this task
         /// </summary>
+        [Required]
         public InnateCode InnateCode { get; set; }
 
         public string GetSensibleObjectName()

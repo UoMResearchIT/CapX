@@ -1,0 +1,25 @@
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
+
+<RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="5px;">
+    <div title="@description" style="background-color: @backgroundColour; height: 1rem; width: 100%; margin-bottom: -0.1rem; border-radius: var(--rz-badge-border-radius)" />
+    <RadzenText Text="@Entry.InnateCodeTask.TaskName" TextStyle="TextStyle.Body2" Style="white-space:pre-wrap" />
+</RadzenStack>
+
+@code {
+
+        [Parameter]
+        public TimesheetEntry Entry { get; set; }
+
+    private string backgroundColour;
+    private string description;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        backgroundColour = (Entry?.InnateCodeTask?.Duty.GetAttribute<ColourAttribute>().BackgroundColourCode ?? "#609");
+        description = Entry?.InnateCodeTask?.Duty.ToNiceString();
+    }
+
+}

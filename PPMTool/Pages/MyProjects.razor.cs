@@ -52,13 +52,7 @@ namespace PPMTool.Pages
             // Log any time there is no role returned?
             if (userRole == null)
             {
-                LogError($"{uname}: Role is null!");
-            }
-
-            if (userRole.RoleType != RoleType.Superuser && userRole.RoleType != RoleType.Manager)
-            {
-                LogInformation($"{uname}: Role is not Manager or Superuser, redirecting...");
-                Navigation.NavigateTo("/capacity");
+                LogError($"Role is null!");
             }
 
             LogInformation("Viewing my projects");
@@ -69,6 +63,13 @@ namespace PPMTool.Pages
             // Load settings the first time
             if (firstRender)
             {
+                // Navigate away if not a manager
+                if (userRole.RoleType != RoleType.Superuser && userRole.RoleType != RoleType.Manager)
+                {
+                    LogInformation($"Role is not Manager or Superuser, redirecting...");
+                    Navigation.NavigateTo("capacity");
+                }
+
                 // Get switch setting
                 includeFinished = await SessionStorage.GetItemAsync<bool>("my-project-show-active");
 

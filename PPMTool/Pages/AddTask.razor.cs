@@ -189,7 +189,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
 
         private string GetNiceString(Enum x)
@@ -409,13 +409,35 @@ namespace PPMTool.Pages
         /// <summary>
         /// Handles the edit form submission. Can called by owning components.
         /// </summary>
-        public void HandleSubmit()
+        public async void HandleSubmit()
         {
             if (ProjectModel != null)
             {
                 UpdateSubTaskModelFromResourceDataGrid();
                 if (IsValid)
                 {
+                    // Warn of the fact that they are setting a zero demand
+                    var confirmed = true;
+                    if (TaskModel.Demand == 0)
+                    {
+                        var message = "You are about to set the demand for this task zero.";
+
+                        if (TaskModel.AssignedResources.Count != 0)
+                        {
+                            message += " You also have resources assigned to this task despite its zero demand.";
+                        }
+
+                        message += " Are you sure you want to do this?";
+
+                        confirmed = await DialogService.Confirm(message, "Zero Demand Task") ?? false;
+                    }
+
+                    // Bail early if they do not want to continue
+                    if (!confirmed)
+                    {
+                        return;
+                    }
+
                     LogInformation("Saving sub task...");
 
                     // Add new new to task list for project if it is a new one

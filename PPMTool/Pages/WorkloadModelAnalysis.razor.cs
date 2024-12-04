@@ -274,13 +274,11 @@ namespace PPMTool.Pages
                 catch (Exception ex)
                 {
                     // Present an error notification to the user
-                    InvokeAsync(() => ShowNotification(new NotificationMessage
+                    InvokeAsync(() => ShowNotification(new CapXNotificationMessage
                     {
-                        Severity = NotificationSeverity.Error,
                         Summary = "Upload Issue",
                         Detail = $"{ex.Message}",
-                        Duration = 10000,
-                        Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                        Duration = 10000
                     }));
                     LogError($"{ex.Message}");
 

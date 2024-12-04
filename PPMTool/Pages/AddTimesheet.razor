@@ -1,0 +1,219 @@
+﻿@page "/addtimesheet/{TimesheetId:int}"
+@inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
+@using DotNetExtensions
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+@using PPMTool.Services
+@using Radzen.Blazor
+<PageTitle>Add Timesheet - CapX</PageTitle>
+
+<div class="container">
+    @if (TimesheetId > 0 && timesheet == null)
+    {
+        <StatusMessageComponent Message="@(new StatusMessage("Either you are not permitted to view this timesheet or a timesheet with the given ID is not present in the database!", StatusMessage.MessageType.Error))" />
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                @if (TimesheetId <= 0)
+                {
+                    <h1>Add Timesheet</h1>
+                }
+                else
+                {
+                    <h1>Edit Timesheet</h1>
+                }
+                <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")" TextStyle="TextStyle.Subtitle1" />
+                <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
+            </div>
+            @if (EditAuthorised)
+            {
+                <div class="col-auto" style="align-content: center">
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+                </div>
+            }
+        </div>
+        <hr />
+        
+        <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
+                <div class="card">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="row">
+                    <div class="col">
+                        <h2>Timesheet Entries</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)) />
+                    </div>
+                </div>
+                <RadzenDataGrid @ref="dataGrid"
+                                AllowFiltering="false"
+                                AllowPaging="false"
+                                AllowSorting="true"
+                                EditMode="DataGridEditMode.Single"
+                                Data="@dataGridEntities"
+                                TItem="TimesheetEntry"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                ColumnWidth="5rem">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem" Sortable="false">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    FilterOperator="StringFilterOperator.Contains"
+                                                    AllowFiltering="true"
+                                                    Placeholder="Search for Innate Code"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    Data="@innateCodes.Select(x => x.GetCodeAsString())"
+                                                    Style="width: 100%"
+                                                    Change="@(args => InnateCodeChanged(args))" />
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                                }
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px" Width="12rem" Sortable="false">
+                            <Template Context="entry">
+                                <TimesheetEntryTaskComponent Entry="@entry" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="InnateCodeTask"
+                                                    Data="@innateCodeTasks"
+                                                    TextProperty="TaskName"
+                                                    Style="width: 100%"
+                                                    @bind-Value="entry.InnateCodeTask" />
+                                }
+                                else
+                                {
+                                    <TimesheetEntryTaskComponent Entry="@entry" />
+                                }
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.MondayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.TuesdayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@tuesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.WednesdayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@wednesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.ThursdayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@thursdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.FridayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@fridayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SaturdayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@saturdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Sortable="false" Resizable="false">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SundayHours" Change="UpdateDailyTotals" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@sundayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Title="Total" MinWidth="10px" FormatString="{0:F2}" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                            <Template Context="entry">
+                                <RadzenText Text="@entry.TotalHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </Template>
+                            <FooterTemplate>
+                                <RadzenText Text="@($"{totalHours.ToString("F2")}")" Style="font-weight: bold;"/>
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="9.5rem" MinWidth="10px" Title="Actions">
+                            <Template Context="entry">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+
+                </RadzenDataGrid>
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
+                            <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                        </RadzenStack>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 1rem;">
+                <div class="col">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <div>
+                            @if ((timesheet?.IsLineManager(activeUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(activeUser) ?? true))" Style="margin-left: 0.5rem;" />
+                            }
+                            @if ((timesheet?.IsLineManagerButNotOwner(activeUser) ?? false) || (timesheet?.IsSelfApprover(activeUser) ?? false))
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(!timesheet?.IsPermittedToApproveOrReject(activeUser) ?? true)" />
+                            }
+                            @if ((timesheet?.IsOwner(activeUser) ?? false) && !(timesheet?.IsLineManager(activeUser) ?? false))
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true))" Style="margin-left: 0.5rem;" />
+                            }
+                        </div>
+                    </RadzenStack>
+                </div>
+            </div>
+            @if (ErrorMessage != null)
+            {
+                <br />
+                <StatusMessageComponent Message=@ErrorMessage />
+            }
+            </EditForm>
+    }
+</div>
