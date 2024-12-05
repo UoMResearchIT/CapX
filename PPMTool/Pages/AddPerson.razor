@@ -18,9 +18,15 @@
                         <h1>Edit <i>@personModel.Name</i></h1>
                         <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
                     </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
-                    </div>
+                    @if (PersonId > 0)
+                    {
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" Disabled=!EditAuthorised />
+                        </div>
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
+                        </div>
+                    }
                 </div>
                 <hr />
             }
@@ -35,21 +41,23 @@
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br>
                     <RadzenTextBox TValue="string" @bind-Value="personModel.Name" />
                 </div>
-            </div>
-            <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Initials" /><br>
                     <RadzenTextBox TValue="string" @bind-Value="personModel.ShortName" />
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Line Manager" /><br>
+                    <RadzenDropDown class="radzen-dropdown" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" />
                 </div>
             </div>
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Start Date" /><br>
-                    <RadzenDatePicker @bind-Value="personModel.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.StartDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="End Date" /><br>
-                    <RadzenDatePicker @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>

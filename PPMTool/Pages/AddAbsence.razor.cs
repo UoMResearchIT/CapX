@@ -99,7 +99,7 @@ namespace PPMTool.Pages
                     // Send emails based on diff information
                     EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
 
-                    // Reset assign the absences from the data grid to the model
+                    // Assign the absences from the data grid to the model
                     personModel.Absences.Clear();
                     foreach (var ab in dataGridEntities)
                     {

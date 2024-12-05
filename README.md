@@ -1,8 +1,8 @@
 # CapX
 This is a PPM tool written in .NET Blazor Server. This is being used as a stop-gap solution for the capacity planning system the ITS Governance and Delivery management Office (GaDMO) currently use which is of limited use to us day to day. Instead, CapX has an export facility which allows its data to be output in a format GaDMO can read into their system.
 
-The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](balex.itservices.manchester.ac.uk). This is a 10.99 private IP so users will need to be on the VPN to access.
-There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and show cases new features but might not be entirely stable.
+The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](https://balex.itservices.manchester.ac.uk). This is a 10.99 private IP so users will need to be on the VPN to access.
+There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and show cases new features but might not be entirely stable.
 
 ## User Accounts and Access
 As of v1.6, the app is integrated with UoM CAS with local access to restricted parts of the app managed within the app using a Role-Based Access Control database table. Super-users are able to manage user roles via the "Manage Access" page.

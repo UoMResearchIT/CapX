@@ -12,6 +12,7 @@ namespace PPMTool.Data.Entities
     {
         public int ResourceId { get; set; }
 
+        [Required]
         public Person Person { get; set; }
 
         /// <summary>
@@ -42,6 +43,9 @@ namespace PPMTool.Data.Entities
                 }
             }
         }
+
+        [Required]
+        public SubTask SubTask { get; set; }
 
         public string GetSensibleObjectName()
         {

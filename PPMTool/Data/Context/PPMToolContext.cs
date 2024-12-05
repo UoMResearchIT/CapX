@@ -14,6 +14,8 @@ namespace PPMTool.Data.Context
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<SubTask> SubTasks { get; set; }
+        public DbSet<Timesheet> Timesheets { get; set; }
+        public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<SkillTag> SkillTags { get; set; }
         public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }

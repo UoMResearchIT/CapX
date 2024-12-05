@@ -193,15 +193,23 @@
                                     var point = (ListPoint<GanttBlock>)context.DataPoint;
                                     <div class="m-0 p-3">
                                         <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
-                                        @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
-                                        {
-                                            <h3 class="me-1 text-warning"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>
-                                        }
                                         @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
                                         {
-                                            <h3 class="me-1 text-danger"> &#x26A0; [UNDER RESOURCED (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h3>
+                                            <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
                                         }
-                                        <h3>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h3>
+                                        @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
+                                        {
+                                            <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
+                                        }
+                                        @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
+                                        {
+                                            <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
+                                        }
+                                        @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
+                                        {
+                                            <h4 class="me-1 text-info">[Currently No Demand]</h4>
+                                        }
+                                        <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                                     </div>

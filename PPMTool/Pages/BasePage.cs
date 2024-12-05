@@ -15,6 +15,19 @@ namespace PPMTool.Pages
     [Authorize]
     public abstract class BasePage : ComponentBase
     {
+        /// <summary>
+        /// Default notification message with format and duration pre-set
+        /// </summary>
+        public class CapXNotificationMessage : NotificationMessage
+        {
+            public CapXNotificationMessage()
+            {
+                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%";
+                Duration = 4000;
+                Severity = NotificationSeverity.Error;
+            }
+        }
+
         [Inject]
         protected ILogger Logger { get; set; }
 

@@ -1,0 +1,23 @@
+﻿@using PPMTool.Data.Entities
+
+<RadzenButton Icon="@(Timesheet.IsPermittedToViewOnly(ActiveUser) ? "visibility" : "edit")"
+              ButtonStyle="@((Timesheet.IsPermittedToViewOnly(ActiveUser) ? ButtonStyle.Light : ButtonStyle.Primary))"
+              class="m-1"
+              Click="@(args => EditTimesheet(Timesheet))"
+              @onclick:stopPropagation="true"
+              Disabled="@(!Timesheet.IsOwner(ActiveUser) && !Timesheet.IsLineManager(ActiveUser))"
+              MouseEnter="@(args => ShowTooltip(args, Timesheet.IsPermittedToViewOnly(ActiveUser) ? "View" : "Edit"))" />
+
+@code {
+    [Parameter]
+    public Timesheet Timesheet { get; set; }
+
+    [Parameter]
+    public Person ActiveUser { get; set; }
+
+    [Parameter]
+    public Action<Timesheet> EditTimesheet { get; set; }
+
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
+}

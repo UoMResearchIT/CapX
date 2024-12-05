@@ -1,0 +1,31 @@
+﻿@page "/absences"
+@using PPMTool.Pages.Components
+@inherits BasePage
+<PageTitle>Absences - CapX</PageTitle>
+
+    <div class="row">
+        <div class="col">
+            <h1>Absent Today</h1>
+        </div>
+    </div>
+    <hr/>
+    <div class="row">
+        <div class="col">
+            @if (currentAbsences == null)
+        {
+            <LoadingComponent />            
+        }
+        else if (currentAbsences.Count() == 0)
+        {
+            <RadzenText Text="There is no-one currently absent." />
+        }
+        else
+        {
+            foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
+            {
+                <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
+            }
+        }
+            </div>
+        </div>
+    <br/>
