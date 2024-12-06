@@ -108,7 +108,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.MondayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
@@ -116,7 +116,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.TuesdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@tuesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@tuesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
@@ -124,7 +124,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.WednesdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@wednesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@wednesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
@@ -132,7 +132,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.ThursdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@thursdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@thursdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
@@ -140,7 +140,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.FridayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@fridayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@fridayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
@@ -148,7 +148,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SaturdayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@saturdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@saturdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
@@ -156,7 +156,7 @@
                                 <RadzenNumeric TValue="double" Min="0" Step="0.25" Style="width: 100%" @bind-Value="entry.SundayHours" Change="UpdateDailyTotals" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@sundayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@sundayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Title="Total" MinWidth="10px" FormatString="{0:F2}" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center">
@@ -164,7 +164,7 @@
                                 <RadzenText Text="@entry.TotalHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </Template>
                             <FooterTemplate>
-                                <RadzenText Text="@($"{totalHours.ToString("F2")}")" Style="font-weight: bold;"/>
+                                <RadzenText Text="@($"{totalHours.ToString("F2")}")" Style="font-weight: bold; margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="9.5rem" MinWidth="10px" Title="Actions">
