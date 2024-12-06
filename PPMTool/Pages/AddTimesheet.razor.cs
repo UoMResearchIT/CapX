@@ -49,9 +49,17 @@ namespace PPMTool.Pages
         private double totalHours;
         private Role activeUserRole;
 
+        private Dictionary<string, string> DayColours = new Dictionary<string, string>();
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            DayColours.Add("mon", "#eee");
+            DayColours.Add("wed", "#eee");
+            DayColours.Add("fri", "#eee");
+            DayColours.Add("sat", "#fdfbd4");
+            DayColours.Add("sun", "#fdfbd4");
 
             // Get the person associated with the active user
             activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
@@ -360,6 +368,21 @@ namespace PPMTool.Pages
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
             UpdateDailyTotals();
+        }
+
+        private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
+        {
+            if (args != null)
+            {
+                if (args.Column.Property != null)
+                {
+                    string theDay = args.Column.Title.ToLower().Trim();
+                    if (DayColours.ContainsKey(theDay))
+                    {
+                        args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                    }
+                }
+            }
         }
     }
 }
