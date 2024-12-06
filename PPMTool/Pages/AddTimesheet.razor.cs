@@ -48,6 +48,14 @@ namespace PPMTool.Pages
         private double sundayHours;
         private double totalHours;
         private Role activeUserRole;
+        private Dictionary<string, string> DayColours = new Dictionary<string, string>
+        {
+            { "mon", "#EEE" },
+            { "wed", "#EEE" },
+            { "fri", "#EEE" },
+            { "sat", "#FDFBD4" },
+            { "sun", "#FDFBD4" }
+        };
 
         protected override void OnInitialized()
         {
@@ -360,6 +368,25 @@ namespace PPMTool.Pages
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
             UpdateDailyTotals();
+        }
+
+        /// <summary>
+        /// Fired when a cell of the datagrid is rendered. Used to set the colour styling of the cells.
+        /// </summary>
+        /// <param name="args"></param>
+        private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
+        {
+            if (args != null)
+            {
+                if (args.Column.Property != null)
+                {
+                    string theDay = args.Column.Title.ToLower().Trim();
+                    if (DayColours.ContainsKey(theDay))
+                    {
+                        args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                    }
+                }
+            }
         }
     }
 }
