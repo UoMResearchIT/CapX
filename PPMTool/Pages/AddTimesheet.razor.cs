@@ -48,18 +48,18 @@ namespace PPMTool.Pages
         private double sundayHours;
         private double totalHours;
         private Role activeUserRole;
-
-        private Dictionary<string, string> DayColours = new Dictionary<string, string>();
+        private Dictionary<string, string> DayColours = new Dictionary<string, string>
+        {
+            { "mon", "#EEE" },
+            { "wed", "#EEE" },
+            { "fri", "#EEE" },
+            { "sat", "#FDFBD4" },
+            { "sun", "#FDFBD4" }
+        };
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
-            DayColours.Add("mon", "#eee");
-            DayColours.Add("wed", "#eee");
-            DayColours.Add("fri", "#eee");
-            DayColours.Add("sat", "#fdfbd4");
-            DayColours.Add("sun", "#fdfbd4");
 
             // Get the person associated with the active user
             activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
@@ -370,6 +370,10 @@ namespace PPMTool.Pages
             UpdateDailyTotals();
         }
 
+        /// <summary>
+        /// Fired when a cell of the datagrid is rendered. Used to set the colour styling of the cells.
+        /// </summary>
+        /// <param name="args"></param>
         private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
         {
             if (args != null)
