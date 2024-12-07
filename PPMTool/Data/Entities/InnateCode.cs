@@ -7,11 +7,22 @@ namespace PPMTool.Data.Entities
     {
         public int InnateCodeId { get; set; }
 
+        /// <summary>
+        /// Code of the activity
+        /// </summary>
         [Required]
         public string ActivityCode { get; set; }
 
+        /// <summary>
+        /// Name of the activity
+        /// </summary>
         [Required]
         public string ActivityName { get; set; }
+
+        /// <summary>
+        /// Whether this code is active and can be booked to
+        /// </summary>
+        public bool IsActive { get; set; }
 
         /// <summary>
         /// The collection of innate code tasks that belong to this code
@@ -28,6 +39,10 @@ namespace PPMTool.Data.Entities
             return $"{ActivityCode} - {ActivityName}";
         }
 
+        /// <summary>
+        /// Required implementation to identify this object in the logs
+        /// </summary>
+        /// <returns></returns>
         public string GetSensibleObjectName()
         {
             return GetCodeAsString();
