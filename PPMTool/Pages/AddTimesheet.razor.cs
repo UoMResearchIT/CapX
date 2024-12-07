@@ -36,7 +36,7 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         private Timesheet timesheet;
-        private IEnumerable<InnateCode> innateCodes = new List<InnateCode>();
+        private IList<InnateCode> innateCodes = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTasks = new List<InnateCodeTask>();
         private Person activeUser;
         private double mondayHours;
@@ -90,6 +90,7 @@ namespace PPMTool.Pages
             // If no timesheet and intention is create
             if (timesheet == null && TimesheetId == -1)
             {
+                // Get the last timesheet to determine the date of this one
                 var lastTimesheetForThisUser = TimesheetService.GetLastForUser(Context, activeUser);
                 timesheet = new Timesheet()
                 {
@@ -115,7 +116,19 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = timesheet.TimesheetEntries.ToList();
                 UpdateDailyTotals();
-                innateCodes = InnateCodeService.GetAll(Context);
+
+                // Innate codes are limited to active ones initially
+                innateCodes = InnateCodeService.GetActive(Context).ToList();
+
+                // If this timesheet contains codes that are not in the dropdown list then add them in
+                foreach (var code in timesheet.TimesheetEntries.Select(x => x.InnateCodeTask.InnateCode))
+                {
+                    if (!innateCodes.Any(x => x.InnateCodeId == code.InnateCodeId))
+                    {
+                        Debug.WriteLine($"** Loaded timesheet has inactive code: {code.GetCodeAsString()} -- adding to dropdown...");
+                        innateCodes.Add(code);
+                    }
+                }
             }
 
             LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");

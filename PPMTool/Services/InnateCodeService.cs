@@ -98,5 +98,15 @@ namespace PPMTool.Services
             }
             return -1;
         }
+
+        /// <summary>
+        /// Get the active timesheet codes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal IEnumerable<InnateCode> GetActive(PPMToolContext context)
+        {
+            return context.InnateCodes.Where(x => x.IsActive);
+        }
     }
 }
