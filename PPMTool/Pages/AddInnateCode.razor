@@ -25,13 +25,17 @@
                 <ValidationSummary />
 
                 <div class="row">
-                    <div class="col">
+                    <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Activity Code" /><br />
                         <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityCode" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Activity Name" /><br />
                         <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityName" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Active" /><br />
+                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem"/>
                     </div>
                 </div>
 
