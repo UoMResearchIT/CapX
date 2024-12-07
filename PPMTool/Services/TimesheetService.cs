@@ -75,8 +75,7 @@ namespace PPMTool.Services
         public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
         {
             return context.Timesheets
-                .Where(t => t.Owner.PersonId == user.PersonId)
-                .ToList();
+                .Where(t => t.Owner.PersonId == user.PersonId);
         }
 
         /// <summary>
@@ -87,8 +86,7 @@ namespace PPMTool.Services
         public IEnumerable<Timesheet> GetMyStaffTimesheets(PPMToolContext context, Person user)
         {
             return context.Timesheets
-                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId))
-                .ToList();
+                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId));
         }
 
         /// <summary>
@@ -100,7 +98,8 @@ namespace PPMTool.Services
         {
             return context.Timesheets
                 .Include(t => t.TimesheetEntries)
-                .ToList();
+                .ThenInclude(x => x.InnateCodeTask)
+                .ThenInclude(x => x.InnateCode);
         }
 
         /// <summary>
