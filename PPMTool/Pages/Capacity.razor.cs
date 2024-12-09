@@ -21,6 +21,17 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class Capacity : BasePage
     {
+        /// <summary>
+        /// Represents a model for a particular chart
+        /// </summary>
+        public class ChartModel
+        {
+            public IList<ChartItem> ConfirmedChartItems { get; set; }
+            public IList<ChartItem> ProvisionalChartItems { get; set; }
+            public string ChartTitle { get; set; }
+            public ApexChartOptions<ChartItem> ChartOptions { get; set; }
+        }
+
         [Inject]
         private PersonService PersonService { get; set; }
 
@@ -141,10 +152,6 @@ namespace PPMTool.Pages
         private IEnumerable<Project> cachedProjects;
         private IEnumerable<Person> cachedPeople;
         private IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
-        private IList<List<ChartItem>> confirmedChartItems;
-        private IList<List<ChartItem>> provisionalChartItems;
-        private IList<string> chartTitles;
-        private IList<ApexChartOptions<ChartItem>> chartOptions;
         private List<Person> people;
         private List<Person> managers;
         private List<Person> filteredPeople;
@@ -162,6 +169,7 @@ namespace PPMTool.Pages
         private bool peopleChosen;
         private CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         private Task configureChartTask = null;
+        private IList<ChartModel> chartModels = new List<ChartModel>();
 
         protected override void OnInitialized()
         {
@@ -505,11 +513,8 @@ namespace PPMTool.Pages
                 Debug.WriteLine("** Running new configure task...");
 
                 // Initialise the dictionaries
-                confirmedChartItems = new List<List<ChartItem>>();
-                provisionalChartItems = new List<List<ChartItem>>();
+                chartModels.Clear();
                 groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
-                chartTitles = new List<string>();
-                chartOptions = new List<ApexChartOptions<ChartItem>>();
                 IEnumerable<Project> validProjects = cachedProjects;
 
                 // Need some people for this to work
@@ -584,15 +589,13 @@ namespace PPMTool.Pages
                     }
 
                     // Add data
-                    confirmedChartItems.Add(chartSourceTemp.Where(x => !x.IsHatched).ToList());
-                    provisionalChartItems.Add(chartSourceTemp.Where(x => x.IsHatched).ToList());
-
-                    // Chart title
-                    var chartTitle = $"Load for All {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
-                    chartTitles.Add(chartTitle);
-
-                    // Chart options
-                    chartOptions.Add(BuildNewChartOptionsObject());
+                    chartModels.Add(new ChartModel
+                    {
+                        ChartTitle = $"Load for All {(managerChosen ? " with manager " + ChosenManager.Name : "")}",
+                        ChartOptions = BuildNewChartOptionsObject(),
+                        ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched).ToList(),
+                        ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched).ToList()
+                    });
                 }
 
                 // -------------- PROJECT MODE -------------- //
@@ -670,93 +673,92 @@ namespace PPMTool.Pages
                             out var provisionalChartItemsComplete
                         );
 
-                        // Add completed chart source to dictionary
-                        confirmedChartItems.Add(confirmedChartItemsComplete);
-                        provisionalChartItems.Add(provisionalChartItemsComplete);
-
-                        // Title
-                        var chartTitle = $"Load for {name} {(managerChosen ? " with manager " + ChosenManager.Name : "")}";
-                        chartTitles.Add(chartTitle);
-
-                        // Options
-                        chartOptions.Add(BuildNewChartOptionsObject());
+                        // Add data
+                        chartModels.Add(new ChartModel
+                        {
+                            ChartTitle = $"Load for {name} {(managerChosen ? " with manager " + ChosenManager.Name : "")}",
+                            ChartOptions = BuildNewChartOptionsObject(),
+                            ConfirmedChartItems = confirmedChartItemsComplete,
+                            ProvisionalChartItems = provisionalChartItemsComplete
+                        });
                     }
                 }
 
                 Debug.WriteLine($"** Done. Unfunded = {IncludeUnFunded} | Leavers = {IncludeLeavers} | Finished = {IncludeFinished}.");
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
-                var allItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).Where(x => x.Value1 != 0);
+                var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
                 long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
-                foreach (var opt in chartOptions)
+                foreach (var opt in chartModels.Select(x => x.ChartOptions))
                 {
                     opt.Xaxis.Min = !queryActive ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : QueryStartDate.ToUnixTimeMilliseconds();
                     opt.Xaxis.Max = !queryActive ? endDateForChartNoQuery : queryEndDate.ToUnixTimeMilliseconds();
                 }
-                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartOptions.FirstOrDefault()?.Xaxis?.Min} to {chartOptions.FirstOrDefault()?.Xaxis?.Max}");
+                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Min} to {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Max}");
 
                 return Task.CompletedTask;
 
             }), configureChartTaskCancellationTokenSource.Token)
-                .ContinueWith(task =>
+            .ContinueWith(task =>
+            {
+                Debug.WriteLine($"** ...task complete. Status = {task.Status}");
+
+                if (presentQueryResults)
                 {
-                    Debug.WriteLine($"** ...task complete. Status = {task.Status}");
-
-                    if (presentQueryResults)
+                    // Convert the chart results to capacity query results
+                    var results = new List<CapacityQueryItem>();
+                    var mergedItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems));
+                    foreach (var item in mergedItems)
                     {
-                        // Convert the chart results to capacity query results
-                        var results = new List<CapacityQueryItem>();
-                        var mergedItems = confirmedChartItems.Concat(provisionalChartItems).SelectMany(x => x).ToList();
-                        foreach (var item in mergedItems)
+                        // Get person from item label
+                        var person = people.FirstOrDefault(p => p.Name == item.Label);
+                        if (person == null)
                         {
-                            // Get person from item label
-                            var person = people.FirstOrDefault(p => p.Name == item.Label);
-                            if (person == null)
-                            {
-                                Debug.WriteLine($"** Couldn't find person {item.Label}");
-                                continue;
-                            }
-
-                            // Availability of individual is value 2 in the chart item
-                            var availabilityFTE = item.Value2;
-
-                            // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
-                            var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
-
-                            // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-                            if (item.StartDate != item.EndDate && unassignedFTE > 0)
-                            {
-                                // Add to range
-                                results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
-                            }
+                            Debug.WriteLine($"** Couldn't find person {item.Label}");
+                            continue;
                         }
 
-                        // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
-                        fullMatch = OrganiseResults(results
-                            .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-                        partialMatchPercent = OrganiseResults(results
-                            .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-                        partialMatchDuration = OrganiseResults(results
-                            .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-                        partialMatchBoth = OrganiseResults(results
-                            .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+                        // Availability of individual is value 2 in the chart item
+                        var availabilityFTE = item.Value2;
 
-                        // Results available
-                        queryResultsAvailable = results.Count() > 0;
+                        // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
+                        var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
 
-                        LogInformation("Query results generated.");
+                        // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
+                        if (item.StartDate != item.EndDate && unassignedFTE > 0)
+                        {
+                            // Add to range
+                            results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
+                        }
                     }
 
-                    InvokeAsync(() =>
-                    {
-                        // Reset the state
-                        Loading = false;
-                        configureChartTask = null;
-                        StateHasChanged();
-                    });
+                    // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
+                    fullMatch = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+                    partialMatchPercent = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
+                    partialMatchDuration = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
+                    partialMatchBoth = OrganiseResults(results
+                        .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
 
-                    Debug.WriteLine($"** There are {chartTitles.Count} chart(s)!");
+                    // Results available
+                    queryResultsAvailable = results.Count() > 0;
+
+                    LogInformation("Query results generated.");
+                }
+
+                InvokeAsync(() =>
+                {
+                    // Reset the state
+                    Debug.WriteLine($"** Continue with task complete!");
+                    Loading = false;
+                    configureChartTask = null;
+                    StateHasChanged();
                 });
+
+                Debug.WriteLine($"** There are {chartModels.Count} chart(s)!");
+            });
         }
 
         /// <summary>
@@ -799,7 +801,7 @@ namespace PPMTool.Pages
 
                 // Go through all the chart options objects and for all not associated with the chart making this call
                 // and whose values of the X limits differ from those give can then be updated.
-                foreach (var opt in chartOptions)
+                foreach (var opt in chartModels.Select(x => x.ChartOptions))
                 {
                     if (opt != zoomedData.Chart.Options)
                     {
