@@ -14,15 +14,15 @@
 
 <RadzenComponents />
 <RadzenLayout>
-    <RadzenHeader Style="background-color: #609; padding-top: 0.2rem; padding-bottom: 0.2rem;">
+    <RadzenHeader Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
                 <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
-                <RadzenText TextStyle="TextStyle.DisplayH5" style="margin-bottom: 0; color: white">CapX - RSE Operational Management Tool</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin-bottom: 0; color: white">CapX - RSE Operational Management Tool</RadzenText>
             </RadzenStack>
             @if (Environment.IsDevelopment())
             {
-                <RadzenText TextStyle="TextStyle.DisplayH5" style="color: var(--rz-warning); margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" Style="color: white; margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
             }
             <LoginView />
         </RadzenStack>
@@ -92,7 +92,7 @@
             @Body
         </div>
     </RadzenBody>
-    <RadzenFooter Style="background-color: #609; padding-top: 0.2rem; padding-bottom: 0.2rem;">
+    <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="3rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0; color: white" Text="@versionString" />
             <AuthorizeView>
