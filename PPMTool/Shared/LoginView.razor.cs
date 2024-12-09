@@ -83,7 +83,7 @@ namespace PPMTool.Shared
         {
             loginLink = $"/Account/Login?returnUrl={Navigation?.Uri}";
 #if LOCAL
-            loginLink += $"&role={loginAs.CASUserName}";
+            loginLink += $"&username={loginAs.CASUserName}";
 #endif
             Debug.WriteLine($"** Login using {loginLink}");
         }
