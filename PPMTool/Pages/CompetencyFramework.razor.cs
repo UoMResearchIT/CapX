@@ -19,9 +19,6 @@ namespace PPMTool.Pages
     public partial class CompetencyFramework : BasePage
     {
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private PersonService PersonService { get; set; }
 
         [Inject]
@@ -55,10 +52,10 @@ namespace PPMTool.Pages
             // Check user permissions
             var role = RolesService.GetByUsername(Context, ActiveUserName);
             userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
-            activeUserId = role?.Person.PersonId ?? 0;
+            activeUserId = ActiveUser?.PersonId ?? 0;
 
             // Get the active user by default
-            selectedPerson = role?.Person;
+            selectedPerson = ActiveUser;
 
             // Get starting lists from the DB
             people = PersonService.GetAll(Context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);

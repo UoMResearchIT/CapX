@@ -47,7 +47,7 @@
                         <h2>Timesheet Entries</h2>
                     </div>
                     <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)) />
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
@@ -169,13 +169,13 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="9.5rem" MinWidth="10px" Title="Actions">
                             <Template Context="entry">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                             </Template>
                             <EditTemplate Context="entry">
-                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
-                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -185,7 +185,7 @@
                 <div class="row">
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
-                            <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true)" />
+                            <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                         </RadzenStack>
                     </div>
                 </div>
@@ -194,17 +194,17 @@
                 <div class="col">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                         <div>
-                            @if ((timesheet?.IsLineManager(activeUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
+                            @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(activeUser) ?? true))" Style="margin-left: 0.5rem;" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { timesheet.Status = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-left: 0.5rem;" />
                             }
-                            @if ((timesheet?.IsLineManagerButNotOwner(activeUser) ?? false) || (timesheet?.IsSelfApprover(activeUser) ?? false))
+                            @if ((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(!timesheet?.IsPermittedToApproveOrReject(activeUser) ?? true)" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true)" />
                             }
-                            @if ((timesheet?.IsOwner(activeUser) ?? false) && !(timesheet?.IsLineManager(activeUser) ?? false))
+                            @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(activeUser) ?? true))" Style="margin-left: 0.5rem;" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { timesheet.Status = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-left: 0.5rem;" />
                             }
                         </div>
                     </RadzenStack>

@@ -17,9 +17,6 @@ namespace PPMTool.Pages
     public partial class ManageAccess : DataGridPage<Role>
     {
         [Inject]
-        public RolesService RolesService { get; set; }
-
-        [Inject]
         public PersonService PersonService { get; set; }
 
         private List<Person> people;

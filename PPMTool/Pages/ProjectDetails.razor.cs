@@ -32,9 +32,6 @@ namespace PPMTool.Pages
         private NoteService NoteService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
         [Inject]
@@ -103,7 +100,6 @@ namespace PPMTool.Pages
         private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
         private bool isCurrentUserFollowing;
-        private Person activeUser;
         private bool isProjectManager;
         private bool groupLinkedTasks = false;
         private ApexChart<GanttBlock> gantt;
@@ -139,7 +135,6 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             var role = RolesService.GetByUsername(Context, ActiveUserName);
-            activeUser = role?.Person;
             allProjects = ProjectService.GetAll(Context).ToList();
 
             cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
@@ -197,9 +192,9 @@ namespace PPMTool.Pages
                 actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
                 fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
                 count = allTasks.Count;
-                isCurrentUserFollowing = project.Followers.Any(x => x.Name == activeUser?.Name) ||
-                    project.ProjectManager?.Name == activeUser?.Name;
-                isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && activeUser == project?.ProjectManager);
+                isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
+                    project.ProjectManager?.Name == ActiveUser?.Name;
+                isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
 
                 ganttChartOptions = new ApexChartOptions<GanttBlock>
                 {
@@ -422,17 +417,17 @@ namespace PPMTool.Pages
         /// </summary>
         private void ToggleFollowing()
         {
-            if (activeUser == null) return;
-            if (project.Followers.Contains(activeUser))
+            if (ActiveUser == null) return;
+            if (project.Followers.Contains(ActiveUser))
             {
-                project.Followers.Remove(activeUser);
+                project.Followers.Remove(ActiveUser);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
                 LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
-                project.Followers.Add(activeUser);
+                project.Followers.Add(ActiveUser);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
                 LogInformation($"Now following project {project.GetFullName()}");

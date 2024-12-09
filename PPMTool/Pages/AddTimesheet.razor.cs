@@ -29,15 +29,11 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
         private Timesheet timesheet;
         private IList<InnateCode> innateCodes = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTasks = new List<InnateCodeTask>();
-        private Person activeUser;
         private double mondayHours;
         private double tuesdayHours;
         private double wednesdayHours;
@@ -62,13 +58,12 @@ namespace PPMTool.Pages
 
             // Get the person associated with the active user
             activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-            activeUser = activeUserRole.Person;
 
             // Only superusers can delete a timesheet
             EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
 
             // Handle if the user is not found
-            if (activeUser == null)
+            if (ActiveUser == null)
             {
                 LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
                 return;
@@ -90,10 +85,10 @@ namespace PPMTool.Pages
             if (timesheet == null && TimesheetId == -1)
             {
                 // Get the start date for the new timesheet
-                var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, activeUser);
+                var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
                 timesheet = new Timesheet()
                 {
-                    Owner = activeUser,
+                    Owner = ActiveUser,
                     StartDate = nextTimesheetStartDate
                 };
 
@@ -139,8 +134,8 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool IsPermittedToViewTimesheetDetailsPage()
         {
-            return (timesheet?.IsOwner(activeUser) ?? false) ||
-                (timesheet?.IsLineManager(activeUser) ?? false) ||
+            return (timesheet?.IsOwner(ActiveUser) ?? false) ||
+                (timesheet?.IsLineManager(ActiveUser) ?? false) ||
                 activeUserRole.RoleType == RoleType.Superuser;
         }
 
@@ -278,7 +273,7 @@ namespace PPMTool.Pages
             if (timesheet.Status != TimesheetStatus.New)
             {
                 timesheet.DateStatusChanged = DateTime.Now;
-                timesheet.StatusChangedBy = activeUser;
+                timesheet.StatusChangedBy = ActiveUser;
             }
 
             // Save to database

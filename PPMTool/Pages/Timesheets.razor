@@ -49,7 +49,7 @@
                 <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                     <Template Context="timesheet">
                         <TimesheetDashboardButtonComponent Timesheet="@timesheet"
-                                                           ActiveUser="@activeUser"
+                                                           ActiveUser="@ActiveUser"
                                                            EditTimesheet="@EditTimesheet"
                                                            ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                     </Template>
@@ -96,7 +96,7 @@
                     <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="timesheet">
                             <TimesheetDashboardButtonComponent Timesheet="@timesheet"
-                                                               ActiveUser="@activeUser"
+                                                               ActiveUser="@ActiveUser"
                                                                EditTimesheet="@EditTimesheet"
                                                                ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                         </Template>
