@@ -15,34 +15,38 @@
     <div class="card">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
             <RadzenDropDown @bind-Value=@chosenPeople
-            Data=@filteredPeople
-            TextProperty="Name"
-            ValueProperty="Name"
-            Multiple=true
-            AllowClear=true
-            Placeholder="Filter RSE"
-            Chips=true
-            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-            FilterOperator="StringFilterOperator.Contains"
-            AllowFiltering="true"
-            Style="width: 100%; max-width: 400px;"
-            Change="@(args => PeopleSelectionChanged(args))"
-            LoadData="@LoadFilteredPeople"
-            Disabled=@(!ReadOrEditAuthorised || Loading) />
+                            Data=@filteredPeople
+                            TextProperty="Name"
+                            ValueProperty="Name"
+                            Multiple=true
+                            AllowClear=true
+                            Placeholder="Filter RSE"
+                            Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterOperator="StringFilterOperator.Contains"
+                            AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;"
+                            Change="@(args => PeopleSelectionChanged(args))"
+                            LoadData="@LoadFilteredPeople"
+                            Disabled=@(!ReadOrEditAuthorised || Loading) />
+            @if (HasStaffInList())
+            {
+                <RadzenButton Text="My Staff" Click="FilterToMyStaff" />
+            }
             <RadzenDropDown @bind-Value=@chosenManager
-            Data=@filteredManagers
-            TextProperty="Name"
-            Multiple=false
-            AllowClear=true
-            Placeholder="Filter Manager"
-            Chips=true
-            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-            FilterOperator="StringFilterOperator.Contains"
-            AllowFiltering="true"
-            Style="width: 100%; max-width: 400px;"
-            Change="@(args => ManagerSelectionChanged(args))"
-            LoadData="@LoadFilteredManagers"
-            Disabled=@(!ReadOrEditAuthorised || Loading) />
+                            Data=@filteredManagers
+                            TextProperty="Name"
+                            Multiple=false
+                            AllowClear=true
+                            Placeholder="Filter Project Manager"
+                            Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterOperator="StringFilterOperator.Contains"
+                            AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;"
+                            Change="@(args => ManagerSelectionChanged(args))"
+                            LoadData="@LoadFilteredManagers"
+                            Disabled=@(!ReadOrEditAuthorised || Loading) />
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
                 <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
@@ -54,6 +58,12 @@
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Finished:
                 <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" />
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />
+                <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead(6))" />
+                <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead(9))" />
+                <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead(12))" />
             </RadzenStack>
         </RadzenStack>
     </div>

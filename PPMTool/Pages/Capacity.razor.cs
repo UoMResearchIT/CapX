@@ -475,6 +475,11 @@ namespace PPMTool.Pages
             ConfigureChartSource(true);
         }
 
+        /// <summary>
+        /// Method to order the capacity query results
+        /// </summary>
+        /// <param name="results"></param>
+        /// <returns></returns>
         private List<CapacityQueryItem> OrganiseResults(IEnumerable<CapacityQueryItem> results)
         {
             return results
@@ -793,24 +798,35 @@ namespace PPMTool.Pages
             return validProjects;
         }
 
+        /// <summary>
+        /// Callback when an item is zoomed
+        /// </summary>
+        /// <param name="zoomedData"></param>
         private void OnChartZoomed(ZoomedData<ChartItem> zoomedData)
         {
             if (zoomedData != null)
             {
                 Debug.WriteLine($"** {zoomedData.Chart.ChartId} Zoomed {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+                UpdateZoomAcrossCharts(zoomedData.Chart.Options, zoomedData.XAxis.Min, zoomedData.XAxis.Max);
+            }
+        }
 
-                // Go through all the chart options objects and for all not associated with the chart making this call
-                // and whose values of the X limits differ from those give can then be updated.
-                foreach (var opt in chartModels.Select(x => x.ChartOptions))
+        /// <summary>
+        /// Updates all the chart models that do not have the matching options object with the min and max provided
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        private void UpdateZoomAcrossCharts(ApexChartOptions<ChartItem> options, object min, object max)
+        {
+            // Go through all the chart options objects and for all not associated with the chart making this call
+            // and whose values of the X limits differ from those give can then be updated.
+            foreach (var opt in chartModels.Select(x => x.ChartOptions))
+            {
+                if (opt != options)
                 {
-                    if (opt != zoomedData.Chart.Options)
-                    {
-                        if (opt.Xaxis.Min as decimal? != zoomedData.XAxis.Min || opt.Xaxis.Max as decimal? != zoomedData.XAxis.Max)
-                        {
-                            Debug.WriteLine($"** Updating zoom for {opt.Chart.Id}: {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
-                            JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, zoomedData.XAxis.Min, zoomedData.XAxis.Max);
-                        }
-                    }
+                    Debug.WriteLine($"** Updating zoom for {opt.Chart.Id}: {min} to {max}");
+                    JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, min, max);
                 }
             }
         }
@@ -1037,6 +1053,40 @@ namespace PPMTool.Pages
                 },
                 tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
+        }
+
+        /// <summary>
+        /// Quickly select those people in the available list that the active user manages
+        /// </summary>
+        private void FilterToMyStaff()
+        {
+            ChosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
+            PeopleSelectionChanged(ChosenPeople);
+        }
+
+        /// <summary>
+        /// Does the active user manage staff that are in the available list
+        /// </summary>
+        /// <returns></returns>
+        private bool HasStaffInList()
+        {
+            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.PersonId);
+        }
+
+        /// <summary>
+        /// Method to automatically zoom the charts to the number of months in the future
+        /// </summary>
+        /// <param name="numberOfMonths"></param>
+        private void SetZoomToMonthsAhead(int numberOfMonths)
+        {
+            var zoomTo = DateTime.Today.AddMonths(numberOfMonths).ToUnixTimeMilliseconds();
+            var opt = chartModels.FirstOrDefault()?.ChartOptions;
+            if (opt != null)
+            {
+                Debug.WriteLine($"** Updating zoom for {opt.Chart.Id}: {opt.Xaxis.Min} to {zoomTo}");
+                JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, opt.Xaxis.Min, zoomTo);
+                UpdateZoomAcrossCharts(opt, opt.Xaxis.Min, zoomTo);
+            }
         }
     }
 }
