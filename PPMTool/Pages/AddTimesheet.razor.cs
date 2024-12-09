@@ -58,7 +58,6 @@ namespace PPMTool.Pages
 
             // Get the person associated with the active user
             activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-            ActiveUser = activeUserRole.Person;
 
             // Only superusers can delete a timesheet
             EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;

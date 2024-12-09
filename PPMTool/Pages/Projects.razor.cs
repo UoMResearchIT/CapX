@@ -58,7 +58,7 @@ namespace PPMTool.Pages
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            userRole = RoleService.GetByUsername(Context, uname);
+            userRole = RolesService.GetByUsername(Context, uname);
 
             // Log any time there is no role returned?
             if (userRole == null)
