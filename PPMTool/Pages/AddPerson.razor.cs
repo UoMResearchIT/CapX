@@ -11,7 +11,7 @@ using Radzen;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class AddPerson : BasePageWithLineManagerCheck
+    public partial class AddPerson : BasePage
     {
         [Inject]
         private PersonService PersonService { get; set; }

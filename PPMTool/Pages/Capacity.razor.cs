@@ -25,16 +25,10 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private RolesService RoleService { get; set; }
-
-        [Inject]
         private ProjectService ProjectService { get; set; }
 
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
-
-        [Inject]
-        private RolesService RolesService { get; set; }
 
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
@@ -233,7 +227,7 @@ namespace PPMTool.Pages
 
             // Choose the person automatically if not a manager    
             // Look up the username
-            var role = RoleService.GetByUsername(Context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             ChosenPeople = new List<string>
             {
                 role.GetName()

@@ -19,12 +19,8 @@ namespace PPMTool.Pages
         private TimesheetService TimesheetService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
-        private Person activeUser;
         private Role activeUserRole;
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
@@ -69,9 +65,6 @@ namespace PPMTool.Pages
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
             activeUserRole = RolesService.GetByUsername(Context, uname);
-
-            // Get the person associated with the active user
-            activeUser = activeUserRole?.Person;
 
             // Log any time there is no role returned?
             if (activeUserRole == null)

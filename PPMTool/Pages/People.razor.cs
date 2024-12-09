@@ -12,7 +12,7 @@ using Radzen;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser,Developer")]
-    public partial class People : BasePageWithLineManagerCheck
+    public partial class People : BasePage
     {
         [Inject]
         private PersonService PersonService { get; set; }
@@ -69,11 +69,8 @@ namespace PPMTool.Pages
 
             if (!EditAuthorised)
             {
-                // Look up the username
-                var role = RolesService.GetByUsername(Context, AuthenticationState.User.Identity.Name.Trim().ToLower());
-
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
+                loadedPeople = loadedPeople.Where(x => x == ActiveUser).ToList();
             }
 
             // Set the table empty flag
