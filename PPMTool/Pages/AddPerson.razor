@@ -1,5 +1,5 @@
 ﻿@page "/addperson/{PersonId:int}"
-@inherits BasePage
+@inherits BasePageWithLineManagerCheck
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 <PageTitle>Add Person - CapX</PageTitle>
@@ -21,7 +21,7 @@
                     @if (PersonId > 0)
                     {
                         <div class="col-auto" style="align-content: center">
-                            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" Disabled=!EditAuthorised />
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
                         </div>
                         <div class="col-auto" style="align-content: center">
                             <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
@@ -78,24 +78,23 @@
                             <RadzenIcon Icon="search" />
                         </div>
                         <div class="col flexbox pr-3 pl-0">
-                        <RadzenAutoComplete
-                            @bind-Value=@autoCompleteText
-                            Placeholder="Search for Skill Tags to Add"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            Data=@availableTags
-                            TextProperty="Name"
-                            Change=@OnChange
-                            Style="width:100%" />
+                            <RadzenAutoComplete @bind-Value=@autoCompleteText
+                                                Placeholder="Search for Skill Tags to Add"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                Data=@availableTags
+                                                TextProperty="Name"
+                                                Change=@OnChange
+                                                Style="width:100%"
+                                                Disabled=!EditAuthorised  />
                         </div>
                     </div>
                     <div class="row">
-                        <RadzenDataList
-                            AllowVirtualization=true
-                            class="full-height-list"
-                            WrapItems="false"
-                            AllowPaging="false"
-                            Data="@chosenTags"
-                            TItem="SkillTag">
+                        <RadzenDataList AllowVirtualization=true
+                                        class="full-height-list"
+                                        WrapItems="false"
+                                        AllowPaging="false"
+                                        Data="@chosenTags"
+                                        TItem="SkillTag">
                             <Template Context="tag">
                                 <div class="row flexbox p-0">
                                     <div class="col">
@@ -105,7 +104,7 @@
                                         @($"{tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0} other(s) with this tag")
                                     </div>
                                     <div class="col-auto">
-                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Clear"))" Disabled=!EditAuthorised />
                                     </div>
                                 </div>
                             </Template>
@@ -118,7 +117,7 @@
                             <h3>Workload Model Changes</h3>
                         </div>
                         <div class="col-auto">
-                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" />
+                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAvailability())" Disabled=!EditAuthorised />
                         </div>
                     </div>
                     <hr />
@@ -175,7 +174,7 @@
                             <h3>Absence</h3>
                         </div>
                         <div class="col-auto">
-                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" />
+                            <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" Disabled=!EditAuthorised />
                         </div>
                     </div>
                     <hr />
@@ -205,7 +204,7 @@
             <ValidationSummary />
             <div class="row">
                 <div class="col">
-                    <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled=!EditAuthorised />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                 </div>
             </div>

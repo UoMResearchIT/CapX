@@ -11,13 +11,10 @@ using Radzen;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public partial class AddPerson : BasePage
+    public partial class AddPerson : BasePageWithLineManagerCheck
     {
         [Inject]
         private PersonService PersonService { get; set; }
-
-        [Inject]
-        private RolesService RolesService { get; set; }
 
         [Inject]
         private TagService TagService { get; set; }
@@ -63,7 +60,11 @@ namespace PPMTool.Pages
                 // Update the chosen tags
                 if (personModel != null)
                 {
+                    // Update chosen tags
                     chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
+
+                    // Edit should only be authorised for the line manager or superusers
+                    EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
                 }
             }
 
