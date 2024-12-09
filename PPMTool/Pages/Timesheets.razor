@@ -23,6 +23,9 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
         </div>
     </div>
+    <div class="row">
+        <RadzenText Text="@($"Next timesheet to add is for {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" />
+    </div>
     <hr />
     <div class="card">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">

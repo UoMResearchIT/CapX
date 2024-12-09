@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
@@ -27,6 +28,10 @@ namespace PPMTool.Pages
         private Role activeUserRole;
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
+        private DateTime dateNextTimesheet;
+        private List<Timesheet> myTimesheets;
+        private List<Timesheet> myStaffTimesheets;
+
         public bool ShowAllMyTimesheets
         {
             get => showAllMyTimesheets;
@@ -55,9 +60,6 @@ namespace PPMTool.Pages
                 }
             }
         }
-
-        private List<Timesheet> myTimesheets;
-        private List<Timesheet> myStaffTimesheets;
 
         protected override void OnInitialized()
         {
@@ -101,6 +103,9 @@ namespace PPMTool.Pages
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
             myTimesheets = TimesheetService.GetMyTimesheets(Context, activeUserRole.Person).OrderByDescending(t => t.StartDate).ToList();
+
+            // Set the start date for the next one
+            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, activeUserRole.Person);
 
             if (!ShowAllMyTimesheets)
             {
