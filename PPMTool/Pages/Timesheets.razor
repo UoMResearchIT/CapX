@@ -8,18 +8,13 @@
 @using DotNetExtensions
 <PageTitle>Timesheets - CapX</PageTitle>
 
-<style>
-    .rz-text-body2 {
-        background-color: yellow;
-    }
-</style>
-
 <div class="container">
     <div class="row">
         <div class="col-auto mr-auto">
             <h1>My Timesheets</h1>
+            <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
         </div>
-        <div class="col-auto">
+        <div class="col-auto align-content-center">
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
         </div>
     </div>

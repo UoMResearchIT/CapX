@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using FluentDateTime;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -124,17 +126,18 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Returns the last timesheet in the DB for the person supplied
+        /// Returns the start date of the next timesheet for the user.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="owner"></param>
         /// <returns></returns>
-        internal Timesheet GetLastForUser(PPMToolContext context, Person owner)
+        internal DateTime GetNextTimesheetStartDateForUser(PPMToolContext context, Person owner)
         {
-            return context.Timesheets
+            var lastTimesheet = context.Timesheets
                 .Where(t => t.Owner.PersonId == owner.PersonId)
                 .OrderByDescending(t => t.StartDate)
                 .FirstOrDefault();
+            return lastTimesheet?.StartDate.AddDays(7).Date ?? owner.StartDate.Date.FirstDayOfWeek();
         }
 
         /// <summary>

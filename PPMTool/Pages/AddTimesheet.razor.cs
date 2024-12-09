@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentDateTime;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -90,12 +89,12 @@ namespace PPMTool.Pages
             // If no timesheet and intention is create
             if (timesheet == null && TimesheetId == -1)
             {
-                // Get the last timesheet to determine the date of this one
-                var lastTimesheetForThisUser = TimesheetService.GetLastForUser(Context, activeUser);
+                // Get the start date for the new timesheet
+                var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, activeUser);
                 timesheet = new Timesheet()
                 {
                     Owner = activeUser,
-                    StartDate = lastTimesheetForThisUser?.StartDate.AddDays(7).Date ?? activeUser.StartDate.Date.FirstDayOfWeek()
+                    StartDate = nextTimesheetStartDate
                 };
 
                 // Immediately save the timesheet to the DB
