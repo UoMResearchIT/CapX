@@ -26,7 +26,7 @@
                 {
                     <h1>Edit Timesheet</h1>
                 }
-                <RadzenText Text="@($"{timesheet.StartDate.ToShortDateString()} - {timesheet.StartDate.AddDays(6).ToShortDateString()}")" TextStyle="TextStyle.Subtitle1" />
+                <RadzenText Text="@($"{timesheet.StartDate.ToLongDateString()} - {timesheet.StartDate.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
                 <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
             </div>
             @if (EditAuthorised)
