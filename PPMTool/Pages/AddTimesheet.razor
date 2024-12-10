@@ -210,7 +210,7 @@
                             }
                             @if ((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true)" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { timesheet.Status = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
                             }
                             @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                             {
