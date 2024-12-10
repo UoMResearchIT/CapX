@@ -23,7 +23,7 @@ namespace PPMTool.Pages
         {
             public CapXNotificationMessage()
             {
-                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%";
+                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -120%); width: 100%";
                 Duration = 4000;
                 Severity = NotificationSeverity.Error;
             }
@@ -139,7 +139,7 @@ namespace PPMTool.Pages
             TooltipService.Open(elementReference, message, options);
         }
 
-        protected void ShowNotification(NotificationMessage message)
+        protected void ShowNotification(CapXNotificationMessage message)
         {
             NotificationService.Notify(message);
         }

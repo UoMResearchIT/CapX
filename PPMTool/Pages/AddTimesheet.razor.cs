@@ -417,42 +417,57 @@ namespace PPMTool.Pages
         private void ValidateNumericInput(double value, TimesheetEntry entry, string propertyName)
         {
             // Ensure the value is within the range and adheres to the step
+            var hasBeenCorrected = false;
+            var idealValue = Math.Round(value / entryStep) * entryStep;
             if (value < entryMinimum)
             {
                 value = entryMinimum;
+                hasBeenCorrected = true;
             }
-            else
+            else if (idealValue != value)
             {
-                value = Math.Round(value / entryStep) * entryStep;
+                value = idealValue;
+                hasBeenCorrected = true;
             }
 
             // Update the property with the validated value
-            switch (propertyName)
+            if (hasBeenCorrected)
             {
-                case nameof(entry.MondayHours):
-                    entry.MondayHours = value;
-                    break;
-                case nameof(entry.TuesdayHours):
-                    entry.TuesdayHours = value;
-                    break;
-                case nameof(entry.WednesdayHours):
-                    entry.WednesdayHours = value;
-                    break;
-                case nameof(entry.ThursdayHours):
-                    entry.ThursdayHours = value;
-                    break;
-                case nameof(entry.FridayHours):
-                    entry.FridayHours = value;
-                    break;
-                case nameof(entry.SaturdayHours):
-                    entry.SaturdayHours = value;
-                    break;
-                case nameof(entry.SundayHours):
-                    entry.SundayHours = value;
-                    break;
+                switch (propertyName)
+                {
+                    case nameof(entry.MondayHours):
+                        entry.MondayHours = value;
+                        break;
+                    case nameof(entry.TuesdayHours):
+                        entry.TuesdayHours = value;
+                        break;
+                    case nameof(entry.WednesdayHours):
+                        entry.WednesdayHours = value;
+                        break;
+                    case nameof(entry.ThursdayHours):
+                        entry.ThursdayHours = value;
+                        break;
+                    case nameof(entry.FridayHours):
+                        entry.FridayHours = value;
+                        break;
+                    case nameof(entry.SaturdayHours):
+                        entry.SaturdayHours = value;
+                        break;
+                    case nameof(entry.SundayHours):
+                        entry.SundayHours = value;
+                        break;
+                }
+
+                // Show a notification to the user that their value has been corrected
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Value Adjusted",
+                    Detail = $"Value must be greater than {entryMinimum} and in steps of {entryStep}. Value has been corrected."
+                });
             }
 
-            // Update the daily totals
+            // Update the daily totals regardless of correction
             UpdateDailyTotals();
         }
     }
