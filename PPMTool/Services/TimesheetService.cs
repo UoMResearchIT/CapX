@@ -179,5 +179,21 @@ namespace PPMTool.Services
             context.TimesheetEntries.Remove(entry);
             if (commitChanges) context.SaveChanges();
         }
+
+        /// <summary>
+        /// Gets all the timesheets with entries and tasks owned by person and in range [startRange, endRange)
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="startRange"></param>
+        /// <param name="endRange"></param>
+        /// <returns></returns>
+        internal IEnumerable<Timesheet> GetAllTimesheetsForPersonInDateRange(PPMToolContext context, Person person, DateTime startRange, DateTime endRange)
+        {
+            return context.Timesheets
+                .Include(t => t.TimesheetEntries)
+                .ThenInclude(x => x.InnateCodeTask)
+                .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate >= startRange && x.StartDate < endRange);
+        }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -27,6 +28,7 @@ namespace PPMTool.Pages
         private DateTime dateNextTimesheet;
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
+        private TaskQueue taskQueue = new TaskQueue();
 
         public bool ShowAllMyTimesheets
         {
@@ -37,7 +39,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-mine", showAllMyTimesheets);
-                    LoadData();
+                    EnqueueLoadData();
                 }
             }
         }
@@ -52,7 +54,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyStaffTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-reports", showAllMyStaffTimesheets);
-                    LoadData();
+                    EnqueueLoadData();
                 }
             }
         }
@@ -60,7 +62,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            Loading = true;
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
@@ -84,15 +85,29 @@ namespace PPMTool.Pages
             if (temp != null) ShowAllMyTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
-            LoadData();
+            EnqueueLoadData();
+        }
+
+        /// <summary>
+        /// Put a load data request into the queue
+        /// </summary>
+        private void EnqueueLoadData()
+        {
+            _ = taskQueue.Enqueue(async () =>
+            {
+                await LoadData();
+            });
         }
 
         /// <summary>
         /// Load in the timesheet data from the service
         /// </summary>
         /// <param name="showAll"></param>
-        private void LoadData()
+        private async Task LoadData()
         {
+            Loading = true;
+            await InvokeAsync(StateHasChanged);
+
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
             myTimesheets = TimesheetService.GetMyTimesheets(Context, activeUserRole.Person).OrderByDescending(t => t.StartDate).ToList();
@@ -128,7 +143,7 @@ namespace PPMTool.Pages
             }
 
             Loading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
 
         /// <summary>

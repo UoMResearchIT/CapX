@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -8,280 +7,180 @@ using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class WorkloadModelAnalysis : BasePage
     {
-        private class TimesheetReportLine
-        {
-            public string Resource { get; set; }
-            public string Activity { get; set; }
-            public string Task { get; set; }
-            public Duty Duty { get; set; }
-            public IList<float> WeeklyValues { get; set; } = new List<float>();
-        }
-
-        private Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
-        private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
-        private byte[] file;
-        private string fileName;
-        private long? fileSize;
-        private bool compareToWLM = true;
-        private bool normalisedByTotalHours = false;
-
         [Inject]
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private InnateCodeService InnateCodeService { get; set; }
+        private TimesheetService TimesheetService { get; set; }
+
+        private Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
+        private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
+        private bool compareToWLM = true;
+        private bool normalisedByTotalHours = false;
+        private DateTime? startDate = DateTime.Today.StartOfMonth().StartOfWeek();
+        private DateTime? endDate = DateTime.Today.StartOfWeek().AddDays(7);
+        private IEnumerable<Person> availablePeople;
+        private IEnumerable<Person> selectedPeople;
+        private string loadingMessage;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Available people are all if superuser or self and people they manage and are current staff
+            availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
+            if (RolesService.GetRoleTypeForUsername(Context, ActiveUserName) != RoleType.Superuser)
+            {
+                availablePeople = availablePeople
+                    .Where(x => x.PersonId == ActiveUser?.PersonId || (x.LineManager?.PersonId == ActiveUser?.PersonId && x.IsCurrentStaff()))
+                    .OrderBy(x => x.Name);
+            }
+
             LogInformation($"Viewing WLM analysis page");
         }
 
-        private void OnError(UploadErrorEventArgs args, string name)
-        {
-            LogError($"File Upload Failed: {args.Message}");
-        }
-
+        /// <summary>
+        /// Method to trigger state has changed after the display style settings of the charts has been updated
+        /// </summary>
         private void DisplayStyleChanged()
         {
             StateHasChanged();
         }
 
-        private void OnFileChanged(byte[] value, string name)
+        /// <summary>
+        /// Method to increment the end date to so many months after the start date
+        /// </summary>
+        /// <param name="numberOfMonths"></param>
+        private void SetEndDate(int numberOfMonths)
+        {
+            endDate = startDate.Value.AddMonths(numberOfMonths);
+        }
+
+        /// <summary>
+        /// Method to generate chart objects
+        /// </summary>
+        private void GenerateCharts()
         {
             // Start the spinner
             Loading = true;
+            loadingMessage = "Loading...";
             wlmChartItems.Clear();
             wlmChartOptions.Clear();
 
-            if (value != null) LogInformation($"File Uploaded - generating WLM graphs...");
-
             Task.Run(() =>
             {
-                try
+                LogInformation("Generating WLM graphs...");
+
+                // Adjust the start and end dates to the nearest Monday before and Monday after
+                startDate = startDate.Value.StartOfWeek();
+                endDate = endDate.Value.StartOfWeek().AddDays(7);
+                var totalTime = endDate.Value.Subtract(startDate.Value).TotalMilliseconds;
+
+                // For each person selected
+                foreach (var person in selectedPeople)
                 {
-                    // Data
-                    var dates = new List<DateTime>();
-                    var reportData = new List<TimesheetReportLine>();
-                    var matchingFails = new List<string>();
+                    LogInformation($"Generating chart items for {person.Name}");
 
-                    // Bail or read from stream
-                    if (value == null)
+                    // Initialise a list of data
+                    var data = new List<WLMWeeklyDataChartItem>();
+
+                    // Get all timesheets in the date range
+                    var allTimesheets = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, person, startDate.Value, endDate.Value);
+
+                    // Loop over the weeks
+                    var weekStart = startDate.Value;
+                    while (weekStart < endDate.Value)
                     {
-                        return;
-                    }
+                        var percent = (int)(weekStart.Subtract(startDate.Value).TotalMilliseconds * 100 / totalTime);
+                        loadingMessage = $"Loading...{person.Name} ({percent}%)";
+                        InvokeAsync(StateHasChanged);
 
-                    // Convert text -- arrives as a base64 image bizarrely!
-                    var fileText = System.Text.Encoding.Default.GetString(value);
-                    string[] dbInfo = fileText.Split("base64,");
-                    var base64Contents = dbInfo[1].ToString();
-                    byte[] contentsAsBytes = Convert.FromBase64String(base64Contents);
-                    fileText = System.Text.Encoding.Default.GetString(contentsAsBytes);
+                        // Get the workload model change in place on the date of the week start
+                        var wlm = person.GetWorkloadModelOnDateOrDefault(weekStart);
 
-                    // Split into lines
-                    var lines = fileText.Split("\n");
-
-                    // Read one line at a time
-                    bool headersParsed = false;
-                    var hasTotalColumn = false;
-                    int columnCount = 0;
-                    foreach (var line in lines)
-                    {
-                        // Split line
-                        var values = line.Split("\t");
-
-                        // Continue if no data on the line
-                        if (values.Length < 3) continue;
-
-                        // Continue if the final line
-                        if (values[0] == "Page total" || values[0] == "Total") continue;
-
-                        // Error if it is somewhere in the middle of the file and there is something up with the formatting
-                        if (headersParsed && values.Length != columnCount)
+                        // Create a chart item
+                        var item = new WLMWeeklyDataChartItem()
                         {
-                            throw new Exception($"Line {string.Join("|", new string[] { values[0], values[1], values[2] })} does not have the same number of columns {values.Length} as expected {columnCount}!");
-                        }
-
-                        // If the line starts with "Resource"
-                        if (!headersParsed && values[0] == "Resource")
-                        {
-                            // Check it has the required neighbouring columns
-                            if ((values[1] != "Activity" && values[1] != "Project Activity Number & Name") || values[2] != "Task" || !DateTime.TryParse(values[3], out var temp))
+                            WeekStart = weekStart,
+                            WLMWeeklyTargetsByDuty = new Dictionary<Duty, float>
                             {
-                                throw new Exception("File needs to have columns named \"Resource\", \"Activity\" (or \"Project Activity Number & Name\"), \"Task\" before the weekly data!");
+                                { Duty.Other, 0 },
+                                { Duty.ProjectWork, (float)wlm.ProjectWorkFTE },
+                                { Duty.BAU, (float)wlm.BusinessAsUsualFTE },
+                                { Duty.PersonalDevelopment, (float)wlm.PersonalDevelopmentFTE },
+                                { Duty.StaffMgmt, (float)wlm.StaffManagementFTE },
+                                { Duty.ProjectAndServiceMgmt, (float)wlm.ProjectAndServiceManagementFTE},
+                                { Duty.RSA, (float)wlm.ArchitectureFTE },
                             }
-
-                            // Parse the dates
-                            for (var week = 3; week < values.Length; week++)
-                            {
-                                if (values[week].Replace("\r", "") == "Total")
-                                {
-                                    hasTotalColumn = true;
-                                    continue;
-                                }
-                                dates.Add(DateTime.Parse(values[week]));
-                            }
-
-                            // Move to next line
-                            columnCount = values.Length;
-                            Debug.WriteLine($"** Expecting {columnCount - 3 - (hasTotalColumn ? 1 : 0)} weeks in the file");
-                            headersParsed = true;
-                            continue;
-                        }
-
-                        // Skip if not yet reached the header row
-                        if (!headersParsed) continue;
-
-                        // Generate an object from the line and stip out double quotes
-                        var obj = new TimesheetReportLine
-                        {
-                            Resource = values[0].Replace("\"", "").Replace("\r", ""),
-                            Activity = values[1].Replace("\"", "").Replace("\r", ""),
-                            Task = values[2].Replace("\"", "").Replace("\r", "")
                         };
 
-                        // Look up the duty
-                        Debug.WriteLine($"** Looking up \"{obj.Activity}\" | \"{obj.Task}\"");
-                        int duty = InnateCodeService.FindDutyForTask(Context, obj.Activity, obj.Task);
-                        if (duty == -1)
+                        // Loop over each task in the current timesheet
+                        var currentTimesheet = allTimesheets.FirstOrDefault(x => x.StartDate.Date == weekStart.Date);
+                        if (currentTimesheet != null)
                         {
-                            // Cannot find this combo in the database
-                            var tag = $"{obj.Activity}|{obj.Task}";
-                            if (!matchingFails.Contains(tag)) matchingFails.Add($"{obj.Activity}|{obj.Task}");
-                        }
-                        obj.Duty = (Duty)duty;
-
-                        // Get weekly data and strip the first three columns and possibly the last column
-                        var valuesAsList = values.ToList();
-                        valuesAsList.RemoveRange(0, 3);
-                        if (hasTotalColumn) valuesAsList.RemoveAt(valuesAsList.Count - 1);
-
-                        // Parse to floats and add to object
-                        obj.WeeklyValues = valuesAsList.Select(x =>
-                        {
-                            return float.TryParse(x, out var value) ? value : 0f;
-                        }).ToList();
-                        reportData.Add(obj);
-                    }
-
-                    Debug.WriteLine($"** Finished reading lines.");
-                    if (matchingFails.Count > 0)
-                    {
-                        throw new Exception($"Cannot find the following \"activity\" | \"task\" combinations in the CapX timesheet DB! =>\n{string.Join(";\r\n", matchingFails)} => They will need to be added by a CapX admin to the database before the generation will succeed.");
-                    }
-
-                    // Group the data by person
-                    var groupedData = reportData.GroupBy(x => x.Resource);
-
-                    // For each group (person)
-                    foreach (var resourceData in groupedData)
-                    {
-                        LogInformation($"Generating chart items for {resourceData.Key}");
-
-                        // Initialise a list of data
-                        var data = new List<WLMWeeklyDataChartItem>();
-
-                        // Find the WLM active at the beginning of the week for that person
-                        var person = PersonService.GetByName(Context, resourceData.Key.Trim());
-
-                        if (person == null)
-                        {
-                            throw new Exception($"Could not find a person in the CapX DB with the name {resourceData.Key}. Is their name in Innate and CapX different? If so, change the name in the Innate report to match that in CapX and try again.");
-                        }
-
-                        // For each week of data
-                        for (var i = 0; i < columnCount - 3 - (hasTotalColumn ? 1 : 0); i++)
-                        {
-                            // Get the week
-                            var weekStart = dates[i];
-
-                            // Get the workload model change in place on the date of the week start
-                            var wlm = person.GetWorkloadModelOnDateOrDefault(weekStart);
-
-                            // Create a chart item
-                            var item = new WLMWeeklyDataChartItem()
+                            foreach (var entry in currentTimesheet.TimesheetEntries)
                             {
-                                WeekStart = weekStart,
-                                WLMWeeklyTargetsByDuty = new Dictionary<Duty, float>
-                                {
-                                    { Duty.Other, 0 },
-                                    { Duty.ProjectWork, (float)wlm.ProjectWorkFTE },
-                                    { Duty.BAU, (float)wlm.BusinessAsUsualFTE },
-                                    { Duty.PersonalDevelopment, (float)wlm.PersonalDevelopmentFTE },
-                                    { Duty.StaffMgmt, (float)wlm.StaffManagementFTE },
-                                    { Duty.ProjectAndServiceMgmt, (float)wlm.ProjectAndServiceManagementFTE},
-                                    { Duty.RSA, (float)wlm.ArchitectureFTE },
-                                }
-                            };
+                                // Update values in the entry as not in DB
+                                entry.UpdateTotalHours();
 
-                            // Loop over each task in the group
-                            foreach (var row in resourceData)
-                            {
                                 // Add the hours for the task to the relevant item in the dictionary
-                                item.WeeklyValuesByDuty[row.Duty] += row.WeeklyValues[i];
+                                item.WeeklyValuesByDuty[entry.InnateCodeTask.Duty] += (float)entry.TotalHours;
                             }
+                        }
 
-                            // Find total hours worked (excluding leave)
-                            float totalHours = 0f;
-                            foreach (var duty in item.WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
-                            {
-                                totalHours += item.WeeklyValuesByDuty[duty];
-                            }
-                            item.TotalHoursForWeek = totalHours;
+                        // Find total hours worked (excluding leave)
+                        float totalHours = 0f;
+                        foreach (var duty in item.WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
+                        {
+                            totalHours += item.WeeklyValuesByDuty[duty];
+                        }
+                        item.TotalHoursForWeek = totalHours;
 
-                            // How many hours expected from WLM
-                            var wlmTargetTotalHours = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value) * 35f;
+                        // How many hours expected from WLM
+                        var wlmTargetTotalHours = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value) * 35f;
 
-                            // Convert raw hours to FTE based on standard week
+                        // Convert raw hours to FTE based on standard week
+                        foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                        {
+                            item.WeeklyValuesByDuty[duty] /= 35f;
+                        }
+
+                        // If underbooked due to time on leave or we are on a shorter working week then scale WLM targets for the week
+                        if (totalHours < wlmTargetTotalHours)
+                        {
+                            var fractionWorking = totalHours / wlmTargetTotalHours;
                             foreach (var duty in item.WeeklyValuesByDuty.Keys)
                             {
-                                item.WeeklyValuesByDuty[duty] /= 35f;
+                                item.WLMWeeklyTargetsByDuty[duty] *= fractionWorking;
                             }
-
-                            // If underbooked due to time on leave or we are on a shorter working week then scale WLM targets for the week
-                            if (totalHours < wlmTargetTotalHours)
-                            {
-                                var fractionWorking = totalHours / wlmTargetTotalHours;
-                                foreach (var duty in item.WeeklyValuesByDuty.Keys)
-                                {
-                                    item.WLMWeeklyTargetsByDuty[duty] *= fractionWorking;
-                                }
-                            }
-
-                            // Compute the net
-                            item.UpdateWLMNetValues();
-
-                            // Add to list
-                            data.Add(item);
                         }
 
-                        // Add items to the chart data dictionary
-                        wlmChartItems.Add(resourceData.Key, data);
+                        // Compute the net
+                        item.UpdateWLMNetValues();
 
-                        // Create a chart options object
-                        CreateChartOptions();
+                        // Add to list
+                        data.Add(item);
+
+                        // Increment
+                        weekStart = weekStart.AddDays(7);
                     }
-                }
-                catch (Exception ex)
-                {
-                    // Present an error notification to the user
-                    InvokeAsync(() => ShowNotification(new CapXNotificationMessage
-                    {
-                        Summary = "Upload Issue",
-                        Detail = $"{ex.Message}",
-                        Duration = 10000
-                    }));
-                    LogError($"{ex.Message}");
 
+                    // Add items to the chart data dictionary
+                    wlmChartItems.Add(person.Name, data);
+
+                    // Create a chart options object
+                    CreateChartOptions();
                 }
             }).ContinueWith(t =>
             {
@@ -293,6 +192,9 @@ namespace PPMTool.Pages
             });
         }
 
+        /// <summary>
+        /// Creates a chart options object
+        /// </summary>
         private void CreateChartOptions()
         {
             // Chart options
