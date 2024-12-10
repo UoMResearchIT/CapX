@@ -32,6 +32,7 @@ namespace PPMTool.Pages
         private DateTime? endDate = DateTime.Today.StartOfWeek().AddDays(7);
         private IEnumerable<Person> availablePeople;
         private IEnumerable<Person> selectedPeople;
+        private string loadingMessage;
 
         protected override void OnInitialized()
         {
@@ -49,15 +50,31 @@ namespace PPMTool.Pages
             LogInformation($"Viewing WLM analysis page");
         }
 
+        /// <summary>
+        /// Method to trigger state has changed after the display style settings of the charts has been updated
+        /// </summary>
         private void DisplayStyleChanged()
         {
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Method to increment the end date to so many months after the start date
+        /// </summary>
+        /// <param name="numberOfMonths"></param>
+        private void SetEndDate(int numberOfMonths)
+        {
+            endDate = startDate.Value.AddMonths(numberOfMonths);
+        }
+
+        /// <summary>
+        /// Method to generate chart objects
+        /// </summary>
         private void GenerateCharts()
         {
             // Start the spinner
             Loading = true;
+            loadingMessage = "Loading...";
             wlmChartItems.Clear();
             wlmChartOptions.Clear();
 
@@ -68,6 +85,7 @@ namespace PPMTool.Pages
                 // Adjust the start and end dates to the nearest Monday before and Monday after
                 startDate = startDate.Value.StartOfWeek();
                 endDate = endDate.Value.StartOfWeek().AddDays(7);
+                var totalTime = endDate.Value.Subtract(startDate.Value).TotalMilliseconds;
 
                 // For each person selected
                 foreach (var person in selectedPeople)
@@ -84,6 +102,10 @@ namespace PPMTool.Pages
                     var weekStart = startDate.Value;
                     while (weekStart < endDate.Value)
                     {
+                        var percent = (int)(weekStart.Subtract(startDate.Value).TotalMilliseconds * 100 / totalTime);
+                        loadingMessage = $"Loading...{person.Name} ({percent}%)";
+                        InvokeAsync(StateHasChanged);
+
                         // Get the workload model change in place on the date of the week start
                         var wlm = person.GetWorkloadModelOnDateOrDefault(weekStart);
 
