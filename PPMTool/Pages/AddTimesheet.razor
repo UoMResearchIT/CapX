@@ -30,8 +30,14 @@
                 {
                     <h1>Edit Timesheet</h1>
                 }
-                <RadzenText Text="@($"{timesheet.StartDate.ToLongDateString()} - {timesheet.StartDate.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
-                <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style" Text="@(timesheet.Status.ToNiceString())" />
+                @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+                {
+                    <RadzenText Text="@timesheet?.Owner.Name" TextStyle="TextStyle.DisplayH5" />
+                }
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem">
+                    <RadzenText Text="@($"{timesheet.StartDate.ToLongDateString()} - {timesheet.StartDate.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                    <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style align-self-center" Text="@(timesheet.Status.ToNiceString())" />
+                </RadzenStack>
             </div>
             @if (EditAuthorised)
             {
