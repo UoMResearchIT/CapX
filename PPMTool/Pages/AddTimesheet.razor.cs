@@ -43,6 +43,8 @@ namespace PPMTool.Pages
         private double sundayHours;
         private double totalHours;
         private Role activeUserRole;
+        private int entryMinimum = 0;
+        private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
         {
             { "mon", "#EEE" },
@@ -404,6 +406,54 @@ namespace PPMTool.Pages
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to check the valid entered into an input and correct it if not in the allowable set of values
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="entry"></param>
+        /// <param name="propertyName"></param>
+        private void ValidateNumericInput(double value, TimesheetEntry entry, string propertyName)
+        {
+            // Ensure the value is within the range and adheres to the step
+            if (value < entryMinimum)
+            {
+                value = entryMinimum;
+            }
+            else
+            {
+                value = Math.Round(value / entryStep) * entryStep;
+            }
+
+            // Update the property with the validated value
+            switch (propertyName)
+            {
+                case nameof(entry.MondayHours):
+                    entry.MondayHours = value;
+                    break;
+                case nameof(entry.TuesdayHours):
+                    entry.TuesdayHours = value;
+                    break;
+                case nameof(entry.WednesdayHours):
+                    entry.WednesdayHours = value;
+                    break;
+                case nameof(entry.ThursdayHours):
+                    entry.ThursdayHours = value;
+                    break;
+                case nameof(entry.FridayHours):
+                    entry.FridayHours = value;
+                    break;
+                case nameof(entry.SaturdayHours):
+                    entry.SaturdayHours = value;
+                    break;
+                case nameof(entry.SundayHours):
+                    entry.SundayHours = value;
+                    break;
+            }
+
+            // Update the daily totals
+            UpdateDailyTotals();
         }
     }
 }
