@@ -23,22 +23,36 @@
     </RadzenRow>
     <RadzenRow class="card" Style="flex-direction:unset">
         <RadzenColumn>
-            <RadzenStack>
-                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Innate Report Upload" />
-                <RadzenText TextStyle="TextStyle.Body2" Text="If you upload an appropriately-formatted, tab-separated, plain text report downloaded from Innate, this page will generate the workload model analyses for you for each person in the report over the period specified in the report. For more information see the CapX Wiki on the GitHub repository." />
+            <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Choose Staff:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                    <RadzenDropDown @bind-Value=@selectedPeople
+                                    Data=@availablePeople
+                                    TextProperty="Name"
+                                    Multiple=true
+                                    AllowClear=true
+                                    Placeholder="Choose RSEs"
+                                    Chips=true
+                                    Disabled="@Loading"
+                                    Style="width: 100%" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Choose Date Range:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                        <RadzenDatePicker @bind-Value="@startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled="@Loading" />
+                        <RadzenText Text="to" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                        <RadzenDatePicker @bind-Value="@endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled="@Loading" />
+                    </RadzenStack>
+                    <RadzenButton Text="Generate" Click="GenerateCharts" Disabled="@(Loading || startDate == null || endDate == null || selectedPeople == null || selectedPeople?.Count() == 0)" />
+                </RadzenStack>
             </RadzenStack>
-        </RadzenColumn>
-        <RadzenColumn>
-            <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
-                Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
-                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
         </RadzenColumn>
     </RadzenRow>
     <hr />
     <RadzenRow>
         @if (Loading)
         {
-            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <LoadingComponent />
         }
         else if (wlmChartItems != null && wlmChartItems.Count > 0)
         {
@@ -53,7 +67,7 @@
         }
         else
         {
-            <RadzenText Text="Upload a timesheet data report to generate charts" />
+            <RadzenText Text="Choose people and a date range above and click to generate the chart." />
         }
     </RadzenRow>
     <br />
