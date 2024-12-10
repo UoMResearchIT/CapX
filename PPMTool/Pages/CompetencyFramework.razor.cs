@@ -44,14 +44,21 @@ namespace PPMTool.Pages
 
             // Check user permissions
             var role = RolesService.GetByUsername(Context, ActiveUserName);
-            userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
+            userIsSuperuser = role?.RoleType == RoleType.Superuser;
             activeUserId = ActiveUser?.PersonId ?? 0;
 
             // Get the active user by default
             selectedPerson = ActiveUser;
 
             // Get starting lists from the DB
-            availablePeople = PersonService.GetAll(Context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
+            availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
+            if (!userIsSuperuser)
+            {
+                // Self plus direct reports who are current
+                availablePeople = availablePeople
+                    .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
+                    .OrderBy(x => x.Name);
+            }
             competencies = CompetencyService.GetAll(Context);
 
             // Prepare the bindings for the expansion setting of the accordions
