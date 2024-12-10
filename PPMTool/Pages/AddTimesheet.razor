@@ -10,7 +10,11 @@
 <PageTitle>Add Timesheet - CapX</PageTitle>
 
 <div class="container">
-    @if (TimesheetId > 0 && timesheet == null)
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else if (TimesheetId > 0 && timesheet == null)
     {
         <StatusMessageComponent Message="@(new StatusMessage("Either you are not permitted to view this timesheet or a timesheet with the given ID is not present in the database!", StatusMessage.MessageType.Error))" />
     }

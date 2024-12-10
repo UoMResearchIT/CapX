@@ -9,87 +9,46 @@
 <PageTitle>Timesheets - CapX</PageTitle>
 
 <div class="container">
-    <div class="row">
-        <div class="col-auto mr-auto">
-            <h1>My Timesheets</h1>
-            <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
-        </div>
-        <div class="col-auto align-content-center">
-            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
-        </div>
-    </div>
-    <hr />
-    <div class="card">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-            <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
-            <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" />
-        </RadzenStack>
-    </div>
-    <div class="card">
-        <RadzenDataGrid AllowAlternatingRows="true" 
-                        AllowPaging="true" 
-                        AllowFiltering=@ShowAllMyTimesheets
-                        FilterMode="FilterMode.Simple"
-                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        PageSize="5" 
-                        PagerHorizontalAlign="HorizontalAlign.Right"
-                        AllowSorting="true" 
-                        Data="@myTimesheets" 
-                        TItem="Timesheet"
-                        GridLines="DataGridGridLines.Horizontal">
-
-            <Columns>
-                <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem" />
-                <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
-                    <Template Context="timesheet">
-                        <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToNiceString()" />
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn Property="Info" Title="Notes" />
-                <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
-                    <Template Context="timesheet">
-                        <TimesheetDashboardButtonComponent Timesheet="@timesheet"
-                                                           ActiveUser="@ActiveUser"
-                                                           EditTimesheet="@EditTimesheet"
-                                                           ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-    </div>
-
-    <div style="padding-top: 3rem" hidden="@hideStaffResults">
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
         <div class="row">
             <div class="col-auto mr-auto">
-                <h1>My Staff Timesheets</h1>
+                <h1>My Timesheets</h1>
+                <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
+            </div>
+            <div class="col-auto align-content-center">
+                <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
             </div>
         </div>
         <hr />
         <div class="card">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                 <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
-                <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" />
+                <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" />
             </RadzenStack>
         </div>
         <div class="card">
-            <RadzenDataGrid AllowAlternatingRows="true"
-                            AllowPaging="true"
-                            AllowFiltering="true"
+            <RadzenDataGrid AllowAlternatingRows="true" 
+                            AllowPaging="true" 
+                            AllowFiltering=@ShowAllMyTimesheets
                             FilterMode="FilterMode.Simple"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            PageSize="10"
+                            PageSize="5" 
                             PagerHorizontalAlign="HorizontalAlign.Right"
-                            AllowSorting="true"
-                            Data="@myStaffTimesheets"
+                            AllowSorting="true" 
+                            Data="@myTimesheets" 
                             TItem="Timesheet"
                             GridLines="DataGridGridLines.Horizontal">
 
                 <Columns>
-                    <RadzenDataGridColumn Property="Owner.Name" Title="Staff member" Width="20rem"/>
-                    <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem"/>
+                    <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem" />
                     <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                         <Template Context="timesheet">
-                            <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToString()" />
+                            <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToNiceString()" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Info" Title="Notes" />
@@ -104,5 +63,53 @@
                 </Columns>
             </RadzenDataGrid>
         </div>
-    </div>
+
+        <div style="padding-top: 3rem" hidden="@hideStaffResults">
+            <div class="row">
+                <div class="col-auto mr-auto">
+                    <h1>My Staff Timesheets</h1>
+                </div>
+            </div>
+            <hr />
+            <div class="card">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
+                    <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" />
+                </RadzenStack>
+            </div>
+            <div class="card">
+                <RadzenDataGrid AllowAlternatingRows="true"
+                                AllowPaging="true"
+                                AllowFiltering="true"
+                                FilterMode="FilterMode.Simple"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                PageSize="10"
+                                PagerHorizontalAlign="HorizontalAlign.Right"
+                                AllowSorting="true"
+                                Data="@myStaffTimesheets"
+                                TItem="Timesheet"
+                                GridLines="DataGridGridLines.Horizontal">
+
+                    <Columns>
+                        <RadzenDataGridColumn Property="Owner.Name" Title="Staff member" Width="20rem"/>
+                        <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem"/>
+                        <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
+                            <Template Context="timesheet">
+                                <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToString()" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="Info" Title="Notes" />
+                        <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
+                            <Template Context="timesheet">
+                                <TimesheetDashboardButtonComponent Timesheet="@timesheet"
+                                                                   ActiveUser="@ActiveUser"
+                                                                   EditTimesheet="@EditTimesheet"
+                                                                   ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        </div>
+    }
 </div>
