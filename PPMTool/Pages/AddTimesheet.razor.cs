@@ -307,18 +307,34 @@ namespace PPMTool.Pages
         /// Handle a change in the code on the first dropdown
         /// </summary>
         /// <param name="value"></param>
-        private void InnateCodeChanged(object value)
+        private void OnInnateCodeChanged(object value)
         {
             // Load the innate tasks associated with the selected innate code
             Debug.WriteLine($"** Selected {value}");
-            var tasks = innateCodes.FirstOrDefault(x => x.GetCodeAsString() == (value as string)).Tasks.ToList();
+            var tasks = innateCodes
+                .FirstOrDefault(x => x.GetCodeAsString() == (value as string)).Tasks
+                .ToList();
 
-            // Find all exsiting entries that use this same code
-            var tasksInUse = dataGridEntities.Where(x => x.InnateCodeTask.InnateCode.GetCodeAsString() == (value as string)).Select(x => x.InnateCodeTask).ToList();
+            // Find all existing entries that use this same code
+            var tasksInUse = dataGridEntities
+                .Where(x => x.InnateCodeTask.InnateCode.GetCodeAsString() == (value as string))
+                .Select(x => x.InnateCodeTask)
+                .ToList();
 
             // Remove the tasks from the list that are already in use
             tasks.RemoveAll(x => tasksInUse.Contains(x));
+
+            // Assign the tasks
             innateCodeTasks = tasks;
+
+            // If there is only one task then select it
+            if (tasks.Count == 1)
+            {
+                entityToInsert.InnateCodeTask = tasks.First();
+            }
+
+            // Force a re-render
+            StateHasChanged();
         }
 
         /// <summary>
@@ -461,7 +477,7 @@ namespace PPMTool.Pages
                 // Show a notification to the user that their value has been corrected
                 ShowNotification(new CapXNotificationMessage
                 {
-                    Severity = NotificationSeverity.Warning,
+                    Severity = NotificationSeverity.Info,
                     Summary = "Value Adjusted",
                     Detail = $"Value must be greater than {entryMinimum} and in steps of {entryStep}. Value has been corrected."
                 });
