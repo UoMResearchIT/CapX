@@ -34,23 +34,10 @@ namespace PPMTool.Pages
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
 
-        protected override void OnInitialized()
+
+        protected override void OnParametersSet()
         {
-            base.OnInitialized();
-
-            // Find out if superuser for delete button
-            isSuperUser = RolesService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
-
-            // Map entities to checkbox list items
-            availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
-
-            // Map the list of managers for drop down
-            managers = RolesService.GetAll(Context)
-                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
-                .Select(x => x.Person)
-                .DistinctBy(x => x.PersonId)
-                .OrderBy(x => x.Name)
-                .ToList();
+            base.OnParametersSet();
 
             // Load the person model if necessary
             if (PersonId > 0)
@@ -73,6 +60,27 @@ namespace PPMTool.Pages
             messageStore = new ValidationMessageStore(editContext);
 
             LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+        }
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+
+            // Find out if superuser for delete button
+            isSuperUser = RolesService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
+
+            // Map entities to checkbox list items
+            availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+
+            // Map the list of managers for drop down
+            managers = RolesService.GetAll(Context)
+                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
+                .Select(x => x.Person)
+                .DistinctBy(x => x.PersonId)
+                .OrderBy(x => x.Name)
+                .ToList();
+
+            LogInformation("Initialising add/edit person page");
         }
 
         void OnChange(dynamic args)
