@@ -86,7 +86,7 @@
                                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                     Data="@innateCodes.Select(x => x.GetCodeAsString())"
                                                     Style="width: 100%"
-                                                    Change="@(args => InnateCodeChanged(args))" />
+                                                    Change="@(args => OnInnateCodeChanged(args))" />
                                 }
                                 else
                                 {
