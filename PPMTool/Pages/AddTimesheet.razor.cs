@@ -43,6 +43,8 @@ namespace PPMTool.Pages
         private double sundayHours;
         private double totalHours;
         private Role activeUserRole;
+        private int entryMinimum = 0;
+        private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
         {
             { "mon", "#EEE" },
@@ -404,6 +406,69 @@ namespace PPMTool.Pages
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to check the valid entered into an input and correct it if not in the allowable set of values
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="entry"></param>
+        /// <param name="propertyName"></param>
+        private void ValidateNumericInput(double value, TimesheetEntry entry, string propertyName)
+        {
+            // Ensure the value is within the range and adheres to the step
+            var hasBeenCorrected = false;
+            var idealValue = Math.Round(value / entryStep) * entryStep;
+            if (value < entryMinimum)
+            {
+                value = entryMinimum;
+                hasBeenCorrected = true;
+            }
+            else if (idealValue != value)
+            {
+                value = idealValue;
+                hasBeenCorrected = true;
+            }
+
+            // Update the property with the validated value
+            if (hasBeenCorrected)
+            {
+                switch (propertyName)
+                {
+                    case nameof(entry.MondayHours):
+                        entry.MondayHours = value;
+                        break;
+                    case nameof(entry.TuesdayHours):
+                        entry.TuesdayHours = value;
+                        break;
+                    case nameof(entry.WednesdayHours):
+                        entry.WednesdayHours = value;
+                        break;
+                    case nameof(entry.ThursdayHours):
+                        entry.ThursdayHours = value;
+                        break;
+                    case nameof(entry.FridayHours):
+                        entry.FridayHours = value;
+                        break;
+                    case nameof(entry.SaturdayHours):
+                        entry.SaturdayHours = value;
+                        break;
+                    case nameof(entry.SundayHours):
+                        entry.SundayHours = value;
+                        break;
+                }
+
+                // Show a notification to the user that their value has been corrected
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Value Adjusted",
+                    Detail = $"Value must be greater than {entryMinimum} and in steps of {entryStep}. Value has been corrected."
+                });
+            }
+
+            // Update the daily totals regardless of correction
+            UpdateDailyTotals();
         }
     }
 }
