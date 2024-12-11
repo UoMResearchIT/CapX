@@ -461,7 +461,7 @@ namespace PPMTool.Pages
                 // Show a notification to the user that their value has been corrected
                 ShowNotification(new CapXNotificationMessage
                 {
-                    Severity = NotificationSeverity.Warning,
+                    Severity = NotificationSeverity.Info,
                     Summary = "Value Adjusted",
                     Detail = $"Value must be greater than {entryMinimum} and in steps of {entryStep}. Value has been corrected."
                 });
