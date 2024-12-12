@@ -354,6 +354,13 @@ namespace PPMTool.Pages
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
             TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
+
+            ShowNotification(new CapXNotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Updated",
+                Detail = "Your timesheet template has been updated. The added task row will show when you next create a new timesheet."
+            });
         }
 
         /// <summary>
@@ -412,6 +419,13 @@ namespace PPMTool.Pages
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
             UpdateDailyTotals();
+
+            ShowNotification(new CapXNotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Task removed",
+                Detail = "The task row has been removed from your template and will no longer show by default when creating a new timesheet."
+            });
         }
 
         /// <summary>
