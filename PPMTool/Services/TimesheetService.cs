@@ -223,7 +223,7 @@ namespace PPMTool.Services
             }
             else
             {
-                templateTimesheetTasks.Add(task.InnateCodeTaskId);
+                templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
             }
 
             string updatedTemplateDetails = string.Join(":", templateTimesheetTasks);
