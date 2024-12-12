@@ -107,6 +107,34 @@ namespace PPMTool.Pages
                     {
                         throw new Exception("Error creating new timesheet!");
                     }
+                    else
+                    {
+                        // Get the timesheet back
+                        Timesheet newTimesheet = TimesheetService.GetById(Context, newId);
+
+                        // Get all the Innate Codes for use
+                        List<InnateCodeTask> allTasks = Context.InnateCodeTasks.ToList();
+
+                        // Add new tasks from the user's template detail
+                        string timesheetTemplate = activeUserRole.TimesheetTemplateData == null ? "1:2" : activeUserRole.TimesheetTemplateData;
+
+                        var templateTimesheetTasks = timesheetTemplate?.Split(':')?.Select(Int32.Parse)?.ToList();
+                        foreach ( int taskId in templateTimesheetTasks ) 
+                        {
+                            try
+                            {
+                                InnateCodeTask task = allTasks.Where(x => x.InnateCodeTaskId == taskId).FirstOrDefault();
+                                TimesheetEntry entry = new TimesheetEntry();
+                                entry.InnateCodeTask = task;
+
+                                newTimesheet.TimesheetEntries.Add(entry);
+
+                                Debug.WriteLine($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                            }
+                            catch ( Exception ex ) { Debug.WriteLine( ex ); }
+                        }
+                        Context.SaveChanges();
+                    }
 
                     // Redirect to the newly created Timesheet so refrshing the page
                     // with the -1 parameter doesn't create another new timesheet.
