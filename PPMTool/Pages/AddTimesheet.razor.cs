@@ -20,8 +20,6 @@ namespace PPMTool.Pages
         [Parameter]
         public int? TimesheetId { get; set; }
 
-        private bool IsSavingTimesheetProgress { get; set; } = false;
-
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
@@ -229,22 +227,6 @@ namespace PPMTool.Pages
             // Reset error message
             ErrorMessage = null;
 
-            // If saving the timesheet progress just update the db for any changed notes
-            if (IsSavingTimesheetProgress)
-            {
-                TimesheetService.Update(Context, timesheet);
-                Debug.WriteLine("Timesheet ptogress saved");
-
-                // Show notification for save action
-                ShowNotification(new CapXNotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Saved",
-                    Detail = "Your timesheet progress has been saved."
-                });
-                return;
-            }
-
             // Validation on minimum hours etc. and show a status message
             if (timesheet.Status == TimesheetStatus.Submitted && dataGridEntities.Count == 0)
             {
@@ -256,6 +238,11 @@ namespace PPMTool.Pages
             // Decide what to do based on the status of the timesheet
             if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted)
             {
+                // Prompt
+                var confirmed = await DialogService.Confirm($"You are about to submit a status change to your timesheet.",
+                    "Change Timesheet Status") ?? false;
+                if (!confirmed) return;
+
                 // Reset the timesheet entries on the model
                 timesheet.TimesheetEntries.Clear();
 
