@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20241212085522_AddTimesheetTemplateDataToRole")]
+    [Migration("20241212105610_AddTimesheetTemplateDataToRole")]
     partial class AddTimesheetTemplateDataToRole
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
