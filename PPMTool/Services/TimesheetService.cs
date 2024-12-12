@@ -217,7 +217,7 @@ namespace PPMTool.Services
         {
             var templateTimesheetTasks = role.TimesheetTemplateData?.Split(':')?.Select(Int32.Parse)?.ToList();
 
-            if(templateTimesheetTasks.Contains(task.InnateCodeTaskId)) 
+            if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
             {
                 templateTimesheetTasks.Remove(task.InnateCodeTaskId);
             }
