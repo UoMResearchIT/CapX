@@ -109,31 +109,10 @@ namespace PPMTool.Pages
                     }
                     else
                     {
-                        // Get the timesheet back
+                        // Get the timesheet back to manipulate
                         Timesheet newTimesheet = TimesheetService.GetById(Context, newId);
-
-                        // Get all the Innate Codes for use
-                        List<InnateCodeTask> allTasks = Context.InnateCodeTasks.ToList();
-
-                        // Add new tasks from the user's template detail
-                        string timesheetTemplate = activeUserRole.TimesheetTemplateData == null ? "1:2" : activeUserRole.TimesheetTemplateData;
-
-                        var templateTimesheetTasks = timesheetTemplate?.Split(':')?.Select(Int32.Parse)?.ToList();
-                        foreach ( int taskId in templateTimesheetTasks ) 
-                        {
-                            try
-                            {
-                                InnateCodeTask task = allTasks.Where(x => x.InnateCodeTaskId == taskId).FirstOrDefault();
-                                TimesheetEntry entry = new TimesheetEntry();
-                                entry.InnateCodeTask = task;
-
-                                newTimesheet.TimesheetEntries.Add(entry);
-
-                                Debug.WriteLine($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
-                            }
-                            catch ( Exception ex ) { Debug.WriteLine( ex ); }
-                        }
-                        Context.SaveChanges();
+                        innateCodeTasks = Context.InnateCodeTasks.ToList();
+                        TimesheetService.SetupTimesheetFromTemplate(Context, newTimesheet, activeUserRole, innateCodeTasks);
                     }
 
                     // Redirect to the newly created Timesheet so refrshing the page
@@ -374,6 +353,7 @@ namespace PPMTool.Pages
             Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
+            TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
         }
 
         /// <summary>
@@ -428,6 +408,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task DeleteRow(TimesheetEntry entity)
         {
+            TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
             UpdateDailyTotals();
