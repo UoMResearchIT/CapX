@@ -191,6 +191,7 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Populate code dropdown with {temp.Count} tasks");
             innateCodeDropdownSource = temp;
+            OnInnateCodeChanged(null);
         }
 
         /// <summary>
@@ -408,6 +409,7 @@ namespace PPMTool.Pages
             Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
+            LoadInnateCodes();
         }
 
         /// <summary>
@@ -444,8 +446,8 @@ namespace PPMTool.Pages
             UpdateDailyTotals();
             entity.UpdateTotalHours();
 
-            // Refresh the task dropdown
-            OnInnateCodeChanged(null);
+            // Refresh the code and task dropdowns
+            LoadInnateCodes();
         }
 
         /// <summary>
@@ -468,6 +470,7 @@ namespace PPMTool.Pages
             TimesheetService.DeleteEntry(Context, entity);
             await base.DeleteRow(entity);
             UpdateDailyTotals();
+            LoadInnateCodes();
         }
 
         /// <summary>
