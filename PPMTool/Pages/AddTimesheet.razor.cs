@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -53,84 +54,98 @@ namespace PPMTool.Pages
             { "sat", "#FDFBD4" },
             { "sun", "#FDFBD4" }
         };
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         protected override async Task OnParametersSetAsync()
         {
             await base.OnParametersSetAsync();
 
             Loading = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
 
-            await Task.Run(() =>
+            try
             {
-                Debug.WriteLine("** Starting initialisation task...");
-
-                // Get the person associated with the active user
-                activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-
-                // Only superusers can delete a timesheet
-                EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
-
-                // Handle if the user is not found
-                if (ActiveUser == null)
+                await Task.Run(() =>
                 {
-                    LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
-                    return;
-                }
+                    Debug.WriteLine("** Starting initialisation task...");
 
-                // If there is an ID, then lookup the timesheet
-                if ((TimesheetId ?? 0) > 0)
-                {
-                    timesheet = TimesheetService.GetById(Context, TimesheetId);
-                }
+                    // Get the person associated with the active user
+                    activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
 
-                // Check whether this user should have access or not
-                if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
-                {
-                    timesheet = null;
-                }
+                    // Only superusers can delete a timesheet
+                    EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
 
-                // If no timesheet and intention is create
-                if (timesheet == null && TimesheetId == -1)
-                {
-                    // Get the start date for the new timesheet
-                    var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
-                    timesheet = new Timesheet()
+                    // Handle if the user is not found
+                    if (ActiveUser == null)
                     {
-                        Owner = ActiveUser,
-                        StartDate = nextTimesheetStartDate
-                    };
-
-                    // Immediately save the timesheet to the DB
-                    int newId = TimesheetService.Add(Context, timesheet);
-
-                    // If a duplicate is detected then throw an error as this should never happen
-                    if (newId == -1)
-                    {
-                        throw new Exception("Error creating new timesheet!");
+                        LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
+                        return;
                     }
 
-                    // Redirect to the newly created Timesheet so refrshing the page
-                    // with the -1 parameter doesn't create another new timesheet.
-                    Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
-                    return;
-                }
+                    // If there is an ID, then lookup the timesheet
+                    if ((TimesheetId ?? 0) > 0)
+                    {
+                        timesheet = TimesheetService.GetById(Context, TimesheetId);
+                    }
 
-                if (timesheet != null)
+                    // Check whether this user should have access or not
+                    if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
+                    {
+                        timesheet = null;
+                    }
+
+                    // If no timesheet and intention is create
+                    if (timesheet == null && TimesheetId == -1)
+                    {
+                        // Get the start date for the new timesheet
+                        var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
+                        timesheet = new Timesheet()
+                        {
+                            Owner = ActiveUser,
+                            StartDate = nextTimesheetStartDate
+                        };
+
+                        // Immediately save the timesheet to the DB
+                        int newId = TimesheetService.Add(Context, timesheet);
+
+                        // If a duplicate is detected then throw an error as this should never happen
+                        if (newId == -1)
+                        {
+                            throw new Exception("Error creating new timesheet!");
+                        }
+
+                        // Redirect to the newly created Timesheet so refrshing the page
+                        // with the -1 parameter doesn't create another new timesheet.
+                        Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+                        cancellationTokenSource.Cancel();
+                        return;
+                    }
+
+                    if (timesheet != null)
+                    {
+                        dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        UpdateDailyTotals();
+
+                        // Innate codes are limited to active ones initially
+                        LoadInnateCodes();
+                    }
+
+                    LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
+                }, cancellationToken).ContinueWith(t =>
                 {
-                    dataGridEntities = timesheet.TimesheetEntries.ToList();
-                    UpdateDailyTotals();
-
-                    // Innate codes are limited to active ones initially
-                    LoadInnateCodes();
-                }
-
-                LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
-            }).ContinueWith(t =>
+                    if (!t.IsCanceled)
+                    {
+                        Loading = false;
+                        InvokeAsync(StateHasChanged);
+                    }
+                    Debug.WriteLine("** ...complete!");
+                }, TaskContinuationOptions.ExecuteSynchronously);
+            }
+            catch (TaskCanceledException)
             {
-                Debug.WriteLine("** ...complete!");
-                Loading = false;
-                InvokeAsync(StateHasChanged);
-            });
+                // We intend it to be cancelled so this is fine to ignore
+            }
         }
 
         protected override void OnInitialized()
