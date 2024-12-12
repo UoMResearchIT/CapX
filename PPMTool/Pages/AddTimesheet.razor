@@ -84,7 +84,7 @@
                                                     AllowFiltering="true"
                                                     Placeholder="Search for Innate Code"
                                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                    Data="@innateCodes.Select(x => x.GetCodeAsString())"
+                                                    Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
                                                     Style="width: 100%"
                                                     Change="@(args => OnInnateCodeChanged(args))" />
                                 }
@@ -102,7 +102,7 @@
                                 @if (entry.InnateCodeTask == null)
                                 {
                                     <RadzenDropDown TValue="InnateCodeTask"
-                                                    Data="@innateCodeTasks"
+                                                    Data="@innateCodeTaskDropdownSource"
                                                     TextProperty="TaskName"
                                                     Style="width: 100%"
                                                     @bind-Value="entry.InnateCodeTask" />

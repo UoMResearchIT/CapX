@@ -106,7 +106,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<InnateCode> GetActive(PPMToolContext context)
         {
-            return context.InnateCodes.Where(x => x.IsActive);
+            return context.InnateCodes.Where(x => x.IsActive).OrderBy(x => x.ActivityCode);
         }
     }
 }
