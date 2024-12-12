@@ -415,17 +415,22 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task DeleteRow(TimesheetEntry entity)
         {
-            TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
-            TimesheetService.DeleteEntry(Context, entity);
-            await base.DeleteRow(entity);
-            UpdateDailyTotals();
-
-            ShowNotification(new CapXNotificationMessage
+            bool confirmDeletion = await DialogService.Confirm($"This task will be removed from your timesheet template. If you want the task to still be added to future timesheets automatically (but just don't need it for this one) then just leave it empty when you submit the timesheet.",
+                   "Delete Task Row") ?? false;
+            if (confirmDeletion)
             {
-                Severity = NotificationSeverity.Error,
-                Summary = "Task removed",
-                Detail = "The task row has been removed from your template and will no longer show by default when creating a new timesheet."
-            });
+                TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
+                TimesheetService.DeleteEntry(Context, entity);
+                await base.DeleteRow(entity);
+                UpdateDailyTotals();
+
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Task removed",
+                    Detail = "The task row has been removed from your template and will no longer show by default when creating a new timesheet."
+                });
+            }
         }
 
         /// <summary>
