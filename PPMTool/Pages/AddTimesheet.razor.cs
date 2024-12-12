@@ -51,6 +51,7 @@ namespace PPMTool.Pages
             { "sat", "#FDFBD4" },
             { "sun", "#FDFBD4" }
         };
+        private TimesheetStatus newStatus;
 
         protected override void OnInitialized()
         {
@@ -224,6 +225,12 @@ namespace PPMTool.Pages
         /// </summary>
         private async void HandleValidSubmit()
         {
+            // Prompt
+            var confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
+                "Change Timesheet Status") ?? false;
+            if (!confirmed) return;
+            timesheet.Status = newStatus;
+
             // Reset error message
             ErrorMessage = null;
 
@@ -238,11 +245,6 @@ namespace PPMTool.Pages
             // Decide what to do based on the status of the timesheet
             if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted)
             {
-                // Prompt
-                var confirmed = await DialogService.Confirm($"You are about to submit a status change to your timesheet.",
-                    "Change Timesheet Status") ?? false;
-                if (!confirmed) return;
-
                 // Reset the timesheet entries on the model
                 timesheet.TimesheetEntries.Clear();
 
