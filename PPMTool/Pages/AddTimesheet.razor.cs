@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -30,8 +31,8 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         private Timesheet timesheet;
-        private IList<InnateCode> innateCodes = new List<InnateCode>();
-        private IEnumerable<InnateCodeTask> innateCodeTasks = new List<InnateCodeTask>();
+        private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
+        private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
         private double mondayHours;
         private double tuesdayHours;
         private double wednesdayHours;
@@ -52,98 +53,149 @@ namespace PPMTool.Pages
             { "sun", "#FDFBD4" }
         };
         private TimesheetStatus newStatus;
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+        protected override async Task OnParametersSetAsync()
+        {
+            await base.OnParametersSetAsync();
+
+            Loading = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    Debug.WriteLine("** Starting initialisation task...");
+
+                    // Get the person associated with the active user
+                    activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
+
+                    // Only superusers can delete a timesheet
+                    EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
+
+                    // Handle if the user is not found
+                    if (ActiveUser == null)
+                    {
+                        LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
+                        return;
+                    }
+
+                    // If there is an ID, then lookup the timesheet
+                    if ((TimesheetId ?? 0) > 0)
+                    {
+                        timesheet = TimesheetService.GetById(Context, TimesheetId);
+                    }
+
+                    // Check whether this user should have access or not
+                    if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
+                    {
+                        timesheet = null;
+                    }
+
+                    // If no timesheet and intention is create
+                    if (timesheet == null && TimesheetId == -1)
+                    {
+                        // Get the start date for the new timesheet
+                        var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
+                        timesheet = new Timesheet()
+                        {
+                            Owner = ActiveUser,
+                            StartDate = nextTimesheetStartDate
+                        };
+
+                        // Immediately save the timesheet to the DB
+                        int newId = TimesheetService.Add(Context, timesheet);
+
+                        // If a duplicate is detected then throw an error as this should never happen
+                        if (newId == -1)
+                        {
+                            throw new Exception("Error creating new timesheet!");
+                        }
+                        else
+                        {
+                            // Set-up the timesheet from the template
+                            TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser, InnateCodeService.GetAllTasks(Context));
+                        }
+
+                        // Redirect to the newly created Timesheet so refrshing the page
+                        // with the -1 parameter doesn't create another new timesheet.
+                        Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+                        cancellationTokenSource.Cancel();
+                        return;
+                    }
+
+                    if (timesheet != null)
+                    {
+                        dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        UpdateDailyTotals();
+
+                        // Innate codes are limited to active ones initially
+                        LoadInnateCodes();
+                    }
+
+                    LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
+                }, cancellationToken).ContinueWith(t =>
+                {
+                    if (!t.IsCanceled)
+                    {
+                        Loading = false;
+                        InvokeAsync(StateHasChanged);
+                    }
+                    Debug.WriteLine("** ...complete!");
+                }, TaskContinuationOptions.ExecuteSynchronously);
+            }
+            catch (TaskCanceledException)
+            {
+                // We intend it to be cancelled so this is fine to ignore
+            }
+        }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+        }
 
-            Loading = true;
+        /// <summary>
+        /// Load innate codes to populate the dropdown source. If there is a timesheet then remove codes that have been used and have no tasks left.
+        /// </summary>
+        private void LoadInnateCodes()
+        {
+            Debug.WriteLine("** Loading innate codes...");
 
-            Task.Run(() =>
+            // Get all active from the DB
+            var temp = InnateCodeService.GetActive(Context).ToList();
+
+            // If this timesheet contains codes that are not in the dropdown list then add them in
+            foreach (var code in timesheet.TimesheetEntries.Select(x => x.InnateCodeTask.InnateCode))
             {
-
-                // Get the person associated with the active user
-                activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-
-                // Only superusers can delete a timesheet
-                EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
-
-                // Handle if the user is not found
-                if (ActiveUser == null)
+                if (!temp.Any(x => x.InnateCodeId == code.InnateCodeId))
                 {
-                    LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
-                    return;
+                    Debug.WriteLine($"** Loaded timesheet has inactive code: {code.GetCodeAsString()} -- adding to dropdown...");
+                    temp.Add(code);
                 }
+            }
 
-                // If there is an ID, then lookup the timesheet
-                if ((TimesheetId ?? 0) > 0)
-                {
-                    timesheet = TimesheetService.GetById(Context, TimesheetId);
-                }
-
-                // Check whether this user should have access or not
-                if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
-                {
-                    timesheet = null;
-                }
-
-                // If no timesheet and intention is create
-                if (timesheet == null && TimesheetId == -1)
-                {
-                    // Get the start date for the new timesheet
-                    var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
-                    timesheet = new Timesheet()
-                    {
-                        Owner = ActiveUser,
-                        StartDate = nextTimesheetStartDate
-                    };
-
-                    // Immediately save the timesheet to the DB
-                    int newId = TimesheetService.Add(Context, timesheet);
-
-                    // If a duplicate is detected then throw an error as this should never happen
-                    if (newId == -1)
-                    {
-                        throw new Exception("Error creating new timesheet!");
-                    }
-                    else
-                    {
-                        // Get the timesheet back to manipulate
-                        Timesheet newTimesheet = TimesheetService.GetById(Context, newId);
-                        innateCodeTasks = Context.InnateCodeTasks.ToList();
-                        TimesheetService.SetupTimesheetFromTemplate(Context, newTimesheet, ActiveUser, innateCodeTasks);
-                    }
-
-                    // Redirect to the newly created Timesheet so refrshing the page
-                    // with the -1 parameter doesn't create another new timesheet.
-                    Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
-                }
-
-                if (timesheet != null)
-                {
-                    dataGridEntities = timesheet.TimesheetEntries.ToList();
-                    UpdateDailyTotals();
-
-                    // Innate codes are limited to active ones initially
-                    innateCodes = InnateCodeService.GetActive(Context).ToList();
-
-                    // If this timesheet contains codes that are not in the dropdown list then add them in
-                    foreach (var code in timesheet.TimesheetEntries.Select(x => x.InnateCodeTask.InnateCode))
-                    {
-                        if (!innateCodes.Any(x => x.InnateCodeId == code.InnateCodeId))
-                        {
-                            Debug.WriteLine($"** Loaded timesheet has inactive code: {code.GetCodeAsString()} -- adding to dropdown...");
-                            innateCodes.Add(code);
-                        }
-                    }
-                }
-
-                LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
-            }).ContinueWith(t =>
+            // Remove codes that have been used on the timesheet already and have no tasks left
+            var codesInUse = dataGridEntities.Select(x => x.InnateCodeTask).GroupBy(x => x.InnateCode);
+            foreach (var code in codesInUse.Select(x => x.Key))
             {
-                Loading = false;
-                InvokeAsync(StateHasChanged);
-            });
+                // Match code in use to active code in initial source
+                var match = temp.FirstOrDefault(x => x.InnateCodeId == code.InnateCodeId);
+                if (match != null)
+                {
+                    // If all tasks for this code are in use then remove the code from the dropdown source
+                    if (match.Tasks.Count == codesInUse.FirstOrDefault(x => x.Key == code)?.Count())
+                    {
+                        temp.Remove(match);
+                    }
+                }
+            }
+
+            Debug.WriteLine($"** Populate code dropdown with {temp.Count} tasks");
+            innateCodeDropdownSource = temp;
+            OnInnateCodeChanged(null);
         }
 
         /// <summary>
@@ -305,10 +357,18 @@ namespace PPMTool.Pages
         /// <param name="value"></param>
         private void OnInnateCodeChanged(object value)
         {
+            // If value is null then just clear the lists
+            if (value == null)
+            {
+                Debug.WriteLine($"** Clearing task list");
+                innateCodeTaskDropdownSource = new List<InnateCodeTask>();
+                return;
+            }
+
             // Load the innate tasks associated with the selected innate code
             Debug.WriteLine($"** Selected {value}");
-            var tasks = innateCodes
-                .FirstOrDefault(x => x.GetCodeAsString() == (value as string)).Tasks
+            var tasks = innateCodeDropdownSource
+                .FirstOrDefault(x => x.GetCodeAsString() == (value as string))?.Tasks
                 .ToList();
 
             // Find all existing entries that use this same code
@@ -318,10 +378,11 @@ namespace PPMTool.Pages
                 .ToList();
 
             // Remove the tasks from the list that are already in use
-            tasks.RemoveAll(x => tasksInUse.Contains(x));
+            tasks?.RemoveAll(x => tasksInUse.Contains(x));
 
             // Assign the tasks
-            innateCodeTasks = tasks;
+            innateCodeTaskDropdownSource = tasks;
+            Debug.WriteLine($"** {tasks.Count} tasks in list");
 
             // If there is only one task then select it
             if (tasks.Count == 1)
@@ -339,7 +400,6 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnCreateRow(TimesheetEntry entity)
         {
-            Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
             TimesheetService.AddToTemplate(Context, ActiveUser, entity.InnateCodeTask);
@@ -350,6 +410,7 @@ namespace PPMTool.Pages
                 Summary = "Updated",
                 Detail = "Your timesheet template has been updated. The added task row will show when you next create a new timesheet."
             });
+            LoadInnateCodes();
         }
 
         /// <summary>
@@ -358,7 +419,6 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnUpdateRow(TimesheetEntry entity)
         {
-            Reset();
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.UpdateEntry(Context, entity);
         }
@@ -369,7 +429,7 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void CancelEdit(TimesheetEntry entity)
         {
-            LogInformation($"Cancel Edit row in view for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Restore model and cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
@@ -385,6 +445,9 @@ namespace PPMTool.Pages
             // Update the totals
             UpdateDailyTotals();
             entity.UpdateTotalHours();
+
+            // Refresh the code and task dropdowns
+            LoadInnateCodes();
         }
 
         /// <summary>
@@ -395,6 +458,7 @@ namespace PPMTool.Pages
         {
             await base.InsertRow();
             entityToInsert.Timesheet = timesheet;
+            LogInformation($"(Override) Add row in view for <{entityToInsert?.GetSensibleObjectName()}>");
         }
 
         /// <summary>
@@ -412,6 +476,7 @@ namespace PPMTool.Pages
                 TimesheetService.DeleteEntry(Context, entity);
                 await base.DeleteRow(entity);
                 UpdateDailyTotals();
+                LoadInnateCodes();
 
                 ShowNotification(new CapXNotificationMessage
                 {

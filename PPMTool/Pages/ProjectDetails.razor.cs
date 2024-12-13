@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
@@ -78,7 +79,7 @@ namespace PPMTool.Pages
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
-        private List<ChartItem> burnUpChartSource = new List<ChartItem>();
+        private List<ChartItem> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
@@ -102,7 +103,8 @@ namespace PPMTool.Pages
         private bool isCurrentUserFollowing;
         private bool isProjectManager;
         private bool groupLinkedTasks = false;
-        private ApexChart<GanttBlock> gantt;
+        private ApexChart<GanttBlock> scheduleChart;
+        private ApexChart<ChartItem> burnUpChart;
 
         internal class GanttBlock : IChartItem
         {
@@ -130,221 +132,244 @@ namespace PPMTool.Pages
             }
         }
 
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+            Loading = true;
+
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
+
+            // Reset the search box
+            noteSearchTerms = string.Empty;
+
+            // Filter the mentions reset
+            cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
+            FilterMentionables();
+
+            Task.Run(() =>
+            {
+                // Query string only consulted when Project ID is not specified in URL
+                if (ProjectId == null && RTP != null)
+                {
+                    // Try get the project
+                    ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
+                }
+
+                // Carry on and load the project details
+                if (ProjectId != null)
+                {
+                    project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+
+                    // Generate the blocks for the schedule chart
+                    allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                    var allBlocks = new List<GanttBlock>();
+                    foreach (var t in allTasks)
+                    {
+                        // Initialise as the task name
+                        var groupName = t.Name;
+
+                        if (t.Predecessor != null)
+                        {
+                            // Find predecessor in the existing list
+                            var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
+                            if (match != null)
+                            {
+                                groupName = match.PredecessorGroupName;
+                            }
+                            else
+                            {
+                                Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
+                                LogError("Cannot find predecessor task in temporary list!");
+                            }
+                        }
+
+                        // Add to the list of blocks
+                        allBlocks.Add(new GanttBlock(t, groupName));
+                    }
+
+                    // Fill in the data
+                    ChartHelper.CompleteChartSeries(
+                        allBlocks,
+                        c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
+                        out confirmedBlocks,
+                        out provisionalBlocks
+                    );
+
+                    // Update the UI
+                    plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
+                    actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
+                    fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                    count = allTasks.Count;
+                    isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
+                        project.ProjectManager?.Name == ActiveUser?.Name;
+                    isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
+
+                    ganttChartOptions = new ApexChartOptions<GanttBlock>
+                    {
+                        Chart = new Chart
+                        {
+                            Zoom = new Zoom
+                            {
+                                AllowMouseWheelZoom = false
+                            }
+                        },
+                        PlotOptions = new PlotOptions
+                        {
+                            Bar = new PlotOptionsBar
+                            {
+                                Horizontal = true,
+                                RangeBarGroupRows = true
+                            }
+                        },
+                        Fill = new Fill
+                        {
+                            Opacity = 1,
+                            Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                            Pattern = new FillPattern
+                            {
+                                Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                            }
+                        },
+                        Legend = new ApexCharts.Legend
+                        {
+                            Show = false
+                        },
+                        Annotations = new Annotations
+                        {
+                            Xaxis = new List<AnnotationsXAxis>
+                            {
+                                new AnnotationsXAxis()
+                                {
+                                    X = DateTime.Today.ToUnixTimeMilliseconds(),
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Current Week",
+                                        Position = LabelPosition.Right
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    // Update the Gantt chart axis limits
+                    UpdateScheduleChartAxisLimits();
+
+                    // Create the burn-up chart items
+                    burnUpChartSource = new List<ChartItem>();
+                    var temp = ChartHelper.AggregateSubTasksByWeek(
+                        project.GetFullName(),
+                        project.SubTasks,
+                        (assignments, currentWeek) =>
+                        {
+                            // Value 1 requires the number of days is simply the planned work hours up to the end of that week
+                            return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek));
+                        },
+                        (assignments, currentWeek) =>
+                        {
+                            // Value 2 is corrected for the unmet demand on the task
+                            return assignments.RoundedSum(task => task.Demand == 0 ? 0 : (task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand))));
+                        }
+                    ).ToList();
+
+                    // Generate series by aggregating the values
+                    double cumulativeValue1 = 0;
+                    double cumulativeValue2 = 0;
+                    foreach (var week in temp)
+                    {
+                        cumulativeValue1 += week.Value1;
+                        cumulativeValue2 += week.Value2;
+                        burnUpChartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulativeValue1), Math.Round(cumulativeValue2), false));
+                    }
+
+                    // Early exit if chartSource has no data
+                    if (burnUpChartSource.Count < 1) return;
+
+                    // Create a new data point to indicate progress
+                    var seriesStart = burnUpChartSource.Min(x => x.StartDate);
+                    var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
+                    var actualsX = DateTime.Today;
+                    var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
+
+                    // If the task has started yet or has already finished then x coordinate is the limits of the series
+                    if (DateTime.Today < seriesStart) actualsX = seriesStart;
+                    else if (DateTime.Today > seriesEnd) actualsX = seriesEnd;
+
+                    // Set options
+                    burnUpChartOptions = new ApexChartOptions<ChartItem>
+                    {
+                        Chart = new Chart
+                        {
+                            Zoom = new Zoom
+                            {
+                                AllowMouseWheelZoom = false
+                            }
+                        },
+                        Stroke = new Stroke
+                        {
+                            Curve = new CurveSelections(new Curve[] { Curve.Straight })
+                        },
+                        Colors = new List<string> { "#1151F3", "#FFC107" },
+                        Annotations = new Annotations
+                        {
+                            Yaxis = new List<AnnotationsYAxis>
+                            {
+                                new AnnotationsYAxis()
+                                {
+                                    Y = actualsY,
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Actual (Hours)",
+                                        Position = LabelPosition.Right
+                                    }
+                                }
+                            },
+                            Xaxis = new List<AnnotationsXAxis>
+                            {
+                                new AnnotationsXAxis()
+                                {
+                                    X = actualsX.ToUnixTimeMilliseconds(),
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Current Week",
+                                        Position = LabelPosition.Left
+                                    }
+                                }
+                            }
+                        },
+                        Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
+                        Yaxis = new List<YAxis>
+                        {
+                            new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
+                        }
+                    };
+                }
+                LogInformation($"Viewing project details for RTP-{project?.RTP}");
+            }).ContinueWith(t =>
+            {
+                Loading = false;
+                InvokeAsync(() =>
+                {
+                    StateHasChanged();
+                    OnAfterRender(true);
+                });
+            });
+        }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
             allProjects = ProjectService.GetAll(Context).ToList();
 
-            cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
-            FilterMentionables();
-
-            // Query string only consulted when Project ID is not specified in URL
-            if (ProjectId == null && RTP != null)
-            {
-                // Try get the project
-                ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
-            }
-
-            // Carry on and load the project details
-            if (ProjectId != null)
-            {
-                project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
-
-                // Generate the blocks for the schedule chart
-                allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
-                var allBlocks = new List<GanttBlock>();
-                foreach (var t in allTasks)
-                {
-                    // Initialise as the task name
-                    var groupName = t.Name;
-
-                    if (t.Predecessor != null)
-                    {
-                        // Find predecessor in the existing list
-                        var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
-                        if (match != null)
-                        {
-                            groupName = match.PredecessorGroupName;
-                        }
-                        else
-                        {
-                            Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
-                            LogError("Cannot find predecessor task in temporary list!");
-                        }
-                    }
-
-                    // Add to the list of blocks
-                    allBlocks.Add(new GanttBlock(t, groupName));
-                }
-
-                // Fill in the data
-                ChartHelper.CompleteChartSeries(
-                    allBlocks,
-                    c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
-                    out confirmedBlocks,
-                    out provisionalBlocks
-                );
-
-                // Update the UI
-                plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
-                actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
-                fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
-                count = allTasks.Count;
-                isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
-                    project.ProjectManager?.Name == ActiveUser?.Name;
-                isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
-
-                ganttChartOptions = new ApexChartOptions<GanttBlock>
-                {
-                    Chart = new Chart
-                    {
-                        Zoom = new Zoom
-                        {
-                            AllowMouseWheelZoom = false
-                        }
-                    },
-                    PlotOptions = new PlotOptions
-                    {
-                        Bar = new PlotOptionsBar
-                        {
-                            Horizontal = true,
-                            RangeBarGroupRows = true
-                        }
-                    },
-                    Fill = new Fill
-                    {
-                        Opacity = 1,
-                        Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
-                        Pattern = new FillPattern
-                        {
-                            Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
-                        }
-                    },
-                    Legend = new ApexCharts.Legend
-                    {
-                        Show = false
-                    },
-                    Annotations = new Annotations
-                    {
-                        Xaxis = new List<AnnotationsXAxis>
-                        {
-                            new AnnotationsXAxis()
-                            {
-                                X = DateTime.Today.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "red",
-                                Label = new Label
-                                {
-                                    Text = "Current Week",
-                                    Position = LabelPosition.Right
-                                }
-                            }
-                        }
-                    }
-                };
-
-                // Update the Gantt chart axis limits
-                UpdateScheduleChartAxisLimits();
-
-                // Create the burn-up chart items
-                var temp = ChartHelper.AggregateSubTasksByWeek(
-                    project.GetFullName(),
-                    project.SubTasks,
-                    (assignments, currentWeek) =>
-                    {
-                        // Value 1 requires the number of days is simply the planned work hours up to the end of that week
-                        return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek));
-                    },
-                    (assignments, currentWeek) =>
-                    {
-                        // Value 2 is corrected for the unmet demand on the task
-                        return assignments.RoundedSum(task => task.Demand == 0 ? 0 : (task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand))));
-                    }
-                ).ToList();
-
-                // Generate series by aggregating the values
-                double cumulativeValue1 = 0;
-                double cumulativeValue2 = 0;
-                foreach (var week in temp)
-                {
-                    cumulativeValue1 += week.Value1;
-                    cumulativeValue2 += week.Value2;
-                    burnUpChartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulativeValue1), Math.Round(cumulativeValue2), false));
-                }
-
-                // Early exit if chartSource has no data
-                if (burnUpChartSource.Count < 1) return;
-
-                // Create a new data point to indicate progress
-                var seriesStart = burnUpChartSource.Min(x => x.StartDate);
-                var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
-                var actualsX = DateTime.Today;
-                var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
-
-                // If the task has started yet or has already finished then x coordinate is the limits of the series
-                if (DateTime.Today < seriesStart) actualsX = seriesStart;
-                else if (DateTime.Today > seriesEnd) actualsX = seriesEnd;
-
-                // Set options
-                burnUpChartOptions = new ApexChartOptions<ChartItem>
-                {
-                    Chart = new Chart
-                    {
-                        Zoom = new Zoom
-                        {
-                            AllowMouseWheelZoom = false
-                        }
-                    },
-                    Stroke = new Stroke
-                    {
-                        Curve = new CurveSelections(new Curve[] { Curve.Straight })
-                    },
-                    Colors = new List<string> { "#1151F3", "#FFC107" },
-                    Annotations = new Annotations
-                    {
-                        Yaxis = new List<AnnotationsYAxis>
-                        {
-                            new AnnotationsYAxis()
-                            {
-                                Y = actualsY,
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "red",
-                                Label = new Label
-                                {
-                                    Text = "Actual (Hours)",
-                                    Position = LabelPosition.Right
-                                }
-                            }
-                        },
-                        Xaxis = new List<AnnotationsXAxis>
-                        {
-                            new AnnotationsXAxis()
-                            {
-                                X = actualsX.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "red",
-                                Label = new Label
-                                {
-                                    Text = "Current Week",
-                                    Position = LabelPosition.Left
-                                }
-                            }
-                        }
-                    },
-                    Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
-                    Yaxis = new List<YAxis>
-                    {
-                        new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
-                    }
-                };
-                InvokeAsync(StateHasChanged);
-            }
-            LogInformation($"Viewing project details for RTP-{project?.RTP}");
+            LogInformation($"Initialised project details");
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -393,7 +418,7 @@ namespace PPMTool.Pages
             UpdateScheduleChartAxisLimits();
 
             // Redraw the chart
-            gantt?.RenderAsync();
+            scheduleChart?.RenderAsync();
         }
 
         private void UpdateScheduleChartAxisLimits()
@@ -409,7 +434,7 @@ namespace PPMTool.Pages
                     Max = allBlocks.Count() == 0 ? null : allBlocks.Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
                 }
             };
-            gantt?.UpdateOptionsAsync(false, false, false);
+            scheduleChart?.UpdateOptionsAsync(false, false, false);
         }
 
         /// <summary>
@@ -538,6 +563,7 @@ namespace PPMTool.Pages
 
         private void PopulateNotes()
         {
+            Debug.WriteLine("** Populating notes...");
             allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
@@ -548,6 +574,8 @@ namespace PPMTool.Pages
 
         private void FilterNotes()
         {
+            Debug.WriteLine("** Filtering / Highlighting notes...");
+
             // Clear existing highlighting
             InvokeAsync(async () =>
             {

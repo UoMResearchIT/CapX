@@ -262,17 +262,25 @@ namespace PPMTool.Services
 
             foreach (int taskId in templateTimesheetTasks)
             {
-                try
+                InnateCodeTask task = tasks.FirstOrDefault(x => x.InnateCodeTaskId == taskId);
+
+                // If task is no-longer in the DB or if the task is no-longer associated with an active code then remove from template
+                if (task == null || !task.InnateCode.IsActive)
                 {
-                    InnateCodeTask task = tasks.Where(x => x.InnateCodeTaskId == taskId).FirstOrDefault();
+                    // Remove from template
+                    if (task != null) DeleteFromTemplate(context, person, task);
+
+                    Debug.WriteLine($"** Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
+                }
+                else
+                {
+                    // Add entry to timesheet
                     TimesheetEntry entry = new TimesheetEntry();
                     entry.InnateCodeTask = task;
-
                     timesheet.TimesheetEntries.Add(entry);
 
-                    Debug.WriteLine($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                    Debug.WriteLine($"** Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
                 }
-                catch (Exception ex) { Debug.WriteLine(ex); }
             }
             context.SaveChanges();
         }
