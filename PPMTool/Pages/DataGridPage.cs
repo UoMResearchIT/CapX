@@ -55,6 +55,7 @@ namespace PPMTool.Pages
         protected async virtual Task SaveRow(T entity)
         {
             LogInformation($"Update row in view for <{entity?.GetSensibleObjectName()}>");
+            Reset();
             await dataGrid.UpdateRow(entity);
         }
 
@@ -108,7 +109,6 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected virtual void OnCreateRow(T entity)
         {
-            Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             dataGridEntityService.Add(Context, entity);
         }
@@ -119,7 +119,6 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected virtual void OnUpdateRow(T entity)
         {
-            Reset();
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
             dataGridEntityService.Update(Context, entity);
         }

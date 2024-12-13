@@ -395,7 +395,6 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnCreateRow(TimesheetEntry entity)
         {
-            Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
             LoadInnateCodes();
@@ -407,7 +406,6 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnUpdateRow(TimesheetEntry entity)
         {
-            Reset();
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.UpdateEntry(Context, entity);
         }
