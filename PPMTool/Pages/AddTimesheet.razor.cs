@@ -21,8 +21,6 @@ namespace PPMTool.Pages
         [Parameter]
         public int? TimesheetId { get; set; }
 
-        private bool IsSavingTimesheetProgress { get; set; } = false;
-
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
@@ -54,6 +52,7 @@ namespace PPMTool.Pages
             { "sat", "#FDFBD4" },
             { "sun", "#FDFBD4" }
         };
+        private TimesheetStatus newStatus;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         protected override async Task OnParametersSetAsync()
@@ -280,24 +279,14 @@ namespace PPMTool.Pages
         /// </summary>
         private async void HandleValidSubmit()
         {
+            // Prompt
+            var confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
+                "Change Timesheet Status") ?? false;
+            if (!confirmed) return;
+            timesheet.Status = newStatus;
+
             // Reset error message
             ErrorMessage = null;
-
-            // If saving the timesheet progress just update the db for any changed notes
-            if (IsSavingTimesheetProgress)
-            {
-                TimesheetService.Update(Context, timesheet);
-                Debug.WriteLine("Timesheet ptogress saved");
-
-                // Show notification for save action
-                ShowNotification(new CapXNotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Saved",
-                    Detail = "Your timesheet progress has been saved."
-                });
-                return;
-            }
 
             // Validation on minimum hours etc. and show a status message
             if (timesheet.Status == TimesheetStatus.Submitted && dataGridEntities.Count == 0)
