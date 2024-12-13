@@ -1,26 +1,30 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using Microsoft.EntityFrameworkCore.Migrations;
 using System.Text.Json;
-using PPMTool.Data.Context;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.Migrations;
+using PPMTool.Data.Context;
 
 #nullable disable
 
 namespace PPMTool.Migrations
 {
-    
-
     public partial class AddSkills : Migration
     {
 
         string LocalFilePath = "./ToInsertSkills.txt";
         string SkillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
-        
-        protected  bool IsDuplicatedSkill(string toInsertSkill, IEnumerable<string> existingSkills)
+
+        /// <summary>
+        /// Check to see if two skills represented as a string name are duplicated
+        /// </summary>
+        /// <param name="toInsertSkill"></param>
+        /// <param name="existingSkills"></param>
+        /// <returns></returns>
+        protected bool IsDuplicatedSkill(string toInsertSkill, IEnumerable<string> existingSkills)
         {
             Regex rgx = new Regex("[^a-zA-Z0-9 .#]");
             foreach (var existingSkill in existingSkills)
@@ -44,9 +48,9 @@ namespace PPMTool.Migrations
 
             var respone = client.GetAsync(SkillJsonEndpoint).Result.EnsureSuccessStatusCode();
             var content = respone.Content.ReadAsStringAsync().Result;
-            
+
             var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");
-            
+
             HashSet<string> toInsertSkills = new();
             foreach (var person in dictionary)
             {
@@ -57,7 +61,6 @@ namespace PPMTool.Migrations
                 }
             }
 
-
             // Retrive the existing Skills Tag
             var context = new PPMToolContext();
             var ts = new Services.TagService();
@@ -67,12 +70,11 @@ namespace PPMTool.Migrations
             foreach (string skill in toInsertSkills)
             {
                 if (IsDuplicatedSkill(skill, existingSkills))
-                {                
+                {
                     Console.WriteLine($"Duplicated skill: {skill}");
                     toInsertSkills.Remove(skill);
                 }
             }
-
 
             // Write the skills to a .txt file
             if (!File.Exists(LocalFilePath))
@@ -83,11 +85,12 @@ namespace PPMTool.Migrations
             }
             else
             {
-                // file exists: compare its content, warn and update if different
+                // File exists: compare its content, warn and update if different
                 var existingContent = File.ReadAllLines(LocalFilePath);
                 var newContent = toInsertSkills.ToArray();
 
-                if (!existingContent.SequenceEqual(newContent)) // only update if the content is different
+                // Only update if the content is different
+                if (!existingContent.SequenceEqual(newContent))
                 {
                     File.WriteAllLines(LocalFilePath, toInsertSkills);
                     Console.WriteLine("Warning: File content has been updated.");
@@ -111,8 +114,8 @@ namespace PPMTool.Migrations
 
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            var toInsetSkills = GetSkillsFromSkillGraphRepo();
-            foreach (var skill in toInsetSkills)
+            var toInsertSkills = GetSkillsFromSkillGraphRepo();
+            foreach (var skill in toInsertSkills)
             {
                 migrationBuilder.InsertData(
                     table: "SkillTags",
