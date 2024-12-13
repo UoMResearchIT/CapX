@@ -12,10 +12,10 @@ namespace PPMTool.API.Endpoints;
 public static class Skills
 {
     /// <summary>
-    /// Get all distinct skills 
+    /// Get all skills tags from DB
     /// </summary>
     /// <returns>
-    /// A list of distinct skills
+    /// A list of skills tags in DB
     /// </returns> 
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
