@@ -9,15 +9,20 @@ namespace PPMTool.Data.Context
     {
         public DbSet<Absence> Absence { get; set; }
         public DbSet<InnateCode> InnateCodes { get; set; }
+        public DbSet<InnateCodeTask> InnateCodeTasks { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<SubTask> SubTasks { get; set; }
+        public DbSet<Timesheet> Timesheets { get; set; }
+        public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<SkillTag> SkillTags { get; set; }
         public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<FinancialReference> FinancialReferences { get; set; }
+        public DbSet<Competency> Competencies { get; set; }
+        public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; }
 
         /// <summary>
         /// Inject options.

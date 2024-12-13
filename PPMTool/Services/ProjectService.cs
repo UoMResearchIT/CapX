@@ -109,6 +109,16 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Gets project table entities without any includes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Project> GetAllShallow(PPMToolContext context)
+        {
+            return context.Projects;
+        }
+
+        /// <summary>
         /// Get all the projects but pre-filter to only unfunded ones.
         /// </summary>
         /// <param name="context"></param>

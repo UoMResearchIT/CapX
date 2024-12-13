@@ -5,6 +5,7 @@
 @using PPMTool.Pages.Components
 @using DotNetExtensions
 @using System.ComponentModel.DataAnnotations
+<PageTitle>Add Project - CapX</PageTitle>
 
 <div class="container">
     @if (ProjectId <= 0)
@@ -94,7 +95,7 @@
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Public Description" /><br />
-                    <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!"/>
+                    <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
                 </div>
             </div>
             <div class="row">

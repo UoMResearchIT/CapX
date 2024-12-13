@@ -18,7 +18,7 @@ namespace PPMTool.Pages
 
             if (PersonId > 0)
             {
-                personModel = PersonService.GetById(context, PersonId);
+                personModel = PersonService.GetById(Context, PersonId);
                 dataGridEntities = personModel.WorkloadModelChanges.ToList();
             }
             else
@@ -52,12 +52,12 @@ namespace PPMTool.Pages
                 if (dataGridEntities.DistinctBy(x => x.ChangeDate).Count() != dataGridEntities.Count())
                 {
                     LogWarning($"Availability change duplicates a change date!");
-                    errorMessage = new StatusMessage("You cannot have multiple changes in availability on the same day!", StatusMessage.MessageType.Error);
+                    ErrorMessage = new StatusMessage("You cannot have multiple changes in availability on the same day!", StatusMessage.MessageType.Error);
                     return;
                 }
                 else
                 {
-                    errorMessage = null;
+                    ErrorMessage = null;
                 }
 
                 // Update the person model, save to database, refresh the list and reset the model
@@ -68,7 +68,7 @@ namespace PPMTool.Pages
                 }
 
                 LogInformation($"Saving workload model changes for {personModel.Name}.");
-                PersonService.Update(context, personModel);
+                PersonService.Update(Context, personModel);
                 Navigation.NavigateTo($"addperson/{PersonId}");
             }
         }

@@ -17,12 +17,8 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
-        [Inject]
-        private RolesService RoleService { get; set; }
-
         private bool tableEmpty;
         private IEnumerable<Person> people;
-        private IEnumerable<Absence> currentAbsences;
         private int count;
         private int pageCount = 10;
 
@@ -63,7 +59,7 @@ namespace PPMTool.Pages
         private void LoadData(LoadDataArgs args)
         {
             // Order by name by default
-            var loadedPeople = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
+            var loadedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
             // Reduce to just current people
             if (!IncludeLeavers)
@@ -73,17 +69,9 @@ namespace PPMTool.Pages
 
             if (!EditAuthorised)
             {
-                // Look up the username
-                var role = RoleService.GetByUsername(context, AuthenticationState.User.Identity.Name.Trim().ToLower());
-
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
+                loadedPeople = loadedPeople.Where(x => x == ActiveUser).ToList();
             }
-
-            // Current absences
-            currentAbsences = loadedPeople
-                .Where(x => x.IsCurrentlyAbsent())
-                .Select(x => x.Absences.FirstOrDefault(x => x.IsCurrentAbsence()));
 
             // Set the table empty flag
             tableEmpty = loadedPeople.Count == 0;
@@ -128,11 +116,6 @@ namespace PPMTool.Pages
             {
                 people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
-        }
-
-        private void EditAbsence(Person person)
-        {
-            Navigation.NavigateTo($"/addabsence/{person.PersonId}");
         }
     }
 }

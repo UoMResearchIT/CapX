@@ -2,6 +2,7 @@
 @inherits DataGridPage<FinancialReference>
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+<PageTitle>Manage Financial Refs - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
@@ -9,12 +10,12 @@
             <h1>Manage Financial References</h1>
         </div>
         <div class="col-auto">
-            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null) />
+            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || !EditAuthorised) />
         </div>
     </div>
-    @if (statusMessage != null)
+    @if (ErrorMessage != null)
     {
-        <StatusMessageComponent Message="statusMessage" />
+        <StatusMessageComponent Message="ErrorMessage" />
     }
     <hr />
     <RadzenDataGrid @ref="dataGrid"
@@ -95,8 +96,8 @@
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="FinancialReference" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions">
                 <Template Context="fin">
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!EditAuthorised)" />
                 </Template>
                 <EditTemplate Context="fin">
                     <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(fin))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />

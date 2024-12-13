@@ -14,6 +14,9 @@ namespace PPMTool.Data.Entities
         public int PersonId { get; set; }
 
         private string name;
+        /// <summary>
+        /// Name of the person
+        /// </summary>
         [Required]
         public string Name
         {
@@ -21,19 +24,41 @@ namespace PPMTool.Data.Entities
             set { name = value; ShortName = GetInitials(value); }
         }
 
-
+        /// <summary>
+        /// Initials of the person -- auto populated but can be edited
+        /// </summary>
         public string ShortName { get; set; }
 
+        /// <summary>
+        /// When they started in post
+        /// </summary>
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Today;
 
+        /// <summary>
+        /// When they left. Null if still in post.
+        /// </summary>
         public DateTime? EndDate { get; set; }
 
+        /// <summary>
+        /// FTE of the post
+        /// </summary>
         [Required]
         public double FTE { get; set; } = 1.0;
 
         /// <summary>
-        /// Any changes to their availability which includes the undertaking of baseline activities
+        /// Line manager of this person
+        /// </summary>
+        [Required]
+        public Person LineManager { get; set; }
+
+        /// <summary>
+        /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
+        /// </summary>
+        public string TimesheetTemplateData { get; set; }
+
+        /// <summary>
+        /// Any changes to their WLMs
         /// </summary>
         public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
 
@@ -59,9 +84,31 @@ namespace PPMTool.Data.Entities
         [InverseProperty("ProjectManager")]
         public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
 
+        /// <summary>
+        /// List of the competency assessments this person has performed
+        /// </summary>
+        public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
+
+        /// <summary>
+        /// The collection of Timesheets this person owns
+        /// </summary>
+        [InverseProperty("Owner")]
+        public ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
+
+        /// <summary>
+        /// The collection of Timesheets this person was last to change the status of
+        /// </summary>
+        [InverseProperty("StatusChangedBy")]
+        public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
+
+        /// <summary>
+        /// List of people that this person manages as their line manager
+        /// </summary>
+        public ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
+
         public Person()
         {
-            // Generate status messages to be maintained against a project
+            // Generate status messages to be maintained against a person
             statusMessages = new List<StatusMessage>
             {
                 new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
@@ -112,6 +159,43 @@ namespace PPMTool.Data.Entities
             }
 
             return availability;
+        }
+
+        /// <summary>
+        /// Method to get the current workload model of a person in force at the date given or defaults to a G6 model
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
+        {
+            // Get the workload model that is active at the beginning of the week
+            var activeModel = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderBy(x => x.ChangeDate).LastOrDefault();
+
+            // If no workload model active then default to the standard 100% project work model
+            if (activeModel == null)
+            {
+                activeModel = new WorkloadModelChange()
+                {
+                    ChangeDate = date,
+                    Person = this,
+                    ProjectWorkFTE = 0.8,
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0.1,
+                    Notes = "Default G6 Model",
+                    Grade = 6
+                };
+            }
+
+            return activeModel;
+        }
+
+        /// <summary>
+        /// Is the current staff member a current staff member at the moment
+        /// </summary>
+        /// <returns></returns>
+        internal bool IsCurrentStaff()
+        {
+            return StartDate <= DateTime.Today && (EndDate == null || EndDate > DateTime.Today);
         }
     }
 }

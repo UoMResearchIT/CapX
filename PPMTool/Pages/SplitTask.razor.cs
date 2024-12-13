@@ -18,9 +18,6 @@ namespace PPMTool.Pages
         [Parameter]
         public int? ProjectId { get; set; }
 
-        [Inject]
-        public RolesService RolesService { get; set; }
-
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
         private bool splitOnDate = true;
@@ -48,7 +45,7 @@ namespace PPMTool.Pages
 
                 // Only allow the project manager to save the split or a superuser
                 var user = AuthenticationState?.User;
-                var role = RolesService.GetByUsername(context, ActiveUserName);
+                var role = RolesService.GetByUsername(Context, ActiveUserName);
                 EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && originalAddTaskComponent?.ProjectModel.ProjectManager.PersonId == role?.Person.PersonId);
 
                 StateHasChanged();

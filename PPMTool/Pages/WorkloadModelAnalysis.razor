@@ -1,0 +1,76 @@
+﻿@page "/wlmanalysis"
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using DotNetExtensions
+@using PPMTool.Pages.Components
+@inherits BasePage
+<PageTitle>WLM Analysis - CapX</PageTitle>
+
+<div class="container">
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                <h2>Workload Model Analysis</h2>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
+                    <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow class="card" Style="flex-direction:unset">
+        <RadzenColumn>
+            <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Choose Staff:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                    <RadzenDropDown @bind-Value=@selectedPeople
+                                    Data=@availablePeople
+                                    TextProperty="Name"
+                                    Multiple=true
+                                    AllowClear=true
+                                    Placeholder="Choose RSEs"
+                                    Chips=true
+                                    MaxSelectedLabels="20"
+                                    Disabled="@Loading"
+                                    Style="width: 100%" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Choose Date Range:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                        <RadzenDatePicker @bind-Value="@startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled="@Loading" />
+                        <RadzenText Text="to" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                        <RadzenDatePicker @bind-Value="@endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled="@Loading" />
+                        <RadzenButton Text="3 Months From Start" Click="@(() => SetEndDate(3))" Disabled="@(Loading || startDate == null)" />
+                    </RadzenStack>
+                    <RadzenButton Text="Generate" Click="GenerateCharts" Disabled="@(Loading || startDate == null || endDate == null || selectedPeople == null || selectedPeople?.Count() == 0)" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <hr />
+    @if (Loading)
+    {
+        <LoadingComponent @bind-SpinnerText="@loadingMessage" />
+    }
+    else if (wlmChartItems != null && wlmChartItems.Count > 0)
+    {
+        <RadzenRow>
+            @for (int i = 0; i < wlmChartItems.Count; ++i)
+            {
+                <WLMChartComponent Title="@wlmChartItems.Keys.ElementAt(i)"
+                                   ChartOptions="@wlmChartOptions[i]"
+                                   ChartItems="@wlmChartItems.ElementAt(i).Value"
+                                   CompareToWorkloadModel="@compareToWLM"
+                                   NormalisedByTotalHours="@normalisedByTotalHours" />
+            }
+        </RadzenRow>
+    }
+    else
+    {
+        <RadzenText Text="Choose people and a date range above and click to generate the chart." />
+    }
+    <br />
+</div>

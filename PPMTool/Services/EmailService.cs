@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-#if !LOCAL
 using System.Net.Mail;
-#endif
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +43,7 @@ namespace PPMTool.Services
 
         public void SendEmail(IEnumerable<string> to, string subject, string message)
         {
-#if !LOCAL
+
             var client = new SmtpClient(Configuration["Email:SmtpServer"]);
 
             var mailMessage = new MailMessage
@@ -61,10 +59,11 @@ namespace PPMTool.Services
                 mailMessage.To.Add(recipient);
             }
 
+            Logger.LogInformation($"Sending email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
+#if !LOCAL
             try
             {
                 client.Send(mailMessage);
-                Logger.LogInformation($"Sent email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
             }
             catch (Exception e)
             {
@@ -271,9 +270,9 @@ namespace PPMTool.Services
         {
             Task.Run(() =>
             {
-                // Create context and get roles
+                // Create context and get roles (ignoring externals)
                 var context = DbContextFactory.CreateDbContext();
-                var roles = RolesService.GetAll(context).DistinctBy(x => x.Person.PersonId);
+                var roles = RolesService.GetAll(context).Where(x => x.Person != null).DistinctBy(x => x.Person.PersonId);
 
                 // Start with those mentioned in the note
                 var peopleToBeNotfied = mentions;
@@ -338,13 +337,14 @@ namespace PPMTool.Services
                             .Where(x => x.PropertyName != "EditorPersonId" && x.PropertyName != nameof(Note.EditedDate))
                         )
                         {
-                            body.Append($"<b>{diff.PropertyName}:</b> {diff.OriginalValue ?? "None"} <b>&hArr;</b> {diff.CurrentValue ?? "None"}<br/>");
+                            body.Append($"<p><b><i>{diff.PropertyName}:</i></b></p> <p>{diff.OriginalValue ?? "None"}<br/><b>&hArr;</b> {diff.CurrentValue ?? "None"}</p>");
                         }
+                        body.Append("<hr />");
                     }
 
                     // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View {note.Project.GetFullName()} on CapX</a>");
+                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
 
                     // Send email
                     var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";

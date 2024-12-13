@@ -38,7 +38,10 @@ namespace PPMTool
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddServerSideBlazor();
+            services.AddServerSideBlazor().AddHubOptions(o =>
+            {
+                o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
+            });
 
             services.AddDbContextFactory<PPMToolContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("PPMToolContextConnection"))
@@ -57,6 +60,8 @@ namespace PPMTool
             services.AddScoped<EmailService>();
             services.AddScoped<NoteService>();
             services.AddScoped<FinancialReferenceService>();
+            services.AddScoped<CompetencyService>();
+            services.AddScoped<TimesheetService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -150,9 +155,6 @@ namespace PPMTool
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
-
-            // Seed the superuser
-            roleService.SeedSuperUser("mbgm6ah3", "Adrian Harwood");
         }
 
         private async Task OnCreatingTicket(CasCreatingTicketContext context)

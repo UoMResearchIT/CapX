@@ -1,0 +1,229 @@
+﻿@page "/addtimesheet/{TimesheetId:int}"
+@inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
+@using DotNetExtensions
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+@using PPMTool.Services
+@using Radzen.Blazor
+<PageTitle>Add Timesheet - CapX</PageTitle>
+
+<div class="container">
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else if (TimesheetId > 0 && timesheet == null)
+    {
+        <StatusMessageComponent Message="@(new StatusMessage("Either you are not permitted to view this timesheet or a timesheet with the given ID is not present in the database!", StatusMessage.MessageType.Error))" />
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                @if (TimesheetId <= 0)
+                {
+                    <h1>Add Timesheet</h1>
+                }
+                else
+                {
+                    <h1>Edit Timesheet</h1>
+                }
+                @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+                {
+                    <RadzenText Text="@timesheet?.Owner.Name" TextStyle="TextStyle.DisplayH5" />
+                }
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem">
+                    <RadzenText Text="@($"{timesheet.StartDate.ToLongDateString()} - {timesheet.StartDate.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                    <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style align-self-center" Text="@(timesheet.Status.ToNiceString())" />
+                </RadzenStack>
+            </div>
+            @if (EditAuthorised)
+            {
+                <div class="col-auto" style="align-content: center">
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+                </div>
+            }
+        </div>
+        <hr />
+        
+        <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
+                <div class="card">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="row">
+                    <div class="col">
+                        <h2>Timesheet Entries</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
+                    </div>
+                </div>
+                <RadzenDataGrid @ref="dataGrid"
+                                AllowFiltering="false"
+                                AllowPaging="false"
+                                AllowSorting="false"
+                                EditMode="DataGridEditMode.Single"
+                                Data="@dataGridEntities"
+                                TItem="TimesheetEntry"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                ColumnWidth="5rem"
+                                CellRender="@CellRender">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    FilterOperator="StringFilterOperator.Contains"
+                                                    AllowFiltering="true"
+                                                    Placeholder="Search for Innate Code"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
+                                                    Style="width: 100%"
+                                                    Change="@(args => OnInnateCodeChanged(args))" />
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                                }
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Task" MinWidth="10px" Width="12rem">
+                            <Template Context="entry">
+                                <TimesheetEntryTaskComponent Entry="@entry" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="InnateCodeTask"
+                                                    Data="@innateCodeTaskDropdownSource"
+                                                    TextProperty="TaskName"
+                                                    Style="width: 100%"
+                                                    @bind-Value="entry.InnateCodeTask" />
+                                }
+                                else
+                                {
+                                    <TimesheetEntryTaskComponent Entry="@entry" />
+                                }
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.MondayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.MondayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.TuesdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.TuesdayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@tuesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.WednesdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.WednesdayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@wednesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.ThursdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.ThursdayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@thursdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.FridayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.FridayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@fridayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.SaturdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.SaturdayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@saturdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="entry">
+                                <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.SundayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.SundayHours)))" />
+                            </EditTemplate>
+                            <FooterTemplate>
+                                <RadzenText Text="@sundayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Title="Total" MinWidth="10px" FormatString="{0:F2}" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText Text="@entry.TotalHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </Template>
+                            <FooterTemplate>
+                                <RadzenText Text="@($"{totalHours.ToString("F2")}")" Style="font-weight: bold; margin-bottom: 0;" />
+                            </FooterTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                            <Template Context="entry">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+
+                </RadzenDataGrid>
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
+                            <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                        </RadzenStack>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 1rem;">
+                <div class="col">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <div>
+                            @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-left: 0.5rem;" />
+                            }
+                            @if ((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { newStatus = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
+                            }
+                            @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
+                            {
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-left: 0.5rem;" />
+                            }
+                        </div>
+                    </RadzenStack>
+                </div>
+            </div>
+            @if (ErrorMessage != null)
+            {
+                <br />
+                <StatusMessageComponent Message=@ErrorMessage />
+            }
+            </EditForm>
+    }
+</div>

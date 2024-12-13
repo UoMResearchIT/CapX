@@ -1,0 +1,17 @@
+services:
+  capx:
+    build:
+      context: .
+      secrets:
+        - github_token
+    ports:
+      - ${CAPX_PORT:3000}:80
+    volumes:
+      - state:/app/state
+
+volumes:
+  state:
+
+secrets:
+  github_token:
+    environment: GITHUB_TOKEN

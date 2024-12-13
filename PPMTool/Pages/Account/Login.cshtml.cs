@@ -26,6 +26,9 @@ namespace PPMTool.Pages.Account
         [FromQuery(Name = "returnUrl")]
         public string ReturnUrl { get; set; }
 
+        [FromQuery(Name = "username")]
+        public string Username { get; set; }
+
         public LoginModel(RolesService rolesService, ILogger<LoginModel> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
             _roleService = rolesService;
@@ -45,8 +48,7 @@ namespace PPMTool.Pages.Account
         {
             // Local debugging so just sign in
             var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, "mbgm6ah3"));
-            identity.AddClaim(new Claim(ClaimTypes.Name, "mbgm6ah3"));
+            identity.AddClaim(new Claim(ClaimTypes.Name, Username));
 
             // Add roles from DB for this user
             var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";

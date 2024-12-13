@@ -23,8 +23,10 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
                 new StatusMessage("Task has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => HasAbsentResourcesAndStartsWithinAWeek()),
                 new StatusMessage("Task has resources with absence during or near the start of this task.", StatusMessage.MessageType.Info, () => IsAffectedByAbsence()),
+                new StatusMessage("Task has zero demand.", StatusMessage.MessageType.Info, () => HasZeroDemandAndNoResources()),
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
+                new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Warning, () => HasZeroDemandButResourced()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -137,6 +139,12 @@ namespace PPMTool.Data.Entities
         public int Lag { get; set; }
 
         /// <summary>
+        /// If using a cost model that charges leadership, should it be charged on this task.
+        /// Typically disabled for maintenance tasks.
+        /// </summary>
+        public bool ChargeLeadership { get; set; } = true;
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
@@ -172,7 +180,8 @@ namespace PPMTool.Data.Entities
                 // If no resources assigned then use the demand to schedule the task
                 if (AssignedResources.Count == 0)
                 {
-                    units = Demand;
+                    // Cannot schedule using zero demand so schedule according to original demand if necessary
+                    units = Demand == 0 ? OriginalDemand : Demand;
                 }
 
                 // If we assign someone who doesn't start until after the date then error
@@ -427,6 +436,24 @@ namespace PPMTool.Data.Entities
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether the task has zero demand and no resources assigned.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasZeroDemandAndNoResources()
+        {
+            return Demand == 0 && AssignedResources.Count == 0;
+        }
+
+        /// <summary>
+        /// Determines whether the task has zero demand but still has resources assigned.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasZeroDemandButResourced()
+        {
+            return Demand == 0 && AssignedResources.Count > 0;
         }
 
         /// <summary>

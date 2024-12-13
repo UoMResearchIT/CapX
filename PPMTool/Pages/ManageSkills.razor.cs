@@ -20,12 +20,12 @@ namespace PPMTool.Pages
 
         private bool IsDuplicatedSkill(SkillTag entity)
         {
-            if (TagService.DuplicateDetected(context, entity))
+            if (TagService.DuplicateDetected(Context, entity))
             {
-                statusMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
+                ErrorMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
                 return true;
             }
-            statusMessage = null;
+            ErrorMessage = null;
             return false;
         }
 
@@ -33,7 +33,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             dataGridEntityService = TagService;
-            dataGridEntities = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
+            dataGridEntities = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
             LogInformation($"Viewing skills tags");
         }
 
@@ -57,15 +57,15 @@ namespace PPMTool.Pages
                 await base.DeleteRow(entity);
 
                 // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(context).Where(x => x.SkillTags.Contains(entity));
+                var people = PersonService.GetAll(Context).Where(x => x.SkillTags.Contains(entity));
                 foreach (var person in people)
                 {
                     LogInformation($"Removing skills tag {entity.GetSensibleObjectName()} from {person.Name}");
                     person.SkillTags.Remove(entity);
-                    PersonService.Update(context, person);
+                    PersonService.Update(Context, person);
                 }
 
-                dataGridEntityService.Delete(context, entity);
+                dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }
         }

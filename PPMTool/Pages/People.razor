@@ -3,6 +3,7 @@
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+<PageTitle>People - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
@@ -11,34 +12,6 @@
         </div>
     </div>
     <hr />
-    @if (EditAuthorised)
-    {
-        <div class="row">
-            <div class="col">
-                <h2>Absent Today</h2>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                @if (currentAbsences == null)
-            {
-                <LoadingComponent />            
-            }
-            else if (currentAbsences.Count() == 0)
-            {
-                <RadzenText Text="There is no-one currently absent." />
-            }
-            else
-            {
-                foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
-                {
-                    <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
-                }
-            }
-                </div>
-            </div>
-        <hr/>
-    }
     <div class="row">
         <div class="col">
             <h2>All People</h2>
@@ -88,6 +61,17 @@
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="LineManager" Title="Line Manager" FilterOperator="FilterOperator.Contains" MinWidth="10px">
+                        <Template Context="p">
+                            <span style="display: flex; align-items: center">
+                                @if (p.LineManager?.IsCurrentlyAbsent() ?? false)
+                                {
+                                    <RadzenIcon Style="margin-right: 5px" Icon="info" IconStyle="IconStyle.Info" title=@($"Line manager is currently absent!") />
+                                }
+                                @(p?.LineManager?.Name ?? "Not Set")
+                            </span>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="FTE" Title="Post FTE" Width="50px" MinWidth="10px" />
@@ -108,7 +92,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
                         <Template Context="p">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(p))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>

@@ -9,7 +9,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Superuser")]
+    [Authorize(Roles = "Superuser,Manager")]
     public partial class ManageFinancialReferences : DataGridPage<FinancialReference>
     {
         [Inject]
@@ -19,9 +19,12 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             dataGridEntityService = FinancialReferenceService;
-            dataGridEntities = FinancialReferenceService.GetAll(context)
+            dataGridEntities = FinancialReferenceService.GetAll(Context)
                 .OrderBy(x => x.FinancialYear)
                 .ToList();
+
+            // Only superusers can edit financial references
+            EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
             LogInformation($"Viewing finref grid");
         }
 
@@ -30,20 +33,20 @@ namespace PPMTool.Pages
             if (await DialogService.Confirm($"You are about to delete reference {entity.GetSensibleObjectName()}.", "Delete") ?? false)
             {
                 await base.DeleteRow(entity);
-                dataGridEntityService.Delete(context, entity);
+                dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted finref {entity.GetSensibleObjectName()}");
             }
         }
 
         protected override void OnCreateRow(FinancialReference entity)
         {
-            var result = FinancialReferenceService.Add(context, entity);
+            var result = FinancialReferenceService.Add(Context, entity);
             if (result == -1)
             {
                 dataGridEntities.Remove(entity);
                 dataGrid.Reload();
                 Reset();
-                statusMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                ErrorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
                 return;
             }
             LogInformation($"Added finref {entity.GetSensibleObjectName()}");
@@ -52,11 +55,11 @@ namespace PPMTool.Pages
 
         protected override void OnUpdateRow(FinancialReference entity)
         {
-            var result = FinancialReferenceService.Update(context, entity);
+            var result = FinancialReferenceService.Update(Context, entity);
             if (result == -1)
             {
                 CancelEdit(entity);
-                statusMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                ErrorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
                 return;
             }
             LogInformation($"Updated finref {entity.GetSensibleObjectName()}");

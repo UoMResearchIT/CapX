@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -64,6 +65,16 @@ namespace PPMTool.Services
                 .Include(p => p.WorkloadModelChanges)
                 .Include(p => p.Absences)
                 .ToList();
+        }
+
+        /// <summary>
+        /// Gets people table entities without any includes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetAllShallow(PPMToolContext context)
+        {
+            return context.People;
         }
 
         /// <summary>
@@ -153,6 +164,17 @@ namespace PPMTool.Services
         internal IEnumerable<Absence> GetAbsencesForPeople(PPMToolContext context, IEnumerable<Person> people)
         {
             return context.Absence.Where(x => people.Select(x => x.PersonId).Contains(x.Person.PersonId));
+        }
+
+        /// <summary>
+        /// Get a person based on their name
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        internal Person GetByName(PPMToolContext context, string name)
+        {
+            return context.People.Where(x => x.Name == name).Include(x => x.WorkloadModelChanges).FirstOrDefault();
         }
     }
 }

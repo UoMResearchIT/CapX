@@ -1,23 +1,24 @@
 ﻿@using PPMTool.Data
 @using System.Diagnostics
+@using ApexCharts
+@using static PPMTool.Pages.Capacity
 
-<ApexChart @ref="@chart"
-           Title="@Title"
+<ApexChart Title="@title"
            TItem="ChartItem"
-           Options=@ChartOptions
+           Options=@chartOptions
            XAxisType="XAxisType.Datetime"
            OnDataPointSelection=@OnDataPointSelection
            OnZoomed="@OnChartZoomed">
     <ChildContent>
         <ApexRangeSeries TItem="ChartItem"
-                         Items="@ConfirmedChartItems"
+                         Items="@confirmedChartItems"
                          XValue="@(e => e.Label)"
                          YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                          YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
                          PointColor="@(e => e.Colour)" />
 
         <ApexRangeSeries TItem="ChartItem"
-                         Items="@ProvisionalChartItems"
+                         Items="@provisionalChartItems"
                          XValue="@(e => e.Label)"
                          YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
                          YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
@@ -44,23 +45,37 @@
 
 @code
 {
-    [Parameter]
-    public ApexChartOptions<ChartItem> ChartOptions { get; set; }
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
 
     [Parameter]
-    public IEnumerable<ChartItem> ConfirmedChartItems { get; set; }
-
-    [Parameter]
-    public IEnumerable<ChartItem> ProvisionalChartItems { get; set; }
+    public ChartModel ChartModel { get; set; }
 
     [Parameter]
     public Action<SelectedData<ChartItem>> OnDataPointSelection { get; set; }   
-    
-    [Parameter]
-    public string Title { get; set; }
 
     [Parameter]
     public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
 
-    private ApexChart<ChartItem> chart;
+    public string title;
+    public ApexChartOptions<ChartItem> chartOptions;
+    public IEnumerable<ChartItem> confirmedChartItems;
+    public IEnumerable<ChartItem> provisionalChartItems;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (ChartModel == null)
+        {
+            Debug.WriteLine("** CHART MODEL IS NULL!");
+        }
+        else
+        {
+            title = ChartModel.ChartTitle;
+            chartOptions = ChartModel.ChartOptions;
+            confirmedChartItems = ChartModel.ConfirmedChartItems;
+            provisionalChartItems = ChartModel.ProvisionalChartItems;
+        }
+    }
 }

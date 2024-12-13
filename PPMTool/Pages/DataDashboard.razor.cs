@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApexCharts;
@@ -25,21 +27,9 @@ namespace PPMTool.Pages
         private float trainingPSMFTE = 0.1f;
         private float otherPSMFTE = 0.5f;
 
-        private float grade41Costs = 33333.55f;
-        private float grade55Costs = 43172.16f;
-        private float grade65Costs = 50935.80f;
-        private float grade71Costs = 57458.16f;
-        private float grade75Costs = 64797.29f;
-
-        /// <summary>
-        ///  The amount of money that we are expected to recover:
-        ///  i.e. negative, blue values in Column E of the tracker which represent the salary costs removed from the budget
-        /// </summary>
-        private float recoveryTarget = 1118849;
-
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
-        private int yearsAhead = 3;
+        private int yearsAhead;
         private bool showFinishedAsSeparate = false;
 
         private IEnumerable<Person> people;
@@ -49,8 +39,11 @@ namespace PPMTool.Pages
         private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
         private ApexChartOptions<DemandChartItem> fteChartOptions;
+        private ApexChartOptions<DemandChartItem> ytdChartOptions;
         private ApexChartOptions<DutyChartItem> dutyChartOptions;
 
+        private bool exportRunning;
+        private ViewOption viewOption;
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -59,7 +52,21 @@ namespace PPMTool.Pages
         private ProjectService ProjectService { get; set; }
 
         [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
+
+        [Inject]
         private IJSRuntime JSRuntime { get; set; }
+
+        private enum ViewOption
+        {
+            [Description("Last FY")]
+            LastFY,
+            [Description("Current FY")]
+            CurrentFY,
+            [Description("Next FY")]
+            NextFY,
+            Custom
+        }
 
         protected override void OnInitialized()
         {
@@ -69,20 +76,66 @@ namespace PPMTool.Pages
             EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
 
             // Get starting lists from the DB
-            people = PersonService.GetAll(context);
-            projects = ProjectService.GetAll(context);
-
-            // Default to the first day of the previous financial year
-            var today = DateTime.Today;
-            startDate = new DateTime(today.Month < 8 ? today.Year - 2 : today.Year - 1, 8, 1);
+            people = PersonService.GetAll(Context);
+            projects = ProjectService.GetAll(Context);
 
             // Set chart options
+            ytdChartOptions = new ApexChartOptions<DemandChartItem>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Line,
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
+                },
+                Xaxis = new XAxis
+                {
+                    Type = XAxisType.Datetime
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return '£' + val.toFixed(0).replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, "","") }"
+                        }
+                    }
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
+                },
+                Colors = GetColours()
+            };
+
             fteChartOptions = new ApexChartOptions<DemandChartItem>
             {
                 Chart = new Chart
                 {
                     Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -123,7 +176,11 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Area,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 Xaxis = new XAxis
                 {
@@ -182,7 +239,11 @@ namespace PPMTool.Pages
                 Chart = new Chart
                 {
                     Type = ChartType.Bar,
-                    Animations = new Animations { Enabled = false }
+                    Animations = new Animations { Enabled = false },
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false
+                    }
                 },
                 PlotOptions = new PlotOptions
                 {
@@ -193,7 +254,6 @@ namespace PPMTool.Pages
                 }
             };
 
-            // Start the spinners
             Loading = true;
         }
 
@@ -204,8 +264,9 @@ namespace PPMTool.Pages
             {
                 await JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
 
-                // Generate the charts
-                GenerateCharts();
+                // Set the initial settings and generate the charts
+                viewOption = ViewOption.CurrentFY;
+                ViewOptionChanged();
             }
         }
 
@@ -227,15 +288,24 @@ namespace PPMTool.Pages
                 demandChartOptions.Fill.Colors = GetColours();
                 demandChartOptions.Colors = GetColours();
 
-                // Clear the existing demand item list
+                // Clear the existing demand item lists
                 demandChartItems.Clear();
                 dutyChartItems.Clear();
 
-                // For each week
+                // Tracked values
                 var currentWeekStart = startDate;
+                var currentFY = 0;
+                var endDate = startDate.AddYears(yearsAhead);
+                var startFY = FinancialReference.GetFinancialYear(startDate);
+                var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
-                while (currentWeekStart < startDate.AddYears(yearsAhead))
+                FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, startDate);
+                float recoveryTargetPerWeek = 0f;
+                float proportionOfFY = 0f;
+
+                // For each week
+                while (currentWeekStart < endDate)
                 {
                     // Initialise
                     float wlmProject = 0f;
@@ -247,6 +317,8 @@ namespace PPMTool.Pages
                     float assignmentUnder = 0f;
                     float assignmentOver = 0f;
                     int numStaff = 0;
+                    float recoverableStaffCosts = 0f;
+                    float recoveryYTD = 0f;
 
                     // If quarter has changed then create a new object for the quarter
                     if (dutyChartItems.Count == 0 || dutyChartItems.Last().Year != currentWeekStart.Year || dutyChartItems.Last().Period != (int)Math.Ceiling(currentWeekStart.Month / 3f))
@@ -260,16 +332,27 @@ namespace PPMTool.Pages
                         dutyXLabels.Add($"Q{dutyChartItems.Last().Period} {dutyChartItems.Last().Year}");
                     }
 
-                    // Get the projects that are running during the week (exclude those projects with no tasks that have default start date)
+                    // If financial year has changed then get the next financial reference and update recovery target
+                    if (currentFY != FinancialReference.GetFinancialYear(currentWeekStart))
+                    {
+                        currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, currentWeekStart);
+                        currentFY = FinancialReference.GetFinancialYear(currentWeekStart);
+
+                        // Compute how many weeks of this FY run within the window of the graph
+                        proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
+                        recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
+                    }
+
+                    // Get the projects that are running during the week (exclude those projects with no tasks as they will have "default" start date)
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
 
 
-                    // Cancelled //
+                    /// Cancelled ///
                     var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
-                    // All Projects (not cancelled) //
+                    /// All Projects (not cancelled) ///
 
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
@@ -287,7 +370,7 @@ namespace PPMTool.Pages
                     var metDemand = (float)Math.Round(totalDemand - unmetDemand);
 
 
-                    // Finished //
+                    /// Finished ///
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
@@ -297,52 +380,74 @@ namespace PPMTool.Pages
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
-                    // Confirmed //
+                    /// Confirmed ///
 
                     // Get just confirmed projects
-                    var projectsThisWeekConfirmedActive = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
+                    var projectsThisWeekConfirmed = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
 
                     // Remove finished projects if being shown separately
                     if (showFinishedAsSeparate)
                     {
-                        projectsThisWeekConfirmedActive = projectsThisWeekConfirmedActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                        projectsThisWeekConfirmed = projectsThisWeekConfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
                     // Get tasks
-                    var tasksOnConfirmedActiveProjectsThisWeek = projectsThisWeekConfirmedActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Get met and unmet demand for this subset
-                    var unmetDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var totalDemandConfirmed = (float)tasksOnConfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var unmetDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
-                    // Unconfirmed //
+                    /// Unconfirmed ///
 
                     // Get just unconfirmed projects
-                    var projectsThisWeekUnconfirmedButActive = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
+                    var projectsThisWeekUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
 
                     // Remove finished projects if being shown separately
                     if (showFinishedAsSeparate)
                     {
-                        projectsThisWeekUnconfirmedButActive = projectsThisWeekUnconfirmedButActive.Where(x => x.ProjectStatus != ProjectStatus.Finished);
+                        projectsThisWeekUnconfirmed = projectsThisWeekUnconfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
                     // Get tasks
-                    var tasksOnUnconfirmedActiveProjectsThisWeek = projectsThisWeekUnconfirmedButActive.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
 
                     // Calculate the unconfirmed totals
-                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
-                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+                    var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
+                    var totalDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
-                    // Compute value of confirmed and unconfirmed projects using G7.1 salary costs
-                    var confirmedValue = (float)Math.Round(totalDemandConfirmed * grade71Costs, 2);
-                    var unConfirmedValue = (float)Math.Round(totalDemandUnconfirmed * grade71Costs, 2);
+                    /// Costs ///
+
+                    // Get the expected income for all confirmed projects this week
+                    var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.Budget / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.FundsReceived / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var plannedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.PlannedCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
+
+                    // Get the actual income for all confirmed projects this week
+                    var actualYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return x.ActualCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
 
 
-                    // People //
+                    /// People ///
 
                     // Get the people who are employed for at least one day during the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));
@@ -350,20 +455,8 @@ namespace PPMTool.Pages
                     // Compute people based totals
                     foreach (var person in peopleEmployedThisWeek)
                     {
-                        // Get the workload model that is active at the beginning of the week
-                        var activeModel = person.WorkloadModelChanges.Where(x => x.ChangeDate <= currentWeekStart).OrderBy(x => x.ChangeDate).LastOrDefault();
-
-                        // If no workload model active then default to the standard 100% project work model
-                        if (activeModel == null)
-                        {
-                            activeModel = new WorkloadModelChange()
-                            {
-                                ChangeDate = currentWeekStart,
-                                Person = person,
-                                ProjectWorkFTE = person.FTE,
-                                Notes = "Default model"
-                            };
-                        }
+                        // Get active WLM or default G6 model
+                        var activeModel = person.GetWorkloadModelOnDateOrDefault(currentWeekStart);
 
                         // Update totals
                         wlmProject += (float)activeModel.ProjectWorkFTE;
@@ -372,6 +465,15 @@ namespace PPMTool.Pages
                         wlmPSM += (float)activeModel.ProjectAndServiceManagementFTE;
                         wlmStaff += (float)activeModel.StaffManagementFTE;
                         wlmRSA += (float)activeModel.ArchitectureFTE;
+                        try
+                        {
+                            recoverableStaffCosts += (float)currentFinRef.GetMidGradeCosts(activeModel.Grade) * (float)activeModel.ProjectWorkFTE * proportionOfFY / 52;
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Skip if the grade is invalid
+                            Debug.WriteLine($"** Grade {activeModel.Grade} is invalid!");
+                        }
                         numStaff++;
 
                         // Get assignments for this person and sum for the week
@@ -388,6 +490,19 @@ namespace PPMTool.Pages
                             assignmentUnder += (float)(activeModel.ProjectWorkFTE - totalAssignmentFTE);
                         }
                     }
+
+                    // Get previous item to initialise the next item for the YTD values
+                    var previousDemandChartItem = demandChartItems.LastOrDefault();
+                    if (previousDemandChartItem != null)
+                    {
+                        recoveryYTD = previousDemandChartItem.RecoveryTargetYTD;
+                        recoverableStaffCosts += previousDemandChartItem.RecoverableStaffCostsYTD;
+                        budgetYTD += previousDemandChartItem.BudgetYTD;
+                        receivedYTD += previousDemandChartItem.ReceivedFundsYTD;
+                        plannedYTD += previousDemandChartItem.PlannedCostYTD;
+                        actualYTD += previousDemandChartItem.ActualCostsYTD;
+                    }
+                    recoveryYTD += recoveryTargetPerWeek;
 
                     // Create a demand item and add it to the list
                     demandChartItems.Add(new DemandChartItem()
@@ -416,11 +531,15 @@ namespace PPMTool.Pages
                         UnderallocationFTE = assignmentUnder,
                         OverallocationFTE = assignmentOver,
                         BenchProjectFTE = wlmProject - metDemand - unmetDemand,
-                        ConfirmedValue = confirmedValue,
-                        UnconfirmedValue = unConfirmedValue,
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
+                        RecoveryTargetYTD = recoveryYTD,
+                        BudgetYTD = budgetYTD,
+                        ReceivedFundsYTD = receivedYTD,
+                        PlannedCostYTD = plannedYTD,
+                        ActualCostsYTD = actualYTD,
+                        RecoverableStaffCostsYTD = recoverableStaffCosts
                     });
 
                     // Update averages for quarter for duty chart
@@ -505,6 +624,152 @@ namespace PPMTool.Pages
                     "#00F5D4",
                     "#000",
                 };
+        }
+
+        /// <summary>
+        /// Callback when the view option is changed in the select bar
+        /// </summary>
+        private void ViewOptionChanged()
+        {
+            switch (viewOption)
+            {
+                case ViewOption.LastFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
+                    yearsAhead = 1;
+                    break;
+
+                case ViewOption.CurrentFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
+                    yearsAhead = 1;
+                    break;
+
+                case ViewOption.NextFY:
+                    startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1);
+                    yearsAhead = 1;
+                    break;
+
+                case ViewOption.Custom:
+                    return;
+            }
+            GenerateCharts();
+        }
+
+        /// <summary>
+        /// Callback when the start date is changed through the UI
+        /// </summary>
+        private void StartDateChanged()
+        {
+            Debug.WriteLine("** Start Date Changed -- changing to Custom view option");
+            viewOption = ViewOption.Custom;
+            GenerateCharts();
+        }
+
+        /// <summary>
+        /// Callback when the years ahead is changed through the UI
+        /// </summary>
+        private void YearsAheadChanged()
+        {
+            Debug.WriteLine("** Years Ahead Changed -- changing to Custom view option");
+            viewOption = ViewOption.Custom;
+            GenerateCharts();
+        }
+
+        /// <summary>
+        /// Method to export a financial report for Research Finance
+        /// </summary>
+        private void ExportFinancialReport()
+        {
+            LogInformation($"Exporting financial report...");
+
+            exportRunning = true;
+
+            Task.Run(async () =>
+            {
+                // Create a context to be accesed on this thread
+                var threadContext = ContextFactory.CreateDbContext();
+
+                // Create blank list of data
+                var allData = new List<ExportHelper.AssignmentChunk>();
+
+                // Set the report length
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1);
+                var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
+
+                // Get data for each person active in the window
+                var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+                foreach (var person in peopleActive)
+                {
+                    // Get the row data
+                    var data = ExportHelper.GetExportDataForPerson(
+                        person,
+                        ProjectService.GetAll(threadContext),
+                        startDate,
+                        endDate,
+                        FinancialReferenceService.GetAll(threadContext)
+                    );
+                    allData.AddRange(data);
+                }
+                allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Write to CSV file
+                        var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
+                        using (var writer = new StreamWriter(path))
+                        {
+
+                            // Write header row
+                            var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
+                            var propNames = props.Select(x => x.Name);
+                            var headers = propNames.ToList();
+                            writer.WriteLine(string.Join(",", headers));
+
+                            // Write rows one at a time
+                            foreach (var record in allData)
+                            {
+                                // Write properties
+                                var valuesAsStrings = new List<string>();
+                                foreach (var name in propNames)
+                                {
+                                    string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
+
+                                    // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
+                                    valuesAsStrings.Add(value.Replace(",", ";"));
+                                }
+
+                                // Write the row
+                                writer.WriteLine(string.Join(",", valuesAsStrings));
+                            }
+                        }
+                        Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }

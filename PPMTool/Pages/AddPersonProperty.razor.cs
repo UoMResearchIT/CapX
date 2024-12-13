@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -18,13 +17,12 @@ namespace PPMTool.Pages
         public int PersonId { get; set; }
 
         protected Person personModel;
-        protected StatusMessage errorMessage = null;
 
         protected override void CancelEdit(T entity)
         {
             LogInformation($"Cancel row edit for {entity?.GetSensibleObjectName()}");
             Reset();
-            PersonService.RestoreModel(context, ref entity);
+            PersonService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
         }
 

@@ -26,9 +26,6 @@ namespace PPMTool.Pages
         private SubTaskService SubTaskService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Parameter]
@@ -91,15 +88,15 @@ namespace PPMTool.Pages
 
         public void InitialiseComponent(bool restoreModels = true)
         {
-            people = PersonService.GetAll(context)
+            people = PersonService.GetAll(Context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
 
             // Get project model from DB and manually restore it in case it has been modified elsewhere
-            ProjectModel = ProjectService.GetById(context, ProjectId);
-            if (restoreModels) ProjectService.RestoreModel(context, ref projectModel);
+            ProjectModel = ProjectService.GetById(Context, ProjectId);
+            if (restoreModels) ProjectService.RestoreModel(Context, ref projectModel);
 
             // No project then stop initialising
             if (ProjectModel == null)
@@ -119,12 +116,12 @@ namespace PPMTool.Pages
             {
                 // Get task and restore it in case it has been modified elsewhere
                 var referenceTask = ProjectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
-                if (restoreModels) SubTaskService.RestoreModel(context, ref referenceTask);
+                if (restoreModels) SubTaskService.RestoreModel(Context, ref referenceTask);
 
                 Debug.WriteLine($"** Reference Task: Start: {referenceTask.StartDate.ToShortDateString()} | End: {referenceTask.EndDate.ToShortDateString()} | Work: {referenceTask.PlannedWorkHours} | Duration: {referenceTask.DurationDays}");
 
                 // Clone the reference task if copying
-                TaskModel = IsCopy ? SubTaskService.Clone(context, referenceTask) : referenceTask;
+                TaskModel = IsCopy ? SubTaskService.Clone(Context, referenceTask) : referenceTask;
 
                 // Assign the predecessor option
                 if (TaskModel.Predecessor != null) selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
@@ -158,7 +155,7 @@ namespace PPMTool.Pages
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
             var user = AuthenticationState?.User;
-            var role = RolesService.GetByUsername(context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
@@ -169,7 +166,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
 
         private string GetNiceString(Enum x)
@@ -200,17 +197,17 @@ namespace PPMTool.Pages
                     LogWarning($"Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
 
                     // Call delete on the subtask service and let it remove the resources
-                    SubTaskService.Delete(context, TaskModel);
+                    SubTaskService.Delete(Context, TaskModel);
 
                     // Remove the sub-task from the project model
                     ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(context);
+                    var finrefs = FinancialReferenceService.GetAll(Context);
                     ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
-                    ProjectService.Update(context, ProjectModel);
+                    ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
                     Navigation.NavigateTo($"projectdetails/{ProjectId}");
@@ -254,7 +251,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Cancel edit row for {resource.GetSensibleObjectName()}");
             Reset();
-            SubTaskService.RestoreModel(context, ref resource);
+            SubTaskService.RestoreModel(Context, ref resource);
             dataGrid.CancelEditRow(resource);
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
@@ -344,7 +341,7 @@ namespace PPMTool.Pages
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
-            var finref = FinancialReferenceService.GetFinancialReferenceForDate(context, TaskModel.StartDate);
+            var finref = FinancialReferenceService.GetFinancialReferenceForDate(Context, TaskModel.StartDate);
             TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, finref);
 
             // Set validity based on scheduler result
@@ -364,9 +361,9 @@ namespace PPMTool.Pages
                 IsValid = false;
             };
 
-            if (TaskModel.Demand <= 0)
+            if (TaskModel.OriginalDemand <= 0)
             {
-                error = "Demand for a task must be greater than zero!";
+                error = "Original demand for a task must be greater than zero!";
                 IsValid = false;
             }
 
@@ -389,20 +386,42 @@ namespace PPMTool.Pages
         /// <summary>
         /// Handles the edit form submission. Can called by owning components.
         /// </summary>
-        public void HandleSubmit()
+        public async void HandleSubmit()
         {
             if (ProjectModel != null)
             {
                 UpdateSubTaskModelFromResourceDataGrid();
                 if (IsValid)
                 {
+                    // Warn of the fact that they are setting a zero demand
+                    var confirmed = true;
+                    if (TaskModel.Demand == 0)
+                    {
+                        var message = "You are about to set the demand for this task zero.";
+
+                        if (TaskModel.AssignedResources.Count != 0)
+                        {
+                            message += " You also have resources assigned to this task despite its zero demand.";
+                        }
+
+                        message += " Are you sure you want to do this?";
+
+                        confirmed = await DialogService.Confirm(message, "Zero Demand Task") ?? false;
+                    }
+
+                    // Bail early if they do not want to continue
+                    if (!confirmed)
+                    {
+                        return;
+                    }
+
                     LogInformation("Saving sub task...");
 
                     // Add new new to task list for project if it is a new one
                     if (TaskModel.SubTaskId <= 0)
                     {
                         // Add the subtask to the database
-                        SubTaskService.Add(context, TaskModel);
+                        SubTaskService.Add(Context, TaskModel);
 
                         // Add reference to the project
                         ProjectModel.SubTasks.Add(TaskModel);
@@ -410,15 +429,15 @@ namespace PPMTool.Pages
                     else
                     {
                         // Update the sub task in the database
-                        SubTaskService.Update(context, TaskModel);
+                        SubTaskService.Update(Context, TaskModel);
                     }
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(context);
+                    var finrefs = FinancialReferenceService.GetAll(Context);
                     ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
-                    ProjectService.Update(context, ProjectModel);
+                    ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page if not triggered from a split task page
                     if (!IsSplit) Navigation.NavigateTo($"projectdetails/{ProjectId}");

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -22,9 +21,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
-
-        [Inject]
-        private RolesService RolesService { get; set; }
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -62,12 +58,12 @@ namespace PPMTool.Pages
 
             if (ProjectId > 0)
             {
-                projectModel = ProjectService.GetById(context, ProjectId);
+                projectModel = ProjectService.GetById(Context, ProjectId);
 
                 // If editing a project, only allow the project manager to edit it or a superuser
                 var user = AuthenticationState?.User;
-                var role = RolesService.GetByUsername(context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager == role?.Person);
+                var role = RolesService.GetByUsername(Context, ActiveUserName);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager.PersonId == role?.Person.PersonId);
 
                 // Populate school list
                 schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
@@ -77,24 +73,24 @@ namespace PPMTool.Pages
                 projectModel.DayRate = double.Parse(Configuration["DefaultDayRate"]);
 
                 // Auto generate the RTP number based on the highest in the DB
-                projectModel.RTP = ProjectService.GetAll(context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
+                projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
                 // Set the active user as the PM by default
-                projectModel.ProjectManager = RolesService.GetByUsername(context, ActiveUserName)?.Person;
+                projectModel.ProjectManager = RolesService.GetByUsername(Context, ActiveUserName)?.Person;
             }
 
             // Initially load data
-            innateActivityQuery = InnateCodeService.GetAll(context).OrderBy(x => x.ActivityCode).AsQueryable();
+            innateActivityQuery = InnateCodeService.GetAll(Context).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
             faculties = Enum.GetValues<Faculty>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
-            var people = PersonService.GetAll(context).OrderBy(x => x.Name).ToList();
-            var roles = RolesService.GetAll(context)
+            var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            var roles = RolesService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            projectManagers = people.Where(x => roles.Any(y => y.Person == x)).ToList();
+            projectManagers = people.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
@@ -143,7 +139,7 @@ namespace PPMTool.Pages
             Person pm = value as Person;
 
             // If the PM is not null and is not the current user then warn of loss of access if not superuser
-            var role = RolesService.GetByUsername(context, ActiveUserName);
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
             if (pm != null && pm.PersonId != role?.Person?.PersonId && role.RoleType != RoleType.Superuser)
             {
                 DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
@@ -162,7 +158,7 @@ namespace PPMTool.Pages
                     if (!CheckProjectManagerSet()) return;
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(context);
+                    var finrefs = FinancialReferenceService.GetAll(Context);
                     projectModel.UpdateProjectMetaData(true, finrefs);
 
                     if (ProjectId > 0)
@@ -186,17 +182,17 @@ namespace PPMTool.Pages
 
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
 
-                        var res = ProjectService.Update(context, projectModel);
+                        var res = ProjectService.Update(Context, projectModel);
                         if (!CheckResultOfAddOrUpdate(res)) return;
                     }
                     else
                     {
                         LogInformation("Adding new project...");
-                        var res = ProjectService.Add(context, projectModel);
+                        var res = ProjectService.Add(Context, projectModel);
                         if (!CheckResultOfAddOrUpdate(res)) return;
 
                         // Make sure that super users automatically follow the project
-                        var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
+                        var superusers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
                         foreach (var s in superusers)
                         {
                             if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");
@@ -206,7 +202,7 @@ namespace PPMTool.Pages
                                 projectModel.Followers.Add(s);
                             }
                         }
-                        ProjectService.Update(context, projectModel);
+                        ProjectService.Update(Context, projectModel);
                     }
                 }
 
@@ -283,14 +279,14 @@ namespace PPMTool.Pages
                         {
                             LogInformation($"Deleting subtask ID {projectModel.SubTasks.First()?.SubTaskId}");
 
-                            SubTaskService.Delete(context, projectModel.SubTasks.First());
+                            SubTaskService.Delete(Context, projectModel.SubTasks.First());
                         }
                     }
 
                     LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
-                    ProjectService.Delete(context, projectModel);
+                    ProjectService.Delete(Context, projectModel);
 
                     // Navigate back to the projects list
                     Navigation.NavigateTo("projects");

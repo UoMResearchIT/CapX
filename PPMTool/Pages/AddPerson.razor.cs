@@ -17,9 +17,6 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private TagService TagService { get; set; }
 
         [Inject]
@@ -31,30 +28,30 @@ namespace PPMTool.Pages
         private Person personModel = new();
         private IEnumerable<SkillTag> availableTags;
         private IList<SkillTag> chosenTags = new List<SkillTag>();
+        private IList<Person> managers = new List<Person>();
         private string autoCompleteText;
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
 
-        protected override void OnInitialized()
+
+        protected override void OnParametersSet()
         {
-            base.OnInitialized();
-
-            // Find out if superuser for delete button
-            isSuperUser = RolesService.GetRoleTypeForUsername(context, ActiveUserName) == Enums.RoleType.Superuser;
-
-            // Map entities to checkbox list items
-            availableTags = TagService.GetAll(context).OrderBy(x => x.Name).ToList();
+            base.OnParametersSet();
 
             // Load the person model if necessary
             if (PersonId > 0)
             {
-                personModel = PersonService.GetAll(context).FirstOrDefault(x => x.PersonId == PersonId);
+                personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
                 // Update the chosen tags
                 if (personModel != null)
                 {
+                    // Update chosen tags
                     chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
+
+                    // Edit should only be authorised for the line manager or superusers
+                    EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
                 }
             }
 
@@ -63,6 +60,27 @@ namespace PPMTool.Pages
             messageStore = new ValidationMessageStore(editContext);
 
             LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+        }
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+
+            // Find out if superuser for delete button
+            isSuperUser = RolesService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
+
+            // Map entities to checkbox list items
+            availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+
+            // Map the list of managers for drop down
+            managers = RolesService.GetAll(Context)
+                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
+                .Select(x => x.Person)
+                .DistinctBy(x => x.PersonId)
+                .OrderBy(x => x.Name)
+                .ToList();
+
+            LogInformation("Initialising add/edit person page");
         }
 
         void OnChange(dynamic args)
@@ -133,7 +151,7 @@ namespace PPMTool.Pages
                     LogInformation($"Saving person {personModel?.Name}...");
 
                     // Edit
-                    var res = PersonService.Update(context, personModel);
+                    var res = PersonService.Update(Context, personModel);
                     if (res < 0)
                     {
                         // Duplicate found so show error message
@@ -152,7 +170,7 @@ namespace PPMTool.Pages
                 else
                 {
                     // Add new
-                    var res = PersonService.Add(context, personModel);
+                    var res = PersonService.Add(Context, personModel);
                     if (res < 0)
                     {
                         // Duplicate found so show error message
@@ -188,7 +206,7 @@ namespace PPMTool.Pages
                     LogInformation($"Deleting person {personModel.Name}, ID {personModel.PersonId}");
 
                     // Delete from DB
-                    PersonService.Delete(context, personModel);
+                    PersonService.Delete(Context, personModel);
 
                     // Navigate back to the people list
                     Navigation.NavigateTo("people");
@@ -202,6 +220,14 @@ namespace PPMTool.Pages
 
             // Navigate back to the people list
             Navigation.NavigateTo("people");
+        }
+
+        /// <summary>
+        /// Method to navigate to the capacity page for this person
+        /// </summary>
+        private void ViewCapacity()
+        {
+            Navigation.NavigateTo($"capacity?filterid={personModel.PersonId}");
         }
     }
 }

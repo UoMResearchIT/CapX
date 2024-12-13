@@ -222,3 +222,39 @@ mark {
 .rz-card {
     background-color: #fcfcfc
 }
+
+.table thead th {
+    vertical-align: top
+}
+
+.no-margin {
+    margin: 0
+}
+
+.radzen-group {
+    border: 1px solid var(--rz-base-400);
+    padding: 0.5rem;
+}
+
+.radzen-shaded {
+    border: none;
+    padding: 0.5rem;
+    background-color: var(--rz-base-100);
+}
+
+:root {
+    --rz-primary: #609;
+    --rz-on-primary-lighter: #609;
+    --rz-grid-cell-padding: 0.5rem;
+}
+
+.competency-highlightable {
+}
+
+.timesheet-status-style {
+    width: 8rem;
+}
+
+:not(.rz-form-field-content) > .rz-textarea:disabled {
+    color: #777
+}

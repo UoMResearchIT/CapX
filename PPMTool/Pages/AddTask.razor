@@ -5,6 +5,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using static PPMTool.Data.Entities.Project
+<PageTitle>Add Task - CapX</PageTitle>
 
 <div class="container">
     @if ((TaskId != null && TaskId <= 0) || IsCopy)
@@ -102,7 +103,7 @@
             </div>
 
             <div class="row">
-                <div class="col">
+                <div class="col-2">
                     <RadzenLabel class="radzen-form-label" Text="Fixed Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date cannot be fixed as determined by end date of predecessor" Visible="@(selectedPredecessorId != null)" /><br />
                     <div class="align-items-center p-1">
                         <div style="display: flex">
@@ -111,21 +112,8 @@
                     </div>
                 </div>
 
-                <!-- Start date is required if fixed start otherwise driven from predecesors -->
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled || selectedPredecessorId != null)" /><br />
-                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled || selectedPredecessorId != null)" ShowTime="false" DateFormat="dd/MM/yyyy" />
-                </div>
-
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task work is computed from duration and resources (or demand if no resources)" Visible="@workDisabled" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.5" Placeholder="0" @bind-Value="TaskModel.PlannedWorkHours" Disabled="@workDisabled" />
-                </div>
-            </div>
-
-            <div class="row">
                 <!-- Choice of whether the end drive should be picked or driven -->
-                <div class="col">
+                <div class="col-2">
                     <RadzenLabel class="radzen-form-label" Text="Fixed End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cannot fix end date if task is not fixed duration" Visible="@(TaskModel.TaskType != TaskType.FixedDuration)" /><br />
                     <div class="align-items-center p-1">
                         <div style="display: flex">
@@ -134,13 +122,37 @@
                     </div>
                 </div>
 
+                <!-- Start date is required if fixed start otherwise driven from predecesors -->
+                <div class="col-4">
+                    <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled || selectedPredecessorId != null)" /><br />
+                    <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled || selectedPredecessorId != null)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                </div>
+
                 <!-- End date is can be driven by duration or chosen which will then drive the duration -->
-                <div class="col">
+                <div class="col-4">
                     <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="End date is determined by work and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(!TaskModel.HasFixedEndDate || TaskModel.TaskType != TaskType.FixedDuration)" /><br />
                     <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.EndDate" Disabled="@(!TaskModel.HasFixedEndDate)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                 </div>
+            </div>
 
-                <div class="col">
+            <div class="row">
+                <div class="col-2">
+                    <RadzenLabel class="radzen-form-label" Text="Charge Leadership" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Project cost model does not charge leadership so this option does nothing" Visible="@(ProjectModel.CostModel == CostModel.DayRate)" /><br />
+                    <div class="align-items-center p-1">
+                        <div style="display: flex">
+                            <RadzenSwitch @bind-value="TaskModel.ChargeLeadership" Disabled="@(ProjectModel.CostModel == CostModel.DayRate)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-2">
+
+                </div>
+                <div class="col-4">
+                    <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task work is computed from duration and resources (or demand if no resources)" Visible="@workDisabled" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.5" Placeholder="0" @bind-Value="TaskModel.PlannedWorkHours" Disabled="@workDisabled" />
+                </div>
+
+                <div class="col-4">
                     <RadzenLabel class="radzen-form-label" Text="Duration (Days)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task duration is computed from work and resources (or demand if no resources)" Visible="@(durationDisabled)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" @bind-Value="TaskModel.DurationDays" Disabled="@(durationDisabled)" /><br />
                     <div>(@(TaskModel.DurationBillableDays) Billable Days)</div>
