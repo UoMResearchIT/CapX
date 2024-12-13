@@ -476,9 +476,6 @@ namespace PPMTool.Migrations
                     b.Property<int>("RoleType")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("TimesheetTemplateData")
-                        .HasColumnType("TEXT");
-
                     b.HasKey("RoleId");
 
                     b.HasIndex("PersonId");
