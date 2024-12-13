@@ -12,7 +12,6 @@
   <ItemGroup>
     <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
     <PackageReference Include="DotNetExtensions" Version="1.2.0" />
-    <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
     <PackageReference Include="FluentDateTime" Version="3.0.0" />
     <PackageReference Include="GSS.Authentication.CAS.AspNetCore" Version="5.3.3" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.67" />
