@@ -108,18 +108,16 @@ namespace PPMTool.Pages
                         // Immediately save the timesheet to the DB
                         int newId = TimesheetService.Add(Context, timesheet);
 
-                    // If a duplicate is detected then throw an error as this should never happen
-                    if (newId == -1)
-                    {
-                        throw new Exception("Error creating new timesheet!");
-                    }
-                    else
-                    {
-                        // Get the timesheet back to manipulate
-                        Timesheet newTimesheet = TimesheetService.GetById(Context, newId);
-                        innateCodeTasks = Context.InnateCodeTasks.ToList();
-                        TimesheetService.SetupTimesheetFromTemplate(Context, newTimesheet, ActiveUser, innateCodeTasks);
-                    }
+                        // If a duplicate is detected then throw an error as this should never happen
+                        if (newId == -1)
+                        {
+                            throw new Exception("Error creating new timesheet!");
+                        }
+                        else
+                        {
+                            // Set-up the timesheet from the template
+                            TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser, InnateCodeService.GetAllTasks(Context));
+                        }
 
                         // Redirect to the newly created Timesheet so refrshing the page
                         // with the -1 parameter doesn't create another new timesheet.
