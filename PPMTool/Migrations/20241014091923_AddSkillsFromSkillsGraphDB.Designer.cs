@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20241014091923_AddSkills")]
+    [Migration("20241014091923_AddSkillsFromSkillsGraphDB")]
     partial class AddSkills
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
