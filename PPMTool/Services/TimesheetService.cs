@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using FluentDateTime;
 using Microsoft.EntityFrameworkCore;
@@ -194,6 +195,86 @@ namespace PPMTool.Services
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
                 .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate >= startRange && x.StartDate < endRange);
+        }
+
+        /// <summary>
+        /// Method to remove a task from a person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        public List<int> GetTemplate(PPMToolContext context, Person person)
+        {
+            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+        }
+
+        /// <summary>
+        /// Method to add a task to a person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="task"></param>
+        public void AddToTemplate(PPMToolContext context, Person person, InnateCodeTask task)
+        {
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+
+            // If not already in the template then add it to the start and update the person record
+            if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
+            {
+                templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
+                string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+                person.TimesheetTemplateData = updatedTemplateDetails;
+                context.People.Update(person);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Method to removes a task from the person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="task"></param>
+        public void DeleteFromTemplate(PPMToolContext context, Person person, InnateCodeTask task)
+        {
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+
+            // If it is in the list then remove it and update the person record
+            if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
+            {
+                templateTimesheetTasks.Remove(task.InnateCodeTaskId);
+                string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+                person.TimesheetTemplateData = updatedTemplateDetails;
+                context.People.Update(person);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Sets up a new timesheet using the person's template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="timesheet"></param>
+        /// <param name="person"></param>
+        /// <param name="tasks"></param>
+        public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks)
+        {
+            var templateTimesheetTasks = GetTemplate(context, person);
+
+            foreach (int taskId in templateTimesheetTasks)
+            {
+                try
+                {
+                    InnateCodeTask task = tasks.Where(x => x.InnateCodeTaskId == taskId).FirstOrDefault();
+                    TimesheetEntry entry = new TimesheetEntry();
+                    entry.InnateCodeTask = task;
+
+                    timesheet.TimesheetEntries.Add(entry);
+
+                    Debug.WriteLine($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                }
+                catch (Exception ex) { Debug.WriteLine(ex); }
+            }
+            context.SaveChanges();
         }
     }
 }

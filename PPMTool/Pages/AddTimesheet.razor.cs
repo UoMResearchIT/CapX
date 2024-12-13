@@ -106,6 +106,13 @@ namespace PPMTool.Pages
                     {
                         throw new Exception("Error creating new timesheet!");
                     }
+                    else
+                    {
+                        // Get the timesheet back to manipulate
+                        Timesheet newTimesheet = TimesheetService.GetById(Context, newId);
+                        innateCodeTasks = Context.InnateCodeTasks.ToList();
+                        TimesheetService.SetupTimesheetFromTemplate(Context, newTimesheet, ActiveUser, innateCodeTasks);
+                    }
 
                     // Redirect to the newly created Timesheet so refrshing the page
                     // with the -1 parameter doesn't create another new timesheet.
@@ -335,6 +342,14 @@ namespace PPMTool.Pages
             Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
+            TimesheetService.AddToTemplate(Context, ActiveUser, entity.InnateCodeTask);
+
+            ShowNotification(new CapXNotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Updated",
+                Detail = "Your timesheet template has been updated. The added task row will show when you next create a new timesheet."
+            });
         }
 
         /// <summary>
@@ -389,9 +404,22 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task DeleteRow(TimesheetEntry entity)
         {
-            TimesheetService.DeleteEntry(Context, entity);
-            await base.DeleteRow(entity);
-            UpdateDailyTotals();
+            bool confirmDeletion = await DialogService.Confirm($"This task will be removed from your timesheet template. If you want the task to still be added to future timesheets automatically (but just don't need it for this one) then just leave it empty when you submit the timesheet.",
+                   "Delete Task Row") ?? false;
+            if (confirmDeletion)
+            {
+                TimesheetService.DeleteFromTemplate(Context, ActiveUser, entity.InnateCodeTask);
+                TimesheetService.DeleteEntry(Context, entity);
+                await base.DeleteRow(entity);
+                UpdateDailyTotals();
+
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Task removed",
+                    Detail = "The task row has been removed from your template and will no longer show by default when creating a new timesheet."
+                });
+            }
         }
 
         /// <summary>
