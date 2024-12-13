@@ -177,15 +177,14 @@
                                 <RadzenText Text="@($"{totalHours.ToString("F2")}")" Style="font-weight: bold; margin-bottom: 0;" />
                             </FooterTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="9.5rem" MinWidth="10px" Title="Actions">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="entry">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
                             </Template>
                             <EditTemplate Context="entry">
                                 <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                                 <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                     </Columns>
