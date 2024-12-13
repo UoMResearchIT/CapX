@@ -5,7 +5,7 @@ VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PPMTool", "PPMTool.csproj", "{87AEF871-663B-4941-A0C4-B0AA805AD982}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Api", "..\PPMTool.Api\PPMTool.Api.csproj", "{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.API", "..\PPMTool.Api\PPMTool.API.csproj", "{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
