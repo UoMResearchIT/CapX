@@ -53,6 +53,11 @@ namespace PPMTool.Data.Entities
         public Person LineManager { get; set; }
 
         /// <summary>
+        /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
+        /// </summary>
+        public string TimesheetTemplateData { get; set; }
+
+        /// <summary>
         /// Any changes to their WLMs
         /// </summary>
         public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();

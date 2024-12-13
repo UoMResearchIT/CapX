@@ -198,24 +198,24 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Method to remove a task from a user's timesheet template
+        /// Method to remove a task from a person's timesheet template
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="role"></param>
-        public List<int> GetTemplate(PPMToolContext context, Role role)
+        /// <param name="person"></param>
+        public List<int> GetTemplate(PPMToolContext context, Person person)
         {
-            return role.TimesheetTemplateData?.Split(':')?.Select(Int32.Parse)?.ToList();
+            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList();
         }
 
         /// <summary>
-        /// Method to remove a task from a user's timesheet template
+        /// Method to remove a task from a person's timesheet template
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="role"></param>
+        /// <param name="person"></param>
         /// <param name="task"></param>
-        public void UpdateTemplate(PPMToolContext context, Role role, InnateCodeTask task)
+        public void UpdateTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = role.TimesheetTemplateData?.Split(':')?.Select(Int32.Parse)?.ToList();
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList();
 
             if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
             {
@@ -226,22 +226,22 @@ namespace PPMTool.Services
                 templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
             }
 
-            string updatedTemplateDetails = string.Join(":", templateTimesheetTasks);
-            role.TimesheetTemplateData = updatedTemplateDetails;
-            context.Roles.Update(role);
+            string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+            person.TimesheetTemplateData = updatedTemplateDetails;
+            context.People.Update(person);
             context.SaveChanges();
         }
 
         /// <summary>
-        /// Sets up a new timesheet using the user's template
+        /// Sets up a new timesheet using the person's template
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheet"></param>
-        /// <param name="role"></param>
+        /// <param name="person"></param>
         /// <param name="tasks"></param>
-        public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Role role, IEnumerable<InnateCodeTask> tasks)
+        public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks)
         {
-            var templateTimesheetTasks = GetTemplate(context, role);
+            var templateTimesheetTasks = GetTemplate(context, person);
 
             foreach (int taskId in templateTimesheetTasks)
             {

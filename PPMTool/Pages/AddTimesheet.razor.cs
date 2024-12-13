@@ -111,7 +111,7 @@ namespace PPMTool.Pages
                         // Get the timesheet back to manipulate
                         Timesheet newTimesheet = TimesheetService.GetById(Context, newId);
                         innateCodeTasks = Context.InnateCodeTasks.ToList();
-                        TimesheetService.SetupTimesheetFromTemplate(Context, newTimesheet, activeUserRole, innateCodeTasks);
+                        TimesheetService.SetupTimesheetFromTemplate(Context, newTimesheet, ActiveUser, innateCodeTasks);
                     }
 
                     // Redirect to the newly created Timesheet so refrshing the page
@@ -342,7 +342,7 @@ namespace PPMTool.Pages
             Reset();
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
-            TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
+            TimesheetService.UpdateTemplate(Context, ActiveUser, entity.InnateCodeTask);
 
             ShowNotification(new CapXNotificationMessage
             {
@@ -408,7 +408,7 @@ namespace PPMTool.Pages
                    "Delete Task Row") ?? false;
             if (confirmDeletion)
             {
-                TimesheetService.UpdateTemplate(Context, activeUserRole, entity.InnateCodeTask);
+                TimesheetService.UpdateTemplate(Context, ActiveUser, entity.InnateCodeTask);
                 TimesheetService.DeleteEntry(Context, entity);
                 await base.DeleteRow(entity);
                 UpdateDailyTotals();

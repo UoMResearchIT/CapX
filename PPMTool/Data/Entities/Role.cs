@@ -38,8 +38,6 @@ namespace PPMTool.Data.Entities
         [DataType(DataType.EmailAddress)]
         public string EmailAddress { get; set; }
 
-        public string TimesheetTemplateData { get; set; }
-
         public string GetSensibleObjectName()
         {
             return $"{GetName()} ({GetStandardisedUserName()})";
