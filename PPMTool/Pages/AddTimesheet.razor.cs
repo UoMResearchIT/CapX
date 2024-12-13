@@ -418,7 +418,7 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void CancelEdit(TimesheetEntry entity)
         {
-            LogInformation($"Cancel Edit row in view for <{entity?.GetSensibleObjectName()}>");
+            LogInformation($"Restore model and cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
             TimesheetService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
@@ -447,6 +447,7 @@ namespace PPMTool.Pages
         {
             await base.InsertRow();
             entityToInsert.Timesheet = timesheet;
+            LogInformation($"(Override) Add row in view for <{entityToInsert?.GetSensibleObjectName()}>");
         }
 
         /// <summary>

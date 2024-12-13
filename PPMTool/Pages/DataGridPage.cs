@@ -25,6 +25,9 @@ namespace PPMTool.Pages
             base.OnInitialized();
         }
 
+        /// <summary>
+        /// Reset error messages and the tracking of the entity being inserted or updated
+        /// </summary>
         protected virtual void Reset()
         {
             entityToInsert = null;
@@ -32,19 +35,33 @@ namespace PPMTool.Pages
             ErrorMessage = null;
         }
 
+        /// <summary>
+        /// Edit a row in the datagrid
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected async virtual Task EditRow(T entity)
         {
-            LogInformation($"Edit row in view for <{entity?.GetSensibleObjectName()}>");
             entityToUpdate = entity;
+            LogInformation($"Edit row in view for <{entityToUpdate?.GetSensibleObjectName()}>");
             await dataGrid.EditRow(entity);
         }
 
+        /// <summary>
+        /// Update a row in the datagrid
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected async virtual Task SaveRow(T entity)
         {
             LogInformation($"Update row in view for <{entity?.GetSensibleObjectName()}>");
             await dataGrid.UpdateRow(entity);
         }
 
+        /// <summary>
+        /// Canacel the edit of a row in the datagrid
+        /// </summary>
+        /// <param name="entity"></param>
         protected virtual void CancelEdit(T entity)
         {
             LogInformation($"Restore model and cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
@@ -53,10 +70,14 @@ namespace PPMTool.Pages
             dataGrid.CancelEditRow(entity);
         }
 
+        /// <summary>
+        /// Delete a row from the data grid (handles both existing row and one being added)
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected async virtual Task DeleteRow(T entity)
         {
             Reset();
-
             if (dataGridEntities.Contains(entity))
             {
                 LogInformation($"Delete row in data grid source for <{entity?.GetSensibleObjectName()}>");
@@ -70,6 +91,10 @@ namespace PPMTool.Pages
             await dataGrid.Reload();
         }
 
+        /// <summary>
+        /// Create an entity instance and add to datagrid
+        /// </summary>
+        /// <returns></returns>
         protected async virtual Task InsertRow()
         {
             entityToInsert = Activator.CreateInstance(typeof(T)) as T;
@@ -77,6 +102,10 @@ namespace PPMTool.Pages
             await dataGrid.InsertRow(entityToInsert);
         }
 
+        /// <summary>
+        /// Callback fired by the datagrid when a row is created
+        /// </summary>
+        /// <param name="entity"></param>
         protected virtual void OnCreateRow(T entity)
         {
             Reset();
@@ -84,6 +113,10 @@ namespace PPMTool.Pages
             dataGridEntityService.Add(Context, entity);
         }
 
+        /// <summary>
+        /// Callback fired by the datagrid when a row is updated
+        /// </summary>
+        /// <param name="entity"></param>
         protected virtual void OnUpdateRow(T entity)
         {
             Reset();
