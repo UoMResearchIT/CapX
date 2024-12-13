@@ -204,32 +204,49 @@ namespace PPMTool.Services
         /// <param name="person"></param>
         public List<int> GetTemplate(PPMToolContext context, Person person)
         {
-            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList();
+            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
         }
 
         /// <summary>
-        /// Method to remove a task from a person's timesheet template
+        /// Method to add a task to a person's timesheet template
         /// </summary>
         /// <param name="context"></param>
         /// <param name="person"></param>
         /// <param name="task"></param>
-        public void UpdateTemplate(PPMToolContext context, Person person, InnateCodeTask task)
+        public void AddToTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList();
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
 
+            // If not already in the template then add it to the start and update the person record
+            if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
+            {
+                templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
+                string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+                person.TimesheetTemplateData = updatedTemplateDetails;
+                context.People.Update(person);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Method to removes a task from the person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="task"></param>
+        public void DeleteFromTemplate(PPMToolContext context, Person person, InnateCodeTask task)
+        {
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+
+            // If it is in the list then remove it and update the person record
             if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
             {
                 templateTimesheetTasks.Remove(task.InnateCodeTaskId);
+                string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+                person.TimesheetTemplateData = updatedTemplateDetails;
+                context.People.Update(person);
+                context.SaveChanges();
             }
-            else
-            {
-                templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
-            }
-
-            string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
-            person.TimesheetTemplateData = updatedTemplateDetails;
-            context.People.Update(person);
-            context.SaveChanges();
         }
 
         /// <summary>
