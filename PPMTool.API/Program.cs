@@ -49,7 +49,8 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 // Map endpoints to methods
-app.MapGet("/skills/getAll", PPMTool.API.Endpoints.Skills.GetAll);
+app.MapGet("/skills/getAll", PPMTool.API.Endpoints.Skills.GetAllSkillTagsAsync);
+app.MapGet("/skills/getAllForPerson/{username}", PPMTool.API.Endpoints.Skills.GetAllSkillsTagsForPersonAsync);
 
 
 app.Run();

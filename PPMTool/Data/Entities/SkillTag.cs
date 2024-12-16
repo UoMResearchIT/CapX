@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PPMTool.Data.Entities
 {
@@ -8,6 +9,7 @@ namespace PPMTool.Data.Entities
 
         public string Name { get; set; }
 
+        [JsonIgnore]
         public ICollection<Person> People { get; set; }
 
         public string GetSensibleObjectName()
