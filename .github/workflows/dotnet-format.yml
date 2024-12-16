@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./
+        working-directory: ./PPMTool
     steps:
     - uses: actions/checkout@v4
       with:
@@ -26,14 +26,14 @@ jobs:
       with:
         dotnet-version: 6.0.x
     - name: Format
-      run: dotnet format PPMTool/PPMTool.sln --exclude Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
+      run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
       
   build:
   
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./
+        working-directory: ./PPMTool
     steps:
     - uses: actions/checkout@v4
       with:
@@ -50,6 +50,6 @@ jobs:
         -p ${{ secrets.ACTIONS_REPO_TOKEN }} \
         --store-password-in-clear-text
     - name: Restore dependencies
-      run: dotnet restore --verbosity detailed
+      run: dotnet restore --verbosity detailed ../PPMTool.API/PPMTool.API.csproj
     - name: Build
       run: dotnet build --no-restore
