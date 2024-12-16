@@ -11,9 +11,6 @@ namespace PPMTool.Pages
         protected ProjectService ProjectService { get; set; }
 
         [Inject]
-        protected RolesService RoleService { get; set; }
-
-        [Inject]
         protected ISessionStorageService SessionStorage { get; set; }
 
         [Inject]

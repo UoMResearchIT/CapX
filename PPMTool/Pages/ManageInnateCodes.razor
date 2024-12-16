@@ -39,6 +39,13 @@
                     @(code.Tasks != null && code.Tasks.Count() > 0 ? string.Join(",", code.Tasks.Select(x => x.TaskName)) : "")
                 </Template>
             </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="InnateCode" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px">
+                <Template Context="c">
+                    <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                        <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" />
+                    </RadzenStack>
+                </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TItem="InnateCode" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" MinWidth="10px" Title="Actions">
                 <Template Context="code">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditCode(code))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />

@@ -27,9 +27,6 @@ namespace PPMTool.Pages
         private SubTaskService SubTaskService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Parameter]

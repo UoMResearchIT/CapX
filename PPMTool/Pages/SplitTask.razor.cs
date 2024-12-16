@@ -18,9 +18,6 @@ namespace PPMTool.Pages
         [Parameter]
         public int? ProjectId { get; set; }
 
-        [Inject]
-        public RolesService RolesService { get; set; }
-
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
         private bool splitOnDate = true;

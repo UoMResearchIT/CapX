@@ -17,9 +17,6 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
-        [Inject]
-        private RolesService RoleService { get; set; }
-
         private bool tableEmpty;
         private IEnumerable<Person> people;
         private int count;
@@ -72,11 +69,8 @@ namespace PPMTool.Pages
 
             if (!EditAuthorised)
             {
-                // Look up the username
-                var role = RoleService.GetByUsername(Context, AuthenticationState.User.Identity.Name.Trim().ToLower());
-
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x == role.Person).ToList();
+                loadedPeople = loadedPeople.Where(x => x == ActiveUser).ToList();
             }
 
             // Set the table empty flag

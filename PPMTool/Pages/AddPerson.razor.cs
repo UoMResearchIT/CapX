@@ -17,9 +17,6 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private TagService TagService { get; set; }
 
         [Inject]
@@ -36,6 +33,34 @@ namespace PPMTool.Pages
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
+
+
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+
+            // Load the person model if necessary
+            if (PersonId > 0)
+            {
+                personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
+
+                // Update the chosen tags
+                if (personModel != null)
+                {
+                    // Update chosen tags
+                    chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
+
+                    // Edit should only be authorised for the line manager or superusers
+                    EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+                }
+            }
+
+            // Instantiate the edit context so we have a reference to it
+            editContext = new EditContext(personModel);
+            messageStore = new ValidationMessageStore(editContext);
+
+            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+        }
 
         protected override void OnInitialized()
         {
@@ -55,23 +80,7 @@ namespace PPMTool.Pages
                 .OrderBy(x => x.Name)
                 .ToList();
 
-            // Load the person model if necessary
-            if (PersonId > 0)
-            {
-                personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
-
-                // Update the chosen tags
-                if (personModel != null)
-                {
-                    chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
-                }
-            }
-
-            // Instantiate the edit context so we have a reference to it
-            editContext = new EditContext(personModel);
-            messageStore = new ValidationMessageStore(editContext);
-
-            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+            LogInformation("Initialising add/edit person page");
         }
 
         void OnChange(dynamic args)

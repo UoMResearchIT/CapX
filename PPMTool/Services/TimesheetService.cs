@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using FluentDateTime;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -75,8 +78,7 @@ namespace PPMTool.Services
         public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
         {
             return context.Timesheets
-                .Where(t => t.Owner.PersonId == user.PersonId)
-                .ToList();
+                .Where(t => t.Owner.PersonId == user.PersonId);
         }
 
         /// <summary>
@@ -87,8 +89,7 @@ namespace PPMTool.Services
         public IEnumerable<Timesheet> GetMyStaffTimesheets(PPMToolContext context, Person user)
         {
             return context.Timesheets
-                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId))
-                .ToList();
+                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId));
         }
 
         /// <summary>
@@ -100,7 +101,8 @@ namespace PPMTool.Services
         {
             return context.Timesheets
                 .Include(t => t.TimesheetEntries)
-                .ToList();
+                .ThenInclude(x => x.InnateCodeTask)
+                .ThenInclude(x => x.InnateCode);
         }
 
         /// <summary>
@@ -125,17 +127,18 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Returns the last timesheet in the DB for the person supplied
+        /// Returns the start date of the next timesheet for the user.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="owner"></param>
         /// <returns></returns>
-        internal Timesheet GetLastForUser(PPMToolContext context, Person owner)
+        internal DateTime GetNextTimesheetStartDateForUser(PPMToolContext context, Person owner)
         {
-            return context.Timesheets
+            var lastTimesheet = context.Timesheets
                 .Where(t => t.Owner.PersonId == owner.PersonId)
                 .OrderByDescending(t => t.StartDate)
                 .FirstOrDefault();
+            return lastTimesheet?.StartDate.AddDays(7).Date ?? owner.StartDate.Date.FirstDayOfWeek();
         }
 
         /// <summary>
@@ -176,6 +179,110 @@ namespace PPMTool.Services
         {
             context.TimesheetEntries.Remove(entry);
             if (commitChanges) context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Gets all the timesheets with entries and tasks owned by person and in range [startRange, endRange)
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="startRange"></param>
+        /// <param name="endRange"></param>
+        /// <returns></returns>
+        internal IEnumerable<Timesheet> GetAllTimesheetsForPersonInDateRange(PPMToolContext context, Person person, DateTime startRange, DateTime endRange)
+        {
+            return context.Timesheets
+                .Include(t => t.TimesheetEntries)
+                .ThenInclude(x => x.InnateCodeTask)
+                .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate >= startRange && x.StartDate < endRange);
+        }
+
+        /// <summary>
+        /// Method to remove a task from a person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        public List<int> GetTemplate(PPMToolContext context, Person person)
+        {
+            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+        }
+
+        /// <summary>
+        /// Method to add a task to a person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="task"></param>
+        public void AddToTemplate(PPMToolContext context, Person person, InnateCodeTask task)
+        {
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+
+            // If not already in the template then add it to the start and update the person record
+            if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
+            {
+                templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
+                string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+                person.TimesheetTemplateData = updatedTemplateDetails;
+                context.People.Update(person);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Method to removes a task from the person's timesheet template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="task"></param>
+        public void DeleteFromTemplate(PPMToolContext context, Person person, InnateCodeTask task)
+        {
+            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+
+            // If it is in the list then remove it and update the person record
+            if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
+            {
+                templateTimesheetTasks.Remove(task.InnateCodeTaskId);
+                string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
+                person.TimesheetTemplateData = updatedTemplateDetails;
+                context.People.Update(person);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Sets up a new timesheet using the person's template
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="timesheet"></param>
+        /// <param name="person"></param>
+        /// <param name="tasks"></param>
+        public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks)
+        {
+            var templateTimesheetTasks = GetTemplate(context, person);
+
+            foreach (int taskId in templateTimesheetTasks)
+            {
+                InnateCodeTask task = tasks.FirstOrDefault(x => x.InnateCodeTaskId == taskId);
+
+                // If task is no-longer in the DB or if the task is no-longer associated with an active code then remove from template
+                if (task == null || !task.InnateCode.IsActive)
+                {
+                    // Remove from template
+                    if (task != null) DeleteFromTemplate(context, person, task);
+
+                    Debug.WriteLine($"** Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
+                }
+                else
+                {
+                    // Add entry to timesheet
+                    TimesheetEntry entry = new TimesheetEntry();
+                    entry.InnateCodeTask = task;
+                    timesheet.TimesheetEntries.Add(entry);
+
+                    Debug.WriteLine($"** Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                }
+            }
+            context.SaveChanges();
         }
     }
 }
