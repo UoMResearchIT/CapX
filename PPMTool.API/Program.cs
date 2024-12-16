@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using PPMTool.API.Authentication;
+using PPMTool.API.Endpoints;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 
@@ -40,6 +43,31 @@ builder.Services.AddSwaggerGen(
         {
             Debug.Assert(false, "XML documentation file not found");
         }
+
+        opt.AddSecurityDefinition("API Key", new OpenApiSecurityScheme
+        {
+            Description = "The API key to access the endpoints",
+            Type = SecuritySchemeType.ApiKey,
+            Name = "x-api-key",
+            In = ParameterLocation.Header,
+            Scheme = "ApiKeyScheme"
+        });
+
+        var scheme = new OpenApiSecurityScheme
+        {
+            Reference = new OpenApiReference
+            {
+                Type = ReferenceType.SecurityScheme,
+                Id = "API Key"
+            },
+            In = ParameterLocation.Header
+        };
+
+        var requirement = new OpenApiSecurityRequirement
+        {
+            { scheme, new string[] { } }
+        };
+        opt.AddSecurityRequirement(requirement);
     }
 );
 
@@ -49,9 +77,12 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
-// Map endpoints to methods
-app.MapGet("/skills/getAll", PPMTool.API.Endpoints.Skills.GetAllSkillTagsAsync);
-app.MapGet("/skills/getAllForPerson/{username}", PPMTool.API.Endpoints.Skills.GetAllSkillsTagsForPersonAsync);
+// API key authentication middleware -- maybe replace with endpoint filter after .NET 8.0 upgrade?
+// https://youtu.be/GrJJXixjR8M?feature=shared&t=775
+app.UseMiddleware<APIKeyAuthMiddleware>();
 
+// Map endpoints to methods
+app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
+app.MapGet("/skills/getAllForPerson/{username}", Skills.GetAllSkillsTagsForPersonAsync);
 
 app.Run();
