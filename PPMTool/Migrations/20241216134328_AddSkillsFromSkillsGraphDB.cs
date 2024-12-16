@@ -12,9 +12,8 @@ using PPMTool.Data.Context;
 
 namespace PPMTool.Migrations
 {
-    public partial class AddSkills : Migration
+    public partial class AddSkillsFromSkillsGraphDB : Migration
     {
-
         string LocalFilePath = "./ToInsertSkills.txt";
         string SkillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
 
