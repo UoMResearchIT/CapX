@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -17,17 +15,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override IEnumerable<SkillTag> GetAll(PPMToolContext context)
         {
-            return GetAllAsync(context).GetAwaiter().GetResult();
-        }
-
-        /// <summary>
-        /// Returns all skill tags in the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public async Task<IEnumerable<SkillTag>> GetAllAsync(PPMToolContext context)
-        {
-            return await context.SkillTags.ToListAsync();
+            return context.SkillTags;
         }
 
         /// <summary>

@@ -10,9 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
-        options.UseSqlite(configuration.GetConnectionString("PPMToolContextConnection"))
+        options.UseSqlite(configuration.GetConnectionString("PPMToolContextConnection") ?? throw new Exception("Invalid connection string!"))
     );
 builder.Services.AddScoped<TagService>();
+builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
