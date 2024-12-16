@@ -18,11 +18,16 @@ namespace PPMTool.Pages
         [Inject]
         private TagService TagService { get; set; }
 
+        /// <summary>
+        /// Method to detect a duplicate on save or update and display error message
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         private bool IsDuplicatedSkill(SkillTag entity)
         {
             if (TagService.DuplicateDetected(Context, entity))
             {
-                ErrorMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
+                ErrorMessage = new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error);
                 return true;
             }
             ErrorMessage = null;
@@ -35,13 +40,6 @@ namespace PPMTool.Pages
             dataGridEntityService = TagService;
             dataGridEntities = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
             LogInformation($"Viewing skills tags");
-        }
-
-        protected override async Task EditRow(SkillTag entity)
-        {
-            if (IsDuplicatedSkill(entity)) return;
-            await base.EditRow(entity);
-
         }
 
         protected override async Task SaveRow(SkillTag entity)
