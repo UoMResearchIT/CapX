@@ -49,6 +49,12 @@ jobs:
         -u ${{ secrets.ACTIONS_NUGET_USER }} \
         -p ${{ secrets.ACTIONS_REPO_TOKEN }} \
         --store-password-in-clear-text
+    - name: Check paths
+      run: |
+        cd ..
+        ls -l
+        cd PPMTool.API
+        ls -l
     - name: Restore dependencies
       run: dotnet restore --verbosity detailed ../PPMTool.API/PPMTool.API.csproj
     - name: Build
