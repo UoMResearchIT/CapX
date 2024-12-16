@@ -50,6 +50,6 @@ jobs:
         -p ${{ secrets.ACTIONS_REPO_TOKEN }} \
         --store-password-in-clear-text
     - name: Restore dependencies
-      run: dotnet restore --verbosity detailed ../PPMTool.API/PPMTool.API.csproj
+      run: dotnet restore --verbosity detailed
     - name: Build
       run: dotnet build --no-restore
