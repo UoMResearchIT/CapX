@@ -52,9 +52,8 @@ namespace PPMTool.Services
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
             return context.InnateCodes
-                .Include(x => x.Tasks)
                 .OrderBy(x => x.ActivityCode)
-                .ToList();
+                .Include(x => x.Tasks);
         }
 
         public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
@@ -97,6 +96,30 @@ namespace PPMTool.Services
                 }
             }
             return -1;
+        }
+
+        /// <summary>
+        /// Get the active timesheet codes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal IEnumerable<InnateCode> GetActive(PPMToolContext context)
+        {
+            return context.InnateCodes
+                .Where(x => x.IsActive)
+                .Include(x => x.Tasks)
+                .OrderBy(x => x.ActivityCode);
+        }
+
+        /// <summary>
+        /// Return all tasks including their parent Innate Code entity 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal IEnumerable<InnateCodeTask> GetAllTasks(PPMToolContext context)
+        {
+            return context.InnateCodeTasks
+                .Include(x => x.InnateCode);
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -8,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data;
 using PPMTool.Data.Context;
+using PPMTool.Data.Entities;
+using PPMTool.Services;
 using Radzen;
 
 namespace PPMTool.Pages
@@ -22,11 +23,14 @@ namespace PPMTool.Pages
         {
             public CapXNotificationMessage()
             {
-                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%";
+                Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -120%); width: 100%";
                 Duration = 4000;
                 Severity = NotificationSeverity.Error;
             }
         }
+
+        [Inject]
+        protected RolesService RolesService { get; set; }
 
         [Inject]
         protected ILogger Logger { get; set; }
@@ -56,7 +60,6 @@ namespace PPMTool.Pages
                 if (loading != value)
                 {
                     loading = value;
-                    Debug.WriteLine($"** Loading: {loading}");
                 }
             }
         }
@@ -73,6 +76,8 @@ namespace PPMTool.Pages
 
         protected string Title { get; set; }
 
+        protected Person ActiveUser { get; private set; }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -88,6 +93,21 @@ namespace PPMTool.Pages
 
             // Stash the user name
             ActiveUserName = AuthenticationState?.User.Identity.Name.Trim().ToLower();
+
+            // Get the active user
+            ActiveUser = RolesService.GetByUsername(Context, ActiveUserName)?.Person;
+        }
+
+        /// <summary>
+        /// Check whether the current user is the line manager of the person or a superuser
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        protected bool IsSuperuserOrLineManagerOfThisPerson(Person person)
+        {
+            var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.PersonId ?? -1);
+            var su = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+            return lm || su;
         }
 
         public void LogInformation(string message)
@@ -119,7 +139,7 @@ namespace PPMTool.Pages
             TooltipService.Open(elementReference, message, options);
         }
 
-        protected void ShowNotification(NotificationMessage message)
+        protected void ShowNotification(CapXNotificationMessage message)
         {
             NotificationService.Notify(message);
         }

@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -18,15 +20,16 @@ namespace PPMTool.Pages
         private TimesheetService TimesheetService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
-        private Person activeUser;
         private Role activeUserRole;
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
+        private DateTime dateNextTimesheet;
+        private List<Timesheet> myTimesheets;
+        private List<Timesheet> myStaffTimesheets;
+        private TaskQueue taskQueue = new TaskQueue();
+
         public bool ShowAllMyTimesheets
         {
             get => showAllMyTimesheets;
@@ -36,7 +39,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-mine", showAllMyTimesheets);
-                    LoadData();
+                    EnqueueLoadData();
                 }
             }
         }
@@ -51,25 +54,18 @@ namespace PPMTool.Pages
                 {
                     showAllMyStaffTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-reports", showAllMyStaffTimesheets);
-                    LoadData();
+                    EnqueueLoadData();
                 }
             }
         }
 
-        private List<Timesheet> myTimesheets;
-        private List<Timesheet> myStaffTimesheets;
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            Loading = true;
 
             // Look up the username
             var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
             activeUserRole = RolesService.GetByUsername(Context, uname);
-
-            // Get the person associated with the active user
-            activeUser = activeUserRole?.Person;
 
             // Log any time there is no role returned?
             if (activeUserRole == null)
@@ -89,18 +85,35 @@ namespace PPMTool.Pages
             if (temp != null) ShowAllMyTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
-            LoadData();
+            EnqueueLoadData();
+        }
+
+        /// <summary>
+        /// Put a load data request into the queue
+        /// </summary>
+        private void EnqueueLoadData()
+        {
+            _ = taskQueue.Enqueue(async () =>
+            {
+                await LoadData();
+            });
         }
 
         /// <summary>
         /// Load in the timesheet data from the service
         /// </summary>
         /// <param name="showAll"></param>
-        private void LoadData()
+        private async Task LoadData()
         {
+            Loading = true;
+            await InvokeAsync(StateHasChanged);
+
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
             myTimesheets = TimesheetService.GetMyTimesheets(Context, activeUserRole.Person).OrderByDescending(t => t.StartDate).ToList();
+
+            // Set the start date for the next one
+            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, activeUserRole.Person);
 
             if (!ShowAllMyTimesheets)
             {
@@ -130,7 +143,7 @@ namespace PPMTool.Pages
             }
 
             Loading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
 
         /// <summary>
