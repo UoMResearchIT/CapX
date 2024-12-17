@@ -67,7 +67,7 @@ namespace PPMTool.Pages
                 StateHasChanged();
             }
 
-            Debug.WriteLine($"** SplitTask Page Rendered! Split Logic = {splitLogicInitialised} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskId}");
+            Debug.WriteLine($"** SplitTask Page Rendered! Split pending = {Loading} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskModel?.SubTaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskModel?.SubTaskId}");
             SplitTasks();
         }
 
@@ -112,16 +112,19 @@ namespace PPMTool.Pages
 
             // Set the original task as the predecessor of the new task
             newAddTaskComponent.TaskModel.HasFixedStart = false;
+            Debug.WriteLine($"** Setting original task as predecessor to new task...");
             newAddTaskComponent.TaskModel.Predecessor = originalAddTaskComponent.TaskModel;
             newAddTaskComponent.InitialisePredecessorBinding();
 
             // Find the tasks for which the original task was the predecessor and update them to have the new task as its predecessor
+            Debug.WriteLine($"** Successors on original task = {originalAddTaskComponent.TaskModel.Successors.Count}");
             foreach (var task in originalAddTaskComponent.TaskModel.Successors)
             {
                 task.Predecessor = newAddTaskComponent.TaskModel;
             }
 
             Loading = false;
+            StateHasChanged();
             Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
         }
 

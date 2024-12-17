@@ -186,7 +186,9 @@ namespace PPMTool.Pages
         {
             if (TaskModel.Predecessor != null)
             {
+                Debug.WriteLine($"** Task {TaskModel.SubTaskId}: Setting selected predecessor ID to {TaskModel.Predecessor.SubTaskId}");
                 selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
+                StateHasChanged();
             }
         }
 
@@ -336,10 +338,10 @@ namespace PPMTool.Pages
         /// </summary>
         public void UpdateSubTaskModelFromResourceDataGrid()
         {
-            LogInformation("Validating the sub task model...");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Validating the sub task model...");
             editContext?.Validate();
 
-            LogInformation("Updating sub task resources from data grid...");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Updating sub task resources from data grid...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
@@ -350,14 +352,15 @@ namespace PPMTool.Pages
             }
 
             // Update predecessor task
+            Debug.WriteLine($"** Task {TaskModel.SubTaskId}: Setting predecessor task with ID = {selectedPredecessorId}");
             TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
-            LogInformation("Scheduling task...");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Scheduling task...");
 
             // Schedule (updates planned work, duration etc.)
             error = TaskModel.Schedule(false, ProjectModel);
 
-            LogInformation("Updating actual hours from resources...");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 
             // Update actual hours
             TaskModel.ActualWorkHours = 0;
@@ -366,7 +369,7 @@ namespace PPMTool.Pages
                 TaskModel.ActualWorkHours += res.ActualWorkHours;
             }
 
-            LogInformation("Updating costs...");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Updating costs...");
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
