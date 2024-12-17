@@ -70,7 +70,7 @@
         <MessageSummaryComponent Messages="@statusMessages" IgnoreStatus="true" />
     }
     <div class="col-auto" style="margin-left: -1rem">
-        <RadzenButton Click="InitialiseTaskComponents" Text="Split Task" Icon="settings_ethernet" Disabled="@((splitOnDate && splitDate == null) || (!splitOnDate && splitValue == null))" />
+        <RadzenButton Click="InitialiseTaskComponents" Text="Split Task" Icon="settings_ethernet" Disabled="@((splitOnDate && splitDate == null) || (!splitOnDate && splitValue == null) || Loading)" />
     </div>
 </RadzenStack>
 <hr />

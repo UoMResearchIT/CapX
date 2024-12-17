@@ -38,8 +38,6 @@ namespace PPMTool.Pages
         private DateTime originalStartDate;
         private DateTime originalEndDate;
         private bool splitLogicInitialised;
-        private bool subscribed;
-        private bool splitPending;
 
         protected override void OnInitialized()
         {
@@ -77,13 +75,13 @@ namespace PPMTool.Pages
         {
             // Set the flag to render the components
             splitLogicInitialised = true;
-            splitPending = true;
+            Loading = true;
             StateHasChanged();
         }
 
         private void SplitTasks()
         {
-            if (originalAddTaskComponent == null || newAddTaskComponent == null || !splitPending)
+            if (originalAddTaskComponent == null || newAddTaskComponent == null || !Loading)
             {
                 return;
             }
@@ -123,7 +121,7 @@ namespace PPMTool.Pages
                 task.Predecessor = newAddTaskComponent.TaskModel;
             }
 
-            splitPending = false;
+            Loading = false;
             Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
         }
 
