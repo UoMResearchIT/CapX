@@ -225,7 +225,7 @@ namespace PPMTool.Pages
                     "Delete Task") ?? false;
                 if (confirmed)
                 {
-                    LogWarning($"Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
+                    LogWarning($"Task {TaskModel?.SubTaskId}: Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
 
                     // Call delete on the subtask service and let it remove the resources
                     SubTaskService.Delete(Context, TaskModel);
@@ -280,7 +280,7 @@ namespace PPMTool.Pages
 
         protected override void CancelEdit(Resource resource)
         {
-            LogInformation($"Cancel edit row for {resource.GetSensibleObjectName()}");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Cancel edit row for {resource.GetSensibleObjectName()}");
             Reset();
             SubTaskService.RestoreModel(Context, ref resource);
             dataGrid.CancelEditRow(resource);
@@ -289,7 +289,7 @@ namespace PPMTool.Pages
 
         protected override void OnCreateRow(Resource resource)
         {
-            LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
             dataGridEntities.Add(resource);
             entityToInsert = null;
             TaskModel.UpdateUnmetDemand(dataGridEntities);
@@ -329,7 +329,7 @@ namespace PPMTool.Pages
 
         private void DiscardChanges()
         {
-            LogInformation($"Discarding task changes!");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Discarding task changes!");
             Navigation.NavigateTo($"projectdetails/{ProjectModel.ProjectId}");
         }
 
@@ -447,7 +447,7 @@ namespace PPMTool.Pages
                         return;
                     }
 
-                    LogInformation("Saving sub task...");
+                    LogInformation($"Task {TaskModel?.SubTaskId}: Saving sub task...");
 
                     // Add new new to task list for project if it is a new one
                     if (TaskModel.SubTaskId <= 0)
@@ -469,6 +469,7 @@ namespace PPMTool.Pages
                     ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
+                    LogInformation($"Task {TaskModel?.SubTaskId}: Saving project...");
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page if not triggered from a split task page
