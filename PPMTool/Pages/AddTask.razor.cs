@@ -108,7 +108,10 @@ namespace PPMTool.Pages
 
             // Get project model from DB and manually restore it in case it has been modified elsewhere
             ProjectModel = ProjectService.GetById(Context, ProjectId);
-            if (restoreModels) ProjectService.RestoreModel(Context, ref projectModel);
+            if (restoreModels)
+            {
+                ProjectService.RestoreModel(Context, ref projectModel);
+            }
 
             // No project then stop initialising
             if (ProjectModel == null)
@@ -118,7 +121,10 @@ namespace PPMTool.Pages
             }
 
             // Initialise sub tasks
-            if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
+            if (ProjectModel.SubTasks == null)
+            {
+                ProjectModel.SubTasks = new List<SubTask>();
+            }
 
             // Initialise data grid entities
             dataGridEntities = new List<Resource>();
@@ -178,7 +184,10 @@ namespace PPMTool.Pages
         /// </summary>
         public void InitialisePredecessorBinding()
         {
-            if (TaskModel.Predecessor != null) selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
+            if (TaskModel.Predecessor != null)
+            {
+                selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
+            }
         }
 
         protected override void OnAfterRender(bool firstRender)

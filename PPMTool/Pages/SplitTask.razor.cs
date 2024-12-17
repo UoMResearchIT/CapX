@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 
@@ -12,6 +13,12 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class SplitTask : BasePage
     {
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private ProjectService ProjectService { get; set; }
+
         [Parameter]
         public int? SubTaskId { get; set; }
 
@@ -20,6 +27,8 @@ namespace PPMTool.Pages
 
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
+        private SubTask originalTask;
+        private Project owningProject;
         private bool splitOnDate = true;
         private ActualsLogic selectedActualsLogic;
         private DateTime? splitDate;
@@ -29,10 +38,16 @@ namespace PPMTool.Pages
         private DateTime originalStartDate;
         private DateTime originalEndDate;
         private bool splitLogicInitialised;
+        private bool subscribed;
+        private bool splitPending;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Initialise the original task and project for the meta data
+            originalTask = SubTaskService.GetShallowById(Context, SubTaskId);
+            owningProject = ProjectService.GetById(Context, ProjectId);
 
             statusMessages.Add(new StatusMessage("Set your parameters and click Split Task to configure the two halves of the tasks automatically!", StatusMessage.MessageType.Warning, () => !splitLogicInitialised));
         }
@@ -42,21 +57,37 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
             if (firstRender)
             {
-                LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
-                originalStartDate = originalAddTaskComponent?.TaskModel.StartDate ?? DateTime.Today;
-                originalEndDate = originalAddTaskComponent?.TaskModel.EndDate ?? DateTime.Today;
+                LogInformation($"Splitting task {originalTask?.Name} on {owningProject?.GetFullName()}");
+                originalStartDate = originalTask?.StartDate ?? DateTime.Today;
+                originalEndDate = originalTask?.EndDate ?? DateTime.Today;
 
                 // Only allow the project manager to save the split or a superuser
                 var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(Context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && originalAddTaskComponent?.ProjectModel.ProjectManager.PersonId == role?.Person.PersonId);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && owningProject?.ProjectManager.PersonId == role?.Person.PersonId);
 
                 StateHasChanged();
             }
+
+            Debug.WriteLine($"** SplitTask Page Rendered! Split Logic = {splitLogicInitialised} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskId}");
+            SplitTasks();
+        }
+
+        private void InitialiseTaskComponents()
+        {
+            // Set the flag to render the components
+            splitLogicInitialised = true;
+            splitPending = true;
+            StateHasChanged();
         }
 
         private void SplitTasks()
         {
+            if (originalAddTaskComponent == null || newAddTaskComponent == null || !splitPending)
+            {
+                return;
+            }
+
             Debug.WriteLine($"** Running split logic...");
 
             // Clear the error messages
@@ -92,11 +123,8 @@ namespace PPMTool.Pages
                 task.Predecessor = newAddTaskComponent.TaskModel;
             }
 
-            // Set the flag and redraw the view
-            splitLogicInitialised = true;
-            StateHasChanged();
-
-            Debug.WriteLine($"** {statusMessages.Count} status message(s).");
+            splitPending = false;
+            Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
         }
 
         private void CheckForFixedWorkWarnings()

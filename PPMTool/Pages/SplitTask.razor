@@ -8,7 +8,7 @@
 
 <div class="row">
     <div class="col">
-        <h1>Split <i>@(originalAddTaskComponent?.TaskModel.Name)</i></h1>
+        <h1>Split <i>@(originalTask.Name)</i></h1>
     </div>
 </div>
 
@@ -70,31 +70,34 @@
         <MessageSummaryComponent Messages="@statusMessages" IgnoreStatus="true" />
     }
     <div class="col-auto" style="margin-left: -1rem">
-        <RadzenButton Click="SplitTasks" Text="Split Task" Icon="settings_ethernet" Disabled="@((splitOnDate && splitDate == null) || (!splitOnDate && splitValue == null))" />
+        <RadzenButton Click="InitialiseTaskComponents" Text="Split Task" Icon="settings_ethernet" Disabled="@((splitOnDate && splitDate == null) || (!splitOnDate && splitValue == null))" />
     </div>
 </RadzenStack>
 <hr />
 
-<div class="row">
-    <div class="col-6">
-        <AddTask @ref="@originalAddTaskComponent" IsSplit="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+@if (splitLogicInitialised)
+{
+    <div class="row">
+        <div class="col-6">
+            <AddTask @ref="@originalAddTaskComponent" IsSplit="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+        </div>
+        <div class="col-6 vr">
+            <AddTask @ref="@newAddTaskComponent" IsSplit="true" IsCopy="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
+        </div>
     </div>
-    <div class="col-6 vr">
-        <AddTask @ref="@newAddTaskComponent" IsSplit="true" IsCopy="true" ProjectId="@ProjectId" TaskId="@(SubTaskId ?? 0)" />
-    </div>
-</div>
-<hr />
+    <hr />
 
-<div class="row">
-    <div class="col-auto">
-        <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="refresh" />
+    <div class="row">
+        <div class="col-auto">
+            <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="refresh" />
+        </div>
+        <div class="col"></div>
+        <div class="col-auto">
+            <RadzenStack JustifyContent="JustifyContent.End" Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" Style="width:100%">
+                <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="check" Disabled=!EditAuthorised />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="close" />
+            </RadzenStack>
+        </div>
     </div>
-    <div class="col"></div>
-    <div class="col-auto">
-        <RadzenStack JustifyContent="JustifyContent.End" Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" Style="width:100%">
-            <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="check" Disabled=!EditAuthorised />
-            <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="close" />
-        </RadzenStack>
-    </div>
-</div>
-<hr />
+    <hr />
+}
