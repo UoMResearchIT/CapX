@@ -173,9 +173,7 @@ namespace PPMTool.Pages
                 proposedDurationNewTask = (newAddTaskComponent.TaskModel.EndDate - splitDate).Value.TotalDays + 1;
                 if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
                 {
-                    statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! Remember the dates are inclusive. " +
-                        $"Based on your choice of split, the two tasks would have durations of {proposedDurationOrigTask} days and {proposedDurationNewTask} days respectively.",
-                        StatusMessage.MessageType.Error, () => true));
+                    AddBadDurationStatusMessage(proposedDurationOrigTask, proposedDurationNewTask);
                     return;
                 }
             }
@@ -193,9 +191,7 @@ namespace PPMTool.Pages
                 proposedDurationNewTask = originalAddTaskComponent.TaskModel.DurationDays - splitValue ?? 0;
                 if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
                 {
-                    statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! " +
-                        $"Based on your choice of split, the two tasks would have durations of {proposedDurationOrigTask} days and {proposedDurationNewTask} days respectively.",
-                        StatusMessage.MessageType.Error, () => true));
+                    AddBadDurationStatusMessage(proposedDurationOrigTask, proposedDurationNewTask);
                     return;
                 }
 
@@ -235,6 +231,13 @@ namespace PPMTool.Pages
                 originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
                 newAddTaskComponent.TaskModel.DurationDays = originalDuration - originalAddTaskComponent.TaskModel.DurationDays;
             }
+        }
+
+        private void AddBadDurationStatusMessage(double origDuration, double newDuration)
+        {
+            statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! Remember the dates are inclusive. " +
+                        $"Based on your choice of split, the two tasks would have durations of {origDuration} days and {newDuration} days respectively.",
+                        StatusMessage.MessageType.Error, () => true));
         }
 
         private void UpdateActuals()

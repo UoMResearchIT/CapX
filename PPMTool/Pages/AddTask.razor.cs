@@ -429,7 +429,7 @@ namespace PPMTool.Pages
                     var confirmed = true;
                     if (TaskModel.Demand == 0)
                     {
-                        var message = "You are about to set the demand for this task zero.";
+                        var message = "You are about to set the demand for this task to zero.";
 
                         if (TaskModel.AssignedResources.Count != 0)
                         {
@@ -444,6 +444,11 @@ namespace PPMTool.Pages
                     // Bail early if they do not want to continue
                     if (!confirmed)
                     {
+                        if (TaskModel.AssignedResources.Count != 0)
+                        {
+                            IsValid = false;
+                            error = "Task has zero demand but has resources assigned!";
+                        }
                         return;
                     }
 
@@ -475,6 +480,10 @@ namespace PPMTool.Pages
                     // Return to the project details page if not triggered from a split task page
                     if (!IsSplit) Navigation.NavigateTo($"projectdetails/{ProjectId}");
                 }
+            }
+            else
+            {
+                LogError($"Task {TaskModel?.SubTaskId}: Cannot save task as it has no project model!");
             }
         }
 
