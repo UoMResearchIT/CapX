@@ -38,6 +38,7 @@ namespace PPMTool.Pages
         private DateTime originalStartDate;
         private DateTime originalEndDate;
         private bool splitLogicInitialised;
+        private bool showTaskInvalidError;
 
         protected override void OnInitialized()
         {
@@ -90,6 +91,7 @@ namespace PPMTool.Pages
 
             // Clear the error messages
             statusMessages.Clear();
+            showTaskInvalidError = false;
 
             // Reinitialise the components from the DB
             originalAddTaskComponent.InitialiseComponent();
@@ -285,18 +287,23 @@ namespace PPMTool.Pages
 
         private void UpdateAndSave()
         {
-            // Try to submit both tasks (sub tasks are updated as part of this submission attempt)
-            originalAddTaskComponent.HandleSubmit();
-            newAddTaskComponent.HandleSubmit();
+            showTaskInvalidError = false;
 
-            // Navigate away if successful submit
+            // Validate the tasks first before trying to save anything as both have to pass
+            UpdateSubTasks();
+
             if (originalAddTaskComponent.IsValid && newAddTaskComponent.IsValid)
             {
+
+                // Try to submit both tasks (sub tasks are updated as part of this submission attempt)
+                originalAddTaskComponent.HandleSubmit();
+                newAddTaskComponent.HandleSubmit();
                 Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
             }
             else
             {
-                statusMessages.Add(new StatusMessage("Please correct the errors on tasks before saving!", StatusMessage.MessageType.Error, () => true));
+                showTaskInvalidError = true;
+                StateHasChanged();
             }
         }
     }

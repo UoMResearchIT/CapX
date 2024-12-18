@@ -1,5 +1,6 @@
 ﻿@page "/splittask/{ProjectId:int}/{SubTaskId:int}"
 @inherits BasePage
+@using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
@@ -91,7 +92,12 @@
         <div class="col-auto">
             <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="refresh" />
         </div>
-        <div class="col"></div>
+        <div class="col align-items-center">
+            @if (showTaskInvalidError)
+            {
+                <StatusMessageComponent Message="@(new StatusMessage("Please correct the errors on tasks before saving!", StatusMessage.MessageType.Error, () => true))" />
+            }
+        </div>
         <div class="col-auto">
             <RadzenStack JustifyContent="JustifyContent.End" Orientation="Radzen.Orientation.Horizontal" Gap="0.4rem" Style="width:100%">
                 <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="check" Disabled=!EditAuthorised />
