@@ -238,6 +238,7 @@ namespace PPMTool.Pages
                     ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
+                    LogInformation($"Saving project {ProjectModel?.GetFullName()}...");
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
@@ -469,16 +470,19 @@ namespace PPMTool.Pages
                         SubTaskService.Update(Context, TaskModel);
                     }
 
-                    // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
-                    ProjectModel.UpdateProjectMetaData(false, finrefs);
+                    // Update the project summary values if not splitting as that is taken care of on the split task page
+                    if (!IsSplit)
+                    {
+                        var finrefs = FinancialReferenceService.GetAll(Context);
+                        ProjectModel.UpdateProjectMetaData(false, finrefs);
 
-                    // Update the project in the database
-                    LogInformation($"Task {TaskModel?.SubTaskId}: Saving project...");
-                    ProjectService.Update(Context, ProjectModel);
+                        // Update the project in the database
+                        LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetFullName()}...");
+                        ProjectService.Update(Context, ProjectModel);
 
-                    // Return to the project details page if not triggered from a split task page
-                    if (!IsSplit) Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                        // Return to the project details page if not triggered from a split task page
+                        Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                    }
                 }
             }
             else

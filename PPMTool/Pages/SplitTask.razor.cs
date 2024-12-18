@@ -19,6 +19,9 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
+
         [Parameter]
         public int? SubTaskId { get; set; }
 
@@ -294,10 +297,22 @@ namespace PPMTool.Pages
 
             if (originalAddTaskComponent.IsValid && newAddTaskComponent.IsValid)
             {
-
                 // Try to submit both tasks (sub tasks are updated as part of this submission attempt)
                 originalAddTaskComponent.HandleSubmit();
                 newAddTaskComponent.HandleSubmit();
+
+                // Get updated project from the DB
+                owningProject = ProjectService.GetById(Context, owningProject.ProjectId);
+
+                // Update the project summary values
+                var finrefs = FinancialReferenceService.GetAll(Context);
+                owningProject.UpdateProjectMetaData(false, finrefs);
+
+                // Update the project in the database
+                LogInformation($"Saving project {owningProject?.GetFullName()}...");
+                ProjectService.Update(Context, owningProject);
+
+                // Navigate back
                 Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
             }
             else
