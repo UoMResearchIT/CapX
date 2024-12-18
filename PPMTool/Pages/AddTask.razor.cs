@@ -457,11 +457,11 @@ namespace PPMTool.Pages
                     // Add new new to task list for project if it is a new one
                     if (TaskModel.SubTaskId <= 0)
                     {
+                        // Add reference to the project
+                        TaskModel.OwningProject = ProjectModel;
+
                         // Add the subtask to the database
                         SubTaskService.Add(Context, TaskModel);
-
-                        // Add reference to the project
-                        ProjectModel.SubTasks.Add(TaskModel);
                     }
                     else
                     {

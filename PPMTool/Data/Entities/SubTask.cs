@@ -150,6 +150,11 @@ namespace PPMTool.Data.Entities
         public bool ChargeLeadership { get; set; } = true;
 
         /// <summary>
+        /// Project which owns the subtask
+        /// </summary>
+        public Project OwningProject { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
