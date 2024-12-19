@@ -258,3 +258,7 @@ mark {
 :not(.rz-form-field-content) > .rz-textarea:disabled {
     color: #777
 }
+
+.rz-grid-table thead th .rz-column-title {
+    padding-left: 0.5rem;
+}
