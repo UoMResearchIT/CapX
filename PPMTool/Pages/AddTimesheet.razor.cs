@@ -53,6 +53,9 @@ namespace PPMTool.Pages
             { "sun", "#FDFBD4" }
         };
         private TimesheetStatus newStatus;
+        private Timesheet previousTimesheet;
+        private Timesheet nextTimesheet;
+
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         protected override async Task OnParametersSetAsync()
@@ -128,6 +131,18 @@ namespace PPMTool.Pages
 
                     if (timesheet != null)
                     {
+                        // Get details for the prev/next timesheets
+                        previousTimesheet = null;
+                        nextTimesheet = null;
+                        DateTime previousDate = timesheet.StartDate.AddDays(-7);
+                        DateTime nextDate = timesheet.StartDate.AddDays(7);
+                        List<Timesheet> prevandnext = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, ActiveUser, previousDate, nextDate).ToList();
+                        foreach ( Timesheet t in prevandnext )
+                        {
+                            if (t.StartDate == previousDate) { previousTimesheet = t; }
+                            if (t.StartDate == nextDate) { nextTimesheet = t; }
+                        }
+
                         dataGridEntities = timesheet.TimesheetEntries.ToList();
                         UpdateDailyTotals();
 
@@ -567,6 +582,11 @@ namespace PPMTool.Pages
 
             // Update the daily totals regardless of correction
             UpdateDailyTotals();
+        }
+
+        public void GoToTimesheet(Timesheet timesheet)
+        {
+            Navigation.NavigateTo("AddTimesheet/" + @timesheet.TimesheetId);
         }
     }
 }
