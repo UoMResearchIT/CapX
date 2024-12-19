@@ -176,7 +176,7 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(Context, ActiveUserName);
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
-            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
         }
 
         /// <summary>
@@ -339,10 +339,10 @@ namespace PPMTool.Pages
         /// </summary>
         public void UpdateSubTaskModelFromResourceDataGrid()
         {
-            LogInformation($"Task {TaskModel?.SubTaskId}: Validating the sub task model...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Validating the sub task model...");
             editContext?.Validate();
 
-            LogInformation($"Task {TaskModel?.SubTaskId}: Updating sub task resources from data grid...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating sub task resources from data grid...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
@@ -356,12 +356,12 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Task {TaskModel.SubTaskId}: Setting predecessor task with ID = {selectedPredecessorId}");
             TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
-            LogInformation($"Task {TaskModel?.SubTaskId}: Scheduling task...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
             // Schedule (updates planned work, duration etc.)
             error = TaskModel.Schedule(false, ProjectModel);
 
-            LogInformation($"Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 
             // Update actual hours
             TaskModel.ActualWorkHours = 0;
@@ -370,7 +370,7 @@ namespace PPMTool.Pages
                 TaskModel.ActualWorkHours += res.ActualWorkHours;
             }
 
-            LogInformation($"Task {TaskModel?.SubTaskId}: Updating costs...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating costs...");
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
@@ -411,6 +411,8 @@ namespace PPMTool.Pages
                 error = "Fixed duration tasks must have a value of duration greater than zero!";
                 IsValid = false;
             }
+
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: ...Validation complete!");
 
             // Update UI
             StateHasChanged();
@@ -455,12 +457,13 @@ namespace PPMTool.Pages
 
                     LogInformation($"Task {TaskModel?.SubTaskId}: Saving sub task...");
 
+                    // Add reference to the project
+                    TaskModel.OwningProject = ProjectModel;
+                    Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Owning project ID = {taskModel.OwningProject?.ProjectId}");
+
                     // Add new new to task list for project if it is a new one
                     if (TaskModel.SubTaskId <= 0)
                     {
-                        // Add reference to the project
-                        TaskModel.OwningProject = ProjectModel;
-
                         // Add the subtask to the database
                         SubTaskService.Add(Context, TaskModel);
                     }

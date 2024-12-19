@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -303,12 +304,14 @@ namespace PPMTool.Pages
 
                 // Get updated project from the DB
                 owningProject = ProjectService.GetById(Context, owningProject.ProjectId);
+                Debug.WriteLine($"** {owningProject?.SubTasks.Count} subtasks found! IDs: {string.Join("|", owningProject?.SubTasks.Select(x => x.SubTaskId))}");
 
                 // Update the project summary values
                 var finrefs = FinancialReferenceService.GetAll(Context);
                 owningProject.UpdateProjectMetaData(false, finrefs);
 
                 // Update the project in the database
+
                 LogInformation($"Saving project {owningProject?.GetFullName()}...");
                 ProjectService.Update(Context, owningProject);
 
