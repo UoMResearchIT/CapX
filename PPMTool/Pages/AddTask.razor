@@ -30,6 +30,9 @@
             @if (!IsSplit)
             {
                 <div class="col-auto" style="align-content: center">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="SplitSubTask" Text="Split" Icon="settings_ethernet" Disabled=!EditAuthorised />
+                </div>
+                <div class="col-auto" style="align-content: center">
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
                 </div>
             }
@@ -314,10 +317,10 @@
             @if (!IsSplit)
             {
                 <div class="row">
-                    <div class="col-auto">
+                    <div class="col">
                         <RadzenButton ButtonType="ButtonType.Button" Click="UpdateSubTaskModelFromResourceDataGrid" Text="Update" Icon="refresh" />
                     </div>
-                    <div class="col" style="justify-content:end">
+                    <div class="col-auto" style="justify-content:end">
                         <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" Disabled=!EditAuthorised />
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                     </div>

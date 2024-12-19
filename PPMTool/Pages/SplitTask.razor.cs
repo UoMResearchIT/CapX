@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 
@@ -12,6 +14,15 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class SplitTask : BasePage
     {
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
+        private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private FinancialReferenceService FinancialReferenceService { get; set; }
+
         [Parameter]
         public int? SubTaskId { get; set; }
 
@@ -20,6 +31,8 @@ namespace PPMTool.Pages
 
         private AddTask originalAddTaskComponent;
         private AddTask newAddTaskComponent;
+        private SubTask originalTask;
+        private Project owningProject;
         private bool splitOnDate = true;
         private ActualsLogic selectedActualsLogic;
         private DateTime? splitDate;
@@ -28,10 +41,18 @@ namespace PPMTool.Pages
         private double origProportion = 0;
         private DateTime originalStartDate;
         private DateTime originalEndDate;
+        private bool splitLogicInitialised;
+        private bool showTaskInvalidError;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Initialise the original task and project for the meta data
+            originalTask = SubTaskService.GetShallowById(Context, SubTaskId);
+            owningProject = ProjectService.GetById(Context, ProjectId);
+
+            statusMessages.Add(new StatusMessage("Set your parameters and click Split Task to configure the two halves of the tasks automatically!", StatusMessage.MessageType.Warning, () => !splitLogicInitialised));
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -39,29 +60,46 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
             if (firstRender)
             {
-                LogInformation($"Splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent?.ProjectModel.GetFullName()}");
-                originalStartDate = originalAddTaskComponent?.TaskModel.StartDate ?? DateTime.Today;
-                originalEndDate = originalAddTaskComponent?.TaskModel.EndDate ?? DateTime.Today;
+                LogInformation($"Splitting task {originalTask?.Name} on {owningProject?.GetFullName()}");
+                originalStartDate = originalTask?.StartDate ?? DateTime.Today;
+                originalEndDate = originalTask?.EndDate ?? DateTime.Today;
 
                 // Only allow the project manager to save the split or a superuser
                 var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(Context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && originalAddTaskComponent?.ProjectModel.ProjectManager.PersonId == role?.Person.PersonId);
+                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && owningProject?.ProjectManager.PersonId == role?.Person.PersonId);
 
                 StateHasChanged();
             }
+
+            Debug.WriteLine($"** SplitTask Page Rendered! Split pending = {Loading} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskModel?.SubTaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskModel?.SubTaskId}");
+            SplitTasks();
+        }
+
+        private void InitialiseTaskComponents()
+        {
+            // Set the flag to render the components
+            splitLogicInitialised = true;
+            Loading = true;
+            StateHasChanged();
         }
 
         private void SplitTasks()
         {
+            if (originalAddTaskComponent == null || newAddTaskComponent == null || !Loading)
+            {
+                return;
+            }
+
             Debug.WriteLine($"** Running split logic...");
 
             // Clear the error messages
             statusMessages.Clear();
+            showTaskInvalidError = false;
 
             // Reinitialise the components from the DB
             originalAddTaskComponent.InitialiseComponent();
-            newAddTaskComponent.InitialiseComponent();
+            newAddTaskComponent.InitialiseComponent(originalAddTaskComponent.GetContext());
 
             // Apply the logic to split the task and actuals
             ApplySplitLogic();
@@ -78,10 +116,22 @@ namespace PPMTool.Pages
             // Check for fixed work warnings
             CheckForFixedWorkWarnings();
 
-            // Tell Blazor to redraw the page
-            StateHasChanged();
+            // Set the original task as the predecessor of the new task
+            newAddTaskComponent.TaskModel.HasFixedStart = false;
+            Debug.WriteLine($"** Setting original task as predecessor to new task...");
+            newAddTaskComponent.TaskModel.Predecessor = originalAddTaskComponent.TaskModel;
+            newAddTaskComponent.InitialisePredecessorBinding();
 
-            Debug.WriteLine($"** {statusMessages.Count} status message(s).");
+            // Find the tasks for which the original task was the predecessor and update them to have the new task as its predecessor
+            Debug.WriteLine($"** Successors on original task = {originalAddTaskComponent.TaskModel.Successors.Count}");
+            foreach (var task in originalAddTaskComponent.TaskModel.Successors)
+            {
+                task.Predecessor = newAddTaskComponent.TaskModel;
+            }
+
+            Loading = false;
+            StateHasChanged();
+            Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
         }
 
         private void CheckForFixedWorkWarnings()
@@ -129,9 +179,7 @@ namespace PPMTool.Pages
                 proposedDurationNewTask = (newAddTaskComponent.TaskModel.EndDate - splitDate).Value.TotalDays + 1;
                 if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
                 {
-                    statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! Remember the dates are inclusive. " +
-                        $"Based on your choice of split, the two tasks would have durations of {proposedDurationOrigTask} days and {proposedDurationNewTask} days respectively.",
-                        StatusMessage.MessageType.Error, () => true));
+                    AddBadDurationStatusMessage(proposedDurationOrigTask, proposedDurationNewTask);
                     return;
                 }
             }
@@ -149,9 +197,7 @@ namespace PPMTool.Pages
                 proposedDurationNewTask = originalAddTaskComponent.TaskModel.DurationDays - splitValue ?? 0;
                 if (proposedDurationOrigTask < 1 || proposedDurationNewTask < 1)
                 {
-                    statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! " +
-                        $"Based on your choice of split, the two tasks would have durations of {proposedDurationOrigTask} days and {proposedDurationNewTask} days respectively.",
-                        StatusMessage.MessageType.Error, () => true));
+                    AddBadDurationStatusMessage(proposedDurationOrigTask, proposedDurationNewTask);
                     return;
                 }
 
@@ -191,6 +237,13 @@ namespace PPMTool.Pages
                 originalAddTaskComponent.TaskModel.DurationDays = (int)Math.Round(originalDuration * origProportion);
                 newAddTaskComponent.TaskModel.DurationDays = originalDuration - originalAddTaskComponent.TaskModel.DurationDays;
             }
+        }
+
+        private void AddBadDurationStatusMessage(double origDuration, double newDuration)
+        {
+            statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! Remember the dates are inclusive. " +
+                        $"Based on your choice of split, the two tasks would have durations of {origDuration} days and {newDuration} days respectively.",
+                        StatusMessage.MessageType.Error, () => true));
         }
 
         private void UpdateActuals()
@@ -238,18 +291,37 @@ namespace PPMTool.Pages
 
         private void UpdateAndSave()
         {
-            // Try to submit both tasks (sub tasks are updated as part of this submission attempt)
-            originalAddTaskComponent.HandleSubmit();
-            newAddTaskComponent.HandleSubmit();
+            showTaskInvalidError = false;
 
-            // Navigate away if successful submit
+            // Validate the tasks first before trying to save anything as both have to pass
+            UpdateSubTasks();
+
             if (originalAddTaskComponent.IsValid && newAddTaskComponent.IsValid)
             {
+                // Try to submit both tasks (sub tasks are updated as part of this submission attempt)
+                originalAddTaskComponent.HandleSubmit();
+                newAddTaskComponent.HandleSubmit();
+
+                // Get updated project from the DB
+                owningProject = ProjectService.GetById(Context, owningProject.ProjectId);
+                Debug.WriteLine($"** {owningProject?.SubTasks.Count} subtasks found! IDs: {string.Join("|", owningProject?.SubTasks.Select(x => x.SubTaskId))}");
+
+                // Update the project summary values
+                var finrefs = FinancialReferenceService.GetAll(Context);
+                owningProject.UpdateProjectMetaData(false, finrefs);
+
+                // Update the project in the database
+
+                LogInformation($"Saving project {owningProject?.GetFullName()}...");
+                ProjectService.Update(Context, owningProject);
+
+                // Navigate back
                 Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
             }
             else
             {
-                statusMessages.Add(new StatusMessage("Please correct the errors on tasks before saving!", StatusMessage.MessageType.Error, () => true));
+                showTaskInvalidError = true;
+                StateHasChanged();
             }
         }
     }
