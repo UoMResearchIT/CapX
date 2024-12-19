@@ -137,7 +137,7 @@ namespace PPMTool.Pages
                         DateTime previousDate = timesheet.StartDate.AddDays(-7);
                         DateTime nextDate = timesheet.StartDate.AddDays(7);
                         List<Timesheet> prevandnext = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, ActiveUser, previousDate, nextDate).ToList();
-                        foreach ( Timesheet t in prevandnext )
+                        foreach (Timesheet t in prevandnext)
                         {
                             if (t.StartDate == previousDate) { previousTimesheet = t; }
                             if (t.StartDate == nextDate) { nextTimesheet = t; }
