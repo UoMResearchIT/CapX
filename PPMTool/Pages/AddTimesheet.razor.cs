@@ -280,6 +280,9 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method fired when the timesheet note is changed
+        /// </summary>
         public void NoteChanged()
         {
             TimesheetService.Update(Context, timesheet);
@@ -584,9 +587,13 @@ namespace PPMTool.Pages
             UpdateDailyTotals();
         }
 
+        /// <summary>
+        /// Navigate to timesheet
+        /// </summary>
+        /// <param name="timesheet"></param>
         public void GoToTimesheet(Timesheet timesheet)
         {
-            Navigation.NavigateTo("AddTimesheet/" + @timesheet.TimesheetId);
+            Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
         }
     }
 }
