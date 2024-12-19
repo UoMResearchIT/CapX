@@ -201,21 +201,25 @@
             </div>
             <div class="row" style="margin-top: 1rem;">
                 <div class="col">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">
                         <div>
                             @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-left: 0.5rem;" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
                             }
                             @if ((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { newStatus = TimesheetStatus.Rejected; })" Style="margin-left: 0.5rem;" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { newStatus = TimesheetStatus.Rejected; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
                             }
                             @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-left: 0.5rem;" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" />
                             }
                         </div>
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
+                        <RadzenButton ButtonType="ButtonType.Button" Text="Previous timesheet" ButtonStyle="ButtonStyle.Dark" Disabled="@(previousTimesheet == null)" Click="@(() => { GoToTimesheet(@previousTimesheet); })" />
+                        <RadzenButton ButtonType="ButtonType.Button" Text="Next timesheet" ButtonStyle="ButtonStyle.Dark" Disabled="@(nextTimesheet == null)" Click="@(() => { GoToTimesheet(@nextTimesheet); })"/>
                     </RadzenStack>
                 </div>
             </div>
