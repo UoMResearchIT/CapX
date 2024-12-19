@@ -205,21 +205,27 @@
                         <div>
                             @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;"/>
                             }
                             @if ((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { newStatus = TimesheetStatus.Rejected; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { newStatus = TimesheetStatus.Rejected; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
                             }
                             @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
                             }
                         </div>
                     </RadzenStack>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
-                        <RadzenButton ButtonType="ButtonType.Button" Text="Previous timesheet" ButtonStyle="ButtonStyle.Dark" Disabled="@(previousTimesheet == null)" Click="@(() => { GoToTimesheet(@previousTimesheet); })" />
-                        <RadzenButton ButtonType="ButtonType.Button" Text="Next timesheet" ButtonStyle="ButtonStyle.Dark" Disabled="@(nextTimesheet == null)" Click="@(() => { GoToTimesheet(@nextTimesheet); })"/>
+                        <RadzenButton ButtonStyle="ButtonStyle.Dark" Disabled="@(previousTimesheet == null)" Click="@(() => { GoToTimesheet(@previousTimesheet); })">
+                            <RadzenImage Path="images/chevron_left.png" Style="width: 22px; height: 22px; margin-left: -10px;" />
+                            <span class="rz-button-text">Previous timesheet</span>
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Dark" Disabled="@(nextTimesheet == null)" Click="@(() => { GoToTimesheet(@nextTimesheet); })">
+                            <span class="rz-button-text">Next timesheet</span>
+                            <RadzenImage Path="images/chevron_right.png" Style="width: 22px; height: 22px; margin-right: -10px;" />
+                        </RadzenButton>
                     </RadzenStack>
                 </div>
             </div>
