@@ -483,7 +483,6 @@
                             <NoteComponent Note="note"
                                            DeleteNote="DeleteNote"
                                            EditNote="EditNote"
-                                           CopyLinkToClipboard="CopyLinkToNoteToClipboard"
                                            MarkComplete="@(args => MarkComplete(note))"
                                            EditAuthorised="@(isProjectManager || ActiveUser == note.Author)"
                                            ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
