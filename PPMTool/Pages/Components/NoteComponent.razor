@@ -41,7 +41,7 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit"))" />
                     }
                     <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Copy Link"))">
-                        <i class="notranslate rz-button-icon-left rzi" style="background-color: yellow" onclick="copyText('@(CopyNoteLink)')">@((MarkupString)"link")</i>
+                        <i class="notranslate rz-button-icon-left rzi" onclick="copyText('@(CopyNoteLink)')">@((MarkupString)"link")</i>
                     </RadzenButton>
                     @if (EditAuthorised)
                     {
