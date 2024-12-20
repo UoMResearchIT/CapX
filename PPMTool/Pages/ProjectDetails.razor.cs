@@ -376,7 +376,7 @@ namespace PPMTool.Pages
             LogInformation($"Initialised project details");
         }
 
-        protected override void OnAfterRender(bool firstRender)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             base.OnAfterRender(firstRender);
 
@@ -385,6 +385,9 @@ namespace PPMTool.Pages
 
             if (firstRender)
             {
+                // Create a reference to self in JS
+                await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
+
                 // After the page has finished rendering then apply the search string from the parameter
                 if (FilteredNote != null)
                 {
@@ -401,7 +404,7 @@ namespace PPMTool.Pages
                     // Check whether the parameter is present to scroll to the due notes
                     if (FilterDueNotes)
                     {
-                        InvokeAsync(async () =>
+                        await InvokeAsync(async () =>
                         {
                             // Refresh then scroll last due note into view
                             StateHasChanged();
@@ -582,12 +585,24 @@ namespace PPMTool.Pages
         {
             htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
             {
-                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
-
                 // Close the popup
                 MentionSearchString = string.Empty;
                 await popup.CloseAsync();
+
+                // Insert text and move cursor
+                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
             });
+        }
+
+        /// <summary>
+        /// This method is fired from JS when the content of the HTML editor is changed from JS rather than a key press
+        /// </summary>
+        /// <param name="content"></param>
+        [JSInvokable]
+        public void OnEditorChangeFromJS(string content)
+        {
+            noteModel.HtmlContent = content;
+            Debug.WriteLine($"** After Mention Insert: {noteModel.HtmlContent}");
         }
 
         /// <summary>
@@ -847,7 +862,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void ResolveMentionsInCurrentNoteModel()
         {
-            Debug.WriteLine($"** Content: {noteModel.HtmlContent}");
+            Debug.WriteLine($"** Content Resolve: {noteModel.HtmlContent}");
             // Get list of all new mentions in the note content
             var newMentions = new List<string>();
             var matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)@\w+");
