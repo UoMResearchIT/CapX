@@ -102,9 +102,18 @@ namespace PPMTool.Pages
         private RadzenHtmlEditor htmlEditor;
         private bool isCurrentUserFollowing;
         private bool isProjectManager;
-        private bool groupLinkedTasks = false;
+        private bool groupLinkedTasks;
         private ApexChart<GanttBlock> scheduleChart;
         private ApexChart<ChartItem> burnUpChart;
+        private bool mentionTriggerArmed;
+
+        /// <summary>
+        /// Keys to be ignored by the mention trigger code -- all other keys reset the trigger except space or tab which arms it
+        /// </summary>
+        private static readonly HashSet<string> ControlKeys = new()
+        {
+            "Control", "Shift", "Alt", "Meta", "CapsLock", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"
+        };
 
         /// <summary>
         /// Represents a block on the schedule chart
@@ -511,12 +520,20 @@ namespace PPMTool.Pages
         /// <param name="args"></param>
         private void ProcessEditorInput(KeyboardEventArgs args)
         {
-            Debug.WriteLine($"** Key pressed in the editor {args.Key}");
+            Debug.WriteLine($"** Key pressed in the editor \"{args.Key}\"");
 
-            // If it is a mention trigger but not a mention insertion then open the popup
-            if (args.Key == "@")
+            // If a space then "arm" the trigger
+            if (args.Key == " ")
+            {
+                Debug.WriteLine("** Arming trigger...");
+                mentionTriggerArmed = true;
+            }
+
+            // If an at character then show the popup
+            else if (mentionTriggerArmed && args.Key == "@")
             {
                 Debug.WriteLine($"** Opening popup...");
+                mentionTriggerArmed = false;
 
                 // Save cursor position
                 htmlEditor.SaveSelectionAsync().ContinueWith(async t =>
@@ -528,6 +545,13 @@ namespace PPMTool.Pages
                         StateHasChanged();
                     });
                 });
+            }
+
+            // If not a control key then reset the trigger
+            else if (mentionTriggerArmed && !ControlKeys.Contains(args.Key))
+            {
+                Debug.WriteLine("** Disarming trigger...");
+                mentionTriggerArmed = false;
             }
         }
 
