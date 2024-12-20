@@ -40,7 +40,9 @@
                     {
                         <RadzenButton ButtonStyle="ButtonStyle.Primary" Icon="edit" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => EditNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit"))" />
                     }
-                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => CopyLinkToClipboard?.Invoke(Note))" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Copy Link"))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="link" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Style="padding: 0" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Copy Link"))">
+                        <div onclick="copyText('@(CopyNoteLink)')" style="padding: 0.5rem"><i class="notranslate rz-button-icon-left rzi">@((MarkupString)"link")</i></div>
+                    </RadzenButton>
                     @if (EditAuthorised)
                     {
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Size="ButtonSize.Medium" class="ms-1" Click="@(args => DeleteNote?.Invoke(Note))" Disabled="!EditAuthorised" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Delete"))" />
@@ -78,7 +80,7 @@
     public Action<Note> EditNote { get; set; }
 
     [Parameter]
-    public Action<Note> CopyLinkToClipboard { get; set; }
+    public string CopyNoteLink { get; set; } = "Hello";
 
     [Parameter]
     public Action<Note> MarkComplete { get; set; }

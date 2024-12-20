@@ -845,13 +845,12 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Copies the absolute URL which filters the notes to the one selected via JS
+        /// Generates the absolute URL which filters the notes to the one selected via JS
         /// </summary>
         /// <param name="noteTolink"></param>
-        private async void CopyLinkToNoteToClipboard(Note noteTolink)
+        private string GetCopyLinkText(Note noteTolink)
         {
-            var link = $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
-            await JSRuntime.InvokeVoidAsync("copyText", link);
+            return $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
         }
 
         /// <summary>
