@@ -337,7 +337,7 @@ namespace PPMTool.Pages
                     if (entry.TotalHours == 0 && timesheet.Status == TimesheetStatus.Submitted)
                     {
                         LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName}...");
-                        await DeleteRow(entry);
+                        TimesheetService.DeleteEntry(Context, entry, false);
                     }
                     else
                     {
