@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -116,6 +117,8 @@ namespace PPMTool.Services
                 .AsNoTracking()
                 .FirstOrDefault(x => x.SubTaskId == taskToClone.SubTaskId);
 
+            Debug.WriteLine($"** Cloning task {taskToClone.Name}...");
+
             // Reset ID
             clone.SubTaskId = 0;
 
@@ -136,7 +139,20 @@ namespace PPMTool.Services
             // Change name
             clone.Name = $"{taskToClone.Name} (Copy)";
 
+            Debug.WriteLine($"** Original task ID: {taskToClone.SubTaskId} | Cloned task ID: {clone.SubTaskId}");
+
             return clone;
+        }
+
+        /// <summary>
+        /// Returns a shallow object representing the subtask
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="subTaskId"></param>
+        /// <returns></returns>
+        internal SubTask GetShallowById(PPMToolContext context, int? subTaskId)
+        {
+            return context.SubTasks.FirstOrDefault(x => x.SubTaskId == subTaskId);
         }
     }
 }

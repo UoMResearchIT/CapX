@@ -49,12 +49,10 @@ function insertTextAtCaret(text) {
 }
 
 function copyText(text) {
-    setTimeout(() => {
-        navigator.clipboard.writeText(text).then(function () {
-            alert("Link to note copied to clipboard!");
-        })
-        .catch(function (error) {
-            alert(error);
-        });
-    }, 0);
+    navigator.clipboard.writeText(text).then(function () {
+        alert("Link to note copied to clipboard!\n" + text);
+    })
+    .catch(function (error) {
+        alert(error);
+    });
 };
