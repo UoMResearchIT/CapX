@@ -106,6 +106,9 @@ namespace PPMTool.Pages
         private ApexChart<GanttBlock> scheduleChart;
         private ApexChart<ChartItem> burnUpChart;
 
+        /// <summary>
+        /// Represents a block on the schedule chart
+        /// </summary>
         internal class GanttBlock : IChartItem
         {
             public GanttBlock(SubTask t, string groupName, bool isFake = false)
@@ -413,6 +416,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Handler for switching the group linked tasks option
+        /// </summary>
+        /// <param name="value"></param>
         private void GroupTasksChanged(bool value)
         {
             UpdateScheduleChartAxisLimits();
@@ -421,6 +428,9 @@ namespace PPMTool.Pages
             scheduleChart?.RenderAsync();
         }
 
+        /// <summary>
+        /// Updates the schedule chart axis limits as switching between grouped and ungrouped doesn't auto update properly
+        /// </summary>
         private void UpdateScheduleChartAxisLimits()
         {
             var allBlocks = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake());
@@ -460,11 +470,19 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Stores a reference to the person associated with a current mention
+        /// </summary>
+        /// <param name="person"></param>
         private void HighlightMention(Person person)
         {
             highlightedPerson = person;
         }
 
+        /// <summary>
+        /// Resets the reference to the person associated with a current mention
+        /// </summary>
+        /// <param name="person"></param>
         private void UnHighlightMention(Person person)
         {
             highlightedPerson = null;
@@ -475,7 +493,6 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterMentionables()
         {
-
             if (string.IsNullOrWhiteSpace(mentionSearchString))
             {
                 mentionables = cachedMentionables;
@@ -488,6 +505,10 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
         }
 
+        /// <summary>
+        /// Handle changes in the HTML editor
+        /// </summary>
+        /// <param name="args"></param>
         private void ProcessEditorInput(KeyboardEventArgs args)
         {
             Debug.WriteLine($"** Key pressed in the editor {args.Key}");
@@ -510,6 +531,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Handle key presses while the mention popup is visible
+        /// </summary>
+        /// <param name="args"></param>
         private void ProcessMentionSearchInput(KeyboardEventArgs args)
         {
             if (args.Key == "Escape")
@@ -538,12 +563,20 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Open the mention popup via JS
+        /// </summary>
+        /// <returns></returns>
         private async Task OnMentionPopupOpenAsync()
         {
             // Focus on the search box
             await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function(){ document.getElementById('search').focus(); }, 200)");
         }
 
+        /// <summary>
+        /// Insert the initials of the selected person via JS
+        /// </summary>
+        /// <param name="person"></param>
         private void MentionPerson(Person person)
         {
             htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
@@ -556,11 +589,17 @@ namespace PPMTool.Pages
             });
         }
 
+        /// <summary>
+        /// Invoked when the notes filter switch is toggled
+        /// </summary>
         private void FilterSwitchToggled()
         {
             PopulateNotes();
         }
 
+        /// <summary>
+        /// Populates the notes to be show in the list
+        /// </summary>
         private void PopulateNotes()
         {
             Debug.WriteLine("** Populating notes...");
@@ -572,6 +611,9 @@ namespace PPMTool.Pages
             FilterNotes();
         }
 
+        /// <summary>
+        /// Filters the notes in the list via JS and also applies text highlighting if searching
+        /// </summary>
         private void FilterNotes()
         {
             Debug.WriteLine("** Filtering / Highlighting notes...");
@@ -634,12 +676,19 @@ namespace PPMTool.Pages
             });
         }
 
+        /// <summary>
+        /// Clears the search terms and resets the filter
+        /// </summary>
         private void ClearSearch()
         {
             noteSearchTerms = string.Empty;
             FilterNotes();
         }
 
+        /// <summary>
+        /// Shows or hides the HTML editor div with scrolling to the editor via JS
+        /// </summary>
+        /// <param name="show"></param>
         private async void ShowOrHideEditor(bool show)
         {
             // Set visibility
@@ -661,11 +710,18 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Navigate to the edit project page
+        /// </summary>
+        /// <param name="project"></param>
         private void EditProject(Project project)
         {
             Navigation.NavigateTo($"/addproject/{project.ProjectId}");
         }
 
+        /// <summary>
+        /// Handles the add note button click
+        /// </summary>
         private void AddClicked()
         {
             noteModel = new Note();
@@ -673,6 +729,9 @@ namespace PPMTool.Pages
             ShowOrHideEditor(true);
         }
 
+        /// <summary>
+        /// Handles the note edit discard button
+        /// </summary>
         private void DiscardClicked()
         {
             LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
@@ -685,6 +744,9 @@ namespace PPMTool.Pages
             ShowOrHideEditor(false);
         }
 
+        /// <summary>
+        /// Saves a new note to the database and hides the editor
+        /// </summary>
         private void SaveNote()
         {
             if (project == null || project.ProjectId < 0)
@@ -707,6 +769,9 @@ namespace PPMTool.Pages
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
         }
 
+        /// <summary>
+        /// Updates an existing note in the DB and hides the editor
+        /// </summary>
         private void UpdateNote()
         {
             // Update model in DB
@@ -723,6 +788,10 @@ namespace PPMTool.Pages
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, listOfNoteChanges);
         }
 
+        /// <summary>
+        /// Enters note edit mode
+        /// </summary>
+        /// <param name="noteToEdit"></param>
         private void EditNote(Note noteToEdit)
         {
             // Remove the note from the list so it doesn't confuse the user
@@ -735,6 +804,10 @@ namespace PPMTool.Pages
             isEditExistingNote = true;
         }
 
+        /// <summary>
+        /// Deletes a note
+        /// </summary>
+        /// <param name="noteToDelete"></param>
         private async void DeleteNote(Note noteToDelete)
         {
             bool confirmed = await DialogService.Confirm($"You are about to delete a note from {project.GetFullName()}!", "Delete Note") ?? false;
@@ -747,12 +820,20 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Copies the absolute URL which filters the notes to the one selected via JS
+        /// </summary>
+        /// <param name="noteTolink"></param>
         private async void CopyLinkToNoteToClipboard(Note noteTolink)
         {
             var link = $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
             await JSRuntime.InvokeVoidAsync("copyText", link);
         }
 
+        /// <summary>
+        /// Marks a due date flag on a note as complete
+        /// </summary>
+        /// <param name="note"></param>
         private void MarkComplete(Note note)
         {
             LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
@@ -833,6 +914,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Handler for when a task is selected in the schedule chart -- navigates to the edit task page
+        /// </summary>
+        /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
             if (!EditAuthorised) return;
@@ -843,33 +928,51 @@ namespace PPMTool.Pages
                 var task = dataPoint.DataPoint.Items.FirstOrDefault()?.Task;
                 if (task == null) return;
                 Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
-                Navigation.NavigateTo($"/addtask/{ProjectId}/{task.SubTaskId}");
+                EditTask(task);
             }
         }
 
+        /// <summary>
+        /// Navigates to the edit task page
+        /// </summary>
+        /// <param name="task"></param>
         void EditTask(SubTask task)
         {
             Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}");
         }
 
+        /// <summary>
+        /// Navigates to the add task page
+        /// </summary>
         void AddTask()
         {
             Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
         }
 
+        /// <summary>
+        /// Navigates to the add task page with the copy parameter set
+        /// </summary>
+        /// <param name="task"></param>
         void CopyTask(SubTask task)
         {
             // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
             Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
         }
 
+        /// <summary>
+        /// Navigates to the split task page
+        /// </summary>
+        /// <param name="task"></param>
         void SplitTask(SubTask task)
         {
             // Navigate to the split task page passing the task ID to be split
             Navigation.NavigateTo($"splittask/{project.ProjectId}/{task.SubTaskId}");
         }
 
-        // Necessary to ensure that we can filter the resources on the fly
+        /// <summary>
+        /// Loads the task data grid content. Necessary to ensure that we can filter the resources on the fly.
+        /// </summary>
+        /// <param name="args"></param>
         private void LoadData(LoadDataArgs args)
         {
             var query = project.SubTasks.ToList().AsQueryable();
