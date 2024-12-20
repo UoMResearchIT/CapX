@@ -105,15 +105,7 @@ namespace PPMTool.Pages
         private bool groupLinkedTasks;
         private ApexChart<GanttBlock> scheduleChart;
         private ApexChart<ChartItem> burnUpChart;
-        private bool mentionTriggerArmed;
 
-        /// <summary>
-        /// Keys to be ignored by the mention trigger code -- all other keys reset the trigger except space or tab which arms it
-        /// </summary>
-        private static readonly HashSet<string> ControlKeys = new()
-        {
-            "Control", "Shift", "Alt", "Meta", "CapsLock", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"
-        };
 
         /// <summary>
         /// Represents a block on the schedule chart
@@ -522,18 +514,10 @@ namespace PPMTool.Pages
         {
             Debug.WriteLine($"** Key pressed in the editor \"{args.Key}\"");
 
-            // If a space then "arm" the trigger
-            if (args.Key == " ")
-            {
-                Debug.WriteLine("** Arming trigger...");
-                mentionTriggerArmed = true;
-            }
-
-            // If an at character then show the popup
-            else if (mentionTriggerArmed && args.Key == "@")
+            // If it is a mention trigger but not a mention insertion then open the popup
+            if (args.Key == "@")
             {
                 Debug.WriteLine($"** Opening popup...");
-                mentionTriggerArmed = false;
 
                 // Save cursor position
                 htmlEditor.SaveSelectionAsync().ContinueWith(async t =>
@@ -545,13 +529,6 @@ namespace PPMTool.Pages
                         StateHasChanged();
                     });
                 });
-            }
-
-            // If not a control key then reset the trigger
-            else if (mentionTriggerArmed && !ControlKeys.Contains(args.Key))
-            {
-                Debug.WriteLine("** Disarming trigger...");
-                mentionTriggerArmed = false;
             }
         }
 
@@ -870,6 +847,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void ResolveMentionsInCurrentNoteModel()
         {
+            Debug.WriteLine($"** Content: {noteModel.HtmlContent}");
             // Get list of all new mentions in the note content
             var newMentions = new List<string>();
             var matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)@\w+");
@@ -879,13 +857,13 @@ namespace PPMTool.Pages
             var managers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
-            foreach (var m in newMentions)
+            foreach (Match m in matches)
             {
-                var match = managers.FirstOrDefault(x => x.ShortName.Equals(m.Substring(1), StringComparison.OrdinalIgnoreCase));
-                if (match != null)
+                var person = managers.FirstOrDefault(x => x.ShortName.Equals(m.Value.Trim().Substring(1), StringComparison.OrdinalIgnoreCase));
+                if (person != null)
                 {
-                    Debug.WriteLine($"** Replacing {m} with {match.Name}");
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m, $"&nbsp;<span class=\"badge badge-primary\">{match.Name}</span>&nbsp;");
+                    Debug.WriteLine($"** Replacing {m} with {person.Name}");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m.Value, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
                 }
                 else
                 {
@@ -915,7 +893,7 @@ namespace PPMTool.Pages
 
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)#RTP-\w+", RegexOptions.IgnoreCase);
+            matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
             newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
