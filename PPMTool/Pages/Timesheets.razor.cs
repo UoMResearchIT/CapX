@@ -28,6 +28,7 @@ namespace PPMTool.Pages
         private DateTime dateNextTimesheet;
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
+        private List<Timesheet> myStaffTimesheetsSinceDate;
         private TaskQueue taskQueue = new TaskQueue();
 
         public bool ShowAllMyTimesheets
@@ -126,11 +127,14 @@ namespace PPMTool.Pages
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
                 myStaffTimesheets = new List<Timesheet>();
+                myStaffTimesheetsSinceDate = new List<Timesheet>();
 
                 foreach (Person p in activeUserRole.Person.PeopleManaged)
                 {
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
                 }
+
+                myStaffTimesheetsSinceDate = myStaffTimesheets.Where(t => t.StartDate >= GetDateForAPastMonday(10)).ToList();
 
                 if (!ShowAllMyStaffTimesheets)
                 {
@@ -160,6 +164,19 @@ namespace PPMTool.Pages
         private void EditTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+        }
+
+        /// <summary>
+        /// Get a datetime for a Monday in the past to find timesheets since
+        /// <param name="weeksAgo"></param>
+        /// </summary>
+        private DateTime GetDateForAPastMonday(int weeksAgo)
+        {
+            DateTime today = DateTime.Today;
+            int daysSinceMonday = (int)today.DayOfWeek - (int)DayOfWeek.Monday;
+            if (daysSinceMonday < 0) daysSinceMonday += 7; // Adjust for Sunday
+            DateTime thisWeekMonday = today.AddDays(-daysSinceMonday);
+            return thisWeekMonday.AddDays(weeksAgo * 7);
         }
     }
 }

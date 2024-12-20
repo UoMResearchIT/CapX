@@ -82,14 +82,18 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the timesheets for direct reports
+        /// Gets all the timesheets for a person since a specified date
         /// </summary>
         /// <param name="context"></param>
+        /// <param name="user"></param>
+        /// <param name="startDate"></param>
         /// <returns></returns>
-        public IEnumerable<Timesheet> GetMyStaffTimesheets(PPMToolContext context, Person user)
+        public IEnumerable<Timesheet> GetMyTimesheetsSinceDate(PPMToolContext context, Person user, DateTime startDate)
         {
             return context.Timesheets
-                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId));
+                .Where(t => t.Owner.PersonId == user.PersonId)
+                .Where(t => t.StartDate >= startDate)
+                .OrderBy(t => t.StartDate);
         }
 
         /// <summary>
