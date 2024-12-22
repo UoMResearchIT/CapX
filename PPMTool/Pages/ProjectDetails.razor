@@ -381,7 +381,7 @@
                             Failed linking, if either the person or project does not exist, will leave the text unchanged.
                         </RadzenText>
                         <div class="grip">
-                            <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent style="height:100%; min-height:10rem;" />
+                            <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />
                         </div>
                         <Popup @ref=popup
                                Lazy=false
@@ -483,7 +483,7 @@
                             <NoteComponent Note="note"
                                            DeleteNote="DeleteNote"
                                            EditNote="EditNote"
-                                           CopyLinkToClipboard="CopyLinkToNoteToClipboard"
+                                           CopyNoteLink="@GetCopyLinkText(note)"
                                            MarkComplete="@(args => MarkComplete(note))"
                                            EditAuthorised="@(isProjectManager || ActiveUser == note.Author)"
                                            ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />

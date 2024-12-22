@@ -131,12 +131,13 @@ namespace PPMTool.Pages
 
                     if (timesheet != null)
                     {
-                        // Get details for the prev/next timesheets
+                        // Get details for the prev/next timesheets based on the owner of the timesheet being viewed
+                        // (to accommodate a manager looking at a staff timesheet).
                         previousTimesheet = null;
                         nextTimesheet = null;
                         DateTime previousDate = timesheet.StartDate.AddDays(-7);
                         DateTime nextDate = timesheet.StartDate.AddDays(7);
-                        List<Timesheet> prevandnext = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, ActiveUser, previousDate, nextDate).ToList();
+                        List<Timesheet> prevandnext = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, timesheet.Owner, previousDate, nextDate).ToList();
                         foreach (Timesheet t in prevandnext)
                         {
                             if (t.StartDate == previousDate) { previousTimesheet = t; }
@@ -337,7 +338,7 @@ namespace PPMTool.Pages
                     if (entry.TotalHours == 0 && timesheet.Status == TimesheetStatus.Submitted)
                     {
                         LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName}...");
-                        await DeleteRow(entry);
+                        TimesheetService.DeleteEntry(Context, entry, false);
                     }
                     else
                     {
