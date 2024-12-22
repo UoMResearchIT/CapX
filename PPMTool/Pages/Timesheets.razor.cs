@@ -32,7 +32,7 @@ namespace PPMTool.Pages
         private List<DateTime> synopsisDates;
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
-        public Dictionary<Person,List<Timesheet>> myStaffTimesheetsInPeriod;
+        public Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private TaskQueue taskQueue = new TaskQueue();
 
         public bool ShowAllMyTimesheets
@@ -157,7 +157,7 @@ namespace PPMTool.Pages
                 {
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
                     myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
-                    if(myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count) { myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]); }
+                    if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count) { myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]); }
                 }
 
                 if (!ShowAllMyStaffTimesheets)
@@ -239,7 +239,7 @@ namespace PPMTool.Pages
             List<Timesheet> paddedList = new List<Timesheet>();
             List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
 
-            foreach(DateTime date in dates) 
+            foreach (DateTime date in dates)
             {
                 Timesheet sheet = unpaddedList.FirstOrDefault(t => t.StartDate == date);
                 paddedList.Add(sheet);
