@@ -238,13 +238,11 @@ namespace PPMTool.Pages
         {
             List<Timesheet> paddedList = new List<Timesheet>();
             List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
-
             foreach (DateTime date in dates)
             {
                 Timesheet sheet = unpaddedList.FirstOrDefault(t => t.StartDate == date);
                 paddedList.Add(sheet);
             }
-
             return paddedList;
         }
     }
