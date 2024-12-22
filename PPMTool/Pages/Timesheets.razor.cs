@@ -105,7 +105,7 @@ namespace PPMTool.Pages
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showsynopsis");
-            if (temp != null) showSynopsis = temp ?? false;
+            if (temp != null) showSynopsis = temp ?? true;
             EnqueueLoadData();
         }
 
