@@ -64,7 +64,7 @@ namespace PPMTool.Pages
             }
         }
 
-        private bool showSynopsis;
+        private bool showSynopsis = true;
         public bool ShowSynopsis
         {
             get => showSynopsis;
@@ -153,7 +153,7 @@ namespace PPMTool.Pages
                 synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
                 synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
 
-                foreach (Person p in activeUserRole.Person.PeopleManaged)
+                foreach (Person p in activeUserRole.Person.PeopleManaged.Where(p => p.PersonId != activeUserRole.Person.PersonId).OrderBy(p => p.ShortName)) // For AH who is self-managed
                 {
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
                     myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
