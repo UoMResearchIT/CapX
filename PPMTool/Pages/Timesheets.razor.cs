@@ -32,7 +32,7 @@ namespace PPMTool.Pages
         private List<DateTime> synopsisDates;
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
-        public Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
+        private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private TaskQueue taskQueue = new TaskQueue();
 
         public bool ShowAllMyTimesheets
