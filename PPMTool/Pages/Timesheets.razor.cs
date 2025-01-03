@@ -26,8 +26,13 @@ namespace PPMTool.Pages
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
         private DateTime dateNextTimesheet;
+        private DateTime dateMondayThisWeek;
+        private DateTime synopsisStartDate;
+        private DateTime synopsisEndDate;
+        private List<DateTime> synopsisDates;
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
+        private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private TaskQueue taskQueue = new TaskQueue();
 
         public bool ShowAllMyTimesheets
@@ -59,6 +64,20 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool showSynopsis = true;
+        public bool ShowSynopsis
+        {
+            get => showSynopsis;
+            private set
+            {
+                if (value != showSynopsis)
+                {
+                    showSynopsis = value;
+                    SessionStorage.SetItemAsync<bool?>("timesheets-showsynopsis", showSynopsis);
+                }
+            }
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -85,6 +104,8 @@ namespace PPMTool.Pages
             if (temp != null) ShowAllMyTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
+            temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showsynopsis");
+            if (temp != null) showSynopsis = temp ?? true;
             EnqueueLoadData();
         }
 
@@ -126,10 +147,17 @@ namespace PPMTool.Pages
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
                 myStaffTimesheets = new List<Timesheet>();
+                myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
+                dateMondayThisWeek = GetDateForMondayThisWeek();
+                synopsisStartDate = GetDateForAMonday(7); // Weeks in the past
+                synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
+                synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
 
-                foreach (Person p in activeUserRole.Person.PeopleManaged)
+                foreach (Person p in activeUserRole.Person.PeopleManaged.Where(p => p.PersonId != activeUserRole.Person.PersonId).OrderBy(p => p.ShortName)) // For AH who is self-managed
                 {
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
+                    myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
+                    if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count) { myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]); }
                 }
 
                 if (!ShowAllMyStaffTimesheets)
@@ -156,10 +184,66 @@ namespace PPMTool.Pages
 
         /// <summary>
         /// Navigate to the specific timesheet to view/edit it
+        /// <param name="timesheet"></param>
         /// </summary>
         private void EditTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+        }
+
+        /// <summary>
+        /// Get a datetime for a Monday in the past to find timesheets since
+        /// </summary>
+        private DateTime GetDateForMondayThisWeek()
+        {
+            DateTime today = DateTime.Today;
+            int daysSinceMonday = (int)today.DayOfWeek - (int)DayOfWeek.Monday;
+            if (daysSinceMonday < 0) daysSinceMonday += 7; // Adjust for Sunday
+            return today.AddDays(-daysSinceMonday);
+        }
+
+        /// <summary>
+        /// Get a datetime for a Monday in the past to find timesheets since
+        /// <param name="numberOfWeeks"></param>
+        /// <param name="inPast"></param>
+        /// </summary>
+        private DateTime GetDateForAMonday(int numberOfWeeks, bool inPast = true)
+        {
+            DateTime thisWeekMonday = GetDateForMondayThisWeek();
+            return (inPast ? thisWeekMonday.AddDays(-numberOfWeeks * 7) : thisWeekMonday.AddDays(numberOfWeeks * 7));
+        }
+
+        /// <summary>
+        /// Build the list of dates we want to show the synopsis for
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// </summary>
+        private List<DateTime> GetSynopsisDates(DateTime start, DateTime end)
+        {
+            DateTime nextDate;
+            List<DateTime> allDates = new List<DateTime>();
+            for (nextDate = start; nextDate <= end; nextDate = nextDate.AddDays(7))
+            {
+                allDates.Add(nextDate);
+            }
+            return allDates;
+        }
+
+        /// <summary>
+        /// Pads the list of timesheets with nulls so that the order/structure matches the list of dates
+        /// <param name="dates"></param>
+        /// <param name="unpaddedList"></param>
+        /// </summary>
+        private List<Timesheet> GetPaddedTimesheetList(List<DateTime> dates, List<Timesheet> unpaddedList)
+        {
+            List<Timesheet> paddedList = new List<Timesheet>();
+            List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
+            foreach (DateTime date in dates)
+            {
+                Timesheet sheet = unpaddedList.FirstOrDefault(t => t.StartDate == date);
+                paddedList.Add(sheet);
+            }
+            return paddedList;
         }
     }
 }

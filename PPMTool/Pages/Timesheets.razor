@@ -6,6 +6,7 @@
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
 @using DotNetExtensions
+@using System.Diagnostics
 <PageTitle>Timesheets - CapX</PageTitle>
 
 <div class="container">
@@ -72,6 +73,69 @@
             </div>
             <hr />
             <div class="card">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Staff Synopsis"/>
+                    <RadzenSwitch @bind-Value="@ShowSynopsis" />
+                </RadzenStack>
+            </div>
+            <div class="card" hidden="@(!ShowSynopsis)">
+                <table class="table table-striped" style="border: 1px solid #ccc;">
+                    <tr style="background-color: #eee;">
+                        <th>
+                            Week commencing
+                        </th>
+                        @foreach(DateTime d in synopsisDates ?? new List<DateTime>())
+                        {
+                            double width = 85 / @synopsisDates.Count;
+                            int adjustedWidth = (int)Math.Floor(width);
+
+                            string extraStyleDetails = "";
+                            if (d == dateMondayThisWeek)
+                            {
+                                extraStyleDetails = "background-color : #FDFBD4;";
+                            }
+
+                            <th style="width: @adjustedWidth%; text-align: center; @extraStyleDetails">@d.ToString("dd/MM")</th>
+                        }
+                    </tr>
+                    @foreach(KeyValuePair<Person, List<Timesheet>> kvp in @myStaffTimesheetsInPeriod ?? new Dictionary<Person, List<Timesheet>>())
+                    {
+                        int indexCounter = 0;
+                        Debug.WriteLine($"** SYNOPSIS : {kvp.Key.Name} [{kvp.Value.Count}] entries");
+                        <tr>
+                            <td>@kvp.Key.Name</td>
+                            
+                            @for(int i = 0; i < kvp.Value.Count; i++)
+                            {
+                                if (@kvp.Value[i] != null)
+                                {
+                                    Timesheet t = kvp.Value[i];
+                                    string badgeStyle = @t.Status.GetBadgeStyle().ToString();
+                                    string rzClass = "rz-background-color-" + badgeStyle.Substring(badgeStyle.IndexOf('.') + 1).ToLower();
+
+                                    <td class="@rzClass" style="text-align: center;">
+                                        <div title="@t.Status.ToNiceString()" style="font-size: 0.8rem;" onclick="@(() => EditTimesheet(t))">&nbsp;</div>
+                                    </td>
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("** SYNOPSIS : No timesheet");
+                                    if (dateMondayThisWeek <= synopsisDates[i] && synopsisDates[i] < dateMondayThisWeek.AddDays(7))
+                                    {
+                                        <td style="background-color : #FDFBD4;">&nbsp;</td>
+                                    }
+                                    else
+                                    {
+                                        <td>&nbsp;</td>
+                                    }
+                                }
+                            }
+                        </tr>
+                    }
+                </table>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                     <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
                     <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" />
