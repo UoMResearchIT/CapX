@@ -234,7 +234,7 @@ namespace PPMTool.Pages
         /// <param name="dates"></param>
         /// <param name="unpaddedList"></param>
         /// </summary>
-        private List<Timesheet> GetPaddedTimesheetList(List<DateTime> dates, List<Timesheet> unpaddedList) 
+        private List<Timesheet> GetPaddedTimesheetList(List<DateTime> dates, List<Timesheet> unpaddedList)
         {
             List<Timesheet> paddedList = new List<Timesheet>();
             List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
