@@ -1,6 +1,8 @@
 ﻿@page "/datadashboard"
+@using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 @inherits BasePage
 <PageTitle>Data Dashboard - CapX</PageTitle>
@@ -285,36 +287,40 @@
                 else if (dutyChartItems != null && dutyChartItems.Count > 0)
                 {
                     <ApexChart TItem="DutyChartItem"
-                               Title="Duty Demand (FTE)"
+                               Title="Duty Capacity (Available FTE vs Demand)"
                                Options="@dutyChartOptions">
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Research Software Architecture"
+                                         Name="@Duty.RSA.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
-                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))"
+                                         Color="@Duty.RSA.GetBackgroundColourCode()" />
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Staff Management"
+                                         Name="@Duty.StaffMgmt.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
-                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))"
+                                         Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Project and Service Management"
+                                         Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
-                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))"
+                                         Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Project Work"
+                                         Name="@Duty.ProjectWork.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
-                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))"
+                                         Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
 
                     </ApexChart>
                 }
