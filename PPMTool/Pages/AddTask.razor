@@ -168,16 +168,20 @@
                 <h2>Actuals</h2>
                 <div class="row">
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Actual Hours" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Hours summed from resource" /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Actual Hours" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Hours are sum of resource actuals" /><br />
                         <RadzenText Text="@TaskModel.ActualWorkHours.ToString("F1")" />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Actual Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cost computed from resource day rates and work" /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Actual Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cost computed from resource day rates and actual hours" /><br />
                         <RadzenText Text="@TaskModel.ActualCost.ToString("C2")" />
                     </div>
                     <div class="col">
                     </div>
                 </div>
+                @if (!Loading)
+                {
+                    
+                }
             }
 
             <hr />

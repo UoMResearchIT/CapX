@@ -177,6 +177,28 @@ namespace PPMTool.Pages
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+
+            // Run actuals report if not copying or splitting
+            if (!IsCopy && !IsSplit)
+            {
+                Loading = true;
+                StateHasChanged();
+                Task.Run(() =>
+                {
+                    Debug.WriteLine("** Running actuals report...");
+
+                    // TODO: Run actuals report
+
+
+                }).ContinueWith(t =>
+                {
+                    InvokeAsync(() =>
+                    {
+                        Loading = false;
+                        StateHasChanged();
+                    });
+                });
+            }
         }
 
         /// <summary>
