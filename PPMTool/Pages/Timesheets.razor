@@ -46,7 +46,7 @@
                             GridLines="DataGridGridLines.Horizontal">
 
                 <Columns>
-                    <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem" />
+                    <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" Width="10rem" />
                     <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                         <Template Context="timesheet">
                             <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToNiceString()" />
@@ -74,7 +74,7 @@
             <hr />
             <div class="card">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Staff Synopsis"/>
+                    <RadzenText Text="Staff Synopsis" Style="margin-bottom: 0.2rem" />
                     <RadzenSwitch @bind-Value="@ShowSynopsis" />
                 </RadzenStack>
             </div>
@@ -82,9 +82,9 @@
                 <table class="table table-striped" style="border: 1px solid #ccc;">
                     <tr style="background-color: #eee;">
                         <th>
-                            Week commencing
+                            Week Commencing
                         </th>
-                        @foreach(DateTime d in synopsisDates ?? new List<DateTime>())
+                        @foreach (DateTime d in synopsisDates ?? new List<DateTime>())
                         {
                             double width = 85 / @synopsisDates.Count;
                             int adjustedWidth = (int)Math.Floor(width);
@@ -98,14 +98,13 @@
                             <th style="width: @adjustedWidth%; text-align: center; @extraStyleDetails">@d.ToString("dd/MM")</th>
                         }
                     </tr>
-                    @foreach(KeyValuePair<Person, List<Timesheet>> kvp in @myStaffTimesheetsInPeriod ?? new Dictionary<Person, List<Timesheet>>())
+                    @foreach (KeyValuePair<Person, List<Timesheet>> kvp in @myStaffTimesheetsInPeriod ?? new Dictionary<Person, List<Timesheet>>())
                     {
-                        int indexCounter = 0;
                         Debug.WriteLine($"** SYNOPSIS : {kvp.Key.Name} [{kvp.Value.Count}] entries");
                         <tr>
                             <td>@kvp.Key.Name</td>
                             
-                            @for(int i = 0; i < kvp.Value.Count; i++)
+                            @for (int i = 0; i < kvp.Value.Count; i++)
                             {
                                 if (@kvp.Value[i] != null)
                                 {
@@ -155,8 +154,8 @@
                                 GridLines="DataGridGridLines.Horizontal">
 
                     <Columns>
-                        <RadzenDataGridColumn Property="Owner.Name" Title="Staff member" Width="20rem"/>
-                        <RadzenDataGridColumn Property="StartDate" Title="Week Starting" FormatString="{0:d}" Width="10rem"/>
+                        <RadzenDataGridColumn Property="Owner.Name" Title="Staff Member" Width="20rem"/>
+                        <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" Width="10rem" />
                         <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                             <Template Context="timesheet">
                                 <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToString()" />
