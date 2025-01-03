@@ -28,6 +28,26 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
+        /// Gets the background colour code from the enum if it has the attribute. Otherwise returns UoM purple.
+        /// </summary>
+        /// <param name="enumValue"></param>
+        /// <returns></returns>
+        public static string GetBackgroundColourCode(this Enum enumValue)
+        {
+            MemberInfo[] member = enumValue.GetType().GetMember(enumValue.ToString());
+            if (member != null && member.Length != 0)
+            {
+                object[] customAttributes = member[0].GetCustomAttributes(typeof(ColourAttribute), inherit: false);
+                if (customAttributes != null && customAttributes.Count() > 0)
+                {
+                    return ((ColourAttribute)customAttributes.ElementAt(0)).BackgroundColourCode;
+                }
+            }
+
+            return "#609";
+        }
+
+        /// <summary>
         /// Project status is one of the cancelled states or finished
         /// </summary>
         /// <param name="status"></param>

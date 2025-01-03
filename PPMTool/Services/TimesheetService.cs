@@ -82,21 +82,6 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the timesheets for a person since a specified date
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="user"></param>
-        /// <param name="startDate"></param>
-        /// <returns></returns>
-        public IEnumerable<Timesheet> GetMyTimesheetsSinceDate(PPMToolContext context, Person user, DateTime startDate)
-        {
-            return context.Timesheets
-                .Where(t => t.Owner.PersonId == user.PersonId)
-                .Where(t => t.StartDate >= startDate)
-                .OrderBy(t => t.StartDate);
-        }
-
-        /// <summary>
         /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
@@ -107,16 +92,6 @@ namespace PPMTool.Services
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode);
-        }
-
-        /// <summary>
-        /// Gets just the timesheet table entities
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public IEnumerable<Timesheet> GetAllShallow(PPMToolContext context)
-        {
-            return context.Timesheets;
         }
 
         /// <summary>
@@ -136,7 +111,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="owner"></param>
         /// <returns></returns>
-        internal DateTime GetNextTimesheetStartDateForUser(PPMToolContext context, Person owner)
+        public DateTime GetNextTimesheetStartDateForUser(PPMToolContext context, Person owner)
         {
             var lastTimesheet = context.Timesheets
                 .Where(t => t.Owner.PersonId == owner.PersonId)
@@ -193,7 +168,7 @@ namespace PPMTool.Services
         /// <param name="startRange"></param>
         /// <param name="endRange"></param>
         /// <returns></returns>
-        internal IEnumerable<Timesheet> GetAllTimesheetsForPersonInDateRange(PPMToolContext context, Person person, DateTime startRange, DateTime endRange)
+        public IEnumerable<Timesheet> GetAllTimesheetsForPersonInDateRange(PPMToolContext context, Person person, DateTime startRange, DateTime endRange)
         {
             return context.Timesheets
                 .Include(t => t.TimesheetEntries)
