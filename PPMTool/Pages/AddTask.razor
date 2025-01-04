@@ -178,10 +178,49 @@
                     <div class="col">
                     </div>
                 </div>
-                @if (!Loading)
-                {
-                    
-                }
+                <h4>Actuals Report</h4>
+                <div class="row">
+                    <div class="col">
+                        @if (Loading)
+                        {
+                            <LoadingComponent />
+                        }
+                        else if (actualsReportRows == null || actualsReportRows.Count == 0)
+                        {
+                            <RadzenText Text="@($"No timesheet bookings to show for the timesheet activity code {projectModel?.InnateActivity.GetCodeAsString()}")" />
+                        }
+                        else
+                        {
+                            <table class="table table-sm table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th class="col-2">Task</th>
+                                        <th class="col-4">Resource</th>
+                                        @foreach (var week in actualsReportRows.First().Hours.Keys)
+                                        {
+                                            <th class="col-2">@week.ToShortDateString()</th>
+                                        }
+                                        <th class="col-2">Row Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in actualsReportRows)
+                                    {
+                                        <tr>
+                                            <td>@row.Resource.Name</td>
+                                            <td>@row.Task.TaskName</td>
+                                            @foreach (var week in row.Hours)
+                                            {
+                                                <td>@week.Value.ToString("F2")</td>
+                                            }
+                                            <td>@row.RowTotal</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
             }
 
             <hr />

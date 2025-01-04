@@ -17,6 +17,37 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser")]
     public partial class AddTask : DataGridPage<Resource>
     {
+        /// <summary>
+        /// A class representing a row of the actuals reporting grid
+        /// </summary>
+        private class ActualsReportRow
+        {
+            /// <summary>
+            /// Resource associated with the cell
+            /// </summary>
+            public Person Resource { get; set; }
+
+            /// <summary>
+            /// Task to which the time was booked
+            /// </summary>
+            public InnateCodeTask Task { get; set; }
+
+            /// <summary>
+            /// Dictionary representing the weeks and values for this particular row
+            /// </summary>
+            public IDictionary<DateTime, double> Hours { get; set; } = new Dictionary<DateTime, double>();
+
+            /// <summary>
+            /// Total number of hours on the row
+            /// </summary>
+            public double RowTotal { get; set; }
+
+            /// <summary>
+            /// Whether this row is a total row as it will be rendered differently
+            /// </summary>
+            public bool IsTotalRow { get; set; }
+        }
+
         [Inject]
         private ProjectService ProjectService { get; set; }
 
@@ -28,6 +59,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private FinancialReferenceService FinancialReferenceService { get; set; }
+
+        [Inject]
+        private TimesheetService TimesheetService { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -80,6 +114,7 @@ namespace PPMTool.Pages
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
         private EditContext editContext;
+        private List<ActualsReportRow> actualsReportRows;
 
         protected override void OnInitialized()
         {
@@ -182,6 +217,7 @@ namespace PPMTool.Pages
             if (!IsCopy && !IsSplit)
             {
                 Loading = true;
+                actualsReportRows = null;
                 StateHasChanged();
                 Task.Run(() =>
                 {
@@ -189,6 +225,19 @@ namespace PPMTool.Pages
 
                     // TODO: Run actuals report
 
+                    // Get all the timesheet entries associated with the activity code for this project
+                    var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity);
+
+                    // Find the earliest and latest timesheet weeks
+                    var startWeek = timesheets.Min(x => x.StartDate);
+                    var endWeek = timesheets.Max(x => x.StartDate);
+
+                    // Create a row for every unique resource - task combination
+
+
+                    // Map the timesheet data to the rows
+
+                    // Generate total rows
 
                 }).ContinueWith(t =>
                 {
