@@ -191,33 +191,35 @@
                         }
                         else
                         {
-                            <table class="table table-sm table-striped table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th class="col-2">Task</th>
-                                        <th class="col-4">Resource</th>
-                                        @foreach (var week in actualsReportRows.First().Hours.Keys)
-                                        {
-                                            <th class="col-2">@week.ToShortDateString()</th>
-                                        }
-                                        <th class="col-2">Row Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var row in actualsReportRows)
-                                    {
+                            <div class="table-wrap">
+                                <table class="table table-sm table-striped table-bordered">
+                                    <thead>
                                         <tr>
-                                            <td>@row.Resource.Name</td>
-                                            <td>@row.Task.TaskName</td>
-                                            @foreach (var week in row.Hours)
+                                            <th class="col-2">Task</th>
+                                            <th class="col-4">Resource</th>
+                                            @foreach (var week in actualsReportRows.First().Hours.Keys)
                                             {
-                                                <td>@week.Value.ToString("F2")</td>
+                                                <th class="col-2">@week.ToShortDateString()</th>
                                             }
-                                            <td>@row.RowTotal</td>
+                                            <th class="col-2">Row Total</th>
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in actualsReportRows)
+                                        {
+                                            <tr>
+                                                <td>@row.Task.TaskName</td>
+                                                <td>@row.Resource.Name</td>
+                                                @foreach (var week in row.Hours)
+                                                {
+                                                    <td>@week.Value.ToString("F2")</td>
+                                                }
+                                                <td>@row.RowTotal</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         }
                     </div>
                 </div>

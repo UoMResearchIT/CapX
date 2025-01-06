@@ -231,13 +231,13 @@ namespace PPMTool.Pages
                     var endWeek = timesheets.Max(x => x.StartDate);
 
                     // Create a row for every unique resource - task combination
-                    var rows = new List<ActualsReportRow>();
+                    actualsReportRows = new List<ActualsReportRow>();
                     foreach (var timesheet in timesheets)
                     {
                         foreach (var entry in timesheet.TimesheetEntries)
                         {
                             // See if we can find an existing row that matches the resource and task combination
-                            var row = rows.FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
+                            var row = actualsReportRows.FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
 
                             // If not then create an empty object
                             if (row == null)
@@ -248,7 +248,7 @@ namespace PPMTool.Pages
                                     Task = entry.InnateCodeTask,
                                     Hours = new Dictionary<DateTime, double>()
                                 };
-                                rows.Add(row);
+                                actualsReportRows.Add(row);
                             }
 
                             // Add the hours to the row
@@ -270,7 +270,7 @@ namespace PPMTool.Pages
                     var currentWeek = startWeek;
                     while (currentWeek <= endWeek)
                     {
-                        foreach (var row in rows)
+                        foreach (var row in actualsReportRows)
                         {
                             if (!row.Hours.ContainsKey(currentWeek))
                             {
@@ -281,7 +281,8 @@ namespace PPMTool.Pages
                     }
 
                     // Generate total rows for each task
-                    foreach (var task in actualsReportRows.Select(x => x.Task).DistinctBy(x => x.InnateCodeTaskId))
+                    var taskList = actualsReportRows.Select(x => x.Task).DistinctBy(x => x.InnateCodeTaskId).ToList();
+                    foreach (var task in taskList)
                     {
                         var totalRow = new ActualsReportRow
                         {
@@ -301,7 +302,7 @@ namespace PPMTool.Pages
                     }
 
                     // Order and group the rows appropriately
-                    actualsReportRows = rows
+                    actualsReportRows = actualsReportRows
                         .OrderBy(x => x.Task.TaskName)
                         .ThenBy(x => x.Resource.Name == "Total" ? 1 : 0)
                         .ThenBy(x => x.Resource.Name)
