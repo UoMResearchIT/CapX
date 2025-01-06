@@ -223,8 +223,6 @@ namespace PPMTool.Pages
                 {
                     Debug.WriteLine("** Running actuals report...");
 
-                    // TODO: Run actuals report
-
                     // Get all the timesheet entries associated with the activity code for this project
                     var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity);
 
@@ -233,11 +231,81 @@ namespace PPMTool.Pages
                     var endWeek = timesheets.Max(x => x.StartDate);
 
                     // Create a row for every unique resource - task combination
+                    var rows = new List<ActualsReportRow>();
+                    foreach (var timesheet in timesheets)
+                    {
+                        foreach (var entry in timesheet.TimesheetEntries)
+                        {
+                            // See if we can find an existing row that matches the resource and task combination
+                            var row = rows.FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
 
+                            // If not then create an empty object
+                            if (row == null)
+                            {
+                                row = new ActualsReportRow
+                                {
+                                    Resource = timesheet.Owner,
+                                    Task = entry.InnateCodeTask,
+                                    Hours = new Dictionary<DateTime, double>()
+                                };
+                                rows.Add(row);
+                            }
 
-                    // Map the timesheet data to the rows
+                            // Add the hours to the row
+                            if (!row.Hours.ContainsKey(timesheet.StartDate))
+                            {
+                                entry.UpdateTotalHours();
+                                row.Hours.Add(timesheet.StartDate, entry.TotalHours);
+                                row.RowTotal += entry.TotalHours;
+                            }
+                            else
+                            {
+                                // This shouldn't happen as there should only be one entry for the week, resource, task combination
+                                throw new Exception("Actuals report failed by finding duplicate week/resource/task combination in the timesheet database!");
+                            }
+                        }
+                    }
 
-                    // Generate total rows
+                    // Fill in the blank weeks
+                    var currentWeek = startWeek;
+                    while (currentWeek <= endWeek)
+                    {
+                        foreach (var row in rows)
+                        {
+                            if (!row.Hours.ContainsKey(currentWeek))
+                            {
+                                row.Hours.Add(currentWeek, 0);
+                            }
+                        }
+                        currentWeek = currentWeek.AddDays(7);
+                    }
+
+                    // Generate total rows for each task
+                    foreach (var task in actualsReportRows.Select(x => x.Task).DistinctBy(x => x.InnateCodeTaskId))
+                    {
+                        var totalRow = new ActualsReportRow
+                        {
+                            Task = task,
+                            Resource = new Person { Name = "Total" },
+                            Hours = new Dictionary<DateTime, double>(),
+                            IsTotalRow = true
+                        };
+
+                        // Loop over each week (all entries should have the same number of dictionary items)
+                        foreach (var week in actualsReportRows.First().Hours.Keys.Distinct())
+                        {
+                            totalRow.Hours.Add(week, actualsReportRows.Where(x => x.Task.InnateCodeTaskId == task.InnateCodeTaskId).Sum(x => x.Hours.ContainsKey(week) ? x.Hours[week] : 0));
+                        }
+                        totalRow.RowTotal = totalRow.Hours.Values.Sum();
+                        actualsReportRows.Add(totalRow);
+                    }
+
+                    // Order and group the rows appropriately
+                    actualsReportRows = rows
+                        .OrderBy(x => x.Task.TaskName)
+                        .ThenBy(x => x.Resource.Name == "Total" ? 1 : 0)
+                        .ThenBy(x => x.Resource.Name)
+                        .ToList();
 
                 }).ContinueWith(t =>
                 {
