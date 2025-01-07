@@ -114,59 +114,108 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.MondayHours == 0 ? "" : entry.MondayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.MondayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.MondayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@mondayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(mondayHours == 0 ? "" : mondayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.TuesdayHours == 0 ? "" : entry.TuesdayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.TuesdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.TuesdayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@tuesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(tuesdayHours == 0 ? "" : tuesdayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.WednesdayHours == 0 ? "" : entry.WednesdayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.WednesdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.WednesdayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@wednesdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(wednesdayHours == 0 ? "" : wednesdayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.ThursdayHours == 0 ? "" : entry.ThursdayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.ThursdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.ThursdayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@thursdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(thursdayHours == 0 ? "" : thursdayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.FridayHours == 0 ? "" : entry.FridayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.FridayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.FridayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@fridayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(fridayHours == 0 ? "" : fridayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.SaturdayHours == 0 ? "" : entry.SaturdayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.SaturdayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.SaturdayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@saturdayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(saturdayHours == 0 ? "" : saturdayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
+                                    @(entry.SundayHours == 0 ? "" : entry.SundayHours.ToString("F2"))
+                                </RadzenText>
+                            </Template>
                             <EditTemplate Context="entry">
                                 <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.SundayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.SundayHours)))" />
                             </EditTemplate>
                             <FooterTemplate>
-                                <RadzenText Text="@sundayHours.ToString("F2")" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0">
+                                    @(sundayHours == 0 ? "" : sundayHours.ToString("F2"))
+                                </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Title="Total" MinWidth="10px" FormatString="{0:F2}" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center">
