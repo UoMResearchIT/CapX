@@ -226,10 +226,12 @@
                                     }
                                     <RadzenDataGridColumn TItem="ActualsReportRow" Property="RowTotal" Title="Total" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" MinWidth="10px">
                                         <Template Context="row">
-                                            @row.RowTotal.ToString("F2")
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
+                                                @row.RowTotal.ToString("F2")
+                                            </RadzenText>
                                         </Template>
                                         <FooterTemplate>
-                                            <RadzenText TextStyle="TextStyle.Subtitle2">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
                                                 @(actualsColumnSums.Sum(x => x.Value) == 0 ? "" : actualsColumnSums.Sum(x => x.Value).ToString("F2"))
                                             </RadzenText>
                                         </FooterTemplate>
