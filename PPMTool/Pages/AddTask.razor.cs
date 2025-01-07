@@ -11,6 +11,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -20,7 +21,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// A class representing a row of the actuals reporting grid
         /// </summary>
-        private class ActualsReportRow
+        public class ActualsReportRow
         {
             /// <summary>
             /// Resource associated with the cell
@@ -41,11 +42,6 @@ namespace PPMTool.Pages
             /// Total number of hours on the row
             /// </summary>
             public double RowTotal { get; set; }
-
-            /// <summary>
-            /// Whether this row is a total row as it will be rendered differently
-            /// </summary>
-            public bool IsTotalRow { get; set; }
         }
 
         [Inject]
@@ -115,6 +111,21 @@ namespace PPMTool.Pages
         private IList<SubTask> predecessorTasks = new List<SubTask>();
         private EditContext editContext;
         private List<ActualsReportRow> actualsReportRows;
+        private IDictionary<DateTime, double> actualsColumnSums;
+
+        private RadzenDataGrid<ActualsReportRow> actualsGrid;
+        public RadzenDataGrid<ActualsReportRow> ActualsGrid
+        {
+            get => actualsGrid;
+            set
+            {
+                if (value != actualsGrid)
+                {
+                    actualsGrid = value;
+                    if (actualsGrid != null) UpdateActualsColumnSums();
+                }
+            }
+        }
 
         protected override void OnInitialized()
         {
@@ -232,12 +243,20 @@ namespace PPMTool.Pages
 
                     // Create a row for every unique resource - task combination
                     actualsReportRows = new List<ActualsReportRow>();
+                    actualsColumnSums = new Dictionary<DateTime, double>();
                     foreach (var timesheet in timesheets)
                     {
                         foreach (var entry in timesheet.TimesheetEntries)
                         {
+                            // Ignore the tasks that do not match the activity for the project
+                            if (entry.InnateCodeTask.InnateCode.InnateCodeId != projectModel.InnateActivity.InnateCodeId)
+                            {
+                                continue;
+                            }
+
                             // See if we can find an existing row that matches the resource and task combination
-                            var row = actualsReportRows.FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
+                            var row = actualsReportRows
+                                .FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
 
                             // If not then create an empty object
                             if (row == null)
@@ -268,6 +287,7 @@ namespace PPMTool.Pages
 
                     // Fill in the blank weeks
                     var currentWeek = startWeek;
+                    Debug.WriteLine($"** Filling blanks between {startWeek.ToShortDateString()} and {endWeek.ToShortDateString()}");
                     while (currentWeek <= endWeek)
                     {
                         foreach (var row in actualsReportRows)
@@ -280,36 +300,22 @@ namespace PPMTool.Pages
                         currentWeek = currentWeek.AddDays(7);
                     }
 
-                    // Generate total rows for each task
-                    var taskList = actualsReportRows.Select(x => x.Task).DistinctBy(x => x.InnateCodeTaskId).ToList();
-                    foreach (var task in taskList)
+                    // Create column sums
+                    if (actualsReportRows.FirstOrDefault() != null)
                     {
-                        var totalRow = new ActualsReportRow
-                        {
-                            Task = task,
-                            Resource = new Person { Name = "Total" },
-                            Hours = new Dictionary<DateTime, double>(),
-                            IsTotalRow = true
-                        };
+                        // Get the keys in place -- populate once actuals grid is set
+                        actualsColumnSums = new Dictionary<DateTime, double>(actualsReportRows.First().Hours);
 
-                        // Loop over each week (all entries should have the same number of dictionary items)
-                        foreach (var week in actualsReportRows.First().Hours.Keys.Distinct())
-                        {
-                            totalRow.Hours.Add(week, actualsReportRows.Where(x => x.Task.InnateCodeTaskId == task.InnateCodeTaskId).Sum(x => x.Hours.ContainsKey(week) ? x.Hours[week] : 0));
-                        }
-                        totalRow.RowTotal = totalRow.Hours.Values.Sum();
-                        actualsReportRows.Add(totalRow);
+                        // Order and group the rows appropriately
+                        actualsReportRows = actualsReportRows
+                            .OrderBy(x => x.Task.TaskName)
+                            .ThenBy(x => x.Resource.Name)
+                            .ToList();
                     }
-
-                    // Order and group the rows appropriately
-                    actualsReportRows = actualsReportRows
-                        .OrderBy(x => x.Task.TaskName)
-                        .ThenBy(x => x.Resource.Name == "Total" ? 1 : 0)
-                        .ThenBy(x => x.Resource.Name)
-                        .ToList();
 
                 }).ContinueWith(t =>
                 {
+                    Debug.WriteLine($"** ...finshed. Task Status = {t.Status}");
                     InvokeAsync(() =>
                     {
                         Loading = false;
@@ -317,6 +323,48 @@ namespace PPMTool.Pages
                     });
                 });
             }
+        }
+
+        /// <summary>
+        /// Based on the current
+        /// </summary>
+        private void UpdateActualsColumnSums()
+        {
+            // Get only visible rows
+            var actualsData = actualsGrid?.View;
+            if (actualsData == null || actualsData.Count() == 0)
+            {
+                Debug.WriteLine($"** Cannot update the column sums as no data!");
+                return;
+            }
+
+            Debug.WriteLine($"** Updating column sums...");
+
+            // Loop over dates
+            foreach (var week in actualsData.First().Hours.Keys)
+            {
+                // Reset
+                actualsColumnSums[week] = 0;
+
+                // Loop over each row and update
+                foreach (var row in actualsData)
+                {
+                    actualsColumnSums[week] += row.Hours[week];
+
+                    if (week.Day == 4 && week.Month == 11 && week.Year == 2019)
+                    {
+                        Debug.WriteLine($"** Value to Add = {row.Hours[week]} | New sum value = {actualsColumnSums[week]}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Callback fired when the filter is applied or cleared
+        /// </summary>
+        private void ActualsReportFiltered()
+        {
+            UpdateActualsColumnSums();
         }
 
         /// <summary>

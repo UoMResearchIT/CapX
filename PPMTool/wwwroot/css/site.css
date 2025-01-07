@@ -286,7 +286,7 @@ mark {
 .table-wrap th:nth-child(2),
 .table-wrap td:nth-child(2) {
     position: sticky;
-    left: 120px; /* Adjust the left position based on the width of the first column */
+    left: 12rem; /* Adjust the left position based on the width of the first column */
     background-color: #e6e6fa;
     z-index: 3; /* Ensure the second column stays above the other columns */
 }

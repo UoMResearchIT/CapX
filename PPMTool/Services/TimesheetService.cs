@@ -275,6 +275,7 @@ namespace PPMTool.Services
             return context.Timesheets
                 .Include(x => x.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
+                .ThenInclude(x => x.InnateCode)
                 .Where(x => x.TimesheetEntries
                     .Any(x => x.InnateCodeTask.InnateCode.InnateCodeId == innateActivity.InnateCodeId)
                 );

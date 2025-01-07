@@ -191,35 +191,51 @@
                         }
                         else
                         {
-                            <div class="table-wrap">
-                                <table class="table table-sm table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th class="col-2">Task</th>
-                                            <th class="col-4">Resource</th>
-                                            @foreach (var week in actualsReportRows.First().Hours.Keys)
-                                            {
-                                                <th class="col-2">@week.ToShortDateString()</th>
-                                            }
-                                            <th class="col-2">Row Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var row in actualsReportRows)
+                            <RadzenDataGrid AllowAlternatingRows="true"
+                                            AllowFiltering="true"
+                                            AllowPaging="false"
+                                            AllowSorting="true"
+                                            FilterMode="FilterMode.CheckBoxList"
+                                            AllowColumnResize="true"
+                                            Data="@actualsReportRows"
+                                            TItem="ActualsReportRow"
+                                            Density="Density.Compact"
+                                            ColumnWidth="10rem"
+                                            Filter="ActualsReportFiltered"
+                                            FilterCleared="ActualsReportFiltered"
+                                            @ref=@ActualsGrid>
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="Task.TaskName" Title="Task" Frozen="true" MinWidth="10px" Width="12rem" />
+                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="Resource.Name" Title="Person" Frozen="true" MinWidth="10px" />
+                                    @{
+                                        var weeks = actualsReportRows.First().Hours.Keys.ToList();
+                                        weeks.Sort();
+                                        foreach (var week in weeks)
                                         {
-                                            <tr>
-                                                <td>@row.Task.TaskName</td>
-                                                <td>@row.Resource.Name</td>
-                                                @foreach (var week in row.Hours)
-                                                {
-                                                    <td>@week.Value.ToString("F2")</td>
-                                                }
-                                                <td>@row.RowTotal</td>
-                                            </tr>
+                                            <RadzenDataGridColumn TItem="ActualsReportRow" Title="@week.ToString("dd/MM/yy")" Filterable="false" Sortable="false" MinWidth="10px" Width="6rem">
+                                                <Template Context="row">
+                                                    @(row.Hours[week] == 0 ? "" : row.Hours[week].ToString("F2"))
+                                                </Template>
+                                                <FooterTemplate>
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2">
+                                                        @(actualsColumnSums[week] == 0 ? "" : actualsColumnSums[week].ToString("F2"))
+                                                    </RadzenText>
+                                                </FooterTemplate>
+                                            </RadzenDataGridColumn>
                                         }
-                                    </tbody>
-                                </table>
-                            </div>
+                                    }
+                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="RowTotal" Title="Total" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" MinWidth="10px">
+                                        <Template Context="row">
+                                            @row.RowTotal.ToString("F2")
+                                        </Template>
+                                        <FooterTemplate>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2">
+                                                @(actualsColumnSums.Sum(x => x.Value) == 0 ? "" : actualsColumnSums.Sum(x => x.Value).ToString("F2"))
+                                            </RadzenText>
+                                        </FooterTemplate>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
                         }
                     </div>
                 </div>
