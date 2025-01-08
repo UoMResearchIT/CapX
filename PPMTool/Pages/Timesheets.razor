@@ -182,6 +182,15 @@
                                                                    ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                             </Template>
                         </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="NEW Action">
+                            <Template Context="t">
+                                <EditOrViewButtonComponent TItem="Timesheet"
+                                                           Item="t"
+                                                           CanViewOnly="@t.IsPermittedToViewOnly(ActiveUser)"
+                                                           IsDisabled="@(!t.IsOwner(ActiveUser) && !t.IsLineManager(ActiveUser))"
+                                                           OnButtonClick="@(EditTimesheet)" />
+                            </Template>
+                        </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
                 <div class ="timesheet-note">
