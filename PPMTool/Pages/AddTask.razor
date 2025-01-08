@@ -181,7 +181,7 @@
                 </div>
                 <div class="row">
                     <div class="col">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" class="m-2">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" class="my-2">
                             <RadzenLabel class="radzen-form-label" Text="Actuals Report" />
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                                 <RadzenLabel Text="Date Range" class="rz-ms-2" />
@@ -225,7 +225,7 @@
                                     <RadzenDataGridColumn TItem="ActualsReportRow" Property="Resource.Name" Title="Person" Frozen="true" MinWidth="10px" />
                                     @{
                                         var weeks = actualsReportRows?.SelectMany(x => x.Hours.Keys).Distinct().ToList();
-                                        weeks.Sort();
+                                        weeks?.Sort();
                                         foreach (var week in weeks)
                                         {
                                             <RadzenDataGridColumn TItem="ActualsReportRow" Title="@week.ToString("dd/MM/yy")" Filterable="false" Sortable="false" MinWidth="10px" Width="6rem">
