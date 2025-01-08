@@ -63,6 +63,9 @@
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
+            <div class="timesheet-note">
+                Shows your 'new/unsubmitted' and 'rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected.
+            </div>
         </div>
 
         <div style="padding-top: 3rem" hidden="@hideStaffResults">
@@ -79,7 +82,7 @@
                 </RadzenStack>
             </div>
             <div class="card" hidden="@(!ShowSynopsis)">
-                <table class="table table-striped" style="border: 1px solid #ccc;">
+                <table class="table table-striped" style="border: 1px solid #ccc; margin-bottom: 0;">
                     <tr style="background-color: #eee;">
                         <th>
                             Week Commencing
@@ -102,7 +105,7 @@
                     {
                         Debug.WriteLine($"** SYNOPSIS : {kvp.Key.Name} [{kvp.Value.Count}] entries");
                         <tr>
-                            <td>@kvp.Key.Name</td>
+                            <td>@kvp.Key.Name <span class="badge badge-warning" style="padding: 0.3rem; float: right;">@kvp.Key.ShortName</span></td>
                             
                             @for (int i = 0; i < kvp.Value.Count; i++)
                             {
@@ -132,6 +135,9 @@
                         </tr>
                     }
                 </table>
+                <div class="timesheet-note">
+                    Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. *This* week is shaded in cream.
+                </div>
             </div>
 
             <div class="card" style="margin-top: 1rem;">
@@ -172,6 +178,9 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
+                <div class ="timesheet-note">
+                    Timesheets are ordered by date (desc) and only ones marked as 'submitted' are shown by default. All but submitted are shown if the 'Show All timesheets' option is selected.
+                </div>
             </div>
         </div>
     }
