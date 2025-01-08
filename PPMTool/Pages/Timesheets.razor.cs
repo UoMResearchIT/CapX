@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -33,7 +32,6 @@ namespace PPMTool.Pages
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
-        private TaskQueue taskQueue = new TaskQueue();
 
         public bool ShowAllMyTimesheets
         {
@@ -44,7 +42,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-mine", showAllMyTimesheets);
-                    EnqueueLoadData();
+                    EnqueueLoadData(GenerateTask());
                 }
             }
         }
@@ -59,7 +57,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyStaffTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-reports", showAllMyStaffTimesheets);
-                    EnqueueLoadData();
+                    EnqueueLoadData(GenerateTask());
                 }
             }
         }
@@ -106,18 +104,19 @@ namespace PPMTool.Pages
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showsynopsis");
             if (temp != null) showSynopsis = temp ?? true;
-            EnqueueLoadData();
+            EnqueueLoadData(GenerateTask());
         }
 
         /// <summary>
-        /// Put a load data request into the queue
+        /// Generates a task to load data
         /// </summary>
-        private void EnqueueLoadData()
+        /// <returns></returns>
+        private Func<Task> GenerateTask()
         {
-            _ = taskQueue.Enqueue(async () =>
+            return async () =>
             {
                 await LoadData();
-            });
+            };
         }
 
         /// <summary>

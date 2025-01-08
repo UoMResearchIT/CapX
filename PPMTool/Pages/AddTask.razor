@@ -4,6 +4,7 @@
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+@using System.Diagnostics
 @using static PPMTool.Data.Entities.Project
 <PageTitle>Add Task - CapX</PageTitle>
 
@@ -184,16 +185,16 @@
                             <RadzenLabel class="radzen-form-label" Text="Actuals Report" />
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                                 <RadzenLabel Text="Date Range" class="rz-ms-2" />
-                                <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="LoadActuals" />
+                            <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => EnqueueLoadData(async () => await Task.Run(LoadActuals)))" />
                                 <RadzenLabel Text="to" class="rz-ms-2" />
-                                <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="LoadActuals" />
+                                <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => EnqueueLoadData(async () => await Task.Run(LoadActuals)))" />
                                 <RadzenLabel Text="Hide Empty Weeks" Component="CheckBox1" class="rz-ms-2" />
-                                <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; LoadActuals(); }) />
+                                <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; EnqueueLoadData(async () => await Task.Run(LoadActuals)); }) />
                             </RadzenStack>
                         </RadzenStack>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col">
                         @if (Loading)
