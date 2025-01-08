@@ -64,7 +64,10 @@
                 </Columns>
             </RadzenDataGrid>
             <div class="timesheet-note">
-                Shows your 'new/unsubmitted' and 'rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected.
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
+                    Shows your 'New/Unsubmitted' and 'Rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected.
+                </RadzenStack>
             </div>
         </div>
 
@@ -136,7 +139,10 @@
                     }
                 </table>
                 <div class="timesheet-note">
-                    Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. *This* week is shaded in cream.
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
+                        Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. Current calendar week is shaded in cream.
+                    </RadzenStack>
                 </div>
             </div>
 
@@ -179,7 +185,10 @@
                     </Columns>
                 </RadzenDataGrid>
                 <div class ="timesheet-note">
-                    Timesheets are ordered by date (desc) and only ones marked as 'submitted' are shown by default. All but submitted are shown if the 'Show All timesheets' option is selected.
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
+                        Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but submitted are shown if the 'Show All Timesheets' option is selected.
+                    </RadzenStack>
                 </div>
             </div>
         </div>
