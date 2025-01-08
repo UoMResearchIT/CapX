@@ -223,7 +223,7 @@
                                     <RadzenDataGridColumn TItem="ActualsReportRow" Property="Task.TaskName" Title="Task" Frozen="true" MinWidth="10px" Width="12rem" />
                                     <RadzenDataGridColumn TItem="ActualsReportRow" Property="Resource.Name" Title="Person" Frozen="true" MinWidth="10px" />
                                     @{
-                                        var weeks = actualsReportRows.First().Hours.Keys.ToList();
+                                        var weeks = actualsReportRows?.SelectMany(x => x.Hours.Keys).Distinct().ToList();
                                         weeks.Sort();
                                         foreach (var week in weeks)
                                         {
