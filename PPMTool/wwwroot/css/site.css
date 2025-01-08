@@ -263,30 +263,12 @@ mark {
     padding-left: 0.5rem;
 }
 
-.table-wrap {
-    height: 15rem;
-    overflow-y: auto;
-}
-
-.table-wrap thead th {
-    position: sticky;
-    top: 0;
-    background-color: #e6e6fa;
-    z-index: 2; /* Ensure the header stays above the table rows */
-}
-
-.table-wrap th:first-child,
-.table-wrap td:first-child {
-    position: sticky;
-    left: 0;
-    background-color: #e6e6fa;
-    z-index: 3; /* Ensure the first column stays above the other columns */
-}
-
-.table-wrap th:nth-child(2),
-.table-wrap td:nth-child(2) {
-    position: sticky;
-    left: 12rem; /* Adjust the left position based on the width of the first column */
-    background-color: #e6e6fa;
-    z-index: 3; /* Ensure the second column stays above the other columns */
+.timesheet-note {
+    padding: 0.5rem;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    font-weight: bold;
+    background-color: #F5F5F5;
+    border-radius: 2px;
+    border: 1px solid #ccc
 }
