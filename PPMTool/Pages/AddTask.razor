@@ -229,11 +229,17 @@
                                         {
                                             <RadzenDataGridColumn TItem="ActualsReportRow" Title="@week.ToString("dd/MM/yy")" Filterable="false" Sortable="false" MinWidth="10px" Width="6rem">
                                                 <Template Context="row">
-                                                    @(row.Hours[week] == 0 ? "" : row.Hours[week].ToString("F2"))
+                                                    @if (row.Hours.ContainsKey(week))
+                                                    {
+                                                        @(row.Hours[week] == 0 ? "" : row.Hours[week].ToString("F2"))
+                                                    }
                                                 </Template>
                                                 <FooterTemplate>
                                                     <RadzenText TextStyle="TextStyle.Subtitle2">
-                                                        @(actualsColumnSums[week] == 0 ? "" : actualsColumnSums[week].ToString("F2"))
+                                                        @if (actualsColumnSums.ContainsKey(week))
+                                                        {
+                                                            @(actualsColumnSums[week] == 0 ? "" : actualsColumnSums[week].ToString("F2"))
+                                                        }
                                                     </RadzenText>
                                                 </FooterTemplate>
                                             </RadzenDataGridColumn>
