@@ -35,7 +35,6 @@ namespace PPMTool.Pages
         private bool isSuperUser;
         private bool canView;
 
-
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
@@ -54,8 +53,8 @@ namespace PPMTool.Pages
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
-                    // Developers can view their own page
-                    canView = EditAuthorised || ActiveUser == personModel ? true : false;
+                    // Developers can view their own page; managers can view all people pages
+                    canView = EditAuthorised || ActiveUser?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
                 }
             }
 
