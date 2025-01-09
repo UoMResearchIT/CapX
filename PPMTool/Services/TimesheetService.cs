@@ -194,7 +194,7 @@ namespace PPMTool.Services
         /// <param name="task"></param>
         public void AddToTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateTimesheetTasks = GetTimesheetTaskIdsFromPerson(person);
 
             // If not already in the template then add it to the start and update the person record
             if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
@@ -205,6 +205,22 @@ namespace PPMTool.Services
                 context.People.Update(person);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Get the existing template data out of the person model
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        private IList<int> GetTimesheetTaskIdsFromPerson(Person person)
+        {
+            var templateData = person.TimesheetTemplateData?.Split('|');
+            var templateTimesheetTasks = new List<int>();
+            if (templateData != null && templateData.All(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                templateTimesheetTasks = templateData.Select(int.Parse).ToList();
+            }
+            return templateTimesheetTasks;
         }
 
         /// <summary>
