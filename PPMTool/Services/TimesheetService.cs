@@ -179,11 +179,16 @@ namespace PPMTool.Services
         /// <summary>
         /// Method to remove a task from a person's timesheet template
         /// </summary>
-        /// <param name="context"></param>
         /// <param name="person"></param>
-        public List<int> GetTemplate(PPMToolContext context, Person person)
+        public List<int> GetTemplate(Person person)
         {
-            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateData = person.TimesheetTemplateData?.Split('|');
+            var templateTimesheetTasks = new List<int>();
+            if (templateData != null && templateData.All(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                templateTimesheetTasks = templateData.Select(int.Parse).ToList();
+            }
+            return templateTimesheetTasks;
         }
 
         /// <summary>
@@ -194,7 +199,7 @@ namespace PPMTool.Services
         /// <param name="task"></param>
         public void AddToTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateTimesheetTasks = GetTemplate(person);
 
             // If not already in the template then add it to the start and update the person record
             if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
@@ -215,7 +220,7 @@ namespace PPMTool.Services
         /// <param name="task"></param>
         public void DeleteFromTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateTimesheetTasks = GetTemplate(person);
 
             // If it is in the list then remove it and update the person record
             if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
@@ -237,7 +242,7 @@ namespace PPMTool.Services
         /// <param name="tasks"></param>
         public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks)
         {
-            var templateTimesheetTasks = GetTemplate(context, person);
+            var templateTimesheetTasks = GetTemplate(person);
 
             foreach (int taskId in templateTimesheetTasks)
             {
