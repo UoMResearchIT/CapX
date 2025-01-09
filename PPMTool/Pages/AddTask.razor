@@ -201,9 +201,9 @@
                         {
                             <LoadingComponent />
                         }
-                        else if (actualsReportRows == null || actualsReportRows.Count == 0)
+                        else if (actualsReportRows == null || actualsReportRows?.Count == 0)
                         {
-                            <RadzenText Text="@($"No timesheet bookings to show for the timesheet activity code {projectModel?.InnateActivity.GetCodeAsString()}")" />
+                            <RadzenText Text="@($"No actuals to show for the timesheet activity code {projectModel?.InnateActivity?.GetCodeAsString()}")" />
                         }
                         else
                         {

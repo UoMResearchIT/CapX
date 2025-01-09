@@ -272,6 +272,8 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Timesheet> GetAllForInnateCode(PPMToolContext context, InnateCode innateActivity)
         {
+            if (innateActivity == null) return new List<Timesheet>();
+
             return context.Timesheets
                 .Include(x => x.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)

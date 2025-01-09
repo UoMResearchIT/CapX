@@ -245,101 +245,111 @@ namespace PPMTool.Pages
             actualsReportRows = null;
             InvokeAsync(StateHasChanged);
 
-            Debug.WriteLine("** Running actuals report...");
-
-            // Get all the timesheet entries associated with the activity code for this project
-            var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity);
-
-            // Find the earliest and latest timesheet weeks if no date set
-            var startWeek = actualsStartDate ?? timesheets.Min(x => x.StartDate);
-            var endWeek = actualsEndDate ?? timesheets.Max(x => x.StartDate);
-
-            // Correct to start of week
-            startWeek = startWeek.FirstDayOfWeek().Date;
-            endWeek = endWeek.FirstDayOfWeek().Date;
-
-            if (endWeek <= startWeek)
+            try
             {
-                endWeek = startWeek.AddDays(7);
-            }
+                Debug.WriteLine("** Running actuals report...");
 
-            // Revise timesheet selection based on date range selected
-            timesheets = timesheets.Where(x => x.StartDate >= startWeek && x.StartDate <= endWeek);
+                // Get all the timesheet entries associated with the activity code for this project
+                if (projectModel?.InnateActivity == null) return;
+                var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity);
 
-            // Create a row for every unique resource - task combination
-            actualsReportRows = new List<ActualsReportRow>();
-            actualsColumnSums = new Dictionary<DateTime, double>();
-            foreach (var timesheet in timesheets)
-            {
-                foreach (var entry in timesheet.TimesheetEntries)
+                // Find the earliest and latest timesheet weeks if no date set
+                var startWeek = actualsStartDate ?? timesheets.Min(x => x.StartDate);
+                var endWeek = actualsEndDate ?? timesheets.Max(x => x.StartDate);
+
+                // Correct to start of week
+                startWeek = startWeek.FirstDayOfWeek().Date;
+                endWeek = endWeek.FirstDayOfWeek().Date;
+
+                if (endWeek <= startWeek)
                 {
-                    // Ignore the tasks that do not match the activity for the project
-                    if (entry.InnateCodeTask.InnateCode.InnateCodeId != projectModel.InnateActivity.InnateCodeId)
-                    {
-                        continue;
-                    }
-
-                    // See if we can find an existing row that matches the resource and task combination
-                    var row = actualsReportRows
-                        .FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
-
-                    // If not then create an empty object
-                    if (row == null)
-                    {
-                        row = new ActualsReportRow
-                        {
-                            Resource = timesheet.Owner,
-                            Task = entry.InnateCodeTask,
-                            Hours = new Dictionary<DateTime, double>()
-                        };
-                        actualsReportRows.Add(row);
-                    }
-
-                    // Add the hours to the row
-                    if (!row.Hours.ContainsKey(timesheet.StartDate))
-                    {
-                        entry.UpdateTotalHours();
-                        row.Hours.Add(timesheet.StartDate, entry.TotalHours);
-                        row.RowTotal += entry.TotalHours;
-                    }
-                    else
-                    {
-                        // This shouldn't happen as there should only be one entry for the week, resource, task combination
-                        throw new Exception("Actuals report failed by finding duplicate week/resource/task combination in the timesheet database!");
-                    }
+                    endWeek = startWeek.AddDays(7);
                 }
-            }
 
-            // Fill in the blank weeks
-            if (!hideEmptyWeeks)
-            {
-                var currentWeek = startWeek;
-                Debug.WriteLine($"** Filling blanks between {startWeek.ToShortDateString()} and {endWeek.ToShortDateString()}");
-                while (currentWeek <= endWeek)
+                // Revise timesheet selection based on date range selected
+                timesheets = timesheets.Where(x => x.StartDate >= startWeek && x.StartDate <= endWeek);
+
+                // Create a row for every unique resource - task combination
+                actualsReportRows = new List<ActualsReportRow>();
+                actualsColumnSums = new Dictionary<DateTime, double>();
+                foreach (var timesheet in timesheets)
                 {
-                    foreach (var row in actualsReportRows)
+                    foreach (var entry in timesheet.TimesheetEntries)
                     {
-                        if (!row.Hours.ContainsKey(currentWeek))
+                        // Ignore the tasks that do not match the activity for the project
+                        if (entry.InnateCodeTask.InnateCode.InnateCodeId != projectModel.InnateActivity.InnateCodeId)
                         {
-                            row.Hours.Add(currentWeek, 0);
+                            continue;
+                        }
+
+                        // See if we can find an existing row that matches the resource and task combination
+                        var row = actualsReportRows
+                            .FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
+
+                        // If not then create an empty object
+                        if (row == null)
+                        {
+                            row = new ActualsReportRow
+                            {
+                                Resource = timesheet.Owner,
+                                Task = entry.InnateCodeTask,
+                                Hours = new Dictionary<DateTime, double>()
+                            };
+                            actualsReportRows.Add(row);
+                        }
+
+                        // Add the hours to the row
+                        if (!row.Hours.ContainsKey(timesheet.StartDate))
+                        {
+                            entry.UpdateTotalHours();
+                            row.Hours.Add(timesheet.StartDate, entry.TotalHours);
+                            row.RowTotal += entry.TotalHours;
+                        }
+                        else
+                        {
+                            // This shouldn't happen as there should only be one entry for the week, resource, task combination
+                            throw new Exception("Actuals report failed by finding duplicate week/resource/task combination in the timesheet database!");
                         }
                     }
-                    currentWeek = currentWeek.AddDays(7);
                 }
+
+                // Fill in the blank weeks
+                if (!hideEmptyWeeks)
+                {
+                    var currentWeek = startWeek;
+                    Debug.WriteLine($"** Filling blanks between {startWeek.ToShortDateString()} and {endWeek.ToShortDateString()}");
+                    while (currentWeek <= endWeek)
+                    {
+                        foreach (var row in actualsReportRows)
+                        {
+                            if (!row.Hours.ContainsKey(currentWeek))
+                            {
+                                row.Hours.Add(currentWeek, 0);
+                            }
+                        }
+                        currentWeek = currentWeek.AddDays(7);
+                    }
+                }
+
+                // If possible, update the column sums
+                UpdateActualsColumnSums();
+
+                // Order and group the rows appropriately
+                actualsReportRows = actualsReportRows
+                    .OrderBy(x => x.Task.TaskName)
+                    .ThenBy(x => x.Resource.Name)
+                    .ToList();
             }
-
-            // If possible, update the column sums
-            UpdateActualsColumnSums();
-
-            // Order and group the rows appropriately
-            actualsReportRows = actualsReportRows
-                .OrderBy(x => x.Task.TaskName)
-                .ThenBy(x => x.Resource.Name)
-                .ToList();
-
-            Debug.WriteLine($"** ...finshed.");
-            Loading = false;
-            InvokeAsync(StateHasChanged);
+            catch (Exception ex)
+            {
+                LogError("Actuals report failing!");
+            }
+            finally
+            {
+                Debug.WriteLine($"** ...finished updating actuals.");
+                Loading = false;
+                InvokeAsync(StateHasChanged);
+            }
         }
 
         /// <summary>
