@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -108,7 +109,9 @@ namespace PPMTool.Pages
             var temp = innateActivityQuery;
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                temp = temp.Where(act => act.GetCodeAsString().ToLower().Contains(args.Filter.ToLower()));
+                Debug.WriteLine($"** Filtering Innate Code on {args.Filter}");
+                temp = temp.Where(act => act.ActivityName.ToLower().Contains(args.Filter.ToLower()) || act.ActivityCode.ToLower().Contains(args.Filter.ToLower()));
+                Debug.WriteLine($"** Innate code filter list contains {temp.Count()} items");
             }
 
             innateActivities = temp.ToList();
