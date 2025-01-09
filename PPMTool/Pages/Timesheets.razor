@@ -55,10 +55,10 @@
                     <RadzenDataGridColumn Property="Info" Title="Notes" />
                     <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="timesheet">
-                            <TimesheetDashboardButtonComponent Timesheet="@timesheet"
-                                                               ActiveUser="@ActiveUser"
-                                                               EditTimesheet="@EditTimesheet"
-                                                               ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                            <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
+                                                       IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                                       OnButtonClick="@(canView => EditTimesheet(timesheet))"
+                                                       ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -176,10 +176,10 @@
                         <RadzenDataGridColumn Property="Info" Title="Notes" />
                         <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                             <Template Context="timesheet">
-                                <TimesheetDashboardButtonComponent Timesheet="@timesheet"
-                                                                   ActiveUser="@ActiveUser"
-                                                                   EditTimesheet="@EditTimesheet"
-                                                                   ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                                <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
+                                                           IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                                           OnButtonClick="@(canView => EditTimesheet(timesheet))"
+                                                           ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -187,7 +187,7 @@
                 <div class ="timesheet-note">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                         <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                        Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but submitted are shown if the 'Show All Timesheets' option is selected.
+                        Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but 'New/Unsubmitted' are shown if the 'Show All Timesheets' option is selected.
                     </RadzenStack>
                 </div>
             </div>

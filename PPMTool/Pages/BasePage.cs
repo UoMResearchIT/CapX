@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -68,13 +69,11 @@ namespace PPMTool.Pages
 
         protected AuthenticationState AuthenticationState { get; private set; }
 
-        protected string ActiveUserName { get; private set; } = "None";
-
         protected PPMToolContext Context { get; set; }
 
         protected StatusMessage ErrorMessage { get; set; }
 
-        protected string Title { get; set; }
+        protected string ActiveUserName { get; private set; } = "None";
 
         protected Person ActiveUser { get; private set; }
 
@@ -92,6 +91,8 @@ namespace PPMTool.Pages
             _ = TaskQueue.Enqueue(taskGenerator);
         }
 
+        protected RoleType ActiveUserRoleType { get; private set; }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -102,14 +103,18 @@ namespace PPMTool.Pages
             // Get authentication state
             AuthenticationState = AuthenticationStateTask.Result;
 
-            // Editing only permitted by managers and superusers
-            EditAuthorised = (AuthenticationState?.User.IsInRole("Superuser") ?? false) || (AuthenticationState?.User.IsInRole("Manager") ?? false);
-
             // Stash the user name
             ActiveUserName = AuthenticationState?.User.Identity.Name.Trim().ToLower();
 
             // Get the active user
-            ActiveUser = RolesService.GetByUsername(Context, ActiveUserName)?.Person;
+            var role = RolesService.GetByUsername(Context, ActiveUserName);
+            ActiveUser = role?.Person;
+
+            // Get active user role
+            ActiveUserRoleType = role?.RoleType ?? Enums.RoleType.None;
+
+            // Editing only permitted by managers and superusers by default
+            EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
         }
 
         /// <summary>
