@@ -90,11 +90,6 @@
                             @string.Join(',', p.SkillTags.Select(t => t.Name))
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px" FrozenPosition="FrozenColumnPosition.Right" Title="Edit">
-                        <Template Context="p">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditPerson(p))" @onclick:stopPropagation="true" Disabled="@(!(IsSuperuserOrLineManagerOfThisPerson(p) || ActiveUser == p))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
-                        </Template>
-                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="p">
                             <EditOrViewButtonComponent CanViewOnly="@(ActiveUser?.PersonId == p.PersonId)"
