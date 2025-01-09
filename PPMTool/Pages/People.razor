@@ -97,11 +97,10 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="p">
-                            <EditOrViewButtonComponent TItem="Person"
-                                                       Item="p"
-                                                       CanViewOnly="@(ActiveUser == p)"
-                                                       IsDisabled="@(!(IsSuperuserOrLineManagerOfThisPerson(p) || ActiveUser == p))"
-                                                       OnButtonClick="@(EditPerson)" />
+                            <EditOrViewButtonComponent CanViewOnly="@(ActiveUser?.PersonId == p.PersonId)"
+                                                       IsDisabled="@(!(IsSuperuserOrLineManagerOfThisPerson(p) || ActiveUser?.PersonId == p.PersonId))"
+                                                       OnButtonClick="@(canView => EditPerson(p))"
+                                                       ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>

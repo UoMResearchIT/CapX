@@ -1,10 +1,9 @@
 ﻿@using PPMTool.Data.Entities
-@typeparam TItem
 
 <RadzenButton Icon=@(CanViewOnly ? "visibility" : "edit")
               ButtonStyle="@(CanViewOnly ? ButtonStyle.Light : ButtonStyle.Primary)"
               class="m-1"
-              Click="HandleClick"
+              Click="@(() => OnButtonClick?.Invoke(CanViewOnly))"
               @onclick:stopPropagation="true"
               Disabled=@IsDisabled
               MouseEnter="@(args => ShowTooltip(args, CanViewOnly ? "View" : "Edit"))" />
@@ -17,19 +16,8 @@
     public bool IsDisabled { get; set; }
 
     [Parameter]
-    public EventCallback<TItem> OnButtonClick { get; set; }
-
-    [Parameter]
-    public TItem Item { get; set; }
+    public Action<bool> OnButtonClick { get; set; }
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
-
-    private async Task HandleClick()
-    {
-        if (OnButtonClick.HasDelegate)
-        {
-            await OnButtonClick.InvokeAsync(Item);
-        }
-    }
 }
