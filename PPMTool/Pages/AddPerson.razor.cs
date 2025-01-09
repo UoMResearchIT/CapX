@@ -10,7 +10,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class AddPerson : BasePage
     {
         [Inject]
@@ -33,7 +33,7 @@ namespace PPMTool.Pages
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
-
+        private bool canView;
 
         protected override void OnParametersSet()
         {
@@ -52,6 +52,9 @@ namespace PPMTool.Pages
 
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+
+                    // Developers can view their own page; managers can view all people pages
+                    canView = EditAuthorised || ActiveUser?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
                 }
             }
 
