@@ -77,6 +77,20 @@ namespace PPMTool.Pages
 
         protected Person ActiveUser { get; private set; }
 
+        /// <summary>
+        /// A queuing mechanism for background data loads on pages so they don't run at the same time
+        /// </summary>
+        protected TaskQueue TaskQueue { get; private set; } = new TaskQueue();
+
+        /// <summary>
+        /// Put a load data request into the queue
+        /// </summary>
+        /// <param name="taskGenerator">Function to generate a Task to put in the queue</param>
+        protected void EnqueueLoadData(Func<Task> taskGenerator)
+        {
+            _ = TaskQueue.Enqueue(taskGenerator);
+        }
+
         protected RoleType ActiveUserRoleType { get; private set; }
 
         protected override void OnInitialized()

@@ -4,6 +4,7 @@
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+@using System.Diagnostics
 @using static PPMTool.Data.Entities.Project
 <PageTitle>Add Task - CapX</PageTitle>
 
@@ -168,14 +169,98 @@
                 <h2>Actuals</h2>
                 <div class="row">
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Actual Hours" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Hours summed from resource" /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Actual Hours" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Hours are sum of resource actuals" /><br />
                         <RadzenText Text="@TaskModel.ActualWorkHours.ToString("F1")" />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Actual Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cost computed from resource day rates and work" /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Actual Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cost computed from resource day rates and actual hours" /><br />
                         <RadzenText Text="@TaskModel.ActualCost.ToString("C2")" />
                     </div>
                     <div class="col">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" class="my-2">
+                            <RadzenLabel class="radzen-form-label" Text="Actuals Report" />
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                <RadzenLabel Text="Date Range" class="rz-ms-2" />
+                            <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => EnqueueLoadData(async () => await Task.Run(LoadActuals)))" />
+                                <RadzenLabel Text="to" class="rz-ms-2" />
+                                <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => EnqueueLoadData(async () => await Task.Run(LoadActuals)))" />
+                                <RadzenLabel Text="Hide Empty Weeks" Component="CheckBox1" class="rz-ms-2" />
+                                <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; EnqueueLoadData(async () => await Task.Run(LoadActuals)); }) />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        @if (Loading)
+                        {
+                            <LoadingComponent />
+                        }
+                        else if (actualsReportRows == null || actualsReportRows?.Count == 0)
+                        {
+                            <RadzenText Text="@($"No actuals to show for the timesheet activity code {projectModel?.InnateActivity?.GetCodeAsString()}")" />
+                        }
+                        else
+                        {
+                            <RadzenDataGrid AllowAlternatingRows="true"
+                                            AllowFiltering="true"
+                                            AllowPaging="false"
+                                            AllowSorting="true"
+                                            FilterMode="FilterMode.CheckBoxList"
+                                            AllowColumnResize="true"
+                                            Data="@actualsReportRows"
+                                            TItem="ActualsReportRow"
+                                            Density="Density.Compact"
+                                            ColumnWidth="10rem"
+                                            Filter="ActualsReportFiltered"
+                                            FilterCleared="ActualsReportFiltered"
+                                            @ref=@ActualsGrid>
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="Task.TaskName" Title="Task" Frozen="true" MinWidth="10px" Width="12rem" />
+                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="Resource.Name" Title="Person" Frozen="true" MinWidth="10px" />
+                                    @{
+                                        var weeks = actualsReportRows?.SelectMany(x => x.Hours.Keys).Distinct().ToList();
+                                        weeks?.Sort();
+                                        foreach (var week in weeks)
+                                        {
+                                            <RadzenDataGridColumn TItem="ActualsReportRow" Title="@week.ToString("dd/MM/yy")" Filterable="false" Sortable="false" MinWidth="10px" Width="6rem">
+                                                <Template Context="row">
+                                                    @if (row.Hours.ContainsKey(week))
+                                                    {
+                                                        @(row.Hours[week] == 0 ? "" : row.Hours[week].ToString("F2"))
+                                                    }
+                                                </Template>
+                                                <FooterTemplate>
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2">
+                                                        @if (actualsColumnSums.ContainsKey(week))
+                                                        {
+                                                            @(actualsColumnSums[week] == 0 ? "" : actualsColumnSums[week].ToString("F2"))
+                                                        }
+                                                    </RadzenText>
+                                                </FooterTemplate>
+                                            </RadzenDataGridColumn>
+                                        }
+                                    }
+                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="RowTotal" Title="Total" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" MinWidth="10px">
+                                        <Template Context="row">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
+                                                @row.RowTotal.ToString("F2")
+                                            </RadzenText>
+                                        </Template>
+                                        <FooterTemplate>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
+                                                @(actualsColumnSums.Sum(x => x.Value) == 0 ? "" : actualsColumnSums.Sum(x => x.Value).ToString("F2"))
+                                            </RadzenText>
+                                        </FooterTemplate>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
                     </div>
                 </div>
             }

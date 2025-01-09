@@ -263,5 +263,24 @@ namespace PPMTool.Services
             }
             context.SaveChanges();
         }
+
+        /// <summary>
+        /// Returns all timesheets (including owner and entries) where activity code for at least one entry matches the one supplied
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="innateActivity"></param>
+        /// <returns></returns>
+        internal IEnumerable<Timesheet> GetAllForInnateCode(PPMToolContext context, InnateCode innateActivity)
+        {
+            if (innateActivity == null) return new List<Timesheet>();
+
+            return context.Timesheets
+                .Include(x => x.TimesheetEntries)
+                .ThenInclude(x => x.InnateCodeTask)
+                .ThenInclude(x => x.InnateCode)
+                .Where(x => x.TimesheetEntries
+                    .Any(x => x.InnateCodeTask.InnateCode.InnateCodeId == innateActivity.InnateCodeId)
+                );
+        }
     }
 }
