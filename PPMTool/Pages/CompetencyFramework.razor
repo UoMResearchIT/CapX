@@ -39,6 +39,25 @@
         </RadzenStack>
     </RadzenCard>
     <br />
+    <RadzenCard>
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
+                <RadzenText Text="Upload Legacy Excel Spreadsheet For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
+                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!userIsSuperuser" />
+                @if (userIsSuperuser || activeUserId == selectedPerson.PersonId)
+                {
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
+                        <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
+                        <RadzenText Text="This feature is deprecated and will be removed in the next release. This could be your last chance to import your competency grid from the legacy Excel spreadsheet!" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem; color: red" />
+                        <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
+                                         Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
+                                         InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+    <br />
     <div class="row">
         <div class="col">
             <h2>Competencies Framework Assessment</h2>

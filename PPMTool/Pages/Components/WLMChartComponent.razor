@@ -18,7 +18,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(1).Value)))"
-                                 Color="#008FFB" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -26,7 +26,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(2).Value)))"
-                                 Color="#00E396" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -34,7 +34,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(3).Value)))"
-                                 Color="#FEB019" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -42,7 +42,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(4).Value)))"
-                                 Color="#FF4560" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -50,7 +50,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(5).Value)))"
-                                 Color="#775DD0" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -58,7 +58,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(6).Value)))"
-                                 Color="#2E294E" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetBackgroundColourCode()" />
             }
             else
             {
@@ -68,7 +68,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(1).Value)))"
-                                 Color="#008FFB" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -76,7 +76,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(2).Value)))"
-                                 Color="#00E396" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -84,7 +84,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(3).Value)))"
-                                 Color="#FEB019" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -92,7 +92,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(4).Value)))"
-                                 Color="#FF4560" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -100,7 +100,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(5).Value)))"
-                                 Color="#775DD0" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
@@ -108,7 +108,7 @@
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(6).Value)))"
-                                 Color="#2E294E" />
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetBackgroundColourCode()" />
             }
         </ApexChart>
         <hr />
@@ -119,7 +119,7 @@
                     <tr>
                         @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
                         {
-                            <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" /></th>
+                            <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" Style="@($"color: {duty.GetBackgroundColourCode()}")" /></th>
                         }
                     </tr>
                 </thead>

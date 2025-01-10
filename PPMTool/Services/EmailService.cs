@@ -225,6 +225,7 @@ namespace PPMTool.Services
                             $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                     Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
                     SendEmail(recipients, subject, body.ToString());
+                    Task.Delay(1000);
                 }
             });
         }
@@ -353,6 +354,7 @@ namespace PPMTool.Services
                         .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
                             $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                     SendEmail(recipients, subject, body.ToString());
+                    Task.Delay(1000);
                 }
             });
         }

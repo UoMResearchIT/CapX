@@ -82,17 +82,6 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the timesheets for direct reports
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public IEnumerable<Timesheet> GetMyStaffTimesheets(PPMToolContext context, Person user)
-        {
-            return context.Timesheets
-                .Where(t => user.PeopleManaged.Any(p => p.PersonId == t.Owner.PersonId));
-        }
-
-        /// <summary>
         /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
@@ -103,16 +92,6 @@ namespace PPMTool.Services
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode);
-        }
-
-        /// <summary>
-        /// Gets just the timesheet table entities
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public IEnumerable<Timesheet> GetAllShallow(PPMToolContext context)
-        {
-            return context.Timesheets;
         }
 
         /// <summary>
@@ -132,7 +111,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="owner"></param>
         /// <returns></returns>
-        internal DateTime GetNextTimesheetStartDateForUser(PPMToolContext context, Person owner)
+        public DateTime GetNextTimesheetStartDateForUser(PPMToolContext context, Person owner)
         {
             var lastTimesheet = context.Timesheets
                 .Where(t => t.Owner.PersonId == owner.PersonId)
@@ -189,7 +168,7 @@ namespace PPMTool.Services
         /// <param name="startRange"></param>
         /// <param name="endRange"></param>
         /// <returns></returns>
-        internal IEnumerable<Timesheet> GetAllTimesheetsForPersonInDateRange(PPMToolContext context, Person person, DateTime startRange, DateTime endRange)
+        public IEnumerable<Timesheet> GetAllTimesheetsForPersonInDateRange(PPMToolContext context, Person person, DateTime startRange, DateTime endRange)
         {
             return context.Timesheets
                 .Include(t => t.TimesheetEntries)
@@ -200,11 +179,16 @@ namespace PPMTool.Services
         /// <summary>
         /// Method to remove a task from a person's timesheet template
         /// </summary>
-        /// <param name="context"></param>
         /// <param name="person"></param>
-        public List<int> GetTemplate(PPMToolContext context, Person person)
+        public List<int> GetTemplate(Person person)
         {
-            return person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateData = person.TimesheetTemplateData?.Split('|');
+            var templateTimesheetTasks = new List<int>();
+            if (templateData != null && templateData.All(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                templateTimesheetTasks = templateData.Select(int.Parse).ToList();
+            }
+            return templateTimesheetTasks;
         }
 
         /// <summary>
@@ -215,7 +199,7 @@ namespace PPMTool.Services
         /// <param name="task"></param>
         public void AddToTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateTimesheetTasks = GetTemplate(person);
 
             // If not already in the template then add it to the start and update the person record
             if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
@@ -236,7 +220,7 @@ namespace PPMTool.Services
         /// <param name="task"></param>
         public void DeleteFromTemplate(PPMToolContext context, Person person, InnateCodeTask task)
         {
-            var templateTimesheetTasks = person.TimesheetTemplateData?.Split('|')?.Select(int.Parse)?.ToList() ?? new List<int>();
+            var templateTimesheetTasks = GetTemplate(person);
 
             // If it is in the list then remove it and update the person record
             if (templateTimesheetTasks.Contains(task.InnateCodeTaskId))
@@ -258,7 +242,7 @@ namespace PPMTool.Services
         /// <param name="tasks"></param>
         public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks)
         {
-            var templateTimesheetTasks = GetTemplate(context, person);
+            var templateTimesheetTasks = GetTemplate(person);
 
             foreach (int taskId in templateTimesheetTasks)
             {
@@ -283,6 +267,25 @@ namespace PPMTool.Services
                 }
             }
             context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Returns all timesheets (including owner and entries) where activity code for at least one entry matches the one supplied
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="innateActivity"></param>
+        /// <returns></returns>
+        internal IEnumerable<Timesheet> GetAllForInnateCode(PPMToolContext context, InnateCode innateActivity)
+        {
+            if (innateActivity == null) return new List<Timesheet>();
+
+            return context.Timesheets
+                .Include(x => x.TimesheetEntries)
+                .ThenInclude(x => x.InnateCodeTask)
+                .ThenInclude(x => x.InnateCode)
+                .Where(x => x.TimesheetEntries
+                    .Any(x => x.InnateCodeTask.InnateCode.InnateCodeId == innateActivity.InnateCodeId)
+                );
         }
     }
 }
