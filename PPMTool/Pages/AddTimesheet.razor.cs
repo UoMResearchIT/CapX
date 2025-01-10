@@ -313,15 +313,15 @@ namespace PPMTool.Pages
             ErrorMessage = null;
 
             // Validation on minimum hours etc. and show a status message
-            if (timesheet.Status == TimesheetStatus.Submitted && dataGridEntities.Count == 0)
+            if ((timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover()) && dataGridEntities.Count == 0)
             {
                 ErrorMessage = new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error);
                 timesheet.Status = TimesheetStatus.New;
                 return;
             }
 
-            // Decide what to do based on the status of the timesheet
-            if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted)
+            // Decide what to do based on the status of the timesheet (if being submitted or saved or self-approved)
+            if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover())
             {
                 // Reset the timesheet entries on the model
                 timesheet.TimesheetEntries.Clear();
@@ -335,9 +335,9 @@ namespace PPMTool.Pages
                 {
                     // If a timesheet entry has no hours associated with it then
                     // delete it from the database and do not add it to the model
-                    if (entry.TotalHours == 0 && timesheet.Status == TimesheetStatus.Submitted)
+                    if (entry.TotalHours == 0 && (timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover()))
                     {
-                        LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName}...");
+                        LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName()}...");
                         TimesheetService.DeleteEntry(Context, entry, false);
                     }
                     else
@@ -368,6 +368,15 @@ namespace PPMTool.Pages
             // Refresh the data grid
             await dataGrid.Reload();
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Check whether the active user is a self approver of this timesheet and has just changed the status to Approved
+        /// </summary>
+        /// <returns></returns>
+        private bool SubmittingAsSelfApprover()
+        {
+            return timesheet.IsSelfApprover(ActiveUser) && timesheet.Status == TimesheetStatus.Approved;
         }
 
         /// <summary>
