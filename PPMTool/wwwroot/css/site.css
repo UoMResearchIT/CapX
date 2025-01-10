@@ -272,3 +272,7 @@ mark {
     border-radius: 2px;
     border: 1px solid #ccc
 }
+
+.timesheet-synopsis-table {
+    font-size: 0.9rem;
+}
