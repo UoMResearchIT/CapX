@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -149,6 +150,19 @@ namespace PPMTool.Services
         {
             return RTP == null ? null : GetAll(context)
                 .FirstOrDefault(p => p.RTP == RTP);
+        }
+
+        /// <summary>
+        /// Use the entry tracking to determine the old status of a project model before writing changes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectModel"></param>
+        /// <returns></returns>
+        internal ProjectStatus GetOldStatus(PPMToolContext context, Project projectModel)
+        {
+            var success = context.Entry(projectModel).OriginalValues.TryGetValue<ProjectStatus>(nameof(Project.ProjectStatus), out var status);
+            if (!success) throw new InvalidOperationException("Could not determine the old status of the project model.");
+            return status;
         }
     }
 }

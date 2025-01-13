@@ -183,6 +183,17 @@ namespace PPMTool.Pages
                             projectModel.Followers.Clear();
                         }
 
+                        // Set the actuals last updated if changed status to active from anything other than paused
+                        var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
+                        if (oldStatus != projectModel.ProjectStatus)
+                        {
+                            LogInformation($"Project status change: {oldStatus} -> {projectModel.ProjectStatus}");
+                        }
+                        if (oldStatus != ProjectStatus.Paused && projectModel.ProjectStatus == ProjectStatus.Active)
+                        {
+                            projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
+                        }
+
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
 
                         var res = ProjectService.Update(Context, projectModel);
