@@ -281,7 +281,8 @@ namespace PPMTool.Pages
 
                 // Get all the timesheet entries associated with the activity code for this project
                 if (projectModel?.InnateActivity == null) return;
-                var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity);
+                var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity).Where(x => x.Status == TimesheetStatus.Approved);
+                if (timesheets.Count() == 0) return;
 
                 // Find the earliest and latest timesheet weeks if no date set
                 var startWeek = actualsStartDate ?? timesheets.Min(x => x.StartDate);
