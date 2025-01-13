@@ -239,11 +239,11 @@ namespace PPMTool.Pages
         /// Method to generate the actuals report and populate the data grid
         /// </summary>
         /// <exception cref="Exception">Throw if there are multiple task/resource/week entries in the timesheet data</exception>
-        private void LoadActuals()
+        private async void LoadActuals()
         {
             Loading = true;
-            actualsReportRows = null;
-            InvokeAsync(StateHasChanged);
+            var tempActuals = new List<ActualsReportRow>();
+            var tempActualColumnSums = new Dictionary<DateTime, double>();
 
             try
             {
@@ -270,8 +270,6 @@ namespace PPMTool.Pages
                 timesheets = timesheets.Where(x => x.StartDate >= startWeek && x.StartDate <= endWeek);
 
                 // Create a row for every unique resource - task combination
-                actualsReportRows = new List<ActualsReportRow>();
-                actualsColumnSums = new Dictionary<DateTime, double>();
                 foreach (var timesheet in timesheets)
                 {
                     foreach (var entry in timesheet.TimesheetEntries)
@@ -283,7 +281,7 @@ namespace PPMTool.Pages
                         }
 
                         // See if we can find an existing row that matches the resource and task combination
-                        var row = actualsReportRows
+                        var row = tempActuals
                             .FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
 
                         // If not then create an empty object
@@ -295,7 +293,7 @@ namespace PPMTool.Pages
                                 Task = entry.InnateCodeTask,
                                 Hours = new Dictionary<DateTime, double>()
                             };
-                            actualsReportRows.Add(row);
+                            tempActuals.Add(row);
                         }
 
                         // Add the hours to the row
@@ -320,7 +318,7 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Filling blanks between {startWeek.ToShortDateString()} and {endWeek.ToShortDateString()}");
                     while (currentWeek <= endWeek)
                     {
-                        foreach (var row in actualsReportRows)
+                        foreach (var row in tempActuals)
                         {
                             if (!row.Hours.ContainsKey(currentWeek))
                             {
@@ -331,29 +329,33 @@ namespace PPMTool.Pages
                     }
                 }
 
-                // If possible, update the column sums
-                UpdateActualsColumnSums();
-
                 // Order and group the rows appropriately
-                actualsReportRows = actualsReportRows
+                actualsReportRows = tempActuals
                     .OrderBy(x => x.Task.TaskName)
                     .ThenBy(x => x.Resource.Name)
                     .ToList();
+
+                // The column sums must be invoke on the main thread
+                await InvokeAsync(() =>
+                {
+                    UpdateActualsColumnSums();
+                });
+
             }
             catch (Exception ex)
             {
-                LogError("Actuals report failing!");
+                LogError($"Actuals report failing!\n{ex}");
             }
             finally
             {
                 Debug.WriteLine($"** ...finished updating actuals.");
                 Loading = false;
-                InvokeAsync(StateHasChanged);
+                await InvokeAsync(StateHasChanged);
             }
         }
 
         /// <summary>
-        /// Based on the current
+        /// Based on the currently visible data in the data grid, update the column sums with a new Dictionary
         /// </summary>
         private void UpdateActualsColumnSums()
         {
@@ -369,23 +371,25 @@ namespace PPMTool.Pages
 
             // Setup the array
             var keys = actualsData?.SelectMany(x => x.Hours.Keys).Distinct();
-            actualsColumnSums = new Dictionary<DateTime, double>();
+            IDictionary<DateTime, double> tempActualColumnSums = new Dictionary<DateTime, double>();
 
             // Loop over dates
             foreach (var week in keys)
             {
                 // Reset
-                actualsColumnSums.Add(new KeyValuePair<DateTime, double>(week, 0));
+                tempActualColumnSums.Add(new KeyValuePair<DateTime, double>(week, 0));
 
                 // Loop over each row and update
                 foreach (var row in actualsData)
                 {
                     if (row.Hours.ContainsKey(week))
                     {
-                        actualsColumnSums[week] += row.Hours[week];
+                        tempActualColumnSums[week] += row.Hours[week];
                     }
                 }
             }
+
+            actualsColumnSums = tempActualColumnSums;
 
             Debug.WriteLine($"** ...finished updating column sums.");
         }
