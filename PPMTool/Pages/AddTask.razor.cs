@@ -239,7 +239,7 @@ namespace PPMTool.Pages
         /// Method to generate the actuals report and populate the data grid
         /// </summary>
         /// <exception cref="Exception">Throw if there are multiple task/resource/week entries in the timesheet data</exception>
-        private async void LoadActuals()
+        private void LoadActuals()
         {
             Loading = true;
             var tempActuals = new List<ActualsReportRow>();
@@ -336,7 +336,7 @@ namespace PPMTool.Pages
                     .ToList();
 
                 // The column sums must be invoke on the main thread
-                await InvokeAsync(() =>
+                InvokeAsync(() =>
                 {
                     UpdateActualsColumnSums();
                 });
@@ -350,7 +350,7 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine($"** ...finished updating actuals.");
                 Loading = false;
-                await InvokeAsync(StateHasChanged);
+                InvokeAsync(StateHasChanged);
             }
         }
 
