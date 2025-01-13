@@ -231,19 +231,49 @@ namespace PPMTool.Pages
             // Run actuals report if not copying or splitting
             if (!IsCopy && !IsSplit)
             {
-                EnqueueLoadData(async () => await Task.Run(LoadActuals));
+                KickOffActualsReportTask();
             }
+        }
+
+        /// <summary>
+        /// Method to first set the UI state, then queue a LoadActuals task then update the UI again
+        /// </summary>
+        private void KickOffActualsReportTask()
+        {
+            // Set state change
+            Loading = true;
+            var tempActuals = new List<ActualsReportRow>();
+            StateHasChanged();
+
+            // Queue background task
+            EnqueueLoadData(async () =>
+            {
+                await Task.Run(() =>
+                {
+                    LoadActuals(out tempActuals);
+
+                }).ContinueWith(t =>
+                {
+                    // Run back on the main thread
+                    InvokeAsync(() =>
+                    {
+                        UpdateActualsColumnSums(tempActuals);
+                        Loading = false;
+                        StateHasChanged();
+                    });
+                });
+            });
         }
 
         /// <summary>
         /// Method to generate the actuals report and populate the data grid
         /// </summary>
+        /// <param name="tempActuals"></param>
         /// <exception cref="Exception">Throw if there are multiple task/resource/week entries in the timesheet data</exception>
-        private void LoadActuals()
+        private void LoadActuals(out List<ActualsReportRow> tempActuals)
         {
-            Loading = true;
-            var tempActuals = new List<ActualsReportRow>();
-            var tempActualColumnSums = new Dictionary<DateTime, double>();
+            // Initialise
+            tempActuals = new List<ActualsReportRow>();
 
             try
             {
@@ -335,12 +365,6 @@ namespace PPMTool.Pages
                     .ThenBy(x => x.Resource.Name)
                     .ToList();
 
-                // The column sums must be invoke on the main thread
-                InvokeAsync(() =>
-                {
-                    UpdateActualsColumnSums();
-                });
-
             }
             catch (Exception ex)
             {
@@ -349,18 +373,17 @@ namespace PPMTool.Pages
             finally
             {
                 Debug.WriteLine($"** ...finished updating actuals.");
-                Loading = false;
-                InvokeAsync(StateHasChanged);
             }
         }
 
         /// <summary>
         /// Based on the currently visible data in the data grid, update the column sums with a new Dictionary
         /// </summary>
-        private void UpdateActualsColumnSums()
+        /// <param name="data">The actuals data to use to inform the column sums. If null, use whatever data is visible in the data grid.</param>
+        private void UpdateActualsColumnSums(IEnumerable<ActualsReportRow> data = null)
         {
             // Get only visible rows
-            var actualsData = actualsGrid?.View;
+            var actualsData = data ?? actualsGrid?.View;
             if (actualsData == null || actualsData.Count() == 0)
             {
                 Debug.WriteLine($"** Cannot update the column sums as no data!");
