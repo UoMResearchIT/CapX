@@ -125,8 +125,8 @@ namespace PPMTool.Pages
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
         private EditContext editContext;
-        private List<ActualsReportRow> actualsReportRows;
-        private IDictionary<DateTime, double> actualsColumnSums;
+        private List<ActualsReportRow> actualsReportRows = new List<ActualsReportRow>();
+        private IDictionary<DateTime, double> actualsColumnSums = new Dictionary<DateTime, double>();
         private DateTime? actualsStartDate;
         private DateTime? actualsEndDate;
         private bool hideEmptyWeeks = false;
@@ -369,8 +369,8 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Updating column sums...");
 
-            // Setup the array
-            var keys = actualsData?.SelectMany(x => x.Hours.Keys).Distinct();
+            // Setup the array using all weeks not just those visible
+            var keys = actualsReportRows?.SelectMany(x => x.Hours.Keys).Distinct();
             IDictionary<DateTime, double> tempActualColumnSums = new Dictionary<DateTime, double>();
 
             // Loop over dates
