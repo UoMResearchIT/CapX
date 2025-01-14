@@ -732,7 +732,7 @@ namespace PPMTool.Pages
         /// <param name="project"></param>
         private void EditProject(Project project)
         {
-            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
         }
 
         /// <summary>

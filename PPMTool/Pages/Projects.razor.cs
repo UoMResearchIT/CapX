@@ -120,7 +120,7 @@ namespace PPMTool.Pages
 
         private void AddProject()
         {
-            Navigation.NavigateTo($"/addproject/-1");
+            Navigation.NavigateTo($"projects/addproject/-1");
         }
     }
 }
