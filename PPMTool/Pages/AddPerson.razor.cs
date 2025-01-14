@@ -136,7 +136,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing absences...");
-                    Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
+                    Navigation.NavigateTo($"people/addabsence/{personModel.PersonId}");
                 }
             }
         }
