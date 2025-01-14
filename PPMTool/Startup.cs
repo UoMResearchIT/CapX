@@ -21,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 using Radzen;
+using Sentry;
 
 namespace PPMTool
 {
@@ -129,6 +130,16 @@ namespace PPMTool
             IDbContextFactory<PPMToolContext> contextFactory
         )
         {
+            SentrySdk.Init(o =>
+            {
+                o.Dsn = Configuration.GetValue<string>("Sentry:Dsn");
+                o.Release = Configuration.GetValue<string>("VersionNumber");
+
+#if LOCAL || DEBUG
+                o.Debug = true;
+#endif
+            });
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

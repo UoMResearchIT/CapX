@@ -48,6 +48,8 @@ namespace PPMTool
                 {
                     webBuilder.UseStaticWebAssets();
                     webBuilder.UseStartup<Startup>();
+
+                    webBuilder.UseSentry();
                 });
 
             }

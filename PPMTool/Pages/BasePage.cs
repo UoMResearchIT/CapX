@@ -11,6 +11,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Sentry;
 
 namespace PPMTool.Pages
 {
@@ -129,24 +130,61 @@ namespace PPMTool.Pages
             return lm || su;
         }
 
+        /// <summary>
+        /// Logs the error to the Sentry platform
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="sentryLevel"></param>
+        private void LogToSentry(string message, SentryLevel sentryLevel = SentryLevel.Info, Exception exception = null)
+        {
+            if (exception != null)
+            {
+                SentrySdk.CaptureException(exception);
+            }
+            else
+            {
+                SentrySdk.CaptureMessage(message, sentryLevel);
+            }
+        }
+
+        /// <summary>
+        /// Log information to the logging sinks
+        /// </summary>
+        /// <param name="message"></param>
         public void LogInformation(string message)
         {
             Logger?.LogInformation($"{ActiveUserName}: {message}");
         }
 
+        /// <summary>
+        /// Log the warning to the logging sinks
+        /// </summary>
+        /// <param name="message"></param>
         public void LogWarning(string message)
         {
             Logger.LogWarning($"{ActiveUserName}: {message}");
+            //LogToSentry(message, SentryLevel.Warning);
         }
 
+        /// <summary>
+        /// Log the error to the logging sinks
+        /// </summary>
+        /// <param name="message"></param>
         public void LogError(string message)
         {
             Logger?.LogError(message);
+            //LogToSentry(message, SentryLevel.Error);
         }
 
+        /// <summary>
+        /// Log the error to the logging sinks
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="exception"></param>
         public void LogError(string message, Exception exception)
         {
             Logger?.LogError(exception, message);
+            //LogToSentry(message, SentryLevel.Error, exception);
         }
 
         public void ShowTooltip(ElementReference elementReference, string message, int delay = 500)
