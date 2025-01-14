@@ -1,4 +1,4 @@
-﻿@page "/addabsence/{PersonId:int}"
+﻿@page "/people/addabsence/{PersonId:int}"
 @inherits AddPersonProperty<Absence>
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
@@ -7,7 +7,7 @@
 <div class="container">
     @if (personModel != null)
     {
-        <h1>Absences</h1>
+        <h1>Edit Absences</h1>
         <hr />
         <div class="card">
             <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">

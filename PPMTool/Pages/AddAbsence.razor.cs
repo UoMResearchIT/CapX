@@ -46,7 +46,7 @@ namespace PPMTool.Pages
             LogInformation($"Discarding absence changes!");
 
             // Just navigate away as nothing will have been written to the database
-            Navigation.NavigateTo($"addperson/{PersonId}");
+            Navigation.NavigateTo($"people/addperson/{PersonId}");
         }
 
         private void HandleValidSubmit()
@@ -116,7 +116,7 @@ namespace PPMTool.Pages
                 }
 
                 // Navigate back
-                Navigation.NavigateTo($"addperson/{PersonId}");
+                Navigation.NavigateTo($"people/addperson/{PersonId}");
             }
         }
     }

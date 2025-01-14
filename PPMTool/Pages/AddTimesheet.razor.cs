@@ -124,7 +124,7 @@ namespace PPMTool.Pages
 
                         // Redirect to the newly created Timesheet so refrshing the page
                         // with the -1 parameter doesn't create another new timesheet.
-                        Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+                        Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
                         cancellationTokenSource.Cancel();
                         return;
                     }
@@ -603,7 +603,7 @@ namespace PPMTool.Pages
         /// <param name="timesheet"></param>
         public void GoToTimesheet(Timesheet timesheet)
         {
-            Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+            Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
         }
     }
 }

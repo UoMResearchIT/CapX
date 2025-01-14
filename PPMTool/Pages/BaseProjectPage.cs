@@ -18,7 +18,7 @@ namespace PPMTool.Pages
 
         protected void NavigateToProjectDetails(int id, bool newWindow = false, bool filterDueNotes = false)
         {
-            string url = $"/projectdetails/{id}";
+            string url = $"projects/projectdetails/{id}";
 
             if (filterDueNotes)
             {

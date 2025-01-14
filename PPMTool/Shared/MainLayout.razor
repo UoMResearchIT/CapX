@@ -36,13 +36,13 @@
             </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Projects" Icon="work" Path="myprojects">
+                    <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
+                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" Selected="true" />
                             </Authorized>
                         </AuthorizeView>
-                        <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" Selected="true" />
+                        <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
                         <AuthorizeView Roles="Superuser,Manager,Developer">
                             <Authorized Context="sub_context_1">
                                 <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
@@ -58,7 +58,7 @@
             </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager,Developer">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="People" Icon="people" Path="people">
+                    <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
                         <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
@@ -205,11 +205,11 @@
         {
             if (match.ItemType == typeof(Project))
             {
-                Navigation.NavigateTo($"projectdetails/{match.EntityId}");
+                Navigation.NavigateTo($"projects/projectdetails/{match.EntityId}");
             }
             else
             {
-                Navigation.NavigateTo($"addperson/{match.EntityId}");
+                Navigation.NavigateTo($"people/addperson/{match.EntityId}");
             }
         }
         ClearMagicBar();

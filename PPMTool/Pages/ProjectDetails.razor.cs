@@ -732,7 +732,7 @@ namespace PPMTool.Pages
         /// <param name="project"></param>
         private void EditProject(Project project)
         {
-            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
         }
 
         /// <summary>
@@ -842,7 +842,7 @@ namespace PPMTool.Pages
         /// <param name="noteTolink"></param>
         private string GetCopyLinkText(Note noteTolink)
         {
-            return $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
+            return $"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
         }
 
         /// <summary>
@@ -917,7 +917,7 @@ namespace PPMTool.Pages
                 var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
                 }
                 else
                 {
@@ -955,7 +955,7 @@ namespace PPMTool.Pages
         /// <param name="task"></param>
         void EditTask(SubTask task)
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}");
         }
 
         /// <summary>
@@ -963,7 +963,7 @@ namespace PPMTool.Pages
         /// </summary>
         void AddTask()
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/-1");
         }
 
         /// <summary>
@@ -973,7 +973,7 @@ namespace PPMTool.Pages
         void CopyTask(SubTask task)
         {
             // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
         }
 
         /// <summary>
@@ -983,7 +983,7 @@ namespace PPMTool.Pages
         void SplitTask(SubTask task)
         {
             // Navigate to the split task page passing the task ID to be split
-            Navigation.NavigateTo($"splittask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/splittask/{project.ProjectId}/{task.SubTaskId}");
         }
 
         /// <summary>

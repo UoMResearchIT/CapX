@@ -286,7 +286,7 @@ namespace PPMTool.Pages
         private void DiscardChanges()
         {
             LogInformation($"Discarding splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent.ProjectModel.GetFullName()}!");
-            Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
+            Navigation.NavigateTo($"projects/projectdetails/{originalAddTaskComponent?.ProjectId}");
         }
 
         private void UpdateAndSave()
@@ -316,7 +316,7 @@ namespace PPMTool.Pages
                 ProjectService.Update(Context, owningProject);
 
                 // Navigate back
-                Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
+                Navigation.NavigateTo($"projects/projectdetails/{originalAddTaskComponent?.ProjectId}");
             }
             else
             {

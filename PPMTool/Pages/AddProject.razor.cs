@@ -267,7 +267,7 @@ namespace PPMTool.Pages
         {
             if (gotoDetails)
             {
-                Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
+                Navigation.NavigateTo($"projects/projectdetails/{projectModel.ProjectId}");
             }
             else
             {

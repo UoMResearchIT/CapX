@@ -369,7 +369,7 @@ namespace PPMTool.Pages
                 var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
                 if (project != null)
                 {
-                    Navigation.NavigateTo($"/projectdetails/{project.ProjectId}");
+                    Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
                 }
             }
 
