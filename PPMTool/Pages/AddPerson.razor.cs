@@ -119,7 +119,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing workload model changes...");
-                    Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
+                    Navigation.NavigateTo($"people/addavailabilitychange/{personModel.PersonId}");
                 }
             }
         }

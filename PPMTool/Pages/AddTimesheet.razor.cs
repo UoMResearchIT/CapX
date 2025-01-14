@@ -603,7 +603,7 @@ namespace PPMTool.Pages
         /// <param name="timesheet"></param>
         public void GoToTimesheet(Timesheet timesheet)
         {
-            Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+            Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
         }
     }
 }
