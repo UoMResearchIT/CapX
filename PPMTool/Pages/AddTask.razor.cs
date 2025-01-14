@@ -489,7 +489,7 @@ namespace PPMTool.Pages
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
-                    Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                    Navigation.NavigateTo($"projects/projectdetails/{ProjectId}");
                 }
             }
         }
@@ -578,7 +578,7 @@ namespace PPMTool.Pages
         private void DiscardChanges()
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Discarding task changes!");
-            Navigation.NavigateTo($"projectdetails/{ProjectModel.ProjectId}");
+            Navigation.NavigateTo($"projects/projectdetails/{ProjectModel.ProjectId}");
         }
 
         /// <summary>
@@ -731,7 +731,7 @@ namespace PPMTool.Pages
                         ProjectService.Update(Context, ProjectModel);
 
                         // Return to the project details page if not triggered from a split task page
-                        Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                        Navigation.NavigateTo($"projects/projectdetails/{ProjectId}");
                     }
                 }
             }
