@@ -97,7 +97,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Timestamp recording when actuals were last updated.
         /// </summary>
-        public string ActualsLastUpdated { get; set; }
+        public string ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
         /// Constructor also adds default status messages

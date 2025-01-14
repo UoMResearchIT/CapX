@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person : ObjectWithStatusMessages
+    public class Person : ObjectWithStatusMessages, IComparable
     {
         public int PersonId { get; set; }
 
@@ -51,6 +51,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public Person LineManager { get; set; }
+
+        /// <summary>
+        /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
+        /// </summary>
+        public string TimesheetTemplateData { get; set; }
 
         /// <summary>
         /// Any changes to their WLMs
@@ -191,6 +196,16 @@ namespace PPMTool.Data.Entities
         internal bool IsCurrentStaff()
         {
             return StartDate <= DateTime.Today && (EndDate == null || EndDate > DateTime.Today);
+        }
+
+        /// <summary>
+        /// Default comparer for person objects compares name
+        /// </summary>
+        /// <param name="obj">Other person</param>
+        /// <returns></returns>
+        public int CompareTo(object obj)
+        {
+            return Name.CompareTo((obj as Person)?.Name);
         }
     }
 }

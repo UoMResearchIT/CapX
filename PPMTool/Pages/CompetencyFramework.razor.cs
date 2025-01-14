@@ -19,9 +19,6 @@ namespace PPMTool.Pages
     public partial class CompetencyFramework : BasePage
     {
         [Inject]
-        private RolesService RolesService { get; set; }
-
-        [Inject]
         private PersonService PersonService { get; set; }
 
         [Inject]
@@ -30,7 +27,7 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
-        private IEnumerable<Person> people;
+        private IEnumerable<Person> availablePeople;
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
         private int activeUserId;
@@ -54,14 +51,21 @@ namespace PPMTool.Pages
 
             // Check user permissions
             var role = RolesService.GetByUsername(Context, ActiveUserName);
-            userIsSuperuser = role?.RoleType == Enums.RoleType.Superuser;
-            activeUserId = role?.Person.PersonId ?? 0;
+            userIsSuperuser = role?.RoleType == RoleType.Superuser;
+            activeUserId = ActiveUser?.PersonId ?? 0;
 
             // Get the active user by default
-            selectedPerson = role?.Person;
+            selectedPerson = ActiveUser;
 
             // Get starting lists from the DB
-            people = PersonService.GetAll(Context).Where(x => x.IsCurrentStaff()).OrderBy(x => x.Name);
+            availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
+            if (!userIsSuperuser)
+            {
+                // Self plus direct reports who are current
+                availablePeople = availablePeople
+                    .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
+                    .OrderBy(x => x.Name);
+            }
             competencies = CompetencyService.GetAll(Context);
 
             // Prepare the bindings for the expansion setting of the accordions
@@ -104,7 +108,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
             if (ValidateAssessment(assessment, out var message)) CompetencyService.AddAssessment(Context, assessment);
-            else NotificationService.Notify(NotificationSeverity.Error, "Validation Error", message);
+            else ShowValidationError(message);
             StateHasChanged();
         }
 
@@ -112,8 +116,21 @@ namespace PPMTool.Pages
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
             if (ValidateAssessment(assessment, out var message)) CompetencyService.UpdateAssessment(Context, assessment);
-            else NotificationService.Notify(NotificationSeverity.Error, "Validation Error", message);
+            else ShowValidationError(message);
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// General method to show a validation error notification
+        /// </summary>
+        /// <param name="message"></param>
+        private void ShowValidationError(string message)
+        {
+            ShowNotification(new CapXNotificationMessage
+            {
+                Summary = "Validation Error",
+                Detail = message
+            });
         }
 
         /// <summary>
@@ -123,17 +140,17 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            if (string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
+            if (string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
             {
                 message = "Evidence is required!";
                 return false;
             }
-            else if (string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyDescription)))
+            else if (string.IsNullOrWhiteSpace(assessment.CompetencyDescription) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyDescription)))
             {
                 message = "Competency description is required!";
                 return false;
             }
-            else if (string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyObjective)))
+            else if (string.IsNullOrWhiteSpace(assessment.CompetencyObjective) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyObjective)))
             {
                 message = "Competency objective is required!";
                 return false;
@@ -303,13 +320,11 @@ namespace PPMTool.Pages
                 catch (Exception ex)
                 {
                     // Present an error notification to the user
-                    InvokeAsync(() => ShowNotification(new NotificationMessage
+                    InvokeAsync(() => ShowNotification(new CapXNotificationMessage
                     {
-                        Severity = NotificationSeverity.Error,
                         Summary = "Upload Issue",
                         Detail = $"{ex.Message}",
-                        Duration = 10000,
-                        Style = "position: fixed; top: 100%; left: 50%; transform: translate(-50%, -100%); width: 100%"
+                        Duration = 10000
                     }));
                     LogError($"{ex.Message}");
 

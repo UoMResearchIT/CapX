@@ -1,9 +1,26 @@
 ﻿
 <RadzenStack AlignItems="AlignItems.Center" Class="rz-m-12" Gap="2rem">
     <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-    <RadzenText TextStyle="TextStyle.Subtitle2">Loading...</RadzenText>
+    <RadzenText Text="@SpinnerText" TextStyle="TextStyle.Subtitle2" />
 </RadzenStack>
 
 @code {
+    private string spinnerText = "Loading...";
 
+    [Parameter]
+    public string SpinnerText
+    {
+        get => spinnerText;
+        set
+        {
+            if (spinnerText != value)
+            {
+                spinnerText = value;
+                SpinnerTextChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<string> SpinnerTextChanged { get; set; }
 }

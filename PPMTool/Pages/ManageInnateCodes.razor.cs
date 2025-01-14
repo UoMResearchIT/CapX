@@ -35,12 +35,12 @@ namespace PPMTool.Pages
 
         private void EditCode(InnateCode code)
         {
-            Navigation.NavigateTo($"/addinnatecode/{code.InnateCodeId}");
+            Navigation.NavigateTo($"addinnatecode/{code.InnateCodeId}");
         }
 
         private void AddCode()
         {
-            Navigation.NavigateTo("/addinnatecode/-1");
+            Navigation.NavigateTo("addinnatecode/-1");
         }
     }
 }

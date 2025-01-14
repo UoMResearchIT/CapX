@@ -1,4 +1,8 @@
-﻿function scrollToElement(id) {
+﻿function setDotNetReference(dotNetHelper) {
+    window.dotNetHelper = dotNetHelper;
+}
+
+function scrollToElement(id) {
     const e = document.getElementById(id);
     e.scrollIntoView();
     e.focus();
@@ -46,11 +50,19 @@ function insertTextAtCaret(text) {
     newRange.setEndAfter(textNode);
     sel.removeAllRanges();
     sel.addRange(newRange);
+
+    // Get the current text in the rz-html-editor-content div
+    var editorContent = document.querySelector('#editor-entry .rz-html-editor-content').innerHTML;
+
+    // Call the C# method to fire the OnChange event
+    if (window.dotNetHelper) {
+        window.dotNetHelper.invokeMethodAsync('OnEditorChangeFromJS', editorContent);
+    }
 }
 
-function copyText (text) {
+function copyText(text) {
     navigator.clipboard.writeText(text).then(function () {
-        alert("Link to note copied to clipboard!");
+        alert("Link to note copied to clipboard!\n" + text);
     })
     .catch(function (error) {
         alert(error);

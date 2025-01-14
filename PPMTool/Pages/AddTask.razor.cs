@@ -3,19 +3,48 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentDateTime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
     public partial class AddTask : DataGridPage<Resource>
     {
+        /// <summary>
+        /// A class representing a row of the actuals reporting grid
+        /// </summary>
+        public class ActualsReportRow
+        {
+            /// <summary>
+            /// Resource associated with the cell
+            /// </summary>
+            public Person Resource { get; set; }
+
+            /// <summary>
+            /// Task to which the time was booked
+            /// </summary>
+            public InnateCodeTask Task { get; set; }
+
+            /// <summary>
+            /// Dictionary representing the weeks and values for this particular row
+            /// </summary>
+            public IDictionary<DateTime, double> Hours { get; set; } = new Dictionary<DateTime, double>();
+
+            /// <summary>
+            /// Total number of hours on the row
+            /// </summary>
+            public double RowTotal { get; set; }
+        }
+
         [Inject]
         private ProjectService ProjectService { get; set; }
 
@@ -26,10 +55,10 @@ namespace PPMTool.Pages
         private SubTaskService SubTaskService { get; set; }
 
         [Inject]
-        private RolesService RolesService { get; set; }
+        private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Inject]
-        private FinancialReferenceService FinancialReferenceService { get; set; }
+        private TimesheetService TimesheetService { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -70,6 +99,20 @@ namespace PPMTool.Pages
             }
         }
 
+        private RadzenDataGrid<ActualsReportRow> actualsGrid;
+        public RadzenDataGrid<ActualsReportRow> ActualsGrid
+        {
+            get => actualsGrid;
+            set
+            {
+                if (value != actualsGrid)
+                {
+                    actualsGrid = value;
+                    if (actualsGrid != null) UpdateActualsColumnSums();
+                }
+            }
+        }
+
         public bool IsValid { get; private set; } = true;
 
         private int? selectedPredecessorId;
@@ -82,6 +125,11 @@ namespace PPMTool.Pages
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
         private EditContext editContext;
+        private List<ActualsReportRow> actualsReportRows = new List<ActualsReportRow>();
+        private IDictionary<DateTime, double> actualsColumnSums = new Dictionary<DateTime, double>();
+        private DateTime? actualsStartDate;
+        private DateTime? actualsEndDate;
+        private bool hideEmptyWeeks = false;
 
         protected override void OnInitialized()
         {
@@ -89,8 +137,19 @@ namespace PPMTool.Pages
             InitialiseComponent();
         }
 
-        public void InitialiseComponent(bool restoreModels = true)
+        /// <summary>
+        /// Initialises the component with the project and task models.
+        /// </summary>
+        /// <param name="referenceContext">Overwrite the current context with a new context of your choice (erase tracking information)</param>
+        /// <param name="restoreModels">Restore the model based on its current context object</param>
+        public void InitialiseComponent(PPMToolContext referenceContext = null, bool restoreModels = true)
         {
+            // Overwrite the context
+            if (referenceContext != null && referenceContext != Context)
+            {
+                Context = referenceContext;
+            }
+
             people = PersonService.GetAll(Context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
                 .OrderBy(x => x.Name)
@@ -99,7 +158,10 @@ namespace PPMTool.Pages
 
             // Get project model from DB and manually restore it in case it has been modified elsewhere
             ProjectModel = ProjectService.GetById(Context, ProjectId);
-            if (restoreModels) ProjectService.RestoreModel(Context, ref projectModel);
+            if (restoreModels)
+            {
+                ProjectService.RestoreModel(Context, ref projectModel);
+            }
 
             // No project then stop initialising
             if (ProjectModel == null)
@@ -109,7 +171,10 @@ namespace PPMTool.Pages
             }
 
             // Initialise sub tasks
-            if (ProjectModel.SubTasks == null) ProjectModel.SubTasks = new List<SubTask>();
+            if (ProjectModel.SubTasks == null)
+            {
+                ProjectModel.SubTasks = new List<SubTask>();
+            }
 
             // Initialise data grid entities
             dataGridEntities = new List<Resource>();
@@ -127,7 +192,7 @@ namespace PPMTool.Pages
                 TaskModel = IsCopy ? SubTaskService.Clone(Context, referenceTask) : referenceTask;
 
                 // Assign the predecessor option
-                if (TaskModel.Predecessor != null) selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
+                InitialisePredecessorBinding();
 
                 // Assign resources
                 foreach (var r in TaskModel.AssignedResources)
@@ -161,7 +226,217 @@ namespace PPMTool.Pages
             var role = RolesService.GetByUsername(Context, ActiveUserName);
             EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
 
-            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+
+            // Run actuals report if not copying or splitting
+            if (!IsCopy && !IsSplit)
+            {
+                KickOffActualsReportTask();
+            }
+        }
+
+        /// <summary>
+        /// Method to first set the UI state, then queue a LoadActuals task then update the UI again
+        /// </summary>
+        private void KickOffActualsReportTask()
+        {
+            // Set state change
+            Loading = true;
+            var tempActuals = new List<ActualsReportRow>();
+            StateHasChanged();
+
+            // Queue background task
+            EnqueueLoadData(async () =>
+            {
+                await Task.Run(() =>
+                {
+                    LoadActuals(out tempActuals);
+
+                }).ContinueWith(t =>
+                {
+                    // Run back on the main thread
+                    InvokeAsync(() =>
+                    {
+                        UpdateActualsColumnSums(tempActuals);
+                        Loading = false;
+                        StateHasChanged();
+                    });
+                });
+            });
+        }
+
+        /// <summary>
+        /// Method to generate the actuals report and populate the data grid
+        /// </summary>
+        /// <param name="tempActuals"></param>
+        /// <exception cref="Exception">Throw if there are multiple task/resource/week entries in the timesheet data</exception>
+        private void LoadActuals(out List<ActualsReportRow> tempActuals)
+        {
+            // Initialise
+            tempActuals = new List<ActualsReportRow>();
+
+            try
+            {
+                Debug.WriteLine("** Running actuals report...");
+
+                // Get all the timesheet entries associated with the activity code for this project
+                if (projectModel?.InnateActivity == null) return;
+                var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity).Where(x => x.Status == TimesheetStatus.Approved);
+                if (timesheets.Count() == 0) return;
+
+                // Find the earliest and latest timesheet weeks if no date set
+                var startWeek = actualsStartDate ?? timesheets.Min(x => x.StartDate);
+                var endWeek = actualsEndDate ?? timesheets.Max(x => x.StartDate);
+
+                // Correct to start of week
+                startWeek = startWeek.FirstDayOfWeek().Date;
+                endWeek = endWeek.FirstDayOfWeek().Date;
+
+                if (endWeek <= startWeek)
+                {
+                    endWeek = startWeek.AddDays(7);
+                }
+
+                // Revise timesheet selection based on date range selected
+                timesheets = timesheets.Where(x => x.StartDate >= startWeek && x.StartDate <= endWeek);
+
+                // Create a row for every unique resource - task combination
+                foreach (var timesheet in timesheets)
+                {
+                    foreach (var entry in timesheet.TimesheetEntries)
+                    {
+                        // Ignore the tasks that do not match the activity for the project
+                        if (entry.InnateCodeTask.InnateCode.InnateCodeId != projectModel.InnateActivity.InnateCodeId)
+                        {
+                            continue;
+                        }
+
+                        // See if we can find an existing row that matches the resource and task combination
+                        var row = tempActuals
+                            .FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
+
+                        // If not then create an empty object
+                        if (row == null)
+                        {
+                            row = new ActualsReportRow
+                            {
+                                Resource = timesheet.Owner,
+                                Task = entry.InnateCodeTask,
+                                Hours = new Dictionary<DateTime, double>()
+                            };
+                            tempActuals.Add(row);
+                        }
+
+                        // Add the hours to the row
+                        if (!row.Hours.ContainsKey(timesheet.StartDate))
+                        {
+                            entry.UpdateTotalHours();
+                            row.Hours.Add(timesheet.StartDate, entry.TotalHours);
+                            row.RowTotal += entry.TotalHours;
+                        }
+                        else
+                        {
+                            // This shouldn't happen as there should only be one entry for the week, resource, task combination
+                            throw new Exception("Actuals report failed by finding duplicate week/resource/task combination in the timesheet database!");
+                        }
+                    }
+                }
+
+                // Fill in the blank weeks
+                if (!hideEmptyWeeks)
+                {
+                    var currentWeek = startWeek;
+                    Debug.WriteLine($"** Filling blanks between {startWeek.ToShortDateString()} and {endWeek.ToShortDateString()}");
+                    while (currentWeek <= endWeek)
+                    {
+                        foreach (var row in tempActuals)
+                        {
+                            if (!row.Hours.ContainsKey(currentWeek))
+                            {
+                                row.Hours.Add(currentWeek, 0);
+                            }
+                        }
+                        currentWeek = currentWeek.AddDays(7);
+                    }
+                }
+
+                // Order and group the rows appropriately
+                actualsReportRows = tempActuals
+                    .OrderBy(x => x.Task.TaskName)
+                    .ThenBy(x => x.Resource.Name)
+                    .ToList();
+
+            }
+            catch (Exception ex)
+            {
+                LogError($"Actuals report failing!\n{ex}");
+            }
+            finally
+            {
+                Debug.WriteLine($"** ...finished updating actuals.");
+            }
+        }
+
+        /// <summary>
+        /// Based on the currently visible data in the data grid, update the column sums with a new Dictionary
+        /// </summary>
+        /// <param name="data">The actuals data to use to inform the column sums. If null, use whatever data is visible in the data grid.</param>
+        private void UpdateActualsColumnSums(IEnumerable<ActualsReportRow> data = null)
+        {
+            // Get only visible rows
+            var actualsData = data ?? actualsGrid?.View;
+            if (actualsData == null || actualsData.Count() == 0)
+            {
+                Debug.WriteLine($"** Cannot update the column sums as no data!");
+                return;
+            }
+
+            Debug.WriteLine($"** Updating column sums...");
+
+            // Setup the array using all weeks not just those visible
+            var keys = actualsReportRows?.SelectMany(x => x.Hours.Keys).Distinct();
+            IDictionary<DateTime, double> tempActualColumnSums = new Dictionary<DateTime, double>();
+
+            // Loop over dates
+            foreach (var week in keys)
+            {
+                // Reset
+                tempActualColumnSums.Add(new KeyValuePair<DateTime, double>(week, 0));
+
+                // Loop over each row and update
+                foreach (var row in actualsData)
+                {
+                    if (row.Hours.ContainsKey(week))
+                    {
+                        tempActualColumnSums[week] += row.Hours[week];
+                    }
+                }
+            }
+
+            actualsColumnSums = tempActualColumnSums;
+
+            Debug.WriteLine($"** ...finished updating column sums.");
+        }
+
+        /// <summary>
+        /// Callback fired when the filter is applied or cleared
+        /// </summary>
+        private void ActualsReportFiltered()
+        {
+            UpdateActualsColumnSums();
+        }
+
+        /// <summary>
+        /// Initialise the binding of the predecessor ID in the dropdown
+        /// </summary>
+        public void InitialisePredecessorBinding()
+        {
+            if (TaskModel.Predecessor != null)
+            {
+                Debug.WriteLine($"** Task {TaskModel.SubTaskId}: Setting selected predecessor ID to {TaskModel.Predecessor.SubTaskId}");
+                selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
+                StateHasChanged();
+            }
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -169,7 +444,7 @@ namespace PPMTool.Pages
             base.OnAfterRender(firstRender);
 
             // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("/nothinghere");
+            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
 
         private string GetNiceString(Enum x)
@@ -197,7 +472,7 @@ namespace PPMTool.Pages
                     "Delete Task") ?? false;
                 if (confirmed)
                 {
-                    LogWarning($"Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
+                    LogWarning($"Task {TaskModel?.SubTaskId}: Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
 
                     // Call delete on the subtask service and let it remove the resources
                     SubTaskService.Delete(Context, TaskModel);
@@ -210,6 +485,7 @@ namespace PPMTool.Pages
                     ProjectModel.UpdateProjectMetaData(false, finrefs);
 
                     // Update the project in the database
+                    LogInformation($"Saving project {ProjectModel?.GetFullName()}...");
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
@@ -252,7 +528,7 @@ namespace PPMTool.Pages
 
         protected override void CancelEdit(Resource resource)
         {
-            LogInformation($"Cancel edit row for {resource.GetSensibleObjectName()}");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Cancel edit row for {resource.GetSensibleObjectName()}");
             Reset();
             SubTaskService.RestoreModel(Context, ref resource);
             dataGrid.CancelEditRow(resource);
@@ -261,7 +537,7 @@ namespace PPMTool.Pages
 
         protected override void OnCreateRow(Resource resource)
         {
-            LogInformation($"Created new row for {resource.GetSensibleObjectName()}");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
             dataGridEntities.Add(resource);
             entityToInsert = null;
             TaskModel.UpdateUnmetDemand(dataGridEntities);
@@ -301,7 +577,7 @@ namespace PPMTool.Pages
 
         private void DiscardChanges()
         {
-            LogInformation($"Discarding task changes!");
+            LogInformation($"Task {TaskModel?.SubTaskId}: Discarding task changes!");
             Navigation.NavigateTo($"projectdetails/{ProjectModel.ProjectId}");
         }
 
@@ -310,10 +586,10 @@ namespace PPMTool.Pages
         /// </summary>
         public void UpdateSubTaskModelFromResourceDataGrid()
         {
-            LogInformation("Validating the sub task model...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Validating the sub task model...");
             editContext?.Validate();
 
-            LogInformation("Updating sub task resources from data grid...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating sub task resources from data grid...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
@@ -324,14 +600,15 @@ namespace PPMTool.Pages
             }
 
             // Update predecessor task
+            Debug.WriteLine($"** Task {TaskModel.SubTaskId}: Setting predecessor task with ID = {selectedPredecessorId}");
             TaskModel.Predecessor = ProjectModel.SubTasks.FirstOrDefault(s => s.SubTaskId == selectedPredecessorId);
 
-            LogInformation("Scheduling task...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
             // Schedule (updates planned work, duration etc.)
             error = TaskModel.Schedule(false, ProjectModel);
 
-            LogInformation("Updating actual hours from resources...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 
             // Update actual hours
             TaskModel.ActualWorkHours = 0;
@@ -340,7 +617,7 @@ namespace PPMTool.Pages
                 TaskModel.ActualWorkHours += res.ActualWorkHours;
             }
 
-            LogInformation("Updating costs...");
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating costs...");
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
@@ -382,6 +659,8 @@ namespace PPMTool.Pages
                 IsValid = false;
             }
 
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: ...Validation complete!");
+
             // Update UI
             StateHasChanged();
         }
@@ -389,23 +668,51 @@ namespace PPMTool.Pages
         /// <summary>
         /// Handles the edit form submission. Can called by owning components.
         /// </summary>
-        public void HandleSubmit()
+        public async void HandleSubmit()
         {
             if (ProjectModel != null)
             {
                 UpdateSubTaskModelFromResourceDataGrid();
                 if (IsValid)
                 {
-                    LogInformation("Saving sub task...");
+                    // Warn of the fact that they are setting a zero demand
+                    var confirmed = true;
+                    if (TaskModel.Demand == 0)
+                    {
+                        var message = "You are about to set the demand for this task to zero.";
+
+                        if (TaskModel.AssignedResources.Count != 0)
+                        {
+                            message += " You also have resources assigned to this task despite its zero demand.";
+                        }
+
+                        message += " Are you sure you want to do this?";
+
+                        confirmed = await DialogService.Confirm(message, "Zero Demand Task") ?? false;
+                    }
+
+                    // Bail early if they do not want to continue
+                    if (!confirmed)
+                    {
+                        if (TaskModel.AssignedResources.Count != 0)
+                        {
+                            IsValid = false;
+                            error = "Task has zero demand but has resources assigned!";
+                        }
+                        return;
+                    }
+
+                    LogInformation($"Task {TaskModel?.SubTaskId}: Saving sub task...");
+
+                    // Add reference to the project
+                    TaskModel.OwningProject = ProjectModel;
+                    Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Owning project ID = {taskModel.OwningProject?.ProjectId}");
 
                     // Add new new to task list for project if it is a new one
                     if (TaskModel.SubTaskId <= 0)
                     {
                         // Add the subtask to the database
                         SubTaskService.Add(Context, TaskModel);
-
-                        // Add reference to the project
-                        ProjectModel.SubTasks.Add(TaskModel);
                     }
                     else
                     {
@@ -413,16 +720,24 @@ namespace PPMTool.Pages
                         SubTaskService.Update(Context, TaskModel);
                     }
 
-                    // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
-                    ProjectModel.UpdateProjectMetaData(false, finrefs);
+                    // Update the project summary values if not splitting as that is taken care of on the split task page
+                    if (!IsSplit)
+                    {
+                        var finrefs = FinancialReferenceService.GetAll(Context);
+                        ProjectModel.UpdateProjectMetaData(false, finrefs);
 
-                    // Update the project in the database
-                    ProjectService.Update(Context, ProjectModel);
+                        // Update the project in the database
+                        LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetFullName()}...");
+                        ProjectService.Update(Context, ProjectModel);
 
-                    // Return to the project details page if not triggered from a split task page
-                    if (!IsSplit) Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                        // Return to the project details page if not triggered from a split task page
+                        Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                    }
                 }
+            }
+            else
+            {
+                LogError($"Task {TaskModel?.SubTaskId}: Cannot save task as it has no project model!");
             }
         }
 
@@ -430,7 +745,7 @@ namespace PPMTool.Pages
         /// Method to update the source for the resource dropdown to filter out based on search text
         /// </summary>
         /// <param name="args"></param>
-        void UpdatePeopleDropdownSource(LoadDataArgs args)
+        private void UpdatePeopleDropdownSource(LoadDataArgs args)
         {
             var temp = people.AsQueryable();
             if (!string.IsNullOrEmpty(args.Filter))
@@ -441,6 +756,23 @@ namespace PPMTool.Pages
             // Remove any people already selected as resources
             filteredPeople = temp.Where(x => !dataGridEntities.Any(y => y.Person.PersonId == x.PersonId)).ToList();
             InvokeAsync(StateHasChanged);
+        }
+
+        /// <summary>
+        /// Navigates to the split task page
+        /// </summary>
+        private void SplitSubTask()
+        {
+            Navigation.NavigateTo($"splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
+        }
+
+        /// <summary>
+        /// Return the EF context being used to track entities for this component
+        /// </summary>
+        /// <returns></returns>
+        internal PPMToolContext GetContext()
+        {
+            return Context;
         }
     }
 }

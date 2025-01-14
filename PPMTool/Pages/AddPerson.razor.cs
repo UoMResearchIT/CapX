@@ -10,14 +10,11 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class AddPerson : BasePage
     {
         [Inject]
         private PersonService PersonService { get; set; }
-
-        [Inject]
-        private RolesService RolesService { get; set; }
 
         [Inject]
         private TagService TagService { get; set; }
@@ -36,6 +33,37 @@ namespace PPMTool.Pages
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
+        private bool canView;
+
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+
+            // Load the person model if necessary
+            if (PersonId > 0)
+            {
+                personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
+
+                // Update the chosen tags
+                if (personModel != null)
+                {
+                    // Update chosen tags
+                    chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
+
+                    // Edit should only be authorised for the line manager or superusers
+                    EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+
+                    // Developers can view their own page; managers can view all people pages
+                    canView = EditAuthorised || ActiveUser?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
+                }
+            }
+
+            // Instantiate the edit context so we have a reference to it
+            editContext = new EditContext(personModel);
+            messageStore = new ValidationMessageStore(editContext);
+
+            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+        }
 
         protected override void OnInitialized()
         {
@@ -55,23 +83,7 @@ namespace PPMTool.Pages
                 .OrderBy(x => x.Name)
                 .ToList();
 
-            // Load the person model if necessary
-            if (PersonId > 0)
-            {
-                personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
-
-                // Update the chosen tags
-                if (personModel != null)
-                {
-                    chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
-                }
-            }
-
-            // Instantiate the edit context so we have a reference to it
-            editContext = new EditContext(personModel);
-            messageStore = new ValidationMessageStore(editContext);
-
-            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+            LogInformation("Initialising add/edit person page");
         }
 
         void OnChange(dynamic args)

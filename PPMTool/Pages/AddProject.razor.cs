@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -21,9 +22,6 @@ namespace PPMTool.Pages
 
         [Inject]
         private SubTaskService SubTaskService { get; set; }
-
-        [Inject]
-        private RolesService RolesService { get; set; }
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -111,7 +109,9 @@ namespace PPMTool.Pages
             var temp = innateActivityQuery;
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                temp = temp.Where(act => act.GetCodeAsString().ToLower().Contains(args.Filter.ToLower()));
+                Debug.WriteLine($"** Filtering Innate Code on {args.Filter}");
+                temp = temp.Where(act => act.ActivityName.ToLower().Contains(args.Filter.ToLower()) || act.ActivityCode.ToLower().Contains(args.Filter.ToLower()));
+                Debug.WriteLine($"** Innate code filter list contains {temp.Count()} items");
             }
 
             innateActivities = temp.ToList();
@@ -181,6 +181,17 @@ namespace PPMTool.Pages
                         {
 
                             projectModel.Followers.Clear();
+                        }
+
+                        // Set the actuals last updated if changed status to active from anything other than paused
+                        var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
+                        if (oldStatus != projectModel.ProjectStatus)
+                        {
+                            LogInformation($"Project status change: {oldStatus} -> {projectModel.ProjectStatus}");
+                        }
+                        if (oldStatus != ProjectStatus.Paused && projectModel.ProjectStatus == ProjectStatus.Active)
+                        {
+                            projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
                         }
 
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");

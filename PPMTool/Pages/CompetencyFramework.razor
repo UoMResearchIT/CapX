@@ -15,7 +15,7 @@
     </div>
     <div class="row">
         <div class="col">
-            <RadzenText Text="Your development journey and competency framework assessments are only visible to you and system super-users. It is designed as a tool for personal reflection and a mechanism to monitor your own development journey as an RSE. You may wish to share this with your line manager to assist with the setting of Role-Based Objectives as part of your Personal Development Review (PDR)." TextStyle="TextStyle.Body2" />
+            <RadzenText Text="Your development journey and competency framework assessments are only visible to you, your line manager and system super-users. It is designed as a tool for personal reflection and a mechanism to monitor your own development journey as an RSE. You may wish to share this with your line manager to assist with the setting of Role-Based Objectives as part of your Personal Development Review (PDR)." TextStyle="TextStyle.Body2" />
         </div>
     </div>
     <hr />
@@ -23,17 +23,7 @@
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
                 <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@people" Style="width:100%" Disabled="!userIsSuperuser" />
-                @if (userIsSuperuser || activeUserId == selectedPerson.PersonId)
-                {
-                    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
-                        <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
-                        <RadzenText Text="This feature is deprecated and will be removed in a future release. This could be your last chance to import your competency grid from the legacy Excel spreadsheet!" TextStyle="TextStyle.Body2" Style="margin-bottom: 0rem" />
-                        <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
-                                         Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
-                                         InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
-                    </RadzenStack>
-                }
+                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
                 <PathwayGaugeComponent AssessmentsForGradeAndPerson="@(competencies.Where(x => x.Grade == 5).SelectMany(x => x.Assessments).Where(x => x.Person.PersonId == selectedPerson.PersonId))"
@@ -45,6 +35,25 @@
                 <PathwayGaugeComponent AssessmentsForGradeAndPerson="@(competencies.Where(x => x.Grade == 7).SelectMany(x => x.Assessments).Where(x => x.Person.PersonId == selectedPerson.PersonId))"
                                        TotalNumberOfCompetenciesInGrade="@(competencies.Where(x => x.Grade == 7).Count())"
                                        Title="Leadership Level (Grade 7)" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+    <br />
+    <RadzenCard>
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
+                <RadzenText Text="Upload Legacy Excel Spreadsheet For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
+                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!userIsSuperuser" />
+                @if (userIsSuperuser || activeUserId == selectedPerson.PersonId)
+                {
+                    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
+                        <RadzenText Text="Upload Legacy Assessment Grid:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem" />
+                        <RadzenText Text="This feature is deprecated and will be removed in the next release. This could be your last chance to import your competency grid from the legacy Excel spreadsheet!" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem; color: red" />
+                        <RadzenFileInput @bind-Value=@file @bind-FileName=@fileName @bind-FileSize=@fileSize TValue="byte[]" Style="width: 100%" Disabled="Loading"
+                                         Accept="text/plain" Change=@(args => OnFileChanged(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
+                                         InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                    </RadzenStack>
+                }
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
