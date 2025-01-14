@@ -39,10 +39,10 @@
                     <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
+                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" Selected="true" />
                             </Authorized>
                         </AuthorizeView>
-                        <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" Selected="true" />
+                        <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
                         <AuthorizeView Roles="Superuser,Manager,Developer">
                             <Authorized Context="sub_context_1">
                                 <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
@@ -205,7 +205,7 @@
         {
             if (match.ItemType == typeof(Project))
             {
-                Navigation.NavigateTo($"projectdetails/{match.EntityId}");
+                Navigation.NavigateTo($"projects/projectdetails/{match.EntityId}");
             }
             else
             {
