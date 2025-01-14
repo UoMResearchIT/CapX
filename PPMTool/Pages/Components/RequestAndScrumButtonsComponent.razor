@@ -1,4 +1,5 @@
 ﻿@using PPMTool.Data.Entities
+@using System.Diagnostics
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
     <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" />
@@ -34,9 +35,15 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
         hasScrumLink = !string.IsNullOrWhiteSpace(Project?.ScrumProjectLink);
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
         scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
         requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";
+        Debug.WriteLine($"** Scrum: {hasScrumLink}, Request: {hasRequestDoc}");
     }
 }
