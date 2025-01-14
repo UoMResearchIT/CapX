@@ -49,17 +49,7 @@ namespace PPMTool
                     webBuilder.UseStaticWebAssets();
                     webBuilder.UseStartup<Startup>();
 
-                    // Add the following line:
-                    webBuilder.UseSentry(o =>
-                    {
-                        o.Dsn = "https://d2b8b7e13b1c6049538193e8ffa9a436@o4508607259869184.ingest.de.sentry.io/4508607263932496";
-
-#if LOCAL || DEBUG
-                        // When configuring for the first time, to see what the SDK is doing:
-                        o.Debug = true;
-#endif
-                    });
-
+                    webBuilder.UseSentry();
                 });
 
             }

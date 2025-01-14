@@ -163,7 +163,7 @@ namespace PPMTool.Pages
         public void LogWarning(string message)
         {
             Logger.LogWarning($"{ActiveUserName}: {message}");
-            LogToSentry(message, SentryLevel.Warning);
+            //LogToSentry(message, SentryLevel.Warning);
         }
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace PPMTool.Pages
         public void LogError(string message)
         {
             Logger?.LogError(message);
-            LogToSentry(message, SentryLevel.Error);
+            //LogToSentry(message, SentryLevel.Error);
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace PPMTool.Pages
         public void LogError(string message, Exception exception)
         {
             Logger?.LogError(exception, message);
-            LogToSentry(message, SentryLevel.Error, exception);
+            //LogToSentry(message, SentryLevel.Error, exception);
         }
 
         public void ShowTooltip(ElementReference elementReference, string message, int delay = 500)
