@@ -373,7 +373,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
             allProjects = ProjectService.GetAll(Context).ToList();
 
-            LogInformation($"Initialised project details");
+            Debug.WriteLine($"** Initialised project details");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
