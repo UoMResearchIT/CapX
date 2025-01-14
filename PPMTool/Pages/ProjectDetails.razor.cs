@@ -865,7 +865,7 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Content Resolve: {noteModel.HtmlContent}");
             // Get list of all new mentions in the note content
             var newMentions = new List<string>();
-            var matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)@\w+");
+            var matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)@\w+");
             newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // Load in the list of managers
@@ -908,7 +908,7 @@ namespace PPMTool.Pages
 
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
+            matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
             newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
