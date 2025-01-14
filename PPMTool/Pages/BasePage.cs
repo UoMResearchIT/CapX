@@ -154,7 +154,6 @@ namespace PPMTool.Pages
         public void LogInformation(string message)
         {
             Logger?.LogInformation($"{ActiveUserName}: {message}");
-            LogToSentry(message);
         }
 
         /// <summary>
