@@ -41,7 +41,7 @@ namespace PPMTool.Pages
             LogInformation($"Discarding workload model changes!");
 
             // Just navigate away as nothing will have been written to the database
-            Navigation.NavigateTo($"addperson/{PersonId}");
+            Navigation.NavigateTo($"people/addperson/{PersonId}");
         }
 
         private void HandleValidSubmit()
@@ -69,7 +69,7 @@ namespace PPMTool.Pages
 
                 LogInformation($"Saving workload model changes for {personModel.Name}.");
                 PersonService.Update(Context, personModel);
-                Navigation.NavigateTo($"addperson/{PersonId}");
+                Navigation.NavigateTo($"people/addperson/{PersonId}");
             }
         }
     }
