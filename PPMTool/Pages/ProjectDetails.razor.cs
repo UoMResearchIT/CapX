@@ -383,6 +383,12 @@ namespace PPMTool.Pages
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("nothinghere");
 
+            // If the path is the legacy path then redirect
+            if (!Navigation.Uri.Contains("projects/projectdetails"))
+            {
+                Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
+            }
+
             if (firstRender)
             {
                 // Create a reference to self in JS
