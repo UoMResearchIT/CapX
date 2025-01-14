@@ -955,7 +955,7 @@ namespace PPMTool.Pages
         /// <param name="task"></param>
         void EditTask(SubTask task)
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}");
         }
 
         /// <summary>
@@ -963,7 +963,7 @@ namespace PPMTool.Pages
         /// </summary>
         void AddTask()
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/-1");
         }
 
         /// <summary>
@@ -973,7 +973,7 @@ namespace PPMTool.Pages
         void CopyTask(SubTask task)
         {
             // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
         }
 
         /// <summary>
