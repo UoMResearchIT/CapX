@@ -763,7 +763,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void SplitSubTask()
         {
-            Navigation.NavigateTo($"splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
+            Navigation.NavigateTo($"projects/splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
         }
 
         /// <summary>

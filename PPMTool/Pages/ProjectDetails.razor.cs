@@ -983,7 +983,7 @@ namespace PPMTool.Pages
         void SplitTask(SubTask task)
         {
             // Navigate to the split task page passing the task ID to be split
-            Navigation.NavigateTo($"splittask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/splittask/{project.ProjectId}/{task.SubTaskId}");
         }
 
         /// <summary>
