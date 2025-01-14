@@ -96,12 +96,12 @@ namespace PPMTool.Pages
 
         private void AddCompetency()
         {
-            Navigation.NavigateTo("addcompetency/-1");
+            Navigation.NavigateTo("competencies/addcompetency/-1");
         }
 
         private void EditCompetency(Competency competency)
         {
-            Navigation.NavigateTo($"addcompetency/{competency?.CompetencyId}");
+            Navigation.NavigateTo($"competencies/addcompetency/{competency?.CompetencyId}");
         }
 
         private void AddAssessment(CompetencyAssessment assessment)
