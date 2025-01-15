@@ -39,6 +39,9 @@ namespace PPMTool.Pages
         {
             base.OnParametersSet();
 
+            // Default view permission based on edit authorisation
+            canView = EditAuthorised;
+
             // Load the person model if necessary
             if (PersonId > 0)
             {
