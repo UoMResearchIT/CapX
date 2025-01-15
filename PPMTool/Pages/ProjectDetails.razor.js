@@ -4,8 +4,10 @@
 
 function scrollToElement(id) {
     const e = document.getElementById(id);
-    e.scrollIntoView();
-    e.focus();
+    if (e != null) {
+        e.scrollIntoView();
+        e.focus();
+    }
 }
 
 function highlightInNotes(keyword) {
