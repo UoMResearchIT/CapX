@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add Person - CapX</PageTitle>
 
@@ -72,7 +73,7 @@
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled=!EditAuthorised />
+                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled="@(ActiveUserRoleType != RoleType.Superuser)" />
                     </div>
                 </div>
                 <hr />
