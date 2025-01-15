@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add Person - CapX</PageTitle>
 
@@ -71,8 +72,8 @@
                         <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="This is the FTE of the post as agreed as part of the department budget. If someone is working less than 1.0 FTE i.e. part-time, this should be reflected as a WLM change." /><br />
+                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled="@(ActiveUserRoleType != RoleType.Superuser)" />
                     </div>
                 </div>
                 <hr />
