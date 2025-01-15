@@ -360,10 +360,10 @@ namespace PPMTool.Pages
             }).ContinueWith(t =>
             {
                 Loading = false;
-                InvokeAsync(() =>
+                InvokeAsync(async () =>
                 {
                     StateHasChanged();
-                    OnAfterRender(true);
+                    await OnAfterRenderAsync(true);
                 });
             });
         }
@@ -378,7 +378,7 @@ namespace PPMTool.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnAfterRender(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("nothinghere");
@@ -410,13 +410,10 @@ namespace PPMTool.Pages
                     // Check whether the parameter is present to scroll to the due notes
                     if (FilterDueNotes)
                     {
-                        await InvokeAsync(async () =>
-                        {
-                            // Refresh then scroll last due note into view
-                            StateHasChanged();
-                            await Task.Delay(300);
-                            await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
-                        });
+                        // Refresh then scroll last due note into view
+                        StateHasChanged();
+                        await Task.Delay(300);
+                        await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
                     }
                 }
                 else
