@@ -68,6 +68,9 @@
     [Parameter]
     public int OverDueNoteCount { get; set; }
 
+    [Parameter]
+    public DateTime? NextDueDate { get; set; }
+
     [Inject]
     private NavigationManager Navigation { get; set; }
 
