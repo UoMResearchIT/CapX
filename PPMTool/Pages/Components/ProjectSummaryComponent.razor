@@ -20,19 +20,28 @@
             </RadzenStack>
             <MessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
         </RadzenStack>
-            @if (DueNoteCount > 0 || OverDueNoteCount > 0)
-            {
-            <RadzenStack class="@($"col-3 p-1 {(OverDueNoteCount > 0 ? "rz-border-danger" : "rz-border-warning")}")" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.2rem">
-                <RadzenText Text="Actions Due" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.2rem" Wrap="FlexWrap.Wrap">
-                    <RadzenIcon IconStyle="IconStyle.Danger" Icon="flag"/>
-                    <RadzenText class="rz-border-radius-10 rz-background-color-danger p-2" TextStyle="TextStyle.Subtitle1" Text="@($"{OverDueNoteCount}")" Style="margin-bottom: -0.1rem; color: white" />
-                    <RadzenIcon IconStyle="IconStyle.Warning" Icon="flag" />
-                    <RadzenText class="rz-border-radius-10 rz-background-color-warning p-2" TextStyle="TextStyle.Subtitle1" Text="@($"{DueNoteCount}")" Style="margin-bottom: -0.1rem" />
+        @if (NextDueDate != null)
+        {
+            <RadzenStack class="@($"col-3 p-2 rounded-frame {borderClass}")" Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="flag" IconStyle="IconStyle.Primary" />
+                        <RadzenText Text="Actions Due:" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@OverDueNoteCount.ToString()" Style="font-size: 1rem" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@DueNoteCount.ToString()" Style="font-size: 1rem" />
+                    </RadzenStack>
                 </RadzenStack>
-                <RadzenButton ButtonStyle="@(OverDueNoteCount > 0 ? ButtonStyle.Danger : ButtonStyle.Warning)" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" class="align-self-center" />
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="event" IconStyle="IconStyle.Primary" />
+                        <RadzenText Text="@($"Next Due: {NextDueDate?.ToShortDateString()}")" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="@buttonStyle" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" class="align-self-center" />
+                </RadzenStack>
             </RadzenStack>
-            }
+        }
         <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
             <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
             <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
@@ -68,12 +77,34 @@
     [Parameter]
     public int OverDueNoteCount { get; set; }
 
+    [Parameter]
+    public DateTime? NextDueDate { get; set; }
+
     [Inject]
     private NavigationManager Navigation { get; set; }
+
+    private string borderClass;
+    private ButtonStyle buttonStyle;
 
     override protected void OnInitialized()
     {
         base.OnInitialized();
+
+        if (OverDueNoteCount > 0)
+        {
+            borderClass = "rz-border-danger";
+            buttonStyle = ButtonStyle.Danger;
+        }
+        else if (DueNoteCount > 0)
+        {
+            borderClass = "rz-border-warning";
+            buttonStyle = ButtonStyle.Warning;
+        }
+        else
+        {
+            borderClass = "rz-border-base-400";
+            buttonStyle = ButtonStyle.Light;
+        }
     }
 
     private void EditProject(Project project)
