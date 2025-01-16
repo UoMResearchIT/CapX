@@ -276,3 +276,7 @@ mark {
 .timesheet-synopsis-table {
     font-size: 0.9rem;
 }
+
+.rounded-frame {
+    border-radius: var(--rz-button-border-radius)
+}
