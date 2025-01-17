@@ -68,11 +68,17 @@
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.StaffManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectManagementFTE" Title="PM" Width="80px" MinWidth="10px">
                             <EditTemplate Context="c">
-                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectAndServiceManagementFTE" />
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ServiceManagementFTE" Title="SM" Width="80px" MinWidth="10px">
+                            <EditTemplate Context="c">
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ServiceManagementFTE" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="80px" MinWidth="10px" />
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="RSA" Width="80px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
@@ -84,7 +90,7 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Filterable="false" Sortable="false" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />

@@ -167,12 +167,15 @@
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
-                                                <RadzenText Text="Project and Service" TextStyle="TextStyle.Subtitle1" />
+                                                <RadzenText Text="Project / Service" TextStyle="TextStyle.Subtitle1" />
                                                 <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="@d.StaffManagementFTE.ToString()" />
-                                                <RadzenText Text="@d.ProjectAndServiceManagementFTE.ToString()" />
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.2rem">
+                                                    <RadzenText Text="@($"{d.ProjectAndServiceManagementFTE}")" />
+                                                    <RadzenText Text="@($"({d.ProjectManagementFTE} / {d.ServiceManagementFTE})")" TextStyle="TextStyle.Subtitle2"/>
+                                                </RadzenStack>
                                                 <RadzenText Text="@d.ArchitectureFTE.ToString()" />
                                             </RadzenStack>
                                         </RadzenStack>
