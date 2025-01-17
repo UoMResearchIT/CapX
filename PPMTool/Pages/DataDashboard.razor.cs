@@ -23,9 +23,6 @@ namespace PPMTool.Pages
         private float projectManFTE = 0.05f;
         private float staffManFTE = 0.05f;
         private float coachFTE = 0.1f;
-        private float appSupportPSMFTE = 0.1f;
-        private float trainingPSMFTE = 0.1f;
-        private float otherPSMFTE = 0.5f;
 
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
@@ -311,7 +308,7 @@ namespace PPMTool.Pages
                     float wlmProject = 0f;
                     float wlmBAU = 0f;
                     float wlmPD = 0f;
-                    float wlmPSM = 0f;
+                    float wlmPM = 0f;
                     float wlmStaff = 0f;
                     float wlmRSA = 0f;
                     float assignmentUnder = 0f;
@@ -462,7 +459,7 @@ namespace PPMTool.Pages
                         wlmProject += (float)activeModel.ProjectWorkFTE;
                         wlmBAU += (float)activeModel.BusinessAsUsualFTE;
                         wlmPD += (float)activeModel.PersonalDevelopmentFTE;
-                        wlmPSM += (float)activeModel.ProjectAndServiceManagementFTE;
+                        wlmPM += (float)activeModel.ProjectManagementFTE;
                         wlmStaff += (float)activeModel.StaffManagementFTE;
                         wlmRSA += (float)activeModel.ArchitectureFTE;
                         try
@@ -511,7 +508,7 @@ namespace PPMTool.Pages
                         ProjectFTE = wlmProject,
                         BAUFTE = wlmBAU,
                         PersonalDevFTE = wlmPD,
-                        PSMFTE = wlmPSM,
+                        PSMFTE = wlmPM,
                         StaffManFTE = wlmStaff,
                         RSAFTE = wlmRSA,
                         NumberOfStaff = numStaff,
@@ -547,7 +544,7 @@ namespace PPMTool.Pages
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
                     item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
-                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPSM - (projectManFTE * (numberConfirmed + numberUnconfirmed) + appSupportPSMFTE + trainingPSMFTE + otherPSMFTE), numberOfWeeks);
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - projectManFTE * (numberConfirmed + numberUnconfirmed), numberOfWeeks);
                     item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
 
                     // Move to next week
