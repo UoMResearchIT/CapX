@@ -216,7 +216,7 @@ namespace PPMTool.Pages
                         {
                             Name = leadershipName,
                             StartDate = dateRange.StartDate,
-                            EndDate = dateRange.EndDate,
+                            EndDate = dateRange.EndDate.AddDays(-1),
                             OwningProject = project,
                             AssignedResources = new List<Resource>
                             {
