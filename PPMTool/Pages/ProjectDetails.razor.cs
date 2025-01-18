@@ -211,9 +211,10 @@ namespace PPMTool.Pages
                     var managementTasks = project.GetLeadershipTaskRanges();
                     foreach (var dateRange in managementTasks)
                     {
+                        var leadershipName = "(Leadership)";
                         allBlocks.Insert(0, new GanttBlock(new SubTask
                         {
-                            Name = "Leadership",
+                            Name = leadershipName,
                             StartDate = dateRange.StartDate,
                             EndDate = dateRange.EndDate,
                             OwningProject = project,
@@ -222,11 +223,11 @@ namespace PPMTool.Pages
                                 new Resource
                                 {
                                     Person = project.ProjectManager,
-                                    AssignmentFTE = project.LeadershipFTE
+                                    AssignmentFTE = Math.Round(project.LeadershipFTE, 3)
                                 }
                             }
 
-                        }, "Leadership", isLeadershipTask: true));
+                        }, leadershipName, isLeadershipTask: true));
                     }
 
                     // Fill in the data

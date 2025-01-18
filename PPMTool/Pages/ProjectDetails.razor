@@ -184,7 +184,7 @@
                                              XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
                                              YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
                                              YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
                             <ApexRangeSeries TItem="GanttBlock"
                                              Items="provisionalBlocks"
@@ -192,7 +192,7 @@
                                              XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
                                              YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
                                              YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                         </ChildContent>
                         <ApexPointTooltip>
                             <div class="m-2">
