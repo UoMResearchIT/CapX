@@ -13,7 +13,7 @@
     <hr />
     <div class="card">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-            <RadzenDropDown @bind-Value=@chosenPeople
+            <RadzenDropDown @bind-Value=@ChosenPeople
                             Data=@filteredPeople
                             TextProperty="Name"
                             ValueProperty="Name"
@@ -53,7 +53,7 @@
     {
         <LoadingComponent />
     }
-    else if (chartModels == null || chartModels.Count < 1)
+    else if (chartModels == null || chartModels.Count == 0)
     {
         <div class="card">
             <p class="lead">No data to show for the selected managers</p>
@@ -71,7 +71,6 @@
                 <div class="col" style="min-width: 50rem;">
                     <div class="card my-1">
                         <CapacityChartComponent ChartModel=@chartModels[i]
-                                                OnDataPointSelection="@DataPointsSelected"
                                                 OnChartZoomed="@OnChartZoomed" />
                     </div>
                 </div>

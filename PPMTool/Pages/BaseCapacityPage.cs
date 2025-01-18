@@ -167,15 +167,47 @@ namespace PPMTool.Pages
         protected abstract void ConfigureChartSource();
 
         /// <summary>
-        /// Method to reload the dropdown sources on the page
-        /// </summary>
-        protected abstract void ReloadDropDownSources();
-
-        /// <summary>
         /// Method to get a unique session storage tag for the page
         /// </summary>
         /// <returns></returns>
         protected abstract string GetSessionStorageTag();
+
+        /// <summary>
+        /// Method to reload the dropdown sources on the page
+        /// </summary>
+        protected virtual void ReloadDropDownSources()
+        {
+            Debug.WriteLine("** Reloading dropdown sources...");
+
+            // Get people and filter if PM selected
+            people = cachedPeople.ToList();
+
+            // Filter out leavers if necessary
+            if (!IncludeLeavers)
+            {
+                people = people
+                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
+                    .OrderBy(x => x.Name)
+                    .ToList();
+            }
+
+            // Apply autocomplete box filters
+            LoadFilteredPeople(new LoadDataArgs());
+
+            // Remove any people not in the dropdown source from the selected people list
+            if (ChosenPeople != null)
+            {
+                var temp = new List<string>();
+                foreach (var p in ChosenPeople)
+                {
+                    if (filteredPeople.Any(x => x.Name == p))
+                    {
+                        temp.Add(p);
+                    }
+                }
+                ChosenPeople = temp;
+            }
+        }
 
         protected override void OnInitialized()
         {

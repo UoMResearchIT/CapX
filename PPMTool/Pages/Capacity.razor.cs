@@ -47,7 +47,6 @@ namespace PPMTool.Pages
 
         private List<Person> managers;
         private List<Person> filteredManagers;
-        private bool managerChosen;
         private DateTime queryEndDate = DateTime.Today.AddDays(7);
         private bool queryResultsAvailable;
         private string queryErrorMessage;
@@ -97,26 +96,18 @@ namespace PPMTool.Pages
             PeopleSelectionChanged(ChosenPeople);
         }
 
-        private void SaveManagerState()
-        {
-            SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
-        }
+        protected override string GetSessionStorageTag() => "capacity";
 
-        private void UpdateSelectionState()
-        {
-            managerChosen = ChosenManager != null;
-            peopleChosen = ChosenPeople != null && ChosenPeople.Count() > 0;
-        }
 
         /// <summary>
         /// Method to setup the dropdown sources
         /// </summary>
-        private void ReloadDropDownSources()
+        protected override void ReloadDropDownSources()
         {
             Debug.WriteLine("** Reloading dropdown sources...");
-
-            // Get people and filter if PM selected
             people = cachedPeople.ToList();
+
+            // Filter if PM selected
             if (chosenManager != null)
             {
                 var validProjects = GetValidProjects();
@@ -137,7 +128,7 @@ namespace PPMTool.Pages
             managers = cachedPeople.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
 
             // Filter out leavers if necessary
-            if (!includeLeavers)
+            if (!IncludeLeavers)
             {
                 people = people
                     .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
@@ -155,19 +146,30 @@ namespace PPMTool.Pages
             LoadFilteredManagers(new LoadDataArgs());
 
             // Remove any people not in the dropdown source from the selected people list
-            if (chosenPeople != null)
+            if (ChosenPeople != null)
             {
                 var temp = new List<string>();
-                foreach (var p in chosenPeople)
+                foreach (var p in ChosenPeople)
                 {
                     if (filteredPeople.Any(x => x.Name == p))
                     {
                         temp.Add(p);
                     }
                 }
-                chosenPeople = temp;
+                ChosenPeople = temp;
             }
         }
+
+        /// <summary>
+        /// Determine whether a manager has been chosen
+        /// </summary>
+        /// <returns></returns>
+        private bool ManagerChosen() => ChosenManager != null;
+
+        /// <summary>
+        /// Save the chosen manager to session storage
+        /// </summary>
+        private void SaveManagerState() => SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
 
         /// <summary>
         /// Use the master list of managers to filter the data source for the dropdown based on user typing
@@ -182,45 +184,6 @@ namespace PPMTool.Pages
             }
             filteredManagers = temp.ToList();
             InvokeAsync(StateHasChanged);
-        }
-
-        /// <summary>
-        /// Method to handle when a series element on the chart is selected
-        /// </summary>
-        /// <param name="dataPoint"></param>
-        private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
-        {
-            // Decide on state
-            UpdateSelectionState();
-
-            // When in project mode, navigate
-            if (dataPoint.IsSelected && peopleChosen)
-            {
-                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
-                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
-
-                // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
-                if (project != null)
-                {
-                    Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
-                }
-            }
-
-            // When in people ("All") mode then add person to selection and update the chart
-            else if (dataPoint.IsSelected && !peopleChosen)
-            {
-                var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
-                Debug.WriteLine($"** Selected {personName}. Updating selection...");
-                var match = people.FirstOrDefault(x => x.Name == personName);
-                if (match != null)
-                {
-                    var temp = peopleChosen ? new List<string>(ChosenPeople) : new List<string>();
-                    temp.Add(personName);
-                    ChosenPeople = temp;
-                    PeopleSelectionChanged(ChosenPeople);
-                }
-            }
         }
 
         /// <summary>
@@ -242,6 +205,60 @@ namespace PPMTool.Pages
             ConfigureChartSource();
 
             LogInformation($"Selected manager: {item?.Name}");
+        }
+
+        /// <summary>
+        /// Quickly select those people in the available list that the active user manages
+        /// </summary>
+        private void FilterToMyStaff()
+        {
+            ChosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
+            PeopleSelectionChanged(ChosenPeople);
+        }
+
+        /// <summary>
+        /// Does the active user manage staff that are in the available list
+        /// </summary>
+        /// <returns></returns>
+        private bool HasStaffInList()
+        {
+            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.PersonId);
+        }
+
+        /// <summary>
+        /// Method to handle when a series element on the chart is selected
+        /// </summary>
+        /// <param name="dataPoint"></param>
+        private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
+        {
+            // When in project mode, navigate
+            if (dataPoint.IsSelected && PeopleChosen())
+            {
+                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
+
+                // Use the title of the task to find its projectID then navigate to the details page
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
+                if (project != null)
+                {
+                    Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
+                }
+            }
+
+            // When in people ("All") mode then add person to selection and update the chart
+            else if (dataPoint.IsSelected && !PeopleChosen())
+            {
+                var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {personName}. Updating selection...");
+                var match = people.FirstOrDefault(x => x.Name == personName);
+                if (match != null)
+                {
+                    var temp = PeopleChosen() ? new List<string>(ChosenPeople) : new List<string>();
+                    temp.Add(personName);
+                    ChosenPeople = temp;
+                    PeopleSelectionChanged(ChosenPeople);
+                }
+            }
         }
 
         /// <summary>
@@ -281,7 +298,7 @@ namespace PPMTool.Pages
             LogInformation($"Query running.");
 
             // Update the chart source as this is used to drive the query results
-            ConfigureChartSource(true);
+            ConfigureChartSource();
         }
 
         /// <summary>
@@ -300,7 +317,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Pulls project info from the DB and packages the data into a plottable format
         /// </summary>
-        private void ConfigureChartSource(bool presentQueryResults = false)
+        protected override void ConfigureChartSource()
         {
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
@@ -355,9 +372,6 @@ namespace PPMTool.Pages
                 var startDate = validProjects.Min(x => x.StartDate);
                 var endDate = validProjects.Max(x => x.EndDate);
 
-                // Determine state based on drop down selections
-                UpdateSelectionState();
-
                 // -------------- PERSON MODE -------------- //
 
                 // Flatten subtasks and group by person if "All" chosen
@@ -405,7 +419,7 @@ namespace PPMTool.Pages
                     // Add data
                     chartModels.Add(new ChartModel
                     {
-                        ChartTitle = $"Load for All {(managerChosen ? " with manager " + ChosenManager.Name : "")}",
+                        ChartTitle = $"Load for All {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
                         ChartOptions = BuildNewChartOptionsObject(),
                         ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched).ToList(),
                         ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched).ToList()
@@ -415,7 +429,7 @@ namespace PPMTool.Pages
                 // -------------- PROJECT MODE -------------- //
 
                 // Filter by people chosen, flatten and group by project if in project mode
-                else if (managerChosen || PeopleChosen())
+                else if (ManagerChosen() || PeopleChosen())
                 {
                     Debug.WriteLine("** Chart in PROJECT MODE.");
 
@@ -490,7 +504,7 @@ namespace PPMTool.Pages
                         // Add data
                         chartModels.Add(new ChartModel
                         {
-                            ChartTitle = $"Load for {name} {(managerChosen ? " with manager " + ChosenManager.Name : "")}",
+                            ChartTitle = $"Load for {name} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
                             ChartOptions = BuildNewChartOptionsObject(),
                             ConfirmedChartItems = confirmedChartItemsComplete,
                             ProvisionalChartItems = provisionalChartItemsComplete
@@ -517,7 +531,7 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine($"** ...task complete. Status = {task.Status}");
 
-                if (presentQueryResults)
+                if (queryActive)
                 {
                     // Convert the chart results to capacity query results
                     var results = new List<CapacityQueryItem>();
@@ -756,24 +770,6 @@ namespace PPMTool.Pages
                 },
                 tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
-        }
-
-        /// <summary>
-        /// Quickly select those people in the available list that the active user manages
-        /// </summary>
-        private void FilterToMyStaff()
-        {
-            ChosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
-            PeopleSelectionChanged(ChosenPeople);
-        }
-
-        /// <summary>
-        /// Does the active user manage staff that are in the available list
-        /// </summary>
-        /// <returns></returns>
-        private bool HasStaffInList()
-        {
-            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.PersonId);
         }
     }
 }

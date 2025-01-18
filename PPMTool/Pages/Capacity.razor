@@ -14,7 +14,7 @@
     <h2>Charts</h2>
     <div class="card">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-            <RadzenDropDown @bind-Value=@chosenPeople
+            <RadzenDropDown @bind-Value=@ChosenPeople
                             Data=@filteredPeople
                             TextProperty="Name"
                             ValueProperty="Name"
@@ -75,7 +75,7 @@
     else if (chartModels == null || chartModels.Count < 1)
     {
         <div class="card">
-            <p class="lead">No data to show for the selected people.</p>
+            <p class="lead">No data to show for the selected people</p>
         </div>
     }
     else
