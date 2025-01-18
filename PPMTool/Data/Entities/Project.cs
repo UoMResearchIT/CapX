@@ -129,7 +129,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The amount of time the management of this project is expected to take in FTE
         /// </summary>
-        public float ManagementTaskFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
+        public float LeadershipFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -420,7 +420,7 @@ namespace PPMTool.Data.Entities
                 }
 
                 // Compute cost (0.05 FTE per project)
-                yearCost = yearFraction * reference.Grade75Costs * ManagementTaskFTE;
+                yearCost = yearFraction * reference.Grade75Costs * LeadershipFTE;
 
                 // Accumulate
                 totalCost += yearCost;
@@ -459,7 +459,7 @@ namespace PPMTool.Data.Entities
         /// Generates a list of date ranges for the leadership tasks
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<DateRange> GetLeadershipTaskRanges()
+        public IEnumerable<DateRange> GetLeadershipTaskRanges()
         {
             // Conver the sub tasks to date ranges (adding a day for the end so it isn't inclusive)
             var dateRanges = SubTasks
