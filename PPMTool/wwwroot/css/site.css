@@ -277,6 +277,14 @@ mark {
     font-size: 0.9rem;
 }
 
+.timesheet-wlm-slice {
+    border: 1px solid #aaa;
+    padding: 0.5rem; 
+    margin: 0px; 
+    float: left;
+    text-align: center;
+}
+
 .rounded-frame {
     border-radius: var(--rz-button-border-radius)
 }
