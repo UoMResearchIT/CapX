@@ -1,0 +1,82 @@
+﻿@page "/managementcapacity"
+@inherits BaseCapacityPage
+@using PPMTool.Pages.Components
+@using PPMTool.Data
+<PageTitle>Management Capacity - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>Management Capacity</h1>
+        </div>
+    </div>
+    <hr />
+    <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <RadzenDropDown @bind-Value=@chosenPeople
+                            Data=@filteredPeople
+                            TextProperty="Name"
+                            ValueProperty="Name"
+                            Multiple=true
+                            AllowClear=true
+                            Placeholder="Filter RSE"
+                            Chips=true
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterOperator="StringFilterOperator.Contains"
+                            AllowFiltering="true"
+                            Style="width: 100%; max-width: 400px;"
+                            Change="@(args => PeopleSelectionChanged(args))"
+                            LoadData="@LoadFilteredPeople"
+                            Disabled=@(!ReadOrEditAuthorised || Loading) />
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Unfunded:
+                <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Leavers:
+                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" />
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                Include Finished:
+                <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" />
+            </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />
+                <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead(6))" />
+                <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead(9))" />
+                <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead(12))" />
+            </RadzenStack>
+        </RadzenStack>
+    </div>
+
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else if (chartModels == null || chartModels.Count < 1)
+    {
+        <div class="card">
+            <p class="lead">No data to show for the selected managers</p>
+        </div>
+    }
+    else
+    {
+        <!-- Legend -->
+        <CapacityLegendComponent ShowProjectModeLegend="false" />
+
+        <!-- Chart -->
+        <div class="row">
+            @for (int i = 0; i < chartModels.Count; ++i)
+            {
+                <div class="col" style="min-width: 50rem;">
+                    <div class="card my-1">
+                        <CapacityChartComponent ChartModel=@chartModels[i]
+                                                OnDataPointSelection="@DataPointsSelected"
+                                                OnChartZoomed="@OnChartZoomed" />
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    <hr />
+</div>

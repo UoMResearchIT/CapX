@@ -6,7 +6,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ApexCharts;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -15,54 +18,44 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
-    public partial class Capacity : BaseCapacityPage
+    [Authorize(Roles = "Manager,Superuser,Reader")]
+    public partial class ManagementCapacity : BaseCapacityPage
     {
-        private DateTime queryStartDate = DateTime.Today;
-        public DateTime QueryStartDate
+        [Inject]
+        private PersonService PersonService { get; set; }
+
+        [Inject]
+        private ProjectService ProjectService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
+        [Inject]
+        private ISessionStorageService SessionStorage { get; set; }
+
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "filterid")]
+        public int? FilterPersonId { get; set; }
+
+        private IEnumerable<string> chosenPeople = new List<string>();
+        public IEnumerable<string> ChosenPeople
         {
-            get => queryStartDate;
+            get => chosenPeople;
             set
             {
-                queryStartDate = value;
-
-                // Update the end date to be a week ahead of the start date by default if it is behind
-                if (queryEndDate < queryStartDate) queryEndDate = queryStartDate.AddDays(7);
-            }
-        }
-
-        private Person chosenManager;
-        public Person ChosenManager
-        {
-            get => chosenManager;
-            set
-            {
-                if (chosenManager != value)
+                if (chosenPeople != value)
                 {
-                    chosenManager = value;
-                    SaveManagerState();
+                    chosenPeople = value;
+                    SavePeopleState();
                 }
             }
         }
-
-        private List<Person> managers;
-        private List<Person> filteredManagers;
-        private bool managerChosen;
-        private DateTime queryEndDate = DateTime.Today.AddDays(7);
-        private bool queryResultsAvailable;
-        private string queryErrorMessage;
-        private bool queryActive;
-        private double requiredFTE = 0.5;
-        private List<CapacityQueryItem> fullMatch;
-        private List<CapacityQueryItem> partialMatchPercent;
-        private List<CapacityQueryItem> partialMatchDuration;
-        private List<CapacityQueryItem> partialMatchBoth;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
-            LogInformation($"Viewing capacity page");
+            LogInformation($"Viewing management capacity page");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -71,35 +64,7 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
-            // Load settings
-            var managerName = await SessionStorage.GetItemAsync<string>($"{GetSessionStorageTag()}-chosen-manager");
-            ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
-
-            // Reload the dropdown sources if a manager has been chosen
-            if (ChosenManager != null)
-            {
-                ReloadDropDownSources();
-            }
-
-            if (EditAuthorised || IsReader)
-            {
-                ConfigureChartSource();
-                return;
-            }
-
-            // Choose the person automatically if not a manager    
-            // Look up the username
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            ChosenPeople = new List<string>
-            {
-                role.GetName()
-            };
             PeopleSelectionChanged(ChosenPeople);
-        }
-
-        private void SaveManagerState()
-        {
-            SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
         }
 
         private void UpdateSelectionState()
@@ -170,6 +135,21 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Use the master list of people to filter the data source for the dropdown based on user typing
+        /// </summary>
+        /// <param name="args"></param>
+        void LoadFilteredPeople(LoadDataArgs args)
+        {
+            var temp = people.AsQueryable();
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
+            }
+            filteredPeople = temp.ToList();
+            InvokeAsync(StateHasChanged);
+        }
+
+        /// <summary>
         /// Use the master list of managers to filter the data source for the dropdown based on user typing
         /// </summary>
         /// <param name="args"></param>
@@ -185,116 +165,28 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method to handle when a series element on the chart is selected
-        /// </summary>
-        /// <param name="dataPoint"></param>
-        private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
-        {
-            // Decide on state
-            UpdateSelectionState();
-
-            // When in project mode, navigate
-            if (dataPoint.IsSelected && peopleChosen)
-            {
-                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
-                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
-
-                // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
-                if (project != null)
-                {
-                    Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
-                }
-            }
-
-            // When in people ("All") mode then add person to selection and update the chart
-            else if (dataPoint.IsSelected && !peopleChosen)
-            {
-                var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
-                Debug.WriteLine($"** Selected {personName}. Updating selection...");
-                var match = people.FirstOrDefault(x => x.Name == personName);
-                if (match != null)
-                {
-                    var temp = peopleChosen ? new List<string>(ChosenPeople) : new List<string>();
-                    temp.Add(personName);
-                    ChosenPeople = temp;
-                    PeopleSelectionChanged(ChosenPeople);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Manager selected from the dropdown
+        /// Fire and forget when selection of the multi-drop down changes
         /// </summary>
         /// <param name="selectedOptions"></param>
-        private void ManagerSelectionChanged(object selectedOptions)
+        private void PeopleSelectionChanged(object selectedOptions)
         {
-            var item = selectedOptions as Person;
-            Debug.WriteLine($"** Selected Manager: {item?.Name}");
+            var items = selectedOptions as IEnumerable<string>;
+            Debug.WriteLine("** Selected People:");
+            if (items != null)
+            {
+                foreach (var i in items)
+                {
+                    Debug.WriteLine($"** {i}");
+                }
+            }
 
             // Save the new state
-            SaveManagerState();
-
-            // Reload the people to include just those working on projects that PM manages
-            ReloadDropDownSources();
+            SavePeopleState();
 
             // Regenerate the chart data
             ConfigureChartSource();
 
-            LogInformation($"Selected manager: {item?.Name}");
-        }
-
-        /// <summary>
-        /// Resets the page to its initial state
-        /// </summary>
-        private void ClearQuery(bool regenerateChart = true)
-        {
-            Debug.WriteLine("** Clearing Query...");
-            queryResultsAvailable = false;
-            queryErrorMessage = null;
-            queryActive = false;
-            ChosenPeople = new List<string>();
-            if (regenerateChart) ConfigureChartSource();
-
-            LogInformation($"Query cleared");
-        }
-
-        /// <summary>
-        /// Runs the capacity query and updates the query result property
-        /// </summary>
-        private void RunQuery()
-        {
-            Debug.WriteLine("** Running query...");
-
-            // Add error
-            if (QueryStartDate >= queryEndDate)
-            {
-                queryErrorMessage = "End date must be after the start date!";
-                return;
-            }
-
-            // Reset query results but don't regenerate the chart as we are going to do it again in a minute
-            ClearQuery(false);
-
-            // Start query state
-            queryActive = true;
-            LogInformation($"Query running.");
-
-            // Update the chart source as this is used to drive the query results
-            ConfigureChartSource(true);
-        }
-
-        /// <summary>
-        /// Method to order the capacity query results
-        /// </summary>
-        /// <param name="results"></param>
-        /// <returns></returns>
-        private List<CapacityQueryItem> OrganiseQueryResults(IEnumerable<CapacityQueryItem> results)
-        {
-            return results
-                .OrderBy(x => x.Person.Name)
-                .ThenByDescending(x => x.AvailabilityPercent)
-                .ToList();
+            LogInformation($"Selected people: {(items == null ? "" : string.Join("|", items))}");
         }
 
         /// <summary>
@@ -361,7 +253,7 @@ namespace PPMTool.Pages
                 // -------------- PERSON MODE -------------- //
 
                 // Flatten subtasks and group by person if "All" chosen
-                if (!PeopleChosen())
+                if (!peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PERSON MODE.");
 
@@ -415,7 +307,7 @@ namespace PPMTool.Pages
                 // -------------- PROJECT MODE -------------- //
 
                 // Filter by people chosen, flatten and group by project if in project mode
-                else if (managerChosen || PeopleChosen())
+                else if (managerChosen || peopleChosen)
                 {
                     Debug.WriteLine("** Chart in PROJECT MODE.");
 
@@ -547,13 +439,13 @@ namespace PPMTool.Pages
                     }
 
                     // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
-                    fullMatch = OrganiseQueryResults(results
+                    fullMatch = OrganiseResults(results
                         .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-                    partialMatchPercent = OrganiseQueryResults(results
+                    partialMatchPercent = OrganiseResults(results
                         .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-                    partialMatchDuration = OrganiseQueryResults(results
+                    partialMatchDuration = OrganiseResults(results
                         .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-                    partialMatchBoth = OrganiseQueryResults(results
+                    partialMatchBoth = OrganiseResults(results
                         .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
 
                     // Results available
@@ -581,7 +473,21 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private IEnumerable<Project> GetValidProjects(bool filterBasedOnSelectedManager = true)
         {
-            var validProjects = base.GetValidProjects();
+            var validProjects = cachedProjects;
+
+            // Filter projects based on finished
+            if (!IncludeFinished)
+            {
+                Debug.WriteLine("** Removing finished projects...");
+                validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
+            }
+
+            // Filter projects based on unfunded
+            if (!IncludeUnFunded)
+            {
+                Debug.WriteLine("** Removing unfunded projects...");
+                validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());
+            }
 
             // Filter the project source if a manager selected
             if (ChosenManager != null && filterBasedOnSelectedManager)
@@ -591,6 +497,39 @@ namespace PPMTool.Pages
             }
 
             return validProjects;
+        }
+
+        /// <summary>
+        /// Callback when an item is zoomed
+        /// </summary>
+        /// <param name="zoomedData"></param>
+        private void OnChartZoomed(ZoomedData<ChartItem> zoomedData)
+        {
+            if (zoomedData != null)
+            {
+                Debug.WriteLine($"** {zoomedData.Chart.ChartId} Zoomed {zoomedData.XAxis.Min} to {zoomedData.XAxis.Max}");
+                UpdateZoomAcrossCharts(zoomedData.Chart.Options, zoomedData.XAxis.Min, zoomedData.XAxis.Max);
+            }
+        }
+
+        /// <summary>
+        /// Updates all the chart models that do not have the matching options object with the min and max provided
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        private void UpdateZoomAcrossCharts(ApexChartOptions<ChartItem> options, object min, object max)
+        {
+            // Go through all the chart options objects and for all not associated with the chart making this call
+            // and whose values of the X limits differ from those give can then be updated.
+            foreach (var opt in chartModels.Select(x => x.ChartOptions))
+            {
+                if (opt != options)
+                {
+                    Debug.WriteLine($"** Updating zoom for {opt.Chart.Id}: {min} to {max}");
+                    JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, min, max);
+                }
+            }
         }
 
         /// <summary>
@@ -612,6 +551,7 @@ namespace PPMTool.Pages
             bool isTotalRow = false
         )
         {
+            // TODO: Check
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
@@ -675,36 +615,9 @@ namespace PPMTool.Pages
                         }
                     }
 
-                    // Generate further, universal messages
-                    messages = GenerateTooltipMessages(assignmentsWithinBlock, person, messages);
-
                     return messages;
                 }
             );
-        }
-
-        /// <summary>
-        /// Generates tooltip messages for the chart items (blocks) based on a series of conditions.
-        /// </summary>
-        /// <param name="assignmentsWithinBlock">List of assignments that have contributed to the block</param>
-        /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
-        /// <param name="messages">Messages to add to</param>
-        /// <returns></returns>
-        private string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
-        {
-            // Add the project unconfirmed warning to the tooltip if project is unconfirmed
-            if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
-            {
-                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
-            }
-
-            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => x.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional)))
-            {
-                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
-            }
-
-            return messages;
         }
 
         /// <summary>
@@ -721,6 +634,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate)
         {
+            // TODO: Check
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
@@ -754,26 +668,8 @@ namespace PPMTool.Pages
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsInBlock => string.Empty
             );
-        }
-
-        /// <summary>
-        /// Quickly select those people in the available list that the active user manages
-        /// </summary>
-        private void FilterToMyStaff()
-        {
-            ChosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
-            PeopleSelectionChanged(ChosenPeople);
-        }
-
-        /// <summary>
-        /// Does the active user manage staff that are in the available list
-        /// </summary>
-        /// <returns></returns>
-        private bool HasStaffInList()
-        {
-            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.PersonId);
         }
     }
 }
