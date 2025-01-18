@@ -55,6 +55,7 @@ namespace PPMTool.Pages
         private TimesheetStatus newStatus;
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
+        private WorkloadModelChange currentWLM;
 
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
@@ -149,6 +150,9 @@ namespace PPMTool.Pages
 
                         // Innate codes are limited to active ones initially
                         LoadInnateCodes();
+
+                        // Get WLM details of the staff member active at the time of the timesheet
+                        currentWLM = timesheet.Owner.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
                     }
 
                     LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
