@@ -257,6 +257,33 @@
                     </div>
                 </div>
             </div>
+
+            @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+            {
+                <div class="card" style="margin-top: 0.5rem;">
+                    <h2>Workload model details</h2>
+                    <div>
+                        @{
+                            var properties = currentWLM.GetType().GetProperties();
+                            <div style="width: 100%; overflow: auto;">
+                                @foreach (var prop in properties)
+                                {
+                                    if (prop.Name.Contains("FTE"))
+                                    {
+                                        double value = (Double)@prop.GetValue(currentWLM);
+                                        if (value != 0)
+                                        {
+                                            int percent = (int)(value * 100);
+                                            <div class="timesheet-wlm-slice" style="width: @percent%;" title="@prop.Name">@value</div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             <div class="row" style="margin-top: 1rem;">
                 <div class="col">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">
