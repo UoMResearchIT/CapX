@@ -211,7 +211,7 @@ namespace PPMTool.Pages
                     var managementTasks = project.GetLeadershipTaskRanges();
                     foreach (var dateRange in managementTasks)
                     {
-                        allBlocks.Add(new GanttBlock(new SubTask
+                        allBlocks.Insert(0, new GanttBlock(new SubTask
                         {
                             Name = "Leadership",
                             StartDate = dateRange.StartDate,
@@ -978,7 +978,7 @@ namespace PPMTool.Pages
         /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
-            if (!EditAuthorised) return;
+            if (!EditAuthorised || (dataPoint.DataPoint.Items.FirstOrDefault()?.IsLeadershipTask ?? true)) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
