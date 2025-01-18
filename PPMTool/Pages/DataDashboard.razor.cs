@@ -20,7 +20,7 @@ namespace PPMTool.Pages
     {
         private float personalDevFTE = 0.1f;
         private float architectureFTE = 0.05f;
-        private float projectManFTE = 0.05f;
+        private float projectManFTE = GlobalDefaults.ProjectManagementDefaultFTE;
         private float staffManFTE = 0.05f;
         private float coachFTE = 0.1f;
 
