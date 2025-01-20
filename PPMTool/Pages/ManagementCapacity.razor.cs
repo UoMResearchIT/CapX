@@ -134,7 +134,6 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate)
         {
-            // TODO: Check
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,

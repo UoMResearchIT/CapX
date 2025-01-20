@@ -158,6 +158,69 @@ namespace PPMTool.Pages
         );
 
         /// <summary>
+        /// Method to construct a dictionary of assignments grouped by person or project which can be mapped into blocks on the chart
+        /// </summary>
+        /// <param name="projects"></param>
+        /// <param name="people"></param>
+        /// <param name="isPersonMode"></param>
+        protected virtual void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
+        {
+            // Reset existing dictionary
+            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
+
+            // Return early if no data
+            if (people.Count() == 0 || projects.Count() == 0)
+            {
+                return;
+            }
+
+            // Create the dictionary differently depending on the mode of the chart
+            if (isPersonMode)
+            {
+                foreach (var person in people)
+                {
+                    // Create a list of subtasks to which this person is assigned
+                    var assignments = new List<Assignment>();
+                    foreach (var project in projects)
+                    {
+                        foreach (var subTask in project.SubTasks)
+                        {
+                            if (subTask.AssignedResources.Any(z => z.Person == person))
+                            {
+                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                            }
+                        }
+                    }
+
+                    // Add dictionary entry with person as key
+                    groupedAssignments.Add(person, assignments);
+                }
+            }
+            else
+            {
+                // Get person
+                var person = people.First();
+
+                // Create a list of subtasks for each project this person is assigned to
+                foreach (var project in projects)
+                {
+                    var assignments = new List<Assignment>();
+                    foreach (var subTask in project.SubTasks)
+                    {
+                        // Only include subtasks with this person assigned as a resource
+                        if (subTask.AssignedResources.Any(x => person.PersonId == x.Person.PersonId))
+                        {
+                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                        }
+                    }
+
+                    // Add dictionary entry with project name as key
+                    if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
+                }
+            }
+        }
+
+        /// <summary>
         /// Method to configure the sources for the capacity chart objects
         /// </summary>
         /// <param name="AfterConfigureTask">Runs after the configuration task has completed</param>
@@ -193,7 +256,6 @@ namespace PPMTool.Pages
 
                 // Initialise the dictionaries
                 chartModels.Clear();
-                groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                 IEnumerable<Project> validProjects = cachedProjects;
 
                 // Need some people for this to work
@@ -230,25 +292,8 @@ namespace PPMTool.Pages
                     // Create temporary list of chart items
                     var chartSourceTemp = new List<ChartItem>();
 
-                    // Build chart items for each person
-                    foreach (var person in people)
-                    {
-                        // Create a list of subtasks to which this person is assigned
-                        var assignments = new List<Assignment>();
-                        foreach (var project in validProjects)
-                        {
-                            foreach (var subTask in project.SubTasks)
-                            {
-                                if (subTask.AssignedResources.Any(z => z.Person == person))
-                                {
-                                    assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                                }
-                            }
-                        }
-
-                        // Add dictionary entry with person as key
-                        groupedAssignments.Add(person, assignments);
-                    }
+                    // Build assignments dictionary for each person
+                    PopulateGroupedAssignmentsForPeople(validProjects, people, false);
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedAssignments)
@@ -290,25 +335,8 @@ namespace PPMTool.Pages
                         // Get person object
                         var person = people.First(x => x.Name == name);
 
-                        // Reset the grouped subtasks list for the next person
-                        groupedAssignments.Clear();
-
-                        // Create a list of subtasks for each project this person is assigned to
-                        foreach (var project in validProjects)
-                        {
-                            var assignments = new List<Assignment>();
-                            foreach (var subTask in project.SubTasks)
-                            {
-                                // Only include subtasks with this person assigned as a resource
-                                if (subTask.AssignedResources.Any(x => name == x.Person.Name))
-                                {
-                                    assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                                }
-                            }
-
-                            // Add dictionary entry with project name as key
-                            if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
-                        }
+                        // Build assignments dictionary for each project
+                        PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, true);
 
                         // Build chart source from the grouped data
                         Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
