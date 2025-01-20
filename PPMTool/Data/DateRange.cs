@@ -9,5 +9,34 @@ namespace PPMTool.Data
     {
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+
+        /// <summary>
+        /// Method to determine whether a testdate is in the range [startDate endDate].
+        /// If end date and start date are the same evaluates against start date.
+        /// </summary>
+        /// <param name="testDate">Date to test</param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        static public bool IsWithin(DateTime testDate, DateTime startDate, DateTime endDate)
+        {
+            return startDate.Date == endDate.Date ? testDate.Date == startDate.Date : testDate.Date >= startDate.Date && testDate.Date <= endDate.Date;
+        }
+
+        /// <summary>
+        /// Method to determine whether any part of the test range [testStart testEnd] intersects with a date range [startDate endDate].
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="testStart"></param>
+        /// <param name="testEnd"></param>
+        /// <returns></returns>
+        static public bool IsWithin(DateTime testStart, DateTime testEnd, DateTime startDate, DateTime endDate)
+        {
+            return
+                IsWithin(testEnd, startDate, endDate) ||
+                IsWithin(testStart, startDate, endDate) ||
+                (startDate.Date > testStart.Date && endDate.Date < testEnd.Date);
+        }
     }
 }

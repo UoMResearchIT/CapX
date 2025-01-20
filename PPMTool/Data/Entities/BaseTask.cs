@@ -18,9 +18,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="testDate">Date to test</param>
         /// <returns></returns>
-        public override bool IsWithin(DateTime testDate)
+        public bool IsWithin(DateTime testDate)
         {
-            return StartDate.Date == EndDate.Date ? testDate.Date == StartDate.Date : testDate.Date >= StartDate.Date && testDate.Date <= EndDate.Date;
+            return DateRange.IsWithin(testDate, StartDate, EndDate);
         }
 
         /// <summary>
@@ -29,14 +29,9 @@ namespace PPMTool.Data.Entities
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        public override bool IsWithin(DateTime startDate, DateTime endDate)
+        public bool IsWithin(DateTime startDate, DateTime endDate)
         {
-            // If end or start of the window falls within the task duration then the task runs within the window.
-            // If not then task still runs within the window if the whole task duration falls within the window.
-            return
-                IsWithin(endDate) ||
-                IsWithin(startDate) ||
-                (StartDate.Date > startDate.Date && EndDate.Date < endDate.Date);
+            return DateRange.IsWithin(StartDate, EndDate, startDate, endDate);
         }
     }
 }

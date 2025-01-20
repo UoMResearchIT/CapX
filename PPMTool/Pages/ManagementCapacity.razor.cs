@@ -82,7 +82,7 @@ namespace PPMTool.Pages
                 {
                     return assignments.RoundedSum(assignment =>
                     {
-                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
                         return resource.AssignmentFTE;
                     });
                 },
@@ -101,7 +101,7 @@ namespace PPMTool.Pages
                         // is not funded, active or in maintenance
                         return
                             assignment.ProjectStatus.IsUnconfirmed() ||
-                            assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
+                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional ?? true);
                     });
                 },
                 (assignments, value1, currentDay) =>
@@ -140,7 +140,7 @@ namespace PPMTool.Pages
                     return assignments.RoundedSum(assignment =>
                     {
                         // Value is the effort of the chosen person
-                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
                         return resource.AssignmentFTE;
                     });
                 },
@@ -159,7 +159,7 @@ namespace PPMTool.Pages
                     return assignments.Any(assignment =>
                     {
                         // Get the set of resources to check the condition against
-                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person == person);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person);
 
                         // If resource is marked as provisional or the project owning the task
                         // is not funded, active or in maintenance

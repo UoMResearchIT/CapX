@@ -311,7 +311,7 @@ namespace PPMTool.Pages
                     var chartSourceTemp = new List<ChartItem>();
 
                     // Build assignments dictionary for each person
-                    PopulateGroupedAssignmentsForPeople(validProjects, people, false);
+                    PopulateGroupedAssignmentsForPeople(validProjects, people, true);
 
                     // Build chart source from the grouped data
                     foreach (var group in groupedAssignments)
@@ -354,7 +354,7 @@ namespace PPMTool.Pages
                         var person = people.First(x => x.Name == name);
 
                         // Build assignments dictionary for each project
-                        PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, true);
+                        PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, false);
 
                         // Build chart source from the grouped data
                         Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");

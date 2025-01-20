@@ -1,4 +1,5 @@
 ﻿using System;
+using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
 namespace PPMTool.Data
@@ -8,7 +9,9 @@ namespace PPMTool.Data
     /// </summary>
     public class LeadershipAssignment : BaseAssignment
     {
-        public DateRange DateRange { get; set; }
+        public DateRange DateRange { get; private set; }
+
+        public Project Project { get; private set; }
 
         public LeadershipAssignment(ProjectStatus projectStatus) : base(projectStatus)
         {
@@ -16,15 +19,12 @@ namespace PPMTool.Data
 
         public override bool IsWithin(DateTime testDate)
         {
-            return DateRange.StartDate.Date == DateRange.EndDate.Date ? testDate.Date == DateRange.StartDate.Date : testDate.Date >= DateRange.StartDate.Date && testDate.Date <= DateRange.EndDate.Date;
+            return DateRange.IsWithin(testDate, DateRange.StartDate, DateRange.EndDate);
         }
 
         public override bool IsWithin(DateTime startDate, DateTime endDate)
         {
-            return
-                IsWithin(endDate) ||
-                IsWithin(startDate) ||
-                (DateRange.StartDate.Date > startDate.Date && DateRange.EndDate.Date < endDate.Date);
+            return DateRange.IsWithin(DateRange.StartDate, DateRange.EndDate, startDate, endDate);
         }
     }
 }
