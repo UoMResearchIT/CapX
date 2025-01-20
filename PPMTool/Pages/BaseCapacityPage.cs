@@ -114,9 +114,7 @@ namespace PPMTool.Pages
             }
         }
 
-        protected bool IsReader => AuthenticationState?.User.IsInRole(RoleType.Reader.ToString()) ?? false;
 
-        protected bool ReadOrEditAuthorised => EditAuthorised || IsReader;
 
         protected CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         protected Task configureChartTask = null;

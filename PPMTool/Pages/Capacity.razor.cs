@@ -80,7 +80,7 @@ namespace PPMTool.Pages
                 ReloadDropDownSources();
             }
 
-            if (EditAuthorised || IsReader)
+            if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
                 ConfigureChartSource();
                 return;
@@ -98,6 +98,7 @@ namespace PPMTool.Pages
 
         protected override string GetSessionStorageTag() => "capacity";
 
+        private bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
 
         /// <summary>
         /// Method to setup the dropdown sources

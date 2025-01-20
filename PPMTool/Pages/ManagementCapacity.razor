@@ -19,7 +19,7 @@
                             ValueProperty="Name"
                             Multiple=true
                             AllowClear=true
-                            Placeholder="Filter RSE"
+                            Placeholder="Filter Manager"
                             Chips=true
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             FilterOperator="StringFilterOperator.Contains"
@@ -27,7 +27,7 @@
                             Style="width: 100%; max-width: 400px;"
                             Change="@(args => PeopleSelectionChanged(args))"
                             LoadData="@LoadFilteredPeople"
-                            Disabled=@(!ReadOrEditAuthorised || Loading) />
+                            Disabled="@Loading" />
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
                 <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />

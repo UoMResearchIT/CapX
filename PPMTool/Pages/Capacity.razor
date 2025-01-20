@@ -28,7 +28,7 @@
                             Style="width: 100%; max-width: 400px;"
                             Change="@(args => PeopleSelectionChanged(args))"
                             LoadData="@LoadFilteredPeople"
-                            Disabled=@(!ReadOrEditAuthorised || Loading) />
+                            Disabled=@(IsDeveloper() || Loading) />
             @if (HasStaffInList())
             {
                 <RadzenButton Text="My Staff" Click="FilterToMyStaff" />
@@ -46,7 +46,7 @@
                             Style="width: 100%; max-width: 400px;"
                             Change="@(args => ManagerSelectionChanged(args))"
                             LoadData="@LoadFilteredManagers"
-                            Disabled=@(!ReadOrEditAuthorised || Loading) />
+                            Disabled=@(IsDeveloper() || Loading) />
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
                 <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
@@ -99,7 +99,7 @@
     }
     <hr />
 
-    @if (ReadOrEditAuthorised)
+    @if (!IsDeveloper())
     {
         <h2>Availability Query</h2>
         <div class="card">

@@ -53,11 +53,11 @@
             </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Capacity" Icon="lists">
-                        <RadzenPanelMenuItem Path="capacity" Text="RSEs" Icon="manage_accounts" />
+                    <RadzenPanelMenuItem Text="Capacity" Icon="lists" Expanded="true">
+                        <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="full_stacked_bar_chart" />
                         <AuthorizeView Roles="Superuser,Manager,Reader">
                             <Authorized Context="sub_context_1">
-                                <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="manage_accounts" />
+                                <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="full_stacked_bar_chart" />
                             </Authorized>
                         </AuthorizeView>
                     </RadzenPanelMenuItem>
