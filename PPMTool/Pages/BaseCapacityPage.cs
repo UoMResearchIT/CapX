@@ -119,7 +119,7 @@ namespace PPMTool.Pages
         protected IList<ChartModel> chartModels = new List<ChartModel>();
         protected IEnumerable<Project> cachedProjects;
         protected IEnumerable<Person> cachedPeople;
-        protected IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
+        protected IDictionary<object, IEnumerable<BaseAssignment>> groupedAssignments;
         protected List<Person> people;
         protected List<Person> filteredPeople;
 
@@ -133,7 +133,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<Assignment> assignments,
+            IEnumerable<BaseAssignment> assignments,
             DateTime startDate,
             DateTime endDate
         );
@@ -150,12 +150,30 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
             bool isTotalRow = false
         );
+
+        /// <summary>
+        /// Generates tooltip messages for the chart items (blocks) based on a series of conditions.
+        /// </summary>
+        /// <param name="assignmentsWithinBlock">List of assignments that have contributed to the block</param>
+        /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
+        /// <param name="messages">Messages to add to</param>
+        /// <returns></returns>
+        protected virtual string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        {
+            // Add the project unconfirmed warning to the tooltip if project is unconfirmed
+            if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
+            {
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
+            }
+
+            return messages;
+        }
 
         /// <summary>
         /// Method to construct a dictionary of assignments grouped by person or project which can be mapped into blocks on the chart
@@ -166,7 +184,7 @@ namespace PPMTool.Pages
         protected virtual void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
         {
             // Reset existing dictionary
-            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
+            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
 
             // Return early if no data
             if (people.Count() == 0 || projects.Count() == 0)
@@ -358,10 +376,11 @@ namespace PPMTool.Pages
                         // Total row needs to repeat the above logic but on the flattened set of subtasks
                         var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                         var rowName = "Total";
+                        groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
                         chartSourceTemp.AddRange(
                             GetProjectModeChartItemsFromAssignments(
                                 rowName,
-                                new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
+                                new KeyValuePair<object, IEnumerable<BaseAssignment>>(rowName, allProjectAssignments),
                                 startDate,
                                 endDate,
                                 person,

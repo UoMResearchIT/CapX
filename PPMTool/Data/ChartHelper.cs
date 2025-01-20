@@ -25,15 +25,15 @@ namespace PPMTool.Data
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
-            IEnumerable<Assignment> assignments,
-            Func<IEnumerable<Assignment>, double> valueFunction,
+            IEnumerable<BaseAssignment> assignments,
+            Func<IEnumerable<BaseAssignment>, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
-            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
+            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
         )
         {
             // If person starts after the start date then reset the start date to that date
@@ -124,15 +124,15 @@ namespace PPMTool.Data
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
-            IEnumerable<Assignment> assignments,
-            Func<IEnumerable<Assignment>, double> valueFunction,
+            IEnumerable<BaseAssignment> assignments,
+            Func<IEnumerable<BaseAssignment>, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
-            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
+            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
         )
         {
             return AggregateAssignmentsIntoBlocks(
@@ -257,15 +257,15 @@ namespace PPMTool.Data
         /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
-            IEnumerable<Assignment> assignments,
-            Func<IEnumerable<Assignment>, double> valueFunction,
+            IEnumerable<BaseAssignment> assignments,
+            Func<IEnumerable<BaseAssignment>, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
-            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null
+            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
         )
         {
             // Each block is considered an element of a series.
@@ -299,7 +299,7 @@ namespace PPMTool.Data
             while (currentDay < endDate)
             {
                 // Find assignments running on current day
-                var within = assignments.Where(x => x.SubTask.IsWithin(currentDay));
+                var within = assignments.Where(x => x.IsWithin(currentDay));
 
                 // Sum value for the current day -- truncate to 2 DP
                 valueDay = valueFunction(within);
@@ -325,7 +325,7 @@ namespace PPMTool.Data
                     // Only add a block if its value is non-zero
                     if (valueTracked != 0d)
                     {
-                        var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
+                        var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
                         temp.Add(new ChartItem(
                             colourFunction(valueTracked, value2Tracked),
@@ -352,7 +352,7 @@ namespace PPMTool.Data
             if (valueTracked != 0d)
             {
                 // Consider the end date to be inclusive of the final block so do not move back a day like above
-                var assignmentsInBlock = assignments.Where(x => x.SubTask.IsWithin(currentBlockStartDay, currentDay));
+                var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay));
                 temp.Add(new ChartItem(
                     colourFunction(valueDay, value2Day),
                     label,

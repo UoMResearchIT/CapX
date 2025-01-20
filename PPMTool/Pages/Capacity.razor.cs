@@ -398,6 +398,57 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Only called in person mode per person to generate chart items
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="assignments"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        protected override IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
+            Person person,
+            IEnumerable<BaseAssignment> assignments,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+                person,
+                assignments,
+                assignments =>
+                {
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource?.AssignmentFTE ?? 0;
+                    });
+                },
+                (value1, value2) =>
+                {
+                    return ChartItem.GetColourStringFTE(value1, value2);
+                },
+                person.Name,
+                queryActive ? QueryStartDate : startDate,
+                queryActive ? queryEndDate : endDate,
+                assignments =>
+                {
+                    return assignments.Any(assignment =>
+                    {
+                        // If any resources are marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return
+                            assignment.ProjectStatus.IsUnconfirmed() ||
+                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional ?? true);
+                    });
+                },
+                (assignments, value1, currentDay) =>
+                {
+                    return person.GetAvailabilityOnDate(currentDay);
+                },
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+            );
+        }
+
+        /// <summary>
         /// Method only called in project mode to generate chart items
         /// </summary>
         /// <param name="seriesName"></param>
@@ -409,7 +460,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -424,8 +475,8 @@ namespace PPMTool.Pages
                     return assignments.RoundedSum(assignment =>
                     {
                         // Value is the effort of the chosen person
-                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
-                        return resource.AssignmentFTE;
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource?.AssignmentFTE ?? 0;
                     });
                 },
                 // Colour function
@@ -443,7 +494,7 @@ namespace PPMTool.Pages
                     return assignments.Any(assignment =>
                     {
                         // Get the set of resources to check the condition against
-                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person == person);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person);
 
                         // If resource is marked as provisional or the project owning the task
                         // is not funded, active or in maintenance
@@ -471,10 +522,10 @@ namespace PPMTool.Pages
                         messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
 
                         // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == person));
-                        if (assignedWithinBlockWithChosenPerson.Any(x => x.SubTask.HasUnmetDemand()))
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person == person) ?? false);
+                        if (assignedWithinBlockWithChosenPerson.Any(x => (x as Assignment)?.SubTask.HasUnmetDemand() ?? false))
                         {
-                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x.SubTask.UnmetDemand);
+                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => (x as Assignment)?.SubTask.UnmetDemand ?? 0);
                             messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
                         }
                     }
@@ -488,78 +539,23 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Generates tooltip messages for the chart items (blocks) based on a series of conditions.
+        /// Method to generate tooltip messages for the chart blocks
         /// </summary>
-        /// <param name="assignmentsWithinBlock">List of assignments that have contributed to the block</param>
-        /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
-        /// <param name="messages">Messages to add to</param>
+        /// <param name="assignmentsWithinBlock"></param>
+        /// <param name="personOfInterest"></param>
+        /// <param name="messages"></param>
         /// <returns></returns>
-        private string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        protected override string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
-            // Add the project unconfirmed warning to the tooltip if project is unconfirmed
-            if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
-            {
-                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
-            }
+            messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => x.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional)))
+            if (assignmentsWithinBlock.Any(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional) ?? true))
             {
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }
 
             return messages;
-        }
-
-        /// <summary>
-        /// Only called in person mode per person to generate chart items
-        /// </summary>
-        /// <param name="person"></param>
-        /// <param name="assignments"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <returns></returns>
-        protected override IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
-            Person person,
-            IEnumerable<Assignment> assignments,
-            DateTime startDate,
-            DateTime endDate)
-        {
-            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                person,
-                assignments,
-                assignments =>
-                {
-                    return assignments.RoundedSum(assignment =>
-                    {
-                        var resource = assignment.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
-                        return resource.AssignmentFTE;
-                    });
-                },
-                (value1, value2) =>
-                {
-                    return ChartItem.GetColourStringFTE(value1, value2);
-                },
-                person.Name,
-                queryActive ? QueryStartDate : startDate,
-                queryActive ? queryEndDate : endDate,
-                assignments =>
-                {
-                    return assignments.Any(assignment =>
-                    {
-                        // If any resources are marked as provisional or the project owning the task
-                        // is not funded, active or in maintenance
-                        return
-                            assignment.ProjectStatus.IsUnconfirmed() ||
-                            assignment.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional;
-                    });
-                },
-                (assignments, value1, currentDay) =>
-                {
-                    return person.GetAvailabilityOnDate(currentDay);
-                },
-                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
-            );
         }
     }
 }
