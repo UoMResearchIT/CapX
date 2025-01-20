@@ -3,6 +3,9 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
+    /// <summary>
+    /// Some kind of assignment used to plot a Gantt chart.
+    /// </summary>
     public abstract class BaseAssignment : IWithin
     {
         public abstract bool IsWithin(DateTime testDate);

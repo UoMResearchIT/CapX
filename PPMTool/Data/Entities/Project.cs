@@ -473,15 +473,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// A helper class to assist with finding how much of the tasks run during a financial year
-        /// </summary>
-        public class DateRange
-        {
-            public DateTime StartDate { get; set; }
-            public DateTime EndDate { get; set; }
-        }
-
-        /// <summary>
         /// A method to compute how many days overlap between a list of date range objects (assuming they themselves do not overlap) and a window
         /// </summary>
         /// <param name="dateRanges">A list of non-overlapping date ranges</param>

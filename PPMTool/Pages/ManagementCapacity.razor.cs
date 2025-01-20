@@ -32,9 +32,15 @@ namespace PPMTool.Pages
 
         protected override string GetSessionStorageTag() => "management-capacity";
 
+        /// <summary>
+        /// Method to construct leadership assignment objects for the given projects and people
+        /// </summary>
+        /// <param name="projects"></param>
+        /// <param name="people"></param>
+        /// <param name="isPersonMode"></param>
         protected override void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
         {
-            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
+            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
 
             if (isPersonMode)
             {
@@ -45,7 +51,7 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in ownedProjects)
                     {
-                        assignments.Add(new Assignment)
+                        // TODO
                     }
                 }
             }
@@ -65,7 +71,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<Assignment> assignments,
+            IEnumerable<BaseAssignment> assignments,
             DateTime startDate,
             DateTime endDate)
         {
@@ -118,7 +124,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -167,29 +173,6 @@ namespace PPMTool.Pages
 
                     // The total availability of the person becomes value 2
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
-                },
-                // Accepts list of assignments for the block to determine tooltip messages for the block
-                assignmentsWithinBlock =>
-                {
-                    var messages = string.Empty;
-
-                    // When not a total row, the group key will be a project.
-                    var projectForRow = groupedAssignments.Key as Project;
-                    if (projectForRow != null)
-                    {
-                        // Always return the project manager on the tooltip for project rows
-                        messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
-
-                        // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x.SubTask.AssignedResources.Any(x => x.Person == person));
-                        if (assignedWithinBlockWithChosenPerson.Any(x => x.SubTask.HasUnmetDemand()))
-                        {
-                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x.SubTask.UnmetDemand);
-                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
-                        }
-                    }
-
-                    return messages;
                 }
             );
         }
