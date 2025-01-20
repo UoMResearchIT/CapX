@@ -18,6 +18,9 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
+            cachedPeople = GetManagers(cachedPeople);
+            ReloadDropDownSources();
+
             LogInformation($"Viewing management capacity page");
         }
 
@@ -48,21 +51,41 @@ namespace PPMTool.Pages
                 foreach (var person in people)
                 {
                     var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
-                    var assignments = new List<Assignment>();
+                    var assignments = new List<LeadershipAssignment>();
                     foreach (var project in ownedProjects)
                     {
-                        // TODO
+                        // Find leadership tasks and convert to leadership assignment
+                        var dateRanges = project.GetLeadershipTaskRanges();
+                        foreach (var dateRange in dateRanges)
+                        {
+                            assignments.Add(new LeadershipAssignment(dateRange, project.LeadershipFTE, project.ProjectStatus));
+                        }
                     }
+
+                    groupedAssignments.Add(person, assignments);
                 }
             }
             else
             {
                 // Project -> Leadership assignments (for a given person)
+                var person = people.First();
+                var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
+                var assignments = new List<LeadershipAssignment>();
+                foreach (var project in ownedProjects)
+                {
+                    // Find leadership tasks and convert to leadership assignment
+                    var dateRanges = project.GetLeadershipTaskRanges();
+                    foreach (var dateRange in dateRanges)
+                    {
+                        assignments.Add(new LeadershipAssignment(dateRange, project.LeadershipFTE, project.ProjectStatus));
+                    }
+                    if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
+                }
             }
         }
 
         /// <summary>
-        /// Only called in person mode per person to generate chart items. Assumed assignments only contain projects
+        /// Only called in person mode per person to generate chart items. Assumed assignments only contain projects that are owned by this person.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="assignments"></param>
@@ -80,11 +103,7 @@ namespace PPMTool.Pages
                 assignments,
                 assignments =>
                 {
-                    return assignments.RoundedSum(assignment =>
-                    {
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
-                        return resource.AssignmentFTE;
-                    });
+                    return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
                 (value1, value2) =>
                 {
@@ -95,18 +114,11 @@ namespace PPMTool.Pages
                 endDate,
                 assignments =>
                 {
-                    return assignments.Any(assignment =>
-                    {
-                        // If any resources are marked as provisional or the project owning the task
-                        // is not funded, active or in maintenance
-                        return
-                            assignment.ProjectStatus.IsUnconfirmed() ||
-                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional ?? true);
-                    });
+                    return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
                 },
                 (assignments, value1, currentDay) =>
                 {
-                    return person.GetAvailabilityOnDate(currentDay);
+                    return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
                 tooltipMessageFormatter: assignmentsInBlock => string.Empty
             );

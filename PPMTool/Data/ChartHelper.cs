@@ -21,6 +21,7 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
@@ -33,6 +34,7 @@ namespace PPMTool.Data
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
         )
         {
@@ -51,60 +53,63 @@ namespace PPMTool.Data
             // Get the chart items
             var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
+                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
 
-            // Create an empty list
-            var extraItems = new List<ChartItem>();
-
-            // If no items or if the first chart item starts after the (corrected) start date
-            // then fill in with "zero items" based on availability profile
-            if (chartItems.Count() < 1 || chartItems.First().StartDate > startDate)
+            if (gapFillingFunction != null)
             {
-                // Define fill region end date
-                var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
+                // Create an empty list
+                var extraItems = new List<ChartItem>();
 
-                // Generate the items
-                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, startDate, endFill));
-            }
-
-            // If there is a gap after the last chart item and the end date then fill in
-            if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
-            {
-                extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems.Last().EndDate, endDate));
-            }
-
-            // Add the extra items to the chart data
-            if (extraItems.Count > 0)
-            {
-                // Add the items to the chart items list and reorder
-                chartItems.AddRange(extraItems);
-                chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
-            }
-
-            // If there are any gaps in the chart items where they are free then fill in
-            extraItems.Clear();
-            for (int i = 0; i < chartItems.Count(); ++i)
-            {
-                // Ignore the last item in the list
-                if (i < chartItems.Count() - 1)
+                // If no items or if the first chart item starts after the (corrected) start date
+                // then fill in with "zero items" based on availability profile
+                if (chartItems.Count() < 1 || chartItems.First().StartDate > startDate)
                 {
-                    // If there is a gap
-                    if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
+                    // Define fill region end date
+                    var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
+
+                    // Generate the items
+                    extraItems.AddRange(gapFillingFunction(person, startDate, endFill));
+                }
+
+                // If there is a gap after the last chart item and the end date then fill in
+                if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
+                {
+                    extraItems.AddRange(gapFillingFunction(person, chartItems.Last().EndDate, endDate));
+                }
+
+                // Add the extra items to the chart data
+                if (extraItems.Count > 0)
+                {
+                    // Add the items to the chart items list and reorder
+                    chartItems.AddRange(extraItems);
+                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
+                }
+
+                // If there are any gaps in the chart items where they are free then fill in
+                extraItems.Clear();
+                for (int i = 0; i < chartItems.Count(); ++i)
+                {
+                    // Ignore the last item in the list
+                    if (i < chartItems.Count() - 1)
                     {
-                        // Generate chart items from availability to fill the gap
-                        extraItems.AddRange(ConvertAvailabilityProfileToChartItems(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
+                        // If there is a gap
+                        if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
+                        {
+                            // Generate chart items from availability to fill the gap
+                            extraItems.AddRange(gapFillingFunction(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
+                        }
                     }
                 }
-            }
 
-            // Add the extra items to the chart data
-            if (extraItems.Count > 0)
-            {
-                // Add the items to the chart items list and reorder
-                chartItems.AddRange(extraItems);
-                chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
+                // Add the extra items to the chart data
+                if (extraItems.Count > 0)
+                {
+                    // Add the items to the chart items list and reorder
+                    chartItems.AddRange(extraItems);
+                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
+                }
             }
 
             return chartItems;
@@ -121,6 +126,7 @@ namespace PPMTool.Data
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
@@ -132,114 +138,14 @@ namespace PPMTool.Data
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
         )
         {
             return AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, tooltipMessageFormatter
+                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter
             ).OrderBy(x => x.StartDate).ToList();
-        }
-
-        /// <summary>
-        /// Method to take the workload model changes of a person and create chart items to represent "zero assignment" for the period specified.
-        /// </summary>
-        /// <param name="person"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <returns></returns>
-        private static IEnumerable<ChartItem> ConvertAvailabilityProfileToChartItems(Person person, DateTime startDate, DateTime endDate)
-        {
-            var blocks = new List<ChartItem>();
-
-            // Get any workload model changes in force at the beginning of the query or during it
-            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
-
-            // Add to the changes any leaving date within the window as a zero availability
-            if (person.EndDate != null)
-            {
-                changes.Add(new WorkloadModelChange()
-                {
-                    Person = person,
-                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Today,
-                    ProjectWorkFTE = 0
-                });
-
-                // Keep only changes on or before the end date
-                changes = changes.Where(x => x.ChangeDate <= person.EndDate?.AddDays(1)).ToList();
-            }
-
-            // Add to the changes any start date within the window as post FTE (if no availablity change on the start date)
-            if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
-            {
-                changes.Add(new WorkloadModelChange()
-                {
-                    Person = person,
-                    ChangeDate = person.StartDate,
-                    ProjectWorkFTE = person.FTE
-                });
-
-                // Keep only changes on or after the start date
-                changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
-
-                // Enforce a zero availability before they start
-                changes.Add(new WorkloadModelChange()
-                {
-                    Person = person,
-                    ChangeDate = startDate,
-                    ProjectWorkFTE = 0
-                });
-            }
-
-            // Sort by date
-            changes = changes.OrderBy(x => x.ChangeDate).ToList();
-
-            // If no changes then use post FTE in a single block
-            if (changes.Count == 0)
-            {
-                blocks.Add(
-                    new ChartItem(ChartItem.GetColourStringFTE(0, person.FTE), person.Name, startDate, endDate,
-                        0, person.FTE, false
-                    )
-                );
-            }
-
-            // Work through the workload model changes to establish blocks of availability
-            else
-            {
-                // We need to establish the availability at the beginning of the query window which will be post FTE by default
-                double initialFTE = person.FTE;
-
-                // Find the change immediately before the query window or on day one
-                // if there is one on the first day of the query window
-                var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (changeBefore != null) initialFTE = changeBefore.ProjectWorkFTE;
-
-                // Any relevant changes after must be after the start of the window but before the end
-                var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
-
-                // First period uses the initial FTE up to the first change after the window begins or the end
-                // of the window if there isn't any changes after
-                blocks.Add(
-                    new ChartItem(ChartItem.GetColourStringFTE(0, initialFTE), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
-                        0, initialFTE, false
-                    )
-                );
-
-                // Subsequent ones use the latest change information
-                for (int i = 0; i < changesAfter.Count; ++i)
-                {
-                    // If the last change then use query end date for block end otherwise it is date of next change
-                    blocks.Add(
-                        new ChartItem(ChartItem.GetColourStringFTE(0, changesAfter[i].ProjectWorkFTE), person.Name, changesAfter[i].ChangeDate,
-                            i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            0, changesAfter[i].ProjectWorkFTE, false
-                        )
-                    );
-                }
-            }
-
-            return blocks;
         }
 
         /// <summary>
@@ -254,6 +160,7 @@ namespace PPMTool.Data
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
+        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
@@ -265,6 +172,7 @@ namespace PPMTool.Data
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
         )
         {

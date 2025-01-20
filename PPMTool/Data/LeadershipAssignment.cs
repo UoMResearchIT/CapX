@@ -1,5 +1,4 @@
 ﻿using System;
-using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
 namespace PPMTool.Data
@@ -11,10 +10,12 @@ namespace PPMTool.Data
     {
         public DateRange DateRange { get; private set; }
 
-        public Project Project { get; private set; }
+        public float LeadershipFTE { get; private set; }
 
-        public LeadershipAssignment(ProjectStatus projectStatus) : base(projectStatus)
+        public LeadershipAssignment(DateRange dateRange, float leadershipFTE, ProjectStatus projectStatus) : base(projectStatus)
         {
+            DateRange = dateRange;
+            LeadershipFTE = leadershipFTE;
         }
 
         public override bool IsWithin(DateTime testDate)

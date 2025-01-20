@@ -82,5 +82,19 @@ namespace PPMTool.Services
             context.Roles.Update(roleEntity);
             context.SaveChanges();
         }
+
+        /// <summary>
+        /// Get a list of people who are managers
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetAllManagers(PPMToolContext context)
+        {
+            return context.Roles
+                .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                .Include(x => x.Person)
+                .Select(x => x.Person)
+                .DistinctBy(x => x.Name);
+        }
     }
 }

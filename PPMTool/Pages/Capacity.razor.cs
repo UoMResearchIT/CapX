@@ -44,8 +44,8 @@ namespace PPMTool.Pages
             }
         }
 
-        private List<Person> managers;
-        private List<Person> filteredManagers;
+        private IList<Person> managers;
+        private IList<Person> filteredManagers;
         private DateTime queryEndDate = DateTime.Today.AddDays(7);
         private bool queryResultsAvailable;
         private string queryErrorMessage;
@@ -120,12 +120,7 @@ namespace PPMTool.Pages
             }
 
             // Add managers
-            var roles = RolesService.GetAll(Context)
-                .Where(x =>
-                    (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
-                    && x.Person != null
-                );
-            managers = cachedPeople.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            managers = GetManagers(cachedPeople);
 
             // Filter out leavers if necessary
             if (!IncludeLeavers)
@@ -444,7 +439,11 @@ namespace PPMTool.Pages
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                (assignments, gapStart, gapEnd) =>
+                {
+                    return FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
+                },
+                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -510,7 +509,7 @@ namespace PPMTool.Pages
                     return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
-                assignmentsWithinBlock =>
+                tooltipMessageFormatter: assignmentsWithinBlock =>
                 {
                     var messages = string.Empty;
 
