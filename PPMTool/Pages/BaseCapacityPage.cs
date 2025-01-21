@@ -105,8 +105,6 @@ namespace PPMTool.Pages
 
             // Regenerate the chart data
             ConfigureChartSource();
-
-            LogInformation($"Selected people: {(items == null ? "" : string.Join("|", items))}");
         }
 
         /// <summary>
@@ -650,9 +648,8 @@ namespace PPMTool.Pages
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished");
             if (temp != null) includeFinished = temp ?? false;
 
-            // Reload dropdowns sources and the chart source
+            // Reload dropdowns sources
             ReloadDropDownSources();
-            ConfigureChartSource();
         }
 
         /// <summary>

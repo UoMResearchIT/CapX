@@ -68,30 +68,35 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
-            // Load settings
-            var managerName = await SessionStorage.GetItemAsync<string>($"{GetSessionStorageTag()}-chosen-manager");
-            ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
-
-            // Reload the dropdown sources if a manager has been chosen
-            if (ChosenManager != null)
-            {
-                ReloadDropDownSources();
-            }
-
+            // Certain roles can use the dropdowns and save manager settings so need to reload
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
-                ConfigureChartSource();
-                return;
-            }
 
-            // Choose the person automatically if not a manager    
-            // Look up the username
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            chosenPeople = new List<string>
+                // Load settings
+                var managerName = await SessionStorage.GetItemAsync<string>($"{GetSessionStorageTag()}-chosen-manager");
+                ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
+
+                // Reload the dropdown sources if a manager has been chosen
+                if (ChosenManager != null)
+                {
+                    ReloadDropDownSources();
+                }
+
+                // Load the chart source based on the current configuration
+                ConfigureChartSource();
+            }
+            else
             {
-                role.GetName()
-            };
-            PeopleSelectionChanged(chosenPeople);
+                // Choose the person automatically if not a manager
+                var role = RolesService.GetByUsername(Context, ActiveUserName);
+                chosenPeople = new List<string>
+                {
+                    role.GetName()
+                };
+
+                // Will automatically load the chart source
+                PeopleSelectionChanged(chosenPeople);
+            }
         }
 
         protected override string GetSessionStorageTag() => "capacity";
@@ -140,7 +145,7 @@ namespace PPMTool.Pages
             LoadFilteredManagers(new LoadDataArgs());
 
             // Remove any people not in the dropdown source from the selected people list
-            if (chosenPeople != null)
+            if (chosenPeople != null && chosenPeople.Count() > 0)
             {
                 var temp = new List<string>();
                 foreach (var p in chosenPeople)
@@ -151,7 +156,9 @@ namespace PPMTool.Pages
                     }
                 }
                 chosenPeople = temp;
-                PeopleSelectionChanged(chosenPeople);
+
+                // Update the session storage
+                SavePeopleState();
             }
         }
 
