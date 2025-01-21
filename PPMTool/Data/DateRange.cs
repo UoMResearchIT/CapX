@@ -11,7 +11,7 @@ namespace PPMTool.Data
         public DateTime EndDate { get; set; }
 
         /// <summary>
-        /// Method to determine whether a testdate is in the range [startDate endDate].
+        /// Method to determine whether a testdate is in the date range [startDate endDate].
         /// If end date and start date are the same evaluates against start date.
         /// </summary>
         /// <param name="testDate">Date to test</param>
@@ -33,10 +33,7 @@ namespace PPMTool.Data
         /// <returns></returns>
         static public bool IsWithin(DateTime testStart, DateTime testEnd, DateTime startDate, DateTime endDate)
         {
-            return
-                IsWithin(testEnd, startDate, endDate) ||
-                IsWithin(testStart, startDate, endDate) ||
-                (startDate.Date > testStart.Date && endDate.Date < testEnd.Date);
+            return startDate.Date <= testEnd.Date && endDate.Date >= testStart.Date;
         }
     }
 }
