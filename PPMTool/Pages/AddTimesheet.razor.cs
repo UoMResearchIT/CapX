@@ -30,6 +30,9 @@ namespace PPMTool.Pages
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
+        [Inject]
+        public EmailService EmailService { get; set; }
+
         private Timesheet timesheet;
         private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
@@ -358,6 +361,13 @@ namespace PPMTool.Pages
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
+            
+            // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
+            if (timesheet.Owner == ActiveUser) 
+            {
+                Debug.Write("** Sending an email to the Line Manager...");
+                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser, timesheet); 
+            }
 
             // Only navigate away if the status is new as this means the save button has been clicked
             if (timesheet.Status != TimesheetStatus.New)
