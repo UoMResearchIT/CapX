@@ -361,12 +361,12 @@ namespace PPMTool.Pages
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            
+
             // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
-            if (timesheet.Owner == ActiveUser) 
+            if (timesheet.Owner == ActiveUser)
             {
                 Debug.Write("** Sending an email to the Line Manager...");
-                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser, timesheet); 
+                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser, timesheet);
             }
 
             // Only navigate away if the status is new as this means the save button has been clicked
