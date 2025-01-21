@@ -120,7 +120,11 @@ namespace PPMTool.Pages
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsInBlock => string.Empty
+                (assignments, gapStart, gapEnd) =>
+                {
+                    return FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectManagementFTE ?? 0);
+                },
+                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -143,18 +147,12 @@ namespace PPMTool.Pages
             bool isTotalRow = false
         )
         {
-            // TODO: Check
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
                 assignments =>
                 {
-                    return assignments.RoundedSum(assignment =>
-                    {
-                        // Value is the effort of the chosen person
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
-                        return resource.AssignmentFTE;
-                    });
+                    return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
                 // Colour function
                 (value1, value2) =>
@@ -168,23 +166,12 @@ namespace PPMTool.Pages
                 // Hatched function
                 assignments =>
                 {
-                    return assignments.Any(assignment =>
-                    {
-                        // Get the set of resources to check the condition against
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person);
-
-                        // If resource is marked as provisional or the project owning the task
-                        // is not funded, active or in maintenance
-                        return assignment.ProjectStatus.IsUnconfirmed() || resource.IsProvisional;
-                    });
+                    return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
                 },
                 // Value 2 for each block
                 (assignments, value1, currentDay) =>
                 {
-                    var peo = people.Where(y => y == person);
-
-                    // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
+                    return person.GetProjectManagementCapacityOnDate(currentDay);
                 }
             );
         }

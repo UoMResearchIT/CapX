@@ -158,6 +158,42 @@ namespace PPMTool.Pages
         );
 
         /// <summary>
+        /// Method to handle when a series element on the chart is selected
+        /// </summary>
+        /// <param name="dataPoint"></param>
+        protected virtual void DataPointsSelected(SelectedData<ChartItem> dataPoint)
+        {
+            // When in project mode, navigate
+            if (dataPoint.IsSelected && PeopleChosen())
+            {
+                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
+
+                // Use the title of the task to find its projectID then navigate to the details page
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
+                if (project != null)
+                {
+                    Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
+                }
+            }
+
+            // When in people ("All") mode then add person to selection and update the chart
+            else if (dataPoint.IsSelected && !PeopleChosen())
+            {
+                var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
+                Debug.WriteLine($"** Selected {personName}. Updating selection...");
+                var match = people.FirstOrDefault(x => x.Name == personName);
+                if (match != null)
+                {
+                    var temp = PeopleChosen() ? new List<string>(ChosenPeople) : new List<string>();
+                    temp.Add(personName);
+                    ChosenPeople = temp;
+                    PeopleSelectionChanged(ChosenPeople);
+                }
+            }
+        }
+
+        /// <summary>
         /// Generates tooltip messages for the chart items (blocks) based on a series of conditions.
         /// </summary>
         /// <param name="assignmentsWithinBlock">List of assignments that have contributed to the block</param>

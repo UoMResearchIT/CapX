@@ -4,7 +4,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using ApexCharts;
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -218,42 +217,6 @@ namespace PPMTool.Pages
         private bool HasStaffInList()
         {
             return people.Any(x => x.LineManager?.PersonId == ActiveUser?.PersonId);
-        }
-
-        /// <summary>
-        /// Method to handle when a series element on the chart is selected
-        /// </summary>
-        /// <param name="dataPoint"></param>
-        private void DataPointsSelected(SelectedData<ChartItem> dataPoint)
-        {
-            // When in project mode, navigate
-            if (dataPoint.IsSelected && PeopleChosen())
-            {
-                var projectName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
-                Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
-
-                // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
-                if (project != null)
-                {
-                    Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
-                }
-            }
-
-            // When in people ("All") mode then add person to selection and update the chart
-            else if (dataPoint.IsSelected && !PeopleChosen())
-            {
-                var personName = dataPoint.DataPoint.Items.FirstOrDefault()?.Label;
-                Debug.WriteLine($"** Selected {personName}. Updating selection...");
-                var match = people.FirstOrDefault(x => x.Name == personName);
-                if (match != null)
-                {
-                    var temp = PeopleChosen() ? new List<string>(ChosenPeople) : new List<string>();
-                    temp.Add(personName);
-                    ChosenPeople = temp;
-                    PeopleSelectionChanged(ChosenPeople);
-                }
-            }
         }
 
         /// <summary>
