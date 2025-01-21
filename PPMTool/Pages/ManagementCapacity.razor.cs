@@ -70,10 +70,10 @@ namespace PPMTool.Pages
                 // Project -> Leadership assignments (for a given person)
                 var person = people.First();
                 var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
-                var assignments = new List<LeadershipAssignment>();
                 foreach (var project in ownedProjects)
                 {
                     // Find leadership tasks and convert to leadership assignment
+                    var assignments = new List<LeadershipAssignment>();
                     var dateRanges = project.GetLeadershipTaskRanges();
                     foreach (var dateRange in dateRanges)
                     {

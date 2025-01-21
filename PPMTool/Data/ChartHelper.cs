@@ -177,8 +177,8 @@ namespace PPMTool.Data
         )
         {
             // Each block is considered an element of a series.
-            // We must define an element as a block of the same FTE value.
-            // Marching through at the chosen resolution, we can then save an element and start a new one when the FTE changes.
+            // We must define an element as a block of the same value.
+            // Marching through at the chosen resolution, we can then save an element and start a new one when the changes.
 
             // Initialise
             var temp = new List<ChartItem>();
