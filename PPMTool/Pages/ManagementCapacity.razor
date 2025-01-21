@@ -13,7 +13,7 @@
     <hr />
     <div class="card">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-            <RadzenDropDown @bind-Value=@ChosenPeople
+            <RadzenDropDown @bind-Value=@chosenPeople
                             Data=@filteredPeople
                             TextProperty="Name"
                             ValueProperty="Name"
@@ -30,15 +30,15 @@
                             Disabled="@Loading" />
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Unfunded:
-                <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" />
+                <RadzenSwitch @bind-Value="@includeUnFunded" Disabled="@Loading" Change="@UnFundedSwitchChanged" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Leavers:
-                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" />
+                <RadzenSwitch @bind-Value="@includeLeavers" Disabled="@Loading" Change="@LeaversSwitchChanged" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 Include Finished:
-                <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" />
+                <RadzenSwitch @bind-Value="@includeFinished" Disabled="@Loading" Change="@FinishedSwitchChanged" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
                 <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />

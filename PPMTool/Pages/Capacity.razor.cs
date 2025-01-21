@@ -75,23 +75,22 @@ namespace PPMTool.Pages
             // Reload the dropdown sources if a manager has been chosen
             if (ChosenManager != null)
             {
-                ReloadDropDownSources();
+                ReloadDropDownSourcesAndChartSource();
             }
 
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
-                ConfigureChartSource();
                 return;
             }
 
             // Choose the person automatically if not a manager    
             // Look up the username
             var role = RolesService.GetByUsername(Context, ActiveUserName);
-            ChosenPeople = new List<string>
+            chosenPeople = new List<string>
             {
                 role.GetName()
             };
-            PeopleSelectionChanged(ChosenPeople);
+            PeopleSelectionChanged(chosenPeople);
         }
 
         protected override string GetSessionStorageTag() => "capacity";
@@ -101,7 +100,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to setup the dropdown sources
         /// </summary>
-        protected override void ReloadDropDownSources()
+        protected override void ReloadDropDownSourcesAndChartSource()
         {
             Debug.WriteLine("** Reloading dropdown sources...");
             people = cachedPeople.ToList();
@@ -122,7 +121,7 @@ namespace PPMTool.Pages
             managers = GetManagers(cachedPeople);
 
             // Filter out leavers if necessary
-            if (!IncludeLeavers)
+            if (!includeLeavers)
             {
                 people = people
                     .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
@@ -140,17 +139,18 @@ namespace PPMTool.Pages
             LoadFilteredManagers(new LoadDataArgs());
 
             // Remove any people not in the dropdown source from the selected people list
-            if (ChosenPeople != null)
+            if (chosenPeople != null)
             {
                 var temp = new List<string>();
-                foreach (var p in ChosenPeople)
+                foreach (var p in chosenPeople)
                 {
                     if (filteredPeople.Any(x => x.Name == p))
                     {
                         temp.Add(p);
                     }
                 }
-                ChosenPeople = temp;
+                chosenPeople = temp;
+                PeopleSelectionChanged(chosenPeople);
             }
         }
 
@@ -193,10 +193,7 @@ namespace PPMTool.Pages
             SaveManagerState();
 
             // Reload the people to include just those working on projects that PM manages
-            ReloadDropDownSources();
-
-            // Regenerate the chart data
-            ConfigureChartSource();
+            ReloadDropDownSourcesAndChartSource();
 
             LogInformation($"Selected manager: {item?.Name}");
         }
@@ -206,8 +203,8 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterToMyStaff()
         {
-            ChosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
-            PeopleSelectionChanged(ChosenPeople);
+            chosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
+            PeopleSelectionChanged(chosenPeople);
         }
 
         /// <summary>
@@ -242,7 +239,7 @@ namespace PPMTool.Pages
             queryResultsAvailable = false;
             queryErrorMessage = null;
             queryActive = false;
-            ChosenPeople = new List<string>();
+            chosenPeople = new List<string>();
             if (regenerateChart) ConfigureChartSource();
 
             LogInformation($"Query cleared");

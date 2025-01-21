@@ -45,75 +45,6 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "filterid")]
         public int? FilterPersonId { get; set; }
 
-        private IEnumerable<string> chosenPeople = new List<string>();
-        public IEnumerable<string> ChosenPeople
-        {
-            get => chosenPeople;
-            set
-            {
-                if (chosenPeople != value)
-                {
-                    chosenPeople = value;
-                    SavePeopleState();
-                }
-            }
-        }
-
-        private bool includeUnFunded = true;
-        public bool IncludeUnFunded
-        {
-            get => includeUnFunded;
-            set
-            {
-                if (includeUnFunded != value)
-                {
-                    includeUnFunded = value;
-                    SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", includeUnFunded);
-
-                    // Update the chart source
-                    ConfigureChartSource();
-                }
-            }
-        }
-
-        private bool includeLeavers = false;
-        public bool IncludeLeavers
-        {
-            get => includeLeavers;
-            set
-            {
-                if (includeLeavers != value)
-                {
-                    includeLeavers = value;
-                    SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", includeLeavers);
-
-                    // Refresh the people source
-                    ReloadDropDownSources();
-
-                    // Update the chart source
-                    ConfigureChartSource();
-
-                }
-            }
-        }
-
-        private bool includeFinished = false;
-        public bool IncludeFinished
-        {
-            get => includeFinished;
-            set
-            {
-                if (includeFinished != value)
-                {
-                    includeFinished = value;
-                    SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", includeFinished);
-
-                    // Update the chart source
-                    ConfigureChartSource();
-                }
-            }
-        }
-
         protected CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         protected Task configureChartTask = null;
         protected IList<ChartModel> chartModels = new List<ChartModel>();
@@ -122,6 +53,55 @@ namespace PPMTool.Pages
         protected IDictionary<object, IEnumerable<BaseAssignment>> groupedAssignments;
         protected List<Person> people;
         protected List<Person> filteredPeople;
+        protected IEnumerable<string> chosenPeople = new List<string>();
+        protected bool includeUnFunded = true;
+        protected bool includeLeavers = false;
+        protected bool includeFinished = false;
+
+        /// <summary>
+        /// Change callback for unfunded switch
+        /// </summary>
+        protected void UnFundedSwitchChanged()
+        {
+            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", includeUnFunded);
+            ConfigureChartSource();
+        }
+
+        /// <summary>
+        /// Change callback for leavers switch
+        /// </summary>
+        protected void LeaversSwitchChanged()
+        {
+            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", includeLeavers);
+            ReloadDropDownSourcesAndChartSource();
+        }
+
+        /// <summary>
+        /// Change callback for include finished switch
+        /// </summary>
+        protected void FinishedSwitchChanged()
+        {
+            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", includeFinished);
+            ReloadDropDownSourcesAndChartSource();
+        }
+
+        /// <summary>
+        /// Fire and forget when selection of the multi-select people down changes
+        /// </summary>
+        /// <param name="selectedOptions"></param>
+        protected void PeopleSelectionChanged(object selectedOptions)
+        {
+            var items = selectedOptions as IEnumerable<string>;
+            Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
+
+            // Save the new state
+            SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
+
+            // Regenerate the chart data
+            ConfigureChartSource();
+
+            LogInformation($"Selected people: {(items == null ? "" : string.Join("|", items))}");
+        }
 
         /// <summary>
         /// Generate chart items for a given person in person mode
@@ -185,10 +165,10 @@ namespace PPMTool.Pages
                 var match = people.FirstOrDefault(x => x.Name == personName);
                 if (match != null)
                 {
-                    var temp = PeopleChosen() ? new List<string>(ChosenPeople) : new List<string>();
+                    var temp = PeopleChosen() ? new List<string>(chosenPeople) : new List<string>();
                     temp.Add(personName);
-                    ChosenPeople = temp;
-                    PeopleSelectionChanged(ChosenPeople);
+                    chosenPeople = temp;
+                    PeopleSelectionChanged(chosenPeople);
                 }
             }
         }
@@ -298,7 +278,6 @@ namespace PPMTool.Pages
             // Wait for the task to be finished
             while (!configureChartTask?.IsCompleted ?? false)
             {
-                Debug.WriteLine("** Waiting for completion...");
                 Task.Delay(1000);
             }
 
@@ -381,7 +360,7 @@ namespace PPMTool.Pages
                     Debug.WriteLine("** Chart in PROJECT MODE.");
 
                     // For each person selected
-                    foreach (var name in ChosenPeople)
+                    foreach (var name in chosenPeople)
                     {
                         // Create temporary list of chart items
                         var chartSourceTemp = new List<ChartItem>();
@@ -443,7 +422,7 @@ namespace PPMTool.Pages
                     }
                 }
 
-                Debug.WriteLine($"** Done. Unfunded = {IncludeUnFunded} | Leavers = {IncludeLeavers} | Finished = {IncludeFinished}.");
+                Debug.WriteLine($"** Done. Unfunded = {includeUnFunded} | Leavers = {includeLeavers} | Finished = {includeFinished}.");
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
@@ -602,15 +581,15 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to reload the dropdown sources on the page
         /// </summary>
-        protected virtual void ReloadDropDownSources()
+        protected virtual void ReloadDropDownSourcesAndChartSource()
         {
-            Debug.WriteLine("** Reloading dropdown sources...");
+            Debug.WriteLine("** Reloading dropdown sources and reconfiguring chart source...");
 
             // Get people and filter if PM selected
             people = cachedPeople.ToList();
 
             // Filter out leavers if necessary
-            if (!IncludeLeavers)
+            if (!includeLeavers)
             {
                 people = people
                     .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
@@ -622,17 +601,18 @@ namespace PPMTool.Pages
             LoadFilteredPeople(new LoadDataArgs());
 
             // Remove any people not in the dropdown source from the selected people list
-            if (ChosenPeople != null)
+            if (chosenPeople != null)
             {
                 var temp = new List<string>();
-                foreach (var p in ChosenPeople)
+                foreach (var p in chosenPeople)
                 {
                     if (filteredPeople.Any(x => x.Name == p))
                     {
                         temp.Add(p);
                     }
                 }
-                ChosenPeople = temp;
+                chosenPeople = temp;
+                PeopleSelectionChanged(chosenPeople);
             }
         }
 
@@ -648,14 +628,17 @@ namespace PPMTool.Pages
             cachedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
 
             // Refresh the dropdown
-            ReloadDropDownSources();
+            ReloadDropDownSourcesAndChartSource();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnAfterRender(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
 
-            ChosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
+            if (!firstRender) return;
+
+            chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
+            Debug.WriteLine($"** From session storage: {(chosenPeople != null ? string.Join('|', chosenPeople) : "")}");
 
             // If there is a query parameter then use it
             if (FilterPersonId != null)
@@ -663,7 +646,7 @@ namespace PPMTool.Pages
                 var matchingPerson = cachedPeople.FirstOrDefault(x => x.PersonId == FilterPersonId);
                 if (matchingPerson != null)
                 {
-                    ChosenPeople = new List<string>
+                    chosenPeople = new List<string>
                     {
                         matchingPerson.Name
                     };
@@ -672,11 +655,14 @@ namespace PPMTool.Pages
 
             // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
             var temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers");
-            if (temp != null) IncludeLeavers = temp ?? false;
+            if (temp != null) includeLeavers = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded");
-            if (temp != null) IncludeUnFunded = temp ?? false;
+            if (temp != null) includeUnFunded = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished");
-            if (temp != null) IncludeFinished = temp ?? false;
+            if (temp != null) includeFinished = temp ?? false;
+
+            // Reload dropdowns sources and the chart source
+            ReloadDropDownSourcesAndChartSource();
         }
 
         /// <summary>
@@ -685,40 +671,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected bool PeopleChosen()
         {
-            return ChosenPeople != null && ChosenPeople.Count() > 0;
-        }
-
-        /// <summary>
-        /// Save the chosen people to session storage
-        /// </summary>
-        protected void SavePeopleState()
-        {
-            SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
-        }
-
-        /// <summary>
-        /// Fire and forget when selection of the multi-select people down changes
-        /// </summary>
-        /// <param name="selectedOptions"></param>
-        protected void PeopleSelectionChanged(object selectedOptions)
-        {
-            var items = selectedOptions as IEnumerable<string>;
-            Debug.WriteLine("** Selected People:");
-            if (items != null)
-            {
-                foreach (var i in items)
-                {
-                    Debug.WriteLine($"** {i}");
-                }
-            }
-
-            // Save the new state
-            SavePeopleState();
-
-            // Regenerate the chart data
-            ConfigureChartSource();
-
-            LogInformation($"Selected people: {(items == null ? "" : string.Join("|", items))}");
+            return chosenPeople != null && chosenPeople.Count() > 0;
         }
 
         /// <summary>
@@ -794,14 +747,14 @@ namespace PPMTool.Pages
             var validProjects = cachedProjects;
 
             // Filter projects based on finished
-            if (!IncludeFinished)
+            if (!includeFinished)
             {
                 Debug.WriteLine("** Removing finished projects...");
                 validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
             }
 
             // Filter projects based on unfunded
-            if (!IncludeUnFunded)
+            if (!includeUnFunded)
             {
                 Debug.WriteLine("** Removing unfunded projects...");
                 validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());

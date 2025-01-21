@@ -19,7 +19,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             cachedPeople = GetManagers(cachedPeople);
-            ReloadDropDownSources();
+            ReloadDropDownSourcesAndChartSource();
 
             LogInformation($"Viewing management capacity page");
         }
@@ -30,7 +30,7 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
-            PeopleSelectionChanged(ChosenPeople);
+            PeopleSelectionChanged(chosenPeople);
         }
 
         protected override string GetSessionStorageTag() => "management-capacity";
