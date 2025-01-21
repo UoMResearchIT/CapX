@@ -73,7 +73,8 @@ namespace PPMTool.Pages
         protected void LeaversSwitchChanged()
         {
             SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", includeLeavers);
-            ReloadDropDownSourcesAndChartSource();
+            ReloadDropDownSources();
+            ConfigureChartSource();
         }
 
         /// <summary>
@@ -82,8 +83,13 @@ namespace PPMTool.Pages
         protected void FinishedSwitchChanged()
         {
             SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", includeFinished);
-            ReloadDropDownSourcesAndChartSource();
+            ConfigureChartSource();
         }
+
+        /// <summary>
+        /// Save the chosen people to session storage
+        /// </summary>
+        protected void SavePeopleState() => SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
 
         /// <summary>
         /// Fire and forget when selection of the multi-select people down changes
@@ -95,7 +101,7 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
 
             // Save the new state
-            SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
+            SavePeopleState();
 
             // Regenerate the chart data
             ConfigureChartSource();
@@ -267,23 +273,7 @@ namespace PPMTool.Pages
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
             StateHasChanged();
-
-            // Before kicking off a new task here we need to cancel the previous one
-            if (configureChartTaskCancellationTokenSource != null)
-            {
-                Debug.WriteLine("** Cancelling existing task...");
-                configureChartTaskCancellationTokenSource.Cancel();
-            }
-
-            // Wait for the task to be finished
-            while (!configureChartTask?.IsCompleted ?? false)
-            {
-                Task.Delay(1000);
-            }
-
-            // Create new cancellation token and task
-            configureChartTaskCancellationTokenSource = new CancellationTokenSource();
-            configureChartTask = Task.Run(new Func<Task>(() =>
+            EnqueueLoadData(async () => await Task.Run(new Func<Task>(() =>
             {
                 Debug.WriteLine("** Running new configure task...");
 
@@ -436,7 +426,7 @@ namespace PPMTool.Pages
 
                 return Task.CompletedTask;
 
-            }), configureChartTaskCancellationTokenSource.Token)
+            }))
             .ContinueWith(task =>
             {
                 Debug.WriteLine($"** ...task complete. Status = {task.Status}");
@@ -453,7 +443,7 @@ namespace PPMTool.Pages
                 });
 
                 Debug.WriteLine($"** There are {chartModels.Count} chart(s)!");
-            });
+            }));
         }
 
         /// <summary>
@@ -581,9 +571,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to reload the dropdown sources on the page
         /// </summary>
-        protected virtual void ReloadDropDownSourcesAndChartSource()
+        protected virtual void ReloadDropDownSources()
         {
-            Debug.WriteLine("** Reloading dropdown sources and reconfiguring chart source...");
+            Debug.WriteLine("** Reloading dropdown sources...");
 
             // Get people and filter if PM selected
             people = cachedPeople.ToList();
@@ -612,7 +602,6 @@ namespace PPMTool.Pages
                     }
                 }
                 chosenPeople = temp;
-                PeopleSelectionChanged(chosenPeople);
             }
         }
 
@@ -627,8 +616,8 @@ namespace PPMTool.Pages
             // Cache all the people
             cachedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
 
-            // Refresh the dropdown
-            ReloadDropDownSourcesAndChartSource();
+            // Load dropdown sources
+            ReloadDropDownSources();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -662,7 +651,8 @@ namespace PPMTool.Pages
             if (temp != null) includeFinished = temp ?? false;
 
             // Reload dropdowns sources and the chart source
-            ReloadDropDownSourcesAndChartSource();
+            ReloadDropDownSources();
+            ConfigureChartSource();
         }
 
         /// <summary>

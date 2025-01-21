@@ -75,11 +75,12 @@ namespace PPMTool.Pages
             // Reload the dropdown sources if a manager has been chosen
             if (ChosenManager != null)
             {
-                ReloadDropDownSourcesAndChartSource();
+                ReloadDropDownSources();
             }
 
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
+                ConfigureChartSource();
                 return;
             }
 
@@ -100,7 +101,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to setup the dropdown sources
         /// </summary>
-        protected override void ReloadDropDownSourcesAndChartSource()
+        protected override void ReloadDropDownSources()
         {
             Debug.WriteLine("** Reloading dropdown sources...");
             people = cachedPeople.ToList();
@@ -193,7 +194,10 @@ namespace PPMTool.Pages
             SaveManagerState();
 
             // Reload the people to include just those working on projects that PM manages
-            ReloadDropDownSourcesAndChartSource();
+            ReloadDropDownSources();
+
+            // Reconfigure the chart
+            ConfigureChartSource();
 
             LogInformation($"Selected manager: {item?.Name}");
         }

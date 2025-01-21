@@ -19,7 +19,8 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             cachedPeople = GetManagers(cachedPeople);
-            ReloadDropDownSourcesAndChartSource();
+            ReloadDropDownSources();
+            ConfigureChartSource();
 
             LogInformation($"Viewing management capacity page");
         }
