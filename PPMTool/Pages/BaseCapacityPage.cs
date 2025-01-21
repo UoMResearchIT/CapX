@@ -447,11 +447,11 @@ namespace PPMTool.Pages
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
-                long? endDateForChartNoQuery = allItems.Count() > 0 ? allItems.Max(x => x.EndDate).ToUnixTimeMilliseconds() : null;
+                long? endDateForAxisRange = allItems.Count() > 0 ? DateTime.Today.AddYears(1).ToUnixTimeMilliseconds() : null;
                 foreach (var opt in chartModels.Select(x => x.ChartOptions))
                 {
                     opt.Xaxis.Min = manualStartDate == null ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : manualStartDate.Value.ToUnixTimeMilliseconds();
-                    opt.Xaxis.Max = manualEndDate == null ? endDateForChartNoQuery : manualEndDate.Value.ToUnixTimeMilliseconds();
+                    opt.Xaxis.Max = manualEndDate == null ? endDateForAxisRange : manualEndDate.Value.ToUnixTimeMilliseconds();
                 }
                 Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Min} to {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Max}");
 
