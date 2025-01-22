@@ -62,7 +62,17 @@
                         <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
-                        <RadzenPanelMenuItem Path="timesheets" Text="Timesheets" Icon="timer" />
+                        <RadzenPanelMenuItem Path="timesheets" Icon="timer">
+                            <Template>
+                                <div style="flex: 1;">
+                                    Timesheets 
+                                    @if (TimesheetService.GetNotificationCount() > 0)
+                                    {
+                                        <span class="badge badge-pill badge-danger" Style="float: right; padding: 0.4rem;">@TimesheetService.GetNotificationCount()</span>
+                                    }
+                                </div>
+                            </Template>
+                        </RadzenPanelMenuItem>
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
@@ -139,9 +149,26 @@
     [Inject]
     private  NavigationManager Navigation { get; set; }
 
+    [Inject]
+    private TimesheetService TimesheetService { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationState { get; set; }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
+
+        var authState = AuthenticationState.GetAwaiter().GetResult();
+        var user = authState?.User;
+
+        if (user?.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            // Lookup the person
+            // var role = context.Roles.FirstOrDefault(x => x.CASUserName.Trim().ToLower() == user.Identity.Name.Trim().ToLower()); // ERROR HERE!!!
+            // TimesheetService.UpdateNotificationCount(context, role.Person);
+        }
+
         versionString = $"v{Configuration["VersionNumber"]}";
         context = ContextFactory.CreateDbContext();
         razorComponentReference = DotNetObjectReference.Create(this);
