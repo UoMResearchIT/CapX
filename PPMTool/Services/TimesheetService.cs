@@ -287,5 +287,24 @@ namespace PPMTool.Services
                     .Any(x => x.InnateCodeTask.InnateCode.InnateCodeId == innateActivity.InnateCodeId)
                 );
         }
+
+        public int GetNotificationCount()
+        {
+            return DateTime.Now.Minute % 2 == 0 ? 8 : 0;  // Won't show if page is refreshed when minute value is odd.
+        }
+
+        public void UpdateNotificationCount(PPMToolContext context, Person activeUser)
+        {
+            int total = 0;
+
+            // Get line managed staff numbers (submitted timesheets)
+            if (activeUser.PeopleManaged.Count > 0)
+            {
+                foreach (Person p in activeUser.PeopleManaged)
+                {
+                    total += context.Timesheets.Where(x => x.Owner == p && x.Status == Enums.TimesheetStatus.Submitted).Count();
+                }
+            }
+        }
     }
 }
