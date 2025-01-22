@@ -56,6 +56,15 @@ namespace PPMTool.Pages
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
+        private Dictionary<string, Duty> wlmToDutyMapping = new Dictionary<string, Duty>
+        {
+            { "ProjectWorkFTE", Duty.ProjectWork },
+            { "BusinessAsUsualFTE", Duty.BAU },
+            { "PersonalDevelopmentFTE", Duty.PersonalDevelopment },
+            { "StaffManagementFTE", Duty.StaffMgmt },
+            { "ProjectAndServiceManagementFTE", Duty.ProjectAndServiceMgmt },
+            { "ArchitectureFTE", Duty.RSA }
+        };
 
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
@@ -145,7 +154,14 @@ namespace PPMTool.Pages
                             if (t.StartDate == nextDate) { nextTimesheet = t; }
                         }
 
-                        dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        if (IsSuperuserOrLineManagerOfThisPerson(timesheet.Owner))
+                        {
+                            dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
+                        }
+                        else
+                        {
+                            dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        }
                         UpdateDailyTotals();
 
                         // Innate codes are limited to active ones initially
