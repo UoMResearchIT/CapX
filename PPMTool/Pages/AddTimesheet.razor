@@ -270,11 +270,14 @@
                                 {
                                     if (prop.Name.Contains("FTE"))
                                     {
+                                        Duty duty = wlmToDutyMapping[prop.Name];
+                                        string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                        string wlmTextColour = duty.GetTextColourCode();
                                         double value = (Double)@prop.GetValue(currentWLM);
                                         if (value != 0)
                                         {
                                             int percent = (int)(value * 100);
-                                            <div class="timesheet-wlm-slice" style="width: @percent%;" title="@prop.Name">@value</div>
+                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour; font-weight: bold;" title="@prop.Name">@value</div>
                                         }
                                     }
                                 }
