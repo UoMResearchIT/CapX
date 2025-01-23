@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -35,9 +34,9 @@ namespace PPMTool.Shared
         {
             base.OnInitialized();
 
-            if (AuthenticationState is not null)
+            if (AuthenticationStateTask is not null)
             {
-                var authState = AuthenticationState.GetAwaiter().GetResult();
+                var authState = AuthenticationStateTask.GetAwaiter().GetResult();
                 var user = authState?.User;
 
                 if (user?.Identity is not null && user.Identity.IsAuthenticated)
@@ -46,7 +45,7 @@ namespace PPMTool.Shared
                     Context = ContextFactory.CreateDbContext();
 
                     // Get authentication state
-                    AuthenticationState = AuthenticationStateTask.Result;
+                    AuthenticationState = authState;
 
                     // Stash the user name
                     ActiveUserName = AuthenticationState?.User.Identity.Name.Trim().ToLower();
@@ -56,13 +55,9 @@ namespace PPMTool.Shared
                     ActiveUser = role?.Person;
 
                     // Get active user role
-                    ActiveUserRoleType = role?.RoleType ?? Enums.RoleType.None;
-
-                    Debug.WriteLine($"Updating Timesheet notifications for {role.Person.Name}");
-                    TimesheetService.GetNotificationCount(context, role.Person);
+                    ActiveUserRoleType = role?.RoleType ?? RoleType.None;
                 }
             }
-
         }
     }
 }

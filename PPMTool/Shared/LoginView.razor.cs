@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -34,7 +33,7 @@ namespace PPMTool.Shared
 #endif
             if (AuthenticationState is not null)
             {
-                var authState = AuthenticationState.GetAwaiter().GetResult();
+                var authState = AuthenticationStateTask.GetAwaiter().GetResult();
                 var user = authState?.User;
 
                 if (user?.Identity is null || !user.Identity.IsAuthenticated)

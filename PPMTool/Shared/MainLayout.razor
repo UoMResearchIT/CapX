@@ -24,7 +24,7 @@
             {
                 <RadzenText TextStyle="TextStyle.DisplayH5" Style="color: white; margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
             }
-            <LoginView />
+            <LoginView @ref=loginView />
         </RadzenStack>
     </RadzenHeader>
     <RadzenSidebar Responsive="false" Style="width: max-content">
@@ -66,9 +66,9 @@
                             <Template>
                                 <div style="flex: 1;">
                                     Timesheets 
-                                    @if (TimesheetService.GetNotificationCount() > 0)
+                                    @if (totalTimesheetIssues > 0)
                                     {
-                                        <span class="badge badge-pill badge-danger" Style="float: right; padding: 0.4rem;">@TimesheetService.GetNotificationCount()</span>
+                                        <span class="badge badge-pill badge-danger" Style="float: right; padding: 0.4rem;">@totalTimesheetIssues</span>
                                     }
                                 </div>
                             </Template>

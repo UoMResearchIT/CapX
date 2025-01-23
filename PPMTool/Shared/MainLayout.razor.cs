@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
@@ -42,12 +43,26 @@ namespace PPMTool.Shared
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
+        private LoginView loginView;
+        private int totalTimesheetIssues;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
             versionString = $"v{Configuration["VersionNumber"]}";
             context = ContextFactory.CreateDbContext();
             razorComponentReference = DotNetObjectReference.Create(this);
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            if (loginView != null)
+            {
+                totalTimesheetIssues = TimesheetService.GetNotificationCount(context, loginView.ActiveUser);
+                //StateHasChanged();
+            }
         }
 
         private void ClearMagicBar()
