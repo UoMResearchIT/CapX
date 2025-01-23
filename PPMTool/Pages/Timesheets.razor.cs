@@ -21,7 +21,6 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
-        private Role activeUserRole;
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
         private DateTime dateNextTimesheet;
@@ -120,10 +119,10 @@ namespace PPMTool.Pages
 
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
-            myTimesheets = TimesheetService.GetMyTimesheets(Context, activeUserRole.Person).OrderByDescending(t => t.StartDate).ToList();
+            myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser).OrderByDescending(t => t.StartDate).ToList();
 
             // Set the start date for the next one
-            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, activeUserRole.Person);
+            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
 
             if (!ShowAllMyTimesheets)
             {
@@ -132,7 +131,7 @@ namespace PPMTool.Pages
             }
 
             // Show second grid if user manages staff - need to see the timesheets they have submitted.
-            if (activeUserRole.Person.PeopleManaged.Count > 0)  // Is a manager
+            if (ActiveUser?.PeopleManaged.Count > 0)  // Is a manager
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
                 myStaffTimesheets = new List<Timesheet>();
@@ -142,7 +141,7 @@ namespace PPMTool.Pages
                 synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
                 synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
 
-                foreach (Person p in activeUserRole.Person.PeopleManaged.Where(p => p.PersonId != activeUserRole.Person.PersonId).OrderBy(p => p.ShortName)) // For AH who is self-managed
+                foreach (Person p in ActiveUser?.PeopleManaged.Where(p => p.PersonId != ActiveUser?.PersonId).OrderBy(p => p.ShortName)) // For AH who is self-managed
                 {
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
                     myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();

@@ -60,8 +60,12 @@ namespace PPMTool.Shared
 
             if (loginView != null)
             {
+                var oldValue = totalTimesheetIssues;
                 totalTimesheetIssues = TimesheetService.GetNotificationCount(context, loginView.ActiveUser);
-                //StateHasChanged();
+                if (oldValue != totalTimesheetIssues)
+                {
+                    StateHasChanged();
+                }
             }
         }
 

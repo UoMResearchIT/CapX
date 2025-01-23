@@ -24,6 +24,8 @@ namespace PPMTool.Shared
 
         protected override void OnInitialized()
         {
+            base.OnInitialized();
+
             // Subscribe to the navigation manager's location changed event to force a rerender of the login view
             Navigation.LocationChanged += HandleLocationChanged;
 
