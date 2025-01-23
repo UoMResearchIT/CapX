@@ -31,7 +31,7 @@ namespace PPMTool.Shared
 #if LOCAL
             showDropDown = true;
 #endif
-            if (AuthenticationState is not null)
+            if (AuthenticationStateTask is not null)
             {
                 var authState = AuthenticationStateTask.GetAwaiter().GetResult();
                 var user = authState?.User;
@@ -44,6 +44,8 @@ namespace PPMTool.Shared
                     OnChange();
                 }
             }
+
+            displayName = ActiveUser?.Name;
         }
 
         /// <summary>

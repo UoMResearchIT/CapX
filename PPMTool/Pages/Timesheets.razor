@@ -1,5 +1,6 @@
 ﻿@page "/timesheets"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data
 @using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
@@ -27,7 +28,7 @@
         </div>
         <hr />
         <div class="card">
-            <RadzenRow JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                 <div>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                         <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem;" />
@@ -35,7 +36,7 @@
                     </RadzenStack>
                 </div>
                 <div>
-                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Style="padding: 0.4rem;" Text="ACTION REQUIRED" Visible="@TimesheetService.HasOwnTimesheetActions" />
+                    <StatusMessageComponent Message="@(new StatusMessage("ACTION REQUIRED", StatusMessage.MessageType.Error, () => TimesheetService.HasOwnTimesheetActions))" />
                 </div>
             </RadzenRow>
         </div>

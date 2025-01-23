@@ -24,7 +24,7 @@ namespace PPMTool.Pages
                 .ToList();
 
             // Only superusers can edit financial references
-            EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+            EditAuthorised = ActiveUserRoleType == Enums.RoleType.Superuser;
             LogInformation($"Viewing finref grid");
         }
 

@@ -80,16 +80,6 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
-            // Look up the username
-            var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            activeUserRole = RolesService.GetByUsername(Context, uname);
-
-            // Log any time there is no role returned?
-            if (activeUserRole == null)
-            {
-                LogError($"{uname}: Role is null!");
-            }
-
             LogInformation("Viewing Timesheets");
         }
 

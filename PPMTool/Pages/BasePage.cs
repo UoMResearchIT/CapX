@@ -88,7 +88,7 @@ namespace PPMTool.Pages
         protected bool IsSuperuserOrLineManagerOfThisPerson(Person person)
         {
             var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.PersonId ?? -1);
-            var su = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+            var su = ActiveUserRoleType == RoleType.Superuser;
             return lm || su;
         }
 

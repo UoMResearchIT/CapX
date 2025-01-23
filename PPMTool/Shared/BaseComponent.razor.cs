@@ -14,8 +14,6 @@ namespace PPMTool.Shared
         [CascadingParameter]
         protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
-        protected AuthenticationState AuthenticationState { get; private set; }
-
         protected PPMToolContext Context { get; set; }
 
         protected string ActiveUserName { get; private set; } = "None";
@@ -44,11 +42,8 @@ namespace PPMTool.Shared
                     // Create the context on every page
                     Context = ContextFactory.CreateDbContext();
 
-                    // Get authentication state
-                    AuthenticationState = authState;
-
                     // Stash the user name
-                    ActiveUserName = AuthenticationState?.User.Identity.Name.Trim().ToLower();
+                    ActiveUserName = authState?.User.Identity.Name.Trim().ToLower();
 
                     // Get the active user
                     var role = RolesService.GetByUsername(Context, ActiveUserName);
