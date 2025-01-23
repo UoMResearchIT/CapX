@@ -24,6 +24,9 @@ namespace PPMTool.Shared
         [Inject]
         private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
 
+        [Inject]
+        private TimesheetService TimesheetService { get; set; }
+
         [CascadingParameter]
         private Task<AuthenticationState> AuthenticationState { get; set; }
 
@@ -53,9 +56,13 @@ namespace PPMTool.Shared
                 if (user?.Identity is not null && user.Identity.IsAuthenticated)
                 {
                     // Lookup the person
-                    var roles = RoleService.GetAll(ContextFactory.CreateDbContext());
+                    PPMToolContext context = ContextFactory.CreateDbContext();
+                    var roles = RoleService.GetAll(context);
                     var role = roles.FirstOrDefault(x => x.GetStandardisedUserName() == user.Identity.Name.Trim().ToLower());
                     displayName = role?.GetName() ?? user.Identity.Name;
+
+                    Debug.WriteLine($"Updating Timesheet notifications for {role.Person.Name}");
+                    TimesheetService.UpdateNotificationCount(context, role.Person);
                 }
                 else
                 {
