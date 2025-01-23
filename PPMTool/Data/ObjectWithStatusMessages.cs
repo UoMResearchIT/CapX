@@ -40,7 +40,7 @@ namespace PPMTool.Data
         /// <returns></returns>
         public bool HasActiveStatusMessages()
         {
-            return statusMessages.Any(x => x.Status && x.Type != StatusMessage.MessageType.Success);
+            return statusMessages?.Any(x => x.Status && x.Type != StatusMessage.MessageType.Success) ?? false;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace PPMTool.Data
         /// <returns></returns>
         public bool HasActiveErrorMessages()
         {
-            return statusMessages.Any(x => x.Status && x.Type == StatusMessage.MessageType.Error);
+            return statusMessages?.Any(x => x.Status && x.Type == StatusMessage.MessageType.Error) ?? false;
         }
     }
 }

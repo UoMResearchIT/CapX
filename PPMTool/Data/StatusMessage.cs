@@ -23,6 +23,7 @@ namespace PPMTool.Data
             Message = message;
             Type = type;
             Condition = condition;
+            Update();
         }
 
         public void Update()

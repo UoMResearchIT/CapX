@@ -58,7 +58,7 @@ namespace PPMTool.Shared
         {
             base.OnAfterRender(firstRender);
 
-            if (loginView != null)
+            if (loginView != null && loginView.ActiveUser != null)
             {
                 var oldValue = totalTimesheetIssues;
                 totalTimesheetIssues = TimesheetService.GetNotificationCount(context, loginView.ActiveUser);
