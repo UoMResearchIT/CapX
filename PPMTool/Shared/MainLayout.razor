@@ -152,23 +152,9 @@
     [Inject]
     private TimesheetService TimesheetService { get; set; }
 
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthenticationState { get; set; }
-
     protected override void OnInitialized()
     {
         base.OnInitialized();
-
-        var authState = AuthenticationState.GetAwaiter().GetResult();
-        var user = authState?.User;
-
-        if (user?.Identity is not null && user.Identity.IsAuthenticated)
-        {
-            // Lookup the person
-            // var role = context.Roles.FirstOrDefault(x => x.CASUserName.Trim().ToLower() == user.Identity.Name.Trim().ToLower()); // ERROR HERE!!!
-            // TimesheetService.UpdateNotificationCount(context, role.Person);
-        }
-
         versionString = $"v{Configuration["VersionNumber"]}";
         context = ContextFactory.CreateDbContext();
         razorComponentReference = DotNetObjectReference.Create(this);
