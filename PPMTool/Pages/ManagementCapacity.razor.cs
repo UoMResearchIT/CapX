@@ -20,7 +20,6 @@ namespace PPMTool.Pages
 
             cachedPeople = GetManagers(cachedPeople);
             ReloadDropDownSources();
-            ConfigureChartSource();
 
             LogInformation($"Viewing management capacity page");
         }
@@ -125,7 +124,7 @@ namespace PPMTool.Pages
                 {
                     return FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectManagementFTE ?? 0);
                 },
-                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
             );
         }
 
@@ -159,7 +158,13 @@ namespace PPMTool.Pages
                 (value1, value2) =>
                 {
                     // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);
+                    return isTotalRow ?
+                        ChartItem.GetColourStringFTE(value1, value2, false) :
+                        (
+                            value1 > GlobalDefaults.ProjectManagementDefaultFTE ?
+                                "#FF9800" :
+                                "#609"
+                        );
                 },
                 seriesName,
                 startDate,
@@ -173,8 +178,30 @@ namespace PPMTool.Pages
                 (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
-                }
+                },
+                tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
             );
+        }
+
+        /// <summary>
+        /// Override to add the increased leadership tooltip to the base ones
+        /// </summary>
+        /// <param name="assignmentsWithinBlock"></param>
+        /// <param name="personOfInterest"></param>
+        /// <param name="messages"></param>
+        /// <returns></returns>
+        protected override string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        {
+            messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
+
+            // Check for leadership load greater than the standard
+            var assignments = assignmentsWithinBlock.Select(x => x as LeadershipAssignment);
+            if (assignments?.Any(x => x?.LeadershipFTE > GlobalDefaults.ProjectManagementDefaultFTE) ?? false)
+            {
+                var amount = assignments.RoundedSum(x => x.LeadershipFTE > GlobalDefaults.ProjectManagementDefaultFTE ? x.LeadershipFTE : 0);
+                messages += $"<h3 class=\"me-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
+            }
+            return messages;
         }
     }
 }
