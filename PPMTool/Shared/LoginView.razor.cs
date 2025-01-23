@@ -62,7 +62,7 @@ namespace PPMTool.Shared
                     displayName = role?.GetName() ?? user.Identity.Name;
 
                     Debug.WriteLine($"Updating Timesheet notifications for {role.Person.Name}");
-                    TimesheetService.UpdateNotificationCount(context, role.Person);
+                    TimesheetService.GetNotificationCount(context, role.Person);
                 }
                 else
                 {

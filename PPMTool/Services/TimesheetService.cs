@@ -292,22 +292,38 @@ namespace PPMTool.Services
                 );
         }
 
+        /// <summary>
+        /// Returns the total count of notifications
+        /// </summary>
         public int GetNotificationCount()
         {
             return timesheetNotificationsCount;
         }
 
+        /// <summary>
+        /// Returns whether the user has rejected timesheets themselves
+        /// </summary>
         public bool HasOwnTimesheetActions()
         {
             return hasOwnTimesheetActions;
         }
 
+        /// <summary>
+        /// Returns whether the direct reports of the user have submitted timesheets to be checked
+        /// </summary>
         public bool HasStaffTimesheetActions()
         {
             return hasStaffTimesheetActions;
         }
 
-        public void UpdateNotificationCount(PPMToolContext context, Person activeUser)
+        /// <summary>
+        /// Gets details of the total number of rejected timesheet number (for self)
+        /// and submitted timesheets (for direct reports).
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activeUser"></param>
+        /// <returns></returns>
+        public void GetNotificationCount(PPMToolContext context, Person activeUser)
         {
             Debug.WriteLine("Updating Timesheet notification count");
             hasOwnTimesheetActions = false;
