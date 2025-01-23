@@ -358,6 +358,7 @@ namespace PPMTool.Pages
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
+            TimesheetService.UpdateNotificationCount(Context, ActiveUser);
 
             // Only navigate away if the status is new as this means the save button has been clicked
             if (timesheet.Status != TimesheetStatus.New)
