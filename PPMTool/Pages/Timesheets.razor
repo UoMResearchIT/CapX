@@ -27,10 +27,17 @@
         </div>
         <hr />
         <div class="card">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
-                <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" />
-            </RadzenStack>
+            <RadzenRow JustifyContent="JustifyContent.SpaceBetween">
+                <div>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem;" />
+                        <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" />
+                    </RadzenStack>
+                </div>
+                <div>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Style="padding: 0.4rem;" Text="ACTION REQUIRED" Visible="@TimesheetService.HasOwnTimesheetActions()" />
+                </div>
+            </RadzenRow>
         </div>
         <div class="card">
             <RadzenDataGrid AllowAlternatingRows="true" 
@@ -147,10 +154,17 @@
             </div>
 
             <div class="card" style="margin-top: 1rem;">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
-                    <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" />
-                </RadzenStack>
+                <RadzenRow JustifyContent="JustifyContent.SpaceBetween">
+                    <div>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
+                            <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" />
+                        </RadzenStack>
+                    </div>
+                    <div>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Style="padding: 0.4rem;" Text="ACTION REQUIRED" Visible="@TimesheetService.HasStaffTimesheetActions()" />
+                    </div>
+                </RadzenRow>
             </div>
             <div class="card">
                 <RadzenDataGrid AllowAlternatingRows="true"
