@@ -2,21 +2,18 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-using PPMTool.Services;
+using PPMTool.Shared;
 using Radzen;
 using Sentry;
 
 namespace PPMTool.Pages
 {
     [Authorize]
-    public abstract class BasePage : ComponentBase
+    public abstract class BasePage : BaseComponent
     {
         /// <summary>
         /// Default notification message with format and duration pre-set
@@ -32,25 +29,16 @@ namespace PPMTool.Pages
         }
 
         [Inject]
-        protected RolesService RolesService { get; set; }
-
-        [Inject]
         protected ILogger Logger { get; set; }
 
         [Inject]
         protected NavigationManager Navigation { get; set; }
 
         [Inject]
-        protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
-
-        [Inject]
         protected TooltipService TooltipService { get; set; }
 
         [Inject]
         protected NotificationService NotificationService { get; set; }
-
-        [CascadingParameter]
-        protected Task<AuthenticationState> AuthenticationStateTask { get; set; }
 
         private bool loading;
         [CascadingParameter]
@@ -68,15 +56,7 @@ namespace PPMTool.Pages
 
         protected bool EditAuthorised { get; set; }
 
-        protected AuthenticationState AuthenticationState { get; private set; }
-
-        protected PPMToolContext Context { get; set; }
-
         protected StatusMessage ErrorMessage { get; set; }
-
-        protected string ActiveUserName { get; private set; } = "None";
-
-        protected Person ActiveUser { get; private set; }
 
         /// <summary>
         /// A queuing mechanism for background data loads on pages so they don't run at the same time
@@ -92,27 +72,9 @@ namespace PPMTool.Pages
             _ = TaskQueue.Enqueue(taskGenerator);
         }
 
-        protected RoleType ActiveUserRoleType { get; private set; }
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
-            // Create the context on every page
-            Context = ContextFactory.CreateDbContext();
-
-            // Get authentication state
-            AuthenticationState = AuthenticationStateTask.Result;
-
-            // Stash the user name
-            ActiveUserName = AuthenticationState?.User.Identity.Name.Trim().ToLower();
-
-            // Get the active user
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            ActiveUser = role?.Person;
-
-            // Get active user role
-            ActiveUserRoleType = role?.RoleType ?? Enums.RoleType.None;
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
@@ -126,7 +88,7 @@ namespace PPMTool.Pages
         protected bool IsSuperuserOrLineManagerOfThisPerson(Person person)
         {
             var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.PersonId ?? -1);
-            var su = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+            var su = ActiveUserRoleType == RoleType.Superuser;
             return lm || su;
         }
 

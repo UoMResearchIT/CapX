@@ -1,5 +1,6 @@
 ﻿@page "/timesheets"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data
 @using PPMTool.Data.Context
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
@@ -20,6 +21,7 @@
             <div class="col-auto mr-auto">
                 <h1>My Timesheets</h1>
                 <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
+                <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> { new StatusMessage("You have reject timesheets to re-submit", StatusMessage.MessageType.Error, () => TimesheetService.HasOwnTimesheetActions) })" />
             </div>
             <div class="col-auto align-content-center">
                 <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
@@ -28,7 +30,7 @@
         <hr />
         <div class="card">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
+                <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem;" />
                 <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" />
             </RadzenStack>
         </div>
@@ -77,6 +79,7 @@
                     <h1>My Staff Timesheets</h1>
                 </div>
             </div>
+            <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> {new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions)})" />
             <hr />
             <div class="card">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">

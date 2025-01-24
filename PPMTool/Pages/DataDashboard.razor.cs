@@ -73,7 +73,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Editing only permitted by superusers
-            EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
 
             // Get starting lists from the DB
             people = PersonService.GetAll(Context);

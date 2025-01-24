@@ -12,6 +12,16 @@ namespace PPMTool.Services
     public class TimesheetService : BaseEntityService<Timesheet>
     {
         /// <summary>
+        /// Whether the active user has any timesheet actions to take
+        /// </summary>
+        public bool HasOwnTimesheetActions { get; private set; }
+
+        /// <summary>
+        /// Whether the active user has any staff timesheet actions to take
+        /// </summary>
+        public bool HasStaffTimesheetActions { get; private set; }
+
+        /// <summary>
         /// Adds a timesheet. If duplicate found does not add but returns -1 otherwise returns ID of added timesheet.
         /// </summary>
         /// <param name="context"></param>
@@ -286,6 +296,39 @@ namespace PPMTool.Services
                 .Where(x => x.TimesheetEntries
                     .Any(x => x.InnateCodeTask.InnateCode.InnateCodeId == innateActivity.InnateCodeId)
                 );
+        }
+
+        /// <summary>
+        /// Gets details of the total number of rejected timesheet number (for self)
+        /// and submitted timesheets (for direct reports).
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activeUser"></param>
+        /// <returns></returns>
+        public int GetIssueCount(PPMToolContext context, Person activeUser)
+        {
+            Debug.WriteLine("Updating Timesheet notification count");
+            HasOwnTimesheetActions = false;
+            HasStaffTimesheetActions = false;
+
+            int selfNotificationsCount = 0;
+            int staffNotificationsCount = 0;
+
+            // Get user's rejected timesheet numbers
+            selfNotificationsCount += context.Timesheets.Where(x => x.Owner == activeUser && x.Status == Enums.TimesheetStatus.Rejected).Count();
+            HasOwnTimesheetActions = selfNotificationsCount > 0;
+
+            // Get line managed staff numbers (submitted timesheets)
+            if (activeUser.PeopleManaged.Count > 0)
+            {
+                foreach (Person p in activeUser.PeopleManaged)
+                {
+                    staffNotificationsCount += context.Timesheets.Where(x => x.Owner == p && x.Status == Enums.TimesheetStatus.Submitted).Count();
+                }
+            }
+            HasStaffTimesheetActions = staffNotificationsCount > 0;
+
+            return selfNotificationsCount + staffNotificationsCount;
         }
     }
 }

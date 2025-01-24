@@ -145,7 +145,7 @@ namespace PPMTool.Pages
             }
         }
 
-        private bool IsReader => AuthenticationState?.User.IsInRole(RoleType.Reader.ToString()) ?? false;
+        private bool IsReader => ActiveUserRoleType == RoleType.Reader;
 
         private bool ReadOrEditAuthorised => EditAuthorised || IsReader;
 
