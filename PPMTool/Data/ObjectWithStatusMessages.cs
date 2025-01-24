@@ -16,22 +16,14 @@ namespace PPMTool.Data
         /// <returns></returns>
         public virtual IList<StatusMessage> GetLatestStatusMessages()
         {
-            UpdateStatusMessages();
-            return statusMessages;
-        }
-
-        /// <summary>
-        /// Update the status messages based on their conditions
-        /// </summary>
-        public virtual void UpdateStatusMessages()
-        {
-            if (statusMessages == null)
-                return;
-
-            foreach (var item in statusMessages)
+            if (statusMessages != null)
             {
-                item.Update();
+                foreach (var item in statusMessages)
+                {
+                    item.Update();
+                }
             }
+            return statusMessages;
         }
 
         /// <summary>

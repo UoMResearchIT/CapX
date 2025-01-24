@@ -83,7 +83,7 @@ namespace PPMTool.Pages
                     // Show just the list of alerts for all
                     proj = proj.Where(x =>
                     {
-                        x.UpdateStatusMessages();
+                        x.GetLatestStatusMessages();
                         return x.HasActiveStatusMessages();
                     }).ToList();
                 }
@@ -92,7 +92,7 @@ namespace PPMTool.Pages
                     // Show just the list of errors for all
                     proj = proj.Where(x =>
                     {
-                        x.UpdateStatusMessages();
+                        x.GetLatestStatusMessages();
                         return x.HasActiveErrorMessages();
                     }).ToList();
                 }
