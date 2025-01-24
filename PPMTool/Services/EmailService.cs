@@ -92,18 +92,17 @@ namespace PPMTool.Services
                     recipients.Add(lineManagerEmailAddress);
 
                     // Create email
-                    var subject = Configuration["Email:TimesheetSubmissionEmailSubject"];
-                    subject = subject.Replace("[STAFF]", staff.Name);
-                    subject = subject.Replace("[DATE]", timesheet.StartDate.ToString("dd/MM/yyyy"));
+                    var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
 
                     StringBuilder body = new StringBuilder();
                     body.Append($"<p>Dear {lineManager.Name},</p>");
-                    body.Append(Configuration["Email:TimesheetSubmissionEmailBody"]);
-                    body.Append("<p><i>Sent from CapX</i></p>");
-                    body = body.Replace("[HERE]", $"{Configuration["Authentication:HostUrl"]}/addtimesheet/{timesheet.TimesheetId.ToString()}");
+                    body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}</p>");
+                    body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
+                    body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
+                    body.Append("<p><em>Sent from CapX</em></p>");
 
                     // Send email
-                    Debug.WriteLine($"** Sending email to {lineManagerEmailAddress}");
+                    Debug.WriteLine($"** Sending Timesheet Submission email to {lineManagerEmailAddress}");
                     SendEmail(recipients, subject, body.ToString());
                 }
             });
