@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Pages;
 
 namespace PPMTool.Services
 {
@@ -70,6 +73,40 @@ namespace PPMTool.Services
                 Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
             }
 #endif
+        }
+
+        public void SendTimesheetSubmissionEmailNotification(Person staff, Timesheet timesheet)
+        {
+            List<string> recipients = new List<string>();
+
+            Task.Run(() =>
+            {
+                // Create context and get relevant details for the email
+                var context = DbContextFactory.CreateDbContext();
+                Person lineManager = staff.LineManager;
+
+                if (lineManager != staff) // No point in AH emailing himself about his timesheet. :)
+                {
+                    Role lineManagerRole = RolesService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
+                    string lineManagerEmailAddress = (string.IsNullOrWhiteSpace(lineManagerRole.EmailAddress) ? $"{lineManagerRole.CASUserName}@manchester.ac.uk" : lineManagerRole.EmailAddress);
+                    recipients.Add(lineManagerEmailAddress);
+
+                    // Create email
+                    var subject = Configuration["Email:TimesheetSubmissionEmailSubject"];
+                    subject = subject.Replace("[STAFF]", staff.Name);
+                    subject = subject.Replace("[DATE]", timesheet.StartDate.ToString("dd/MM/yyyy"));
+
+                    StringBuilder body = new StringBuilder();
+                    body.Append($"<p>Dear {lineManager.Name},</p>");
+                    body.Append(Configuration["Email:TimesheetSubmissionEmailBody"]);
+                    body.Append("<p><i>Sent from CapX</i></p>");
+                    body = body.Replace("[HERE]", $"{Configuration["Authentication:HostUrl"]}/addtimesheet/{timesheet.TimesheetId.ToString()}");
+
+                    // Send email
+                    Debug.WriteLine($"** Sending email to {lineManagerEmailAddress}");
+                    SendEmail(recipients, subject, body.ToString());
+                }
+            });
         }
 
         public void SendAbsenceEmailNotifications(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
