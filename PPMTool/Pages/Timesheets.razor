@@ -21,7 +21,7 @@
             <div class="col-auto mr-auto">
                 <h1>My Timesheets</h1>
                 <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
-                <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> { new StatusMessage("You have reject timesheets to re-submit", StatusMessage.MessageType.Error, () => TimesheetService.HasOwnTimesheetActions) })" />
+                <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> { new StatusMessage("You have rejected timesheets to re-submit", StatusMessage.MessageType.Error, () => TimesheetService.HasOwnTimesheetActions) })" />
             </div>
             <div class="col-auto align-content-center">
                 <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
