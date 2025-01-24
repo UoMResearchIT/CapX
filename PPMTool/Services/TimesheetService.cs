@@ -305,7 +305,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="activeUser"></param>
         /// <returns></returns>
-        public int GetNotificationCount(PPMToolContext context, Person activeUser)
+        public int GetIssueCount(PPMToolContext context, Person activeUser)
         {
             Debug.WriteLine("Updating Timesheet notification count");
             HasOwnTimesheetActions = false;
