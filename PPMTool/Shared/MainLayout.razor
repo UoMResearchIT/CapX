@@ -24,7 +24,7 @@
             {
                 <RadzenText TextStyle="TextStyle.DisplayH5" Style="color: white; margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
             }
-            <LoginView />
+            <LoginView @ref=loginView />
         </RadzenStack>
     </RadzenHeader>
     <RadzenSidebar Responsive="false" Style="width: max-content">
@@ -69,7 +69,17 @@
                         <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
-                        <RadzenPanelMenuItem Path="timesheets" Text="Timesheets" Icon="timer" />
+                        <RadzenPanelMenuItem Path="timesheets" Icon="timer">
+                            <Template>
+                                <div style="flex: 1;">
+                                    Timesheets 
+                                    @if (totalTimesheetIssues > 0)
+                                    {
+                                        <span class="rz-badge rz-badge-danger" Style="float: right; padding: var(--rz-badge-padding); font-size: 1rem;">@totalTimesheetIssues</span>
+                                    }
+                                </div>
+                            </Template>
+                        </RadzenPanelMenuItem>
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
@@ -118,139 +128,3 @@
         </RadzenStack>
     </RadzenFooter>
 </RadzenLayout>
-
-@code
-{
-    private bool sidebarExpanded = true;
-    private string versionString;
-    private string searchTerm;
-    private PPMToolContext context;
-    private List<MagicBarItem> sourceData = new();
-    private DotNetObjectReference<MainLayout> razorComponentReference;
-
-    [Inject]
-    private PersonService PersonService { get; set; }
-
-    [Inject]
-    private ProjectService ProjectService{ get; set; }
-
-    [Inject]
-    protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
-
-    [Inject]
-    private IJSRuntime JSRuntime { get; set; }
-
-    [Inject]
-    private ILogger<MainLayout> Logger { get; set; }
-
-    [Inject]
-    private  NavigationManager Navigation { get; set; }
-
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-        versionString = $"v{Configuration["VersionNumber"]}";
-        context = ContextFactory.CreateDbContext();
-        razorComponentReference = DotNetObjectReference.Create(this);
-    }
-
-    private void ClearMagicBar()
-    {
-        searchTerm = string.Empty;
-        OnSearchTermEntered();
-        StateHasChanged();
-    }
-
-    private async void OnSearchTermEntered()
-    {
-        // If nothing being typed
-        if (string.IsNullOrWhiteSpace(searchTerm.Trim()))
-        {
-            // Hide the popup if it is visible
-            Logger?.LogInformation("Hiding magic bar popup...");
-            await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", false, null, razorComponentReference);
-            return;
-        }
-
-        // Pull the sources from the DB
-        var matchingPeople = PersonService.GetAllShallow(context)
-        .Where(x =>
-            x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
-            x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())
-        );
-        var matchingProjects = ProjectService.GetAllShallow(context)
-        .Where(x =>
-            x.GetFullName().ToLower().Contains(searchTerm.Trim().ToLower()) ||
-            x.PI.ToLower().Contains(searchTerm.Trim().ToLower())
-        );
-
-        // Add to source
-        sourceData.Clear();
-        foreach (var person in matchingPeople)
-        {
-            sourceData.Add(new MagicBarItem(person));
-        }
-        foreach (var project in matchingProjects)
-        {
-            sourceData.Add(new MagicBarItem(project));
-        }
-        sourceData.OrderBy(x => x.DisplayName);
-
-        Debug.WriteLine($"** Source data contains {sourceData.Count} items!");
-
-        // Send the source data to JS to have it display it in a popup
-        Logger?.LogInformation("Updating magic bar popup...");
-        await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName), razorComponentReference);
-    }
-
-    [JSInvokable]
-    public void OnItemSelected(string selectedItem)
-    {
-        Debug.WriteLine($"** Selected item: {selectedItem}");
-        var match = sourceData.FirstOrDefault(x => x.DisplayName == selectedItem);
-        if (match != null)
-        {
-            if (match.ItemType == typeof(Project))
-            {
-                Navigation.NavigateTo($"projects/projectdetails/{match.EntityId}");
-            }
-            else
-            {
-                Navigation.NavigateTo($"people/addperson/{match.EntityId}");
-            }
-        }
-        ClearMagicBar();
-    }
-
-    public void Dispose()
-    {
-        razorComponentReference?.Dispose();
-    }
-
-    private class MagicBarItem
-    {
-        public int EntityId { get; }
-
-        public string Name { get; }
-
-        public string DisplayName { get; }
-
-        public Type ItemType { get; }
-
-        public MagicBarItem(Person person)
-        {
-            EntityId = person.PersonId;
-            Name = person.Name;
-            DisplayName = $"{person.Name} ({person.ShortName})";
-            ItemType = typeof(Person);
-        }
-
-        public MagicBarItem(Project project)
-        {
-            EntityId = project.ProjectId;
-            Name = project.Name;
-            DisplayName = $"{project.GetFullName()} ({project.PI})";
-            ItemType = typeof(Project);
-        }
-    }
-}

@@ -46,7 +46,7 @@
     <hr />
     @if (project != null)
     {
-        <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+        <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
     }
     <div class="card">
@@ -300,7 +300,7 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
                         <Template Context="t">
-                            <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
+                            <StatusMessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="14rem" MinWidth="10px">
