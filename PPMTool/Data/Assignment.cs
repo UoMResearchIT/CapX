@@ -1,4 +1,5 @@
-﻿using PPMTool.Data.Entities;
+﻿using System;
+using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
 namespace PPMTool.Data
@@ -6,16 +7,23 @@ namespace PPMTool.Data
     /// <summary>
     /// Represents a sub task but with additional information about the project to which it belongs.
     /// </summary>
-    public class Assignment
+    public class Assignment : BaseAssignment
     {
         public SubTask SubTask { get; private set; }
 
-        public ProjectStatus ProjectStatus { get; private set; }
-
-        public Assignment(SubTask subTask, ProjectStatus projectStatus)
+        public Assignment(SubTask subTask, ProjectStatus projectStatus) : base(projectStatus)
         {
             SubTask = subTask;
-            ProjectStatus = projectStatus;
+        }
+
+        public override bool IsWithin(DateTime testDate)
+        {
+            return SubTask.IsWithin(testDate);
+        }
+
+        public override bool IsWithin(DateTime startDate, DateTime endDate)
+        {
+            return SubTask.IsWithin(startDate, endDate);
         }
     }
 }

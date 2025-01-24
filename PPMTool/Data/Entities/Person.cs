@@ -207,5 +207,23 @@ namespace PPMTool.Data.Entities
         {
             return Name.CompareTo((obj as Person)?.Name);
         }
+
+        /// <summary>
+        /// Method to return PM capacity for a person based on the WLM active on the provided date
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal double GetProjectManagementCapacityOnDate(DateTime date)
+        {
+            // If there are changes then check them
+            var pmCapacity = 0d;
+            if (WorkloadModelChanges.Count > 0)
+            {
+                var latestChange = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                if (latestChange != null) pmCapacity = latestChange.ProjectManagementFTE;
+            }
+
+            return pmCapacity;
+        }
     }
 }

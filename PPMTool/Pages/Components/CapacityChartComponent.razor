@@ -1,47 +1,58 @@
 ﻿@using PPMTool.Data
 @using System.Diagnostics
 @using ApexCharts
+@using static PPMTool.Pages.BaseCapacityPage
 @using static PPMTool.Pages.Capacity
 
-<ApexChart Title="@title"
-           TItem="ChartItem"
-           Options=@chartOptions
-           XAxisType="XAxisType.Datetime"
-           OnDataPointSelection=@OnDataPointSelection
-           OnZoomed="@OnChartZoomed">
-    <ChildContent>
-        <ApexRangeSeries TItem="ChartItem"
-                         Items="@confirmedChartItems"
-                         XValue="@(e => e.Label)"
-                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                         PointColor="@(e => e.Colour)" />
+@if ((confirmedChartItems?.Count() ?? 0) == 0 && (provisionalChartItems?.Count() ?? 0) == 0)
+{
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" class="mx-2">
+        <div class="apexcharts-title-text" style="font-family:Arial, Helvetica, sans-serif; font-weight: 900; font-size: 14px">@ChartModel?.ChartTitle</div>
+        <RadzenText Text="No data to show" />
+    </RadzenStack>
+}
+else
+{
+    <ApexChart Title="@title"
+               TItem="ChartItem"
+               Options=@chartOptions
+               XAxisType="XAxisType.Datetime"
+               OnDataPointSelection=@OnDataPointSelection
+               OnZoomed="@OnChartZoomed">
+        <ChildContent>
+            <ApexRangeSeries TItem="ChartItem"
+                             Items="@confirmedChartItems"
+                             XValue="@(e => e.Label)"
+                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                             PointColor="@(e => e.Colour)" />
 
-        <ApexRangeSeries TItem="ChartItem"
-                         Items="@provisionalChartItems"
-                         XValue="@(e => e.Label)"
-                         YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                         YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                         PointColor="@(e => e.Colour)" />
-    </ChildContent>
-    <ApexPointTooltip>
-        <div class="m-2">
-            @{
-                var point = (ListPoint<ChartItem>)context.DataPoint;
-                <div class="m-0 p-3">
-                    @if (point.Items.FirstOrDefault()?.TooltipMessages != null)
-                    {
-                        @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
-                    }
-                    <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
-                    <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
-                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
-                </div>
-            }
-        </div>
-    </ApexPointTooltip>
-</ApexChart>
+            <ApexRangeSeries TItem="ChartItem"
+                             Items="@provisionalChartItems"
+                             XValue="@(e => e.Label)"
+                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                             PointColor="@(e => e.Colour)" />
+        </ChildContent>
+        <ApexPointTooltip>
+            <div class="m-2">
+                @{
+                    var point = (ListPoint<ChartItem>)context.DataPoint;
+                    <div class="m-0 p-3">
+                        @if (point.Items.FirstOrDefault()?.TooltipMessages != null)
+                        {
+                            @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
+                        }
+                        <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
+                        <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
+                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                    </div>
+                }
+            </div>
+        </ApexPointTooltip>
+    </ApexChart>
+}
 
 @code
 {
