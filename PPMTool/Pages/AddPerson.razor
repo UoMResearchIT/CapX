@@ -28,7 +28,7 @@
                     <div class="row">
                         <div class="col">
                             <h1>Edit <i>@personModel.Name</i></h1>
-                            <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                            <StatusMessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
                         </div>
                         @if (PersonId > 0)
                         {
@@ -40,7 +40,6 @@
                             </div>
                         }
                     </div>
-                    <hr />
                 }
             </div>
         </div>
@@ -167,12 +166,12 @@
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
-                                                <RadzenText Text="Project and Service" TextStyle="TextStyle.Subtitle1" />
+                                                <RadzenText Text="Project / Service" TextStyle="TextStyle.Subtitle1" />
                                                 <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="@d.StaffManagementFTE.ToString()" />
-                                                <RadzenText Text="@d.ProjectAndServiceManagementFTE.ToString()" />
+                                                <RadzenText Text="@($"{d.ProjectManagementFTE} / {d.ServiceManagementFTE}")"/>
                                                 <RadzenText Text="@d.ArchitectureFTE.ToString()" />
                                             </RadzenStack>
                                         </RadzenStack>

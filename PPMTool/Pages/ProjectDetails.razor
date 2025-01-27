@@ -46,7 +46,7 @@
     <hr />
     @if (project != null)
     {
-        <MessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+        <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
     }
     <div class="card">
@@ -173,10 +173,10 @@
                 <h2>Schedule</h2>
                 <div class="card">
                     <ApexChart TItem="GanttBlock"
-                                XAxisType="XAxisType.Datetime"
-                                Options=ganttChartOptions
-                                OnDataPointSelection="TaskSelected"
-                                @ref="scheduleChart">
+                               XAxisType="XAxisType.Datetime"
+                               Options=ganttChartOptions
+                               OnDataPointSelection="TaskSelected"
+                               @ref="scheduleChart">
                         <ChildContent>
                             <ApexRangeSeries TItem="GanttBlock"
                                              Items="confirmedBlocks"
@@ -184,7 +184,7 @@
                                              XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
                                              YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
                                              YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
                             <ApexRangeSeries TItem="GanttBlock"
                                              Items="provisionalBlocks"
@@ -192,7 +192,7 @@
                                              XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
                                              YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
                                              YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                         </ChildContent>
                         <ApexPointTooltip>
                             <div class="m-2">
@@ -200,21 +200,28 @@
                                     var point = (ListPoint<GanttBlock>)context.DataPoint;
                                     <div class="m-0 p-3">
                                         <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
-                                        @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
+                                        @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
                                         {
-                                            <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
+                                            @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
+                                            {
+                                                <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
+                                            }
+                                            @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
+                                            {
+                                                <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
+                                            }
+                                            @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
+                                            {
+                                                <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
+                                            }
+                                            @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
+                                            {
+                                                <h4 class="me-1 text-info">[Currently No Demand]</h4>
+                                            }
                                         }
-                                        @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
+                                        else
                                         {
-                                            <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
-                                        }
-                                        @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
-                                        {
-                                            <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
-                                        }
-                                        @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
-                                        {
-                                            <h4 class="me-1 text-info">[Currently No Demand]</h4>
+
                                         }
                                         <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
@@ -293,7 +300,7 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
                         <Template Context="t">
-                            <MessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
+                            <StatusMessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="14rem" MinWidth="10px">

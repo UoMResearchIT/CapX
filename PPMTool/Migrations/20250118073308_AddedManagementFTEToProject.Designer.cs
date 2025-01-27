@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250118073308_AddedManagementFTEToProject")]
+    partial class AddedManagementFTEToProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -360,7 +362,7 @@ namespace PPMTool.Migrations
                     b.Property<int?>("InnateActivityInnateCodeId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<float>("LeadershipFTE")
+                    b.Property<float>("ManagementTaskFTE")
                         .HasColumnType("REAL");
 
                     b.Property<string>("Name")

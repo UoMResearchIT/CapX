@@ -45,7 +45,7 @@
         </div>
     }
     <hr />
-    <MessageSummaryComponent Messages="TaskModel.GetLatestStatusMessages()" />
+    <StatusMessageSummaryComponent Messages="TaskModel.GetLatestStatusMessages()" />
     @if (!EditAuthorised)
     {
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">

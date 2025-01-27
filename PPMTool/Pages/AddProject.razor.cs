@@ -62,9 +62,8 @@ namespace PPMTool.Pages
                 projectModel = ProjectService.GetById(Context, ProjectId);
 
                 // If editing a project, only allow the project manager to edit it or a superuser
-                var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(Context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager.PersonId == role?.Person.PersonId);
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.PersonId;
 
                 // Populate school list
                 schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);

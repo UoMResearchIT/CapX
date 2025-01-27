@@ -1,0 +1,26 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace PPMTool.Migrations
+{
+    public partial class AddedManagementFTEToProject : Migration
+    {
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<float>(
+                name: "ManagementTaskFTE",
+                table: "Projects",
+                type: "REAL",
+                nullable: false,
+                defaultValue: 0.05f);
+        }
+
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "ManagementTaskFTE",
+                table: "Projects");
+        }
+    }
+}
