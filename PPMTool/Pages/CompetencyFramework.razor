@@ -81,18 +81,18 @@
     <hr />
     <RadzenAccordion Multiple="true">
         <Items>
-            @for (int g = 5; g < 8; ++g)
+            @foreach (var comp in competencyGroups)
             {
-                var grade = g;
-                <RadzenAccordionItem Text="@($"Grade {grade}")" Icon="counter_1" CollapseTitle="Collapse"
-                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade {grade} Competencies")"
-                                     ExpandAriaLabel="Expand the Grade 5 Competencies" Selected="@gradeAccordionSelected[5]">
+                <RadzenAccordionItem Text="@($"Grade {comp.Grade}")" Icon="@comp.Icon" CollapseTitle="Collapse"
+                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
+                                     ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")" Selected="@comp.Selected">
                     <Template>
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                            <h3 style="margin-bottom:0.2rem; color: #609">Foundation Level (Grade 5)</h3>
-                            <RadzenProgressBar Value="competencies.Where(x => x.Grade == 5).SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
-                                               Max="@(competencies.Where(x => x.Grade == 5).Count())"
-                                               Unit="@($" out of {competencies.Where(x => x.Grade == 5).Count()} complete")"
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
+                                     AlignItems="AlignItems.Center" Style="width:100%">
+                            <h3 style="margin-bottom:0.2rem; color: #609">@comp.Description</h3>
+                            <RadzenProgressBar Value="@comp.Met"
+                                               Max="@comp.Total"
+                                               Unit="@($" out of {comp.Total} complete")"
                                                ProgressBarStyle="ProgressBarStyle.Success"
                                                Style="width: 50%"
                                                class="mx-5" />
@@ -101,17 +101,16 @@
                     <ChildContent>
                         <RadzenAccordion Multiple="true">
                             <Items>
-                                @for (int i = 0; i < groupedGrade5Competencies.Count(); ++i)
+                                @foreach (var group in comp.CompetenciesGroupedByCategory)
                                 {
-                                    var group = groupedGrade5Competencies.ElementAt(i);
                                     var key = group.Key;
                                     <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
                                                          ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
-                                                         ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")" Selected="@grade5CategoriesSelected[key]">
+                                                         ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")" Selected="@(comp.CompetencySelectionState[key])">
                                         <Template>
                                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                                                <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
-                                                <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
+                                                <h4 style="margin-bottom:0.2rem">@($"{group.FirstOrDefault()?.GetCategoryId()} {group.Key.GetDescription()}")</h4>
+                                                <RadzenProgressBar Value="@(comp.CompetencyMetValues[key])"
                                                                    Max="@(group.Count())"
                                                                    Unit="@($" out of {group.Count()} complete")"
                                                                    ProgressBarStyle="ProgressBarStyle.Primary"
@@ -141,118 +140,6 @@
                     </ChildContent>
                 </RadzenAccordionItem>
             }
-            <RadzenAccordionItem Text="Grade 6" Icon="counter_2" CollapseTitle="Collapse"
-                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 6 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 6 Competencies" Selected="@gradeAccordionSelected[6]">
-                <Template>
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                        <h3 style="margin-bottom:0.2rem; color: #609">Advanced Level (Grade 6)</h3>
-                        <RadzenProgressBar Value="competencies.Where(x => x.Grade == 6).SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
-                                           Max="@(competencies.Where(x => x.Grade == 6).Count())"
-                                           Unit="@($" out of {competencies.Where(x => x.Grade == 6).Count()} complete")"
-                                           ProgressBarStyle="ProgressBarStyle.Success"
-                                           Style="width: 50%"
-                                           class="mx-5" />
-                    </RadzenStack>
-                </Template>
-                <ChildContent>
-                    <RadzenAccordion Multiple="true">
-                        <Items>
-                            @for (int i = 0; i < groupedGrade6Competencies.Count(); ++i)
-                            {
-                                var group = groupedGrade6Competencies.ElementAt(i);
-                                var key = group.Key;
-                                <RadzenAccordionItem Text="@($"Grade 6 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
-                                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 6 {group.Key.GetDescription()} Competencies")"
-                                                     ExpandAriaLabel="@($"Expand the Grade 6 {group.Key.GetDescription()} Competencies")" Selected="@grade6CategoriesSelected[key]">
-                                    <Template>
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                                            <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
-                                            <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
-                                                               Max="@(group.Count())"
-                                                               Unit="@($" out of {group.Count()} complete")"
-                                                               ProgressBarStyle="ProgressBarStyle.Primary"
-                                                               Style="width: 50%"
-                                                               class="mx-5" />
-                                        </RadzenStack>
-                                    </Template>
-                                    <ChildContent>
-                                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                                            @foreach (var competency in group)
-                                            {
-                                                <CompetencyCardComponent Competency="competency"
-                                                                         EditAuthorised="userIsSuperuser"
-                                                                         EditCompetencyAction="@(competency => EditCompetency(competency))"
-                                                                         AddAssessmentAction="@(assessment => AddAssessment(assessment))"
-                                                                         UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
-                                                                         ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
-                                                                         SelectedPerson="selectedPerson"
-                                                                         ActiveUserId="activeUserId" />
-                                            }
-                                        </RadzenStack>
-                                    </ChildContent>
-                                </RadzenAccordionItem>
-                            }
-                        </Items>
-                    </RadzenAccordion>
-                </ChildContent>
-            </RadzenAccordionItem>
-            <RadzenAccordionItem Text="Grade 7" Icon="counter_3" CollapseTitle="Collapse"
-                                 ExpandTitle="Expand" CollapseAriaLabel="Collapse the Grade 7 Competencies"
-                                 ExpandAriaLabel="Expand the Grade 7" Selected="@gradeAccordionSelected[7]">
-                <Template>
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                        <h3 style="margin-bottom:0.2rem; color: #609">Leadership Level (Grade 7)</h3>
-                        <RadzenProgressBar Value="competencies.Where(x => x.Grade == 7).SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
-                                           Max="@(competencies.Where(x => x.Grade == 7).Count())"
-                                           Unit="@($" out of {competencies.Where(x => x.Grade == 7).Count()} complete")"
-                                           ProgressBarStyle="ProgressBarStyle.Success"
-                                           Style="width: 50%"
-                                           class="mx-5" />
-                    </RadzenStack>
-                </Template>
-                <ChildContent>
-                    <RadzenAccordion Multiple="true">
-                        <Items>
-                            @for (int i = 0; i < groupedGrade7Competencies.Count(); ++i)
-                            {
-                                var group = groupedGrade7Competencies.ElementAt(i);
-                                var key = group.Key;
-                                <RadzenAccordionItem Text="@($"Grade 7 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
-                                                     ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 7 {group.Key.GetDescription()} Competencies")"
-                                                     ExpandAriaLabel="@($"Expand the Grade 7 {group.Key.GetDescription()} Competencies")" Selected="@grade7CategoriesSelected[key]">
-                                    <Template>
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                                            <h4 style="margin-bottom:0.2rem">@group.Key.GetDescription()</h4>
-                                            <RadzenProgressBar Value="group.SelectMany(x => x.Assessments).Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId).DistinctBy(x => x.AssociatedCompetency.CompetencyId).Count()"
-                                                               Max="@(group.Count())"
-                                                               Unit="@($" out of {group.Count()} complete")"
-                                                               ProgressBarStyle="ProgressBarStyle.Primary"
-                                                               Style="width: 50%"
-                                                               class="mx-5" />
-                                        </RadzenStack>
-                                    </Template>
-                                    <ChildContent>
-                                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                                            @foreach (var competency in group)
-                                            {
-                                                <CompetencyCardComponent Competency="competency"
-                                                                         EditAuthorised="userIsSuperuser"
-                                                                         EditCompetencyAction="@(competency => EditCompetency(competency))"
-                                                                         AddAssessmentAction="@(assessment => AddAssessment(assessment))"
-                                                                         UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
-                                                                         ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
-                                                                         SelectedPerson="selectedPerson"
-                                                                         ActiveUserId="activeUserId" />
-                                            }
-                                        </RadzenStack>
-                                    </ChildContent>
-                                </RadzenAccordionItem>
-                            }
-                        </Items>
-                    </RadzenAccordion>
-                </ChildContent>
-            </RadzenAccordionItem>
         </Items>
     </RadzenAccordion>
     <br />

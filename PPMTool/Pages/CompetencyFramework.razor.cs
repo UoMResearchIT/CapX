@@ -36,8 +36,12 @@ namespace PPMTool.Pages
             public string Description { get; }
             public string Icon { get; }
             public bool Selected { get; set; }
+            public int Total { get; private set; }
+
+            public int Met { get; private set; }
             public IEnumerable<IGrouping<CompetencyCategory, Competency>> CompetenciesGroupedByCategory { get; }
             public IDictionary<CompetencyCategory, bool> CompetencySelectionState { get; }
+            public IDictionary<CompetencyCategory, int> CompetencyMetValues { get; }
 
             public CompetencyGroup(int grade, string description, string icon, IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies)
             {
@@ -46,11 +50,51 @@ namespace PPMTool.Pages
                 Icon = icon;
                 CompetenciesGroupedByCategory = groupedCompetencies;
                 CompetencySelectionState = new Dictionary<CompetencyCategory, bool>();
+                CompetencyMetValues = new Dictionary<CompetencyCategory, int>();
 
                 // Initialise the dictionary of selection states
                 foreach (var category in CompetenciesGroupedByCategory.Select(x => x.Key))
                 {
                     CompetencySelectionState.Add(category, false);
+                    CompetencyMetValues.Add(category, 0);
+                }
+
+                Total = groupedCompetencies.SelectMany(x => x).Count();
+            }
+
+            /// <summary>
+            /// Updates the met count for this competency group
+            /// </summary>
+            /// <param name="selectedPerson"></param>
+            public void UpdateMet(Person selectedPerson)
+            {
+                Met = 0;
+                if (selectedPerson != null)
+                {
+                    foreach (var group in CompetenciesGroupedByCategory)
+                    {
+                        // Get one "fully met" assessment per competency and count them
+                        CompetencyMetValues[group.Key] = group
+                            .SelectMany(x => x.Assessments)
+                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
+                            .DistinctBy(x => x.AssociatedCompetency.CompetencyId)
+                            .Count();
+                        Met += CompetencyMetValues[group.Key];
+                    }
+                }
+            }
+        }
+
+        private Person selectedPerson = null;
+        public Person SelectedPerson
+        {
+            get => selectedPerson;
+            set
+            {
+                if (selectedPerson != value)
+                {
+                    selectedPerson = value;
+                    UpdateMet();
                 }
             }
         }
@@ -59,12 +103,22 @@ namespace PPMTool.Pages
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
         private int activeUserId;
-        private Person selectedPerson = null;
         private byte[] file;
         private string fileName;
         private long? fileSize;
         private string competencySearchTerms;
         private IEnumerable<CompetencyGroup> competencyGroups;
+
+        /// <summary>
+        /// Method to update the met count of each available competency group
+        /// </summary>
+        private void UpdateMet()
+        {
+            foreach (var group in competencyGroups)
+            {
+                group.UpdateMet(selectedPerson);
+            }
+        }
 
         private Task GetTask()
         {
@@ -105,7 +159,7 @@ namespace PPMTool.Pages
                     "counter_3",
                     competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category).OrderBy(x => x.Key)
                 ));
-
+                UpdateMet();
             }).ContinueWith(t =>
             {
                 Debug.WriteLine($"** ...Competency load task complete: {t.Status}");
@@ -128,7 +182,7 @@ namespace PPMTool.Pages
             activeUserId = ActiveUser?.PersonId ?? 0;
 
             // Get the active user by default
-            selectedPerson = ActiveUser;
+            SelectedPerson = ActiveUser;
 
             // Kick off a DB task to get the data
             EnqueueLoadData(GetTask);
@@ -225,7 +279,7 @@ namespace PPMTool.Pages
                     // Create a context to be accesed on this thread
                     var threadContext = ContextFactory.CreateDbContext();
                     var localCompetencies = CompetencyService.GetAll(threadContext);
-                    var localPerson = PersonService.GetById(threadContext, selectedPerson.PersonId);
+                    var localPerson = PersonService.GetById(threadContext, SelectedPerson.PersonId);
 
                     // Bail or read from stream
                     if (value == null)
