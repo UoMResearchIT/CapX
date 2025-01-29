@@ -278,11 +278,14 @@ mark {
 }
 
 .timesheet-wlm-slice {
-    border: 1px solid #aaa;
     padding: 0.5rem; 
     margin: 0px; 
     float: left;
     text-align: center;
+}
+
+h4 {
+    line-height: unset;
 }
 
 .rounded-frame {
