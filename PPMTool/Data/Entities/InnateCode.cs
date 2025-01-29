@@ -22,7 +22,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Whether this code is active and can be booked to
         /// </summary>
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
 
         /// <summary>
         /// The collection of innate code tasks that belong to this code
