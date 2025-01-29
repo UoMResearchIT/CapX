@@ -261,28 +261,61 @@
             @if (timesheet?.IsLineManager(ActiveUser) ?? false)
             {
                 <div class="card" style="margin-top: 0.5rem;">
-                    <h2>Workload model details</h2>
-                    <div>
-                        @{
-                            var properties = currentWLM.GetType().GetProperties();
-                            <div style="width: 100%; overflow: auto;">
-                                @foreach (var prop in properties)
-                                {
-                                    if (prop.Name.Contains("FTE"))
-                                    {
-                                        Duty duty = wlmToDutyMapping[prop.Name];
-                                        string wlmBackgroundColour = duty.GetBackgroundColourCode();
-                                        string wlmTextColour = duty.GetTextColourCode();
-                                        double value = (Double)@prop.GetValue(currentWLM);
-                                        if (value != 0)
+                    <div class="row">
+                        <div class="col-2"><h4>WLM details</h4></div>
+                        <div class="col-10">
+                            <div>
+                                @{
+                                    var properties = currentWLM.GetType().GetProperties();
+                                    <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
+                                        @foreach (var prop in properties)
                                         {
-                                            int percent = (int)(value * 100);
-                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour; font-weight: bold;" title="@prop.Name">@value</div>
+                                            if (prop.Name.Contains("FTE"))
+                                            {
+                                                try
+                                                {
+                                                    Duty duty = wlmToDutyMapping[prop.Name];
+                                                    string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                                    string wlmTextColour = duty.GetTextColourCode();
+                                                    double value = (Double)@prop.GetValue(currentWLM);
+                                                    string dutyDescription = Data.Extensions.GetEnumDescription(duty) ?? "NOT SET";
+                                                    if (value != 0)
+                                                    {
+                                                        int percent = (int)(value * 100);
+                                                        <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour; font-weight: bold;" title="@dutyDescription">@value</div>
+                                                    }
+                                                }
+                                                catch {}
+                                            }
                                         }
-                                    }
+                                    </div>
                                 }
                             </div>
-                        }
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 0.4rem;">
+                        <div class="col-2"><h4>This timesheet</h4></div>
+                        <div class="col-10">
+                            @{
+                                <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
+                                    @foreach (KeyValuePair<Duty, float> item in wlmChartItem.WeeklyValuesByDuty)
+                                    {
+                                        if (item.Value != 0)
+                                        {
+                                            double roundedValue = Math.Round(item.Value * 100, MidpointRounding.AwayFromZero) / 100; // To nearest 0.01
+                                            double percent = Math.Round((item.Value * 100)*100, MidpointRounding.AwayFromZero) / 100;
+                                            Duty duty = item.Key;
+                                            string dutyDescription = Data.Extensions.GetEnumDescription(duty) ?? "NOT SET";
+                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                            string wlmTextColour = duty.GetTextColourCode();
+
+                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour; font-weight: bold;" title="@dutyDescription">@roundedValue.ToString()</div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             }

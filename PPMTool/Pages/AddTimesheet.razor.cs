@@ -59,6 +59,7 @@ namespace PPMTool.Pages
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
+        private WLMWeeklyDataChartItem wlmChartItem;
         private Dictionary<string, Duty> wlmToDutyMapping = new Dictionary<string, Duty>
         {
             { "ProjectWorkFTE", Duty.ProjectWork },
@@ -171,7 +172,10 @@ namespace PPMTool.Pages
                         LoadInnateCodes();
 
                         // Get WLM details of the staff member active at the time of the timesheet
-                        currentWLM = timesheet.Owner.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
+                        Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
+                        currentWLM = personWithWLMData.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
+
+                        wlmChartItem = WorkloadModelChartHelper.GetWorkloadModelChartData(timesheet.Owner, timesheet.StartDate, new List<Timesheet> { timesheet });
                     }
 
                     LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
