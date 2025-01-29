@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using PPMTool.Data.Entities;
 using Radzen;
 
@@ -138,6 +140,24 @@ namespace PPMTool.Data
 
             // Call the other method
             return GetSuitableFinancialReference(list, year);
+        }
+
+
+        /// <summary>
+        /// Method to get the Description text from an Enum item
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string GetEnumDescription(Enum value)
+        {
+            // Get the Description attribute value for the enum value
+            FieldInfo fi = value.GetType().GetField(value.ToString());
+            DescriptionAttribute[] attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
+
+            if (attributes.Length > 0)
+                return attributes[0].Description;
+            else
+                return value.ToString();
         }
     }
 }
