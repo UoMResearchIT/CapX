@@ -39,7 +39,7 @@
                     <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" Selected="true" />
+                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
                             </Authorized>
                         </AuthorizeView>
                         <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
@@ -54,10 +54,10 @@
             <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Capacity" Icon="lists" Expanded="true">
-                        <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="full_stacked_bar_chart" />
+                        <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="deployed_code_account" />
                         <AuthorizeView Roles="Superuser,Manager,Reader">
                             <Authorized Context="sub_context_1">
-                                <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="full_stacked_bar_chart" />
+                                <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="supervisor_account" />
                             </Authorized>
                         </AuthorizeView>
                     </RadzenPanelMenuItem>

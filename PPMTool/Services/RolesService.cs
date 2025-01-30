@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
@@ -11,6 +13,15 @@ namespace PPMTool.Services
 {
     public class RolesService : BaseEntityService<Role>
     {
+        /// <summary>
+        /// The active user role as pulled from the role database
+        /// </summary>
+        public Role ActiveUserRole { get; private set; }
+
+        /// <summary>
+        /// The active user username as pulled from the authentication state
+        /// </summary>
+        public string ActiveUserName { get; private set; }
 
         private ILogger<RolesService> _logger;
         private IDbContextFactory<PPMToolContext> _contextFactory;
@@ -19,6 +30,31 @@ namespace PPMTool.Services
         {
             _logger = logger;
             _contextFactory = contextFactory;
+        }
+
+        /// <summary>
+        /// Method to set the user info in the RoleService if an active user has not yet been set and a valid authentication state task is provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="AuthenticationStateTask"></param>
+        public void SetUserInfo(PPMToolContext context, Task<AuthenticationState> AuthenticationStateTask)
+        {
+            if (AuthenticationStateTask is not null && ActiveUserRole is null)
+            {
+                var authState = AuthenticationStateTask.GetAwaiter().GetResult();
+                var user = authState?.User;
+
+                if (user?.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    // Stash the user name
+                    ActiveUserName = authState?.User.Identity.Name.Trim().ToLower();
+                    _logger.LogInformation($"Active user name set in Role Service: {ActiveUserName}");
+
+                    // Get active user role
+                    ActiveUserRole = GetByUsername(context, ActiveUserName);
+                    _logger.LogInformation($"Active user role set in Role Service: {ActiveUserRole?.Person.Name} with role {ActiveUserRole?.RoleType}");
+                }
+            }
         }
 
         public override int Add(PPMToolContext context, Role entity, bool commitChanges = true)
