@@ -262,7 +262,7 @@
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">
-                        <div class="col-2"><h4>WLM details</h4></div>
+                        <div class="col-2"><RadzenText Text="WLM details" /></div>
                         <div class="col-10">
                             <div>
                                 @{
@@ -294,8 +294,8 @@
                         </div>
                     </div>
 
-                    <div class="row" style="margin-top: 0.4rem;">
-                        <div class="col-2"><h4>This timesheet</h4></div>
+                    <div class="row" style="margin-top: 0.25rem;">
+                        <div class="col-2"><RadzenText Text="This timesheet" /></div>
                         <div class="col-10">
                             @{
                                 <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
@@ -304,8 +304,10 @@
                                         if (item.Value != 0)
                                         {
                                             double roundedValue = Math.Round(item.Value * 100, MidpointRounding.AwayFromZero) / 100; // To nearest 0.01
-                                            double percent = Math.Round((item.Value * 100)*100, MidpointRounding.AwayFromZero) / 100;
+                                            // double percent = Math.Round((item.Value * 100)*100, MidpointRounding.AwayFromZero) / 100;
                                             Duty duty = item.Key;
+
+                                            double percent = wlmChartItem.WeeklyPercentagesByDuty[duty];
                                             string dutyDescription = Data.Extensions.GetEnumDescription(duty) ?? "NOT SET";
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
