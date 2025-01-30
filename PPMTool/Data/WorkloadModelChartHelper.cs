@@ -70,6 +70,7 @@ namespace PPMTool.Data
             }
 
             item.UpdateWLMNetValues();
+            item.CheckAndAdjustPercentages();
 
             return item;
         }
