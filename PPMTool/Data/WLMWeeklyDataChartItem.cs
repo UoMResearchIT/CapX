@@ -11,6 +11,8 @@ namespace PPMTool.Data
 
         public Dictionary<Duty, float> WeeklyValuesByDuty { get; set; }
 
+        public Dictionary<Duty, float> WeeklyPercentagesByDuty { get; set; }
+
         public Dictionary<Duty, float> WLMWeeklyTargetsByDuty { get; set; }
 
         public Dictionary<Duty, float> WLMNetByDuty { get; set; }
@@ -74,6 +76,41 @@ namespace PPMTool.Data
                 WeeklyValuesByDuty[duty] *= toTotalHours ? 35f : (TotalHoursForWeek ?? 0) == 0 ? 35 : (TotalHoursForWeek ?? 0);
                 WeeklyValuesByDuty[duty] /= toTotalHours ? (TotalHoursForWeek ?? 0) == 0 ? 35 : (TotalHoursForWeek ?? 0) : 35f;
             }
+        }
+
+        public void CheckAndAdjustPercentages()
+        {
+            Dictionary<Duty, float> amendedInput = new Dictionary<Duty, float>();
+
+            Duty maxDuty = new Duty(); // Default value
+            double maxValue = 0;
+
+            // Add up all the percentage values so we can deal with it being slightly over 100 due to rounding
+            double total = 0;
+
+            foreach (KeyValuePair<Duty, float> pair in WeeklyValuesByDuty)
+            {
+                double adjustedValue = Math.Round((pair.Value * 100) * 100, MidpointRounding.AwayFromZero) / 100;
+
+                // Total the values
+                total += adjustedValue;
+
+                if (adjustedValue > maxValue)
+                {
+                    maxDuty = pair.Key;
+                    maxValue = adjustedValue;
+                }
+
+                amendedInput[pair.Key] = (float)adjustedValue;
+            }
+
+            if (total > 100)
+            {
+                double amendedValue = maxValue - (total - 100);
+                amendedInput[maxDuty] = (float)amendedValue;
+            }
+
+            WeeklyPercentagesByDuty = amendedInput;
         }
     }
 }
