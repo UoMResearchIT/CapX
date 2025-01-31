@@ -77,43 +77,5 @@ namespace PPMTool.Data
                 WeeklyValuesByDuty[duty] /= toTotalHours ? (TotalHoursForWeek ?? 0) == 0 ? 35 : (TotalHoursForWeek ?? 0) : 35f;
             }
         }
-
-        /// <summary>
-        /// Method to ensure that calculated percentages total 100% so they fit in the containing div
-        /// </summary>
-        public void CheckAndAdjustPercentages()
-        {
-            Dictionary<Duty, float> amendedInput = new Dictionary<Duty, float>();
-
-            Duty maxDuty = new Duty(); // Default value
-            double maxValue = 0;
-
-            // Add up all the percentage values so we can deal with it being slightly over 100 due to rounding
-            double total = 0;
-
-            foreach (KeyValuePair<Duty, float> pair in WeeklyValuesByDuty)
-            {
-                double adjustedValue = Math.Round((pair.Value * 100) * 100, MidpointRounding.ToZero) / 100;
-
-                // Total the values
-                total += adjustedValue;
-
-                if (adjustedValue > maxValue)
-                {
-                    maxDuty = pair.Key;
-                    maxValue = adjustedValue;
-                }
-
-                amendedInput[pair.Key] = (float)adjustedValue;
-            }
-
-            if (total > 100)
-            {
-                double amendedValue = maxValue - (total - 100);
-                amendedInput[maxDuty] = (float)amendedValue;
-            }
-
-            WeeklyPercentagesByDuty = amendedInput;
-        }
     }
 }
