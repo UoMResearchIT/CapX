@@ -304,22 +304,39 @@
                         <div class="col-10">
                             @{
                                 <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
-                                    @foreach (KeyValuePair<Duty, float> item in wlmChartItem.WeeklyValuesByDuty)
+                                @{
+                                    double total = 0;
+                                    int itemCount = 0;
+
+                                    foreach (KeyValuePair<Duty, float> item in wlmChartItem.WeeklyValuesByDuty)
+                                    {
+                                        total += item.Value;
+                                        itemCount += (item.Value > 0 ? 1 : 0); 
+                                    }
+
+                                    // Subtract a small amount from each item if the total exceeds 100%
+                                    double percentAdjustment = (total > 1 ? (total - 1) / itemCount : 0);
+
+                                    foreach (KeyValuePair<Duty, float> item in wlmChartItem.WeeklyValuesByDuty)
                                     {
                                         if (item.Value != 0)
                                         {
                                             Duty duty = item.Key;
-                                            
+
                                             // Display properties
                                             string roundedValue = item.Value.ToString("F2"); // To nearest 0.01
-                                            double percent = Math.Round(item.Value, 4, MidpointRounding.ToZero) * 100;
+                                            double percent = (Math.Round(item.Value - percentAdjustment, 4, MidpointRounding.ToZero) * 100) ;
                                             string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
 
                                             // Styling properties
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@roundedValue</div>
+                                            string text = (@percent >= 3 ? @roundedValue : "");
+                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">
+                                                @text &nbsp;
+                                            </div>
+                                            }
                                         }
                                     }
                                 </div>
