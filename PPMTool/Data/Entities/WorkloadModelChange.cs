@@ -69,7 +69,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         private void UpdatePSM()
         {
-            ProjectAndServiceManagementFTE = ProjectManagementFTE + ServiceManagementFTE;
+            ProjectAndServiceManagementFTE = Math.Round(1000 * (ProjectManagementFTE + ServiceManagementFTE)) / 1000d;
         }
 
 
