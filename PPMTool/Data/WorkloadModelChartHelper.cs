@@ -8,7 +8,7 @@ namespace PPMTool.Data
 {
     public static class WorkloadModelChartHelper
     {
-        public static WLMWeeklyDataChartItem GetWorkloadModelChartData(Person person, DateTime startDate, List<Timesheet> timesheets)
+        public static WLMWeeklyDataChartItem GetWorkloadModelChartData(Person person, DateTime startDate, IEnumerable<Timesheet> timesheets)
         {
             WorkloadModelChange wlm = person.GetWorkloadModelOnDateOrDefault(startDate);
 

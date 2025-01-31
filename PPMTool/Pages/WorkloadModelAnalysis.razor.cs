@@ -107,7 +107,7 @@ namespace PPMTool.Pages
                         InvokeAsync(StateHasChanged);
 
                         // Build the data object for the chart
-                        data.Add(WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets.ToList()));
+                        data.Add(WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets));
 
                         // Increment
                         weekStart = weekStart.AddDays(7);
