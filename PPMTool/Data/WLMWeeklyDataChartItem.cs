@@ -78,6 +78,9 @@ namespace PPMTool.Data
             }
         }
 
+        /// <summary>
+        /// Method to ensure that calculated percentages total 100% so they fit in the containing div
+        /// </summary>
         public void CheckAndAdjustPercentages()
         {
             Dictionary<Duty, float> amendedInput = new Dictionary<Duty, float>();
@@ -90,7 +93,7 @@ namespace PPMTool.Data
 
             foreach (KeyValuePair<Duty, float> pair in WeeklyValuesByDuty)
             {
-                double adjustedValue = Math.Round((pair.Value * 100) * 100, MidpointRounding.AwayFromZero) / 100;
+                double adjustedValue = Math.Round((pair.Value * 100) * 100, MidpointRounding.ToZero) / 100;
 
                 // Total the values
                 total += adjustedValue;
