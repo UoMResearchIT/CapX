@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Mail;
@@ -70,6 +71,39 @@ namespace PPMTool.Services
                 Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
             }
 #endif
+        }
+
+        public void SendTimesheetSubmissionEmailNotification(Person staff, Timesheet timesheet)
+        {
+            List<string> recipients = new List<string>();
+
+            Task.Run(() =>
+            {
+                // Create context and get relevant details for the email
+                var context = DbContextFactory.CreateDbContext();
+                Person lineManager = staff.LineManager;
+
+                if (lineManager != staff) // No point in AH emailing himself about his timesheet. :)
+                {
+                    Role lineManagerRole = RolesService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
+                    string lineManagerEmailAddress = (string.IsNullOrWhiteSpace(lineManagerRole.EmailAddress) ? $"{lineManagerRole.CASUserName}@manchester.ac.uk" : lineManagerRole.EmailAddress);
+                    recipients.Add(lineManagerEmailAddress);
+
+                    // Create email
+                    var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
+
+                    StringBuilder body = new StringBuilder();
+                    body.Append($"<p>Dear {lineManager.Name},</p>");
+                    body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
+                    body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
+                    body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
+                    body.Append("<p><em>Sent from CapX</em></p>");
+
+                    // Send email
+                    Debug.WriteLine($"** Sending Timesheet Submission email to {lineManagerEmailAddress}");
+                    SendEmail(recipients, subject, body.ToString());
+                }
+            });
         }
 
         public void SendAbsenceEmailNotifications(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
@@ -345,7 +379,7 @@ namespace PPMTool.Services
 
                     // Add footer
                     body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
+                    body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
 
                     // Send email
                     var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";

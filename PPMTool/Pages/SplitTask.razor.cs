@@ -65,9 +65,7 @@ namespace PPMTool.Pages
                 originalEndDate = originalTask?.EndDate ?? DateTime.Today;
 
                 // Only allow the project manager to save the split or a superuser
-                var user = AuthenticationState?.User;
-                var role = RolesService.GetByUsername(Context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && owningProject?.ProjectManager.PersonId == role?.Person.PersonId);
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || owningProject?.ProjectManager.PersonId == ActiveUser?.PersonId;
 
                 StateHasChanged();
             }
@@ -286,7 +284,7 @@ namespace PPMTool.Pages
         private void DiscardChanges()
         {
             LogInformation($"Discarding splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent.ProjectModel.GetFullName()}!");
-            Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
+            Navigation.NavigateTo($"projects/projectdetails/{originalAddTaskComponent?.ProjectId}");
         }
 
         private void UpdateAndSave()
@@ -316,7 +314,7 @@ namespace PPMTool.Pages
                 ProjectService.Update(Context, owningProject);
 
                 // Navigate back
-                Navigation.NavigateTo($"projectdetails/{originalAddTaskComponent?.ProjectId}");
+                Navigation.NavigateTo($"projects/projectdetails/{originalAddTaskComponent?.ProjectId}");
             }
             else
             {

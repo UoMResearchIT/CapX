@@ -112,18 +112,34 @@ namespace PPMTool.Pages
         /// </summary>
         internal class GanttBlock : IChartItem
         {
-            public GanttBlock(SubTask t, string groupName, bool isFake = false)
+            public GanttBlock(SubTask t, string groupName, bool isFake = false, bool isLeadershipTask = false)
             {
                 Task = t;
                 PredecessorGroupName = groupName;
                 this.isFake = isFake;
+                this.IsLeadershipTask = isLeadershipTask;
             }
 
+            /// <summary>
+            /// The subtask which is associated with the Gantt Block
+            /// </summary>
             public SubTask Task { get; private set; }
 
+            /// <summary>
+            /// When grouping tasks that are linked, this is the name of the group
+            /// </summary>
             public string PredecessorGroupName { get; private set; }
 
+            /// <summary>
+            /// Whether this task is a fake task which exists in either the provisional or confirmed series so they both match in length.
+            /// This is to workaround a bug in Apex Charts where the sorting doesn't work if the series aren't all the same length
+            /// </summary>
             private bool isFake;
+
+            /// <summary>
+            /// Whether this task is a leaderhsip task and hence doesn't have a proper subtask object associated with it in the DB.
+            /// </summary>
+            public bool IsLeadershipTask { get; private set; }
 
             public bool IsFake()
             {
@@ -189,6 +205,29 @@ namespace PPMTool.Pages
 
                         // Add to the list of blocks
                         allBlocks.Add(new GanttBlock(t, groupName));
+                    }
+
+                    // Add a gantt block representing the management task
+                    var managementTasks = project.GetLeadershipTaskRanges();
+                    foreach (var dateRange in managementTasks)
+                    {
+                        var leadershipName = "(Leadership)";
+                        allBlocks.Insert(0, new GanttBlock(new SubTask
+                        {
+                            Name = leadershipName,
+                            StartDate = dateRange.StartDate,
+                            EndDate = dateRange.EndDate.AddDays(-1),
+                            OwningProject = project,
+                            AssignedResources = new List<Resource>
+                            {
+                                new Resource
+                                {
+                                    Person = project.ProjectManager,
+                                    AssignmentFTE = Math.Round(project.LeadershipFTE, 3)
+                                }
+                            }
+
+                        }, leadershipName, isLeadershipTask: true));
                     }
 
                     // Fill in the data
@@ -360,10 +399,10 @@ namespace PPMTool.Pages
             }).ContinueWith(t =>
             {
                 Loading = false;
-                InvokeAsync(() =>
+                InvokeAsync(async () =>
                 {
                     StateHasChanged();
-                    OnAfterRender(true);
+                    await OnAfterRenderAsync(true);
                 });
             });
         }
@@ -373,15 +412,21 @@ namespace PPMTool.Pages
             base.OnInitialized();
             allProjects = ProjectService.GetAll(Context).ToList();
 
-            LogInformation($"Initialised project details");
+            Debug.WriteLine($"** Initialised project details");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnAfterRender(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("nothinghere");
+
+            // If the path is the legacy path then redirect
+            if (!Navigation.Uri.Contains("projects/projectdetails"))
+            {
+                Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
+            }
 
             if (firstRender)
             {
@@ -404,13 +449,10 @@ namespace PPMTool.Pages
                     // Check whether the parameter is present to scroll to the due notes
                     if (FilterDueNotes)
                     {
-                        await InvokeAsync(async () =>
-                        {
-                            // Refresh then scroll last due note into view
-                            StateHasChanged();
-                            await Task.Delay(300);
-                            await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
-                        });
+                        // Refresh then scroll last due note into view
+                        StateHasChanged();
+                        await Task.Delay(300);
+                        await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
                     }
                 }
                 else
@@ -732,7 +774,7 @@ namespace PPMTool.Pages
         /// <param name="project"></param>
         private void EditProject(Project project)
         {
-            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
         }
 
         /// <summary>
@@ -842,7 +884,7 @@ namespace PPMTool.Pages
         /// <param name="noteTolink"></param>
         private string GetCopyLinkText(Note noteTolink)
         {
-            return $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
+            return $"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
         }
 
         /// <summary>
@@ -865,7 +907,7 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Content Resolve: {noteModel.HtmlContent}");
             // Get list of all new mentions in the note content
             var newMentions = new List<string>();
-            var matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)@\w+");
+            var matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)@\w+");
             newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // Load in the list of managers
@@ -908,7 +950,7 @@ namespace PPMTool.Pages
 
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"(^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
+            matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
             newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
@@ -917,7 +959,7 @@ namespace PPMTool.Pages
                 var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
                 }
                 else
                 {
@@ -937,7 +979,7 @@ namespace PPMTool.Pages
         /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
-            if (!EditAuthorised) return;
+            if (!EditAuthorised || (dataPoint.DataPoint.Items.FirstOrDefault()?.IsLeadershipTask ?? true)) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
@@ -955,7 +997,7 @@ namespace PPMTool.Pages
         /// <param name="task"></param>
         void EditTask(SubTask task)
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}");
         }
 
         /// <summary>
@@ -963,7 +1005,7 @@ namespace PPMTool.Pages
         /// </summary>
         void AddTask()
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/-1");
         }
 
         /// <summary>
@@ -973,7 +1015,7 @@ namespace PPMTool.Pages
         void CopyTask(SubTask task)
         {
             // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
         }
 
         /// <summary>
@@ -983,7 +1025,7 @@ namespace PPMTool.Pages
         void SplitTask(SubTask task)
         {
             // Navigate to the split task page passing the task ID to be split
-            Navigation.NavigateTo($"splittask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/splittask/{project.ProjectId}/{task.SubTaskId}");
         }
 
         /// <summary>

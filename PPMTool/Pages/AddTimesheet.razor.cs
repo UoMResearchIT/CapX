@@ -30,6 +30,9 @@ namespace PPMTool.Pages
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
+        [Inject]
+        public EmailService EmailService { get; set; }
+
         private Timesheet timesheet;
         private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
@@ -124,7 +127,7 @@ namespace PPMTool.Pages
 
                         // Redirect to the newly created Timesheet so refrshing the page
                         // with the -1 parameter doesn't create another new timesheet.
-                        Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+                        Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
                         cancellationTokenSource.Cancel();
                         return;
                     }
@@ -358,6 +361,14 @@ namespace PPMTool.Pages
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
+            TimesheetService.GetIssueCount(Context, ActiveUser);
+
+            // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
+            if (timesheet.Owner == ActiveUser)
+            {
+                Debug.Write("** Sending an email to the Line Manager...");
+                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser, timesheet);
+            }
 
             // Only navigate away if the status is new as this means the save button has been clicked
             if (timesheet.Status != TimesheetStatus.New)
@@ -603,7 +614,7 @@ namespace PPMTool.Pages
         /// <param name="timesheet"></param>
         public void GoToTimesheet(Timesheet timesheet)
         {
-            Navigation.NavigateTo($"addtimesheet/{timesheet.TimesheetId}");
+            Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
         }
     }
 }

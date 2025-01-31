@@ -16,21 +16,39 @@ namespace PPMTool.Data.Entities
     {
         public int ProjectId { get; set; }
 
+        /// <summary>
+        /// The reference number of the project
+        /// </summary>
         [Required]
         public int RTP { get; set; }
 
+        /// <summary>
+        /// The principal investigator of the project (our customer)
+        /// </summary>
         [Required]
         public string PI { get; set; }
 
+        /// <summary>
+        /// Faculty in which the projet sits
+        /// </summary>
         [Required]
         public Faculty Faculty { get; set; }
 
+        /// <summary>
+        /// School within the faculty in which the project sits
+        /// </summary>
         [Required]
         public School School { get; set; }
 
+        /// <summary>
+        /// The project manager of this project
+        /// </summary>
         [InverseProperty("ManagedProjects")]
         public Person ProjectManager { get; set; }
 
+        /// <summary>
+        /// The tasks that make up this project
+        /// </summary>
         public IList<SubTask> SubTasks { get; set; }
 
         /// <summary>
@@ -45,12 +63,21 @@ namespace PPMTool.Data.Entities
         [RequiredForAny(Values = new[] { nameof(CostModel.DayRate) }, PropertyName = nameof(CostModel))]
         public double DayRate { get; set; }
 
+        /// <summary>
+        /// The cost model this project uses
+        /// </summary>
         [Required]
         public CostModel CostModel { get; set; }
 
+        /// <summary>
+        /// The funds that we have been paid for this project
+        /// </summary>
         [Required]
         public double FundsReceived { get; set; }
 
+        /// <summary>
+        /// The status of the project
+        /// </summary>
         [Required]
         public ProjectStatus ProjectStatus { get; set; }
 
@@ -97,7 +124,12 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Timestamp recording when actuals were last updated.
         /// </summary>
-        public string ActualsLastUpdated { get; set; }
+        public string ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
+
+        /// <summary>
+        /// The amount of time the management of this project is expected to take in FTE
+        /// </summary>
+        public float LeadershipFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -107,10 +139,10 @@ namespace PPMTool.Data.Entities
             // Generate status messages to be maintained against a project
             statusMessages = new List<StatusMessage>
             {
-                new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.WillStartWithinAMonth())),
-                new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasStartedInTheLastWeek())),
-                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek())),
-                new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks.Any(x => x.HasProvisionalResources())),
+                new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
+                new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
+                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false),
+                new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => Budget == 0),
@@ -182,7 +214,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool RunningTaskButInactive()
         {
-            return SubTasks.Any(x => x.IsCurrentlyRunning()) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsCancelled();
+            return (SubTasks?.Any(x => x.IsCurrentlyRunning()) ?? false) && ProjectStatus != ProjectStatus.Active && ProjectStatus != ProjectStatus.Maintenance && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>
@@ -191,7 +223,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool ActiveButNoRunningTask()
         {
-            return SubTasks.All(x => !x.IsCurrentlyRunning()) && (ProjectStatus == ProjectStatus.Active || ProjectStatus == ProjectStatus.Maintenance);
+            return (SubTasks?.All(x => !x.IsCurrentlyRunning()) ?? false) && (ProjectStatus == ProjectStatus.Active || ProjectStatus == ProjectStatus.Maintenance);
         }
 
         /// <summary>
@@ -220,7 +252,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasUnmetDemandInWindow(DateTime? startDate = null, DateTime? endDate = null)
         {
-            return SubTasks.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0);
+            return SubTasks?.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0) ?? false;
         }
 
         /// <summary>
@@ -388,7 +420,7 @@ namespace PPMTool.Data.Entities
                 }
 
                 // Compute cost (0.05 FTE per project)
-                yearCost = yearFraction * reference.Grade75Costs * 0.05;
+                yearCost = yearFraction * reference.Grade75Costs * LeadershipFTE;
 
                 // Accumulate
                 totalCost += yearCost;
@@ -413,9 +445,7 @@ namespace PPMTool.Data.Entities
             }
 
             // Convert tasks to date ranges
-            var dateRanges = SubTasks
-                .Where(x => x.ChargeLeadership)
-                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
+            var dateRanges = GetLeadershipTaskRanges();
 
             // Get the number of overlapping days in this window
             var days = CalculateOverlappingDays(dateRanges, startDate, endDate);
@@ -426,12 +456,20 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// A helper class to assist with finding how much of the tasks run during a financial year
+        /// Generates a list of date ranges for the leadership tasks
         /// </summary>
-        public class DateRange
+        /// <returns></returns>
+        public IEnumerable<DateRange> GetLeadershipTaskRanges()
         {
-            public DateTime StartDate { get; set; }
-            public DateTime EndDate { get; set; }
+            // Conver the sub tasks to date ranges (adding a day for the end so it isn't inclusive)
+            var dateRanges = SubTasks
+                .Where(x => x.ChargeLeadership)
+                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
+
+            // Merge overlapping date ranges
+            var mergedRanges = MergeDateRanges(dateRanges);
+
+            return mergedRanges;
         }
 
         /// <summary>
@@ -443,12 +481,9 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public static int CalculateOverlappingDays(IEnumerable<DateRange> dateRanges, DateTime windowStartDate, DateTime windowEndDate)
         {
-            // Merge overlapping date ranges
-            var mergedRanges = MergeDateRanges(dateRanges);
-
             // Count the days overlapping across all tasks
             int totalDays = 0;
-            foreach (var range in mergedRanges)
+            foreach (var range in dateRanges)
             {
                 DateTime overlapStart = range.StartDate > windowStartDate ? range.StartDate : windowStartDate;
                 DateTime overlapEnd = range.EndDate < windowEndDate ? range.EndDate : windowEndDate;

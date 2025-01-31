@@ -39,6 +39,9 @@ namespace PPMTool.Pages
         {
             base.OnParametersSet();
 
+            // Default view permission based on edit authorisation
+            canView = EditAuthorised;
+
             // Load the person model if necessary
             if (PersonId > 0)
             {
@@ -119,7 +122,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing workload model changes...");
-                    Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
+                    Navigation.NavigateTo($"people/addavailabilitychange/{personModel.PersonId}");
                 }
             }
         }
@@ -136,7 +139,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing absences...");
-                    Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
+                    Navigation.NavigateTo($"people/addabsence/{personModel.PersonId}");
                 }
             }
         }

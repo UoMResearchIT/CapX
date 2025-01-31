@@ -1,7 +1,8 @@
-﻿@page "/addperson/{PersonId:int}"
+﻿@page "/people/addperson/{PersonId:int}"
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add Person - CapX</PageTitle>
 
@@ -27,7 +28,7 @@
                     <div class="row">
                         <div class="col">
                             <h1>Edit <i>@personModel.Name</i></h1>
-                            <MessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                            <StatusMessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
                         </div>
                         @if (PersonId > 0)
                         {
@@ -39,7 +40,6 @@
                             </div>
                         }
                     </div>
-                    <hr />
                 }
             </div>
         </div>
@@ -71,8 +71,8 @@
                         <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><br>
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="This is the FTE of the post as agreed as part of the department budget. If someone is working less than 1.0 FTE i.e. part-time, this should be reflected as a WLM change." /><br />
+                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled="@(ActiveUserRoleType != RoleType.Superuser)" />
                     </div>
                 </div>
                 <hr />
@@ -166,12 +166,12 @@
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
-                                                <RadzenText Text="Project and Service" TextStyle="TextStyle.Subtitle1" />
+                                                <RadzenText Text="Project / Service" TextStyle="TextStyle.Subtitle1" />
                                                 <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="@d.StaffManagementFTE.ToString()" />
-                                                <RadzenText Text="@d.ProjectAndServiceManagementFTE.ToString()" />
+                                                <RadzenText Text="@($"{d.ProjectManagementFTE} / {d.ServiceManagementFTE}")"/>
                                                 <RadzenText Text="@d.ArchitectureFTE.ToString()" />
                                             </RadzenStack>
                                         </RadzenStack>

@@ -125,8 +125,8 @@ namespace PPMTool.Pages
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
         private EditContext editContext;
-        private List<ActualsReportRow> actualsReportRows;
-        private IDictionary<DateTime, double> actualsColumnSums;
+        private List<ActualsReportRow> actualsReportRows = new List<ActualsReportRow>();
+        private IDictionary<DateTime, double> actualsColumnSums = new Dictionary<DateTime, double>();
         private DateTime? actualsStartDate;
         private DateTime? actualsEndDate;
         private bool hideEmptyWeeks = false;
@@ -222,28 +222,57 @@ namespace PPMTool.Pages
             editContext = new EditContext(TaskModel);
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            var user = AuthenticationState?.User;
             var role = RolesService.GetByUsername(Context, ActiveUserName);
-            EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && ProjectModel.ProjectManager == role?.Person);
+            EditAuthorised = (ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager) && ProjectModel.ProjectManager == role?.Person);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
 
             // Run actuals report if not copying or splitting
             if (!IsCopy && !IsSplit)
             {
-                EnqueueLoadData(async () => await Task.Run(LoadActuals));
+                KickOffActualsReportTask();
             }
+        }
+
+        /// <summary>
+        /// Method to first set the UI state, then queue a LoadActuals task then update the UI again
+        /// </summary>
+        private void KickOffActualsReportTask()
+        {
+            // Set state change
+            Loading = true;
+            var tempActuals = new List<ActualsReportRow>();
+            StateHasChanged();
+
+            // Queue background task
+            EnqueueLoadData(async () =>
+            {
+                await Task.Run(() =>
+                {
+                    LoadActuals(out tempActuals);
+
+                }).ContinueWith(t =>
+                {
+                    // Run back on the main thread
+                    InvokeAsync(() =>
+                    {
+                        UpdateActualsColumnSums(tempActuals);
+                        Loading = false;
+                        StateHasChanged();
+                    });
+                });
+            });
         }
 
         /// <summary>
         /// Method to generate the actuals report and populate the data grid
         /// </summary>
+        /// <param name="tempActuals"></param>
         /// <exception cref="Exception">Throw if there are multiple task/resource/week entries in the timesheet data</exception>
-        private void LoadActuals()
+        private void LoadActuals(out List<ActualsReportRow> tempActuals)
         {
-            Loading = true;
-            actualsReportRows = null;
-            InvokeAsync(StateHasChanged);
+            // Initialise
+            tempActuals = new List<ActualsReportRow>();
 
             try
             {
@@ -251,7 +280,8 @@ namespace PPMTool.Pages
 
                 // Get all the timesheet entries associated with the activity code for this project
                 if (projectModel?.InnateActivity == null) return;
-                var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity);
+                var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity).Where(x => x.Status == TimesheetStatus.Approved);
+                if (timesheets.Count() == 0) return;
 
                 // Find the earliest and latest timesheet weeks if no date set
                 var startWeek = actualsStartDate ?? timesheets.Min(x => x.StartDate);
@@ -270,8 +300,6 @@ namespace PPMTool.Pages
                 timesheets = timesheets.Where(x => x.StartDate >= startWeek && x.StartDate <= endWeek);
 
                 // Create a row for every unique resource - task combination
-                actualsReportRows = new List<ActualsReportRow>();
-                actualsColumnSums = new Dictionary<DateTime, double>();
                 foreach (var timesheet in timesheets)
                 {
                     foreach (var entry in timesheet.TimesheetEntries)
@@ -283,7 +311,7 @@ namespace PPMTool.Pages
                         }
 
                         // See if we can find an existing row that matches the resource and task combination
-                        var row = actualsReportRows
+                        var row = tempActuals
                             .FirstOrDefault(x => x.Resource.PersonId == timesheet.Owner.PersonId && x.Task.InnateCodeTaskId == entry.InnateCodeTask.InnateCodeTaskId);
 
                         // If not then create an empty object
@@ -295,7 +323,7 @@ namespace PPMTool.Pages
                                 Task = entry.InnateCodeTask,
                                 Hours = new Dictionary<DateTime, double>()
                             };
-                            actualsReportRows.Add(row);
+                            tempActuals.Add(row);
                         }
 
                         // Add the hours to the row
@@ -320,7 +348,7 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Filling blanks between {startWeek.ToShortDateString()} and {endWeek.ToShortDateString()}");
                     while (currentWeek <= endWeek)
                     {
-                        foreach (var row in actualsReportRows)
+                        foreach (var row in tempActuals)
                         {
                             if (!row.Hours.ContainsKey(currentWeek))
                             {
@@ -331,34 +359,31 @@ namespace PPMTool.Pages
                     }
                 }
 
-                // If possible, update the column sums
-                UpdateActualsColumnSums();
-
                 // Order and group the rows appropriately
-                actualsReportRows = actualsReportRows
+                actualsReportRows = tempActuals
                     .OrderBy(x => x.Task.TaskName)
                     .ThenBy(x => x.Resource.Name)
                     .ToList();
+
             }
             catch (Exception ex)
             {
-                LogError("Actuals report failing!");
+                LogError($"Actuals report failing!\n{ex}");
             }
             finally
             {
                 Debug.WriteLine($"** ...finished updating actuals.");
-                Loading = false;
-                InvokeAsync(StateHasChanged);
             }
         }
 
         /// <summary>
-        /// Based on the current
+        /// Based on the currently visible data in the data grid, update the column sums with a new Dictionary
         /// </summary>
-        private void UpdateActualsColumnSums()
+        /// <param name="data">The actuals data to use to inform the column sums. If null, use whatever data is visible in the data grid.</param>
+        private void UpdateActualsColumnSums(IEnumerable<ActualsReportRow> data = null)
         {
             // Get only visible rows
-            var actualsData = actualsGrid?.View;
+            var actualsData = data ?? actualsGrid?.View;
             if (actualsData == null || actualsData.Count() == 0)
             {
                 Debug.WriteLine($"** Cannot update the column sums as no data!");
@@ -367,25 +392,27 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Updating column sums...");
 
-            // Setup the array
-            var keys = actualsData?.SelectMany(x => x.Hours.Keys).Distinct();
-            actualsColumnSums = new Dictionary<DateTime, double>();
+            // Setup the array using all weeks not just those visible
+            var keys = actualsReportRows?.SelectMany(x => x.Hours.Keys).Distinct();
+            IDictionary<DateTime, double> tempActualColumnSums = new Dictionary<DateTime, double>();
 
             // Loop over dates
             foreach (var week in keys)
             {
                 // Reset
-                actualsColumnSums.Add(new KeyValuePair<DateTime, double>(week, 0));
+                tempActualColumnSums.Add(new KeyValuePair<DateTime, double>(week, 0));
 
                 // Loop over each row and update
                 foreach (var row in actualsData)
                 {
                     if (row.Hours.ContainsKey(week))
                     {
-                        actualsColumnSums[week] += row.Hours[week];
+                        tempActualColumnSums[week] += row.Hours[week];
                     }
                 }
             }
+
+            actualsColumnSums = tempActualColumnSums;
 
             Debug.WriteLine($"** ...finished updating column sums.");
         }
@@ -461,7 +488,7 @@ namespace PPMTool.Pages
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
-                    Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                    Navigation.NavigateTo($"projects/projectdetails/{ProjectId}");
                 }
             }
         }
@@ -550,7 +577,7 @@ namespace PPMTool.Pages
         private void DiscardChanges()
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Discarding task changes!");
-            Navigation.NavigateTo($"projectdetails/{ProjectModel.ProjectId}");
+            Navigation.NavigateTo($"projects/projectdetails/{ProjectModel.ProjectId}");
         }
 
         /// <summary>
@@ -703,7 +730,7 @@ namespace PPMTool.Pages
                         ProjectService.Update(Context, ProjectModel);
 
                         // Return to the project details page if not triggered from a split task page
-                        Navigation.NavigateTo($"projectdetails/{ProjectId}");
+                        Navigation.NavigateTo($"projects/projectdetails/{ProjectId}");
                     }
                 }
             }
@@ -735,7 +762,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void SplitSubTask()
         {
-            Navigation.NavigateTo($"splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
+            Navigation.NavigateTo($"projects/splittask/{projectModel.ProjectId}/{taskModel.SubTaskId}");
         }
 
         /// <summary>

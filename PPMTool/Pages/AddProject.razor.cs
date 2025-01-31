@@ -62,9 +62,8 @@ namespace PPMTool.Pages
                 projectModel = ProjectService.GetById(Context, ProjectId);
 
                 // If editing a project, only allow the project manager to edit it or a superuser
-                var user = AuthenticationState?.User;
                 var role = RolesService.GetByUsername(Context, ActiveUserName);
-                EditAuthorised = (user?.IsInRole("Superuser") ?? false) || ((user?.IsInRole("Manager") ?? false) && projectModel.ProjectManager.PersonId == role?.Person.PersonId);
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.PersonId;
 
                 // Populate school list
                 schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
@@ -183,6 +182,17 @@ namespace PPMTool.Pages
                             projectModel.Followers.Clear();
                         }
 
+                        // Set the actuals last updated if changed status to active from anything other than paused
+                        var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
+                        if (oldStatus != projectModel.ProjectStatus)
+                        {
+                            LogInformation($"Project status change: {oldStatus} -> {projectModel.ProjectStatus}");
+                        }
+                        if (oldStatus != ProjectStatus.Paused && projectModel.ProjectStatus == ProjectStatus.Active)
+                        {
+                            projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
+                        }
+
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
 
                         var res = ProjectService.Update(Context, projectModel);
@@ -256,7 +266,7 @@ namespace PPMTool.Pages
         {
             if (gotoDetails)
             {
-                Navigation.NavigateTo($"projectdetails/{projectModel.ProjectId}");
+                Navigation.NavigateTo($"projects/projectdetails/{projectModel.ProjectId}");
             }
             else
             {

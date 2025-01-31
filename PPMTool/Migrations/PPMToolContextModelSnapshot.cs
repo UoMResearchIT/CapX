@@ -360,6 +360,9 @@ namespace PPMTool.Migrations
                     b.Property<int?>("InnateActivityInnateCodeId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<float>("LeadershipFTE")
+                        .HasColumnType("REAL");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -681,7 +684,13 @@ namespace PPMTool.Migrations
                     b.Property<double>("ProjectAndServiceManagementFTE")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ProjectManagementFTE")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ProjectWorkFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ServiceManagementFTE")
                         .HasColumnType("REAL");
 
                     b.Property<double>("StaffManagementFTE")

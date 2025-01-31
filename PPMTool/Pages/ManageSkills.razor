@@ -35,7 +35,7 @@
                     <RadzenTextBox class="no-margin" @bind-Value="tag.Name" ValueProperty="Name" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px" MinWidth="10px" Title="Actions">
+            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                 <Template Context="tag">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
@@ -43,7 +43,6 @@
                 <EditTemplate Context="tag">
                     <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
                     <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Visible="@(entityToInsert == null)" />
                 </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>

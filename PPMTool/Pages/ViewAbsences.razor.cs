@@ -30,7 +30,7 @@ namespace PPMTool.Pages
 
         private void EditAbsence(Person person)
         {
-            Navigation.NavigateTo($"/addabsence/{person.PersonId}");
+            Navigation.NavigateTo($"people/addabsence/{person.PersonId}");
         }
     }
 }

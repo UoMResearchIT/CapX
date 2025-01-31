@@ -2,30 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.EntityFrameworkCore;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Shared
 {
-    public partial class LoginView : ComponentBase, IDisposable
+    public partial class LoginView : BaseComponent, IDisposable
     {
         [Inject]
         private NavigationManager Navigation { get; set; }
-
-        [Inject]
-        private RolesService RoleService { get; set; }
-
-        [Inject]
-        private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
-
-        [CascadingParameter]
-        private Task<AuthenticationState> AuthenticationState { get; set; }
 
         private string displayName;
         private IEnumerable<Role> roles;
@@ -37,6 +24,8 @@ namespace PPMTool.Shared
 
         protected override void OnInitialized()
         {
+            base.OnInitialized();
+
             // Subscribe to the navigation manager's location changed event to force a rerender of the login view
             Navigation.LocationChanged += HandleLocationChanged;
 
@@ -44,27 +33,21 @@ namespace PPMTool.Shared
 #if LOCAL
             showDropDown = true;
 #endif
-
-            if (AuthenticationState is not null)
+            if (AuthenticationStateTask is not null)
             {
-                var authState = AuthenticationState.GetAwaiter().GetResult();
+                var authState = AuthenticationStateTask.GetAwaiter().GetResult();
                 var user = authState?.User;
 
-                if (user?.Identity is not null && user.Identity.IsAuthenticated)
+                if (user?.Identity is null || !user.Identity.IsAuthenticated)
                 {
-                    // Lookup the person
-                    var roles = RoleService.GetAll(ContextFactory.CreateDbContext());
-                    var role = roles.FirstOrDefault(x => x.GetStandardisedUserName() == user.Identity.Name.Trim().ToLower());
-                    displayName = role?.GetName() ?? user.Identity.Name;
-                }
-                else
-                {
-                    roles = RoleService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
+                    roles = RolesService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
                     filteredRoles = roles.Select(x => RoleToString(x));
                     selectedRole = filteredRoles.FirstOrDefault();
                     OnChange();
                 }
             }
+
+            displayName = ActiveUser?.Name;
         }
 
         /// <summary>

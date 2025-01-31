@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
             StartDate = DateTime.Today;
 
             // List of status messages to check for each task which will drive icons
-            statusMessages = new List<StatusMessage>()
+            statusMessages = new List<StatusMessage>
             {
                 new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
                 new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),

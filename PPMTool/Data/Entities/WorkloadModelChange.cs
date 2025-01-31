@@ -34,6 +34,44 @@ namespace PPMTool.Data.Entities
         [Required]
         public double ArchitectureFTE { get; set; }
 
+        private double serviceManagementFTE;
+        [Required]
+        public double ServiceManagementFTE
+        {
+            get => serviceManagementFTE;
+            set
+            {
+                if (value != serviceManagementFTE)
+                {
+                    serviceManagementFTE = value;
+                    UpdatePSM();
+                }
+            }
+        }
+
+        private double projectManagementFTE;
+        [Required]
+        public double ProjectManagementFTE
+        {
+            get => projectManagementFTE;
+            set
+            {
+                if (value != projectManagementFTE)
+                {
+                    projectManagementFTE = value;
+                    UpdatePSM();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Method to update the Project and Service Management FTE when either Project Management FTE or Service Management FTE is updated
+        /// </summary>
+        private void UpdatePSM()
+        {
+            ProjectAndServiceManagementFTE = ProjectManagementFTE + ServiceManagementFTE;
+        }
+
 
         /// <summary>
         /// Optional notes to explain anything about the change

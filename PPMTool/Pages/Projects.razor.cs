@@ -14,7 +14,6 @@ namespace PPMTool.Pages
     public partial class Projects : BaseProjectPage
     {
         private IEnumerable<Project> projects;
-        private Role userRole;
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -55,16 +54,6 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             Loading = true;
-
-            // Look up the username
-            var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            userRole = RolesService.GetByUsername(Context, uname);
-
-            // Log any time there is no role returned?
-            if (userRole == null)
-            {
-                LogError($"{uname}: Role is null!");
-            }
             LogInformation("Viewing project grid");
         }
 
@@ -95,10 +84,10 @@ namespace PPMTool.Pages
         {
             // Initialise the project list -- developers can only see projects to which they are assigned
             List<Project> proj;
-            if (userRole.RoleType == RoleType.Developer)
+            if (ActiveUserRoleType == RoleType.Developer)
             {
                 proj = ProjectService.GetAll(Context)
-                    .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == userRole.Person)))
+                    .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == ActiveUser)))
                     .OrderBy(x => x.RTP).ToList();
             }
             else
@@ -120,7 +109,7 @@ namespace PPMTool.Pages
 
         private void AddProject()
         {
-            Navigation.NavigateTo($"/addproject/-1");
+            Navigation.NavigateTo($"projects/addproject/-1");
         }
     }
 }
