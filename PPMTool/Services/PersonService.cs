@@ -176,5 +176,16 @@ namespace PPMTool.Services
         {
             return context.People.Where(x => x.Name == name).Include(x => x.WorkloadModelChanges).FirstOrDefault();
         }
+
+        /// <summary>
+        /// Gets all people managed by the supplied person
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activeUser"></param>
+        /// <returns></returns>
+        internal IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
+        {
+            return context.People.Where(x => activeUser == null ? false : x.LineManager.PersonId == activeUser.PersonId);
+        }
     }
 }

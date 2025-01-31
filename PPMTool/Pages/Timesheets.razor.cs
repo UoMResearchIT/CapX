@@ -21,6 +21,9 @@ namespace PPMTool.Pages
         [Inject]
         private ISessionStorageService SessionStorage { get; set; }
 
+        [Inject]
+        private PersonService PersonService { get; set; }
+
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
         private DateTime dateNextTimesheet;
@@ -131,7 +134,8 @@ namespace PPMTool.Pages
             }
 
             // Show second grid if user manages staff - need to see the timesheets they have submitted.
-            if (ActiveUser?.PeopleManaged.Count > 0)  // Is a manager
+            var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser);
+            if (managedPeople.Count() > 0)  // Is a manager
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
                 myStaffTimesheets = new List<Timesheet>();
@@ -141,18 +145,24 @@ namespace PPMTool.Pages
                 synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
                 synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
 
-                foreach (Person p in ActiveUser?.PeopleManaged.Where(p => p.PersonId != ActiveUser?.PersonId).OrderBy(p => p.ShortName)) // For AH who is self-managed
+                foreach (Person p in managedPeople
+                    .Where(p => p.PersonId != ActiveUser?.PersonId)
+                    .OrderBy(p => p.ShortName)) // For AH who is self-managed
                 {
                     // Get timesheets of the person
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
 
-                    // Get timesheets in the range for that person
-                    myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
-
-                    // Pad the timesheet list with nulls
-                    if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count)
+                    // Only add the person to the synopsis if they are currently here in the window
+                    if (p.EndDate == null || p.EndDate >= synopsisStartDate)
                     {
-                        myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]);
+                        // Get timesheets in the range for that person
+                        myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
+
+                        // Pad the timesheet list with nulls
+                        if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count)
+                        {
+                            myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]);
+                        }
                     }
                 }
 
