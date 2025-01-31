@@ -281,6 +281,7 @@ mark {
     margin: 0px; 
     float: left;
     text-align: center;
+    font-weight: bold;
 }
 
 h4 {
