@@ -275,14 +275,19 @@
                                                 try
                                                 {
                                                     Duty duty = wlmToDutyMapping[prop.Name];
+
+                                                    // Display properties
+                                                    double value = (double)@prop.GetValue(currentWLM);
+                                                    string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                                    
+                                                    // Styling properties
                                                     string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                                     string wlmTextColour = duty.GetTextColourCode();
-                                                    double value = (Double)@prop.GetValue(currentWLM);
-                                                    string dutyDescription = Data.Extensions.GetEnumDescription(duty) ?? "NOT SET";
+                                                    
                                                     if (value != 0)
                                                     {
                                                         int percent = (int)(value * 100);
-                                                        <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour; font-weight: bold;" title="@dutyDescription">@value</div>
+                                                        <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@value</div>
                                                     }
                                                 }
                                                 catch {}
@@ -303,16 +308,18 @@
                                     {
                                         if (item.Value != 0)
                                         {
-                                            double roundedValue = Math.Round(item.Value * 100, MidpointRounding.AwayFromZero) / 100; // To nearest 0.01
-                                            // double percent = Math.Round((item.Value * 100)*100, MidpointRounding.AwayFromZero) / 100;
                                             Duty duty = item.Key;
+                                            
+                                            // Display properties
+                                            string roundedValue = item.Value.ToString("F2"); // To nearest 0.01
+                                            double percent = Math.Round(item.Value, 4, MidpointRounding.ToZero) * 100;
+                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
 
-                                            double percent = wlmChartItem.WeeklyPercentagesByDuty[duty];
-                                            string dutyDescription = Data.Extensions.GetEnumDescription(duty) ?? "NOT SET";
+                                            // Styling properties
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour; font-weight: bold;" title="@dutyDescription">@roundedValue.ToString()</div>
+                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@roundedValue</div>
                                         }
                                     }
                                 </div>
