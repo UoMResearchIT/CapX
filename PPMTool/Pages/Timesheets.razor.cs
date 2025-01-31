@@ -143,9 +143,17 @@ namespace PPMTool.Pages
 
                 foreach (Person p in ActiveUser?.PeopleManaged.Where(p => p.PersonId != ActiveUser?.PersonId).OrderBy(p => p.ShortName)) // For AH who is self-managed
                 {
+                    // Get timesheets of the person
                     myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
+
+                    // Get timesheets in the range for that person
                     myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
-                    if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count) { myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]); }
+
+                    // Pad the timesheet list with nulls
+                    if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count)
+                    {
+                        myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]);
+                    }
                 }
 
                 if (!ShowAllMyStaffTimesheets)
@@ -228,6 +236,7 @@ namespace PPMTool.Pages
             List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
             foreach (DateTime date in dates)
             {
+                // This will return null if no match
                 Timesheet sheet = unpaddedList.FirstOrDefault(t => t.StartDate == date);
                 paddedList.Add(sheet);
             }
