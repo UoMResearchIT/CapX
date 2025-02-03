@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-using PPMTool.Pages;
 
 namespace PPMTool.Services
 {
@@ -96,7 +94,7 @@ namespace PPMTool.Services
 
                     StringBuilder body = new StringBuilder();
                     body.Append($"<p>Dear {lineManager.Name},</p>");
-                    body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}</p>");
+                    body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
                     body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
                     body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
                     body.Append("<p><em>Sent from CapX</em></p>");
