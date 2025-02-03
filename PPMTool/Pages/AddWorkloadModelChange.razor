@@ -84,6 +84,11 @@
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Title="Total" Width="80px" MinWidth="10px">
+                            <Template Context="c">
+                                @c.Total().ToString("F1")
+                            </Template>
+                            </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Notes" Title="Notes" Width="350px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenTextBox class="no-margin" TValue="string" @bind-Value="c.Notes" />
