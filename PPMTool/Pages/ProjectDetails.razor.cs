@@ -426,6 +426,7 @@ namespace PPMTool.Pages
             if (!Navigation.Uri.Contains("projects/projectdetails"))
             {
                 Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
+                return;
             }
 
             if (firstRender)
