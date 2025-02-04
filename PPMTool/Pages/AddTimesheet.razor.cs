@@ -164,7 +164,6 @@ namespace PPMTool.Pages
                         // Get WLM details of the staff member active at the time of the timesheet
                         Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
                         currentWLM = personWithWLMData.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
-
                         wlmChartItem = WorkloadModelChartHelper.GetWorkloadModelChartData(timesheet.Owner, timesheet.StartDate, new List<Timesheet> { timesheet });
                     }
 

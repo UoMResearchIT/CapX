@@ -275,11 +275,11 @@
                                             // Display properties
                                             double value = item.Value;
                                             string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
-                                                    
+
                                             // Styling properties
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
-                                                    
+
                                             if (value != 0)
                                             {
                                                 <div class="timesheet-wlm-slice" style="width: @(value * 100)%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@value</div>
@@ -296,40 +296,45 @@
                         <div class="col-10">
                             @{
                                 <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
-                                @{
-                                    double total = 0;
-                                    int itemCount = 0;
+                                    @{
+                                        // Get total hours for the week across all duties
+                                        double total = wlmChartItem.WeeklyValuesByDuty.Sum(x => x.Value);
 
-                                    foreach (KeyValuePair<Duty, float> item in wlmChartItem.WeeklyValuesByDuty)
-                                    {
-                                        total += item.Value;
-                                        itemCount += (item.Value > 0 ? 1 : 0); 
-                                    }
-
-                                    // Subtract a small amount from each item if the total exceeds 100%
-                                    double percentAdjustment = (total > 1 ? (total - 1) / itemCount : 0);
-
-                                    foreach (KeyValuePair<Duty, float> item in wlmChartItem.WeeklyValuesByDuty)
-                                    {
-                                        if (item.Value != 0)
+                                        // Compute percentages of each bar section
+                                        var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
+                                        var totalPercent = 0d;
+                                        foreach (var item in items)
                                         {
-                                            Duty duty = item.Key;
-
-                                            // Display properties
-                                            double percent = (Math.Round(item.Value - percentAdjustment, 4, MidpointRounding.ToZero) * 100) ;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
-
                                             // Styling properties
+                                            Duty duty = item.Key;
+                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            string text = (@percent >= 3 ? item.Value.ToString("F2") : "");
+                                            // If the last item then just make it add up to 100%
+                                            var percent = 0d;
+                                            if (item.Key == items.Last().Key)
+                                            {
+                                                percent = 100 - totalPercent;
+                                                if (percent < 0)
+                                                {
+                                                    percent = 0;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                percent = (item.Value / total) * 100;
+                                            }
+
+                                            // Hack to avoid adding text in a bar that is likely too small to support it
+                                            string text = (percent >= 3 ? item.Value.ToString("F2") : "");
+
+                                            // Draw the bar
                                             <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">
                                                 @text &nbsp;
                                             </div>
                                         }
                                     }
-                                }
                                 </div>
                             }
                         </div>

@@ -11,8 +11,6 @@ namespace PPMTool.Data
 
         public Dictionary<Duty, float> WeeklyValuesByDuty { get; set; }
 
-        public Dictionary<Duty, float> WeeklyPercentagesByDuty { get; set; }
-
         public Dictionary<Duty, float> WLMWeeklyTargetsByDuty { get; set; }
 
         public Dictionary<Duty, float> WLMNetByDuty { get; set; }
