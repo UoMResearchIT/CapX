@@ -99,6 +99,7 @@ namespace PPMTool.Services
         public override IEnumerable<Timesheet> GetAll(PPMToolContext context)
         {
             return context.Timesheets
+                .Include(t => t.Owner)
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode);

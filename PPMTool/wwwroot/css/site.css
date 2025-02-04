@@ -277,6 +277,13 @@ mark {
     font-size: 0.9rem;
 }
 
+.notification-badge {
+    float: right;
+    padding: var(--rz-badge-padding);
+    font-size: 0.8rem;
+    margin-top: 0.1rem;
+}
+
 .rounded-frame {
     border-radius: var(--rz-button-border-radius)
 }
