@@ -515,6 +515,9 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
+                    b.Property<bool>("ChargeLeadership")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("Demand")
                         .HasColumnType("REAL");
 
@@ -553,9 +556,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<int?>("PredecessorSubTaskId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("RequiresLeadership")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")

@@ -463,7 +463,7 @@ namespace PPMTool.Data.Entities
         {
             // Conver the sub tasks to date ranges (adding a day for the end so it isn't inclusive)
             var dateRanges = SubTasks
-                .Where(x => x.RequiresLeadership)
+                .Where(x => x.ChargeLeadership)
                 .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
 
             // Merge overlapping date ranges

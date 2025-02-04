@@ -325,9 +325,9 @@
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Planned Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="SubTask" Property="RequiresLeadership" Title="Leadership Required" Width="8rem" Filterable="false" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="SubTask" Property="ChargeLeadership" Title="Leadership Charges" Width="8rem" Filterable="false" MinWidth="10px">
                         <Template Context="t">
-                            <RadzenSwitch @bind-Value="t.RequiresLeadership" Disabled="true" />
+                            <RadzenSwitch @bind-Value="t.ChargeLeadership" Disabled="true" />
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
