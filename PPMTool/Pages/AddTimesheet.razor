@@ -47,9 +47,9 @@
             }
         </div>
         <hr />
-        
+
         <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
-                <div class="card">
+            <div class="card">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">
@@ -262,35 +262,27 @@
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">
-                        <div class="col-2"><RadzenText Text="WLM details" /></div>
+                        <div class="col-2"><RadzenText Text="WLM Details" /></div>
                         <div class="col-10">
                             <div>
                                 @{
                                     var properties = currentWLM.GetType().GetProperties();
                                     <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
-                                        @foreach (var prop in properties)
+                                        @foreach (var item in currentWLM.GetDutyMapping())
                                         {
-                                            if (prop.Name.Contains("FTE"))
-                                            {
-                                                try
-                                                {
-                                                    Duty duty = wlmToDutyMapping[prop.Name];
+                                            Duty duty = item.Key;
 
-                                                    // Display properties
-                                                    double value = (double)@prop.GetValue(currentWLM);
-                                                    string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                            // Display properties
+                                            double value = item.Value;
+                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
                                                     
-                                                    // Styling properties
-                                                    string wlmBackgroundColour = duty.GetBackgroundColourCode();
-                                                    string wlmTextColour = duty.GetTextColourCode();
+                                            // Styling properties
+                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                            string wlmTextColour = duty.GetTextColourCode();
                                                     
-                                                    if (value != 0)
-                                                    {
-                                                        int percent = (int)(value * 100);
-                                                        <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@value</div>
-                                                    }
-                                                }
-                                                catch {}
+                                            if (value != 0)
+                                            {
+                                                <div class="timesheet-wlm-slice" style="width: @(value * 100)%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@value</div>
                                             }
                                         }
                                     </div>
@@ -300,7 +292,7 @@
                     </div>
 
                     <div class="row" style="margin-top: 0.25rem;">
-                        <div class="col-2"><RadzenText Text="This timesheet" /></div>
+                        <div class="col-2"><RadzenText Text="This Timesheet" /></div>
                         <div class="col-10">
                             @{
                                 <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
@@ -324,7 +316,6 @@
                                             Duty duty = item.Key;
 
                                             // Display properties
-                                            string roundedValue = item.Value.ToString("F2"); // To nearest 0.01
                                             double percent = (Math.Round(item.Value - percentAdjustment, 4, MidpointRounding.ToZero) * 100) ;
                                             string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
 
@@ -332,7 +323,7 @@
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            string text = (@percent >= 3 ? @roundedValue : "");
+                                            string text = (@percent >= 3 ? item.Value.ToString("F2") : "");
                                             <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">
                                                 @text &nbsp;
                                             </div>

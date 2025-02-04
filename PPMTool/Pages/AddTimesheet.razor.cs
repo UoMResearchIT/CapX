@@ -60,16 +60,6 @@ namespace PPMTool.Pages
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
         private WLMWeeklyDataChartItem wlmChartItem;
-        private Dictionary<string, Duty> wlmToDutyMapping = new Dictionary<string, Duty>
-        {
-            { "ProjectWorkFTE", Duty.ProjectWork },
-            { "BusinessAsUsualFTE", Duty.BAU },
-            { "PersonalDevelopmentFTE", Duty.PersonalDevelopment },
-            { "StaffManagementFTE", Duty.StaffMgmt },
-            { "ProjectAndServiceManagementFTE", Duty.ProjectAndServiceMgmt },
-            { "ArchitectureFTE", Duty.RSA }
-        };
-
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         protected override async Task OnParametersSetAsync()

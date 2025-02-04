@@ -6,25 +6,28 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
+    /// <summary>
+    /// Helper class for generating workload model chart data
+    /// </summary>
     public static class WorkloadModelChartHelper
     {
+        /// <summary>
+        /// Generates workload model chart item for a person on a given date based on their workload model and timesheets
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="startDate"></param>
+        /// <param name="timesheets"></param>
+        /// <returns></returns>
         public static WLMWeeklyDataChartItem GetWorkloadModelChartData(Person person, DateTime startDate, IEnumerable<Timesheet> timesheets)
         {
+            // Get WLM of the person on that date
             WorkloadModelChange wlm = person.GetWorkloadModelOnDateOrDefault(startDate);
 
+            // Initialise a chart item with the WLM values by duty
             WLMWeeklyDataChartItem item = new WLMWeeklyDataChartItem()
             {
                 WeekStart = startDate,
-                WLMWeeklyTargetsByDuty = new Dictionary<Duty, float>
-                {
-                    { Duty.Other, 0 },
-                    { Duty.ProjectWork, (float)wlm.ProjectWorkFTE },
-                    { Duty.BAU, (float)wlm.BusinessAsUsualFTE },
-                    { Duty.PersonalDevelopment, (float)wlm.PersonalDevelopmentFTE },
-                    { Duty.StaffMgmt, (float)wlm.StaffManagementFTE },
-                    { Duty.ProjectAndServiceMgmt, (float)wlm.ProjectAndServiceManagementFTE},
-                    { Duty.RSA, (float)wlm.ArchitectureFTE },
-                }
+                WLMWeeklyTargetsByDuty = wlm.GetDutyMapping()
             };
 
             // Loop over each task in the current timesheet
