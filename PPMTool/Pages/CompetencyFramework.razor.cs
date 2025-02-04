@@ -32,18 +32,64 @@ namespace PPMTool.Pages
         /// </summary>
         private class CompetencyGroup
         {
+            /// <summary>
+            /// Grade of competencies in the group
+            /// </summary>
             public int Grade { get; }
+
+            /// <summary>
+            /// Name of the competency group
+            /// </summary>
             public string Description { get; }
+
+            /// <summary>
+            /// Icon used for the competency group
+            /// </summary>
             public string Icon { get; }
+
+            /// <summary>
+            /// Whether this group is selected or not (expands the accordion)
+            /// </summary>
             public bool Selected { get; set; }
+
+            /// <summary>
+            /// Total number of competencies in the group
+            /// </summary>
             public int Total { get; private set; }
 
+            /// <summary>
+            /// Number of competencies in the group the selected person has met
+            /// </summary>
             public int Met { get; private set; }
+
+            /// <summary>
+            /// Competencies in the group, grouped by category
+            /// </summary>
             public IEnumerable<IGrouping<CompetencyCategory, Competency>> CompetenciesGroupedByCategory { get; }
+
+            /// <summary>
+            /// Selection state of the competency category group in the competency group
+            /// </summary>
             public IDictionary<CompetencyCategory, bool> CompetencySelectionState { get; }
+
+            /// <summary>
+            /// Number of competencies in the category group met by the selected person
+            /// </summary>
             public IDictionary<CompetencyCategory, int> CompetencyMetValues { get; }
 
-            public CompetencyGroup(int grade, string description, string icon, IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies)
+            /// <summary>
+            /// The assessments against the competencies in this group
+            /// </summary>
+            public IEnumerable<CompetencyAssessment> CompetencyAssessments { get; }
+
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="grade"></param>
+            /// <param name="description"></param>
+            /// <param name="icon"></param>
+            /// <param name="groupedCompetencies"></param>
+            public CompetencyGroup(int grade, string description, string icon, IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies, IEnumerable<CompetencyAssessment> assessments)
             {
                 Grade = grade;
                 Description = description;
@@ -51,6 +97,8 @@ namespace PPMTool.Pages
                 CompetenciesGroupedByCategory = groupedCompetencies;
                 CompetencySelectionState = new Dictionary<CompetencyCategory, bool>();
                 CompetencyMetValues = new Dictionary<CompetencyCategory, int>();
+                Total = groupedCompetencies.SelectMany(x => x).Count();
+                CompetencyAssessments = assessments;
 
                 // Initialise the dictionary of selection states
                 foreach (var category in CompetenciesGroupedByCategory.Select(x => x.Key))
@@ -58,8 +106,6 @@ namespace PPMTool.Pages
                     CompetencySelectionState.Add(category, false);
                     CompetencyMetValues.Add(category, 0);
                 }
-
-                Total = groupedCompetencies.SelectMany(x => x).Count();
             }
 
             /// <summary>
@@ -73,7 +119,7 @@ namespace PPMTool.Pages
                 {
                     foreach (var group in CompetenciesGroupedByCategory)
                     {
-                        // Get one "fully met" assessment per competency and count them
+                        // Get one "fully met" assessment per competency for the given person and count them
                         CompetencyMetValues[group.Key] = group
                             .SelectMany(x => x.Assessments)
                             .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
@@ -107,7 +153,7 @@ namespace PPMTool.Pages
         private string fileName;
         private long? fileSize;
         private string competencySearchTerms;
-        private IEnumerable<CompetencyGroup> competencyGroups;
+        private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
 
         /// <summary>
         /// Method to update the met count of each available competency group
@@ -126,11 +172,15 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private Task GetTask()
         {
-            Loading = true;
+            InvokeAsync(() =>
+            {
+                Loading = true;
+                StateHasChanged();
+            });
 
             return Task.Run(() =>
             {
-                Debug.WriteLine("** Running competency load task...");
+                Debug.WriteLine($"** Running competency load task for {selectedPerson}...");
 
                 // Get starting lists from the DB
                 availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
@@ -149,20 +199,42 @@ namespace PPMTool.Pages
                     5,
                     "Foundation Level (Grade 5)",
                     "counter_1",
-                    competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category).OrderBy(x => x.Key)
+                    competencies
+                        .Where(x => x.Grade == 5)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 5)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
                 ));
                 groups.Add(new CompetencyGroup(
                     6,
                     "Advanced Level (Grade 6)",
                     "counter_2",
-                    competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category).OrderBy(x => x.Key)
+                    competencies
+                        .Where(x => x.Grade == 6)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 6)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
                 ));
                 groups.Add(new CompetencyGroup(
                     7,
                     "Leadership Level (Grade 7)",
                     "counter_3",
-                    competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category).OrderBy(x => x.Key)
+                    competencies
+                        .Where(x => x.Grade == 7)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 7)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
                 ));
+                competencyGroups = groups;
                 UpdateMet();
             }).ContinueWith(t =>
             {
@@ -276,7 +348,7 @@ namespace PPMTool.Pages
 
         private void PersonSelected()
         {
-            StateHasChanged();
+            EnqueueLoadData(GetTask);
         }
 
         private void OnError(UploadErrorEventArgs args, string name)

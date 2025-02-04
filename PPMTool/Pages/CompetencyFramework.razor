@@ -26,15 +26,12 @@
                 <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
-                <PathwayGaugeComponent AssessmentsForGradeAndPerson="@(competencies.Where(x => x.Grade == 5).SelectMany(x => x.Assessments).Where(x => x.Person.PersonId == selectedPerson.PersonId))"
-                                       TotalNumberOfCompetenciesInGrade="@(competencies.Where(x => x.Grade == 5).Count())"
-                                       Title="Foundation Level (Grade 5)" />
-                <PathwayGaugeComponent AssessmentsForGradeAndPerson="@(competencies.Where(x => x.Grade == 6).SelectMany(x => x.Assessments).Where(x => x.Person.PersonId == selectedPerson.PersonId))"
-                                       TotalNumberOfCompetenciesInGrade="@(competencies.Where(x => x.Grade == 6).Count())"
-                                       Title="Advanced Level (Grade 6)" />
-                <PathwayGaugeComponent AssessmentsForGradeAndPerson="@(competencies.Where(x => x.Grade == 7).SelectMany(x => x.Assessments).Where(x => x.Person.PersonId == selectedPerson.PersonId))"
-                                       TotalNumberOfCompetenciesInGrade="@(competencies.Where(x => x.Grade == 7).Count())"
-                                       Title="Leadership Level (Grade 7)" />
+                @foreach (var comp in competencyGroups)
+                {
+                    <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
+                                           TotalNumberOfCompetenciesInGrade="@comp.Total"
+                                           Title="@comp.Description" />
+                }
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
