@@ -277,6 +277,17 @@ mark {
     font-size: 0.9rem;
 }
 
+.timesheet-wlm-slice {
+    margin: 0px; 
+    float: left;
+    text-align: center;
+    font-weight: bold;
+}
+
+h4 {
+    line-height: unset;
+}
+
 .notification-badge {
     float: right;
     padding: var(--rz-badge-padding);

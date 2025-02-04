@@ -58,8 +58,10 @@ namespace PPMTool.Pages
         private TimesheetStatus newStatus;
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
-
+        private WorkloadModelChange currentWLM;
+        private WLMWeeklyDataChartItem wlmChartItem;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private double totalFTEForTimesheet;
 
         protected override async Task OnParametersSetAsync()
         {
@@ -147,11 +149,26 @@ namespace PPMTool.Pages
                             if (t.StartDate == nextDate) { nextTimesheet = t; }
                         }
 
-                        dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        if (IsSuperuserOrLineManagerOfThisPerson(timesheet.Owner))
+                        {
+                            dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
+                        }
+                        else
+                        {
+                            dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        }
                         UpdateDailyTotals();
 
                         // Innate codes are limited to active ones initially
                         LoadInnateCodes();
+
+                        // Get WLM details of the staff member active at the time of the timesheet
+                        Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
+                        currentWLM = personWithWLMData.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
+                        wlmChartItem = WorkloadModelChartHelper.GetWorkloadModelChartData(timesheet.Owner, timesheet.StartDate, new List<Timesheet> { timesheet });
+
+                        // Get total hours for the week across all duties
+                        totalFTEForTimesheet = wlmChartItem.WeeklyValuesByDuty.Sum(x => x.Value);
                     }
 
                     LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
