@@ -61,6 +61,7 @@ namespace PPMTool.Pages
         private WorkloadModelChange currentWLM;
         private WLMWeeklyDataChartItem wlmChartItem;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private double totalFTEForTimesheet;
 
         protected override async Task OnParametersSetAsync()
         {
@@ -165,6 +166,9 @@ namespace PPMTool.Pages
                         Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
                         currentWLM = personWithWLMData.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
                         wlmChartItem = WorkloadModelChartHelper.GetWorkloadModelChartData(timesheet.Owner, timesheet.StartDate, new List<Timesheet> { timesheet });
+
+                        // Get total hours for the week across all duties
+                        totalFTEForTimesheet = wlmChartItem.WeeklyValuesByDuty.Sum(x => x.Value);
                     }
 
                     LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");

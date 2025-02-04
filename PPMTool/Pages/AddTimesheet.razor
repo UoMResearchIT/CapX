@@ -262,27 +262,28 @@
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">
-                        <div class="col-2"><RadzenText Text="WLM Details" /></div>
+                        <div class="col-2"><RadzenText Text="WLM Target:" TextStyle="TextStyle.Subtitle1" /></div>
                         <div class="col-10">
                             <div>
                                 @{
-                                    var properties = currentWLM.GetType().GetProperties();
                                     <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
                                         @foreach (var item in currentWLM.GetDutyMapping())
                                         {
                                             Duty duty = item.Key;
-
-                                            // Display properties
                                             double value = item.Value;
                                             string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
-
-                                            // Styling properties
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
+                                            // If the timesheet total goes above 35 hours then we have to shrink the bars to match the scale
+                                            if (totalFTEForTimesheet > 1)
+                                            {
+                                                value = value * (1 / totalFTEForTimesheet);
+                                            }
+
                                             if (value != 0)
                                             {
-                                                <div class="timesheet-wlm-slice" style="width: @(value * 100)%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">@value</div>
+                                                <div class="timesheet-wlm-slice" style="width: @(value * 100)%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({value.ToString("F2")})")">@(value.ToString("F2"))</div>
                                             }
                                         }
                                     </div>
@@ -292,13 +293,19 @@
                     </div>
 
                     <div class="row" style="margin-top: 0.25rem;">
-                        <div class="col-2"><RadzenText Text="This Timesheet" /></div>
+                        <div class="col-2"><RadzenText Text="This Timesheet:" TextStyle="TextStyle.Subtitle1" /></div>
                         <div class="col-10">
                             @{
                                 <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
                                     @{
-                                        // Get total hours for the week across all duties
-                                        double total = wlmChartItem.WeeklyValuesByDuty.Sum(x => x.Value);
+                                        // Total width of the bar must be scaled based on what they actually worked but must shrink if > 100%
+                                        var totalTimesheetPercentage = totalFTEForTimesheet * 100;
+                                        var correction = totalTimesheetPercentage / 100;
+                                        if (totalTimesheetPercentage > 100)
+                                        {
+                                            totalTimesheetPercentage = 100;
+                                            correction = 1 / correction;
+                                        }
 
                                         // Compute percentages of each bar section
                                         var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
@@ -311,11 +318,11 @@
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            // If the last item then just make it add up to 100%
+                                            // If the last item then just make it add up to total percent
                                             var percent = 0d;
                                             if (item.Key == items.Last().Key)
                                             {
-                                                percent = 100 - totalPercent;
+                                                percent = totalTimesheetPercentage - totalPercent;
                                                 if (percent < 0)
                                                 {
                                                     percent = 0;
@@ -323,14 +330,15 @@
                                             }
                                             else
                                             {
-                                                percent = (item.Value / total) * 100;
+                                                percent = (item.Value / totalFTEForTimesheet) * correction * 100;
+                                                totalPercent += percent;
                                             }
 
                                             // Hack to avoid adding text in a bar that is likely too small to support it
                                             string text = (percent >= 3 ? item.Value.ToString("F2") : "");
 
                                             // Draw the bar
-                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@dutyDescription">
+                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({item.Value.ToString("F2")})")">
                                                 @text &nbsp;
                                             </div>
                                         }
