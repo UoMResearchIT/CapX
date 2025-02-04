@@ -61,16 +61,16 @@
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
-                                AllowFiltering="false"
-                                AllowPaging="false"
-                                AllowSorting="false"
-                                EditMode="DataGridEditMode.Single"
-                                Data="@dataGridEntities"
-                                TItem="TimesheetEntry"
-                                RowUpdate="@OnUpdateRow"
-                                RowCreate="@OnCreateRow"
-                                ColumnWidth="5rem"
-                                CellRender="@CellRender">
+                AllowFiltering="false"
+                AllowPaging="false"
+                AllowSorting="false"
+                EditMode="DataGridEditMode.Single"
+                Data="@dataGridEntities"
+                TItem="TimesheetEntry"
+                RowUpdate="@OnUpdateRow"
+                RowCreate="@OnCreateRow"
+                ColumnWidth="5rem"
+                CellRender="@CellRender">
                     <Columns>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem">
                             <Template Context="entry">
@@ -80,13 +80,13 @@
                                 @if (entry.InnateCodeTask == null)
                                 {
                                     <RadzenDropDown TValue="string"
-                                                    FilterOperator="StringFilterOperator.Contains"
-                                                    AllowFiltering="true"
-                                                    Placeholder="Search for Innate Code"
-                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                    Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
-                                                    Style="width: 100%"
-                                                    Change="@(args => OnInnateCodeChanged(args))" />
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    Placeholder="Search for Innate Code"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
+                                    Style="width: 100%"
+                                    Change="@(args => OnInnateCodeChanged(args))" />
                                 }
                                 else
                                 {
@@ -102,10 +102,10 @@
                                 @if (entry.InnateCodeTask == null)
                                 {
                                     <RadzenDropDown TValue="InnateCodeTask"
-                                                    Data="@innateCodeTaskDropdownSource"
-                                                    TextProperty="TaskName"
-                                                    Style="width: 100%"
-                                                    @bind-Value="entry.InnateCodeTask" />
+                                    Data="@innateCodeTaskDropdownSource"
+                                    TextProperty="TaskName"
+                                    Style="width: 100%"
+                                    @bind-Value="entry.InnateCodeTask" />
                                 }
                                 else
                                 {
@@ -275,15 +275,16 @@
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            // If the timesheet total goes above 35 hours then we have to shrink the bars to match the scale
+                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
+                                            var percent = value * 100;
                                             if (totalFTEForTimesheet > 1)
                                             {
-                                                value = value * (1 / totalFTEForTimesheet);
+                                                percent = percent * (1 / totalFTEForTimesheet);
                                             }
 
                                             if (value != 0)
                                             {
-                                                <div class="timesheet-wlm-slice" style="width: @(value * 100)%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({value.ToString("F2")})")">@(value.ToString("F2"))</div>
+                                                <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({value.ToString("F2")})")">@(value.ToString("F2"))</div>
                                             }
                                         }
                                     </div>
@@ -298,40 +299,33 @@
                             @{
                                 <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
                                     @{
-                                        // Total width of the bar must be scaled based on what they actually worked but must shrink if > 100%
-                                        var totalTimesheetPercentage = totalFTEForTimesheet * 100;
-                                        var correction = totalTimesheetPercentage / 100;
-                                        if (totalTimesheetPercentage > 100)
-                                        {
-                                            totalTimesheetPercentage = 100;
-                                            correction = 1 / correction;
-                                        }
-
                                         // Compute percentages of each bar section
                                         var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
                                         var totalPercent = 0d;
                                         foreach (var item in items)
                                         {
-                                            // Styling properties
                                             Duty duty = item.Key;
+                                            double value = item.Value;
                                             string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
-                                            // If the last item then just make it add up to total percent
-                                            var percent = 0d;
-                                            if (item.Key == items.Last().Key)
+                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
+                                            var percent = value * 100;
+                                            if (totalFTEForTimesheet > 1)
                                             {
-                                                percent = totalTimesheetPercentage - totalPercent;
+                                                percent = percent * (1 / totalFTEForTimesheet);
+                                                totalPercent += percent;
+                                            }
+
+                                            // If the last item then just make it add up to total percent if 1 FTE or greater
+                                            if (totalFTEForTimesheet >= 1 && item.Key == items.Last().Key)
+                                            {
+                                                percent = 100 - (totalPercent - percent);
                                                 if (percent < 0)
                                                 {
                                                     percent = 0;
                                                 }
-                                            }
-                                            else
-                                            {
-                                                percent = (item.Value / totalFTEForTimesheet) * correction * 100;
-                                                totalPercent += percent;
                                             }
 
                                             // Hack to avoid adding text in a bar that is likely too small to support it
