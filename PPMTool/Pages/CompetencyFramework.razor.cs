@@ -120,6 +120,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Generates a background task for loading the competency data
+        /// </summary>
+        /// <returns></returns>
         private Task GetTask()
         {
             Loading = true;
@@ -190,16 +194,27 @@ namespace PPMTool.Pages
             LogInformation("Viewing competencies framework");
         }
 
+        /// <summary>
+        /// Go to add a competency
+        /// </summary>
         private void AddCompetency()
         {
             Navigation.NavigateTo("competencies/addcompetency/-1");
         }
 
+        /// <summary>
+        /// Go to edit a competency
+        /// </summary>
+        /// <param name="competency"></param>
         private void EditCompetency(Competency competency)
         {
             Navigation.NavigateTo($"competencies/addcompetency/{competency?.CompetencyId}");
         }
 
+        /// <summary>
+        /// Adds an assessment
+        /// </summary>
+        /// <param name="assessment"></param>
         private void AddAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
@@ -208,6 +223,10 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Updates an assessment
+        /// </summary>
+        /// <param name="assessment"></param>
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
