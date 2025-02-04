@@ -99,6 +99,7 @@ namespace PPMTool.Services
         public override IEnumerable<Timesheet> GetAll(PPMToolContext context)
         {
             return context.Timesheets
+                .Include(t => t.Owner)
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode);
@@ -307,7 +308,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public int GetIssueCount(PPMToolContext context, Person activeUser)
         {
-            Debug.WriteLine("Updating Timesheet notification count");
+            Debug.WriteLine("** Updating timesheet notification count");
             HasOwnTimesheetActions = false;
             HasStaffTimesheetActions = false;
 
