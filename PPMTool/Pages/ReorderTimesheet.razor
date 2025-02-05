@@ -1,0 +1,49 @@
+﻿@page "/timesheets/reordertimesheet/{TimesheetId:int}"
+@inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
+@using DotNetExtensions
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+@using PPMTool.Services
+@using Radzen.Blazor
+<PageTitle>Reorder Timesheet Tasks - CapX</PageTitle>
+
+<div class="container">
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else if (TimesheetId > 0 && timesheet == null)
+    {
+        <StatusMessageComponent Message="@(new StatusMessage("Either you are not permitted to view this timesheet or a timesheet with the given ID is not present in the database!", StatusMessage.MessageType.Error))" />
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <h1>Reorder Timesheet Tasks</h1>
+            </div>
+        </div>
+
+        <div class="card">
+            <RadzenDataGrid @ref="dataGrid"
+                            Data="@dataGridEntities"
+                            TItem="TimesheetEntry"
+                            ColumnWidth="5rem">
+                <Columns>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem">
+                        <Template Context="entry">
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask.Duty" Sortable="true" Title="Task" MinWidth="10px" Width="12rem">
+                        <Template Context="entry">
+                            <TimesheetEntryTaskComponent Entry="@entry" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    }
+</div>
