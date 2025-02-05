@@ -147,7 +147,7 @@ namespace PPMTool.Pages
                             if (t.StartDate == nextDate) { nextTimesheet = t; }
                         }
 
-                        dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        dataGridEntities = timesheet.TimesheetEntries.OrderByDescending(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName).ToList();
                         UpdateDailyTotals();
 
                         // Innate codes are limited to active ones initially
@@ -169,6 +169,28 @@ namespace PPMTool.Pages
             {
                 // We intend it to be cancelled so this is fine to ignore
             }
+        }
+
+        void OnDataLoad(LoadDataArgs args)
+        {
+            IQueryable<TimesheetEntry> query = timesheet.TimesheetEntries.AsQueryable();
+
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                if (args.OrderBy.Contains("Duty"))
+                {
+                    query = args.OrderBy.EndsWith("desc")
+                    ? query.OrderByDescending(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName)
+                    : query.OrderBy(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName);
+                }
+                else
+                {
+                    query = args.OrderBy.EndsWith("desc")
+                    ? query.OrderByDescending(e => e.InnateCodeTask.InnateCode.ActivityCode)
+                    : query.OrderBy(e => e.InnateCodeTask.InnateCode.ActivityCode);
+                }
+            }
+            dataGridEntities = query.ToList();
         }
 
         protected override void OnInitialized()
@@ -498,6 +520,15 @@ namespace PPMTool.Pages
             await base.InsertRow();
             entityToInsert.Timesheet = timesheet;
             LogInformation($"(Override) Add row in view for <{entityToInsert?.GetSensibleObjectName()}>");
+        }
+
+        /// <summary>
+        /// Navigate to timesheet reordering page
+        /// </summary>
+        /// <param name="timesheet"></param>
+        public void ReorderTimesheet(Timesheet timesheet)
+        {
+            Navigation.NavigateTo($"timesheets/reordertimesheet/{timesheet.TimesheetId}");
         }
 
         /// <summary>
