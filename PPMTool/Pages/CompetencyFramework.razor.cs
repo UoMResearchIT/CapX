@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -23,20 +25,223 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
+        /// <summary>
+        /// Represents a group of competencies based on grade and the meta data required to render the component
+        /// </summary>
+        private class CompetencyGroup
+        {
+            /// <summary>
+            /// Grade of competencies in the group
+            /// </summary>
+            public int Grade { get; }
+
+            /// <summary>
+            /// Name of the competency group
+            /// </summary>
+            public string Description { get; }
+
+            /// <summary>
+            /// Icon used for the competency group
+            /// </summary>
+            public string Icon { get; }
+
+            /// <summary>
+            /// Whether this group is selected or not (expands the accordion)
+            /// </summary>
+            public bool Selected { get; set; }
+
+            /// <summary>
+            /// Total number of competencies in the group
+            /// </summary>
+            public int Total { get; private set; }
+
+            /// <summary>
+            /// Number of competencies in the group the selected person has met
+            /// </summary>
+            public int Met { get; private set; }
+
+            /// <summary>
+            /// Competencies in the group, grouped by category
+            /// </summary>
+            public IEnumerable<IGrouping<CompetencyCategory, Competency>> CompetenciesGroupedByCategory { get; }
+
+            /// <summary>
+            /// Selection state of the competency category group in the competency group
+            /// </summary>
+            public IDictionary<CompetencyCategory, bool> CompetencySelectionState { get; }
+
+            /// <summary>
+            /// Number of competencies in the category group met by the selected person
+            /// </summary>
+            public IDictionary<CompetencyCategory, int> CompetencyMetValues { get; }
+
+            /// <summary>
+            /// The assessments against the competencies in this group
+            /// </summary>
+            public IEnumerable<CompetencyAssessment> CompetencyAssessments { get; }
+
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="grade"></param>
+            /// <param name="description"></param>
+            /// <param name="icon"></param>
+            /// <param name="groupedCompetencies"></param>
+            public CompetencyGroup(int grade, string description, string icon, IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies, IEnumerable<CompetencyAssessment> assessments)
+            {
+                Grade = grade;
+                Description = description;
+                Icon = icon;
+                CompetenciesGroupedByCategory = groupedCompetencies;
+                CompetencySelectionState = new Dictionary<CompetencyCategory, bool>();
+                CompetencyMetValues = new Dictionary<CompetencyCategory, int>();
+                Total = groupedCompetencies.SelectMany(x => x).Count();
+                CompetencyAssessments = assessments;
+
+                // Initialise the dictionary of selection states
+                foreach (var category in CompetenciesGroupedByCategory.Select(x => x.Key))
+                {
+                    CompetencySelectionState.Add(category, false);
+                    CompetencyMetValues.Add(category, 0);
+                }
+            }
+
+            /// <summary>
+            /// Updates the met count for this competency group
+            /// </summary>
+            /// <param name="selectedPerson"></param>
+            public void UpdateMet(Person selectedPerson)
+            {
+                Met = 0;
+                if (selectedPerson != null)
+                {
+                    foreach (var group in CompetenciesGroupedByCategory)
+                    {
+                        // Get one "fully met" assessment per competency for the given person and count them
+                        CompetencyMetValues[group.Key] = group
+                            .SelectMany(x => x.Assessments)
+                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
+                            .DistinctBy(x => x.AssociatedCompetency.CompetencyId)
+                            .Count();
+                        Met += CompetencyMetValues[group.Key];
+                    }
+                }
+            }
+        }
+
+        private Person selectedPerson = null;
+        public Person SelectedPerson
+        {
+            get => selectedPerson;
+            set
+            {
+                if (selectedPerson != value)
+                {
+                    selectedPerson = value;
+                    UpdateMet();
+                }
+            }
+        }
+
         private IEnumerable<Person> availablePeople;
         private IEnumerable<Competency> competencies;
         private bool userIsSuperuser;
         private int activeUserId;
-        private Person selectedPerson = null;
         private string competencySearchTerms;
+        private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
 
-        private Dictionary<int, bool> gradeAccordionSelected;
-        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade5Competencies;
-        private Dictionary<CompetencyCategory, bool> grade5CategoriesSelected = new();
-        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade6Competencies;
-        private Dictionary<CompetencyCategory, bool> grade6CategoriesSelected = new();
-        private IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedGrade7Competencies;
-        private Dictionary<CompetencyCategory, bool> grade7CategoriesSelected = new();
+        /// <summary>
+        /// Method to update the met count of each available competency group
+        /// </summary>
+        private void UpdateMet()
+        {
+            foreach (var group in competencyGroups)
+            {
+                group.UpdateMet(selectedPerson);
+            }
+        }
+
+        /// <summary>
+        /// Generates a background task for loading the competency data
+        /// </summary>
+        /// <returns></returns>
+        private Task GetTask()
+        {
+            InvokeAsync(() =>
+            {
+                Loading = true;
+                StateHasChanged();
+            });
+
+            return Task.Run(() =>
+            {
+                Debug.WriteLine($"** Running competency load task for {selectedPerson}...");
+
+                // Get starting lists from the DB
+                availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
+                if (!userIsSuperuser)
+                {
+                    // Self plus direct reports who are current
+                    availablePeople = availablePeople
+                        .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
+                        .OrderBy(x => x.Name);
+                }
+                competencies = CompetencyService.GetAllActive(Context);
+
+                // Setup the accordion data
+                var groups = new List<CompetencyGroup>();
+                groups.Add(new CompetencyGroup(
+                    5,
+                    "Foundation Level (Grade 5)",
+                    "counter_1",
+                    competencies
+                        .Where(x => x.Grade == 5)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 5)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                ));
+                groups.Add(new CompetencyGroup(
+                    6,
+                    "Advanced Level (Grade 6)",
+                    "counter_2",
+                    competencies
+                        .Where(x => x.Grade == 6)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 6)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                ));
+                groups.Add(new CompetencyGroup(
+                    7,
+                    "Leadership Level (Grade 7)",
+                    "counter_3",
+                    competencies
+                        .Where(x => x.Grade == 7)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 7)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                ));
+                competencyGroups = groups;
+                UpdateMet();
+            }).ContinueWith(t =>
+            {
+                Debug.WriteLine($"** ...Competency load task complete: {t.Status}");
+
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
+        }
 
         protected override void OnInitialized()
         {
@@ -48,55 +253,35 @@ namespace PPMTool.Pages
             activeUserId = ActiveUser?.PersonId ?? 0;
 
             // Get the active user by default
-            selectedPerson = ActiveUser;
+            SelectedPerson = ActiveUser;
 
-            // Get starting lists from the DB
-            availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
-            if (!userIsSuperuser)
-            {
-                // Self plus direct reports who are current
-                availablePeople = availablePeople
-                    .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
-                    .OrderBy(x => x.Name);
-            }
-            competencies = CompetencyService.GetAll(Context);
-
-            // Prepare the bindings for the expansion setting of the accordions
-            groupedGrade5Competencies = competencies.Where(x => x.Grade == 5).GroupBy(x => x.Category).OrderBy(x => x.Key);
-            foreach (var category in groupedGrade5Competencies.Select(x => x.Key))
-            {
-                grade5CategoriesSelected.Add(category, false);
-            }
-            groupedGrade6Competencies = competencies.Where(x => x.Grade == 6).GroupBy(x => x.Category).OrderBy(x => x.Key);
-            foreach (var category in groupedGrade6Competencies.Select(x => x.Key))
-            {
-                grade6CategoriesSelected.Add(category, false);
-            }
-            groupedGrade7Competencies = competencies.Where(x => x.Grade == 7).GroupBy(x => x.Category).OrderBy(x => x.Key);
-            foreach (var category in groupedGrade7Competencies.Select(x => x.Key))
-            {
-                grade7CategoriesSelected.Add(category, false);
-            }
-            gradeAccordionSelected = new Dictionary<int, bool>
-            {
-                { 5, false },
-                { 6, false },
-                { 7, false }
-            };
+            // Kick off a DB task to get the data
+            EnqueueLoadData(GetTask);
 
             LogInformation("Viewing competencies framework");
         }
 
+        /// <summary>
+        /// Go to add a competency
+        /// </summary>
         private void AddCompetency()
         {
             Navigation.NavigateTo("competencies/addcompetency/-1");
         }
 
+        /// <summary>
+        /// Go to edit a competency
+        /// </summary>
+        /// <param name="competency"></param>
         private void EditCompetency(Competency competency)
         {
             Navigation.NavigateTo($"competencies/addcompetency/{competency?.CompetencyId}");
         }
 
+        /// <summary>
+        /// Adds an assessment
+        /// </summary>
+        /// <param name="assessment"></param>
         private void AddAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
@@ -105,6 +290,10 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Updates an assessment
+        /// </summary>
+        /// <param name="assessment"></param>
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
@@ -154,7 +343,7 @@ namespace PPMTool.Pages
 
         private void PersonSelected()
         {
-            StateHasChanged();
+            EnqueueLoadData(GetTask);
         }
 
         /// <summary>
@@ -183,21 +372,16 @@ namespace PPMTool.Pages
                 if (!string.IsNullOrWhiteSpace(competencySearchTerms))
                 {
                     // Collapse all the accordions
-                    foreach (var grade in gradeAccordionSelected.Keys)
+                    foreach (var group in competencyGroups)
                     {
-                        gradeAccordionSelected[grade] = false;
-                    }
-                    foreach (var category in grade5CategoriesSelected.Keys.Distinct())
-                    {
-                        grade5CategoriesSelected[category] = false;
-                    }
-                    foreach (var category in grade6CategoriesSelected.Keys.Distinct())
-                    {
-                        grade6CategoriesSelected[category] = false;
-                    }
-                    foreach (var category in grade7CategoriesSelected.Keys.Distinct())
-                    {
-                        grade7CategoriesSelected[category] = false;
+                        // Collapse the top level
+                        group.Selected = false;
+
+                        // Collapse all the lower levels
+                        foreach (var category in group.CompetencySelectionState.Keys)
+                        {
+                            group.CompetencySelectionState[category] = false;
+                        }
                     }
 
                     // Find competencies with matching string
@@ -207,20 +391,17 @@ namespace PPMTool.Pages
                     // Expand the accordions for those matching
                     foreach (var grade in matching.Select(x => x.Grade).Distinct())
                     {
-                        gradeAccordionSelected[grade] = true;
+                        // Set state of top level accordion
+                        var group = competencyGroups.First(x => x.Grade == grade);
+                        group.Selected = true;
+
+                        // Set state of lower lever accordions
+                        foreach (var category in matching.Where(x => x.Grade == grade).Select(x => x.Category).Distinct())
+                        {
+                            var cat = group.CompetencySelectionState.First(x => x.Key == category).Key;
+                            group.CompetencySelectionState[cat] = true;
+                        }
                     };
-                    foreach (var category in matching.Where(x => x.Grade == 5).Select(x => x.Category).Distinct())
-                    {
-                        grade5CategoriesSelected[category] = true;
-                    }
-                    foreach (var category in matching.Where(x => x.Grade == 6).Select(x => x.Category).Distinct())
-                    {
-                        grade6CategoriesSelected[category] = true;
-                    }
-                    foreach (var category in matching.Where(x => x.Grade == 7).Select(x => x.Category).Distinct())
-                    {
-                        grade7CategoriesSelected[category] = true;
-                    }
                     await InvokeAsync(StateHasChanged);
 
                     // Highlight matching text on the page with a JS call
