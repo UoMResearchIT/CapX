@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
@@ -69,7 +71,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         private void UpdatePSM()
         {
-            ProjectAndServiceManagementFTE = ProjectManagementFTE + ServiceManagementFTE;
+            ProjectAndServiceManagementFTE = Math.Round(1000 * (ProjectManagementFTE + ServiceManagementFTE)) / 1000d;
         }
 
 
@@ -90,6 +92,24 @@ namespace PPMTool.Data.Entities
         public double Total()
         {
             return ProjectWorkFTE + BusinessAsUsualFTE + PersonalDevelopmentFTE + StaffManagementFTE + ProjectAndServiceManagementFTE + ArchitectureFTE;
+        }
+
+        /// <summary>
+        /// Method to get the WLM values for each duty as a dictionary
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<Duty, float> GetDutyMapping()
+        {
+            return new Dictionary<Duty, float>
+                {
+                    { Duty.Other, 0 },
+                    { Duty.ProjectWork, (float)ProjectWorkFTE },
+                    { Duty.BAU, (float)BusinessAsUsualFTE },
+                    { Duty.PersonalDevelopment, (float)PersonalDevelopmentFTE },
+                    { Duty.StaffMgmt, (float)StaffManagementFTE },
+                    { Duty.ProjectAndServiceMgmt, (float)ProjectAndServiceManagementFTE},
+                    { Duty.RSA, (float)ArchitectureFTE },
+                };
         }
     }
 }

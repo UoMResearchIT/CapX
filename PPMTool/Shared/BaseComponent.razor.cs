@@ -32,16 +32,27 @@ namespace PPMTool.Shared
         {
             base.OnInitialized();
 
-            // Create context for component
-            Context = ContextFactory.CreateDbContext();
+            if (AuthenticationStateTask is not null)
+            {
+                var authState = AuthenticationStateTask.GetAwaiter().GetResult();
+                var user = authState?.User;
 
-            // Set the user info in the RoleService
-            RolesService.SetUserInfo(Context, AuthenticationStateTask);
+                if (user?.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    // Create the context on every page
+                    Context = ContextFactory.CreateDbContext();
 
-            // Set the values locally
-            ActiveUser = RolesService.ActiveUserRole?.Person;
-            ActiveUserRoleType = RolesService.ActiveUserRole?.RoleType ?? RoleType.None;
-            ActiveUserName = RolesService.ActiveUserName;
+                    // Stash the user name
+                    ActiveUserName = authState?.User.Identity.Name.Trim().ToLower();
+
+                    // Get the active user
+                    var role = RolesService.GetByUsername(Context, ActiveUserName);
+                    ActiveUser = role?.Person;
+
+                    // Get active user role
+                    ActiveUserRoleType = role?.RoleType ?? RoleType.None;
+                }
+            }
         }
     }
 }

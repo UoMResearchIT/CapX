@@ -47,6 +47,16 @@ namespace PPMTool.Services
                 .ThenInclude(x => x.Person);
         }
 
+        /// <summary>
+        /// Return only active competencies
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<Competency> GetAllActive(PPMToolContext context)
+        {
+            return GetAll(context).Where(x => x.IsActive);
+        }
+
         public override int Update(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))

@@ -47,9 +47,9 @@
             }
         </div>
         <hr />
-        
+
         <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
-                <div class="card">
+            <div class="card">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">
@@ -232,7 +232,7 @@
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
                             </Template>
                             <EditTemplate Context="entry">
-                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.TotalHours == 0 || entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                                 <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
@@ -257,6 +257,93 @@
                     </div>
                 </div>
             </div>
+
+            @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+            {
+                <div class="card" style="margin-top: 0.5rem;">
+                    <div class="row">
+                        <div class="col-2"><RadzenText Text="WLM Target:" TextStyle="TextStyle.Subtitle1" /></div>
+                        <div class="col-10">
+                            <div>
+                                @{
+                                    <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
+                                        @foreach (var item in currentWLM.GetDutyMapping())
+                                        {
+                                            Duty duty = item.Key;
+                                            double value = item.Value;
+                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                            string wlmTextColour = duty.GetTextColourCode();
+
+                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
+                                            var percent = value * 100;
+                                            if (totalFTEForTimesheet > 1)
+                                            {
+                                                percent = percent * (1 / totalFTEForTimesheet);
+                                            }
+
+                                            if (value != 0)
+                                            {
+                                                <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({value.ToString("F2")})")">@(value.ToString("F2"))</div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 0.25rem;">
+                        <div class="col-2"><RadzenText Text="This Timesheet:" TextStyle="TextStyle.Subtitle1" /></div>
+                        <div class="col-10">
+                            @{
+                                <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
+                                    @{
+                                        // Compute percentages of each bar section
+                                        var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
+                                        var totalPercent = 0d;
+                                        foreach (var item in items)
+                                        {
+                                            Duty duty = item.Key;
+                                            double value = item.Value;
+                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                            string wlmTextColour = duty.GetTextColourCode();
+
+                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
+                                            var percent = value * 100;
+                                            if (totalFTEForTimesheet > 1)
+                                            {
+                                                percent = percent * (1 / totalFTEForTimesheet);
+                                            }
+                                            totalPercent += percent;
+
+                                            // If the last item then just make it add up to total percent if 1 FTE or greater
+                                            if (totalFTEForTimesheet >= 1 && item.Key == items.Last().Key)
+                                            {
+                                                percent = 100 - (totalPercent - percent);
+                                                if (percent < 0)
+                                                {
+                                                    percent = 0;
+                                                }
+                                            }
+
+                                            // Hack to avoid adding text in a bar that is likely too small to support it
+                                            string text = (percent >= 3 ? item.Value.ToString("F2") : "");
+
+                                            // Draw the bar
+                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({item.Value.ToString("F2")})")">
+                                                @text &nbsp;
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
             <div class="row" style="margin-top: 1rem;">
                 <div class="col">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">

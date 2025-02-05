@@ -147,7 +147,7 @@ namespace PPMTool.Data.Entities
         /// If using a cost model that charges leadership, should it be charged on this task.
         /// Typically disabled for maintenance tasks.
         /// </summary>
-        public bool ChargeLeadership { get; set; } = true;
+        public bool RequiresLeadership { get; set; } = true;
 
         /// <summary>
         /// Project which owns the subtask
