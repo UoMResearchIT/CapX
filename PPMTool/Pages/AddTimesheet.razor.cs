@@ -378,7 +378,7 @@ namespace PPMTool.Pages
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            TimesheetService.GetIssueCount(Context, ActiveUser);
+            TimesheetService.GetIssueCount(Context, ActiveUser.PersonId);
 
             // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
             if (timesheet.Owner == ActiveUser)
