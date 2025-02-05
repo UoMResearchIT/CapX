@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="p-0">
             <RadzenDataGrid @ref="dataGrid"
                             Data="@dataGridEntities"
                             TItem="TimesheetEntry"
@@ -44,6 +44,17 @@
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
+
+            <div class="row" style="margin-top: 1rem;">
+                <div class="col">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Click="@(() => { GoToTimesheet(timesheet); })">
+                            <RadzenImage Path="images/chevron_left.png" Style="width: 22px; height: 22px; margin-left: -10px;" />
+                            <span class="rz-button-text">Return to timesheet</span>
+                        </RadzenButton>
+                    </RadzenStack>
+                </div>
+            </div>
         </div>
     }
 </div>
