@@ -78,7 +78,7 @@ namespace PPMTool.Pages
             // Update the min/max on the card
             foreach (var component in projectBulletinCardComponents)
             {
-                component.UpdateMinMax(startDate, endDate);
+                component.UpdateCardData(startDate, endDate);
             }
         }
 
@@ -89,7 +89,7 @@ namespace PPMTool.Pages
             {
                 projectBulletinCardComponents.Add(component);
             }
-            component.UpdateMinMax(startDate, endDate);
+            component.UpdateCardData(startDate, endDate);
         }
 
         /// <summary>

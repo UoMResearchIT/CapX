@@ -44,7 +44,7 @@
                 }
             </RadzenStack>
             <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates" />
-            <RadzenText TextStyle="TextStyle.Body1">@(Project.GetUnmetDemandWindowDates())</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
             <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
                           Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
                           ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
@@ -80,6 +80,9 @@
 
     private double maxDemand;
     private double minDemand;
+    private DateTime startDate;
+    private DateTime endDate;
+    private string windowDatesFormatted;
 
     protected override void OnInitialized()
     {
@@ -87,8 +90,14 @@
         OnInitialised?.Invoke(this);
     }
 
-    public void UpdateMinMax(DateTime? startDate, DateTime? endDate)
+    public void UpdateCardData(DateTime? startDate, DateTime? endDate)
     {
+        // Set the dates
+        Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+        this.startDate = startDate == null ? windowStart : (startDate.Value < windowStart ? windowStart : startDate.Value);
+        this.endDate = endDate == null ? windowEnd : (endDate.Value < windowEnd ? endDate.Value : windowEnd);
+        FormatWindowDates();
+
         // Get max and min demand (rounded to 3 dp) -- ignoring tasks with no unmet demand
         var subtasks = Project.SubTasks.Where(x => x.GetUnmetDemandInWindow(startDate, endDate) != 0);
         if (subtasks.Count() == 0) return;
@@ -110,5 +119,14 @@
     private void ViewDetails(int id)
     {
         Navigation.NavigateTo($"projects/projectdetails/{id}");
+    }
+
+    /// <summary>
+    /// Method to format the demand window dates
+    /// </summary>
+    /// <returns></returns>
+    private void FormatWindowDates()
+    {
+        windowDatesFormatted = $"{(startDate <= DateTime.Today ? "Now" : startDate.ToShortDateString())} - {(endDate == DateTime.Today ? "Today" : endDate.ToShortDateString())}";
     }
 }
