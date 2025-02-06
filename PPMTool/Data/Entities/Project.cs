@@ -389,7 +389,7 @@ namespace PPMTool.Data.Entities
                     // Starts and ends in the same financial year
                     if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
                     {
-                        yearFraction = endDateOfCalculation.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction = (endDateOfCalculation.Subtract(StartDate).TotalDays + 1) / 365f;
                         yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, endDateOfCalculation);
                     }
 
@@ -397,7 +397,7 @@ namespace PPMTool.Data.Entities
                     else
                     {
                         var tempEndDate = new DateTime(finYear + 1, 7, 31);
-                        yearFraction = tempEndDate.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction = (tempEndDate.Subtract(StartDate).TotalDays + 1) / 365f;
                         yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, tempEndDate);
                     }
                 }
@@ -406,7 +406,7 @@ namespace PPMTool.Data.Entities
                 else if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
                 {
                     var tempStartDate = new DateTime(finYear, 8, 1);
-                    yearFraction = endDateOfCalculation.Subtract(tempStartDate).TotalDays / 365f;
+                    yearFraction = (endDateOfCalculation.Subtract(tempStartDate).TotalDays + 1) / 365f;
                     yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, endDateOfCalculation);
                 }
 
@@ -461,10 +461,10 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public IEnumerable<DateRange> GetLeadershipTaskRanges()
         {
-            // Conver the sub tasks to date ranges (adding a day for the end so it isn't inclusive)
+            // Convert the sub tasks to date ranges
             var dateRanges = SubTasks
                 .Where(x => x.RequiresLeadership)
-                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
+                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate });
 
             // Merge overlapping date ranges
             var mergedRanges = MergeDateRanges(dateRanges);
