@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 
@@ -25,7 +25,6 @@ namespace PPMTool.Pages
         private DateTime? startDate;
         private DateTime? endDate;
         private bool groupByStatus = true;
-        private IList<ProjectBulletinCardComponent> projectBulletinCardComponents = new List<ProjectBulletinCardComponent>();
 
 
         protected override void OnInitialized()
@@ -38,11 +37,42 @@ namespace PPMTool.Pages
         protected override void OnAfterRender(bool firstRender)
         {
             // Load settings the first time
-            if (firstRender)
+            if (!firstRender) return;
+
+            // Load data from DB
+            LoadProjectData();
+
+            // Filter the data
+            EnqueueLoadData(GetFilterTask);
+        }
+
+        /// <summary>
+        /// Returns a task that filters the loaded project data
+        /// </summary>
+        /// <returns></returns>
+        private Task GetFilterTask()
+        {
+            return Task.Run(() =>
             {
-                // Load data
-                LoadProjectData();
-            }
+                FilterProjects();
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+        /// <summary>
+        /// Method which sets the loading state and invokes the background task to filter
+        /// </summary>
+        private void ReloadWithFilters()
+        {
+            Loading = true;
+            StateHasChanged();
+            EnqueueLoadData(GetFilterTask);
         }
 
         /// <summary>
@@ -75,21 +105,7 @@ namespace PPMTool.Pages
                 availableProjectsGrouped = availableProjects.GroupBy(x => x.ProjectStatus).OrderByDescending(x => x.Key);
             }
 
-            // Update the min/max on the card
-            foreach (var component in projectBulletinCardComponents)
-            {
-                component.UpdateCardData(startDate, endDate);
-            }
-        }
-
-        private void OnBulletinCardInitialised(ProjectBulletinCardComponent component)
-        {
-            // Stash a reference to the component so we can invoke the update method later
-            if (!projectBulletinCardComponents.Contains(component))
-            {
-                projectBulletinCardComponents.Add(component);
-            }
-            component.UpdateCardData(startDate, endDate);
+            Debug.WriteLine($"** {availableProjects?.Count()} projects loaded.");
         }
 
         /// <summary>
@@ -102,15 +118,6 @@ namespace PPMTool.Pages
 
             // Filter to just projects that are active with current or future unmet demand
             allProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandInWindow() && x.ProjectStatus != ProjectStatus.Paused);
-
-            // Filter the projects
-            FilterProjects();
-
-            // Disable spinner now load complete
-            Loading = false;
-            StateHasChanged();
-
-            Debug.WriteLine($"** {availableProjects?.Count()} projects loaded.");
         }
     }
 }

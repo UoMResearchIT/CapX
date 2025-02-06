@@ -76,7 +76,10 @@
     public bool ShowDetailsButton { get; set; }
 
     [Parameter]
-    public Action<ProjectBulletinCardComponent> OnInitialised { get; set; }
+    public DateTime? FilterStartDate { get; set; }
+
+    [Parameter]
+    public DateTime? FilterEndDate { get; set; }
 
     private double maxDemand;
     private double minDemand;
@@ -87,23 +90,24 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        OnInitialised?.Invoke(this);
+        UpdateCardData();
     }
 
-    public void UpdateCardData(DateTime? startDate, DateTime? endDate)
+    public void UpdateCardData()
     {
-        // Set the dates
+        // Set the dates to show on the card
         Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-        this.startDate = startDate == null ? windowStart : (startDate.Value < windowStart ? windowStart : startDate.Value);
-        this.endDate = endDate == null ? windowEnd : (endDate.Value < windowEnd ? endDate.Value : windowEnd);
+        this.startDate = FilterStartDate == null ? windowStart : (FilterStartDate.Value < windowStart ? windowStart : FilterStartDate.Value);
+        this.endDate = FilterEndDate == null ? windowEnd : (FilterEndDate.Value < windowEnd ? FilterEndDate.Value : windowEnd);
         FormatWindowDates();
 
         // Get max and min demand (rounded to 3 dp) -- ignoring tasks with no unmet demand
-        var subtasks = Project.SubTasks.Where(x => x.GetUnmetDemandInWindow(startDate, endDate) != 0);
+        var subtasks = Project.SubTasks.Where(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate) != 0);
         if (subtasks.Count() == 0) return;
-        maxDemand = Math.Round(1000 * subtasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))) / 1000;
-        minDemand = Math.Round(1000 * subtasks.Min(x => x.GetUnmetDemandInWindow(startDate, endDate))) / 1000;
-        StateHasChanged();
+        maxDemand = Math.Round(1000 * subtasks.Max(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
+        minDemand = Math.Round(1000 * subtasks.Min(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
+
+        Debug.WriteLine($"** {Project.GetFullName()}: {windowDatesFormatted}: {minDemand} - {maxDemand}");
     }
 
     /// <summary>

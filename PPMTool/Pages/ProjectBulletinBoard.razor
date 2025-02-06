@@ -19,21 +19,21 @@
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
             <RadzenLabel Text="Date Range" Component="StartDate" class="rz-ms-2" />
-            <RadzenDatePicker @bind-Value="startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="StartDate" AllowClear="true" Change="FilterProjects" />
+            <RadzenDatePicker @bind-Value="startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="StartDate" AllowClear="true" Change="ReloadWithFilters" Disabled="@Loading" />
             <RadzenLabel Text="to" Component="EndDate" class="rz-ms-2" />
-            <RadzenDatePicker @bind-Value="endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="EndDate" AllowClear="true" Change="FilterProjects" />
+            <RadzenDatePicker @bind-Value="endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="EndDate" AllowClear="true" Change="ReloadWithFilters" Disabled="@Loading" />
             <RadzenLabel Text="Group By Status" Component="CheckBox1" class="rz-ms-2" />
-            <RadzenCheckBox TValue="bool" Value=@groupByStatus Change=@(args => { groupByStatus = args; FilterProjects(); }) Name="CheckBox1" />
+            <RadzenCheckBox TValue="bool" Value=@groupByStatus Change=@(args => { groupByStatus = args; ReloadWithFilters(); }) Name="CheckBox1" Disabled="@Loading" />
         </RadzenStack>
     </RadzenStack>
     <hr />
-    @if (availableProjects == null)
+    @if (Loading || availableProjects == null)
     {
         <LoadingComponent />            
     }
     else if (availableProjects.Count() == 0)
     {
-        <RadzenText Text="There are currently no projects requiring RSE resource." />
+        <RadzenText Text="There are no projects requiring RSE resource matching the chosen date range." />
     }
     else
     {
@@ -45,7 +45,7 @@
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                     @foreach (var project in group)
                     {
-                        <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
+                        <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" FilterStartDate="@startDate" FilterEndDate="@endDate" />
                     }
                 </RadzenStack>
                 <hr />
@@ -56,7 +56,7 @@
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                 @foreach (var project in availableProjects)
                 {
-                    <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
+                    <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" FilterStartDate="@startDate" FilterEndDate="@endDate" />
                 }
             </RadzenStack>
             <hr />
