@@ -39,15 +39,11 @@
     {
         @if (groupByStatus)
         {
-            foreach (var group in availableProjectsGrouped.OrderByDescending(x => x.Key))
+            foreach (var group in availableProjectsGrouped)
             {
                 <h3>@(group.Key.ToNiceString())</h3>
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                    @foreach (var project in group.OrderBy(x =>
-                    {
-                        x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-                        return windowStart;
-                    }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                    @foreach (var project in group)
                     {
                         <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                     }
@@ -58,11 +54,7 @@
         else
         {
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                @foreach (var project in availableProjects.OrderBy(x =>
-                {
-                   x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-                   return windowStart;
-                }).ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate))))
+                @foreach (var project in availableProjects)
                 {
                     <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" OnInitialised="@OnBulletinCardInitialised" />
                 }

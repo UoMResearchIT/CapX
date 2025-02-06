@@ -60,11 +60,19 @@ namespace PPMTool.Pages
                 }
             }
 
-            availableProjects = allProjects.Where(x => x.HasUnmetDemandInWindow(startDate, endDate));
+            // Get projects with unmet demand in the window and order by the start of the window then by the maximum unmet demand
+            availableProjects = allProjects
+                .Where(x => x.HasUnmetDemandInWindow(startDate, endDate))
+                .OrderBy(x =>
+                {
+                    x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                    return windowStart;
+                })
+                .ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
 
             if (groupByStatus)
             {
-                availableProjectsGrouped = availableProjects.GroupBy(x => x.ProjectStatus);
+                availableProjectsGrouped = availableProjects.GroupBy(x => x.ProjectStatus).OrderByDescending(x => x.Key);
             }
 
             // Update the min/max on the card
