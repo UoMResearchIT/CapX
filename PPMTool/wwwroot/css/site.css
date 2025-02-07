@@ -248,6 +248,10 @@ mark {
     --rz-grid-cell-padding: 0.5rem;
 }
 
+.border-primary{
+    border-color: #609 !important;
+}
+
 .competency-highlightable {
 }
 

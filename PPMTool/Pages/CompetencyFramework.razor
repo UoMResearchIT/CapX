@@ -12,6 +12,12 @@
         <div class="col">
             <h2>Development Journey Summary</h2>
         </div>
+        <div class="col-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+                <RadzenText Text="Load Only Unmet Competencies:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(() => EnqueueLoadData(GetTask))" />
+            </RadzenStack>
+        </div>
     </div>
     <div class="row">
         <div class="col">
@@ -58,8 +64,12 @@
                 <RadzenTextBox @bind-Value=@competencySearchTerms
                                Placeholder="Search Competencies"
                                Change=@FilterCompetencies
-                               Style="width:100%" />
-                <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                               Disabled="@Loading" />
+                <RadzenButton Icon="clear"
+                              ButtonStyle="ButtonStyle.Light"
+                              Click="@ClearSearch"
+                              MouseEnter="@(args => ShowTooltip(args, "Clear"))"
+                              Disabled="@Loading" />
             </RadzenStack>
         </div>
     </div>
