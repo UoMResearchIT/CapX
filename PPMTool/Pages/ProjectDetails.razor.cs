@@ -983,7 +983,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private string TrimMatch(string match, char delimiter)
         {
-            if (string.IsNullOrWhiteSpace(match) || match.StartsWith("<") || char.IsWhiteSpace(match[0]))
+            if (match.StartsWith(">") || char.IsWhiteSpace(match[0]))
             {
                 int atIndex = match.IndexOf(delimiter);
                 if (atIndex != -1)
