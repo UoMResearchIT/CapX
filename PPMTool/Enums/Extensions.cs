@@ -156,11 +156,11 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
-        /// Gets the badge style of a timesheet status based on the attribute
+        /// Gets the badge style attribute value
         /// </summary>
         /// <param name="status"></param>
         /// <returns></returns>
-        public static BadgeStyle GetBadgeStyle(this TimesheetStatus status)
+        public static BadgeStyle GetBadgeStyle(this Enum status)
         {
             return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
         }

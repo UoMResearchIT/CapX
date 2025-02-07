@@ -1,11 +1,7 @@
 ﻿@using PPMTool.Enums
 
 <RadzenBadge Style="margin-bottom: 0.3rem"
-             BadgeStyle="@(
-                ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                BadgeStyle.Light)"
+             BadgeStyle="@(ProjectStatus.GetBadgeStyle())"
              Text="@ProjectStatus.ToNiceString()" />
 
 @code {
