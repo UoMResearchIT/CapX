@@ -53,13 +53,14 @@ function insertTextAtCaret(text) {
     sel.removeAllRanges();
     sel.addRange(newRange);
 
+    // Ensure the cursor position is maintained correctly
+    setTimeout(() => {
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    }, 0);
+
     // Get the current text in the rz-html-editor-content div
     var editorContent = document.querySelector('#editor-entry .rz-html-editor-content').innerHTML;
-
-    // Call the C# method to fire the OnChange event
-    if (window.dotNetHelper) {
-        window.dotNetHelper.invokeMethodAsync('OnEditorChangeFromJS', editorContent);
-    }
 }
 
 function copyText(text) {

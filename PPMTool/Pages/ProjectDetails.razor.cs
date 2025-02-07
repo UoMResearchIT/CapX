@@ -638,17 +638,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// This method is fired from JS when the content of the HTML editor is changed from JS rather than a key press
-        /// </summary>
-        /// <param name="content"></param>
-        [JSInvokable]
-        public void OnEditorChangeFromJS(string content)
-        {
-            noteModel.HtmlContent = content;
-            Debug.WriteLine($"** After Mention Insert: {noteModel.HtmlContent}");
-        }
-
-        /// <summary>
         /// Invoked when the notes filter switch is toggled
         /// </summary>
         private void FilterSwitchToggled()
