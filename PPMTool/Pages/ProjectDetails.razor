@@ -22,12 +22,7 @@
             {
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                     <h1>@project.GetFullName()</h1>
-                    <RadzenBadge BadgeStyle="@(
-                                    project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                    project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                    project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                    BadgeStyle.Light)"
-                                 Text="@project.ProjectStatus.ToNiceString()" />
+                    <ProjectBadgeComponent ProjectStatus="@project.ProjectStatus" />
                 </RadzenStack>
             }
         </div>

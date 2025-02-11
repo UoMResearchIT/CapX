@@ -20,10 +20,9 @@ namespace PPMTool.Data
 
         public string Colour { get; }
 
-        public bool IsHatched { get; }
-
         public string TooltipMessages { get; }
 
+        private bool isHatched;
         private bool isFake;
 
         public ChartItem(
@@ -43,7 +42,7 @@ namespace PPMTool.Data
             Value2 = value2;
             Label = label;
             Colour = colour;
-            IsHatched = isHatched;
+            this.isHatched = isHatched;
             TooltipMessages = tooltipMessages;
             this.isFake = isFake;
         }
@@ -163,9 +162,9 @@ namespace PPMTool.Data
             return (r, g, b);
         }
 
-        bool IChartItem.IsHatched()
+        public bool IsHatched()
         {
-            return IsHatched;
+            return isHatched;
         }
 
         public bool IsFake()
