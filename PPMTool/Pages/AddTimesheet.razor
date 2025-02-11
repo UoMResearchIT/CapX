@@ -258,7 +258,7 @@
                 </div>
             </div>
 
-            @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+            @if (timesheet?.IsLineManager(ActiveUser) ?? false && currentWLM != null && wlmChartItem != null)
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">
@@ -267,7 +267,7 @@
                             <div>
                                 @{
                                     <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
-                                        @foreach (var item in currentWLM.GetDutyMapping())
+                                        @foreach (var item in currentWLM?.GetDutyMapping())
                                         {
                                             Duty duty = item.Key;
                                             double value = item.Value;
