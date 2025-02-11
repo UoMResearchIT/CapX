@@ -65,6 +65,7 @@ namespace PPMTool
             services.AddScoped<FinancialReferenceService>();
             services.AddScoped<CompetencyService>();
             services.AddScoped<TimesheetService>();
+            services.AddScoped<InvoiceService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>

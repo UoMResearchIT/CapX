@@ -1,0 +1,49 @@
+﻿using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using PPMTool.Data.Context;
+using PPMTool.Data.Entities;
+
+namespace PPMTool.Services
+{
+    /// <summary>
+    /// Service for managing the DB table associated with invoices
+    /// </summary>
+    public class InvoiceService : BaseEntityService<Invoice>
+    {
+        public override int Add(PPMToolContext context, Invoice entity, bool commitChanges = true)
+        {
+            context.Invoices.Add(entity);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+            return entity.InvoiceId;
+        }
+
+        public override void Delete(PPMToolContext context, Invoice entity, bool commitChanges = true)
+        {
+            context.Invoices.Remove(entity);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+        }
+
+        public override IEnumerable<Invoice> GetAll(PPMToolContext context)
+        {
+            return context.Invoices
+                .Include(x => x.Project)
+                .Include(x => x.Payments);
+        }
+
+        public override int Update(PPMToolContext context, Invoice entity, bool commitChanges = true)
+        {
+            context.Invoices.Update(entity);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+            return entity.InvoiceId;
+        }
+    }
+}
