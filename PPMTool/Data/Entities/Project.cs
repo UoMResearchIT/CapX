@@ -132,6 +132,16 @@ namespace PPMTool.Data.Entities
         public float LeadershipFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
 
         /// <summary>
+        /// List of Invoices associated with this project
+        /// </summary>
+        public ICollection<Invoice> Invoices { get; set; }
+
+        /// <summary>
+        /// List of payments associate with this project
+        /// </summary>
+        public ICollection<Payment> Payments { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
