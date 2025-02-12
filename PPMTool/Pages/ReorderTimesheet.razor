@@ -1,5 +1,5 @@
-﻿@page "/timesheets/reordertimesheet/{TimesheetId:int}"
-@inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
+﻿@page "/timesheets/reordertimesheet"
+@inherits PPMTool.Pages.BasePage
 @using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
@@ -7,54 +7,57 @@
 @using PPMTool.Pages.Components
 @using PPMTool.Services
 @using Radzen.Blazor
-<PageTitle>Reorder Timesheet Tasks - CapX</PageTitle>
 
 <div class="container">
     @if (Loading)
     {
         <LoadingComponent />
     }
-    else if (TimesheetId > 0 && timesheet == null)
-    {
-        <StatusMessageComponent Message="@(new StatusMessage("Either you are not permitted to view this timesheet or a timesheet with the given ID is not present in the database!", StatusMessage.MessageType.Error))" />
-    }
     else
     {
-        <div class="row">
+         <div class="row">
             <div class="col">
-                <h1>Reorder Timesheet Tasks</h1>
-            </div>
-        </div>
+                <h1>Reorder Your Timesheet Template</h1>
 
-        <div class="p-0">
-            <RadzenDataGrid @ref="dataGrid"
-                            Data="@dataGridEntities"
-                            TItem="TimesheetEntry"
-                            ColumnWidth="5rem">
-                <Columns>
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem">
-                        <Template Context="entry">
-                            <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask.Duty" Sortable="true" Title="Task" MinWidth="10px" Width="12rem">
-                        <Template Context="entry">
-                            <TimesheetEntryTaskComponent Entry="@entry" />
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
+                <RadzenDataGrid Data="@templateData"
+                                TItem="TimesheetTemplateItem"
+                                RowRender="@RowRender">
+                    <Columns>
+                        <RadzenDataGridColumn Title="Task Id" Width="20px" property="InnateCodeTask.InnateCodeTaskId" />
 
-            <div class="row" style="margin-top: 1rem;">
-                <div class="col">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" Click="@(() => { GoToTimesheet(timesheet); })">
-                            <RadzenImage Path="images/chevron_left.png" Style="width: 22px; height: 22px; margin-left: -10px;" />
-                            <span class="rz-button-text">Return to timesheet</span>
-                        </RadzenButton>
-                    </RadzenStack>
+                        <RadzenDataGridColumn Title="Innate Code" MinWidth="10px" Width="12rem">
+                            <Template Context="item">
+                                <RadzenText TextStyle="TextStyle.Body2" Text="@item.InnateCode.GetSensibleObjectName()" Style="width: 100%; white-space:pre-wrap" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Title="Task" MinWidth="10px" Width="12rem">
+                            <Template Context="item">
+                                @{
+                                    // Create a TimesheetEntry entity to pass into the component. #UglyHack
+                                    TimesheetEntry te = new TimesheetEntry();
+                                    te.InnateCodeTask = item.InnateCodeTask;
+                                }
+                                <TimesheetEntryTaskComponent Entry="@te" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                     </Columns>
+                </RadzenDataGrid>
+
+                <div style="padding: 1rem; background-color: lightgoldenrodyellow; border: 1px solid #ccc; margin-top: 1rem;">
+                    Template => [@finalOrder]
                 </div>
             </div>
         </div>
+
+        <div class="row" style="margin-top: 1rem;">
+                <div class="col">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
+                        <div>
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save and exit" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { })" />
+                        </div>
+                    </RadzenStack>
+                </div>
+            </div>
     }
 </div>

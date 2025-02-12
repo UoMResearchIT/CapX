@@ -1,35 +1,29 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Pages
 {
-    public partial class ReorderTimesheet : DataGridPage<TimesheetEntry>
+    public partial class ReorderTimesheet : BasePage
     {
-        /// <summary>
-        /// ID of the timesheet to edit if applicable
-        /// </summary>
-        [Parameter]
-        public int? TimesheetId { get; set; }
-
-        [Inject]
-        private TimesheetService TimesheetService { get; set; }
-
         [Inject]
         private PersonService PersonService { get; set; }
 
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
-        [Inject]
-        public EmailService EmailService { get; set; }
-
         private Timesheet timesheet;
         private Role activeUserRole;
+        private ObservableCollection<TimesheetTemplateItem> templateData;
+        private IList<TimesheetTemplateItem> selectedTemplateItem;
+        private TimesheetTemplateItem draggedItem;
+        private string finalOrder;
 
         protected override async Task OnParametersSetAsync()
         {
@@ -41,44 +35,71 @@ namespace PPMTool.Pages
             {
                 await Task.Run(() =>
                 {
-                    Debug.WriteLine("** Starting initialisation task...");
-
-                    // Get the person associated with the active user
-                    activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-
-                    // Only superusers can delete a timesheet
-                    EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
-
                     // Handle if the user is not found
                     if (ActiveUser == null)
                     {
-                        LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
+                        LogError($"No person found for {ActiveUserName}!");
                         return;
                     }
 
-                    // If there is an ID, then lookup the timesheet
-                    if ((TimesheetId ?? 0) > 0)
+                    // Get the user's timesheet template details to work with
+                    templateData = new ObservableCollection<TimesheetTemplateItem>();
+
+                    if (ActiveUser.TimesheetTemplateData != null)
                     {
-                        timesheet = TimesheetService.GetById(Context, TimesheetId);
+                        finalOrder = ActiveUser.TimesheetTemplateData;
+                        var split = finalOrder.Split("|");
+                        IEnumerable<InnateCodeTask> tasks = InnateCodeService.GetAllTasks(Context);
+
+                        foreach (string id in split)
+                        {
+                            InnateCodeTask task = tasks.First(x => x.InnateCodeTaskId == int.Parse(id));
+                            if (task != null)
+                            {
+                                TimesheetTemplateItem item = new TimesheetTemplateItem();
+                                item.TimesheetTemplateItemId = task.InnateCodeTaskId;
+                                item.InnateCode = task.InnateCode;
+                                item.InnateCodeTask = task;
+
+                                templateData.Add(item);
+                            }
+                        }
                     }
 
-                    // Check whether this user should have access or not
-                    if (timesheet != null && !CanEditTheTaskOrder())
-                    {
-                        timesheet = null;
-                    }
-
-                    if (timesheet != null)
-                    {
-                        dataGridEntities = timesheet.TimesheetEntries.OrderByDescending(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName).ToList();
-                        Loading = false;
-                    }
+                    selectedTemplateItem = new List<TimesheetTemplateItem>() { templateData.FirstOrDefault() };
+                    Loading = false;
                 });
             }
             catch (TaskCanceledException)
             {
                 // We intend it to be cancelled so this is fine to ignore
             }
+        }
+
+        void RowRender(RowRenderEventArgs<TimesheetTemplateItem> args)
+        {
+            args.Attributes.Add("title", "Drag row to reorder");
+            args.Attributes.Add("style", "cursor:grab");
+            args.Attributes.Add("draggable", "true");
+            args.Attributes.Add("ondragover", "event.preventDefault();event.target.closest('.rz-data-row').classList.add('my-class')");
+            args.Attributes.Add("ondragleave", "event.target.closest('.rz-data-row').classList.remove('my-class')");
+            args.Attributes.Add("ondragstart", EventCallback.Factory.Create<DragEventArgs>(this, () => draggedItem = args.Data));
+            args.Attributes.Add("ondrop", EventCallback.Factory.Create<DragEventArgs>(this, () =>
+            {
+                var draggedIndex = templateData.IndexOf(draggedItem);
+                var droppedIndex = templateData.IndexOf(args.Data);
+                templateData.Remove(draggedItem);
+                templateData.Insert(draggedIndex <= droppedIndex ? droppedIndex++ : droppedIndex, draggedItem);
+
+                // Update the order to store back into the db for the user
+                finalOrder = "";
+                foreach (var item in templateData)
+                {
+                    finalOrder += finalOrder.Length > 0 ? $"|{item.InnateCodeTask.InnateCodeTaskId}" : $"{item.InnateCodeTask.InnateCodeTaskId}";
+                }
+            }));
+
+
         }
 
         protected override void OnInitialized()
