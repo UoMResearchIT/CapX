@@ -28,7 +28,8 @@
                             Placeholder="Select Project"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             FilterOperator="StringFilterOperator.Contains"
-                            class="radzen-dropdown">
+                            class="radzen-dropdown"
+                            LoadData="LoadProjectDropdownWithFilter">
                 <Template>
                     @((context as Project)?.GetFullName())
                 </Template>

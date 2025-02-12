@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc;
 using PPMTool.Data.Entities;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
@@ -14,7 +13,8 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Superuser,Manager,Reader")]
     public partial class ManageFinancialItems : BasePage
     {
-        [FromQuery(Name = "rtp")]
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "rtp")]
         public int? RTP { get; set; }
 
         [Inject]
@@ -45,6 +45,8 @@ namespace PPMTool.Pages
             cachedProjects = ProjectService.GetAllShallow(Context).OrderBy(x => x.RTP).ToList();
             LoadProjectDropdownWithFilter(null);
             LoadData();
+
+            LogInformation("Viewing project finance");
         }
 
         private void OnProjectChange(object value)
@@ -52,7 +54,7 @@ namespace PPMTool.Pages
             // Load invoices and payments for the selected project
             LoadData();
 
-            Debug.WriteLine($"** {value?.ToString() ?? "Nothing"}");
+            Debug.WriteLine($"** {(value as Project)?.GetFullName() ?? "Nothing"}");
         }
 
         /// <summary>
@@ -69,6 +71,8 @@ namespace PPMTool.Pages
                 invoices = invoices.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 payments = payments.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
             }
+
+            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments.");
         }
 
         /// <summary>
@@ -80,10 +84,12 @@ namespace PPMTool.Pages
             var temp = cachedProjects;
             if (!string.IsNullOrEmpty(args?.Filter))
             {
+                Debug.WriteLine($"** Filter projects on: {args?.Filter}");
                 temp = temp.Where(x => x.GetFullName().ToLower().Contains(args.Filter.ToLower()));
+                Debug.WriteLine($"** {temp.Count()} matched.");
             }
             projects = temp.ToList();
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }
 
         private void AddPaymentOrInvoice()
