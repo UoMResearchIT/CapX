@@ -42,6 +42,11 @@
                                 <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
                             </Authorized>
                         </AuthorizeView>
+                        <AuthorizeView Roles="Superuser,Manager,Reader">
+                            <Authorized Context="sub_context_2">
+                                <RadzenPanelMenuItem Path="managefinancialitems" Text="Manage Finance" Icon="currency_pound" />
+                            </Authorized>
+                        </AuthorizeView>
                         <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
                         <AuthorizeView Roles="Superuser,Manager,Developer">
                             <Authorized Context="sub_context_1">

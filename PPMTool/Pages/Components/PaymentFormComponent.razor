@@ -1,0 +1,31 @@
+﻿@using Radzen
+@using PPMTool.Data.Entities
+@inject DialogService DialogService
+
+<RadzenTemplateForm TItem="Payment" Submit="@HandleValidSubmit" Data="@Payment">
+    <RadzenFieldset Text="Payment Details">
+        <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" />
+        <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" />
+        <RadzenDropDown Data="@invoices" @bind-Value="Payment.Invoice" Name="InvoiceId" />
+    </RadzenFieldset>
+    <RadzenButton Text="Save" Type="Submit" />
+    <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+</RadzenTemplateForm>
+
+@code {
+
+    [Parameter] public Payment Payment { get; set; }
+    private List<Invoice> invoices;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Load invoices for the dropdown
+    }
+
+    private void HandleValidSubmit()
+    {
+        DialogService.Close(true);
+    }
+}

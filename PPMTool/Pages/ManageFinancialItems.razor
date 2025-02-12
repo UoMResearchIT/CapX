@@ -1,0 +1,63 @@
+﻿@page "/managefinancialitems"
+@inherits BasePage
+@using PPMTool.Data.Entities
+@using Radzen
+<PageTitle>Payments and Invoices - CapX</PageTitle>
+
+<div class="container">
+    <div class="row align-items-center">
+        <div class="col mr-auto">
+            <h1>Payments and Invoices</h1>
+            <RadzenText Text="@selectedProject?.GetFullName()" TextStyle="TextStyle.Subtitle1" />
+        </div>
+        <div class="col-auto">
+            <RadzenButton Icon="add" Text="@($"Add {itemType}")" Click="AddPaymentOrInvoice" />
+        </div>
+    </div>
+    <hr />
+    <div class="card">
+        <RadzenText Text="Project:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+        <RadzenDropDown AllowClear="true"
+                        AllowFiltering="true"
+                        AllowSelectAll="false"
+                        Data="@projects"
+                        @bind-Value="selectedProject"
+                        Change="@(args => OnProjectChange(args))"
+                        Multiple="false"
+                        Placeholder="Select Project" />
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Invoices">
+                    <RadzenDataGrid Data="@invoices" TItem="Invoice">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="Invoice" Property="Id" Title="Invoice ID" />
+                            <RadzenDataGridColumn TItem="Invoice" Property="Date" Title="Invoice Date" />
+                            <RadzenDataGridColumn TItem="Invoice" Property="Amount" Title="Amount" />
+                            <RadzenDataGridColumn TItem="Invoice" Property="PaymentStatus" Title="Payment Status" />
+                            <RadzenDataGridColumn TItem="Invoice" Context="invoice">
+                                <Template Context="invoice">
+                                    <RadzenButton Text="Edit" Click="@(args => EditPaymentOrInvoice(invoice))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Payments">
+                    <RadzenDataGrid Data="@payments" TItem="Payment">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="Payment" Property="Id" Title="Payment ID" />
+                            <RadzenDataGridColumn TItem="Payment" Property="Date" Title="Payment Date" />
+                            <RadzenDataGridColumn TItem="Payment" Property="Amount" Title="Amount" />
+                            <RadzenDataGridColumn TItem="Payment" Property="InvoiceId" Title="Associated Invoice" />
+                            <RadzenDataGridColumn TItem="Payment" Context="payment">
+                                <Template Context="payment">
+                                    <RadzenButton Text="Edit" Click="@(args => EditPaymentOrInvoice(payment))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    </div>
+</div>
