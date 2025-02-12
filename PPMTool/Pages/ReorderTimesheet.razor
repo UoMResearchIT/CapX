@@ -43,21 +43,17 @@
                         </RadzenDataGridColumn>
                      </Columns>
                 </RadzenDataGrid>
-
-                <div style="padding: 1rem; background-color: lightgoldenrodyellow; border: 1px solid #ccc; margin-top: 1rem;">
-                    Template => [@finalOrder]
-                </div>
             </div>
         </div>
 
         <div class="row" style="margin-top: 1rem;">
-                <div class="col">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
-                        <div>
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save and exit" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { })" />
-                        </div>
-                    </RadzenStack>
-                </div>
+            <div class="col">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
+                    <div>
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save and exit" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@SaveAndExit" />
+                    </div>
+                </RadzenStack>
             </div>
+        </div>
     }
 </div>
