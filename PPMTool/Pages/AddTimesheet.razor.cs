@@ -125,11 +125,14 @@ namespace PPMTool.Pages
 
                     if (IsSuperuserOrLineManagerOfThisPerson(timesheet.Owner))
                     {
+                        // Order by Duty if Line Manbager viewing
                         dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
                     }
                     else
                     {
-                        dataGridEntities = timesheet.TimesheetEntries.ToList();
+                        // Use the staff member's timesheet template for the ordering
+                        string templateOrdering = ActiveUser.TimesheetTemplateData;
+                        dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
                     }
                     UpdateDailyTotals();
 
@@ -185,6 +188,31 @@ namespace PPMTool.Pages
                 }
                 Debug.WriteLine("** ...complete!");
             });
+        }
+
+        private List<TimesheetEntry> OrderByTemplate(Timesheet timesheet, string templateOrderDetail)
+        {
+            List<int> order = new List<int>();
+
+            if (!string.IsNullOrEmpty(templateOrderDetail))
+            {
+                foreach (string s in templateOrderDetail.Split("|"))
+                {
+                    order.Add(int.Parse(s));
+                }
+
+                // Custom ordering
+                var orderedResults = timesheet.TimesheetEntries
+                    .OrderBy(r => order.IndexOf(r.InnateCodeTask.InnateCodeTaskId) == -1 ? int.MaxValue : order.IndexOf(r.InnateCodeTask.InnateCodeTaskId))
+                    .ThenBy(r => r.InnateCodeTask.InnateCodeTaskId)
+                    .ToList();
+
+                return orderedResults;
+            }
+            else
+            {
+                return timesheet.TimesheetEntries.ToList();
+            }
         }
 
         void OnDataLoad(LoadDataArgs args)
