@@ -45,5 +45,12 @@ namespace PPMTool.Services
             }
             return entity.InvoiceId;
         }
+
+        public IEnumerable<Payment> GetAllPayments(PPMToolContext context)
+        {
+            return context.Payments
+                .Include(x => x.Project)
+                .Include(x => x.Invoice);
+        }
     }
 }

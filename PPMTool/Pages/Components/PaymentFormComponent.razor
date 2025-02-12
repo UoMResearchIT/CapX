@@ -14,7 +14,9 @@
 
 @code {
 
-    [Parameter] public Payment Payment { get; set; }
+    [Parameter]
+    public Payment Payment { get; set; }
+
     private List<Invoice> invoices;
 
     protected override void OnInitialized()

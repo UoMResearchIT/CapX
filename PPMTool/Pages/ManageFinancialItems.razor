@@ -8,23 +8,32 @@
     <div class="row align-items-center">
         <div class="col mr-auto">
             <h1>Payments and Invoices</h1>
-            <RadzenText Text="@selectedProject?.GetFullName()" TextStyle="TextStyle.Subtitle1" />
+            <RadzenText Text="@(selectedProject?.GetFullName() ?? "All Projects")" TextStyle="TextStyle.Subtitle1" />
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="add" Text="@($"Add {itemType}")" Click="AddPaymentOrInvoice" />
+            <RadzenButton Icon="add" Text="Add" Click="AddPaymentOrInvoice" />
         </div>
     </div>
     <hr />
     <div class="card">
-        <RadzenText Text="Project:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-        <RadzenDropDown AllowClear="true"
-                        AllowFiltering="true"
-                        AllowSelectAll="false"
-                        Data="@projects"
-                        @bind-Value="selectedProject"
-                        Change="@(args => OnProjectChange(args))"
-                        Multiple="false"
-                        Placeholder="Select Project" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText Text="Project:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+            <RadzenDropDown AllowClear="true"
+                            AllowFiltering="true"
+                            AllowSelectAll="false"
+                            Data="@projects"
+                            @bind-Value="selectedProject"
+                            Change="@(args => OnProjectChange(args))"
+                            Multiple="false"
+                            Placeholder="Select Project"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterOperator="StringFilterOperator.Contains"
+                            class="radzen-dropdown">
+                <Template>
+                    @((context as Project)?.GetFullName())
+                </Template>
+            </RadzenDropDown>
+        </RadzenStack>
         <RadzenTabs>
             <Tabs>
                 <RadzenTabsItem Text="Invoices">
