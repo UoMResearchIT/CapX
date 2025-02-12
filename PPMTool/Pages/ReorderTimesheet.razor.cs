@@ -97,6 +97,18 @@ namespace PPMTool.Pages
                 {
                     finalOrder += finalOrder.Length > 0 ? $"|{item.InnateCodeTask.InnateCodeTaskId}" : $"{item.InnateCodeTask.InnateCodeTaskId}";
                 }
+
+                // Save the result and update the user
+                ActiveUser.TimesheetTemplateData = finalOrder;
+                PersonService.Update(Context, ActiveUser);
+
+                // Show notification for save action
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Change saved",
+                    Detail = "Your timesheet template ordering has been updated."
+                });
             }));
 
 
@@ -123,6 +135,15 @@ namespace PPMTool.Pages
         public void GoToTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
+        }
+
+        /// <summary>
+        /// Navigate back to the main timesheet dashboard
+        /// </summary>
+        /// <param name="timesheet"></param>
+        public void SaveAndExit()
+        {
+            Navigation.NavigateTo($"timesheets");
         }
     }
 }
