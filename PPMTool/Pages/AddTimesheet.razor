@@ -258,7 +258,7 @@
                 </div>
             </div>
 
-            @if (timesheet?.IsLineManager(ActiveUser) ?? false && currentWLM != null && wlmChartItem != null)
+            @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && currentWLM != null && wlmChartItem != null)
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">
@@ -293,54 +293,60 @@
                         </div>
                     </div>
 
-                    <div class="row" style="margin-top: 0.25rem;">
-                        <div class="col-2"><RadzenText Text="This Timesheet:" TextStyle="TextStyle.Subtitle1" /></div>
-                        <div class="col-10">
-                            @{
-                                <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
-                                    @{
-                                        // Compute percentages of each bar section
-                                        var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
-                                        var totalPercent = 0d;
-                                        foreach (var item in items)
-                                        {
-                                            Duty duty = item.Key;
-                                            double value = item.Value;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
-                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
-                                            string wlmTextColour = duty.GetTextColourCode();
-
-                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
-                                            var percent = value * 100;
-                                            if (totalFTEForTimesheet > 1)
+                    @{
+                        var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
+                    }
+                    @if(items.Count() > 0)
+                    {
+                        <div class="row" style="margin-top: 0.25rem;">
+                            <div class="col-2"><RadzenText Text="This Timesheet:" TextStyle="TextStyle.Subtitle1" /></div>
+                            <div class="col-10">
+                                @{
+                                    <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
+                                        @{
+                                            // Compute percentages of each bar section
+                                        
+                                            var totalPercent = 0d;
+                                            foreach (var item in items)
                                             {
-                                                percent = percent * (1 / totalFTEForTimesheet);
-                                            }
-                                            totalPercent += percent;
+                                                Duty duty = item.Key;
+                                                double value = item.Value;
+                                                string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                                string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                                string wlmTextColour = duty.GetTextColourCode();
 
-                                            // If the last item then just make it add up to total percent if 1 FTE or greater
-                                            if (totalFTEForTimesheet >= 1 && item.Key == items.Last().Key)
-                                            {
-                                                percent = 100 - (totalPercent - percent);
-                                                if (percent < 0)
+                                                // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
+                                                var percent = value * 100;
+                                                if (totalFTEForTimesheet > 1)
                                                 {
-                                                    percent = 0;
+                                                    percent = percent * (1 / totalFTEForTimesheet);
                                                 }
+                                                totalPercent += percent;
+
+                                                // If the last item then just make it add up to total percent if 1 FTE or greater
+                                                if (totalFTEForTimesheet >= 1 && item.Key == items.Last().Key)
+                                                {
+                                                    percent = 100 - (totalPercent - percent);
+                                                    if (percent < 0)
+                                                    {
+                                                        percent = 0;
+                                                    }
+                                                }
+
+                                                // Hack to avoid adding text in a bar that is likely too small to support it
+                                                string text = (percent >= 3 ? item.Value.ToString("F2") : "");
+
+                                                // Draw the bar
+                                                <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({item.Value.ToString("F2")})")">
+                                                    @text &nbsp;
+                                                </div>
                                             }
-
-                                            // Hack to avoid adding text in a bar that is likely too small to support it
-                                            string text = (percent >= 3 ? item.Value.ToString("F2") : "");
-
-                                            // Draw the bar
-                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({item.Value.ToString("F2")})")">
-                                                @text &nbsp;
-                                            </div>
                                         }
-                                    }
-                                </div>
-                            }
+                                    </div>
+                                }
+                            </div>
                         </div>
-                    </div>
+                    }
                 </div>
             }
 
