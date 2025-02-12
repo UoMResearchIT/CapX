@@ -304,9 +304,9 @@ namespace PPMTool.Services
         /// and submitted timesheets (for direct reports).
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="activeUser"></param>
+        /// <param name="activeUserId"></param>
         /// <returns></returns>
-        public int GetIssueCount(PPMToolContext context, Person activeUser)
+        public int GetIssueCount(PPMToolContext context, int activeUserId)
         {
             Debug.WriteLine("** Updating timesheet notification count");
             HasOwnTimesheetActions = false;
@@ -316,15 +316,16 @@ namespace PPMTool.Services
             int staffNotificationsCount = 0;
 
             // Get user's rejected timesheet numbers
-            selfNotificationsCount += context.Timesheets.Where(x => x.Owner == activeUser && x.Status == Enums.TimesheetStatus.Rejected).Count();
+            selfNotificationsCount += context.Timesheets.Include(x => x.Owner).Where(x => x.Owner.PersonId == activeUserId && x.Status == Enums.TimesheetStatus.Rejected).Count();
             HasOwnTimesheetActions = selfNotificationsCount > 0;
 
             // Get line managed staff numbers (submitted timesheets)
-            if (activeUser.PeopleManaged.Count > 0)
+            var peopleManaged = context.People.Where(x => x.LineManager.PersonId == activeUserId);
+            if (peopleManaged.Count() > 0)
             {
-                foreach (Person p in activeUser.PeopleManaged)
+                foreach (Person p in peopleManaged)
                 {
-                    staffNotificationsCount += context.Timesheets.Where(x => x.Owner == p && x.Status == Enums.TimesheetStatus.Submitted).Count();
+                    staffNotificationsCount += context.Timesheets.Include(x => x.Owner).Where(x => x.Owner.PersonId == p.PersonId && x.Status == Enums.TimesheetStatus.Submitted).Count();
                 }
             }
             HasStaffTimesheetActions = staffNotificationsCount > 0;

@@ -192,6 +192,13 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
+            // Add project badges
+            foreach (var status in assignmentsWithinBlock.Select(x => x.ProjectStatus).Distinct())
+            {
+                messages += $"<div class=\"rz-badge {GetCSSBadgeStyle(status.GetBadgeStyle())}\">{status.ToNiceString()}</div>&nbsp";
+            }
+
+            // Add the base messages
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Check for leadership load greater than the standard
@@ -202,6 +209,24 @@ namespace PPMTool.Pages
                 messages += $"<h3 class=\"me-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
             }
             return messages;
+        }
+
+        /// <summary>
+        /// Convert the Radzen badge style to CSS style class
+        /// </summary>
+        /// <param name="badgeStyle"></param>
+        /// <returns></returns>
+        private string GetCSSBadgeStyle(BadgeStyle badgeStyle)
+        {
+            switch (badgeStyle)
+            {
+                case BadgeStyle.Success:
+                    return "rz-badge-success";
+
+                case BadgeStyle.Info:
+                    return "rz-badge-info";
+            }
+            return "rz-badge-light";
         }
     }
 }

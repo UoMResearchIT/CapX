@@ -10,13 +10,7 @@
         <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.3rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
                 <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
-                <RadzenBadge Style="margin-bottom: 0.3rem"
-                             BadgeStyle="@(
-                                    Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                    Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                    Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                    BadgeStyle.Light)"
-                             Text="@Project.ProjectStatus.ToNiceString()" />
+                <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
             <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
         </RadzenStack>

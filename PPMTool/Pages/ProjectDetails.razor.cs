@@ -216,7 +216,7 @@ namespace PPMTool.Pages
                         {
                             Name = leadershipName,
                             StartDate = dateRange.StartDate,
-                            EndDate = dateRange.EndDate.AddDays(-1),
+                            EndDate = dateRange.EndDate,
                             OwningProject = project,
                             AssignedResources = new List<Resource>
                             {
@@ -638,17 +638,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// This method is fired from JS when the content of the HTML editor is changed from JS rather than a key press
-        /// </summary>
-        /// <param name="content"></param>
-        [JSInvokable]
-        public void OnEditorChangeFromJS(string content)
-        {
-            noteModel.HtmlContent = content;
-            Debug.WriteLine($"** After Mention Insert: {noteModel.HtmlContent}");
-        }
-
-        /// <summary>
         /// Invoked when the notes filter switch is toggled
         /// </summary>
         private void FilterSwitchToggled()
@@ -917,11 +906,12 @@ namespace PPMTool.Pages
             // For each mention, attempt to resolve it and replace in the HTMl content
             foreach (Match m in matches)
             {
-                var person = managers.FirstOrDefault(x => x.ShortName.Equals(m.Value.Trim().Substring(1), StringComparison.OrdinalIgnoreCase));
+                var trimmedMatch = TrimMatch(m.Value.Trim(), '@');
+                var person = managers.FirstOrDefault(x => x.ShortName.Equals(trimmedMatch.Substring(1), StringComparison.OrdinalIgnoreCase));
                 if (person != null)
                 {
-                    Debug.WriteLine($"** Replacing {m} with {person.Name}");
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m.Value, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
+                    Debug.WriteLine($"** Replacing {trimmedMatch} with {person.Name}");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
                 }
                 else
                 {
@@ -929,7 +919,7 @@ namespace PPMTool.Pages
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "Mention Failure",
-                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct."
+                        Detail = $"The mention {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
@@ -952,15 +942,16 @@ namespace PPMTool.Pages
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
             matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
-            newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
+            newRtpRefs.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
             foreach (var r in newRtpRefs)
             {
-                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
+                var trimmedMatch = TrimMatch(r, '#');
+                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
                 }
                 else
                 {
@@ -968,10 +959,28 @@ namespace PPMTool.Pages
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "RTP Reference Failure",
-                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct."
+                        Detail = $"The reference {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to trim the matches to remove their preceding characters if necessary
+        /// </summary>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        private string TrimMatch(string match, char delimiter)
+        {
+            if (match.StartsWith(">") || char.IsWhiteSpace(match[0]))
+            {
+                int atIndex = match.IndexOf(delimiter);
+                if (atIndex != -1)
+                {
+                    return match.Substring(atIndex);
+                }
+            }
+            return match;
         }
 
         /// <summary>
