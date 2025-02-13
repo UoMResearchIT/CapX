@@ -40,6 +40,7 @@
                 <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" />
                 <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
                 <RequestAndScrumButtonsComponent Project="@project" />
+                <RadzenButton Click="@(args => EditFinance(project))" Text="Finance" Icon="payments" Disabled="@(!EditAuthorised)" />
             </RadzenStack>
         </div>
     </div>

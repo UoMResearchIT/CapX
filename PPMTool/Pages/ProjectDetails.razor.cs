@@ -768,6 +768,15 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Navigate to the finance page for that project
+        /// </summary>
+        /// <param name="project"></param>
+        private void EditFinance(Project project)
+        {
+            Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
+        }
+
+        /// <summary>
         /// Handles the add note button click
         /// </summary>
         private void AddClicked()
