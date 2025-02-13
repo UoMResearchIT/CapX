@@ -1,0 +1,119 @@
+﻿@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using System.ComponentModel.DataAnnotations
+
+<h2>Project Summary</h2>
+@if (Project == null)
+{
+    <p class="lead">No data to show</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Dates</th>
+                    <th>PI</th>
+                    <th>School (Faculty)</th>
+                    <th>PM</th>
+                    <th>Cost Model</th>
+                    <th>Day Rate</th>
+                    <th>Agreed Budget</th>
+                    <th>Planned Cost</th>
+                    <th>Actual Cost</th>
+                    <th>Funds Received</th>
+                    <th>
+                        Actual Hours<br />
+                        <RadzenButton Click="ResetActualsTimeStamp" Icon="check" Text="Checked" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Disabled="!EditAuthorised" />
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@($"{Project.StartDate.ToShortDateString()} - {Project.EndDate.ToShortDateString()}")</td>
+                    <td>@Project.PI</td>
+                    <td>@($"{Project.School.ToNiceString()} ({Project.Faculty.ToNiceString()})")</td>
+                    <td>@(Project.ProjectManager?.Name ?? "Not Set")</td>
+                    <td>@(Project.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
+                    <td>@(Project.CostModel == CostModel.DayRate ? Project.DayRate.ToString("C0") : "N/A")</td>
+                    <td>@Project.Budget.ToString("C0")</td>
+                    <td>
+                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            @($"Total: ")
+                        }
+                        <span style="color:@plannedCostColour">
+                            @Project.PlannedCost.ToString("C0")
+                        </span>
+                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            <br />
+                            @($"Technical: ")
+                            <span style="color:@plannedCostColour">
+                                @((Project.PlannedCost - Project.PlannedLeadershipCosts).ToString("C0"))
+                            </span>
+                            <br />
+                            @($"Leadership: ")
+                            <span style="color:@plannedCostColour">
+                                @(Project.PlannedLeadershipCosts.ToString("C0"))
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            @($"Total: ")
+                        }
+                        <span style="color:@actualCostColour">
+                            @Project.ActualCost.ToString("C0")
+                        </span>
+                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            <br />
+                            @($"Technical: ")
+                            <span style="color:@actualCostColour">
+                                @((Project.ActualCost - Project.ActualLeadershipCosts).ToString("C0"))
+                            </span>
+                            <br />
+                            @($"Leadership: ")
+                            <span style="color:@actualCostColour">
+                                @(Project.ActualLeadershipCosts.ToString("C0"))
+                            </span>
+                        }
+                    </td>
+                    <td><span style="color:@fundsReceivedColour">@Project.FundsReceived.ToString("C0")</span></td>
+                    <td>@Project.SubTasks.RoundedSum(x => x.ActualWorkHours)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Project Project { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
+
+    [Parameter]
+    public Action ResetActualsTimeStamp { get; set; }
+
+    private string plannedCostColour;
+    private string actualCostColour;
+    private string fundsReceivedColour;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (Project != null)
+        {
+            plannedCostColour = Project.PlannedCost > Project.Budget ? "red" : "green";
+            actualCostColour = Project.ActualCost > Project.PlannedCost ? "red" : "green";
+            fundsReceivedColour = Project.FundsReceived < Project.Budget ? "red" : "green";
+        }
+    }
+}

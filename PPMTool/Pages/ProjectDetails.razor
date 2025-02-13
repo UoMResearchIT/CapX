@@ -50,92 +50,9 @@
         <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
     }
-    <div class="card">
-        @if (project == null)
-        {
-            <p class="lead">No data to show</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Dates</th>
-                            <th>PI</th>
-                            <th>School (Faculty)</th>
-                            <th>PM</th>
-                            <th>Cost Model</th>
-                            <th>Day Rate</th>
-                            <th>Agreed Budget</th>
-                            <th>Planned Cost</th>
-                            <th>Actual Cost</th>
-                            <th>Funds Received</th>
-                            <th>Actual Hours<br />
-                                <RadzenButton Click="ResetActualsTimeStamp" Icon="check" Text="Checked" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Disabled="!EditAuthorised" /></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>@($"{project.StartDate.ToShortDateString()} - {project.EndDate.ToShortDateString()}")</td>
-                            <td>@project.PI</td>
-                            <td>@($"{project.School.ToNiceString()} ({project.Faculty.ToNiceString()})")</td>
-                            <td>@(project.ProjectManager?.Name ?? "Not Set")</td>
-                            <td>@(project.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
-                            <td>@(project.CostModel == CostModel.DayRate ? project.DayRate.ToString("C0") : "N/A")</td>
-                            <td>@project.Budget.ToString("C0")</td>
-                            <td>
-                                @if (project.CostModel == CostModel.TwoTierTechStdAndLeadership || project.CostModel == CostModel.TwoTierTechJunAndLeadership)
-                                {
-                                    @($"Total: ")
-                                }
-                                <span style="color:@plannedCostColour">
-                                    @project.PlannedCost.ToString("C0")
-                                </span>
-                                @if (project.CostModel == CostModel.TwoTierTechStdAndLeadership || project.CostModel == CostModel.TwoTierTechJunAndLeadership)
-                                {
-                                    <br />
-                                    @($"Technical: ")
-                                    <span style="color:@plannedCostColour">
-                                        @((project.PlannedCost - project.PlannedLeadershipCosts).ToString("C0"))
-                                    </span>
-                                    <br />
-                                    @($"Leadership: ")
-                                    <span style="color:@plannedCostColour">
-                                        @(project.PlannedLeadershipCosts.ToString("C0"))
-                                    </span>
-                                }
-                            </td>
-                            <td>
-                                @if (project.CostModel == CostModel.TwoTierTechStdAndLeadership || project.CostModel == CostModel.TwoTierTechJunAndLeadership)
-                                {
-                                    @($"Total: ")
-                                }
-                                <span style="color:@actualCostColour">
-                                    @project.ActualCost.ToString("C0")
-                                </span>
-                                @if (project.CostModel == CostModel.TwoTierTechStdAndLeadership || project.CostModel == CostModel.TwoTierTechJunAndLeadership)
-                                {
-                                    <br />
-                                    @($"Technical: ")
-                                    <span style="color:@actualCostColour">
-                                        @((project.ActualCost - project.ActualLeadershipCosts).ToString("C0"))
-                                    </span>
-                                    <br />
-                                    @($"Leadership: ")
-                                    <span style="color:@actualCostColour">
-                                        @(project.ActualLeadershipCosts.ToString("C0"))
-                                    </span>
-                                }
-                            </td>
-                            <td><span style="color:@fundsReceivedColour">@project.FundsReceived.ToString("C0")</span></td>
-                            <td>@project.SubTasks.RoundedSum(x => x.ActualWorkHours)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
+    <ProjectDetailsSummaryComponent Project="@project"
+                                    EditAuthorised="@EditAuthorised"
+                                    ResetActualsTimestamp="@ResetActualsTimeStamp" />
     <hr />
     @if (Loading)
     {

@@ -83,9 +83,6 @@ namespace PPMTool.Pages
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
-        private string plannedCostColour;
-        private string actualCostColour;
-        private string fundsReceivedColour;
         private bool isEditExistingNote;
         private bool editorVisible;
         private Note noteModel = new Note();
@@ -238,10 +235,7 @@ namespace PPMTool.Pages
                         out provisionalBlocks
                     );
 
-                    // Update the UI
-                    plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
-                    actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
-                    fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                    // Update the UI                    
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
