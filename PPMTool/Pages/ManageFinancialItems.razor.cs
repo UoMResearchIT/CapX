@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
@@ -25,6 +27,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private InvoiceService InvoiceService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
         private IEnumerable<Invoice> invoices;
@@ -72,6 +77,16 @@ namespace PPMTool.Pages
             {
                 Navigation.NavigateTo($"projects/projectdetails/{selectedProject.ProjectId}");
             }
+        }
+
+        /// <summary>
+        /// Opens the URL to the invoice document in a new tab
+        /// </summary>
+        /// <param name="invoice"></param>
+        /// <returns></returns>
+        private async Task ViewInvoiceDocumentAsync(Invoice invoice)
+        {
+            await JSRuntime.InvokeAsync<object>("open", $"{invoice.InvoiceUrl}", "_blank");
         }
 
         /// <summary>

@@ -51,6 +51,7 @@
                             <RadzenDataGridColumn TItem="Invoice" Context="invoice" Title="Actions">
                                 <Template Context="invoice">
                                     <RadzenButton Text="Edit" Click="@(args => EditPaymentOrInvoice(invoice))" />
+                                    <RadzenButton Text="View" Click="@(args => ViewInvoiceDocumentAsync(invoice))" Disabled="@(string.IsNullOrWhiteSpace(invoice.InvoiceUrl))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>

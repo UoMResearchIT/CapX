@@ -28,6 +28,13 @@ namespace PPMTool.Data.Entities
         public InvoiceStatus Status { get; set; }
 
         /// <summary>
+        /// The URL of the invoice document on SharePoint
+        /// </summary>
+        [Required]
+        [DataType(DataType.Url)]
+        public string InvoiceUrl { get; set; }
+
+        /// <summary>
         /// An optional list of payments that pay all or part of this invoice
         /// </summary>
         [Required]
