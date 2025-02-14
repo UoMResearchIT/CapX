@@ -32,9 +32,15 @@ namespace PPMTool.Migrations
             public string Comments { get; set; }
         }
 
-        private string Clean(string initial)
+        private string Clean(string initial, bool isCurrency = false)
         {
-            return initial.Replace("\"\"", "**").Replace("\"", "").Replace("**", "\"\"").Replace("\r", "");
+            var replacement = initial.Replace("\"\"", "**").Replace("\"", "").Replace("**", "\"\"").Replace("\r", "");
+
+            if (isCurrency)
+            {
+                replacement = replacement.Replace(",", "");
+            }
+            return replacement;
         }
 
         private InvoiceStatus MapToInvoiceStatus(string status)
@@ -53,7 +59,7 @@ namespace PPMTool.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             var filePath = $"./Migrations/Data/KnownInvoices.txt";
-            var lines = File.ReadAllLines(filePath);
+            var lines = File.ReadAllLines(filePath, System.Text.Encoding.UTF8);
             List<InvoiceLine> invoiceLinesList = new List<InvoiceLine>();
             foreach (var line in lines)
             {
@@ -71,13 +77,15 @@ namespace PPMTool.Migrations
                     InvId = int.Parse(Clean(values[0])),
                     RTP = int.Parse(Clean(values[1])),
                     RaiserId = int.Parse(Clean(values[2])),
-                    Amount = double.Parse(Clean(values[3])),
+                    Amount = double.Parse(Clean(values[3], true)),
                     Requested = DateTime.ParseExact(Clean(values[4]), "dd MMMM yyyy", CultureInfo.InvariantCulture),
                     InvoiceRef = Clean(values[5]),
                     Status = MapToInvoiceStatus(Clean(values[6])),
                     InvoiceLink = Clean(values[7]),
                     Comments = Clean(values[8])
                 };
+
+                invoiceLinesList.Add(obj);
             }
 
             Console.WriteLine($"** Have {invoiceLinesList.Count} rows from the invoices file!");
@@ -100,7 +108,7 @@ namespace PPMTool.Migrations
                 var obj = new PaymentLine()
                 {
                     InvId = int.Parse(Clean(values[0])),
-                    Amount = double.Parse(Clean(values[1])),
+                    Amount = double.Parse(Clean(values[1], true)),
                     TransactionDate = DateTime.ParseExact(Clean(values[2]), "dd MMMM yyyy", CultureInfo.InvariantCulture),
                     Comments = Clean(values[3])
                 };
@@ -111,7 +119,7 @@ namespace PPMTool.Migrations
             Console.WriteLine($"** Have {paymentLinesList.Count} rows from the payments file!");
 
             // Invoices
-            var sqlScript = string.Empty;
+            string sqlScript = string.Empty;
             foreach (var invoice in invoiceLinesList)
             {
                 sqlScript += $@"
@@ -120,16 +128,14 @@ namespace PPMTool.Migrations
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
                 ";
-            }
 
-            // Execute the SQL script
-            if (!string.IsNullOrWhiteSpace(sqlScript))
-            {
-                migrationBuilder.Sql(sqlScript);
+                if (!string.IsNullOrWhiteSpace(sqlScript))
+                {
+                    migrationBuilder.Sql(sqlScript);
+                }
             }
 
             // Payments
-            sqlScript = string.Empty;
             foreach (var payment in paymentLinesList)
             {
                 // Need to lookup the project Id of the project 
@@ -139,12 +145,11 @@ namespace PPMTool.Migrations
                     FROM Invoices
                     WHERE InvoiceId = {payment.InvId};
                 ";
-            }
 
-            // Execute the SQL script
-            if (!string.IsNullOrWhiteSpace(sqlScript))
-            {
-                migrationBuilder.Sql(sqlScript);
+                if (!string.IsNullOrWhiteSpace(sqlScript))
+                {
+                    migrationBuilder.Sql(sqlScript);
+                }
             }
 
             // Generate any other payments that are needed to balance the books
