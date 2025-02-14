@@ -16,26 +16,32 @@
     </div>
     <hr />
     <div class="card">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-            <RadzenText Text="Project:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-            <RadzenDropDown AllowClear="true"
-                            AllowFiltering="true"
-                            AllowSelectAll="false"
-                            Data="@projects"
-                            @bind-Value="selectedProject"
-                            Change="@(args => OnProjectChange(args))"
-                            Multiple="false"
-                            Placeholder="Select Project"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            FilterOperator="StringFilterOperator.Contains"
-                            class="radzen-dropdown"
-                            LoadData="LoadProjectDropdownWithFilter">
-                <Template>
-                    @((context as Project)?.GetFullName())
-                </Template>
-            </RadzenDropDown>
-            <RadzenButton Click="@(args => GoToProjectDetails())" Text="Project" Icon="info" Disabled="@(selectedProject == null)" />
-        </RadzenStack>
+        <div class="row">
+            <div class="col-auto align-content-center">
+                <RadzenText Text="Project:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+            </div>
+            <div class="col align-content-center">
+                <RadzenDropDown AllowClear="true"
+                                AllowFiltering="true"
+                                AllowSelectAll="false"
+                                Data="@projects"
+                                @bind-Value="selectedProject"
+                                Change="@(args => OnProjectChange(args))"
+                                Multiple="false"
+                                Placeholder="Select Project"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                FilterOperator="StringFilterOperator.Contains"
+                                class="radzen-dropdown"
+                                LoadData="LoadProjectDropdownWithFilter">
+                    <Template>
+                        @((context as Project)?.GetFullName())
+                    </Template>
+                </RadzenDropDown>
+            </div>
+            <div class="col-auto align-content-center">
+                <RadzenButton Click="@(args => GoToProjectDetails())" Text="View Project" Icon="info" Disabled="@(selectedProject == null)" />
+            </div>
+        </div>
         <RadzenTabs>
             <Tabs>
                 <RadzenTabsItem Text="Invoices">
