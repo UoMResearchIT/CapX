@@ -49,12 +49,29 @@ namespace PPMTool.Pages
             LogInformation("Viewing project finance");
         }
 
+        /// <summary>
+        /// Invoked when the project selection is changed to load the datagrid items again
+        /// </summary>
+        /// <param name="value"></param>
         private void OnProjectChange(object value)
         {
             // Load invoices and payments for the selected project
             LoadData();
 
+            LogInformation($"Viewing project finance for {selectedProject?.GetFullName()}");
+
             Debug.WriteLine($"** {(value as Project)?.GetFullName() ?? "Nothing"}");
+        }
+
+        /// <summary>
+        /// Navigate to project details page for selected project
+        /// </summary>
+        private void GoToProjectDetails()
+        {
+            if (selectedProject != null)
+            {
+                Navigation.NavigateTo($"projects/projectdetails/{selectedProject.ProjectId}");
+            }
         }
 
         /// <summary>
