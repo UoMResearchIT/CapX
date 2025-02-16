@@ -8,13 +8,101 @@
 @using PPMTool.Services
 @using Radzen.Blazor
 
-<div class="container">
+<div class="container">#
+    @*
     @if (Loading)
     {
         <LoadingComponent />
     }
     else
     {
+         <EditForm Model="@timesheet" @* OnValidSubmit="@HandleValidSubmit" 
+            <div class="card">
+                <div class="row">
+                    <div class="col">
+                        <h2>Timesheet Template Admin</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
+                        <RadzenButton Text="Add" Icon="add" @* Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))  />
+                    </div>
+                </div>
+
+                <RadzenDataGrid @* @ref="dataGrid" 
+                                AllowFiltering="false"
+                                AllowPaging="false"
+                                EditMode="DataGridEditMode.Single"
+                                Data="@dataGridEntities"
+                                TItem="TimesheetEntry"
+                                @* RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow" 
+                                ColumnWidth="5rem"
+                                CellRender="@CellRender"
+                                LoadData="OnDataLoad">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="IsInTemplate" Title="" Width="10px">
+                            <Template Context="entry">
+                               &nbsp;
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="7px" Width="12rem">
+                            <Template Context="entry">
+                                <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    FilterOperator="StringFilterOperator.Contains"
+                                                    AllowFiltering="true"
+                                                    Placeholder="Search for Innate Code"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
+                                                    Style="width: 100%"
+                                                    Change="@(args => OnInnateCodeChanged(args))" />
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
+                                }
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask.Duty" Sortable="true" Title="Task" MinWidth="10px" Width="12rem">
+                            <Template Context="entry">
+                                <TimesheetEntryTaskComponent Entry="@entry" />
+                            </Template>
+                            <EditTemplate Context="entry">
+                                @if (entry.InnateCodeTask == null)
+                                {
+                                    <RadzenDropDown TValue="InnateCodeTask"
+                                                    Data="@innateCodeTaskDropdownSource"
+                                                    TextProperty="TaskName"
+                                                    Style="width: 100%"
+                                                    @bind-Value="entry.InnateCodeTask" />
+                                }
+                                else
+                                {
+                                    <TimesheetEntryTaskComponent Entry="@entry" />
+                                }
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions" Sortable="false">
+                            <Template Context="entry">
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" @* Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" @* Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+
+            @if (ErrorMessage != null)
+            {
+                <br />
+                <StatusMessageComponent Message=@ErrorMessage />
+            }
+            </EditForm> *@
+
+
          <div class="row">
             <div class="col">
                 <h1>Reorder Your Timesheet Template</h1>
@@ -50,7 +138,7 @@
             <div class="col">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
                     <div>
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save and exit" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@SaveAndExit" />
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Return to dashboard" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@SaveAndExit" />
                     </div>
                 </RadzenStack>
             </div>
