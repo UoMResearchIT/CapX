@@ -60,13 +60,10 @@
                         <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
                     </div>
                 </div>
-                @{
-                    bool CanSort = timesheet.IsLineManager(ActiveUser);
-                }
                 <RadzenDataGrid @ref="dataGrid"
                                 AllowFiltering="false"
                                 AllowPaging="false"
-                                AllowSorting=@CanSort
+                                AllowSorting=true
                                 EditMode="DataGridEditMode.Single"
                                 Data="@dataGridEntities"
                                 TItem="TimesheetEntry"
@@ -76,7 +73,12 @@
                                 CellRender="@CellRender"
                                 LoadData="OnDataLoad">
                     <Columns>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="10px" Width="12rem">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="IsInTemplate" Title="" Width="10px">
+                            <Template Context="entry">
+                               &nbsp;
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="7px" Width="12rem">
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
                             </Template>
@@ -98,7 +100,7 @@
                                 }
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask.Duty" Sortable="true" Title="Task" MinWidth="10px" Width="12rem">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask.Duty" Sortable="true" Title="WLM Duty & Task" MinWidth="10px" Width="12rem">
                             <Template Context="entry">
                                 <TimesheetEntryTaskComponent Entry="@entry" />
                             </Template>
