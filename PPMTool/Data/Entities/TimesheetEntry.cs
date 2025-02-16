@@ -67,6 +67,12 @@ namespace PPMTool.Data.Entities
         public double TotalHours { get; private set; }
 
         /// <summary>
+        /// Represents whether this task is part of the user's template
+        /// </summary>
+        [NotMapped]
+        public bool IsInTemplate { get; set; }
+
+        /// <summary>
         /// Method to sum up the hours in the entry
         /// </summary>
         /// <returns></returns>
