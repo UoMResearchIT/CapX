@@ -123,17 +123,8 @@ namespace PPMTool.Pages
                         if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
 
-                    if (IsSuperuserOrLineManagerOfThisPerson(timesheet.Owner))
-                    {
-                        // Order by Duty if Line Manbager viewing
-                        dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
-                    }
-                    else
-                    {
-                        // Use the staff member's timesheet template for the ordering
-                        string templateOrdering = ActiveUser.TimesheetTemplateData;
-                        dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
-                    }
+                    GetOrderedData();
+
                     UpdateDailyTotals();
 
                     // Innate codes are limited to active ones initially
@@ -190,6 +181,21 @@ namespace PPMTool.Pages
             });
         }
 
+        private void GetOrderedData()
+        {
+            if (ActiveUser.PersonId == timesheet.Owner.PersonId)
+            {
+                // Use the staff member's timesheet template for the ordering
+                string templateOrdering = ActiveUser.TimesheetTemplateData;
+                dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
+            }
+            else
+            {
+                // Order by Duty if Line Manager viewing
+                dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
+            }
+        }
+
         private List<TimesheetEntry> OrderByTemplate(Timesheet timesheet, string templateOrderDetail)
         {
             List<int> order = new List<int>();
@@ -207,6 +213,11 @@ namespace PPMTool.Pages
                     .ThenBy(r => r.InnateCodeTask.InnateCodeTaskId)
                     .ToList();
 
+                foreach (TimesheetEntry e in orderedResults)
+                {
+                    e.IsInTemplate = order.Contains(e.InnateCodeTask.InnateCodeTaskId);
+                }
+
                 return orderedResults;
             }
             else
@@ -219,22 +230,32 @@ namespace PPMTool.Pages
         {
             IQueryable<TimesheetEntry> query = timesheet.TimesheetEntries.AsQueryable();
 
-            if (!string.IsNullOrEmpty(args.OrderBy))
+            // the ordering of timesheet entries epends on who is logged in 
+            // and whose timesheet they are viewing
+            if (!string.IsNullOrEmpty(args.OrderBy)) // Sorting link has been clicked
             {
                 if (args.OrderBy.Contains("Duty"))
                 {
+                    // "WLM Task & Duty" column sorting has been clicked
                     query = args.OrderBy.EndsWith("desc")
                     ? query.OrderByDescending(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName)
                     : query.OrderBy(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName);
                 }
                 else
                 {
+                    // Innate code column sorting has been clicked
                     query = args.OrderBy.EndsWith("desc")
                     ? query.OrderByDescending(e => e.InnateCodeTask.InnateCode.ActivityCode)
                     : query.OrderBy(e => e.InnateCodeTask.InnateCode.ActivityCode);
                 }
+
+                dataGridEntities = query.ToList();
             }
-            dataGridEntities = query.ToList();
+            else
+            {
+                // Default is to order by the user's template if viewing their own timesheet
+                GetOrderedData();
+            }
         }
 
         protected override void OnInitialized()
@@ -615,6 +636,12 @@ namespace PPMTool.Pages
                     if (DayColours.ContainsKey(theDay))
                     {
                         args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                    }
+
+                    if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
+                    {
+                        args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
+                        args.Attributes.Add("title", "Task is part of your default template");
                     }
                 }
             }
