@@ -34,7 +34,7 @@ namespace PPMTool.Migrations
 
         private string Clean(string initial, bool isCurrency = false)
         {
-            var replacement = initial.Replace("\"\"", "**").Replace("\"", "").Replace("**", "\"\"").Replace("\r", "");
+            var replacement = initial.Replace("\"\"", "**").Replace("\"", "").Replace("**", "\"\"").Replace("\r", "").Replace("'", "''");
 
             if (isCurrency)
             {
@@ -128,14 +128,17 @@ namespace PPMTool.Migrations
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
                 ";
-
-                if (!string.IsNullOrWhiteSpace(sqlScript))
-                {
-                    migrationBuilder.Sql(sqlScript);
-                }
             }
 
+            if (!string.IsNullOrWhiteSpace(sqlScript))
+            {
+                migrationBuilder.Sql(sqlScript);
+            }
+
+            Console.WriteLine($"** Invoices added!");
+
             // Payments
+            sqlScript = string.Empty;
             foreach (var payment in paymentLinesList)
             {
                 // Need to lookup the project Id of the project 
@@ -144,53 +147,55 @@ namespace PPMTool.Migrations
                     SELECT '{payment.InvId}', '{payment.TransactionDate:yyyy-MM-dd}', '{payment.Amount}', '[Automatic Import from Old Tracker] {payment.Comments}', ProjectId
                     FROM Invoices
                     WHERE InvoiceId = {payment.InvId};
+
                 ";
-
-                if (!string.IsNullOrWhiteSpace(sqlScript))
-                {
-                    migrationBuilder.Sql(sqlScript);
-                }
             }
-
-            // Generate any other payments that are needed to balance the books
-            sqlScript = $@"
-                -- Loop through each record in the Projects table
-                WITH ProjectPayments AS (
-                    SELECT 
-                        p.ProjectId,
-                        p.FundsReceived,
-                        COALESCE(SUM(py.Value), 0) AS TotalPayments
-                    FROM 
-                        Projects p
-                    LEFT JOIN 
-                        Payments py ON p.ProjectId = py.ProjectId
-                    GROUP BY 
-                        p.ProjectId
-                )
-                INSERT INTO Payments (InvoiceId, KeyDate, Value, Description, ProjectId)
-                SELECT 
-                    NULL AS InvoiceId,
-                    DATE('now') AS KeyDate,
-                    (pp.FundsReceived - pp.TotalPayments) AS Value,
-                    '[Automatic Adjustment Payment] This payment has been created automatically as part of adding the finance tracking feature. This is due to the existing data in CapX for the project stating we had received more money for the project than just what was recorded on the old invoice tracker. These may well be salary costs and hence were not associated with an invoice and not tracked on the tracker.' AS Description,
-                    pp.ProjectId
-                FROM 
-                    ProjectPayments pp
-                WHERE 
-                    pp.FundsReceived > pp.TotalPayments;
-            ";
             if (!string.IsNullOrWhiteSpace(sqlScript))
             {
                 migrationBuilder.Sql(sqlScript);
             }
+
+            Console.WriteLine($"** Payments added!");
+
+            //// Generate any other payments that are needed to balance the books
+            //sqlScript = $@"
+            //    -- Loop through each record in the Projects table
+            //    WITH ProjectPayments AS (
+            //        SELECT 
+            //            p.ProjectId,
+            //            p.FundsReceived,
+            //            COALESCE(SUM(py.Value), 0) AS TotalPayments
+            //        FROM 
+            //            Projects p
+            //        LEFT JOIN 
+            //            Payments py ON p.ProjectId = py.ProjectId
+            //        GROUP BY 
+            //            p.ProjectId
+            //    )
+            //    INSERT INTO Payments (InvoiceId, KeyDate, Value, Description, ProjectId)
+            //    SELECT 
+            //        NULL AS InvoiceId,
+            //        DATE('now') AS KeyDate,
+            //        (pp.FundsReceived - pp.TotalPayments) AS Value,
+            //        '[Automatic Adjustment Payment] This payment has been created automatically as part of adding the finance tracking feature. This is due to the existing data in CapX for the project stating we had received more money for the project than just what was recorded on the old invoice tracker. These may well be salary costs and hence were not associated with an invoice and not tracked on the tracker.' AS Description,
+            //        pp.ProjectId
+            //    FROM 
+            //        ProjectPayments pp
+            //    WHERE 
+            //        pp.FundsReceived > pp.TotalPayments;
+            //";
+            //if (!string.IsNullOrWhiteSpace(sqlScript))
+            //{
+            //    migrationBuilder.Sql(sqlScript);
+            //}
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
                 @"
-                    DELETE FROM Invoices;
                     DELETE FROM Payments;
+                    DELETE FROM Invoices;
                 "
             );
         }
