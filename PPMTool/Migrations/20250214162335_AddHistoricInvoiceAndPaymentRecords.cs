@@ -171,39 +171,63 @@ namespace PPMTool.Migrations
 
             Console.WriteLine($"** Payments added!");
 
-            //// Generate any other payments that are needed to balance the books
-            //sqlScript = $@"
-            //    -- Loop through each record in the Projects table
-            //    WITH ProjectPayments AS (
-            //        SELECT 
-            //            p.ProjectId,
-            //            p.FundsReceived,
-            //            COALESCE(SUM(py.Value), 0) AS TotalPayments
-            //        FROM 
-            //            Projects p
-            //        LEFT JOIN 
-            //            Payments py ON p.ProjectId = py.ProjectId
-            //        GROUP BY 
-            //            p.ProjectId
-            //    )
-            //    INSERT INTO Payments (InvoiceId, KeyDate, Value, Description, ProjectId)
-            //    SELECT 
-            //        NULL AS InvoiceId,
-            //        DATE('now') AS KeyDate,
-            //        (pp.FundsReceived - pp.TotalPayments) AS Value,
-            //        '[Automatic Adjustment Payment] This payment has been created automatically as part of adding the finance tracking feature. This is due to the existing data in CapX for the project stating we had received more money for the project than just what was recorded on the old invoice tracker. These may well be salary costs and hence were not associated with an invoice and not tracked on the tracker.' AS Description,
-            //        pp.ProjectId
-            //    FROM 
-            //        ProjectPayments pp
-            //    WHERE 
-            //        pp.FundsReceived > pp.TotalPayments;
-            //";
-            //if (!string.IsNullOrWhiteSpace(sqlScript))
-            //{
-            //    migrationBuilder.Sql(sqlScript);
-            //}
-        }
+            // Generate any other payments needed to balance the books
+            var message = "This payment has been created automatically as part of adding the finance tracking feature. This is due to the existing data in CapX for the project stating we had received more money for the project than just what was recorded on the old invoice tracker. These may well be salary costs and hence were not associated with an invoice and not tracked on the tracker.";
+            sqlScript = $@"
+                CREATE TEMP TABLE TempProjectPayments (ProjectId INTEGER, Difference REAL);
 
+                WITH ProjectPayments AS (
+                    SELECT 
+                        p.ProjectId,
+                        p.FundsReceived,
+                        COALESCE(SUM(py.Value), 0) AS TotalPayments
+                    FROM 
+                        Projects p
+                    LEFT JOIN 
+                        Payments py ON p.ProjectId = py.ProjectId
+                    GROUP BY 
+                        p.ProjectId
+                )
+                INSERT INTO TempProjectPayments (ProjectId, Difference)
+                SELECT 
+                    pp.ProjectId,
+                    (pp.FundsReceived - pp.TotalPayments) AS Difference
+                FROM 
+                    ProjectPayments pp
+                WHERE 
+                    pp.FundsReceived > pp.TotalPayments;
+
+                INSERT INTO Payments (InvoiceId, KeyDate, Value, Description, ProjectId)
+                SELECT 
+                    NULL AS InvoiceId,
+                    DATE('now') AS KeyDate,
+                    t.Difference AS Value,
+                    '[Automatic Adjustment Payment] {message}' AS Description,
+                    t.ProjectId
+                FROM 
+                    TempProjectPayments t;
+
+                INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
+                SELECT 
+                    '<p><span class=""badge badge-success"">Payment</span><br/><em>[Automatic Adjustment Payment]</em><br/>{message}</p>',
+                    ProjectManagerPersonId,
+                    t.ProjectId,
+                    DATE('now'),
+                    '0001-01-01 00:00:00',
+                    1
+                FROM 
+                    TempProjectPayments t
+                JOIN 
+                    Projects p ON t.ProjectId = p.ProjectId;
+
+                DROP TABLE TempProjectPayments;
+            ";
+
+            if (!string.IsNullOrWhiteSpace(sqlScript))
+            {
+                migrationBuilder.Sql(sqlScript);
+            }
+        }
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
@@ -213,6 +237,7 @@ namespace PPMTool.Migrations
 
                     DELETE FROM Notes
                     WHERE HtmlContent LIKE '%[Automatically Added from Old Tracker]%'
+                    OR HtmlContent LIKE '%[Automatic Adjustment Payment]%'
                 "
             );
         }
