@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Microsoft.EntityFrameworkCore.Migrations;
 using PPMTool.Enums;
 
@@ -127,6 +128,11 @@ namespace PPMTool.Migrations
                     SELECT '{invoice.InvId}', '{invoice.InvoiceRef}', '{(int)invoice.Status}', '{invoice.Requested:yyyy-MM-dd}', '{invoice.Amount}', '[Automatic Import from Old Tracker] {invoice.Comments}', ProjectId, '{invoice.InvoiceLink}'
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
+
+                    INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
+                    SELECT '<p><b>[Invoice Automatically Added]</b> <em>Imported Notes:</em> {invoice.Comments}</p>', {invoice.RaiserId}, ProjectId, '{invoice.Requested:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
+                    FROM Projects
+                    WHERE RTP = {invoice.RTP};
                 ";
             }
 
@@ -141,6 +147,9 @@ namespace PPMTool.Migrations
             sqlScript = string.Empty;
             foreach (var payment in paymentLinesList)
             {
+                // Get related invoice
+                var invoice = invoiceLinesList.First(x => x.InvId == payment.InvId);
+
                 // Need to lookup the project Id of the project 
                 sqlScript += $@"
                     INSERT INTO Payments (InvoiceId, KeyDate, Value, Description, ProjectId)
@@ -148,8 +157,13 @@ namespace PPMTool.Migrations
                     FROM Invoices
                     WHERE InvoiceId = {payment.InvId};
 
+                    INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
+                    SELECT '<p><b>[Payment Automatically Added]</b> <em>Imported Notes:</em> {payment.Comments}</p>', {invoice.RaiserId}, ProjectId, '{payment.TransactionDate:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
+                    FROM Projects
+                    WHERE RTP = {invoice.RTP};
                 ";
             }
+
             if (!string.IsNullOrWhiteSpace(sqlScript))
             {
                 migrationBuilder.Sql(sqlScript);
@@ -196,6 +210,9 @@ namespace PPMTool.Migrations
                 @"
                     DELETE FROM Payments;
                     DELETE FROM Invoices;
+
+                    DELETE FROM Notes
+                    WHERE HtmlContent LIKE '%[Invoice Automatically Added]%' OR HtmlContent LIKE '%[Payment Automatically Added]%';
                 "
             );
         }
