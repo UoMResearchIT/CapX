@@ -130,7 +130,7 @@ namespace PPMTool.Migrations
                     WHERE RTP = {invoice.RTP};
 
                     INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
-                    SELECT '<p><b>[Invoice Automatically Added]</b> <em>Imported Notes:</em> {invoice.Comments}</p>', {invoice.RaiserId}, ProjectId, '{invoice.Requested:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
+                    SELECT '<p><span class=""badge badge-warning"">Invoice</span><br/><em>[Automatically Added from Old Tracker]</em><br/>{invoice.Comments}</p>', {invoice.RaiserId}, ProjectId, '{invoice.Requested:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
                 ";
@@ -158,7 +158,7 @@ namespace PPMTool.Migrations
                     WHERE InvoiceId = {payment.InvId};
 
                     INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
-                    SELECT '<p><b>[Payment Automatically Added]</b> <em>Imported Notes:</em> {payment.Comments}</p>', {invoice.RaiserId}, ProjectId, '{payment.TransactionDate:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
+                    SELECT '<p><span class=""badge badge-success"">Payment</span><br/><em>[Automatically Added from Old Tracker]</em><br/>{payment.Comments}</p>', {invoice.RaiserId}, ProjectId, '{payment.TransactionDate:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
                 ";
@@ -212,7 +212,7 @@ namespace PPMTool.Migrations
                     DELETE FROM Invoices;
 
                     DELETE FROM Notes
-                    WHERE HtmlContent LIKE '%[Invoice Automatically Added]%' OR HtmlContent LIKE '%[Payment Automatically Added]%';
+                    WHERE HtmlContent LIKE '%[Automatically Added from Old Tracker]%'
                 "
             );
         }

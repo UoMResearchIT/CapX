@@ -56,8 +56,8 @@
                             <RadzenDataGridColumn TItem="Invoice" Property="Description" Title="Notes" />
                             <RadzenDataGridColumn TItem="Invoice" Context="invoice" Title="Actions">
                                 <Template Context="invoice">
-                                    <RadzenButton Text="Edit" Click="@(args => EditPaymentOrInvoice(invoice))" />
-                                    <RadzenButton Text="View" Click="@(args => ViewInvoiceDocumentAsync(invoice))" Disabled="@(string.IsNullOrWhiteSpace(invoice.InvoiceUrl))" />
+                                    <RadzenButton Text="Edit" Icon="edit" Click="@(args => EditPaymentOrInvoice(invoice))" />
+                                    <RadzenButton Text="View" Icon="visibility" Click="@(args => ViewInvoiceDocumentAsync(invoice))" Disabled="@(string.IsNullOrWhiteSpace(invoice.InvoiceUrl))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
@@ -74,7 +74,7 @@
                             <RadzenDataGridColumn TItem="Payment" Property="Invoice.InvoiceId" Title="Associated Invoice" />
                             <RadzenDataGridColumn TItem="Payment" Context="payment" Title="Actions">
                                 <Template Context="payment">
-                                    <RadzenButton Text="Edit" Click="@(args => EditPaymentOrInvoice(payment))" />
+                                    <RadzenButton Text="Edit" Icon="edit" Click="@(args => EditPaymentOrInvoice(payment))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
