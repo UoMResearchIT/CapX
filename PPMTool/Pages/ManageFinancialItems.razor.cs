@@ -94,8 +94,8 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
-            invoices = InvoiceService.GetAll(Context);
-            payments = InvoiceService.GetAllPayments(Context);
+            invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate);
+            payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate);
 
             // Filter if a project is selected
             if (selectedProject != null)
