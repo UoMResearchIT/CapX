@@ -10,17 +10,24 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    public partial class ReorderTimesheet : BasePage
+    public partial class ReorderTimesheet : DataGridPage<TimesheetTemplateItem>
     {
+        [Parameter]
+        public int TimesheetId { get; set; }
+
         [Inject]
         private PersonService PersonService { get; set; }
 
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
-        private Timesheet timesheet;
+        [Inject]
+        public Radzen.DialogService dialogService { get; set; }
+
         private Role activeUserRole;
         private ObservableCollection<TimesheetTemplateItem> templateData;
+        private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
+        private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
         private IList<TimesheetTemplateItem> selectedTemplateItem;
         private TimesheetTemplateItem draggedItem;
         private string finalOrder;
@@ -110,8 +117,6 @@ namespace PPMTool.Pages
                     Detail = "Your timesheet template ordering has been updated."
                 });
             }));
-
-
         }
 
         protected override void OnInitialized()
@@ -120,21 +125,12 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Should this user be allowed to view the timesheet. Only superusers, the owner or the line manager.
-        /// </summary>
-        /// <returns></returns>
-        private bool CanEditTheTaskOrder()
-        {
-            return (timesheet?.IsOwner(ActiveUser) ?? false);
-        }
-
-        /// <summary>
         /// Navigate to timesheet
         /// </summary>
         /// <param name="timesheet"></param>
         public void GoToTimesheet(Timesheet timesheet)
         {
-            Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
+            Navigation.NavigateTo($"timesheets/addtimesheet/{TimesheetId}");
         }
 
         /// <summary>
@@ -144,6 +140,11 @@ namespace PPMTool.Pages
         public void SaveAndExit()
         {
             Navigation.NavigateTo($"timesheets");
+        }
+
+        public void CloseDialog()
+        {
+            dialogService.Close(true);
         }
     }
 }
