@@ -588,15 +588,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Navigate to timesheet reordering page
-        /// </summary>
-        /// <param name="timesheet"></param>
-        public void ReorderTimesheet(Timesheet timesheet)
-        {
-            Navigation.NavigateTo($"timesheets/reordertimesheet/{timesheet.TimesheetId}");
-        }
-
-        /// <summary>
         /// Remove the entity from the DB table
         /// </summary>
         /// <param name="entity"></param>
@@ -717,6 +708,24 @@ namespace PPMTool.Pages
         public void GoToTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
+        }
+
+
+        private async void ReorderTimesheetTemplate(Timesheet timesheet)
+        {
+            var result = await DialogService.OpenAsync<ReorderTimesheet>("Reorder your timesheet template",
+               new Dictionary<string, object>() { { "TimesheetId", timesheet.TimesheetId } },
+               new DialogOptions()
+               {
+                   Width = "700px"
+               });
+
+            if (result)
+            {
+                Loading = true;
+                EnqueueLoadData(GetTask);
+                StateHasChanged();
+            }
         }
     }
 }

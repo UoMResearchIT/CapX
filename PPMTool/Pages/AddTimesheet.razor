@@ -7,6 +7,9 @@
 @using PPMTool.Pages.Components
 @using PPMTool.Services
 @using Radzen.Blazor
+@inject DialogService DialogService
+@inject IJSRuntime JSRuntime
+
 <PageTitle>Add Timesheet - CapX</PageTitle>
 
 <div class="container">
@@ -57,7 +60,8 @@
                         <h2>Timesheet Entries</h2>
                     </div>
                     <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
+                        <RadzenButton Variant="Variant.Outlined" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" style="margin-right: 0.5rem;"/>
+                        <RadzenButton Text="Add Task" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
