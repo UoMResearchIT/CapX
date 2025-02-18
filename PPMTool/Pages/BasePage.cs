@@ -149,7 +149,7 @@ namespace PPMTool.Pages
             //LogToSentry(message, SentryLevel.Error, exception);
         }
 
-        public void ShowTooltip(ElementReference elementReference, string message, int delay = 500)
+        public void ShowTooltip(ElementReference elementReference, string message, int delay = 250)
         {
             var options = new TooltipOptions()
             {

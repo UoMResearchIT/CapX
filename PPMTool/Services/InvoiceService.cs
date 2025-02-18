@@ -62,6 +62,40 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Adds a payment to the DB and optionally saves changes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="payment"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        public int AddPayment(PPMToolContext context, Payment payment, bool commitChanges = true)
+        {
+            context.Payments.Add(payment);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+            return payment.PaymentId;
+        }
+
+        /// <summary>
+        /// Updates an existing payment in the DB and optionally saves changes
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="payment"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        public int UpdatePayment(PPMToolContext context, Payment payment, bool commitChanges = true)
+        {
+            context.Payments.Update(payment);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+            return payment.PaymentId;
+        }
+
+        /// <summary>
         /// Gets the funds received based on payments in the DB for the given project
         /// </summary>
         /// <param name="context"></param>

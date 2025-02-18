@@ -12,7 +12,7 @@ namespace PPMTool.Data.Entities
         /// A key date associated with the item (e.g. invoice raised or payment received)
         /// </summary>
         [Required]
-        public DateTime KeyDate { get; set; }
+        public DateTime KeyDate { get; set; } = DateTime.Today;
 
         /// <summary>
         /// Value of the item

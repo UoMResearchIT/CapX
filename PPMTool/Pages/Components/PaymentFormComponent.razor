@@ -8,18 +8,30 @@
 
 <RadzenTemplateForm TItem="Payment" Submit="@HandleValidSubmit" Data="@Payment">
     <RadzenFieldset Text="Payment Details">
-        <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" />
-        <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" />
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
+                <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")"/>
+            </RadzenStack>
+            <RadzenTextArea @bind-Value="Payment.Description" Name="Notes" Placeholder="Optional notes to describe the nature of the payment" Style="width: 100%; height: 10rem;" />
+        </RadzenStack>
+    </RadzenFieldset>
+    <RadzenFieldset Text="Associated Invoice">
         <RadzenDropDown Data="@invoices"
         @bind-Value="Payment.Invoice"
-        Name="InvoiceId">
+        Name="InvoiceId"
+        AllowClear="true"
+        Style="width: 100%;">
             <Template Context="item">
-                @($"{(item as Invoice)?.InvoiceId}: {(item as Invoice)?.InvoiceReference ?? "-"} ({(item as Invoice)?.Value.ToString("{0:C0}")})")
+                @($"{(item as Invoice)?.InvoiceId}: {(item as Invoice)?.InvoiceReference ?? "No Ref"} ({(item as Invoice)?.Value.ToString("C2")})")
             </Template>
         </RadzenDropDown>
     </RadzenFieldset>
-    <RadzenButton Text="Save" Type="Submit" />
-    <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+    <br />
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Save" Type="Submit" />
+        <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+    </RadzenStack>
 </RadzenTemplateForm>
 
 @code {
@@ -49,7 +61,15 @@
     protected override void HandleValidSubmit()
     {
         base.HandleValidSubmit();
-
+        if (Payment.PaymentId > 0)
+        {
+            InvoiceService.UpdatePayment(Context, Payment);
+        }
+        else
+        {
+            InvoiceService.AddPayment(Context, Payment);
+        }
+        
         DialogService.Close(true);
     }
 }

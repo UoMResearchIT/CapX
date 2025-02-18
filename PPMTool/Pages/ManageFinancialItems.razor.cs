@@ -36,6 +36,7 @@ namespace PPMTool.Pages
         private IEnumerable<Payment> payments;
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
+        private int selectedTab;
 
         protected override void OnInitialized()
         {
@@ -124,38 +125,53 @@ namespace PPMTool.Pages
             InvokeAsync(StateHasChanged);
         }
 
-        private void AddPaymentOrInvoice()
+        /// <summary>
+        /// Method to load the dialog to add or edit a payment or invoice
+        /// </summary>
+        /// <param name="item"></param>
+        private async void AddOrEditPaymentOrInvoice(FinanceItem item)
         {
-            DialogService.Open<PaymentFormComponent>("Add Payment", new Dictionary<string, object> { { "Payment", new Payment() } });
-        }
-
-        private void EditPaymentOrInvoice(FinanceItem item)
-        {
-            if (item is Invoice invoice)
+            if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
-                DialogService.Open<InvoiceFormComponent>(
-                    "Edit Invoice",
+                var result = await DialogService.OpenAsync<InvoiceFormComponent>(
+                    $"{(item == null ? "Add" : "Edit")} Invoice",
                     new Dictionary<string, object>
                     {
                         { nameof(InvoiceFormComponent.Invoice), item },
                         { nameof(InvoiceFormComponent.Project), selectedProject },
                         { nameof(InvoiceFormComponent.Context), Context },
                         { nameof(InvoiceFormComponent.Logger), Logger }
+                    },
+                    new DialogOptions
+                    {
+                        ShowClose = false
                     }
                 );
+                if (result == null)
+                {
+                    Debug.WriteLine("** Dialog dismissed");
+                }
             }
-            else if (item is Payment)
+            else if ((item == null && selectedTab == 1) || item is Payment)
             {
                 DialogService.Open<PaymentFormComponent>(
-                    "Edit Payment",
+                    $"{(item == null ? "Add" : "Edit")} Payment",
                     new Dictionary<string, object>
                     {
                         { nameof(PaymentFormComponent.Payment), item },
                         { nameof(PaymentFormComponent.Project), selectedProject },
                         { nameof(PaymentFormComponent.Context), Context },
                         { nameof(PaymentFormComponent.Logger), Logger }
+                    },
+                    new DialogOptions
+                    {
+                        ShowClose = false
                     }
                 );
+            }
+            else
+            {
+                LogError("Unkown finance item type!");
             }
         }
     }
