@@ -13,9 +13,6 @@
             <h1>Payments and Invoices</h1>
             <RadzenText Text="@(selectedProject?.GetFullName() ?? "All Projects")" TextStyle="TextStyle.Subtitle1" />
         </div>
-        <div class="col-auto">
-            <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditPaymentOrInvoice(null))" Disabled="@(selectedProject == null)" />
-        </div>
     </div>
     @if (selectedProject == null)
     {
@@ -59,6 +56,14 @@
             </div>
             <hr />
         }
+        <div class="row align-items-center">
+            <div class="col">
+                <h2>Finance Items</h2>
+            </div>
+            <div class="col-auto align-content-end">
+                <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditPaymentOrInvoice(null))" Disabled="@(selectedProject == null)" />
+            </div>
+        </div>
         <RadzenTabs @bind-SelectedIndex="selectedTab">
             <Tabs>
                 <RadzenTabsItem Text="Invoices">
