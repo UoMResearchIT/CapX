@@ -1,21 +1,40 @@
 ﻿@inherits BaseFinanceItemFormComponent
+@using PPMTool.Enums
 @using Radzen
 @using PPMTool.Data.Entities
+@using DotNetExtensions
 @inject DialogService DialogService
 
-<RadzenTemplateForm TItem="Invoice" Submit="HandleValidSubmit" Data="@Invoice">
+<RadzenTemplateForm TItem="Invoice" Submit="@HandleValidSubmit" Data="@Invoice">
     <RadzenFieldset Text="Invoice Details">
-        <RadzenDatePicker @bind-Value="Invoice.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" />
-        <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" />
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                <RadzenDatePicker @bind-Value="Invoice.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
+                <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")" />
+            </RadzenStack>
+            <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Optional notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
+            <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
+            <RadzenDropDown Data="@statuses" @bind-Value="Invoice.Status" Name="Status" Style="width:100%;">
+                <Template Context="item">
+                    @(((InvoiceStatus)item).GetDescription())
+                </Template>
+            </RadzenDropDown>
+            <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%;" />
+        </RadzenStack>
     </RadzenFieldset>
-    <RadzenButton Text="Save" Type="Submit" />
-    <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+    <br />
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Save" Type="Submit" />
+        <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+    </RadzenStack>
 </RadzenTemplateForm>
 
 @code {
 
     [Parameter]
     public Invoice Invoice { get; set; }
+
+    private IEnumerable<InvoiceStatus> statuses;
 
     protected override void OnInitialized()
     {
@@ -29,11 +48,23 @@
                     Project = Project
                 };
         }
+
+        // Statuses for the dropdown
+        statuses = Enum.GetValues(typeof(InvoiceStatus)).Cast<InvoiceStatus>();
     }
 
     protected override void HandleValidSubmit()
     {
         base.HandleValidSubmit();
+
+        if (Invoice.InvoiceId > 0)
+        {
+            InvoiceService.Update(Context, Invoice);
+        }
+        else
+        {
+            InvoiceService.Add(Context, Invoice);
+        }
 
         DialogService.Close(true);
     }

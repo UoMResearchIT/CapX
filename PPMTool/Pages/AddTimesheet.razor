@@ -266,7 +266,7 @@
                                         {
                                             Duty duty = item.Key;
                                             double value = item.Value;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                            string dutyDescription = duty.GetDescription() ?? "NOT SET";
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
@@ -301,7 +301,7 @@
                                         {
                                             Duty duty = item.Key;
                                             double value = item.Value;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                            string dutyDescription = duty.GetDescription() ?? "NOT SET";
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 

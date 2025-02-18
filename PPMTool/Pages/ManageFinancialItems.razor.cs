@@ -129,12 +129,12 @@ namespace PPMTool.Pages
         /// Method to load the dialog to add or edit a payment or invoice
         /// </summary>
         /// <param name="item"></param>
-        private async void AddOrEditPaymentOrInvoice(FinanceItem item)
+        private void AddOrEditPaymentOrInvoice(FinanceItem item)
         {
             if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
-                var result = await DialogService.OpenAsync<InvoiceFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Invoice",
+                DialogService.Open<InvoiceFormComponent>(
+                    $"{(item == null ? "Add" : "Edit")} Invoice ({selectedProject.GetFullName()})",
                     new Dictionary<string, object>
                     {
                         { nameof(InvoiceFormComponent.Invoice), item },
@@ -147,15 +147,11 @@ namespace PPMTool.Pages
                         ShowClose = false
                     }
                 );
-                if (result == null)
-                {
-                    Debug.WriteLine("** Dialog dismissed");
-                }
             }
             else if ((item == null && selectedTab == 1) || item is Payment)
             {
                 DialogService.Open<PaymentFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Payment",
+                    $"{(item == null ? "Add" : "Edit")} Payment ({selectedProject.GetFullName()})",
                     new Dictionary<string, object>
                     {
                         { nameof(PaymentFormComponent.Payment), item },

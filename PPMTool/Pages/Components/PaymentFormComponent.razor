@@ -61,6 +61,9 @@
     protected override void HandleValidSubmit()
     {
         base.HandleValidSubmit();
+
+        // TODO: Validation?
+
         if (Payment.PaymentId > 0)
         {
             InvoiceService.UpdatePayment(Context, Payment);
