@@ -70,12 +70,6 @@ namespace PPMTool.Data.Entities
         public CostModel CostModel { get; set; }
 
         /// <summary>
-        /// The funds that we have been paid for this project
-        /// </summary>
-        [Required]
-        public double FundsReceived { get; set; }
-
-        /// <summary>
         /// The status of the project
         /// </summary>
         [Required]

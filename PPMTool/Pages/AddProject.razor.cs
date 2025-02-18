@@ -38,6 +38,9 @@ namespace PPMTool.Pages
         [Inject]
         private FinancialReferenceService FinancialReferenceService { get; set; }
 
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -52,6 +55,7 @@ namespace PPMTool.Pages
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
         private ValidationMessageStore messageStore;
         private EditContext editContext;
+        private double fundsReceived;
 
         protected override void OnInitialized()
         {
@@ -61,8 +65,10 @@ namespace PPMTool.Pages
             {
                 projectModel = ProjectService.GetById(Context, ProjectId);
 
+                // Get funds received
+                fundsReceived = InvoiceService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
+
                 // If editing a project, only allow the project manager to edit it or a superuser
-                var role = RolesService.GetByUsername(Context, ActiveUserName);
                 EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.PersonId;
 
                 // Populate school list

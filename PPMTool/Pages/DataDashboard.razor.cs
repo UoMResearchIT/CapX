@@ -54,6 +54,9 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
+
         private enum ViewOption
         {
             [Description("Last FY")]
@@ -281,6 +284,9 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Starting generation...");
 
+                // Create a thread-local context
+                var context = ContextFactory.CreateDbContext();
+
                 // Variable chart options
                 demandChartOptions.Fill.Colors = GetColours();
                 demandChartOptions.Colors = GetColours();
@@ -428,7 +434,7 @@ namespace PPMTool.Pages
                     // Get the actual income for all confirmed projects this week
                     var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
-                        return x.FundsReceived / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                        return InvoiceService.GetFundsReceived(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
                     // Get the actual income for all confirmed projects this week

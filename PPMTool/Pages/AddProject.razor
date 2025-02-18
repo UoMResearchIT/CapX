@@ -133,7 +133,7 @@
                 </div>
                 <div class="col-2">
                     <RadzenLabel class="radzen-form-label" Text="Funds Received (£)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
+                    <RadzenText Text="@(fundsReceived.ToString("C0"))" />
                 </div>
             </div>
             <hr />

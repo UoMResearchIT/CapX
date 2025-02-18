@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -13,6 +14,9 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class Projects : BaseProjectPage
     {
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
+
         private IEnumerable<Project> projects;
 
         private bool includeFinished;
