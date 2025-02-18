@@ -25,8 +25,12 @@ else
                     <th>Actual Cost</th>
                     <th>Funds Received</th>
                     <th>
-                        Actual Hours<br />
-                        <RadzenButton Click="ResetActualsTimeStamp" Icon="check" Text="Checked" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Disabled="!EditAuthorised" />
+                        Actual Hours
+                        @if (ResetActualsTimeStamp != null)
+                        {
+                            <br />
+                            <RadzenButton Click="ResetActualsTimeStamp" Icon="check" Text="Checked" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Disabled="!EditAuthorised" />
+                        }
                     </th>
                 </tr>
             </thead>
@@ -84,7 +88,7 @@ else
                         }
                     </td>
                     <td><span style="color:@fundsReceivedColour">@Project.FundsReceived.ToString("C0")</span></td>
-                    <td>@Project.SubTasks.RoundedSum(x => x.ActualWorkHours)</td>
+                    <td>@Project.SubTasks?.RoundedSum(x => x.ActualWorkHours)</td>
                 </tr>
             </tbody>
         </table>
