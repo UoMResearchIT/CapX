@@ -1,4 +1,8 @@
-﻿@using Radzen
+﻿@inherits BaseFinanceItemFormComponent
+@using Microsoft.Extensions.Logging
+@using PPMTool.Data.Context
+@using PPMTool.Services
+@using Radzen
 @using PPMTool.Data.Entities
 @inject DialogService DialogService
 
@@ -6,7 +10,13 @@
     <RadzenFieldset Text="Payment Details">
         <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" />
         <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" />
-        <RadzenDropDown Data="@invoices" @bind-Value="Payment.Invoice" Name="InvoiceId" />
+        <RadzenDropDown Data="@invoices"
+        @bind-Value="Payment.Invoice"
+        Name="InvoiceId">
+            <Template Context="item">
+                @($"{(item as Invoice)?.InvoiceId}: {(item as Invoice)?.InvoiceReference ?? "-"} ({(item as Invoice)?.Value.ToString("{0:C0}")})")
+            </Template>
+        </RadzenDropDown>
     </RadzenFieldset>
     <RadzenButton Text="Save" Type="Submit" />
     <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
@@ -17,17 +27,29 @@
     [Parameter]
     public Payment Payment { get; set; }
 
-    private List<Invoice> invoices;
+    private IEnumerable<Invoice> invoices;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
+        // If no payment set then create a new payment model
+        if (Payment == null)
+        {
+            Payment = new Payment
+                {
+                    Project = Project
+                };
+        }
+
         // Load invoices for the dropdown
+        invoices = InvoiceService.GetAll(Context).Where(x => x.Project?.ProjectId == Project?.ProjectId);
     }
 
-    private void HandleValidSubmit()
+    protected override void HandleValidSubmit()
     {
+        base.HandleValidSubmit();
+
         DialogService.Close(true);
     }
 }

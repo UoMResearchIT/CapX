@@ -1,4 +1,5 @@
-﻿@using Radzen
+﻿@inherits BaseFinanceItemFormComponent
+@using Radzen
 @using PPMTool.Data.Entities
 @inject DialogService DialogService
 
@@ -16,8 +17,24 @@
     [Parameter]
     public Invoice Invoice { get; set; }
 
-    private void HandleValidSubmit()
+    protected override void OnInitialized()
     {
+        base.OnInitialized();
+
+        // If no invoice set then create a new invoice model
+        if (Invoice == null)
+        {
+            Invoice = new Invoice
+                {
+                    Project = Project
+                };
+        }
+    }
+
+    protected override void HandleValidSubmit()
+    {
+        base.HandleValidSubmit();
+
         DialogService.Close(true);
     }
 }

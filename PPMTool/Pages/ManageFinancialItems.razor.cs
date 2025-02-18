@@ -131,7 +131,32 @@ namespace PPMTool.Pages
 
         private void EditPaymentOrInvoice(FinanceItem item)
         {
-            DialogService.Open<PaymentFormComponent>("Edit Payment", new Dictionary<string, object> { { "Payment", item } });
+            if (item is Invoice invoice)
+            {
+                DialogService.Open<InvoiceFormComponent>(
+                    "Edit Invoice",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(InvoiceFormComponent.Invoice), item },
+                        { nameof(InvoiceFormComponent.Project), selectedProject },
+                        { nameof(InvoiceFormComponent.Context), Context },
+                        { nameof(InvoiceFormComponent.Logger), Logger }
+                    }
+                );
+            }
+            else if (item is Payment)
+            {
+                DialogService.Open<PaymentFormComponent>(
+                    "Edit Payment",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(PaymentFormComponent.Payment), item },
+                        { nameof(PaymentFormComponent.Project), selectedProject },
+                        { nameof(PaymentFormComponent.Context), Context },
+                        { nameof(PaymentFormComponent.Logger), Logger }
+                    }
+                );
+            }
         }
     }
 }
