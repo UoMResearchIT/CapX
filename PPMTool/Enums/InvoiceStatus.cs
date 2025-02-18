@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel;
+using Radzen;
+using static PPMTool.Enums.Extensions;
 
 namespace PPMTool.Enums
 {
@@ -7,10 +9,14 @@ namespace PPMTool.Enums
     /// </summary>
     public enum InvoiceStatus
     {
+        [BadgeStyle(BadgeStyle.Danger)]
         Unpaid,
+        [BadgeStyle(BadgeStyle.Warning)]
         [Description("Partially Paid")]
         PartiallyPaid,
+        [BadgeStyle(BadgeStyle.Success)]
         Paid,
+        [BadgeStyle(BadgeStyle.Light)]
         Cancelled
     }
 }
