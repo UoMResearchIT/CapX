@@ -1,0 +1,11 @@
+﻿<div class="timesheet-note">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+        <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
+        @Message
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public string Message { get; set; }
+}

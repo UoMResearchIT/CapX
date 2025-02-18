@@ -14,9 +14,13 @@
             <RadzenText Text="@(selectedProject?.GetFullName() ?? "All Projects")" TextStyle="TextStyle.Subtitle1" />
         </div>
         <div class="col-auto">
-            <RadzenButton Icon="add" Text="Add" Click="AddPaymentOrInvoice" />
+            <RadzenButton Icon="add" Text="Add" Click="AddPaymentOrInvoice" Disabled="@(selectedProject == null)" />
         </div>
     </div>
+    @if (selectedProject == null)
+    {
+        <HintComponent Message="Selected a project to be able to add an item or navigate to that project's details page" />
+    }
     <hr />
     <div class="card">
         <div class="row">
