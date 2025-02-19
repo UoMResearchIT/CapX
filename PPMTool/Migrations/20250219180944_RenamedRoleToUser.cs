@@ -14,6 +14,11 @@ namespace PPMTool.Migrations
                 SELECT * FROM Roles;
             ");
 
+            migrationBuilder.Sql(@"
+                CREATE TABLE TempNotes AS
+                SELECT * FROM Notes;
+            ");
+
             // Create the Users table
             migrationBuilder.CreateTable(
                 name: "Users",
