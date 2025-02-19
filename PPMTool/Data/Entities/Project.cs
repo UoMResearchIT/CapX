@@ -199,7 +199,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedButHasNoScrumProjectLink()
         {
-            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && string.IsNullOrWhiteSpace(ScrumProjectLink);
+            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && !HtmlHelper.IsValidLink(ScrumProjectLink);
         }
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasNoRequestDocLink()
         {
-            return string.IsNullOrWhiteSpace(RequestDocLink) || RequestDocLink.Length < 12;
+            return !HtmlHelper.IsValidLink(RequestDocLink);
         }
 
 
