@@ -1,4 +1,5 @@
 ﻿@inherits BaseFinanceItemFormComponent
+@using Microsoft.Extensions.Logging
 @using PPMTool.Data
 @using PPMTool.Enums
 @using Radzen
@@ -23,16 +24,19 @@
         </RadzenStack>
     </RadzenFieldset>
     <br />
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.End">
-        @if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
-                <RadzenText Text="@errorMessage" Style="color: red" />
-            </RadzenStack>
-        }
-        <RadzenButton Text="Save" Type="Submit" />
-        <RadzenButton Text="Cancel" Click="@(args => CloseForm(false))" />
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+            <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+            <RadzenText Text="@errorMessage" Style="color: red" />
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteInvoice())" Disabled="@(Invoice?.InvoiceId < 1)" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" />
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
+        </RadzenStack>
     </RadzenStack>
 </RadzenTemplateForm>
 
@@ -86,5 +90,22 @@
         }
 
         CloseForm(true);
+    }
+
+    /// <summary>
+    /// Method to delete an invoice after a prompt
+    /// </summary>
+    private async void DeleteInvoice()
+    {
+        bool confirmed = await DialogService.Confirm($"You are about to delete invoice with ID {Invoice.InvoiceId} and value {Invoice.Value.ToString("C2")}. This cannot be undone!",
+                    "Delete Invoice") ?? false;
+        if (confirmed)
+        {
+            Logger?.LogInformation($"Deleting invoice ID {Invoice.InvoiceId}");
+
+            InvoiceService.Delete(Context, Invoice);
+
+            CloseForm(true);
+        }
     }
 }

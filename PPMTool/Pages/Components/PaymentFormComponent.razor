@@ -27,14 +27,19 @@
         </RadzenDropDown>
     </RadzenFieldset>
     <br />
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.End">
-        @if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
             <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
             <RadzenText Text="@errorMessage" Style="color: red" />
-        }
-        <RadzenButton Text="Save" Type="Submit" />
-        <RadzenButton Text="Cancel" Click="@(args => CloseForm(false))" />
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Payment?.PaymentId < 1)" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" />
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
+        </RadzenStack>
     </RadzenStack>
 </RadzenTemplateForm>
 
@@ -74,7 +79,24 @@
         {
             InvoiceService.AddPayment(Context, Payment);
         }
-        
+
         CloseForm(true);
+    }
+
+    /// <summary>
+    /// Method to delete a payment after a prompt
+    /// </summary>
+    private async void DeletePayment()
+    {
+        bool confirmed = await DialogService.Confirm($"You are about to delete payment with ID {Payment.PaymentId} and value {Payment.Value.ToString("C2")}. This cannot be undone!",
+                    "Delete Payment") ?? false;
+        if (confirmed)
+        {
+            Logger?.LogInformation($"Deleting payment ID {Payment.PaymentId}");
+
+            InvoiceService.DeletePayment(Context, Payment);
+
+            CloseForm(true);
+        }
     }
 }

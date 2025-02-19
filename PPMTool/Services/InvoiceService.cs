@@ -96,6 +96,21 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Delete a payment from the DB
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
+        public void DeletePayment(PPMToolContext context, Payment entity, bool commitChanges = true)
+        {
+            context.Payments.Remove(entity);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
         /// Gets the funds received based on payments in the DB for the given project
         /// </summary>
         /// <param name="context"></param>
