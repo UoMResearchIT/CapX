@@ -137,11 +137,11 @@ namespace PPMTool.Pages
             if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
                 DialogService.Open<InvoiceFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Invoice ({selectedProject.GetFullName()})",
+                    $"{(item == null ? "Add" : "Edit")} Invoice ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
                     new Dictionary<string, object>
                     {
                         { nameof(InvoiceFormComponent.Invoice), item },
-                        { nameof(InvoiceFormComponent.Project), selectedProject },
+                        { nameof(InvoiceFormComponent.Project), selectedProject == null ? item.Project : selectedProject },
                         { nameof(InvoiceFormComponent.Context), Context },
                         { nameof(InvoiceFormComponent.Logger), Logger },
                         { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
@@ -155,11 +155,11 @@ namespace PPMTool.Pages
             else if ((item == null && selectedTab == 1) || item is Payment)
             {
                 DialogService.Open<PaymentFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Payment ({selectedProject.GetFullName()})",
+                    $"{(item == null ? "Add" : "Edit")} Payment ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
                     new Dictionary<string, object>
                     {
                         { nameof(PaymentFormComponent.Payment), item },
-                        { nameof(PaymentFormComponent.Project), selectedProject },
+                        { nameof(PaymentFormComponent.Project), selectedProject == null ? item.Project : selectedProject },
                         { nameof(PaymentFormComponent.Context), Context },
                         { nameof(PaymentFormComponent.Logger), Logger },
                         { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }

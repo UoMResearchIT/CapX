@@ -200,7 +200,7 @@ namespace PPMTool.Migrations
                 INSERT INTO Payments (InvoiceId, KeyDate, Value, Description, ProjectId)
                 SELECT 
                     NULL AS InvoiceId,
-                    DATE('now') AS KeyDate,
+                    '{DateTime.Now.ToString("yyyy-MM-dd")}' AS KeyDate,
                     t.Difference AS Value,
                     '[Automatic Adjustment Payment] {message}' AS Description,
                     t.ProjectId
