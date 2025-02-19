@@ -10,7 +10,6 @@ namespace PPMTool.Data.Entities
         [Required]
         public string HtmlContent { get; set; }
 
-        [Required]
         public Role Author { get; set; }
 
         [Required]
