@@ -74,7 +74,8 @@
                                     AllowSorting="true"
                                     AllowFiltering="true"
                                     PageSize="10"
-                                    AllowPaging="true">
+                                    AllowPaging="true"
+                                    @ref="@dataGridInvoices">
                         <Columns>
                             <RadzenDataGridColumn TItem="Invoice" Property="InvoiceId" Title="Invoice ID" MinWidth="10px" Width="3rem" />
                             <RadzenDataGridColumn TItem="Invoice" Property="InvoiceReference" Title="Reference" MinWidth="10px" />
@@ -88,7 +89,7 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Invoice" Property="Description" Title="Notes" MinWidth="10px" Width="10rem">
                                 <Template Context="invoice">
-                                    <p style="white-space:pre-wrap">@invoice.Description</p>
+                                    <p style="white-space:pre-wrap; margin-bottom:0;">@invoice.Description</p>
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Invoice" Title="Actions" MinWidth="10px">
@@ -109,7 +110,8 @@
                                     AllowFiltering="true"
                                     class="white-space:pre-wrap"
                                     PageSize="10"
-                                    AllowPaging="true">
+                                    AllowPaging="true"
+                                    @ref="@dataGridPayments">
                         <Columns>
                             <RadzenDataGridColumn TItem="Payment" Property="PaymentId" Title="Payment ID" MinWidth="10px" Width="3rem" />
                             <RadzenDataGridColumn TItem="Payment" Property="Invoice.InvoiceId" Title="Associated Invoice" MinWidth="10px" Width="3rem">
@@ -122,7 +124,7 @@
                             <RadzenDataGridColumn TItem="Payment" Property="Value" Title="Amount" FormatString="{0:C0}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="Payment" Property="Description" Title="Notes" MinWidth="10px" Width="10rem">
                                 <Template Context="payment">
-                                    <p style="white-space:pre-wrap">@payment.Description</p>
+                                    <p style="white-space:pre-wrap; margin-bottom:0;">@payment.Description</p>
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Payment" Title="Actions" MinWidth="10px" Width="2rem">

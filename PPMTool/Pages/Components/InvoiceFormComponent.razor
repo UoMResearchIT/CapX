@@ -1,9 +1,9 @@
 ﻿@inherits BaseFinanceItemFormComponent
+@using PPMTool.Data
 @using PPMTool.Enums
 @using Radzen
 @using PPMTool.Data.Entities
 @using DotNetExtensions
-@inject DialogService DialogService
 
 <RadzenTemplateForm TItem="Invoice" Submit="@HandleValidSubmit" Data="@Invoice">
     <RadzenFieldset Text="Invoice Details">
@@ -13,19 +13,26 @@
                 <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")" />
             </RadzenStack>
             <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Optional notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
-            <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
+            <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
             <RadzenDropDown Data="@statuses" @bind-Value="Invoice.Status" Name="Status" Style="width:100%;">
                 <Template Context="item">
                     @(((InvoiceStatus)item).GetDescription())
                 </Template>
             </RadzenDropDown>
-            <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%;" />
+            <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%; margin-left: 0;" />
         </RadzenStack>
     </RadzenFieldset>
     <br />
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.End">
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+                <RadzenText Text="@errorMessage" Style="color: red" />
+            </RadzenStack>
+        }
         <RadzenButton Text="Save" Type="Submit" />
-        <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+        <RadzenButton Text="Cancel" Click="@(args => CloseForm(false))" />
     </RadzenStack>
 </RadzenTemplateForm>
 
@@ -57,6 +64,18 @@
     {
         base.HandleValidSubmit();
 
+        // Validate
+        if (string.IsNullOrWhiteSpace(Invoice.InvoiceReference))
+        {
+            errorMessage = "Invoice Reference is required to associated this record with something physical!";
+            return;
+        }
+        if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
+        {
+            errorMessage = "Invoice URL is required so a copy of the physical invoice can be viewed from this record!";
+            return;
+        }
+
         if (Invoice.InvoiceId > 0)
         {
             InvoiceService.Update(Context, Invoice);
@@ -66,6 +85,6 @@
             InvoiceService.Add(Context, Invoice);
         }
 
-        DialogService.Close(true);
+        CloseForm(true);
     }
 }

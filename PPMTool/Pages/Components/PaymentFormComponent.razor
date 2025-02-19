@@ -4,7 +4,6 @@
 @using PPMTool.Services
 @using Radzen
 @using PPMTool.Data.Entities
-@inject DialogService DialogService
 
 <RadzenTemplateForm TItem="Payment" Submit="@HandleValidSubmit" Data="@Payment">
     <RadzenFieldset Text="Payment Details">
@@ -29,8 +28,13 @@
     </RadzenFieldset>
     <br />
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.End">
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+            <RadzenText Text="@errorMessage" Style="color: red" />
+        }
         <RadzenButton Text="Save" Type="Submit" />
-        <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(false))" />
+        <RadzenButton Text="Cancel" Click="@(args => CloseForm(false))" />
     </RadzenStack>
 </RadzenTemplateForm>
 
@@ -62,8 +66,6 @@
     {
         base.HandleValidSubmit();
 
-        // TODO: Validation?
-
         if (Payment.PaymentId > 0)
         {
             InvoiceService.UpdatePayment(Context, Payment);
@@ -73,6 +75,6 @@
             InvoiceService.AddPayment(Context, Payment);
         }
         
-        DialogService.Close(true);
+        CloseForm(true);
     }
 }

@@ -9,6 +9,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -37,6 +38,8 @@ namespace PPMTool.Pages
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
         private int selectedTab;
+        private RadzenDataGrid<Payment> dataGridPayments;
+        private RadzenDataGrid<Invoice> dataGridInvoices;
 
         protected override void OnInitialized()
         {
@@ -140,7 +143,8 @@ namespace PPMTool.Pages
                         { nameof(InvoiceFormComponent.Invoice), item },
                         { nameof(InvoiceFormComponent.Project), selectedProject },
                         { nameof(InvoiceFormComponent.Context), Context },
-                        { nameof(InvoiceFormComponent.Logger), Logger }
+                        { nameof(InvoiceFormComponent.Logger), Logger },
+                        { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
                     },
                     new DialogOptions
                     {
@@ -157,7 +161,8 @@ namespace PPMTool.Pages
                         { nameof(PaymentFormComponent.Payment), item },
                         { nameof(PaymentFormComponent.Project), selectedProject },
                         { nameof(PaymentFormComponent.Context), Context },
-                        { nameof(PaymentFormComponent.Logger), Logger }
+                        { nameof(PaymentFormComponent.Logger), Logger },
+                        { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
                     },
                     new DialogOptions
                     {
@@ -169,6 +174,15 @@ namespace PPMTool.Pages
             {
                 LogError("Unkown finance item type!");
             }
+        }
+
+        /// <summary>
+        /// Callback which runs when the form closes
+        /// </summary>
+        private void FormClosedHandler()
+        {
+            dataGridInvoices?.Reload();
+            dataGridPayments?.Reload();
         }
     }
 }
