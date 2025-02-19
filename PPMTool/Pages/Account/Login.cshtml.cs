@@ -19,9 +19,9 @@ namespace PPMTool.Pages.Account
     [AllowAnonymous]
     public class LoginModel : PageModel
     {
-        private RolesService _roleService;
-        private ILogger<LoginModel> _logger;
-        private IDbContextFactory<PPMToolContext> _contextFactory;
+        private UserService userService;
+        private ILogger<LoginModel> logger;
+        private IDbContextFactory<PPMToolContext> contextFactory;
 
         [FromQuery(Name = "returnUrl")]
         public string ReturnUrl { get; set; }
@@ -29,11 +29,11 @@ namespace PPMTool.Pages.Account
         [FromQuery(Name = "username")]
         public string Username { get; set; }
 
-        public LoginModel(RolesService rolesService, ILogger<LoginModel> logger, IDbContextFactory<PPMToolContext> contextFactory)
+        public LoginModel(UserService userService, ILogger<LoginModel> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
-            _roleService = rolesService;
-            _logger = logger;
-            _contextFactory = contextFactory;
+            this.userService = userService;
+            this.logger = logger;
+            this.contextFactory = contextFactory;
         }
 
 #if !LOCAL
@@ -52,8 +52,8 @@ namespace PPMTool.Pages.Account
 
             // Add roles from DB for this user
             var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";
-            var roleEntity = _roleService.GetByUsername(_contextFactory.CreateDbContext(), username.Trim().ToLower());
-            var role = string.IsNullOrWhiteSpace(username) || roleEntity == null ? RoleType.None : roleEntity.RoleType;
+            var user = userService.GetByUsername(contextFactory.CreateDbContext(), username.Trim().ToLower());
+            var role = string.IsNullOrWhiteSpace(username) || user == null ? RoleType.None : user.RoleType;
             identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
 
             await HttpContext.SignInAsync(
@@ -63,11 +63,11 @@ namespace PPMTool.Pages.Account
             );
 
             // Update last logged in and log
-            if (roleEntity != null)
+            if (user != null)
             {
-                _roleService.UpdateLastLoggedIn(_contextFactory.CreateDbContext(), roleEntity);
+                userService.UpdateLastLoggedIn(contextFactory.CreateDbContext(), user);
             }
-            _logger?.LogInformation($"{identity.Name}: Logged In");
+            logger?.LogInformation($"{identity.Name}: Logged In");
         }
 #endif
     }

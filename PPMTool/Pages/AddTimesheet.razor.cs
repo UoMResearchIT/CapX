@@ -44,7 +44,7 @@ namespace PPMTool.Pages
         private double saturdayHours;
         private double sundayHours;
         private double totalHours;
-        private Role activeUserRole;
+        private User activeUserRole;
         private int entryMinimum = 0;
         private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
@@ -78,7 +78,7 @@ namespace PPMTool.Pages
                     Debug.WriteLine("** Starting initialisation task...");
 
                     // Get the person associated with the active user
-                    activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
+                    activeUserRole = UserService.GetByUsername(Context, ActiveUserName);
 
                     // Only superusers can delete a timesheet
                     EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;

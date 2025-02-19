@@ -40,7 +40,7 @@ namespace PPMTool.Pages
 
             // Available people are all if superuser or self and people they manage and are current staff
             availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
-            if (RolesService.GetRoleTypeForUsername(Context, ActiveUserName) != RoleType.Superuser)
+            if (UserService.GetRoleTypeForUsername(Context, ActiveUserName) != RoleType.Superuser)
             {
                 availablePeople = availablePeople
                     .Where(x => x.PersonId == ActiveUser?.PersonId || (x.LineManager?.PersonId == ActiveUser?.PersonId && x.IsCurrentStaff()))

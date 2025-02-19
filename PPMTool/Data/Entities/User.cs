@@ -5,9 +5,9 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public class Role : ILoggableClass
+    public class User : ILoggableClass
     {
-        public int RoleId { get; set; }
+        public int UserId { get; set; }
 
         /// <summary>
         /// Type of role the user has

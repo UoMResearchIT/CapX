@@ -10,7 +10,7 @@ namespace PPMTool.Data.Context
         public DbSet<Absence> Absence { get; set; }
         public DbSet<InnateCode> InnateCodes { get; set; }
         public DbSet<InnateCodeTask> InnateCodeTasks { get; set; }
-        public DbSet<Role> Roles { get; set; }
+        public DbSet<User> Users { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<SubTask> SubTasks { get; set; }

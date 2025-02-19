@@ -10,7 +10,7 @@ namespace PPMTool.Data.Entities
         [Required]
         public string HtmlContent { get; set; }
 
-        public Role Author { get; set; }
+        public User Author { get; set; }
 
         [Required]
         public Project Project { get; set; }
@@ -19,7 +19,7 @@ namespace PPMTool.Data.Entities
 
         public DateTime EditedDate { get; set; }
 
-        public Role Editor { get; set; }
+        public User Editor { get; set; }
 
         public bool IsFinanceInfo { get; set; }
 

@@ -82,7 +82,7 @@ namespace PPMTool.Pages
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
                 // Set the active user as the PM by default
-                projectModel.ProjectManager = RolesService.GetByUsername(Context, ActiveUserName)?.Person;
+                projectModel.ProjectManager = UserService.GetByUsername(Context, ActiveUserName)?.Person;
             }
 
             // Initially load data
@@ -91,12 +91,12 @@ namespace PPMTool.Pages
             faculties = Enum.GetValues<Faculty>().ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
-            var roles = RolesService.GetAll(Context)
+            var users = UserService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            projectManagers = people.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            projectManagers = people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
@@ -147,8 +147,8 @@ namespace PPMTool.Pages
             Person pm = value as Person;
 
             // If the PM is not null and is not the current user then warn of loss of access if not superuser
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            if (pm != null && pm.PersonId != role?.Person?.PersonId && role.RoleType != RoleType.Superuser)
+            var user = UserService.GetByUsername(Context, ActiveUserName);
+            if (pm != null && pm.PersonId != user?.Person?.PersonId && user.RoleType != RoleType.Superuser)
             {
                 DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
             }
@@ -211,7 +211,7 @@ namespace PPMTool.Pages
                         if (!CheckResultOfAddOrUpdate(res)) return;
 
                         // Make sure that super users automatically follow the project
-                        var superusers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
+                        var superusers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
                         foreach (var s in superusers)
                         {
                             if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");

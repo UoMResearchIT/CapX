@@ -154,13 +154,13 @@ namespace PPMTool.Pages
             base.OnParametersSet();
             Loading = true;
 
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
+            var user = UserService.GetByUsername(Context, ActiveUserName);
 
             // Reset the search box
             noteSearchTerms = string.Empty;
 
             // Filter the mentions reset
-            cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
+            cachedMentionables = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
             FilterMentionables();
 
             Task.Run(() =>
@@ -239,7 +239,7 @@ namespace PPMTool.Pages
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
+                    isProjectManager = user.RoleType == RoleType.Superuser || (user.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
 
                     ganttChartOptions = new ApexChartOptions<GanttBlock>
                     {
@@ -809,7 +809,7 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            noteModel.Author = RolesService.GetByUsername(Context, ActiveUserName);
+            noteModel.Author = UserService.GetByUsername(Context, ActiveUserName);
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
@@ -826,7 +826,7 @@ namespace PPMTool.Pages
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            noteModel.Editor = RolesService.GetByUsername(Context, ActiveUserName);
+            noteModel.Editor = UserService.GetByUsername(Context, ActiveUserName);
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
@@ -902,7 +902,7 @@ namespace PPMTool.Pages
             newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // Load in the list of managers
-            var managers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            var managers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
             foreach (Match m in matches)

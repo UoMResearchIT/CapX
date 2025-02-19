@@ -88,10 +88,10 @@ namespace PPMTool.Pages
             else
             {
                 // Choose the person automatically if not a manager
-                var role = RolesService.GetByUsername(Context, ActiveUserName);
+                var user = UserService.GetByUsername(Context, ActiveUserName);
                 chosenPeople = new List<string>
                 {
-                    role.GetName()
+                    user.GetName()
                 };
 
                 // Will automatically load the chart source
