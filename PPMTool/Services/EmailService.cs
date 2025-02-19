@@ -330,11 +330,11 @@ namespace PPMTool.Services
                 // Remove the author or the editor
                 if (note.Editor != null)
                 {
-                    peopleToBeNotfied.Remove(note.Editor);
+                    peopleToBeNotfied.Remove(note.Editor.Person);
                 }
                 else
                 {
-                    peopleToBeNotfied.Remove(note.Author);
+                    peopleToBeNotfied.Remove(note.Author.Person);
                 }
 
                 // Create the emails and send

@@ -809,8 +809,7 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Author = role.Person;
+            noteModel.Author = RolesService.GetByUsername(Context, ActiveUserName);
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
@@ -827,8 +826,7 @@ namespace PPMTool.Pages
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Editor = role.Person;
+            noteModel.Editor = RolesService.GetByUsername(Context, ActiveUserName);
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);

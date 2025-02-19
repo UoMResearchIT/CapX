@@ -416,7 +416,7 @@
                                            EditNote="EditNote"
                                            CopyNoteLink="@GetCopyLinkText(note)"
                                            MarkComplete="@(args => MarkComplete(note))"
-                                           EditAuthorised="@(isProjectManager || ActiveUser == note.Author)"
+                                           EditAuthorised="@(isProjectManager || ActiveUser?.PersonId == note.Author.Person?.PersonId)"
                                            ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
                         }
                     }

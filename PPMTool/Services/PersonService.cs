@@ -137,7 +137,7 @@ namespace PPMTool.Services
             context.Roles.RemoveRange(context.Roles.Where(x => x.Person.PersonId == entity.PersonId));
 
             // Delete all notes created or edited by the person
-            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.PersonId == entity.PersonId || x.Editor.PersonId == entity.PersonId));
+            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.Person.PersonId == entity.PersonId || x.Editor.Person.PersonId == entity.PersonId));
 
             // Remove entity from the skills tag list
             foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))
