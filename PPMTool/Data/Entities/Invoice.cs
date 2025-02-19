@@ -16,9 +16,8 @@ namespace PPMTool.Data.Entities
         public int InvoiceId { get; set; }
 
         /// <summary>
-        /// Auto-generated reference based on the project RTP number, the financial year and the preceding invoice reference
+        /// Reference to either an actual invoice or a payment request of sorts
         /// </summary>
-        [Required]
         public string InvoiceReference { get; set; }
 
         /// <summary>
@@ -28,7 +27,7 @@ namespace PPMTool.Data.Entities
         public InvoiceStatus Status { get; set; }
 
         /// <summary>
-        /// The URL of the invoice document on SharePoint
+        /// The URL of the invoice document on SharePoint if it exists
         /// </summary>
         [Required]
         [DataType(DataType.Url)]

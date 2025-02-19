@@ -71,12 +71,11 @@
         // Validate
         if (string.IsNullOrWhiteSpace(Invoice.InvoiceReference))
         {
-            errorMessage = "Invoice Reference is required to associated this record with something physical!";
-            return;
+            Invoice.InvoiceReference = "None";
         }
         if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
         {
-            errorMessage = "Invoice URL is required so a copy of the physical invoice can be viewed from this record!";
+            errorMessage = "Invoice URL is required which links to an invoice or email as a SharePoint document so there is a physical record of the payment request!";
             return;
         }
 
