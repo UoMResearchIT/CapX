@@ -44,6 +44,7 @@ namespace PPMTool.Pages
         private double sundayHours;
         private double totalHours;
         private Role activeUserRole;
+        private bool IsTimesheetOwner = false;
         private int entryMinimum = 0;
         private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
@@ -110,6 +111,9 @@ namespace PPMTool.Pages
 
                 if (timesheet != null)
                 {
+                    // Only timesheet owner can see the "Reorder your timesheet template" button
+                    IsTimesheetOwner = ActiveUser.PersonId == timesheet.Owner.PersonId;
+
                     // Get details for the prev/next timesheets based on the owner of the timesheet being viewed
                     // (to accommodate a manager looking at a staff timesheet).
                     previousTimesheet = null;
@@ -124,7 +128,6 @@ namespace PPMTool.Pages
                     }
 
                     GetOrderedData();
-
                     UpdateDailyTotals();
 
                     // Innate codes are limited to active ones initially
@@ -710,22 +713,33 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
         }
 
-
+        /// <summary>
+        /// Opens the dialog with the ReorderTimesheet page as its content. The passed timesheet
+        /// is only so we can return and reload the correct page that we came from
+        /// </summary>
+        /// <param name="timesheet"></param>
         private async void ReorderTimesheetTemplate(Timesheet timesheet)
         {
-            var result = await DialogService.OpenAsync<ReorderTimesheet>("Reorder your timesheet template",
-               new Dictionary<string, object>() { { "TimesheetId", timesheet.TimesheetId } },
+            await DialogService.OpenAsync<ReorderTimesheet>("Drag and drop tasks to reorder them",
+               new Dictionary<string, object>()
+               {
+                   { "TimesheetId", timesheet.TimesheetId },
+                   { nameof(ReorderTimesheet.FormClosed), () => FormClosedHandler() }
+               },
                new DialogOptions()
                {
-                   Width = "700px"
+                   ShowClose = false,
+                   Width = "50%"
                });
+        }
 
-            if (result)
-            {
-                Loading = true;
-                EnqueueLoadData(GetTask);
-                StateHasChanged();
-            }
+        /// <summary>
+        /// Callback which runs when the form closes
+        /// </summary>
+        private void FormClosedHandler()
+        {
+            // Force a reload of the page - seems the only way to be sure that we're getting the fresh data!
+            Navigation.NavigateTo($"/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}", true);
         }
     }
 }
