@@ -26,7 +26,7 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         [Inject]
-        public Radzen.DialogService dialogService { get; set; }
+        public Radzen.DialogService DialogService { get; set; }
 
         private Role activeUserRole;
         private ObservableCollection<TimesheetTemplateItem> templateData;
@@ -89,7 +89,8 @@ namespace PPMTool.Pages
 
         protected virtual void CloseForm(bool status)
         {
-            DialogService.Close(status);
+            base.DialogService.Close(status);
+            base.DialogService.Close(status);
             FormClosed?.Invoke();
         }
 
@@ -154,7 +155,7 @@ namespace PPMTool.Pages
 
         public void CloseDialog()
         {
-            dialogService.Close(true);
+            DialogService.Close(true);
         }
     }
 }
