@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,9 @@ namespace PPMTool.Pages
     {
         [Parameter]
         public int TimesheetId { get; set; }
+
+        [Parameter]
+        public Action FormClosed { get; set; }
 
         [Inject]
         private PersonService PersonService { get; set; }
@@ -81,6 +85,12 @@ namespace PPMTool.Pages
             {
                 // We intend it to be cancelled so this is fine to ignore
             }
+        }
+
+        protected virtual void CloseForm(bool status)
+        {
+            DialogService.Close(status);
+            FormClosed?.Invoke();
         }
 
         void RowRender(RowRenderEventArgs<TimesheetTemplateItem> args)

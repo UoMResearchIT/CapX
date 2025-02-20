@@ -37,7 +37,7 @@
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: right;">
             <div>
                 @* <RadzenButton Click="@((args) => dialogService.Close(true))" Variant="Variant.Flat" Text="Close" Style="width: 120px" /> *@
-                <RadzenButton Click="CloseDialog" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+                <RadzenButton Click="@(args => CloseForm(false))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
             </div>
         </RadzenStack>
     </div>
