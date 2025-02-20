@@ -24,8 +24,17 @@ namespace PPMTool.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Copy the values from the key info table back to the notes table then drop the key info table
             migrationBuilder.Sql(@"
-                DROP TABLE TempKeyNoteInfo
+                UPDATE Notes
+                SET AuthorPersonId = AuthorId,
+                    EditorPersonId = EditorId
+                FROM TempKeyNoteInfo
+                WHERE Notes.NoteId = TempKeyNoteInfo.NoteId;
+            ");
+
+            migrationBuilder.Sql(@"
+                DROP TABLE TempKeyNoteInfo;
             ");
         }
     }

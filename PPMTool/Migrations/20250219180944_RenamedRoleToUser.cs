@@ -109,40 +109,6 @@ namespace PPMTool.Migrations
                 SELECT * FROM Users;
             ");
 
-            // Drop foreign keys referencing the Users table
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Users_AuthorUserId",
-                table: "Notes");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Users_EditorUserId",
-                table: "Notes");
-
-            // Drop the Users table
-            migrationBuilder.DropTable(
-                name: "Users");
-
-            // Rename columns in the Notes table
-            migrationBuilder.RenameColumn(
-                name: "EditorUserId",
-                table: "Notes",
-                newName: "EditorRoleId");
-
-            migrationBuilder.RenameColumn(
-                name: "AuthorUserId",
-                table: "Notes",
-                newName: "AuthorRoleId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_EditorUserId",
-                table: "Notes",
-                newName: "IX_Notes_EditorRoleId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_AuthorUserId",
-                table: "Notes",
-                newName: "IX_Notes_AuthorRoleId");
-
             // Recreate the Roles table
             migrationBuilder.CreateTable(
                 name: "Roles",
@@ -173,6 +139,36 @@ namespace PPMTool.Migrations
                 SELECT UserId, RoleType, CASUserName, Name, PersonId, LastLoggedIn, EmailAddress
                 FROM TempUsers;
             ");
+
+            // Drop foreign keys referencing the Users table
+            migrationBuilder.DropForeignKey(
+                name: "FK_Notes_Users_AuthorUserId",
+                table: "Notes");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Notes_Users_EditorUserId",
+                table: "Notes");
+
+            // Rename columns in the Notes table
+            migrationBuilder.RenameColumn(
+                name: "EditorUserId",
+                table: "Notes",
+                newName: "EditorRoleId");
+
+            migrationBuilder.RenameColumn(
+                name: "AuthorUserId",
+                table: "Notes",
+                newName: "AuthorRoleId");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Notes_EditorUserId",
+                table: "Notes",
+                newName: "IX_Notes_EditorRoleId");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Notes_AuthorUserId",
+                table: "Notes",
+                newName: "IX_Notes_AuthorRoleId");
 
             // Add foreign keys referencing the Roles table
             migrationBuilder.AddForeignKey(

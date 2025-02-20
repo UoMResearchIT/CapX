@@ -10,6 +10,7 @@ namespace PPMTool.Migrations
         {
             // Copy data from the temporary table to the Notes table
             migrationBuilder.Sql(@"
+                DELETE FROM Notes;
                 INSERT INTO Notes (NoteId, AuthorUserId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorUserId, HtmlContent, IsFinanceInfo, ProjectId)
                 SELECT NoteId, AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId
                 FROM TempNotes;
@@ -35,13 +36,6 @@ namespace PPMTool.Migrations
             migrationBuilder.Sql(@"
                 CREATE TABLE TempNotes AS
                 SELECT NoteId, AuthorUserId AS AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorUserId AS EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId
-                FROM Notes;
-            ");
-
-            // Copy the contents of the Notes table into TempNotes
-            migrationBuilder.Sql(@"
-                INSERT INTO TempNotes (NoteId, AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId)
-                SELECT NoteId, AuthorUserId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorUserId, HtmlContent, IsFinanceInfo, ProjectId
                 FROM Notes;
             ");
         }

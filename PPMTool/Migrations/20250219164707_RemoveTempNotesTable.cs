@@ -22,7 +22,7 @@ namespace PPMTool.Migrations
                 );
 
                 INSERT INTO TempKeyNoteInfo (NoteId, AuthorId, EditorId)
-                SELECT NoteId, AuthorPersonId, EditorPersonId
+                SELECT NoteId, AuthorRoleId, EditorRoleId
                 FROM Notes;
             ");
 

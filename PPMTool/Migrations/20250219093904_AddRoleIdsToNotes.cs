@@ -22,8 +22,8 @@ namespace PPMTool.Migrations
         {
             migrationBuilder.Sql(@"
                 UPDATE Notes
-                SET AuthorRoleId = (SELECT PersonId FROM Roles WHERE RoleId = TempKeyNoteInfo.AuthorId LIMIT 1),
-                    EditorRoleId = (SELECT PersonId FROM Roles WHERE RoleId = TempKeyNoteInfo.EditorId LIMIT 1)
+                SET AuthorRoleId = AuthorId,
+                    EditorRoleId = EditorId
                 FROM TempKeyNoteInfo
                 WHERE Notes.NoteId = TempKeyNoteInfo.NoteId;
             ");
