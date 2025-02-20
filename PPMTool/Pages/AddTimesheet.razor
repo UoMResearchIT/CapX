@@ -67,7 +67,7 @@
                 <RadzenDataGrid @ref="dataGrid"
                                 AllowFiltering="false"
                                 AllowPaging="false"
-                                AllowSorting=true
+                                AllowSorting=@(entityToInsert == null && entityToUpdate == null)
                                 EditMode="DataGridEditMode.Single"
                                 Data="@dataGridEntities"
                                 TItem="TimesheetEntry"
