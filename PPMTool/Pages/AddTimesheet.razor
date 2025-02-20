@@ -60,7 +60,7 @@
                         <h2>Timesheet Entries</h2>
                     </div>
                     <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                        <RadzenButton Variant="Variant.Outlined" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" style="margin-right: 0.5rem;"/>
+                        <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" style="margin-right: 0.5rem;" Disabled=@(entityToInsert != null || entityToUpdate != null || !IsTimesheetOwner)/>
                         <RadzenButton Text="Add Task" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
                     </div>
                 </div>
