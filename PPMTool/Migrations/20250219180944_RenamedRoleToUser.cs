@@ -174,11 +174,6 @@ namespace PPMTool.Migrations
                 FROM TempUsers;
             ");
 
-            // Drop the temporary table
-            migrationBuilder.Sql(@"
-                DROP TABLE TempUsers;
-            ");
-
             // Add foreign keys referencing the Roles table
             migrationBuilder.AddForeignKey(
                 name: "FK_Notes_Roles_AuthorRoleId",
@@ -194,6 +189,13 @@ namespace PPMTool.Migrations
                 column: "EditorRoleId",
                 principalTable: "Roles",
                 principalColumn: "RoleId");
+
+            // Drop the temporary tables
+            migrationBuilder.Sql(@"
+                DROP TABLE TempUsers;
+                DROP TABLE TempRoles;
+                DROP TABLE TempNotes;
+            ");
         }
     }
 }

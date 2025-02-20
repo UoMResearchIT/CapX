@@ -8,12 +8,24 @@ namespace PPMTool.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"DROP TABLE TempNotes;");
+            migrationBuilder.Sql(@"DROP TABLE TempKeyNoteInfo;");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Can't restore this table really
+            // Create the temp notes table again
+            migrationBuilder.Sql(@"
+                CREATE TABLE TempKeyNoteInfo (
+                    NoteId INTEGER,
+                    AuthorId INTEGER,
+                    EditorId INTEGER
+                );
+
+                INSERT INTO TempKeyNoteInfo (NoteId, AuthorId, EditorId)
+                SELECT NoteId, AuthorPersonId, EditorPersonId
+                FROM Notes;
+            ");
+
         }
     }
 }

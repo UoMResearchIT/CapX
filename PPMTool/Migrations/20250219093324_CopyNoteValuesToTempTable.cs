@@ -10,13 +10,13 @@ namespace PPMTool.Migrations
         {
             // Copy the NoteID, AuthorId, and EditorId to a temporary table for each note
             migrationBuilder.Sql(@"
-                CREATE TABLE TempNotes (
+                CREATE TABLE TempKeyNoteInfo (
                     NoteId INTEGER,
                     AuthorId INTEGER,
                     EditorId INTEGER
                 );
 
-                INSERT INTO TempNotes (NoteId, AuthorId, EditorId)
+                INSERT INTO TempKeyNoteInfo (NoteId, AuthorId, EditorId)
                 SELECT NoteId, AuthorPersonId, EditorPersonId
                 FROM Notes;
             ");
@@ -25,7 +25,7 @@ namespace PPMTool.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
-                DROP TABLE TempNotes
+                DROP TABLE TempKeyNoteInfo
             ");
         }
     }
