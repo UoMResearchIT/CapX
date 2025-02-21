@@ -123,7 +123,7 @@ namespace PPMTool.Pages
                         }
                     }
                 },
-                Colors = GetColours()
+                Colors = GetColours(ChartColourSet.MoneyChart)
             };
 
             fteChartOptions = new ApexChartOptions<DemandChartItem>
@@ -288,8 +288,8 @@ namespace PPMTool.Pages
                 var context = ContextFactory.CreateDbContext();
 
                 // Variable chart options
-                demandChartOptions.Fill.Colors = GetColours();
-                demandChartOptions.Colors = GetColours();
+                demandChartOptions.Fill.Colors = GetColours(ChartColourSet.DutyChart);
+                demandChartOptions.Colors = GetColours(ChartColourSet.DutyChart);
 
                 // Clear the existing demand item lists
                 demandChartItems.Clear();
@@ -609,21 +609,19 @@ namespace PPMTool.Pages
             return (float)Math.Round(oldValue, 2);
         }
 
+        private enum ChartColourSet
+        {
+            DutyChart,
+            MoneyChart
+        }
+
         /// <summary>
         /// Get list of colours for the charts
         /// </summary>
         /// <returns></returns>
-        public List<string> GetColours()
+        private List<string> GetColours(ChartColourSet chartSet)
         {
-            return !showFinishedAsSeparate ? new List<string>
-                {
-                    "#9B5DE5",
-                    "#7AFF60",
-                    "#FEE440",
-                    "#FB8F23",
-                    "#F44A4A",
-                    "#000",
-                } : new List<string>
+            var defaultSet = new List<string>
                 {
                     "#F15BB5",
                     "#9B5DE5",
@@ -634,6 +632,38 @@ namespace PPMTool.Pages
                     "#00F5D4",
                     "#000",
                 };
+
+            switch (chartSet)
+            {
+                case ChartColourSet.DutyChart:
+                    return
+                        !showFinishedAsSeparate ?
+                        new List<string>
+                        {
+                            "#9B5DE5",
+                            "#7AFF60",
+                            "#FEE440",
+                            "#FB8F23",
+                            "#F44A4A",
+                            "#000",
+                        } : defaultSet;
+
+
+
+                case ChartColourSet.MoneyChart:
+                    return new List<string>
+                    {
+                        "#F15BB5",
+                        "#9B5DE5",
+                        "#7AFF60",
+                        "#FEE440",
+                        "#FB8F23",
+                        "#F44A4A",
+                        "#000",
+                    };
+            }
+
+            return defaultSet;
         }
 
         /// <summary>
