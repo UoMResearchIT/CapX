@@ -12,7 +12,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a group of subtask that form a project
     /// </summary>
-    public class Project : BaseTask
+    public class Project : BaseTask, ILoggableClass
     {
         public int ProjectId { get; set; }
 
@@ -541,6 +541,15 @@ namespace PPMTool.Data.Entities
             mergedRanges.Add(currentRange);
 
             return mergedRanges;
+        }
+
+        /// <summary>
+        /// To identify the project in the logs and on exports
+        /// </summary>
+        /// <returns></returns>
+        public string GetSensibleObjectName()
+        {
+            return GetFullName();
         }
     }
 }

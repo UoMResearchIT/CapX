@@ -1,10 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
@@ -40,6 +46,7 @@ namespace PPMTool.Pages
         private int selectedTab;
         private RadzenDataGrid<Payment> dataGridPayments;
         private RadzenDataGrid<Invoice> dataGridInvoices;
+        private bool exportRunning;
 
         protected override void OnInitialized()
         {
@@ -185,6 +192,96 @@ namespace PPMTool.Pages
         {
             dataGridInvoices?.Reload();
             dataGridPayments?.Reload();
+        }
+
+        /// <summary>
+        /// Exports the finance items on two tabs in an Excel workbook
+        /// </summary>
+        private void ExportFinanceItems()
+        {
+            LogInformation($"Exporting finance items...");
+
+            exportRunning = true;
+            Task.Run(async () =>
+            {
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        var filename = $"CapX-Finace-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
+                        var workbook = new XLWorkbook();
+                        var sheet1 = workbook.Worksheets.Add("Invoices");
+                        var sheet2 = workbook.Worksheets.Add("Payments");
+
+                        // Write headers and data for Invoices sheet
+                        WriteDataToSheet(sheet1, invoices);
+
+                        // Write headers and data for Payments sheet
+                        WriteDataToSheet(sheet2, payments);
+
+                        var stream = new MemoryStream();
+                        workbook.SaveAs(stream);
+                        stream.Position = 0;
+
+                        // Invoke JS on the client to download the file
+                        var streamRef = new DotNetStreamReference(stream);
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+        /// <summary>
+        /// Give any type, write the values to an Excel sheet
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="sheet"></param>
+        /// <param name="data"></param>
+        private void WriteDataToSheet<T>(IXLWorksheet sheet, IEnumerable<T> data)
+        {
+            // Get public, non-static properties by reflection
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // Write headers
+            for (int i = 0; i < properties.Length; i++)
+            {
+                sheet.Cell(1, i + 1).Value = properties[i].Name;
+            }
+
+            // Write data
+            for (int i = 0; i < data.Count(); i++)
+            {
+                var item = data.ElementAt(i);
+                for (int j = 0; j < properties.Length; j++)
+                {
+                    var value = properties[j].GetValue(item);
+                    string textValue = value is ILoggableClass ? (value as ILoggableClass)?.GetSensibleObjectName() : value?.ToString();
+                    if (value is ICollection)
+                    {
+                        textValue = "[";
+                        foreach (var colItem in (value as ICollection))
+                        {
+                            textValue += colItem is ILoggableClass ? (colItem as ILoggableClass)?.GetSensibleObjectName() : colItem?.ToString();
+                        }
+                        textValue += "]";
+                    }
+                    sheet.Cell(i + 2, j + 1).Value = textValue;
+                }
+            }
         }
     }
 }

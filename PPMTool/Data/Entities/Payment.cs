@@ -5,7 +5,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a received payment which may or may not be associated with an invoice
     /// </summary>
-    public class Payment : FinanceItem
+    public class Payment : FinanceItem, ILoggableClass
     {
         /// <summary>
         /// Primary key
@@ -17,5 +17,14 @@ namespace PPMTool.Data.Entities
         /// Optional invoice to which the payent is linked
         /// </summary>
         public Invoice Invoice { get; set; }
+
+        /// <summary>
+        /// To identify the Invoice in the logs and on exports
+        /// </summary>
+        /// <returns></returns>
+        public string GetSensibleObjectName()
+        {
+            return $"Payment {PaymentId}";
+        }
     }
 }

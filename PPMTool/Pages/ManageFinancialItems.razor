@@ -61,6 +61,7 @@
                 <h2>Finance Items</h2>
             </div>
             <div class="col-auto align-content-end">
+                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinanceItems" Text="Export" Icon="download" Disabled="@(!EditAuthorised || exportRunning)" class="mr-2" />
                 <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditPaymentOrInvoice(null))" Disabled="@(selectedProject == null)" />
             </div>
         </div>

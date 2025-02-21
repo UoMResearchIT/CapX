@@ -7,7 +7,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an invoice or a payment request for a project. May be paid by one or more payments.
     /// </summary>
-    public class Invoice : FinanceItem
+    public class Invoice : FinanceItem, ILoggableClass
     {
         /// <summary>
         /// Primary key
@@ -38,5 +38,14 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public ICollection<Payment> Payments { get; set; }
+
+        /// <summary>
+        /// To identify the Invoice in the logs and on exports
+        /// </summary>
+        /// <returns></returns>
+        public string GetSensibleObjectName()
+        {
+            return $"Invoice {InvoiceId} - Ref: {InvoiceReference}";
+        }
     }
 }
