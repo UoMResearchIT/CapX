@@ -8,112 +8,76 @@ namespace PPMTool.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_People_AuthorPersonId",
-                table: "Notes");
+            // Create a new table with the same schema as the original table, but without the foreign key constraints
+            migrationBuilder.Sql(@"
+                CREATE TABLE Notes_New (
+                    NoteId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    AuthorRoleId INTEGER,
+                    CompletedDate TEXT,
+                    CreatedDate TEXT NOT NULL,
+                    DueDate TEXT,
+                    EditedDate TEXT NOT NULL,
+                    EditorRoleId INTEGER,
+                    HtmlContent TEXT NOT NULL,
+                    IsFinanceInfo INTEGER NOT NULL,
+                    ProjectId INTEGER NOT NULL
+                );
+            ");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_People_EditorPersonId",
-                table: "Notes");
+            // Copy the data from the original table to the new table
+            migrationBuilder.Sql(@"
+                INSERT INTO Notes_New (NoteId, AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId)
+                SELECT NoteId, AuthorPersonId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorPersonId, HtmlContent, IsFinanceInfo, ProjectId
+                FROM Notes;
+            ");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Notes_AuthorPersonId",
-                table: "Notes");
+            // Drop the original table
+            migrationBuilder.Sql(@"
+                DROP TABLE Notes;
+            ");
 
-            migrationBuilder.DropColumn(
-                name: "AuthorPersonId",
-                table: "Notes");
-
-            migrationBuilder.RenameColumn(
-                name: "EditorPersonId",
-                table: "Notes",
-                newName: "EditorRoleId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_EditorPersonId",
-                table: "Notes",
-                newName: "IX_Notes_EditorRoleId");
-
-            migrationBuilder.AddColumn<int>(
-                name: "AuthorRoleId",
-                table: "Notes",
-                type: "INTEGER",
-                nullable: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Notes_AuthorRoleId",
-                table: "Notes",
-                column: "AuthorRoleId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_Roles_AuthorRoleId",
-                table: "Notes",
-                column: "AuthorRoleId",
-                principalTable: "Roles",
-                principalColumn: "RoleId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_Roles_EditorRoleId",
-                table: "Notes",
-                column: "EditorRoleId",
-                principalTable: "Roles",
-                principalColumn: "RoleId");
+            // Rename the new table to the original table name
+            migrationBuilder.Sql(@"
+                ALTER TABLE Notes_New RENAME TO Notes;
+            ");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Roles_AuthorRoleId",
-                table: "Notes");
+            // Create a new table with the same schema as the original table, but with the foreign key constraints
+            migrationBuilder.Sql(@"
+                CREATE TABLE Notes_New (
+                    NoteId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    AuthorPersonId INTEGER,
+                    CompletedDate TEXT,
+                    CreatedDate TEXT NOT NULL,
+                    DueDate TEXT,
+                    EditedDate TEXT NOT NULL,
+                    EditorPersonId INTEGER,
+                    HtmlContent TEXT NOT NULL,
+                    IsFinanceInfo INTEGER NOT NULL,
+                    ProjectId INTEGER NOT NULL,
+                    FOREIGN KEY (AuthorPersonId) REFERENCES People (PersonId) ON DELETE CASCADE,
+                    FOREIGN KEY (EditorPersonId) REFERENCES People (PersonId)
+                );
+            ");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Roles_EditorRoleId",
-                table: "Notes");
+            // Copy the data from the original table to the new table
+            migrationBuilder.Sql(@"
+                INSERT INTO Notes_New (NoteId, AuthorPersonId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorPersonId, HtmlContent, IsFinanceInfo, ProjectId)
+                SELECT NoteId, AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId
+                FROM Notes;
+            ");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Notes_AuthorRoleId",
-                table: "Notes");
+            // Drop the original table
+            migrationBuilder.Sql(@"
+                DROP TABLE Notes;
+            ");
 
-            migrationBuilder.DropColumn(
-                name: "AuthorRoleId",
-                table: "Notes");
-
-            migrationBuilder.RenameColumn(
-                name: "EditorRoleId",
-                table: "Notes",
-                newName: "EditorPersonId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_EditorRoleId",
-                table: "Notes",
-                newName: "IX_Notes_EditorPersonId");
-
-            migrationBuilder.AddColumn<int>(
-                name: "AuthorPersonId",
-                table: "Notes",
-                type: "INTEGER",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Notes_AuthorPersonId",
-                table: "Notes",
-                column: "AuthorPersonId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_People_AuthorPersonId",
-                table: "Notes",
-                column: "AuthorPersonId",
-                principalTable: "People",
-                principalColumn: "PersonId",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_People_EditorPersonId",
-                table: "Notes",
-                column: "EditorPersonId",
-                principalTable: "People",
-                principalColumn: "PersonId");
+            // Rename the new table to the original table name
+            migrationBuilder.Sql(@"
+                ALTER TABLE Notes_New RENAME TO Notes;
+            ");
         }
     }
 }
