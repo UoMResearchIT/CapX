@@ -270,10 +270,10 @@ namespace PPMTool.Pages
                 {
                     var value = properties[j].GetValue(item);
                     string textValue = value is ILoggableClass ? (value as ILoggableClass)?.GetSensibleObjectName() : value?.ToString();
-                    if (value is ICollection)
+                    if (value is IEnumerable && value is not string)
                     {
                         textValue = "[";
-                        foreach (var colItem in (value as ICollection))
+                        foreach (var colItem in (value as IEnumerable))
                         {
                             textValue += colItem is ILoggableClass ? (colItem as ILoggableClass)?.GetSensibleObjectName() : colItem?.ToString();
                         }
