@@ -130,7 +130,7 @@ namespace PPMTool.Migrations
                     WHERE RTP = {invoice.RTP};
 
                     INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
-                    SELECT '<p><span class=""badge badge-warning"">Invoice</span><br/><em>[Automatically Added from Old Tracker]</em><br/>{invoice.Comments}</p>', {invoice.RaiserId}, ProjectId, '{invoice.Requested:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
+                    SELECT '<p><span class=""badge badge-warning"">Invoice</span><br/><b>[Automatically Added from Old Tracker]</b><br/>{invoice.Comments}</p>', {invoice.RaiserId}, ProjectId, '{invoice.Requested:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
                 ";
@@ -158,7 +158,7 @@ namespace PPMTool.Migrations
                     WHERE InvoiceId = {payment.InvId};
 
                     INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
-                    SELECT '<p><span class=""badge badge-success"">Payment</span><br/><em>[Automatically Added from Old Tracker]</em><br/>{payment.Comments}</p>', {invoice.RaiserId}, ProjectId, '{payment.TransactionDate:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
+                    SELECT '<p><span class=""badge badge-success"">Payment</span><br/><b>[Automatically Added from Old Tracker]</b><br/>{payment.Comments}</p>', {invoice.RaiserId}, ProjectId, '{payment.TransactionDate:yyyy-MM-dd}', '0001-01-01 00:00:00', 1
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
                 ";
@@ -209,7 +209,7 @@ namespace PPMTool.Migrations
 
                 INSERT INTO Notes (HtmlContent, AuthorPersonId, ProjectId, CreatedDate, EditedDate, IsFinanceInfo)
                 SELECT 
-                    '<p><span class=""badge badge-success"">Payment</span><br/><em>[Automatic Adjustment Payment]</em><br/>{message}</p>',
+                    '<p><span class=""badge badge-success"">Payment</span><br/><b>[Automatic Adjustment Payment]</b><br/>{message}</p>',
                     ProjectManagerPersonId,
                     t.ProjectId,
                     DATE('now'),

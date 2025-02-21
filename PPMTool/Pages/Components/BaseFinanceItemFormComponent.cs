@@ -81,8 +81,8 @@ namespace PPMTool.Pages.Components
         protected void PostNoteToProject(FinanceItemChangeType type, FinanceItem item)
         {
             // Create a formatted message
-            string message = $"<p><span class=\"badge badge-{(item is Invoice ? "warning" : "success")}\">{(item is Invoice ? "Invoice" : "Payment")}</span><br/><em>[{type.GetDescription()}]</em>" +
-                $"<br/>ID: {GetItemId()}<br />{item.Description}</p>";
+            string message = $"<p><span class=\"badge badge-{(item is Invoice ? "warning" : "success")}\">{(item is Invoice ? "Invoice" : "Payment")}</span><br/><b>{type.GetDescription()} ID: {GetItemId()}</b>" +
+                $"<br />{item.Description}</p>";
 
             // Add the note to the DB
             NoteService.Add(Context, new Note
