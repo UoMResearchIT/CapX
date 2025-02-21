@@ -189,14 +189,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Add a new timesheet
-        /// </summary>
-        void ReorderTimesheetTemplate()
-        {
-            Navigation.NavigateTo("timesheets/reordertimesheet");
-        }
-
-        /// <summary>
         /// Navigate to the specific timesheet to view/edit it
         /// <param name="timesheet"></param>
         /// </summary>

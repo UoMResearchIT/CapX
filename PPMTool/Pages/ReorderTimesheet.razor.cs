@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
@@ -25,10 +26,6 @@ namespace PPMTool.Pages
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
-        [Inject]
-        public Radzen.DialogService DialogService { get; set; }
-
-        private Role activeUserRole;
         private ObservableCollection<TimesheetTemplateItem> templateData;
         private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
@@ -87,14 +84,22 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method to close the dialog popup. Uses a callback to reload the calling page.
+        /// </summary>
+        /// <param name="status"></param>
         protected virtual void CloseForm(bool status)
         {
-            base.DialogService.Close(status);
             base.DialogService.Close(status);
             FormClosed?.Invoke();
         }
 
-        void RowRender(RowRenderEventArgs<TimesheetTemplateItem> args)
+        /// <summary>
+        /// Drag-and-drop functionality in the RadzenDataGrid component.
+        /// Details at https://blazor.radzen.com/datagrid-rowreorder?theme=material3
+        /// </summary>
+        /// <param name="args"></param>
+        public void RowRender(RowRenderEventArgs<TimesheetTemplateItem> args)
         {
             args.Attributes.Add("title", "Drag row to reorder");
             args.Attributes.Add("style", "cursor:grab");
@@ -142,20 +147,6 @@ namespace PPMTool.Pages
         public void GoToTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"timesheets/addtimesheet/{TimesheetId}");
-        }
-
-        /// <summary>
-        /// Navigate back to the main timesheet dashboard
-        /// </summary>
-        /// <param name="timesheet"></param>
-        public void SaveAndExit()
-        {
-            Navigation.NavigateTo($"timesheets");
-        }
-
-        public void CloseDialog()
-        {
-            DialogService.Close(true);
         }
     }
 }

@@ -44,7 +44,6 @@ namespace PPMTool.Pages
         private double sundayHours;
         private double totalHours;
         private Role activeUserRole;
-        private bool IsTimesheetOwner = false;
         private int entryMinimum = 0;
         private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
@@ -111,9 +110,6 @@ namespace PPMTool.Pages
 
                 if (timesheet != null)
                 {
-                    // Only timesheet owner can see the "Reorder your timesheet template" button
-                    IsTimesheetOwner = ActiveUser.PersonId == timesheet.Owner.PersonId;
-
                     // Get details for the prev/next timesheets based on the owner of the timesheet being viewed
                     // (to accommodate a manager looking at a staff timesheet).
                     previousTimesheet = null;
@@ -127,7 +123,7 @@ namespace PPMTool.Pages
                         if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
 
-                    GetOrderedData();
+                    PopulateDatagridDatasource();
                     UpdateDailyTotals();
 
                     // Innate codes are limited to active ones initially
@@ -184,7 +180,7 @@ namespace PPMTool.Pages
             });
         }
 
-        private void GetOrderedData()
+        private void PopulateDatagridDatasource()
         {
             if (ActiveUser.PersonId == timesheet.Owner.PersonId)
             {
@@ -199,6 +195,12 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Gets the user's template data to work with, and orders the timesheet entries accordingly.
+        /// Items not part of the template get put at the end of the ordered list, ordered by InnateCodeTaskId
+        /// </summary>
+        /// <param name="timesheet">The timesheet being viewed</param>
+        /// <param name="templateOrderDetail">The string of pipe-separated TaskIds detailing the user's template items</param>
         private List<TimesheetEntry> OrderByTemplate(Timesheet timesheet, string templateOrderDetail)
         {
             List<int> order = new List<int>();
@@ -216,6 +218,7 @@ namespace PPMTool.Pages
                     .ThenBy(r => r.InnateCodeTask.InnateCodeTaskId)
                     .ToList();
 
+                // Sets a boolean for use in the datagrid to show which items are part of the template
                 foreach (TimesheetEntry e in orderedResults)
                 {
                     e.IsInTemplate = order.Contains(e.InnateCodeTask.InnateCodeTaskId);
@@ -229,11 +232,16 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method tied to the datagrid called when the column sorting icons are clicked.
+        /// Uses the data passed to calculate what needs to be ordered and how.
+        /// </summary>
+        /// <param name="args"></param>
         void OnDataLoad(LoadDataArgs args)
         {
             IQueryable<TimesheetEntry> query = timesheet.TimesheetEntries.AsQueryable();
 
-            // the ordering of timesheet entries epends on who is logged in 
+            // The ordering of timesheet entries epends on who is logged in 
             // and whose timesheet they are viewing
             if (!string.IsNullOrEmpty(args.OrderBy)) // Sorting link has been clicked
             {
@@ -257,7 +265,7 @@ namespace PPMTool.Pages
             else
             {
                 // Default is to order by the user's template if viewing their own timesheet
-                GetOrderedData();
+                PopulateDatagridDatasource();
             }
         }
 

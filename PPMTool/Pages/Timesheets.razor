@@ -71,20 +71,6 @@
                     Shows your 'New/Unsubmitted' and 'Rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected.
                 </RadzenStack>
             </div>
-
-            <div class="timesheet-note">
-                <div class="row">
-                    <div class="col-7 align-content-center">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                            <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                            To reorder the default task items included on NEWLY CREATED timesheets. Existing timesheets will also be reordered according to the outcome of any changes made.
-                        </RadzenStack>                 
-                    </div>
-                    <div class="col-5">
-                        <RadzenButton ButtonStyle="ButtonStyle.Dark" class="float-right" Text="Reorder your default template tasks" Icon="autorenew" Click="@ReorderTimesheetTemplate" />
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div style="padding-top: 3rem" hidden="@hideStaffResults">
