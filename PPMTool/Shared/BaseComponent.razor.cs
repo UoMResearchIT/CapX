@@ -18,7 +18,7 @@ namespace PPMTool.Shared
 
         protected string ActiveUserName { get; private set; } = "None";
 
-        public Person ActiveUser { get; private set; }
+        public User ActiveUser { get; private set; }
 
         protected RoleType ActiveUserRoleType { get; private set; }
 
@@ -47,7 +47,7 @@ namespace PPMTool.Shared
 
                     // Get the active user
                     var user = UserService.GetByUsername(Context, ActiveUserName);
-                    ActiveUser = user?.Person;
+                    ActiveUser = user;
 
                     // Get active user role
                     ActiveUserRoleType = user?.RoleType ?? RoleType.None;

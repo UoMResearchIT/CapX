@@ -35,7 +35,10 @@
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                 @if (EditAuthorised)
                 {
-                    <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?") ButtonStyle="ButtonStyle.Primary" Click="ToggleFollowing" Disabled=@(ActiveUser == project?.ProjectManager) />
+                    <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed") Text=@(isCurrentUserFollowing ? "Following" : "Follow?")
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="ToggleFollowing"
+                                  Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId) />
                 }
                 <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" />
                 <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
@@ -416,7 +419,7 @@
                                            EditNote="EditNote"
                                            CopyNoteLink="@GetCopyLinkText(note)"
                                            MarkComplete="@(args => MarkComplete(note))"
-                                           EditAuthorised="@(isProjectManager || ActiveUser?.PersonId == note.Author.Person?.PersonId)"
+                                           EditAuthorised="@(isProjectManager || ActiveUser?.Person?.PersonId == note.Author.Person?.PersonId)"
                                            ShowTooltip="@((elem, mess) => ShowTooltip(elem, mess))" />
                         }
                     }

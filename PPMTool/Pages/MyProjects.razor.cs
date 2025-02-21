@@ -105,7 +105,7 @@ namespace PPMTool.Pages
             else
             {
                 // Show just the logged in user's projects
-                proj = proj.Where(x => x.ProjectManager?.PersonId == ActiveUser?.PersonId).ToList();
+                proj = proj.Where(x => x.ProjectManager?.PersonId == ActiveUser?.Person?.PersonId).ToList();
             }
 
             // Build the dictionary

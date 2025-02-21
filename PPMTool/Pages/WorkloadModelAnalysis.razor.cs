@@ -43,7 +43,7 @@ namespace PPMTool.Pages
             if (UserService.GetRoleTypeForUsername(Context, ActiveUserName) != RoleType.Superuser)
             {
                 availablePeople = availablePeople
-                    .Where(x => x.PersonId == ActiveUser?.PersonId || (x.LineManager?.PersonId == ActiveUser?.PersonId && x.IsCurrentStaff()))
+                    .Where(x => x.PersonId == ActiveUser?.Person?.PersonId || (x.LineManager?.PersonId == ActiveUser?.Person?.PersonId && x.IsCurrentStaff()))
                     .OrderBy(x => x.Name);
             }
 

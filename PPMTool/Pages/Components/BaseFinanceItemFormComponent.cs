@@ -87,7 +87,7 @@ namespace PPMTool.Pages.Components
             // Add the note to the DB
             NoteService.Add(Context, new Note
             {
-                Author = UserService.GetByUsername(Context, ActiveUserName),
+                Author = ActiveUser,
                 Project = Project,
                 CreatedDate = DateTime.Now,
                 HtmlContent = message,

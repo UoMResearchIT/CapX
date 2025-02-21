@@ -154,8 +154,6 @@ namespace PPMTool.Pages
             base.OnParametersSet();
             Loading = true;
 
-            var user = UserService.GetByUsername(Context, ActiveUserName);
-
             // Reset the search box
             noteSearchTerms = string.Empty;
 
@@ -239,7 +237,7 @@ namespace PPMTool.Pages
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = user.RoleType == RoleType.Superuser || (user.RoleType == RoleType.Manager && ActiveUser?.PersonId == project?.ProjectManager?.PersonId);
+                    isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
 
                     ganttChartOptions = new ApexChartOptions<GanttBlock>
                     {
@@ -494,16 +492,16 @@ namespace PPMTool.Pages
         private void ToggleFollowing()
         {
             if (ActiveUser == null) return;
-            if (project.Followers.Contains(ActiveUser))
+            if (project.Followers.Contains(ActiveUser?.Person))
             {
-                project.Followers.Remove(ActiveUser);
+                project.Followers.Remove(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
                 LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
-                project.Followers.Add(ActiveUser);
+                project.Followers.Add(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
                 LogInformation($"Now following project {project.GetFullName()}");
@@ -809,7 +807,7 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            noteModel.Author = UserService.GetByUsername(Context, ActiveUserName);
+            noteModel.Author = ActiveUser;
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
@@ -826,7 +824,7 @@ namespace PPMTool.Pages
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            noteModel.Editor = UserService.GetByUsername(Context, ActiveUserName);
+            noteModel.Editor = ActiveUser;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);

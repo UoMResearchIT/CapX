@@ -69,7 +69,7 @@ namespace PPMTool.Pages
                 fundsReceived = InvoiceService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
 
                 // If editing a project, only allow the project manager to edit it or a superuser
-                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.PersonId;
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
 
                 // Populate school list
                 schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
@@ -82,7 +82,7 @@ namespace PPMTool.Pages
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
                 // Set the active user as the PM by default
-                projectModel.ProjectManager = UserService.GetByUsername(Context, ActiveUserName)?.Person;
+                projectModel.ProjectManager = ActiveUser?.Person;
             }
 
             // Initially load data
@@ -147,8 +147,7 @@ namespace PPMTool.Pages
             Person pm = value as Person;
 
             // If the PM is not null and is not the current user then warn of loss of access if not superuser
-            var user = UserService.GetByUsername(Context, ActiveUserName);
-            if (pm != null && pm.PersonId != user?.Person?.PersonId && user.RoleType != RoleType.Superuser)
+            if (pm != null && pm.PersonId != ActiveUser?.Person?.PersonId && ActiveUser.RoleType != RoleType.Superuser)
             {
                 DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
             }

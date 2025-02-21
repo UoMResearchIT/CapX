@@ -57,7 +57,7 @@ namespace PPMTool.Pages
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
                     // Developers can view their own page; managers can view all people pages
-                    canView = EditAuthorised || ActiveUser?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
+                    canView = EditAuthorised || ActiveUser?.Person?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
                 }
             }
 

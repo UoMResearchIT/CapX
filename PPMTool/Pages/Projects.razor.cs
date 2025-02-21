@@ -91,7 +91,7 @@ namespace PPMTool.Pages
             if (ActiveUserRoleType == RoleType.Developer)
             {
                 proj = ProjectService.GetAll(Context)
-                    .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == ActiveUser)))
+                    .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person?.PersonId == ActiveUser?.Person?.PersonId)))
                     .OrderBy(x => x.RTP).ToList();
             }
             else
