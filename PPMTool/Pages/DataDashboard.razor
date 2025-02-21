@@ -363,6 +363,13 @@
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"
                                          SeriesType="@SeriesType.Line"
+                                         Name="Requested Funds"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RequestedFundsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
                                          Name="Recoverable Staff Costs"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.RecoverableStaffCostsYTD))" />

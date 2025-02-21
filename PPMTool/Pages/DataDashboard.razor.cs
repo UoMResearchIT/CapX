@@ -425,30 +425,35 @@ namespace PPMTool.Pages
 
                     /// Costs ///
 
-                    // Get the expected income for all confirmed projects this week
+                    // Get the budget for all confirmed projects this week
                     var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return x.Budget / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    // Get the actual income for all confirmed projects this week
+                    // Get the funds received for all confirmed projects this week
                     var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return InvoiceService.GetFundsReceived(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    // Get the actual income for all confirmed projects this week
+                    // Get the planned costs for all confirmed projects this week
                     var plannedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return x.PlannedCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    // Get the actual income for all confirmed projects this week
+                    // Get the actual costs for all confirmed projects this week
                     var actualYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return x.ActualCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
+                    // Get the request income for all confirmed projects this week
+                    var requestedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return InvoiceService.GetFundsRequested(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
 
                     /// People ///
 
@@ -504,6 +509,7 @@ namespace PPMTool.Pages
                         receivedYTD += previousDemandChartItem.ReceivedFundsYTD;
                         plannedYTD += previousDemandChartItem.PlannedCostYTD;
                         actualYTD += previousDemandChartItem.ActualCostsYTD;
+                        requestedYTD += previousDemandChartItem.RequestedFundsYTD;
                     }
                     recoveryYTD += recoveryTargetPerWeek;
 
@@ -542,6 +548,7 @@ namespace PPMTool.Pages
                         ReceivedFundsYTD = receivedYTD,
                         PlannedCostYTD = plannedYTD,
                         ActualCostsYTD = actualYTD,
+                        RequestedFundsYTD = requestedYTD,
                         RecoverableStaffCostsYTD = recoverableStaffCosts
                     });
 
