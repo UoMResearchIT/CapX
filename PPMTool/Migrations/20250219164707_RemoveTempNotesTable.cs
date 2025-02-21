@@ -13,7 +13,7 @@ namespace PPMTool.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Create the temp notes table again
+            // Create the temp notes table again which stores PersonIds
             migrationBuilder.Sql(@"
                 CREATE TABLE TempKeyNoteInfo (
                     NoteId INTEGER,
@@ -22,8 +22,10 @@ namespace PPMTool.Migrations
                 );
 
                 INSERT INTO TempKeyNoteInfo (NoteId, AuthorId, EditorId)
-                SELECT NoteId, AuthorRoleId, EditorRoleId
-                FROM Notes;
+                SELECT n.NoteId, r.PersonId AS AuthorId, e.PersonId AS EditorId
+                FROM Notes n
+                LEFT JOIN Roles r ON n.AuthorRoleId = r.RoleId
+                LEFT JOIN Roles e ON n.EditorRoleId = e.RoleId;
             ");
 
         }

@@ -11,8 +11,8 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20250219093904_AddRoleIdsToNotes")]
-    partial class AddRoleIdsToNotes
+    [Migration("20250219093714_DropConstraintsOnNotesTable")]
+    partial class DropConstraintsOnNotesTable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

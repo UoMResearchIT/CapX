@@ -11,8 +11,8 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20250219093714_SwapAuthorAndRoleOnNotes")]
-    partial class SwapAuthorAndRoleOnNotes
+    [Migration("20250219093904_SwapPersonIdForRoleIdAndReapplyConstraints")]
+    partial class SwapPersonIdForRoleIdAndReapplyConstraints
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

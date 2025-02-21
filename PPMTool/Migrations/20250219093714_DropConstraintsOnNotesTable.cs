@@ -4,7 +4,7 @@
 
 namespace PPMTool.Migrations
 {
-    public partial class SwapAuthorAndRoleOnNotes : Migration
+    public partial class DropConstraintsOnNotesTable : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
