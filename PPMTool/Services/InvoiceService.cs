@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -118,7 +119,18 @@ namespace PPMTool.Services
         /// <returns></returns>
         public double GetFundsReceived(PPMToolContext context, int projectId)
         {
-            return context.Payments.Where(x => x.Project.ProjectId == projectId).Sum(x => x.Value);
+            return context.Payments.Where(x => x.Project.ProjectId == projectId).RoundedSum(x => x.Value, 0);
+        }
+
+        /// <summary>
+        /// Gets the funds rquested based on invoices in the DB for the given project
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        public double GetFundsRequested(PPMToolContext context, int projectId)
+        {
+            return context.Invoices.Where(x => x.Project.ProjectId == projectId).RoundedSum(x => x.Value, 0);
         }
     }
 }

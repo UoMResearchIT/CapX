@@ -25,6 +25,7 @@ else
                     <th>Agreed Budget</th>
                     <th>Planned Cost</th>
                     <th>Actual Cost</th>
+                    <th>Funds Requested</th>
                     <th>Funds Received</th>
                     <th>
                         Actual Hours
@@ -89,6 +90,7 @@ else
                             </span>
                         }
                     </td>
+                    <td><span style="color:@fundsRequestedColour">@fundsRequested.ToString("C0")</span></td>
                     <td><span style="color:@fundsReceivedColour">@fundsReceived.ToString("C0")</span></td>
                     <td>@Project.SubTasks?.RoundedSum(x => x.ActualWorkHours)</td>
                 </tr>
@@ -117,6 +119,8 @@ else
     private string actualCostColour;
     private string fundsReceivedColour;
     private double fundsReceived;
+    private string fundsRequestedColour;
+    private double fundsRequested;
 
     protected override void OnParametersSet()
     {
@@ -125,9 +129,11 @@ else
         if (Project != null)
         {
             fundsReceived = InvoiceService.GetFundsReceived(Context, Project.ProjectId);
+            fundsRequested = InvoiceService.GetFundsRequested(Context, Project.ProjectId);
             plannedCostColour = Project.PlannedCost > Project.Budget ? "red" : "green";
             actualCostColour = Project.ActualCost > Project.PlannedCost ? "red" : "green";
             fundsReceivedColour = fundsReceived < Project.Budget ? "red" : "green";
+            fundsRequestedColour = fundsRequested > fundsReceived ? "red" : "green";
         }
     }
 }
