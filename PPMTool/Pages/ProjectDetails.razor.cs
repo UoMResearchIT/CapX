@@ -239,7 +239,7 @@ namespace PPMTool.Pages
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = user.RoleType == RoleType.Superuser || (user.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
+                    isProjectManager = user.RoleType == RoleType.Superuser || (user.RoleType == RoleType.Manager && ActiveUser?.PersonId == project?.ProjectManager?.PersonId);
 
                     ganttChartOptions = new ApexChartOptions<GanttBlock>
                     {

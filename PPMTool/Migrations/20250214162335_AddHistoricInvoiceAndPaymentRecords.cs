@@ -125,7 +125,7 @@ namespace PPMTool.Migrations
             {
                 sqlScript += $@"
                     INSERT INTO Invoices (InvoiceId, InvoiceReference, Status, KeyDate, Value, Description, ProjectId, InvoiceUrl)
-                    SELECT '{invoice.InvId}', '{invoice.InvoiceRef}', '{(int)invoice.Status}', '{invoice.Requested:yyyy-MM-dd}', '{invoice.Amount}', '[Automatic Import from Old Tracker] {invoice.Comments}', ProjectId, '{invoice.InvoiceLink}'
+                    SELECT '{invoice.InvId}', '{(string.IsNullOrWhiteSpace(invoice.InvoiceRef) ? "None" : invoice.InvoiceRef)}', '{(int)invoice.Status}', '{invoice.Requested:yyyy-MM-dd}', '{invoice.Amount}', '[Automatic Import from Old Tracker] {invoice.Comments}', ProjectId, '{invoice.InvoiceLink}'
                     FROM Projects
                     WHERE RTP = {invoice.RTP};
 

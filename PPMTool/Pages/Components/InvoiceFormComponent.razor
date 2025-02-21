@@ -82,10 +82,12 @@
         if (Invoice.InvoiceId > 0)
         {
             InvoiceService.Update(Context, Invoice);
+            PostNoteToProject(FinanceItemChangeType.Update, Invoice);
         }
         else
         {
             InvoiceService.Add(Context, Invoice);
+            PostNoteToProject(FinanceItemChangeType.Add, Invoice);
         }
 
         CloseForm(true);
@@ -103,8 +105,14 @@
             Logger?.LogInformation($"Deleting invoice ID {Invoice.InvoiceId}");
 
             InvoiceService.Delete(Context, Invoice);
-
+            PostNoteToProject(FinanceItemChangeType.Delete, Invoice);
             CloseForm(true);
         }
+    }
+
+    /// Return the invoice ID
+    protected override int GetItemId()
+    {
+        return Invoice?.InvoiceId ?? 0;
     }
 }
