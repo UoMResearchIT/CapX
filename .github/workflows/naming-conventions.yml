@@ -7,7 +7,7 @@ on:
       - '**'
 
 jobs:
-  check-naming-conventions:
+  check-repo-name-conventions:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,6 +20,11 @@ jobs:
             exit 1
           fi
           
+  check-branch-name-conventions:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
