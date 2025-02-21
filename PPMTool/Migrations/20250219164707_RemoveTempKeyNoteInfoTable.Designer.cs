@@ -11,8 +11,8 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20250219164707_RemoveTempNotesTable")]
-    partial class RemoveTempNotesTable
+    [Migration("20250219164707_RemoveTempKeyNoteInfoTable")]
+    partial class RemoveTempKeyNoteInfoTable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

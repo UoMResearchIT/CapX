@@ -4,7 +4,7 @@
 
 namespace PPMTool.Migrations
 {
-    public partial class RemoveTempNotesTable : Migration
+    public partial class RemoveTempKeyNoteInfoTable : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

@@ -8,17 +8,6 @@ namespace PPMTool.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Create a temporary table to store the data from the Roles table
-            migrationBuilder.Sql(@"
-                CREATE TABLE TempRoles AS
-                SELECT * FROM Roles;
-            ");
-
-            migrationBuilder.Sql(@"
-                CREATE TABLE TempNotes AS
-                SELECT * FROM Notes;
-            ");
-
             // Create the Users table
             migrationBuilder.CreateTable(
                 name: "Users",
@@ -47,54 +36,43 @@ namespace PPMTool.Migrations
             migrationBuilder.Sql(@"
                 INSERT INTO Users (UserId, RoleType, CASUserName, Name, PersonId, LastLoggedIn, EmailAddress)
                 SELECT RoleId, RoleType, CASUserName, Name, PersonId, LastLoggedIn, EmailAddress
-                FROM TempRoles;
+                FROM Roles;
             ");
 
-            // Drop foreign keys referencing the Roles table
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Roles_AuthorRoleId",
-                table: "Notes");
+            // Recreate the Notes table with foreign key constraints to the Users table
+            migrationBuilder.Sql(@"
+                CREATE TABLE Notes_New (
+                    NoteId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    AuthorUserId INTEGER,
+                    CompletedDate TEXT,
+                    CreatedDate TEXT NOT NULL,
+                    DueDate TEXT,
+                    EditedDate TEXT NOT NULL,
+                    EditorUserId INTEGER,
+                    HtmlContent TEXT NOT NULL,
+                    IsFinanceInfo INTEGER NOT NULL,
+                    ProjectId INTEGER NOT NULL,
+                    FOREIGN KEY (AuthorUserId) REFERENCES Users (UserId) ON DELETE CASCADE,
+                    FOREIGN KEY (EditorUserId) REFERENCES Users (UserId)
+                );
+            ");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Roles_EditorRoleId",
-                table: "Notes");
+            // Copy the notes data from the old notes table to the new table
+            migrationBuilder.Sql(@"
+                INSERT INTO Notes_New (NoteId, AuthorUserId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorUserId, HtmlContent, IsFinanceInfo, ProjectId)
+                SELECT NoteId, AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId
+                FROM Notes;
+            ");
 
-            // Rename columns in the Notes table
-            migrationBuilder.RenameColumn(
-                name: "EditorRoleId",
-                table: "Notes",
-                newName: "EditorUserId");
+            // Drop the original table
+            migrationBuilder.Sql(@"
+                DROP TABLE Notes;
+            ");
 
-            migrationBuilder.RenameColumn(
-                name: "AuthorRoleId",
-                table: "Notes",
-                newName: "AuthorUserId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_EditorRoleId",
-                table: "Notes",
-                newName: "IX_Notes_EditorUserId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_AuthorRoleId",
-                table: "Notes",
-                newName: "IX_Notes_AuthorUserId");
-
-            // Add foreign keys referencing the Users table
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_Users_AuthorUserId",
-                table: "Notes",
-                column: "AuthorUserId",
-                principalTable: "Users",
-                principalColumn: "UserId",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_Users_EditorUserId",
-                table: "Notes",
-                column: "EditorUserId",
-                principalTable: "Users",
-                principalColumn: "UserId");
+            // Rename the new table to the original table name
+            migrationBuilder.Sql(@"
+                ALTER TABLE Notes_New RENAME TO Notes;
+            ");
 
             // Drop the Roles table
             migrationBuilder.DropTable(
@@ -103,13 +81,7 @@ namespace PPMTool.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Create a temporary table to store the data from the Users table
-            migrationBuilder.Sql(@"
-                CREATE TABLE TempUsers AS
-                SELECT * FROM Users;
-            ");
-
-            // Recreate the Roles table
+            // Create the Roles table
             migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
@@ -133,65 +105,51 @@ namespace PPMTool.Migrations
                         principalColumn: "PersonId");
                 });
 
-            // Copy data from the temporary table to the Roles table
+            // Copy data from the Users table to the Roles table
             migrationBuilder.Sql(@"
                 INSERT INTO Roles (RoleId, RoleType, CASUserName, Name, PersonId, LastLoggedIn, EmailAddress)
                 SELECT UserId, RoleType, CASUserName, Name, PersonId, LastLoggedIn, EmailAddress
-                FROM TempUsers;
+                FROM Users;
             ");
 
-            // Drop foreign keys referencing the Users table
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Users_AuthorUserId",
-                table: "Notes");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Notes_Users_EditorUserId",
-                table: "Notes");
-
-            // Rename columns in the Notes table
-            migrationBuilder.RenameColumn(
-                name: "EditorUserId",
-                table: "Notes",
-                newName: "EditorRoleId");
-
-            migrationBuilder.RenameColumn(
-                name: "AuthorUserId",
-                table: "Notes",
-                newName: "AuthorRoleId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_EditorUserId",
-                table: "Notes",
-                newName: "IX_Notes_EditorRoleId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Notes_AuthorUserId",
-                table: "Notes",
-                newName: "IX_Notes_AuthorRoleId");
-
-            // Add foreign keys referencing the Roles table
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_Roles_AuthorRoleId",
-                table: "Notes",
-                column: "AuthorRoleId",
-                principalTable: "Roles",
-                principalColumn: "RoleId",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Notes_Roles_EditorRoleId",
-                table: "Notes",
-                column: "EditorRoleId",
-                principalTable: "Roles",
-                principalColumn: "RoleId");
-
-            // Drop the temporary tables
+            // Recreate the Notes table with foreign key constraints to the Roles table
             migrationBuilder.Sql(@"
-                DROP TABLE TempUsers;
-                DROP TABLE TempRoles;
-                DROP TABLE TempNotes;
+                CREATE TABLE Notes_New (
+                    NoteId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    AuthorRoleId INTEGER,
+                    CompletedDate TEXT,
+                    CreatedDate TEXT NOT NULL,
+                    DueDate TEXT,
+                    EditedDate TEXT NOT NULL,
+                    EditorRoleId INTEGER,
+                    HtmlContent TEXT NOT NULL,
+                    IsFinanceInfo INTEGER NOT NULL,
+                    ProjectId INTEGER NOT NULL,
+                    FOREIGN KEY (AuthorRoleId) REFERENCES Roles (RoleId) ON DELETE CASCADE,
+                    FOREIGN KEY (EditorRoleId) REFERENCES Roles (RoleId)
+                );
             ");
+
+            // Copy the notes data from the old notes table to the new table
+            migrationBuilder.Sql(@"
+                INSERT INTO Notes_New (NoteId, AuthorRoleId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorRoleId, HtmlContent, IsFinanceInfo, ProjectId)
+                SELECT NoteId, AuthorUserId, CompletedDate, CreatedDate, DueDate, EditedDate, EditorUserId, HtmlContent, IsFinanceInfo, ProjectId
+                FROM Notes;
+            ");
+
+            // Drop the original table
+            migrationBuilder.Sql(@"
+                DROP TABLE Notes;
+            ");
+
+            // Rename the new table to the original table name
+            migrationBuilder.Sql(@"
+                ALTER TABLE Notes_New RENAME TO Notes;
+            ");
+
+            // Drop the Users table
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }
