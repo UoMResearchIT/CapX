@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data.Entities;
-using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
@@ -98,8 +97,8 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
-            invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate);
-            payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate);
+            invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
+            payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
 
             // Filter if a project is selected
             if (selectedProject != null)
@@ -142,8 +141,9 @@ namespace PPMTool.Pages
                     {
                         { nameof(InvoiceFormComponent.Invoice), item },
                         { nameof(InvoiceFormComponent.Project), selectedProject == null ? item.Project : selectedProject },
-                        { nameof(InvoiceFormComponent.Context), Context },
                         { nameof(InvoiceFormComponent.Logger), Logger },
+                        { nameof(InvoiceFormComponent.Context), Context },
+                        { nameof(InvoiceFormComponent.ActiveUser), ActiveUser },
                         { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
                     },
                     new DialogOptions
@@ -160,8 +160,9 @@ namespace PPMTool.Pages
                     {
                         { nameof(PaymentFormComponent.Payment), item },
                         { nameof(PaymentFormComponent.Project), selectedProject == null ? item.Project : selectedProject },
-                        { nameof(PaymentFormComponent.Context), Context },
                         { nameof(PaymentFormComponent.Logger), Logger },
+                        { nameof(PaymentFormComponent.Context), Context },
+                        { nameof(PaymentFormComponent.ActiveUser), ActiveUser },
                         { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
                     },
                     new DialogOptions

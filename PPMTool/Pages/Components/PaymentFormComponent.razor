@@ -64,7 +64,10 @@
         }
 
         // Load invoices for the dropdown
-        invoices = InvoiceService.GetAll(Context).Where(x => x.Project?.ProjectId == Project?.ProjectId);
+        invoices = InvoiceService
+            .GetAll(Context)
+            .Where(x => x.Project?.ProjectId == Project?.ProjectId)
+            .OrderBy(x => x.InvoiceId);
     }
 
     protected override void HandleValidSubmit()

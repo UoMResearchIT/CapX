@@ -6,24 +6,26 @@ using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
-using PPMTool.Shared;
 using Radzen;
 
 namespace PPMTool.Pages.Components
 {
-    public abstract class BaseFinanceItemFormComponent : BaseComponent
+    public abstract class BaseFinanceItemFormComponent : ComponentBase
     {
         [Parameter]
         public Project Project { get; set; }
 
         [Parameter]
-        public new PPMToolContext Context { get; set; }
+        public PPMToolContext Context { get; set; }
 
         [Parameter]
         public ILogger Logger { get; set; }
 
         [Parameter]
         public Action FormClosed { get; set; }
+
+        [Parameter]
+        public User ActiveUser { get; set; }
 
         [Inject]
         protected InvoiceService InvoiceService { get; set; }
@@ -81,7 +83,7 @@ namespace PPMTool.Pages.Components
         protected void PostNoteToProject(FinanceItemChangeType type, FinanceItem item)
         {
             // Create a formatted message
-            string message = $"<p><span class=\"badge badge-{(item is Invoice ? "warning" : "success")}\">{(item is Invoice ? "Invoice" : "Payment")}</span><br/><b>{type.GetDescription()} ID: {GetItemId()}</b>" +
+            string message = $"<p><span class=\"badge badge-{(item is Invoice ? "warning" : "success")}\">{(item is Invoice ? "Invoice" : "Payment")}</span>&nbsp;<b>{type.GetDescription()} ID: {GetItemId()}</b>" +
                 $"<br />{item.Description}</p>";
 
             // Add the note to the DB
