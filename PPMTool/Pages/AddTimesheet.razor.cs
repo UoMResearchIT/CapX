@@ -70,6 +70,11 @@ namespace PPMTool.Pages
             EnqueueLoadData(GetTask);
         }
 
+        /// <summary>
+        /// Get the task to run in the background
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         private Task GetTask()
         {
             return Task.Run(() =>
@@ -119,14 +124,7 @@ namespace PPMTool.Pages
                         if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
 
-                    if (IsSuperuserOrLineManagerOfThisPerson(timesheet.Owner))
-                    {
-                        dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
-                    }
-                    else
-                    {
-                        dataGridEntities = timesheet.TimesheetEntries.ToList();
-                    }
+                    PopulateDataGridDataSource();
                     UpdateDailyTotals();
 
                     // Innate codes are limited to active ones initially
@@ -181,6 +179,98 @@ namespace PPMTool.Pages
                 }
                 Debug.WriteLine("** ...complete!");
             });
+        }
+
+        /// <summary>
+        /// Method to get the timesheet entries for the datagrid
+        /// </summary>
+        private void PopulateDataGridDataSource()
+        {
+            if (ActiveUser?.Person?.PersonId == timesheet.Owner.PersonId)
+            {
+                // Use the staff member's timesheet template for the ordering
+                string templateOrdering = ActiveUser?.Person?.TimesheetTemplateData;
+                dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
+            }
+            else
+            {
+                // Order by Duty if Line Manager viewing
+                dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets the user's template data to work with, and orders the timesheet entries accordingly.
+        /// Items not part of the template get put at the end of the ordered list, ordered by InnateCodeTaskId
+        /// </summary>
+        /// <param name="timesheet">The timesheet being viewed</param>
+        /// <param name="templateOrderDetail">The string of pipe-separated TaskIds detailing the user's template items</param>
+        private List<TimesheetEntry> OrderByTemplate(Timesheet timesheet, string templateOrderDetail)
+        {
+            List<int> order = new List<int>();
+
+            if (!string.IsNullOrEmpty(templateOrderDetail))
+            {
+                foreach (string s in templateOrderDetail.Split("|"))
+                {
+                    order.Add(int.Parse(s));
+                }
+
+                // Custom ordering
+                var orderedResults = timesheet.TimesheetEntries
+                    .OrderBy(r => order.IndexOf(r.InnateCodeTask.InnateCodeTaskId) == -1 ? int.MaxValue : order.IndexOf(r.InnateCodeTask.InnateCodeTaskId))
+                    .ThenBy(r => r.InnateCodeTask.InnateCodeTaskId)
+                    .ToList();
+
+                // Sets a boolean for use in the datagrid to show which items are part of the template
+                foreach (TimesheetEntry e in orderedResults)
+                {
+                    e.IsInTemplate = order.Contains(e.InnateCodeTask.InnateCodeTaskId);
+                }
+
+                return orderedResults;
+            }
+            else
+            {
+                return timesheet.TimesheetEntries.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Method tied to the datagrid called when the column sorting icons are clicked.
+        /// Uses the data passed to calculate what needs to be ordered and how.
+        /// </summary>
+        /// <param name="args"></param>
+        void OnDataLoad(LoadDataArgs args)
+        {
+            IQueryable<TimesheetEntry> query = timesheet.TimesheetEntries.AsQueryable();
+
+            // The ordering of timesheet entries epends on who is logged in 
+            // and whose timesheet they are viewing
+            if (!string.IsNullOrEmpty(args.OrderBy)) // Sorting link has been clicked
+            {
+                if (args.OrderBy.Contains("Duty"))
+                {
+                    // "WLM Task & Duty" column sorting has been clicked
+                    query = args.OrderBy.EndsWith("desc")
+                    ? query.OrderByDescending(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName)
+                    : query.OrderBy(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName);
+                }
+                else
+                {
+                    // Innate code column sorting has been clicked
+                    query = args.OrderBy.EndsWith("desc")
+                    ? query.OrderByDescending(e => e.InnateCodeTask.InnateCode.ActivityCode)
+                    : query.OrderBy(e => e.InnateCodeTask.InnateCode.ActivityCode);
+                }
+
+                dataGridEntities = query.ToList();
+            }
+            else
+            {
+                // Default is to order by the user's template if viewing their own timesheet
+                PopulateDataGridDataSource();
+            }
         }
 
         protected override void OnInitialized()
@@ -553,6 +643,12 @@ namespace PPMTool.Pages
                     {
                         args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
                     }
+
+                    if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
+                    {
+                        args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
+                        args.Attributes.Add("title", "Task is part of your default template");
+                    }
                 }
             }
         }
@@ -627,6 +723,35 @@ namespace PPMTool.Pages
         public void GoToTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
+        }
+
+        /// <summary>
+        /// Opens the dialog with the ReorderTimesheet page as its content. The passed timesheet
+        /// is only so we can return and reload the correct page that we came from
+        /// </summary>
+        /// <param name="timesheet"></param>
+        private async void ReorderTimesheetTemplate(Timesheet timesheet)
+        {
+            await DialogService.OpenAsync<ReorderTimesheet>("Drag and drop tasks to reorder them",
+               new Dictionary<string, object>()
+               {
+                   { "TimesheetId", timesheet.TimesheetId },
+                   { nameof(ReorderTimesheet.FormClosed), () => FormClosedHandler() }
+               },
+               new DialogOptions()
+               {
+                   ShowClose = false,
+                   Width = "50%"
+               });
+        }
+
+        /// <summary>
+        /// Callback which runs when the form closes
+        /// </summary>
+        private void FormClosedHandler()
+        {
+            // Force a reload of the page - seems the only way to be sure that we're getting the fresh data!
+            Navigation.NavigateTo($"/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}", true);
         }
     }
 }

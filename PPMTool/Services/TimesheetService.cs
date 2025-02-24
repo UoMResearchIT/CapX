@@ -215,7 +215,7 @@ namespace PPMTool.Services
             // If not already in the template then add it to the start and update the person record
             if (!templateTimesheetTasks.Contains(task.InnateCodeTaskId))
             {
-                templateTimesheetTasks.Insert(0, task.InnateCodeTaskId);
+                templateTimesheetTasks.Add(task.InnateCodeTaskId);
                 string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
                 person.TimesheetTemplateData = updatedTemplateDetails;
                 context.People.Update(person);

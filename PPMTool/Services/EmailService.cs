@@ -96,7 +96,7 @@ namespace PPMTool.Services
                     body.Append($"<p>Dear {lineManager.Name},</p>");
                     body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
                     body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
-                    body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
+                    body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
                     body.Append("<p><em>Sent from CapX</em></p>");
 
                     // Send email
