@@ -176,7 +176,8 @@ namespace PPMTool.Pages
                         { nameof(InvoiceFormComponent.Logger), Logger },
                         { nameof(InvoiceFormComponent.Context), Context },
                         { nameof(InvoiceFormComponent.ActiveUser), ActiveUser },
-                        { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
+                        { nameof(InvoiceFormComponent.FormClosed), () => FormClosedHandler() },
+                        { nameof(InvoiceFormComponent.EditAuthorised), EditAuthorised }
                     },
                     new DialogOptions
                     {
@@ -195,7 +196,8 @@ namespace PPMTool.Pages
                         { nameof(PaymentFormComponent.Logger), Logger },
                         { nameof(PaymentFormComponent.Context), Context },
                         { nameof(PaymentFormComponent.ActiveUser), ActiveUser },
-                        { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() }
+                        { nameof(PaymentFormComponent.FormClosed), () => FormClosedHandler() },
+                        { nameof(PaymentFormComponent.EditAuthorised), EditAuthorised }
                     },
                     new DialogOptions
                     {

@@ -27,6 +27,9 @@ namespace PPMTool.Pages.Components
         [Parameter]
         public User ActiveUser { get; set; }
 
+        [Parameter]
+        public bool EditAuthorised { get; set; }
+
         [Inject]
         protected InvoiceService InvoiceService { get; set; }
 

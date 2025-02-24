@@ -65,7 +65,7 @@
             </div>
             <div class="col-auto align-content-end">
                 <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinanceItems" Text="Export" Icon="download" Disabled="@(!EditAuthorised || exportRunning)" class="mr-2" />
-                <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditPaymentOrInvoice(null))" Disabled="@(selectedProject == null)" />
+                <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditPaymentOrInvoice(null))" Disabled="@(selectedProject == null || !EditAuthorised)" />
             </div>
         </div>
         <RadzenTabs @bind-SelectedIndex="selectedTab">
@@ -103,7 +103,7 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Invoice" Title="Actions" MinWidth="10px">
                                 <Template Context="invoice">
-                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditPaymentOrInvoice(invoice))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditPaymentOrInvoice(invoice))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
                                     <RadzenButton Icon="visibility" Click="@(args => ViewInvoiceDocumentAsync(invoice))" Disabled="@(string.IsNullOrWhiteSpace(invoice.InvoiceUrl))" MouseEnter="@(args => ShowTooltip(args, "View"))" />
                                 </Template>
                             </RadzenDataGridColumn>

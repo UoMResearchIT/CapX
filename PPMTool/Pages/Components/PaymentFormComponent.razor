@@ -35,9 +35,9 @@
         </RadzenStack>
     }
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Payment?.PaymentId < 1)" />
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Payment?.PaymentId < 1 || !EditAuthorised)" />
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
-            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" />
+            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" Disabled="@(!EditAuthorised)" />
             <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
         </RadzenStack>
     </RadzenStack>
