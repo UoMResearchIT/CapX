@@ -167,6 +167,9 @@ namespace PPMTool.Pages
 
             Task.Run(() =>
             {
+                // Create a thread-local context
+                var context = ContextFactory.CreateDbContext();
+
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)
                 {
@@ -182,8 +185,8 @@ namespace PPMTool.Pages
                     // Generate the finance item
                     financeSummaryItem = new FinanceSummaryItem(
                         project,
-                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
-                        InvoiceService.GetFundsReceived(Context, project.ProjectId)
+                        InvoiceService.GetFundsRequested(context, project.ProjectId),
+                        InvoiceService.GetFundsReceived(context, project.ProjectId)
                     );
 
                     // Generate the blocks for the schedule chart

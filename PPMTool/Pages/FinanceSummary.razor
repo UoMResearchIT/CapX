@@ -6,6 +6,7 @@
 @using PPMTool.Pages.Components
 @using Radzen
 @using DotNetExtensions
+@using System.ComponentModel.DataAnnotations
 <PageTitle>Finance Summary - CapX</PageTitle>
 
 <div class="container">
@@ -19,32 +20,69 @@
         <RadzenDataGrid Data="@items"
                         TItem="FinanceSummaryItem"
                         ColumnWidth="5rem"
-                        FilterMode="FilterMode.Simple"
+                        FilterMode="FilterMode.CheckBoxList"
                         AllowSorting="true"
                         AllowFiltering="true"
-                        PageSize="10"
-                        AllowPaging="true">
+                        PageSize="15"
+                        AllowPaging="true"
+                        ShowPagingSummary="true"
+                        AllowColumnResize="true"
+                        Density="Density.Compact"
+                        @ref="dataGrid">
             <Columns>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="StartDate" Title="Start Date" FormatString="{0:yyyy-MM-dd}" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="EndDate" Title="End Date" FormatString="{0:yyyy-MM-dd}" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectRTP" Title="RTP" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectName" Title="Project Name" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPI" Title="Project PI" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="School" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="Faculty" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPM" Title="Project PM" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="CostModel" Title="Cost Model" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPI" Title="Project PI" MinWidth="10px" Width="7rem" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPM" Title="PM" MinWidth="10px" Width="7rem" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectStatus" Title="Project Status" MinWidth="10px">
+                    <Template Context="item">
+                        @item.ProjectStatus.ToNiceString()
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="Faculty" MinWidth="10px">
+                    <Template Context="item">
+                        @item.Faculty.ToNiceString()
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="School" MinWidth="10px">
+                    <Template Context="item">
+                        @item.School.ToNiceString()
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="CostModel" Title="Cost Model" Width="8rem" MinWidth="10px">
+                    <Template Context="item">
+                        @(item.CostModel.GetAttribute<DisplayAttribute>().Name)
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="DayRate" Title="Day Rate" FormatString="{0:C}" MinWidth="10px">
                     <Template Context="item">
                         @(item.CostModel == CostModel.DayRate ? item.DayRate.ToString("C0") : "N/A")
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Budget" Title="Budget" FormatString="{0:C}" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedCost" Title="Planned Cost" FormatString="{0:C}" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualCost" Title="Actual Cost" FormatString="{0:C}" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequested" Title="Funds Requested" FormatString="{0:C}" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceived" Title="Funds Received" FormatString="{0:C}" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualHours" Title="Actual Hours" FormatString="{0:N2}" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedCost" Title="Planned" MinWidth="10px">
+                    <Template Context="item">
+                        <span class="@item.PlannedCostColour">@item.PlannedCost.ToString("C")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualCost" Title="Actual" MinWidth="10px">
+                    <Template Context="item">
+                        <span class="@item.ActualCostColour">@item.ActualCost.ToString("C")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequested" Title="Requested" MinWidth="10px">
+                    <Template Context="item">
+                        <span class="@item.FundsRequestedColour">@item.FundsRequested.ToString("C")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceived" Title="Received" MinWidth="10px">
+                    <Template Context="item">
+                        <span class="@item.FundsReceivedColour">@item.FundsReceived.ToString("C")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualHours" Title="Hours" FormatString="{0:N2}" MinWidth="10px" />
             </Columns>
         </RadzenDataGrid>
     </div>

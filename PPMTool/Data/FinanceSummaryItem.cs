@@ -19,9 +19,11 @@ namespace PPMTool.Data
 
         public string ProjectPI { get; set; }
 
-        public string School { get; set; }
+        public ProjectStatus ProjectStatus { get; set; }
 
-        public string Faculty { get; set; }
+        public School School { get; set; }
+
+        public Faculty Faculty { get; set; }
 
         public string ProjectPM { get; set; }
 
@@ -67,9 +69,10 @@ namespace PPMTool.Data
             ProjectRTP = project.RTP;
             ProjectName = project.Name;
             ProjectPI = project.PI;
-            School = project.School.ToNiceString();
-            Faculty = project.Faculty.ToNiceString();
+            School = project.School;
+            Faculty = project.Faculty;
             ProjectPM = project.ProjectManager?.Name ?? "Not Set";
+            ProjectStatus = project.ProjectStatus;
             CostModel = project.CostModel;
             DayRate = project.DayRate;
             Budget = project.Budget;
@@ -82,8 +85,8 @@ namespace PPMTool.Data
             ActualHours = project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0;
             PlannedCostColour = PlannedCost > Budget ? "red" : "green";
             ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
-            FundsReceivedColour = FundsReceived < Budget ? "red" : "green";
-            FundsRequestedColour = FundsRequested > FundsReceived ? "red" : "green";
+            FundsReceivedColour = (FundsReceived < Budget || (FundsReceived == 0 && Budget > 0)) ? "red" : "green";
+            FundsRequestedColour = (FundsRequested > FundsReceived || (FundsRequested == 0 && Budget > 0)) ? "red" : "green";
         }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Services;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -18,6 +19,7 @@ namespace PPMTool.Pages
         private InvoiceService InvoiceService { get; set; }
 
         private IList<FinanceSummaryItem> items;
+        private RadzenDataGrid<FinanceSummaryItem> dataGrid;
 
         protected override void OnInitialized()
         {
@@ -54,9 +56,10 @@ namespace PPMTool.Pages
             {
                 InvokeAsync(() =>
                 {
-                    Debug.WriteLine($"** ...done! Status = {t.Status}");
+                    Debug.WriteLine($"** ...done! Item Count = {items.Count} | Status = {t.Status}");
                     Loading = false;
                     StateHasChanged();
+                    dataGrid?.Reload();
                 });
             });
         }
