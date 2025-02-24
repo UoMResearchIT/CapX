@@ -155,20 +155,37 @@ namespace PPMTool.Pages
 
         protected override void OnParametersSet()
         {
+            // Set the loading flag and redraw the view while the background task runs
             base.OnParametersSet();
             Loading = true;
+            StateHasChanged();
 
-            // Reset the search box
-            noteSearchTerms = string.Empty;
+            // Fire the load task
+            EnqueueLoadData(GetTask);
+        }
 
-            // Filter the mentions reset
-            cachedMentionables = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
-            FilterMentionables();
-
-            Task.Run(() =>
+        /// <summary>
+        /// Method to get the background task that does all the intialisation work
+        /// </summary>
+        /// <returns></returns>
+        private Task GetTask()
+        {
+            return Task.Run(() =>
             {
                 // Create a thread-local context
                 var context = ContextFactory.CreateDbContext();
+
+                // Reset the search box
+                noteSearchTerms = string.Empty;
+
+                // Filter the mentions reset
+                cachedMentionables = UserService
+                    .GetAll(Context)
+                    .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    .DistinctBy(x => x.Person)
+                    .Select(x => x.Person)
+                    .ToList();
+                FilterMentionables();
 
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)
@@ -557,7 +574,9 @@ namespace PPMTool.Pages
             }
             else
             {
-                mentionables = cachedMentionables.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
+                mentionables = cachedMentionables
+                    .Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower()))
+                    .ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
             Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
