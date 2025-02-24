@@ -186,10 +186,10 @@ namespace PPMTool.Pages
         /// </summary>
         private void PopulateDataGridDataSource()
         {
-            if (ActiveUser.PersonId == timesheet.Owner.PersonId)
+            if (ActiveUser?.Person?.PersonId == timesheet.Owner.PersonId)
             {
                 // Use the staff member's timesheet template for the ordering
-                string templateOrdering = ActiveUser.TimesheetTemplateData;
+                string templateOrdering = ActiveUser?.Person?.TimesheetTemplateData;
                 dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
             }
             else

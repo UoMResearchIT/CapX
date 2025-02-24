@@ -58,9 +58,9 @@ namespace PPMTool.Pages
                 // Get the user's timesheet template details to work with
                 templateData = new ObservableCollection<TimesheetTemplateItem>();
 
-                if (ActiveUser.TimesheetTemplateData != null)
+                if (ActiveUser?.Person?.TimesheetTemplateData != null)
                 {
-                    finalOrder = ActiveUser.TimesheetTemplateData;
+                    finalOrder = ActiveUser?.Person?.TimesheetTemplateData;
                     var split = finalOrder.Split("|");
                     IEnumerable<InnateCodeTask> tasks = InnateCodeService.GetAllTasks(Context);
 
@@ -129,16 +129,19 @@ namespace PPMTool.Pages
                 }
 
                 // Save the result and update the user
-                ActiveUser.TimesheetTemplateData = finalOrder;
-                PersonService.Update(Context, ActiveUser);
-
-                // Show notification for save action
-                ShowNotification(new CapXNotificationMessage
+                if (ActiveUser != null && ActiveUser.Person != null)
                 {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Change Saved",
-                    Detail = "Your timesheet template ordering has been updated."
-                });
+                    ActiveUser.Person.TimesheetTemplateData = finalOrder;
+                    PersonService.Update(Context, ActiveUser?.Person);
+
+                    // Show notification for save action
+                    ShowNotification(new CapXNotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Change Saved",
+                        Detail = "Your timesheet template ordering has been updated."
+                    });
+                }
             }));
         }
 
