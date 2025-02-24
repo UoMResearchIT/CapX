@@ -71,6 +71,11 @@ namespace PPMTool.Pages
             EnqueueLoadData(GetTask);
         }
 
+        /// <summary>
+        /// Get the task to run in the background
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         private Task GetTask()
         {
             return Task.Run(() =>
@@ -123,7 +128,7 @@ namespace PPMTool.Pages
                         if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
 
-                    PopulateDatagridDatasource();
+                    PopulateDataGridDataSource();
                     UpdateDailyTotals();
 
                     // Innate codes are limited to active ones initially
@@ -180,7 +185,10 @@ namespace PPMTool.Pages
             });
         }
 
-        private void PopulateDatagridDatasource()
+        /// <summary>
+        /// Method to get the timesheet entries for the datagrid
+        /// </summary>
+        private void PopulateDataGridDataSource()
         {
             if (ActiveUser.PersonId == timesheet.Owner.PersonId)
             {
@@ -265,7 +273,7 @@ namespace PPMTool.Pages
             else
             {
                 // Default is to order by the user's template if viewing their own timesheet
-                PopulateDatagridDatasource();
+                PopulateDataGridDataSource();
             }
         }
 
