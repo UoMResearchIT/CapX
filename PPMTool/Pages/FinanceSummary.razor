@@ -85,7 +85,11 @@
                         <span class="@item.FundsReceivedColour">@item.FundsReceived.ToString("C")</span>
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualHours" Title="Hours" FormatString="{0:N2}" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsOwed" Title="Owed" MinWidth="10px">
+                    <Template Context="item">
+                        <span class="@item.FundsOwedColour">@item.FundsOwed.ToString("C")</span>
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
     </div>

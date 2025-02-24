@@ -55,6 +55,10 @@ namespace PPMTool.Data
 
         public string FundsRequestedColour { get; }
 
+        public double FundsOwed { get; }
+
+        public string FundsOwedColour { get; }
+
 
         public FinanceSummaryItem(Project project, double fundsRequested, double fundsReceived)
         {
@@ -87,6 +91,8 @@ namespace PPMTool.Data
             ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
             FundsReceivedColour = (FundsReceived < Budget || (FundsReceived == 0 && Budget > 0)) ? "red" : "green";
             FundsRequestedColour = (FundsRequested > FundsReceived || (FundsRequested == 0 && Budget > 0)) ? "red" : "green";
+            FundsOwed = FundsRequested - FundsReceived;
+            FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
         }
     }
 }

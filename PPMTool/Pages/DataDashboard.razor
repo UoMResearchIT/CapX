@@ -111,7 +111,7 @@
                             }
                             else
                             {
-                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="!EditAuthorised" />
+                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance)" />
                             }
                         </RadzenStack>
                     </div>
