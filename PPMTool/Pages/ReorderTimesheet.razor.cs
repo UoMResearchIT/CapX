@@ -27,8 +27,6 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         private ObservableCollection<TimesheetTemplateItem> templateData;
-        private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
-        private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
         private IList<TimesheetTemplateItem> selectedTemplateItem;
         private TimesheetTemplateItem draggedItem;
         private string finalOrder;
@@ -38,50 +36,59 @@ namespace PPMTool.Pages
             await base.OnParametersSetAsync();
 
             Loading = true;
+            StateHasChanged();
+            EnqueueLoadData(GetTask);
+        }
 
-            try
+        /// <summary>
+        /// Getter for background load task
+        /// </summary>
+        /// <returns></returns>
+        private Task GetTask()
+        {
+            return Task.Run(() =>
             {
-                await Task.Run(() =>
+                // Handle if the user is not found
+                if (ActiveUser == null)
                 {
-                    // Handle if the user is not found
-                    if (ActiveUser == null)
+                    LogError($"No person found for {ActiveUserName}!");
+                    return;
+                }
+
+                // Get the user's timesheet template details to work with
+                templateData = new ObservableCollection<TimesheetTemplateItem>();
+
+                if (ActiveUser.TimesheetTemplateData != null)
+                {
+                    finalOrder = ActiveUser.TimesheetTemplateData;
+                    var split = finalOrder.Split("|");
+                    IEnumerable<InnateCodeTask> tasks = InnateCodeService.GetAllTasks(Context);
+
+                    foreach (string id in split)
                     {
-                        LogError($"No person found for {ActiveUserName}!");
-                        return;
-                    }
-
-                    // Get the user's timesheet template details to work with
-                    templateData = new ObservableCollection<TimesheetTemplateItem>();
-
-                    if (ActiveUser.TimesheetTemplateData != null)
-                    {
-                        finalOrder = ActiveUser.TimesheetTemplateData;
-                        var split = finalOrder.Split("|");
-                        IEnumerable<InnateCodeTask> tasks = InnateCodeService.GetAllTasks(Context);
-
-                        foreach (string id in split)
+                        InnateCodeTask task = tasks.First(x => x.InnateCodeTaskId == int.Parse(id));
+                        if (task != null)
                         {
-                            InnateCodeTask task = tasks.First(x => x.InnateCodeTaskId == int.Parse(id));
-                            if (task != null)
-                            {
-                                TimesheetTemplateItem item = new TimesheetTemplateItem();
-                                item.TimesheetTemplateItemId = task.InnateCodeTaskId;
-                                item.InnateCode = task.InnateCode;
-                                item.InnateCodeTask = task;
+                            TimesheetTemplateItem item = new TimesheetTemplateItem();
+                            item.TimesheetTemplateItemId = task.InnateCodeTaskId;
+                            item.InnateCode = task.InnateCode;
+                            item.InnateCodeTask = task;
 
-                                templateData.Add(item);
-                            }
+                            templateData.Add(item);
                         }
                     }
+                }
 
-                    selectedTemplateItem = new List<TimesheetTemplateItem>() { templateData.FirstOrDefault() };
-                    Loading = false;
-                });
-            }
-            catch (TaskCanceledException)
+                selectedTemplateItem = new List<TimesheetTemplateItem>() { templateData.FirstOrDefault() };
+
+            }).ContinueWith(t =>
             {
-                // We intend it to be cancelled so this is fine to ignore
-            }
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
 
         /// <summary>
@@ -90,7 +97,7 @@ namespace PPMTool.Pages
         /// <param name="status"></param>
         protected virtual void CloseForm(bool status)
         {
-            base.DialogService.Close(status);
+            DialogService.Close(status);
             FormClosed?.Invoke();
         }
 
@@ -129,7 +136,7 @@ namespace PPMTool.Pages
                 ShowNotification(new CapXNotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Change saved",
+                    Summary = "Change Saved",
                     Detail = "Your timesheet template ordering has been updated."
                 });
             }));
