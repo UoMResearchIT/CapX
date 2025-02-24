@@ -19,7 +19,7 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Superuser,Manager,Reader")]
+    [Authorize(Roles = "Superuser,Manager,Reader,Finance")]
     public partial class ManageFinancialItems : BasePage
     {
         [Parameter]
@@ -39,6 +39,7 @@ namespace PPMTool.Pages
         private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
+        private FinanceSummaryItem financeSummaryItem;
         private IEnumerable<Invoice> invoices;
         private IEnumerable<Payment> payments;
         private IEnumerable<Project> projects;
@@ -91,6 +92,14 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Got to the finance summary page
+        /// </summary>
+        private void GoToFinanceSummary()
+        {
+            Navigation.NavigateTo("managefinancialitems/summary");
+        }
+
+        /// <summary>
         /// Opens the URL to the invoice document in a new tab
         /// </summary>
         /// <param name="invoice"></param>
@@ -105,6 +114,15 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
+            if (selectedProject != null)
+            {
+                financeSummaryItem = new FinanceSummaryItem(
+                    selectedProject,
+                    InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
+                    InvoiceService.GetFundsReceived(Context, selectedProject.ProjectId)
+                );
+            }
+
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
             payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
 

@@ -13,6 +13,9 @@
             <h1>Payments and Invoices</h1>
             <RadzenText Text="@(selectedProject?.GetFullName() ?? "All Projects")" TextStyle="TextStyle.Subtitle1" />
         </div>
+        <div class="col-auto">
+            <RadzenButton Click="@(args => GoToFinanceSummary())" Text="Summary" Icon="list" />
+        </div>
     </div>
     @if (selectedProject == null)
     {
@@ -51,7 +54,7 @@
             <hr />
             <div class="row">
                 <div class="col align-content-center">
-                    <ProjectDetailsSummaryComponent Project="selectedProject" Context="Context" />
+                    <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem" />
                 </div>
             </div>
             <hr />

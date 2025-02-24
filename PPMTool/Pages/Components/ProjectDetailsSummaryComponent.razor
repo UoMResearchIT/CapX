@@ -6,7 +6,7 @@
 @using PPMTool.Services
 
 <h2>Project Summary</h2>
-@if (Project == null)
+@if (FinanceSummaryItem == null)
 {
     <p class="lead">No data to show</p>
 }
@@ -39,60 +39,60 @@ else
             </thead>
             <tbody>
                 <tr>
-                    <td>@($"{Project.StartDate.ToShortDateString()} - {Project.EndDate.ToShortDateString()}")</td>
-                    <td>@Project.PI</td>
-                    <td>@($"{Project.School.ToNiceString()} ({Project.Faculty.ToNiceString()})")</td>
-                    <td>@(Project.ProjectManager?.Name ?? "Not Set")</td>
-                    <td>@(Project.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
-                    <td>@(Project.CostModel == CostModel.DayRate ? Project.DayRate.ToString("C0") : "N/A")</td>
-                    <td>@Project.Budget.ToString("C0")</td>
+                    <td>@($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")</td>
+                    <td>@FinanceSummaryItem.ProjectPI</td>
+                    <td>@($"{FinanceSummaryItem.School} ({FinanceSummaryItem.Faculty})")</td>
+                    <td>@FinanceSummaryItem.ProjectPM</td>
+                    <td>@(FinanceSummaryItem.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
+                    <td>@(FinanceSummaryItem.CostModel == CostModel.DayRate ? FinanceSummaryItem.DayRate.ToString("C0") : "N/A")</td>
+                    <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
                     <td>
-                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
                         {
                             @($"Total: ")
                         }
-                        <span style="color:@plannedCostColour">
-                            @Project.PlannedCost.ToString("C0")
+                        <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                            @FinanceSummaryItem.PlannedCost.ToString("C0")
                         </span>
-                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
                         {
                             <br />
                             @($"Technical: ")
-                            <span style="color:@plannedCostColour">
-                                @((Project.PlannedCost - Project.PlannedLeadershipCosts).ToString("C0"))
+                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                                @((FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts).ToString("C0"))
                             </span>
                             <br />
                             @($"Leadership: ")
-                            <span style="color:@plannedCostColour">
-                                @(Project.PlannedLeadershipCosts.ToString("C0"))
+                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                                @(FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0"))
                             </span>
                         }
                     </td>
                     <td>
-                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
                         {
                             @($"Total: ")
                         }
-                        <span style="color:@actualCostColour">
-                            @Project.ActualCost.ToString("C0")
+                        <span style="color:@FinanceSummaryItem.ActualCostColour">
+                            @FinanceSummaryItem.ActualCost.ToString("C0")
                         </span>
-                        @if (Project.CostModel == CostModel.TwoTierTechStdAndLeadership || Project.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
                         {
                             <br />
                             @($"Technical: ")
-                            <span style="color:@actualCostColour">
-                                @((Project.ActualCost - Project.ActualLeadershipCosts).ToString("C0"))
+                            <span style="color:@FinanceSummaryItem.ActualCostColour">
+                                @((FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts).ToString("C0"))
                             </span>
                             <br />
                             @($"Leadership: ")
-                            <span style="color:@actualCostColour">
-                                @(Project.ActualLeadershipCosts.ToString("C0"))
+                            <span style="color:@FinanceSummaryItem.ActualCostColour">
+                                @(FinanceSummaryItem.ActualLeadershipCosts.ToString("C0"))
                             </span>
                         }
                     </td>
-                    <td><span style="color:@fundsRequestedColour">@fundsRequested.ToString("C0")</span></td>
-                    <td><span style="color:@fundsReceivedColour">@fundsReceived.ToString("C0")</span></td>
-                    <td>@Project.SubTasks?.RoundedSum(x => x.ActualWorkHours)</td>
+                    <td><span style="color:@FinanceSummaryItem.FundsRequestedColour">@FinanceSummaryItem.FundsRequested.ToString("C0")</span></td>
+                    <td><span style="color:@FinanceSummaryItem.FundsReceivedColour">@FinanceSummaryItem.FundsReceived.ToString("C0")</span></td>
+                    <td>@FinanceSummaryItem.ActualHours</td>
                 </tr>
             </tbody>
         </table>
@@ -101,39 +101,11 @@ else
 
 @code {
     [Parameter]
-    public Project Project { get; set; }
+    public FinanceSummaryItem FinanceSummaryItem { get; set; }
 
     [Parameter]
     public bool EditAuthorised { get; set; }
 
     [Parameter]
     public Action ResetActualsTimeStamp { get; set; }
-
-    [Parameter]
-    public PPMToolContext Context { get; set; }
-
-    [Inject]
-    private InvoiceService InvoiceService { get; set; }
-
-    private string plannedCostColour;
-    private string actualCostColour;
-    private string fundsReceivedColour;
-    private double fundsReceived;
-    private string fundsRequestedColour;
-    private double fundsRequested;
-
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-
-        if (Project != null)
-        {
-            fundsReceived = InvoiceService.GetFundsReceived(Context, Project.ProjectId);
-            fundsRequested = InvoiceService.GetFundsRequested(Context, Project.ProjectId);
-            plannedCostColour = Project.PlannedCost > Project.Budget ? "red" : "green";
-            actualCostColour = Project.ActualCost > Project.PlannedCost ? "red" : "green";
-            fundsReceivedColour = fundsReceived < Project.Budget ? "red" : "green";
-            fundsRequestedColour = fundsRequested > fundsReceived ? "red" : "green";
-        }
-    }
 }

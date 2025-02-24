@@ -53,10 +53,9 @@
         <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
     }
-    <ProjectDetailsSummaryComponent Project="@project"
+    <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem"
                                     EditAuthorised="@EditAuthorised"
-                                    ResetActualsTimestamp="@ResetActualsTimeStamp"
-                                    Context="Context" />
+                                    ResetActualsTimestamp="@ResetActualsTimeStamp" />
     <hr />
     @if (Loading)
     {

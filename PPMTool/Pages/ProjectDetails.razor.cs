@@ -44,6 +44,9 @@ namespace PPMTool.Pages
         [Inject]
         private DialogService DialogService { get; set; }
 
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -79,6 +82,7 @@ namespace PPMTool.Pages
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
+        private FinanceSummaryItem financeSummaryItem;
         private List<ChartItem> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
@@ -174,6 +178,13 @@ namespace PPMTool.Pages
                 if (ProjectId != null)
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
+                        InvoiceService.GetFundsReceived(Context, project.ProjectId)
+                    );
 
                     // Generate the blocks for the schedule chart
                     allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
