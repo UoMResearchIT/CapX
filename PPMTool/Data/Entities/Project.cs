@@ -349,16 +349,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to return the dates in which there is unmet demand as a formatted string.
-        /// </summary>
-        /// <returns>Dates as a formatted string</returns>
-        public string GetUnmetDemandWindowDates()
-        {
-            GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-            return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
-        }
-
-        /// <summary>
         /// Method to run the calculation of leaderhsip costs planned or actual
         /// </summary>
         /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
