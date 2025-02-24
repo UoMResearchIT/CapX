@@ -70,7 +70,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x == ActiveUser).ToList();
+                loadedPeople = loadedPeople.Where(x => x.PersonId == ActiveUser?.Person?.PersonId).ToList();
             }
 
             // Set the table empty flag

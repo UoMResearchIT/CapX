@@ -43,7 +43,6 @@ namespace PPMTool.Pages
         private double saturdayHours;
         private double sundayHours;
         private double totalHours;
-        private Role activeUserRole;
         private int entryMinimum = 0;
         private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
@@ -77,11 +76,8 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Starting initialisation task...");
 
-                // Get the person associated with the active user
-                activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-
                 // Only superusers can delete a timesheet
-                EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
 
                 // Handle if the user is not found
                 if (ActiveUser == null)
@@ -151,10 +147,10 @@ namespace PPMTool.Pages
                 if (timesheet == null && TimesheetId == -1)
                 {
                     // Get the start date for the new timesheet
-                    var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
+                    var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
                     timesheet = new Timesheet()
                     {
-                        Owner = ActiveUser,
+                        Owner = ActiveUser?.Person,
                         StartDate = nextTimesheetStartDate
                     };
 
@@ -169,7 +165,7 @@ namespace PPMTool.Pages
                     else
                     {
                         // Set-up the timesheet from the template
-                        TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser, InnateCodeService.GetAllTasks(Context));
+                        TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser?.Person, InnateCodeService.GetAllTasks(Context));
                     }
 
                     // Redirect to the newly created Timesheet so refreshing the page
@@ -241,7 +237,7 @@ namespace PPMTool.Pages
         {
             return (timesheet?.IsOwner(ActiveUser) ?? false) ||
                 (timesheet?.IsLineManager(ActiveUser) ?? false) ||
-                activeUserRole.RoleType == RoleType.Superuser;
+                ActiveUserRoleType == RoleType.Superuser;
         }
 
         /// <summary>
@@ -371,19 +367,19 @@ namespace PPMTool.Pages
             if (timesheet.Status != TimesheetStatus.New)
             {
                 timesheet.DateStatusChanged = DateTime.Now;
-                timesheet.StatusChangedBy = ActiveUser;
+                timesheet.StatusChangedBy = ActiveUser?.Person;
             }
 
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            TimesheetService.GetIssueCount(Context, ActiveUser.PersonId);
+            TimesheetService.GetIssueCount(Context, ActiveUser?.Person?.PersonId ?? 0);
 
             // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
-            if (timesheet.Owner == ActiveUser)
+            if (timesheet.Owner == ActiveUser?.Person)
             {
                 Debug.Write("** Sending an email to the Line Manager...");
-                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser, timesheet);
+                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser?.Person, timesheet);
             }
 
             // Only navigate away if the status is new as this means the save button has been clicked
@@ -457,7 +453,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
-            TimesheetService.AddToTemplate(Context, ActiveUser, entity.InnateCodeTask);
+            TimesheetService.AddToTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
 
             ShowNotification(new CapXNotificationMessage
             {
@@ -527,7 +523,7 @@ namespace PPMTool.Pages
                    "Delete Task Row") ?? false;
             if (confirmDeletion)
             {
-                TimesheetService.DeleteFromTemplate(Context, ActiveUser, entity.InnateCodeTask);
+                TimesheetService.DeleteFromTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
                 TimesheetService.DeleteEntry(Context, entity);
                 await base.DeleteRow(entity);
                 UpdateDailyTotals();

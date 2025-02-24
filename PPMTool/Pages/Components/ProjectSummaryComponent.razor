@@ -37,12 +37,13 @@
             </RadzenStack>
         }
         <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
-            <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
             <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
                 <ChildContent>
                     <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
                 </ChildContent>
             </RadzenSplitButton>
+            <RadzenButton Click=@(args => EditProject(Project)) Icon="edit" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit Project"))" />
+            <RadzenButton Click="@(args => EditFinance(Project))" Icon="payments" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Finance"))" />
             <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
         </RadzenStack>
     </RadzenStack>
@@ -101,8 +102,21 @@
         }
     }
 
+    /// <summary>
+    /// Navigate to the edit project page for that project
+    /// </summary>
+    /// <param name="project"></param>
     private void EditProject(Project project)
     {
         Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
+    }
+
+    /// <summary>
+    /// Navigate to the finance page for that project
+    /// </summary>
+    /// <param name="project"></param>
+    private void EditFinance(Project project)
+    {
+        Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
     }
 }

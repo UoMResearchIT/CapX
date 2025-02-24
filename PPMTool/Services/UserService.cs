@@ -9,65 +9,65 @@ using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
-    public class RolesService : BaseEntityService<Role>
+    public class UserService : BaseEntityService<User>
     {
 
-        private ILogger<RolesService> _logger;
+        private ILogger<UserService> _logger;
         private IDbContextFactory<PPMToolContext> _contextFactory;
 
-        public RolesService(ILogger<RolesService> logger, IDbContextFactory<PPMToolContext> contextFactory)
+        public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
             _logger = logger;
             _contextFactory = contextFactory;
         }
 
-        public override int Add(PPMToolContext context, Role entity, bool commitChanges = true)
+        public override int Add(PPMToolContext context, User entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
             {
                 return -1;
             }
-            context.Roles.Add(entity);
+            context.Users.Add(entity);
             if (commitChanges) context.SaveChanges();
-            return entity.RoleId;
+            return entity.UserId;
         }
 
-        public override bool DuplicateDetected(PPMToolContext context, Role entity)
+        public override bool DuplicateDetected(PPMToolContext context, User entity)
         {
-            return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.RoleId != entity.RoleId);
+            return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.UserId != entity.UserId);
         }
 
-        public override void Delete(PPMToolContext context, Role entity, bool commitChanges = true)
+        public override void Delete(PPMToolContext context, User entity, bool commitChanges = true)
         {
-            context.Roles.Remove(entity);
+            context.Users.Remove(entity);
             if (commitChanges) context.SaveChanges();
         }
 
-        public override IEnumerable<Role> GetAll(PPMToolContext context)
+        public override IEnumerable<User> GetAll(PPMToolContext context)
         {
-            return context.Roles
+            return context.Users
                 .Include(x => x.Person);
         }
 
-        public override int Update(PPMToolContext context, Role entity, bool commitChanges = true)
+        public override int Update(PPMToolContext context, User entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
             {
                 return -1;
             }
-            context.Roles.Update(entity);
+            context.Users.Update(entity);
             if (commitChanges) context.SaveChanges();
-            return entity.RoleId;
+            return entity.UserId;
         }
 
-        public Role GetByUsername(PPMToolContext context, string username)
+        public User GetByUsername(PPMToolContext context, string username)
         {
             return GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
         }
 
         public RoleType GetRoleTypeForUsername(PPMToolContext context, string username)
         {
-            Role match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
+            User match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
             if (match != null)
             {
                 return match.RoleType;
@@ -75,10 +75,10 @@ namespace PPMTool.Services
             return RoleType.None;
         }
 
-        public void UpdateLastLoggedIn(PPMToolContext context, Role roleEntity)
+        public void UpdateLastLoggedIn(PPMToolContext context, User UserEntity)
         {
-            roleEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            context.Roles.Update(roleEntity);
+            UserEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Users.Update(UserEntity);
             context.SaveChanges();
         }
 
@@ -89,7 +89,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public IEnumerable<Person> GetAllManagers(PPMToolContext context)
         {
-            return context.Roles
+            return context.Users
                 .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                 .Include(x => x.Person)
                 .Select(x => x.Person)

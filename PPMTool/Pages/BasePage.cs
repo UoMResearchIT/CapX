@@ -87,7 +87,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected bool IsSuperuserOrLineManagerOfThisPerson(Person person)
         {
-            var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.PersonId ?? -1);
+            var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.Person?.PersonId ?? -1);
             var su = ActiveUserRoleType == RoleType.Superuser;
             return lm || su;
         }
@@ -149,7 +149,7 @@ namespace PPMTool.Pages
             //LogToSentry(message, SentryLevel.Error, exception);
         }
 
-        public void ShowTooltip(ElementReference elementReference, string message, int delay = 500)
+        public void ShowTooltip(ElementReference elementReference, string message, int delay = 250)
         {
             var options = new TooltipOptions()
             {

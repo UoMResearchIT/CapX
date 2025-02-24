@@ -15,11 +15,11 @@ namespace PPMTool.Shared
         private NavigationManager Navigation { get; set; }
 
         private string displayName;
-        private IEnumerable<Role> roles;
-        private IEnumerable<string> filteredRoles;
+        private IEnumerable<User> users;
+        private IEnumerable<string> filteredUsers;
         private bool showDropDown = false;
-        private string selectedRole;
-        private Role loginAs;
+        private string selectedUser;
+        private User loginAs;
         private string loginLink;
 
         protected override void OnInitialized()
@@ -40,9 +40,9 @@ namespace PPMTool.Shared
 
                 if (user?.Identity is null || !user.Identity.IsAuthenticated)
                 {
-                    roles = RolesService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
-                    filteredRoles = roles.Select(x => RoleToString(x));
-                    selectedRole = filteredRoles.FirstOrDefault();
+                    users = UserService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
+                    filteredUsers = users.Select(x => UserToString(x));
+                    selectedUser = filteredUsers.FirstOrDefault();
                     OnChange();
                 }
             }
@@ -55,7 +55,7 @@ namespace PPMTool.Shared
         /// </summary>
         private void OnChange()
         {
-            loginAs = roles.FirstOrDefault(x => RoleToString(x) == selectedRole);
+            loginAs = users.FirstOrDefault(x => UserToString(x) == selectedUser);
             SetLoginLink();
         }
 
@@ -72,13 +72,13 @@ namespace PPMTool.Shared
         }
 
         /// <summary>
-        /// Convert a role to a string in the dropdown
+        /// Convert a user to a string in the dropdown
         /// </summary>
-        /// <param name="role"></param>
+        /// <param name="user"></param>
         /// <returns></returns>
-        private string RoleToString(Role role)
+        private string UserToString(User user)
         {
-            return $"[{role.RoleType.ToString().ToUpper()}] {role.Name} ({role.CASUserName})";
+            return $"[{user.RoleType.ToString().ToUpper()}] {user.Name} ({user.CASUserName})";
         }
 
         public void Dispose()

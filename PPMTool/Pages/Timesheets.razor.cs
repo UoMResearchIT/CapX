@@ -122,10 +122,10 @@ namespace PPMTool.Pages
 
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
-            myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser).OrderByDescending(t => t.StartDate).ToList();
+            myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
 
             // Set the start date for the next one
-            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
+            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
 
             if (!ShowAllMyTimesheets)
             {
@@ -134,7 +134,7 @@ namespace PPMTool.Pages
             }
 
             // Show second grid if user manages staff - need to see the timesheets they have submitted.
-            var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser);
+            var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser?.Person);
             if (managedPeople.Count() > 0)  // Is a manager
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
@@ -146,7 +146,7 @@ namespace PPMTool.Pages
                 synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
 
                 foreach (Person p in managedPeople
-                    .Where(p => p.PersonId != ActiveUser?.PersonId)
+                    .Where(p => p.PersonId != ActiveUser?.Person?.PersonId)
                     .OrderBy(p => p.ShortName)) // For AH who is self-managed
                 {
                     // Get timesheets of the person

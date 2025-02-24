@@ -11,7 +11,7 @@ namespace PPMTool.Data.Entities
         public string HtmlContent { get; set; }
 
         [Required]
-        public Person Author { get; set; }
+        public User Author { get; set; }
 
         [Required]
         public Project Project { get; set; }
@@ -20,7 +20,7 @@ namespace PPMTool.Data.Entities
 
         public DateTime EditedDate { get; set; }
 
-        public Person Editor { get; set; }
+        public User Editor { get; set; }
 
         public bool IsFinanceInfo { get; set; }
 
@@ -30,12 +30,12 @@ namespace PPMTool.Data.Entities
 
         internal string GetNoteEditorText()
         {
-            return Editor != null ? $"Last edited by {Editor.Name} on {EditedDate.ToString("dd/MM/yyyy HH:mm:ss")}" : null;
+            return Editor != null ? $"Last edited by {Editor?.Name ?? "[User Not Found]"} on {EditedDate.ToString("dd/MM/yyyy HH:mm:ss")}" : null;
         }
 
         internal string GetNoteAuthorText()
         {
-            return $"{Author.Name} posted on {CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")}";
+            return $"{Author?.Name ?? "[User Not Found]"} posted on {CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")}";
         }
 
         internal bool IsCompleted()

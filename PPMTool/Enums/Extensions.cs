@@ -120,21 +120,26 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
-        /// Method to return a badge style based on status
+        /// Custom attribute to assign a badge style to an enum
+        /// </summary>
+        public class BadgeStyleAttribute : Attribute
+        {
+            public BadgeStyleAttribute(BadgeStyle style)
+            {
+                Style = style;
+            }
+
+            public BadgeStyle Style { get; }
+        }
+
+        /// <summary>
+        /// Gets the badge style of an enum based on the attribute
         /// </summary>
         /// <param name="status"></param>
         /// <returns></returns>
-        public static BadgeStyle GetBadgeStyle(this AssessmentStatus status)
+        public static BadgeStyle GetBadgeStyle(this Enum status)
         {
-            if (status == AssessmentStatus.FullyMet)
-            {
-                return BadgeStyle.Success;
-            }
-            else if (status == AssessmentStatus.PartiallyMet)
-            {
-                return BadgeStyle.Warning;
-            }
-            return BadgeStyle.Danger;
+            return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
         }
 
         /// <summary>
@@ -153,16 +158,6 @@ namespace PPMTool.Enums
                 return "background-color: var(--rz-warning-lighter);";
             }
             return "background-color: var(--rz-danger-lighter);";
-        }
-
-        /// <summary>
-        /// Gets the badge style attribute value
-        /// </summary>
-        /// <param name="status"></param>
-        /// <returns></returns>
-        public static BadgeStyle GetBadgeStyle(this Enum status)
-        {
-            return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
         }
     }
 }

@@ -558,12 +558,12 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected IList<Person> GetManagers(IEnumerable<Person> people)
         {
-            var roles = RolesService.GetAll(Context)
+            var users = UserService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            return people.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            return people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
         }
 
         /// <summary>

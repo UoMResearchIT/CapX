@@ -23,7 +23,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader,Finance")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
@@ -43,6 +43,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private DialogService DialogService { get; set; }
+
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -79,16 +82,14 @@ namespace PPMTool.Pages
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
+        private FinanceSummaryItem financeSummaryItem;
         private List<ChartItem> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
-        private string plannedCostColour;
-        private string actualCostColour;
-        private string fundsReceivedColour;
         private bool isEditExistingNote;
         private bool editorVisible;
-        private Note noteModel = new Note();
+        private Note noteModel;
         private IList<Person> mentions;
         private string noteSearchTerms;
         private List<Note> filteredNotes;
@@ -164,20 +165,21 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method to get the backgroundt task that does all the intialisation work
+        /// Method to get the background task that does all the intialisation work
         /// </summary>
         /// <returns></returns>
         private Task GetTask()
         {
             return Task.Run(() =>
             {
-                var role = RolesService.GetByUsername(Context, ActiveUserName);
+                // Create a thread-local context
+                var context = ContextFactory.CreateDbContext();
 
                 // Reset the search box
                 noteSearchTerms = string.Empty;
 
                 // Filter the mentions reset
-                cachedMentionables = RolesService
+                cachedMentionables = UserService
                     .GetAll(Context)
                     .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     .DistinctBy(x => x.Person)
@@ -196,6 +198,13 @@ namespace PPMTool.Pages
                 if (ProjectId != null)
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        InvoiceService.GetFundsRequested(context, project.ProjectId),
+                        InvoiceService.GetFundsReceived(context, project.ProjectId)
+                    );
 
                     // Generate the blocks for the schedule chart
                     allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
@@ -255,14 +264,11 @@ namespace PPMTool.Pages
                         out provisionalBlocks
                     );
 
-                    // Update the UI
-                    plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
-                    actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
-                    fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                    // Update the UI                    
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
+                    isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
 
                     ganttChartOptions = new ApexChartOptions<GanttBlock>
                     {
@@ -428,6 +434,11 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             allProjects = ProjectService.GetAll(Context).ToList();
+            showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
 
             Debug.WriteLine($"** Initialised project details");
         }
@@ -517,16 +528,16 @@ namespace PPMTool.Pages
         private void ToggleFollowing()
         {
             if (ActiveUser == null) return;
-            if (project.Followers.Contains(ActiveUser))
+            if (project.Followers.Contains(ActiveUser?.Person))
             {
-                project.Followers.Remove(ActiveUser);
+                project.Followers.Remove(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
                 LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
-                project.Followers.Add(ActiveUser);
+                project.Followers.Add(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
                 LogInformation($"Now following project {project.GetFullName()}");
@@ -787,11 +798,23 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Navigate to the finance page for that project
+        /// </summary>
+        /// <param name="project"></param>
+        private void EditFinance(Project project)
+        {
+            Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
+        }
+
+        /// <summary>
         /// Handles the add note button click
         /// </summary>
         private void AddClicked()
         {
-            noteModel = new Note();
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
             isEditExistingNote = false;
             ShowOrHideEditor(true);
         }
@@ -825,8 +848,7 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Author = role.Person;
+            noteModel.Author = ActiveUser;
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
@@ -843,8 +865,7 @@ namespace PPMTool.Pages
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Editor = role.Person;
+            noteModel.Editor = ActiveUser;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
@@ -920,7 +941,7 @@ namespace PPMTool.Pages
             newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // Load in the list of managers
-            var managers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            var managers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
             foreach (Match m in matches)

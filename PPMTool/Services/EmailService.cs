@@ -20,7 +20,7 @@ namespace PPMTool.Services
         public EmailService(
             IConfiguration configuration,
             ProjectService projectService,
-            RolesService rolesService,
+            UserService userService,
             PersonService personService,
             IDbContextFactory<PPMToolContext> dbContextFactory,
             ILogger logger
@@ -28,7 +28,7 @@ namespace PPMTool.Services
         {
             Configuration = configuration;
             ProjectService = projectService;
-            RolesService = rolesService;
+            UserService = userService;
             PersonService = personService;
             DbContextFactory = dbContextFactory;
             Logger = logger;
@@ -36,7 +36,7 @@ namespace PPMTool.Services
 
         public IConfiguration Configuration { get; }
         public ProjectService ProjectService { get; }
-        public RolesService RolesService { get; }
+        public UserService UserService { get; }
         public PersonService PersonService { get; }
 
         public IDbContextFactory<PPMToolContext> DbContextFactory { get; }
@@ -85,8 +85,8 @@ namespace PPMTool.Services
 
                 if (lineManager != staff) // No point in AH emailing himself about his timesheet. :)
                 {
-                    Role lineManagerRole = RolesService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
-                    string lineManagerEmailAddress = (string.IsNullOrWhiteSpace(lineManagerRole.EmailAddress) ? $"{lineManagerRole.CASUserName}@manchester.ac.uk" : lineManagerRole.EmailAddress);
+                    User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
+                    string lineManagerEmailAddress = (string.IsNullOrWhiteSpace(lineManagerUser.EmailAddress) ? $"{lineManagerUser.CASUserName}@manchester.ac.uk" : lineManagerUser.EmailAddress);
                     recipients.Add(lineManagerEmailAddress);
 
                     // Create email
@@ -112,7 +112,7 @@ namespace PPMTool.Services
             {
                 // Create context and get people for lookup
                 var context = DbContextFactory.CreateDbContext();
-                var people = RolesService.GetAll(context).Select(x => x.Person).DistinctBy(x => x.Name);
+                var people = UserService.GetAll(context).Select(x => x.Person).DistinctBy(x => x.Name);
 
                 // Get various lists of relevant info
                 var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences.Values);
@@ -138,7 +138,7 @@ namespace PPMTool.Services
                 var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
 
                 // If any affected PM is currently absent then notify all PMs
-                var managersToNotify = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
+                var managersToNotify = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
                 var currentPMAbsences = PersonService.GetAbsencesForPeople(context, affectedPMs).Where(x => x.IsCurrentAbsence());
 
                 // Just need to notify the affected if there are no affected PMs who are absent at the moment
@@ -148,7 +148,7 @@ namespace PPMTool.Services
                 }
 
                 // Ensure superusers are in the list in any case
-                var superusers = RolesService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
+                var superusers = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
                 foreach (var su in superusers)
                 {
                     if (!affectedPMs.Contains(su))
@@ -253,8 +253,8 @@ namespace PPMTool.Services
 
                     // Send email
                     var subject = Configuration["Email:AbsenceEmailSubject"];
-                    var role = RolesService.GetAll(context).Where(x => x.Person == pm);
-                    IEnumerable<string> recipients = role
+                    var users = UserService.GetAll(context).Where(x => x.Person == pm);
+                    IEnumerable<string> recipients = users
                         .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
                             $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                     Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
@@ -307,7 +307,7 @@ namespace PPMTool.Services
             {
                 // Create context and get roles (ignoring externals)
                 var context = DbContextFactory.CreateDbContext();
-                var roles = RolesService.GetAll(context).Where(x => x.Person != null).DistinctBy(x => x.Person.PersonId);
+                var users = UserService.GetAll(context).Where(x => x.Person != null).DistinctBy(x => x.Person.PersonId);
 
                 // Start with those mentioned in the note
                 var peopleToBeNotfied = mentions;
@@ -330,11 +330,11 @@ namespace PPMTool.Services
                 // Remove the author or the editor
                 if (note.Editor != null)
                 {
-                    peopleToBeNotfied.Remove(note.Editor);
+                    peopleToBeNotfied.Remove(note.Editor.Person);
                 }
                 else
                 {
-                    peopleToBeNotfied.Remove(note.Author);
+                    peopleToBeNotfied.Remove(note.Author.Person);
                 }
 
                 // Create the emails and send
@@ -383,8 +383,8 @@ namespace PPMTool.Services
 
                     // Send email
                     var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
-                    var role = roles.Where(x => x.Person.PersonId == m.PersonId);
-                    IEnumerable<string> recipients = role
+                    var user = users.Where(x => x.Person.PersonId == m.PersonId);
+                    IEnumerable<string> recipients = user
                         .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
                             $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                     SendEmail(recipients, subject, body.ToString());
