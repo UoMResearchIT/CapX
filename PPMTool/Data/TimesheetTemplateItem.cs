@@ -4,12 +4,12 @@ using PPMTool.Data.Entities;
 namespace PPMTool.Data
 {
     /// <summary>
-    /// Represents an innate code and its associated task
+    /// Represents timesheet template item
     /// </summary>
     public class TimesheetTemplateItem : ILoggableClass
     {
         /// <summary>
-        /// Represents the ID of the timesheet entry record.
+        /// Represents the ID of the timesheet entry record
         /// </summary>
         public int TimesheetTemplateItemId { get; set; }
 
@@ -20,7 +20,7 @@ namespace PPMTool.Data
         public InnateCode InnateCode { get; set; }
 
         /// <summary>
-        /// Represents the innate code task.
+        /// Represents the innate code task
         /// </summary>
         [Required]
         public InnateCodeTask InnateCodeTask { get; set; }
