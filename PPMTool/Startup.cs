@@ -55,7 +55,7 @@ namespace PPMTool
             services.AddRadzenComponents();
 
             services.AddScoped<InnateCodeService>();
-            services.AddScoped<RolesService>();
+            services.AddScoped<UserService>();
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
@@ -65,6 +65,7 @@ namespace PPMTool
             services.AddScoped<FinancialReferenceService>();
             services.AddScoped<CompetencyService>();
             services.AddScoped<TimesheetService>();
+            services.AddScoped<InvoiceService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>
@@ -123,7 +124,7 @@ namespace PPMTool
         public void Configure(
             IApplicationBuilder app,
             IWebHostEnvironment env,
-            RolesService roleService,
+            UserService userService,
             SubTaskService taskService,
             ProjectService projectService,
             PersonService personService,
@@ -189,30 +190,30 @@ namespace PPMTool
                 // Has to be done manually since service provider not built yet?
                 var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
                 var dbContext = dbContextFactory.CreateDbContext();
-                var role = dbContext.Roles
+                var user = dbContext.Users
                     .Include(x => x.Person)
                     .ToList()
                     .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
-                if (role != null)
+                if (user != null)
                 {
-                    identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
+                    identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
                 }
 
                 await context.HttpContext.SignInAsync(context.Principal);
 
                 // Update last logged in and log
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
-                var roleService = context.HttpContext.RequestServices.GetRequiredService<RolesService>();
-                if (roleService != null)
+                var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
+                if (userService != null)
                 {
-                    if (role != null)
+                    if (user != null)
                     {
-                        roleService.UpdateLastLoggedIn(dbContext, role);
+                        userService.UpdateLastLoggedIn(dbContext, user);
                     }
                 }
                 else
                 {
-                    logger?.LogError("RoleService not found! Cannot update last logged in!");
+                    logger?.LogError("User Service not found! Cannot update last logged in!");
                 }
 
                 logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");

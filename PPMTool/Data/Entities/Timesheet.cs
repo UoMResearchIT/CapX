@@ -66,9 +66,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsLineManager(Person user)
+        public bool IsLineManager(User user)
         {
-            return user?.PersonId == (Owner?.LineManager?.PersonId ?? 0);
+            return user?.Person?.PersonId == (Owner?.LineManager?.PersonId ?? 0);
         }
 
         /// <summary>
@@ -76,9 +76,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsOwner(Person user)
+        public bool IsOwner(User user)
         {
-            return user?.PersonId == (Owner?.PersonId ?? 0);
+            return user?.Person?.PersonId == (Owner?.PersonId ?? 0);
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsLineManagerButNotOwner(Person user)
+        public bool IsLineManagerButNotOwner(User user)
         {
             return IsLineManager(user) && !IsOwner(user);
         }
@@ -96,7 +96,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsSelfApprover(Person user)
+        public bool IsSelfApprover(User user)
         {
             return IsOwner(user) && IsLineManager(user);
         }
@@ -106,7 +106,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsPermittedToEditEntriesAndSubmit(Person user)
+        public bool IsPermittedToEditEntriesAndSubmit(User user)
         {
             return IsOwner(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected);
         }
@@ -117,7 +117,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsPermittedToApproveOrReject(Person user)
+        public bool IsPermittedToApproveOrReject(User user)
         {
             return (IsLineManager(user) && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved)) ||
                 (IsSelfApprover(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected || Status == TimesheetStatus.Approved));
@@ -128,7 +128,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsPermittedToViewOnly(Person user)
+        public bool IsPermittedToViewOnly(User user)
         {
             return !IsSelfApprover(user) && ((IsOwner(user) && !IsPermittedToEditEntriesAndSubmit(user)) || (IsLineManager(user) && !IsPermittedToApproveOrReject(user)));
         }

@@ -250,12 +250,7 @@
                 <!-- Don't show if viewing a direct report's timesheet -->
                 @if (!timesheet?.IsLineManager(ActiveUser) ?? false)
                 {
-                    <div class="timesheet-note">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                            <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                            If you don't want/need to use one or more of your 'default' options then leave the item(s) empty. If you remove a row from this timesheet it will not show (when creating a new instance) on future timesheets.
-                        </RadzenStack>
-                    </div>
+                    <HintComponent Message="If you don't want/need to use one or more of your 'default' options then leave the item(s) empty. If you remove a row from this timesheet it will not show (when creating a new instance) on future timesheets." />
                 }
                 <hr />
                 <div class="row">
@@ -280,7 +275,7 @@
                                         {
                                             Duty duty = item.Key;
                                             double value = item.Value;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                            string dutyDescription = duty.GetDescription() ?? "NOT SET";
                                             string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                             string wlmTextColour = duty.GetTextColourCode();
 
@@ -305,7 +300,7 @@
                     @{
                         var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
                     }
-                    @if(items.Count() > 0)
+                    @if (items.Count() > 0)
                     {
                         <div class="row" style="margin-top: 0.25rem;">
                             <div class="col-2"><RadzenText Text="This Timesheet:" TextStyle="TextStyle.Subtitle1" /></div>
@@ -320,7 +315,7 @@
                                             {
                                                 Duty duty = item.Key;
                                                 double value = item.Value;
-                                                string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
+                                                string dutyDescription = duty.GetDescription() ?? "NOT SET";
                                                 string wlmBackgroundColour = duty.GetBackgroundColourCode();
                                                 string wlmTextColour = duty.GetTextColourCode();
 

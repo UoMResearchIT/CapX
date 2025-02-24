@@ -5,6 +5,7 @@
         None,
         Reader,
         Developer,
+        Finance,
         Manager,
         Superuser
     }

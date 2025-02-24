@@ -65,7 +65,7 @@ namespace PPMTool.Pages
                 originalEndDate = originalTask?.EndDate ?? DateTime.Today;
 
                 // Only allow the project manager to save the split or a superuser
-                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || owningProject?.ProjectManager.PersonId == ActiveUser?.PersonId;
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || owningProject?.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
 
                 StateHasChanged();
             }

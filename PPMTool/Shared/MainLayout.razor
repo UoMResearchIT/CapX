@@ -34,12 +34,17 @@
                     <RadzenPanelMenuItem Path="datadashboard" Text="Data Dashboard" Icon="speed" />
                 </Authorized>
             </AuthorizeView>
-            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+            <AuthorizeView Roles="Superuser,Manager,Reader,Developer,Finance">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Roles="Superuser,Manager,Reader,Finance">
+                            <Authorized Context="sub_context_2">
+                                <RadzenPanelMenuItem Path="managefinancialitems" Text="Manage Finance" Icon="payments" />
                             </Authorized>
                         </AuthorizeView>
                         <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
@@ -72,7 +77,10 @@
                         <RadzenPanelMenuItem Path="timesheets" Icon="timer">
                             <Template>
                                 <div style="flex: 1;">
-                                    Timesheets 
+                                    @if (sidebarExpanded)
+                                    {
+                                        <span>Timesheets</span>
+                                    }
                                     @if (totalTimesheetIssues > 0)
                                     {
                                         <span class="rz-badge rz-badge-danger notification-badge">@totalTimesheetIssues</span>
