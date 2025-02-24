@@ -11,7 +11,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader,Finance")]
     public partial class Projects : BaseProjectPage
     {
         [Inject]

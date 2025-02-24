@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
@@ -52,6 +53,11 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            EditAuthorised =
+                ActiveUserRoleType == RoleType.Superuser ||
+                ActiveUserRoleType == RoleType.Manager ||
+                ActiveUserRoleType == RoleType.Finance;
 
             if (RTP != null)
             {

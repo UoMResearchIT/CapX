@@ -49,9 +49,9 @@
                 <RadzenButton Click="@(args => GoToProjectDetails())" Text="View Project" Icon="info" Disabled="@(selectedProject == null)" />
             </div>
         </div>
+        <hr />
         @if (selectedProject != null)
         {
-            <hr />
             <div class="row">
                 <div class="col align-content-center">
                     <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem" />

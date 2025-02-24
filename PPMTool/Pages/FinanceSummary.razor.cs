@@ -32,6 +32,14 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Navigate to finance items page
+        /// </summary>
+        private void GoToFinanceItems()
+        {
+            Navigation.NavigateTo("managefinancialitems");
+        }
+
+        /// <summary>
         /// Generates the load data task
         /// </summary>
         /// <returns></returns>

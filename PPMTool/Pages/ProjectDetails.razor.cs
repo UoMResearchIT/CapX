@@ -23,7 +23,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader,Finance")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
@@ -89,7 +89,7 @@ namespace PPMTool.Pages
         private int count;
         private bool isEditExistingNote;
         private bool editorVisible;
-        private Note noteModel = new Note();
+        private Note noteModel;
         private IList<Person> mentions;
         private string noteSearchTerms;
         private List<Note> filteredNotes;
@@ -417,6 +417,11 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             allProjects = ProjectService.GetAll(Context).ToList();
+            showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
 
             Debug.WriteLine($"** Initialised project details");
         }
@@ -787,7 +792,10 @@ namespace PPMTool.Pages
         /// </summary>
         private void AddClicked()
         {
-            noteModel = new Note();
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
             isEditExistingNote = false;
             ShowOrHideEditor(true);
         }
