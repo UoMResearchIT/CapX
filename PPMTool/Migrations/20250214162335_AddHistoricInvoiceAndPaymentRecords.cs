@@ -212,7 +212,7 @@ namespace PPMTool.Migrations
                     '<p><span class=""badge badge-success"">Payment</span>&nbsp;<b>[Automatic Adjustment Payment]</b><br/>{message}</p>',
                     ProjectManagerPersonId,
                     t.ProjectId,
-                    {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")},
+                    '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',
                     '0001-01-01 00:00:00',
                     1
                 FROM 

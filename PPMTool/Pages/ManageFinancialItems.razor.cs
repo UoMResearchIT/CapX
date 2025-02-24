@@ -120,14 +120,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
-            if (selectedProject != null)
-            {
-                financeSummaryItem = new FinanceSummaryItem(
-                    selectedProject,
-                    InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
-                    InvoiceService.GetFundsReceived(Context, selectedProject.ProjectId)
-                );
-            }
+            UpdateSummaryComponent();
 
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
             payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
@@ -140,6 +133,21 @@ namespace PPMTool.Pages
             }
 
             Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments.");
+        }
+
+        /// <summary>
+        /// Builds a new finance summary item for the summary component
+        /// </summary>
+        private void UpdateSummaryComponent()
+        {
+            if (selectedProject != null)
+            {
+                financeSummaryItem = new FinanceSummaryItem(
+                    selectedProject,
+                    InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
+                    InvoiceService.GetFundsReceived(Context, selectedProject.ProjectId)
+                );
+            }
         }
 
         /// <summary>
@@ -218,6 +226,8 @@ namespace PPMTool.Pages
         {
             dataGridInvoices?.Reload();
             dataGridPayments?.Reload();
+            UpdateSummaryComponent();
+            StateHasChanged();
         }
 
         /// <summary>

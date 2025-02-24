@@ -77,7 +77,10 @@
                         <RadzenPanelMenuItem Path="timesheets" Icon="timer">
                             <Template>
                                 <div style="flex: 1;">
-                                    Timesheets 
+                                    @if (sidebarExpanded)
+                                    {
+                                        <span>Timesheets</span>
+                                    }
                                     @if (totalTimesheetIssues > 0)
                                     {
                                         <span class="rz-badge rz-badge-danger notification-badge">@totalTimesheetIssues</span>

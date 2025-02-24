@@ -13,7 +13,7 @@
                 <RadzenDatePicker @bind-Value="Invoice.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
                 <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")" />
             </RadzenStack>
-            <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Optional notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
+            <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Mandatory notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
             <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
             <RadzenDropDown Data="@statuses" @bind-Value="Invoice.Status" Name="Status" Style="width:100%;">
                 <Template Context="item">
@@ -72,6 +72,11 @@
         if (string.IsNullOrWhiteSpace(Invoice.InvoiceReference))
         {
             Invoice.InvoiceReference = "None";
+        }
+        if (string.IsNullOrWhiteSpace(Invoice.Description))
+        {
+            errorMessage = "You must give this item a description!";
+            return;
         }
         if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
         {
