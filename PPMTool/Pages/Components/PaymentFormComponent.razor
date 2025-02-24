@@ -1,0 +1,119 @@
+﻿@inherits BaseFinanceItemFormComponent
+@using Microsoft.Extensions.Logging
+@using PPMTool.Data.Context
+@using PPMTool.Services
+@using Radzen
+@using PPMTool.Data.Entities
+
+<RadzenTemplateForm TItem="Payment" Submit="@HandleValidSubmit" Data="@Payment">
+    <RadzenFieldset Text="Payment Details">
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
+                <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")"/>
+            </RadzenStack>
+            <RadzenTextArea @bind-Value="Payment.Description" Name="Notes" Placeholder="Mandatory notes to describe the nature of the payment" Style="width: 100%; height: 10rem;" />
+        </RadzenStack>
+    </RadzenFieldset>
+    <RadzenFieldset Text="Associated Invoice">
+        <RadzenDropDown Data="@invoices"
+        @bind-Value="Payment.Invoice"
+        Name="InvoiceId"
+        AllowClear="true"
+        Style="width: 100%;">
+            <Template Context="item">
+                @($"{(item as Invoice)?.InvoiceId}: {(item as Invoice)?.InvoiceReference ?? "No Ref"} ({(item as Invoice)?.Value.ToString("C2")})")
+            </Template>
+        </RadzenDropDown>
+    </RadzenFieldset>
+    <br />
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+            <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+            <RadzenText Text="@errorMessage" Style="color: red" />
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Payment?.PaymentId < 1 || !EditAuthorised)" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" Disabled="@(!EditAuthorised)" />
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+
+    [Parameter]
+    public Payment Payment { get; set; }
+
+    private IEnumerable<Invoice> invoices;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // If no payment set then create a new payment model
+        if (Payment == null)
+        {
+            Payment = new Payment
+                {
+                    Project = Project
+                };
+        }
+
+        // Load invoices for the dropdown
+        invoices = InvoiceService
+            .GetAll(Context)
+            .Where(x => x.Project?.ProjectId == Project?.ProjectId)
+            .OrderBy(x => x.InvoiceId);
+    }
+
+    protected override void HandleValidSubmit()
+    {
+        base.HandleValidSubmit();
+
+        if (string.IsNullOrWhiteSpace(Payment.Description))
+        {
+            errorMessage = "You must give this item a description!";
+            return;
+        }
+
+        if (Payment.PaymentId > 0)
+        {
+            InvoiceService.UpdatePayment(Context, Payment);
+            PostNoteToProject(FinanceItemChangeType.Update, Payment);
+        }
+        else
+        {
+            InvoiceService.AddPayment(Context, Payment);
+            PostNoteToProject(FinanceItemChangeType.Add, Payment);
+        }
+
+        CloseForm(true);
+    }
+
+    /// <summary>
+    /// Method to delete a payment after a prompt
+    /// </summary>
+    private async void DeletePayment()
+    {
+        bool confirmed = await DialogService.Confirm($"You are about to delete payment with ID {Payment.PaymentId} and value {Payment.Value.ToString("C2")}. This cannot be undone!",
+                    "Delete Payment") ?? false;
+        if (confirmed)
+        {
+            Logger?.LogInformation($"Deleting payment ID {Payment.PaymentId}");
+
+            InvoiceService.DeletePayment(Context, Payment);
+            PostNoteToProject(FinanceItemChangeType.Delete, Payment);
+            CloseForm(true);
+        }
+    }
+
+    /// Return the payment ID
+    protected override int GetItemId()
+    {
+        return Payment?.PaymentId ?? 0;
+    }
+}

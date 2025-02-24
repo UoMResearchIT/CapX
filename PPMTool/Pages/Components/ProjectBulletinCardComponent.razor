@@ -8,13 +8,7 @@
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
                 <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
-                <RadzenBadge Style="margin-bottom: 0.5rem"
-                             BadgeStyle="@(
-                                    Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                    Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                    Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                    BadgeStyle.Light)"
-                             Text="@Project.ProjectStatus.ToNiceString()" />
+                <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                 <RadzenText Style="min-width:8rem" TextStyle="TextStyle.Subtitle1" Text="Project Manager:" />

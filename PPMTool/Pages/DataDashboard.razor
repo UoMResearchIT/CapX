@@ -111,7 +111,7 @@
                             }
                             else
                             {
-                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="!EditAuthorised" />
+                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance)" />
                             }
                         </RadzenStack>
                     </div>
@@ -359,6 +359,13 @@
                                          Name="Actual Costs"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.ActualCostsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Requested Funds"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RequestedFundsYTD))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"

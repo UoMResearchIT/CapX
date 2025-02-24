@@ -133,11 +133,11 @@ namespace PPMTool.Services
             // Delete all workload models created against the person
             context.WorkloadModelChanges.RemoveRange(context.WorkloadModelChanges.Where(x => x.Person.PersonId == entity.PersonId));
 
-            // Delete all roles created against the person
-            context.Roles.RemoveRange(context.Roles.Where(x => x.Person.PersonId == entity.PersonId));
+            // Delete all users created against the person
+            context.Users.RemoveRange(context.Users.Where(x => x.Person.PersonId == entity.PersonId));
 
             // Delete all notes created or edited by the person
-            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.PersonId == entity.PersonId || x.Editor.PersonId == entity.PersonId));
+            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.Person.PersonId == entity.PersonId || x.Editor.Person.PersonId == entity.PersonId));
 
             // Remove entity from the skills tag list
             foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))

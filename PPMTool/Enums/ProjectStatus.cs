@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel;
+using Radzen;
+using static PPMTool.Enums.Extensions;
 
 namespace PPMTool.Enums
 {
@@ -28,11 +30,13 @@ namespace PPMTool.Enums
         /// <summary>
         /// Projects that have had their funding confirmed and are going ahead but not yet started
         /// </summary>
+        [BadgeStyle(BadgeStyle.Info)]
         Funded,
 
         /// <summary>
         /// Project is currently underway
         /// </summary>
+        [BadgeStyle(BadgeStyle.Success)]
         Active,
 
         /// <summary>

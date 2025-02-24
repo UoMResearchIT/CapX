@@ -65,12 +65,7 @@
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
-            <div class="timesheet-note">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                    Shows your 'New/Unsubmitted' and 'Rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected.
-                </RadzenStack>
-            </div>
+            <HintComponent Message="Shows your 'New/Unsubmitted' and 'Rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected." />
         </div>
 
         <div style="padding-top: 3rem" hidden="@hideStaffResults">
@@ -141,12 +136,7 @@
                         </tr>
                     }
                 </table>
-                <div class="timesheet-note">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                        Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. Current calendar week is shaded in cream.
-                    </RadzenStack>
-                </div>
+                <HintComponent Message="Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. Current calendar week is shaded in cream." />
             </div>
 
             <div class="card" style="margin-top: 1rem;">
@@ -187,12 +177,7 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-                <div class ="timesheet-note">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                        Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but 'New/Unsubmitted' are shown if the 'Show All Timesheets' option is selected.
-                    </RadzenStack>
-                </div>
+                <HintComponent Message="Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but 'New/Unsubmitted' are shown if the 'Show All Timesheets' option is selected." />
             </div>
         </div>
     }
