@@ -1,6 +1,6 @@
 #! /bin/bash
 
-cd ~/CapX
+cd ~/T-ITS
 git fetch
 git checkout release
 output=$(git rev-list --left-right --count HEAD...@{upstream} | cut -f2)
