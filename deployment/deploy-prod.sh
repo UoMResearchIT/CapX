@@ -3,7 +3,7 @@
 # Fetch from GitHub
 cd ~/T-ITS/ITS-Timesheet-Tool
 git fetch
-git checkout release
+git checkout dev
 git submodule update --init --recursive
 git pull
 
