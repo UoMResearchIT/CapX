@@ -2,7 +2,7 @@
 
 cd ~/T-ITS/ITS-Timesheet-Tool
 git fetch
-git checkout release
+git checkout dev
 output=$(git rev-list --left-right --count HEAD...@{upstream} | cut -f2)
 
 if [ "$output" -gt 0 ]; then
