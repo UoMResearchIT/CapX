@@ -1,9 +1,10 @@
-﻿@using PPMTool.Data.Entities
+﻿@using PPMTool.Data
+@using PPMTool.Data.Entities
 @using System.Diagnostics
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
-    <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" />
-    <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? scrumText : null) Icon="view_kanban" ButtonStyle="ButtonStyle.Dark" MouseEnter="@(args => ShowTooltip?.Invoke(args, scrumText))" Disabled="@(!hasScrumLink)" />
+    <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" />
+    <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? scrumText : null) Icon="view_kanban" MouseEnter="@(args => ShowTooltip?.Invoke(args, scrumText))" Disabled="@(!hasScrumLink)" />
 </RadzenStack>
 
 @code {
@@ -40,7 +41,7 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        hasScrumLink = !string.IsNullOrWhiteSpace(Project?.ScrumProjectLink);
+        hasScrumLink = !HtmlHelper.IsValidLink(Project.ScrumProjectLink);
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
         scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
         requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";

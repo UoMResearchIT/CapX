@@ -18,12 +18,12 @@
             @if (showDropDown)
             {
                 <RadzenDropDown TValue="string"
-                                Data="@filteredRoles"
-                                @bind-Value="selectedRole"
+                                Data="@filteredUsers"
+                                @bind-Value="selectedUser"
                                 AllowFiltering="true"
                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                 FilterOperator="StringFilterOperator.Contains"
-                                Placeholder="Search for Role"
+                                Placeholder="Search for User"
                                 Change="OnChange"
                                 Style="width: 23rem"/>
             }

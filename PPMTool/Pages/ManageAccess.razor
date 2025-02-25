@@ -1,5 +1,5 @@
 ﻿@page "/manageaccess"
-@inherits DataGridPage<Role>
+@inherits DataGridPage<User>
 @using PPMTool.Pages.Components
 @using PPMTool.Data.Entities
 <PageTitle>Manage Access - CapX</PageTitle>
@@ -27,24 +27,24 @@
                     EditMode="DataGridEditMode.Single"
                     FilterMode="FilterMode.Simple"
                     Data="@dataGridEntities"
-                    TItem="Role"
+                    TItem="User"
                     RowUpdate="@OnUpdateRow"
                     RowCreate="@OnCreateRow"
                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                     ColumnWidth="12rem">
         <Columns>
-            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person (RSE)" MinWidth="10px">
-                <EditTemplate Context="role">
-                    <RadzenDropDown @bind-Value="role.Person" Data="@people" Style="width:100%; display: block;">
+            <RadzenDataGridColumn TItem="User" Property="Person.Name" Title="Person (RSE)" MinWidth="10px">
+                <EditTemplate Context="user">
+                    <RadzenDropDown @bind-Value="user.Person" Data="@people" Style="width:100%; display: block;">
                         <Template Context="person">
                             @person.Name
                         </Template>
                     </RadzenDropDown>
                 </EditTemplate>
-                <Template Context="role">
-                    @if (role.Person != null)
+                <Template Context="user">
+                    @if (user.Person != null)
                     {
-                        @($"{role.Person?.Name} ({role.Person?.ShortName})")
+                        @($"{user.Person?.Name} ({user.Person?.ShortName})")
                     }
                     else
                     {
@@ -52,46 +52,46 @@
                     }
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="Name" Title="Display Name" MinWidth="10px">
-                <EditTemplate Context="role">
-                    @if (role.Person == null)
+            <RadzenDataGridColumn TItem="User" Property="Name" Title="Display Name" MinWidth="10px">
+                <EditTemplate Context="user">
+                    @if (user.Person == null)
                     {
-                        <RadzenTextBox class="no-margin" @bind-Value="role.Name" />
+                        <RadzenTextBox class="no-margin" @bind-Value="user.Name" />
                     }
                     else
                     {
-                        @role.Person.Name
+                        @user.Person.Name
                     }
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="CASUserName" Title="User Name" MinWidth="10px">
-                <EditTemplate Context="role">
-                    <RadzenTextBox class="no-margin" @bind-Value="role.CASUserName" ValueProperty="CASUserName" />
+            <RadzenDataGridColumn TItem="User" Property="CASUserName" Title="User Name" MinWidth="10px">
+                <EditTemplate Context="user">
+                    <RadzenTextBox class="no-margin" @bind-Value="user.CASUserName" ValueProperty="CASUserName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="EmailAddress" Title="Email" MinWidth="10px">
-                <EditTemplate Context="role">
-                    <RadzenTextBox class="no-margin" @bind-Value="role.EmailAddress" ValueProperty="EmailAddress" />
+            <RadzenDataGridColumn TItem="User" Property="EmailAddress" Title="Email" MinWidth="10px">
+                <EditTemplate Context="user">
+                    <RadzenTextBox class="no-margin" @bind-Value="user.EmailAddress" ValueProperty="EmailAddress" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="RoleType" Title="Access Level" MinWidth="10px">
-                <EditTemplate Context="role">
-                    <RadzenDropDown @bind-Value="role.RoleType" Data="@roles" />
+            <RadzenDataGridColumn TItem="User" Property="RoleType" Title="Access Level" MinWidth="10px">
+                <EditTemplate Context="user">
+                    <RadzenDropDown @bind-Value="user.RoleType" Data="@roles" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Property="LastLoggedIn" Title="Last Logged In" MinWidth="10px">
-                <Template Context="role">
-                    @role.LastLoggedIn
+            <RadzenDataGridColumn TItem="User" Property="LastLoggedIn" Title="Last Logged In" MinWidth="10px">
+                <Template Context="user">
+                    @user.LastLoggedIn
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Role" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
-                <Template Context="role">
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(role))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(role))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+            <RadzenDataGridColumn TItem="User" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                <Template Context="user">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(user))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(user))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
                 </Template>
-                <EditTemplate Context="role">
-                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(role))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
-                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(role))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                <EditTemplate Context="user">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(user))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(user))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
                 </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>

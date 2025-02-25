@@ -274,12 +274,11 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Check user permissions
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            userIsSuperuser = role?.RoleType == RoleType.Superuser;
-            activeUserId = ActiveUser?.PersonId ?? 0;
+            userIsSuperuser = ActiveUser?.RoleType == RoleType.Superuser;
+            activeUserId = ActiveUser?.Person?.PersonId ?? 0;
 
             // Get the active user by default
-            SelectedPerson = ActiveUser;
+            SelectedPerson = ActiveUser?.Person;
 
             // Kick off a DB task to get the data
             EnqueueLoadData(GetTask);

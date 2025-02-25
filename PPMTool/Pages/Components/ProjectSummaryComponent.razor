@@ -10,13 +10,7 @@
         <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.3rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
                 <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
-                <RadzenBadge Style="margin-bottom: 0.3rem"
-                             BadgeStyle="@(
-                                    Project.ProjectStatus.IsFinishedOrCancelled() ? BadgeStyle.Light :
-                                    Project.ProjectStatus == ProjectStatus.Active ? BadgeStyle.Success :
-                                    Project.ProjectStatus == ProjectStatus.Funded ? BadgeStyle.Info :
-                                    BadgeStyle.Light)"
-                             Text="@Project.ProjectStatus.ToNiceString()" />
+                <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
             <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
         </RadzenStack>
@@ -43,12 +37,13 @@
             </RadzenStack>
         }
         <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
-            <RadzenButton Click=@(args => EditProject(Project)) Text="Edit" Icon="edit" Disabled=!EditAuthorised />
             <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
                 <ChildContent>
                     <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
                 </ChildContent>
             </RadzenSplitButton>
+            <RadzenButton Click=@(args => EditProject(Project)) Icon="edit" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit Project"))" />
+            <RadzenButton Click="@(args => EditFinance(Project))" Icon="payments" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Finance"))" />
             <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
         </RadzenStack>
     </RadzenStack>
@@ -107,8 +102,21 @@
         }
     }
 
+    /// <summary>
+    /// Navigate to the edit project page for that project
+    /// </summary>
+    /// <param name="project"></param>
     private void EditProject(Project project)
     {
         Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
+    }
+
+    /// <summary>
+    /// Navigate to the finance page for that project
+    /// </summary>
+    /// <param name="project"></param>
+    private void EditFinance(Project project)
+    {
+        Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
     }
 }

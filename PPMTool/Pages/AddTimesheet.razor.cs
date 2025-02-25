@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -44,7 +43,6 @@ namespace PPMTool.Pages
         private double saturdayHours;
         private double sundayHours;
         private double totalHours;
-        private Role activeUserRole;
         private int entryMinimum = 0;
         private double entryStep = 0.25;
         private Dictionary<string, string> DayColours = new Dictionary<string, string>
@@ -60,7 +58,6 @@ namespace PPMTool.Pages
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
         private WLMWeeklyDataChartItem wlmChartItem;
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private double totalFTEForTimesheet;
 
         protected override async Task OnParametersSetAsync()
@@ -68,123 +65,211 @@ namespace PPMTool.Pages
             await base.OnParametersSetAsync();
 
             Loading = true;
-            cancellationTokenSource = new CancellationTokenSource();
-            var cancellationToken = cancellationTokenSource.Token;
+            StateHasChanged();
 
-            try
+            EnqueueLoadData(GetTask);
+        }
+
+        /// <summary>
+        /// Get the task to run in the background
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private Task GetTask()
+        {
+            return Task.Run(() =>
             {
-                await Task.Run(() =>
+                Debug.WriteLine("** Starting initialisation task...");
+
+                // Only superusers can delete a timesheet
+                EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
+
+                // Handle if the user is not found
+                if (ActiveUser == null)
                 {
-                    Debug.WriteLine("** Starting initialisation task...");
+                    LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
+                    return;
+                }
 
-                    // Get the person associated with the active user
-                    activeUserRole = RolesService.GetByUsername(Context, ActiveUserName);
-
-                    // Only superusers can delete a timesheet
-                    EditAuthorised = activeUserRole.RoleType == RoleType.Superuser;
-
-                    // Handle if the user is not found
-                    if (ActiveUser == null)
-                    {
-                        LogError($"No person found for {ActiveUserName} and they are accessing the add/edit timesheet page!");
-                        return;
-                    }
-
-                    // If there is an ID, then lookup the timesheet
-                    if ((TimesheetId ?? 0) > 0)
-                    {
-                        timesheet = TimesheetService.GetById(Context, TimesheetId);
-                    }
-
-                    // Check whether this user should have access or not
-                    if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
-                    {
-                        timesheet = null;
-                    }
-
-                    // If no timesheet and intention is create
-                    if (timesheet == null && TimesheetId == -1)
-                    {
-                        // Get the start date for the new timesheet
-                        var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
-                        timesheet = new Timesheet()
-                        {
-                            Owner = ActiveUser,
-                            StartDate = nextTimesheetStartDate
-                        };
-
-                        // Immediately save the timesheet to the DB
-                        int newId = TimesheetService.Add(Context, timesheet);
-
-                        // If a duplicate is detected then throw an error as this should never happen
-                        if (newId == -1)
-                        {
-                            throw new Exception("Error creating new timesheet!");
-                        }
-                        else
-                        {
-                            // Set-up the timesheet from the template
-                            TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser, InnateCodeService.GetAllTasks(Context));
-                        }
-
-                        // Redirect to the newly created Timesheet so refrshing the page
-                        // with the -1 parameter doesn't create another new timesheet.
-                        Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
-                        cancellationTokenSource.Cancel();
-                        return;
-                    }
-
-                    if (timesheet != null)
-                    {
-                        // Get details for the prev/next timesheets based on the owner of the timesheet being viewed
-                        // (to accommodate a manager looking at a staff timesheet).
-                        previousTimesheet = null;
-                        nextTimesheet = null;
-                        DateTime previousDate = timesheet.StartDate.AddDays(-7);
-                        DateTime nextDate = timesheet.StartDate.AddDays(7);
-                        List<Timesheet> prevandnext = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, timesheet.Owner, previousDate, nextDate).ToList();
-                        foreach (Timesheet t in prevandnext)
-                        {
-                            if (t.StartDate == previousDate) { previousTimesheet = t; }
-                            if (t.StartDate == nextDate) { nextTimesheet = t; }
-                        }
-
-                        if (IsSuperuserOrLineManagerOfThisPerson(timesheet.Owner))
-                        {
-                            dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
-                        }
-                        else
-                        {
-                            dataGridEntities = timesheet.TimesheetEntries.ToList();
-                        }
-                        UpdateDailyTotals();
-
-                        // Innate codes are limited to active ones initially
-                        LoadInnateCodes();
-
-                        // Get WLM details of the staff member active at the time of the timesheet
-                        Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
-                        currentWLM = personWithWLMData.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
-                        wlmChartItem = WorkloadModelChartHelper.GetWorkloadModelChartData(timesheet.Owner, timesheet.StartDate, new List<Timesheet> { timesheet });
-
-                        // Get total hours for the week across all duties
-                        totalFTEForTimesheet = wlmChartItem.WeeklyValuesByDuty.Sum(x => x.Value);
-                    }
-
-                    LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
-                }, cancellationToken).ContinueWith(t =>
+                // If there is an ID, then lookup the timesheet
+                if ((TimesheetId ?? 0) > 0)
                 {
-                    if (!t.IsCanceled)
+                    timesheet = TimesheetService.GetById(Context, TimesheetId);
+                }
+
+                // Check whether this user should have access or not
+                if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
+                {
+                    timesheet = null;
+                }
+
+                // If no timesheet and intention is create
+                if (timesheet == null && TimesheetId == -1)
+                {
+                    return;
+                }
+
+                if (timesheet != null)
+                {
+                    // Get details for the prev/next timesheets based on the owner of the timesheet being viewed
+                    // (to accommodate a manager looking at a staff timesheet).
+                    previousTimesheet = null;
+                    nextTimesheet = null;
+                    DateTime previousDate = timesheet.StartDate.AddDays(-7);
+                    DateTime nextDate = timesheet.StartDate.AddDays(7);
+                    List<Timesheet> prevandnext = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, timesheet.Owner, previousDate, nextDate).ToList();
+                    foreach (Timesheet t in prevandnext)
                     {
-                        Loading = false;
-                        InvokeAsync(StateHasChanged);
+                        if (t.StartDate == previousDate) { previousTimesheet = t; }
+                        if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
-                    Debug.WriteLine("** ...complete!");
-                }, TaskContinuationOptions.ExecuteSynchronously);
+
+                    PopulateDataGridDataSource();
+                    UpdateDailyTotals();
+
+                    // Innate codes are limited to active ones initially
+                    LoadInnateCodes();
+
+                    // Get WLM details of the staff member active at the time of the timesheet
+                    Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
+                    currentWLM = personWithWLMData.GetWorkloadModelOnDateOrDefault(timesheet.StartDate);
+                    wlmChartItem = WorkloadModelChartHelper.GetWorkloadModelChartData(timesheet.Owner, timesheet.StartDate, new List<Timesheet> { timesheet });
+
+                    // Get total hours for the week across all duties
+                    totalFTEForTimesheet = wlmChartItem.WeeklyValuesByDuty.Sum(x => x.Value);
+                }
+
+                LogInformation($"Viewing timesheet {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
+            }).ContinueWith(t =>
+            {
+                if (timesheet == null && TimesheetId == -1)
+                {
+                    // Get the start date for the new timesheet
+                    var nextTimesheetStartDate = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
+                    timesheet = new Timesheet()
+                    {
+                        Owner = ActiveUser?.Person,
+                        StartDate = nextTimesheetStartDate
+                    };
+
+                    // Immediately save the timesheet to the DB
+                    int newId = TimesheetService.Add(Context, timesheet);
+
+                    // If a duplicate is detected then throw an error as this should never happen
+                    if (newId == -1)
+                    {
+                        throw new Exception("Error creating new timesheet!");
+                    }
+                    else
+                    {
+                        // Set-up the timesheet from the template
+                        TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser?.Person, InnateCodeService.GetAllTasks(Context));
+                    }
+
+                    // Redirect to the newly created Timesheet so refreshing the page
+                    // with the -1 parameter doesn't create another new timesheet.
+                    Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
+
+                    LogInformation($"Timesheet created with ID {timesheet?.TimesheetId} for {timesheet?.Owner?.Name}");
+                }
+                else
+                {
+                    Loading = false;
+                    InvokeAsync(StateHasChanged);
+                }
+                Debug.WriteLine("** ...complete!");
+            });
+        }
+
+        /// <summary>
+        /// Method to get the timesheet entries for the datagrid
+        /// </summary>
+        private void PopulateDataGridDataSource()
+        {
+            if (ActiveUser?.Person?.PersonId == timesheet.Owner.PersonId)
+            {
+                // Use the staff member's timesheet template for the ordering
+                string templateOrdering = ActiveUser?.Person?.TimesheetTemplateData;
+                dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
             }
-            catch (TaskCanceledException)
+            else
             {
-                // We intend it to be cancelled so this is fine to ignore
+                // Order by Duty if Line Manager viewing
+                dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets the user's template data to work with, and orders the timesheet entries accordingly.
+        /// Items not part of the template get put at the end of the ordered list, ordered by InnateCodeTaskId
+        /// </summary>
+        /// <param name="timesheet">The timesheet being viewed</param>
+        /// <param name="templateOrderDetail">The string of pipe-separated TaskIds detailing the user's template items</param>
+        private List<TimesheetEntry> OrderByTemplate(Timesheet timesheet, string templateOrderDetail)
+        {
+            List<int> order = new List<int>();
+
+            if (!string.IsNullOrEmpty(templateOrderDetail))
+            {
+                foreach (string s in templateOrderDetail.Split("|"))
+                {
+                    order.Add(int.Parse(s));
+                }
+
+                // Custom ordering
+                var orderedResults = timesheet.TimesheetEntries
+                    .OrderBy(r => order.IndexOf(r.InnateCodeTask.InnateCodeTaskId) == -1 ? int.MaxValue : order.IndexOf(r.InnateCodeTask.InnateCodeTaskId))
+                    .ThenBy(r => r.InnateCodeTask.InnateCodeTaskId)
+                    .ToList();
+
+                // Sets a boolean for use in the datagrid to show which items are part of the template
+                foreach (TimesheetEntry e in orderedResults)
+                {
+                    e.IsInTemplate = order.Contains(e.InnateCodeTask.InnateCodeTaskId);
+                }
+
+                return orderedResults;
+            }
+            else
+            {
+                return timesheet.TimesheetEntries.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Method tied to the datagrid called when the column sorting icons are clicked.
+        /// Uses the data passed to calculate what needs to be ordered and how.
+        /// </summary>
+        /// <param name="args"></param>
+        void OnDataLoad(LoadDataArgs args)
+        {
+            IQueryable<TimesheetEntry> query = timesheet.TimesheetEntries.AsQueryable();
+
+            // The ordering of timesheet entries epends on who is logged in 
+            // and whose timesheet they are viewing
+            if (!string.IsNullOrEmpty(args.OrderBy)) // Sorting link has been clicked
+            {
+                if (args.OrderBy.Contains("Duty"))
+                {
+                    // "WLM Task & Duty" column sorting has been clicked
+                    query = args.OrderBy.EndsWith("desc")
+                    ? query.OrderByDescending(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName)
+                    : query.OrderBy(e => e.InnateCodeTask.Duty.ToNiceString()).ThenBy(e => e.InnateCodeTask.TaskName);
+                }
+                else
+                {
+                    // Innate code column sorting has been clicked
+                    query = args.OrderBy.EndsWith("desc")
+                    ? query.OrderByDescending(e => e.InnateCodeTask.InnateCode.ActivityCode)
+                    : query.OrderBy(e => e.InnateCodeTask.InnateCode.ActivityCode);
+                }
+
+                dataGridEntities = query.ToList();
+            }
+            else
+            {
+                // Default is to order by the user's template if viewing their own timesheet
+                PopulateDataGridDataSource();
             }
         }
 
@@ -242,7 +327,7 @@ namespace PPMTool.Pages
         {
             return (timesheet?.IsOwner(ActiveUser) ?? false) ||
                 (timesheet?.IsLineManager(ActiveUser) ?? false) ||
-                activeUserRole.RoleType == RoleType.Superuser;
+                ActiveUserRoleType == RoleType.Superuser;
         }
 
         /// <summary>
@@ -372,19 +457,19 @@ namespace PPMTool.Pages
             if (timesheet.Status != TimesheetStatus.New)
             {
                 timesheet.DateStatusChanged = DateTime.Now;
-                timesheet.StatusChangedBy = ActiveUser;
+                timesheet.StatusChangedBy = ActiveUser?.Person;
             }
 
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            TimesheetService.GetIssueCount(Context, ActiveUser.PersonId);
+            TimesheetService.GetIssueCount(Context, ActiveUser?.Person?.PersonId ?? 0);
 
             // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
-            if (timesheet.Owner == ActiveUser)
+            if (timesheet.Owner == ActiveUser?.Person)
             {
                 Debug.Write("** Sending an email to the Line Manager...");
-                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser, timesheet);
+                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser?.Person, timesheet);
             }
 
             // Only navigate away if the status is new as this means the save button has been clicked
@@ -458,7 +543,7 @@ namespace PPMTool.Pages
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
-            TimesheetService.AddToTemplate(Context, ActiveUser, entity.InnateCodeTask);
+            TimesheetService.AddToTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
 
             ShowNotification(new CapXNotificationMessage
             {
@@ -528,7 +613,7 @@ namespace PPMTool.Pages
                    "Delete Task Row") ?? false;
             if (confirmDeletion)
             {
-                TimesheetService.DeleteFromTemplate(Context, ActiveUser, entity.InnateCodeTask);
+                TimesheetService.DeleteFromTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
                 TimesheetService.DeleteEntry(Context, entity);
                 await base.DeleteRow(entity);
                 UpdateDailyTotals();
@@ -557,6 +642,12 @@ namespace PPMTool.Pages
                     if (DayColours.ContainsKey(theDay))
                     {
                         args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                    }
+
+                    if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
+                    {
+                        args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
+                        args.Attributes.Add("title", "Task is part of your default template");
                     }
                 }
             }
@@ -632,6 +723,35 @@ namespace PPMTool.Pages
         public void GoToTimesheet(Timesheet timesheet)
         {
             Navigation.NavigateTo($"timesheets/addtimesheet/{timesheet.TimesheetId}");
+        }
+
+        /// <summary>
+        /// Opens the dialog with the ReorderTimesheet page as its content. The passed timesheet
+        /// is only so we can return and reload the correct page that we came from
+        /// </summary>
+        /// <param name="timesheet"></param>
+        private async void ReorderTimesheetTemplate(Timesheet timesheet)
+        {
+            await DialogService.OpenAsync<ReorderTimesheet>("Drag and drop tasks to reorder them",
+               new Dictionary<string, object>()
+               {
+                   { "TimesheetId", timesheet.TimesheetId },
+                   { nameof(ReorderTimesheet.FormClosed), () => FormClosedHandler() }
+               },
+               new DialogOptions()
+               {
+                   ShowClose = false,
+                   Width = "50%"
+               });
+        }
+
+        /// <summary>
+        /// Callback which runs when the form closes
+        /// </summary>
+        private void FormClosedHandler()
+        {
+            // Force a reload of the page - seems the only way to be sure that we're getting the fresh data!
+            Navigation.NavigateTo($"/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}", true);
         }
     }
 }

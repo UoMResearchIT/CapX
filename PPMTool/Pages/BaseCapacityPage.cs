@@ -335,8 +335,8 @@ namespace PPMTool.Pages
                     {
                         ChartTitle = customChartTitleGenerator?.Invoke(null) ?? "Load for All",
                         ChartOptions = BuildNewChartOptionsObject(),
-                        ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched).ToList(),
-                        ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched).ToList()
+                        ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched()).ToList(),
+                        ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched()).ToList()
                     });
                 }
 
@@ -394,7 +394,7 @@ namespace PPMTool.Pages
                         // Hack to complete the entries
                         ChartHelper.CompleteChartSeries(
                             chartSourceTemp,
-                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched, isFake: true),
+                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched(), isFake: true),
                             out var confirmedChartItemsComplete,
                             out var provisionalChartItemsComplete
                         );
@@ -558,12 +558,12 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected IList<Person> GetManagers(IEnumerable<Person> people)
         {
-            var roles = RolesService.GetAll(Context)
+            var users = UserService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            return people.Where(x => roles.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            return people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
         }
 
         /// <summary>

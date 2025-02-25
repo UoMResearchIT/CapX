@@ -1,0 +1,123 @@
+﻿@inherits BaseFinanceItemFormComponent
+@using Microsoft.Extensions.Logging
+@using PPMTool.Data
+@using PPMTool.Enums
+@using Radzen
+@using PPMTool.Data.Entities
+@using DotNetExtensions
+
+<RadzenTemplateForm TItem="Invoice" Submit="@HandleValidSubmit" Data="@Invoice">
+    <RadzenFieldset Text="Invoice Details">
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                <RadzenDatePicker @bind-Value="Invoice.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
+                <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")" />
+            </RadzenStack>
+            <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Mandatory notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
+            <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
+            <RadzenDropDown Data="@statuses" @bind-Value="Invoice.Status" Name="Status" Style="width:100%;">
+                <Template Context="item">
+                    @(((InvoiceStatus)item).GetDescription())
+                </Template>
+            </RadzenDropDown>
+            <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%; margin-left: 0;" />
+        </RadzenStack>
+    </RadzenFieldset>
+    <br />
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+            <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+            <RadzenText Text="@errorMessage" Style="color: red" />
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteInvoice())" Disabled="@(Invoice?.InvoiceId < 1 || !EditAuthorised)" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" Disabled="@(!EditAuthorised)" />
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+
+    [Parameter]
+    public Invoice Invoice { get; set; }
+
+    private IEnumerable<InvoiceStatus> statuses;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // If no invoice set then create a new invoice model
+        if (Invoice == null)
+        {
+            Invoice = new Invoice
+                {
+                    Project = Project
+                };
+        }
+
+        // Statuses for the dropdown
+        statuses = Enum.GetValues(typeof(InvoiceStatus)).Cast<InvoiceStatus>();
+    }
+
+    protected override void HandleValidSubmit()
+    {
+        base.HandleValidSubmit();
+
+        // Validate
+        if (string.IsNullOrWhiteSpace(Invoice.InvoiceReference))
+        {
+            Invoice.InvoiceReference = "None";
+        }
+        if (string.IsNullOrWhiteSpace(Invoice.Description))
+        {
+            errorMessage = "You must give this item a description!";
+            return;
+        }
+        if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
+        {
+            errorMessage = "Invoice URL is required which links to an invoice or email as a SharePoint document so there is a physical record of the payment request!";
+            return;
+        }
+
+        if (Invoice.InvoiceId > 0)
+        {
+            InvoiceService.Update(Context, Invoice);
+            PostNoteToProject(FinanceItemChangeType.Update, Invoice);
+        }
+        else
+        {
+            InvoiceService.Add(Context, Invoice);
+            PostNoteToProject(FinanceItemChangeType.Add, Invoice);
+        }
+
+        CloseForm(true);
+    }
+
+    /// <summary>
+    /// Method to delete an invoice after a prompt
+    /// </summary>
+    private async void DeleteInvoice()
+    {
+        bool confirmed = await DialogService.Confirm($"You are about to delete invoice with ID {Invoice.InvoiceId} and value {Invoice.Value.ToString("C2")}. This cannot be undone!",
+                    "Delete Invoice") ?? false;
+        if (confirmed)
+        {
+            Logger?.LogInformation($"Deleting invoice ID {Invoice.InvoiceId}");
+
+            InvoiceService.Delete(Context, Invoice);
+            PostNoteToProject(FinanceItemChangeType.Delete, Invoice);
+            CloseForm(true);
+        }
+    }
+
+    /// Return the invoice ID
+    protected override int GetItemId()
+    {
+        return Invoice?.InvoiceId ?? 0;
+    }
+}

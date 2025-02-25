@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using HtmlAgilityPack;
 
 namespace PPMTool.Data
@@ -83,6 +84,16 @@ namespace PPMTool.Data
                     }
                     break;
             }
+        }
+
+        /// <summary>
+        /// Test whether a link is valid
+        /// </summary>
+        /// <param name="test"></param>
+        /// <returns></returns>
+        public static bool IsValidLink(string test)
+        {
+            return !string.IsNullOrWhiteSpace(test) && test.StartsWith("http") && test.Length >= 12 && Uri.TryCreate(test, UriKind.Absolute, out _);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a group of subtask that form a project
     /// </summary>
-    public class Project : BaseTask
+    public class Project : BaseTask, ILoggableClass
     {
         public int ProjectId { get; set; }
 
@@ -70,12 +70,6 @@ namespace PPMTool.Data.Entities
         public CostModel CostModel { get; set; }
 
         /// <summary>
-        /// The funds that we have been paid for this project
-        /// </summary>
-        [Required]
-        public double FundsReceived { get; set; }
-
-        /// <summary>
         /// The status of the project
         /// </summary>
         [Required]
@@ -130,6 +124,16 @@ namespace PPMTool.Data.Entities
         /// The amount of time the management of this project is expected to take in FTE
         /// </summary>
         public float LeadershipFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
+
+        /// <summary>
+        /// List of Invoices associated with this project
+        /// </summary>
+        public ICollection<Invoice> Invoices { get; set; }
+
+        /// <summary>
+        /// List of payments associate with this project
+        /// </summary>
+        public ICollection<Payment> Payments { get; set; }
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -195,7 +199,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedButHasNoScrumProjectLink()
         {
-            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && string.IsNullOrWhiteSpace(ScrumProjectLink);
+            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && !HtmlHelper.IsValidLink(ScrumProjectLink);
         }
 
         /// <summary>
@@ -204,7 +208,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasNoRequestDocLink()
         {
-            return string.IsNullOrWhiteSpace(RequestDocLink) || RequestDocLink.Length < 12;
+            return !HtmlHelper.IsValidLink(RequestDocLink);
         }
 
 
@@ -342,16 +346,6 @@ namespace PPMTool.Data.Entities
             var tasks = SubTasks.Where(x => x.GetUnmetDemandInWindow() > 0);
             windowStart = tasks.Min(x => x.StartDate);
             windowEnd = tasks.Max(x => x.EndDate);
-        }
-
-        /// <summary>
-        /// Method to return the dates in which there is unmet demand as a formatted string.
-        /// </summary>
-        /// <returns>Dates as a formatted string</returns>
-        public string GetUnmetDemandWindowDates()
-        {
-            GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-            return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
         }
 
         /// <summary>
@@ -537,6 +531,15 @@ namespace PPMTool.Data.Entities
             mergedRanges.Add(currentRange);
 
             return mergedRanges;
+        }
+
+        /// <summary>
+        /// To identify the project in the logs and on exports
+        /// </summary>
+        /// <returns></returns>
+        public string GetSensibleObjectName()
+        {
+            return GetFullName();
         }
     }
 }

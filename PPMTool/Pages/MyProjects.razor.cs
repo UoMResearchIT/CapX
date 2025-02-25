@@ -56,7 +56,19 @@ namespace PPMTool.Pages
                 if (ActiveUserRoleType != RoleType.Superuser && ActiveUserRoleType != RoleType.Manager)
                 {
                     LogInformation($"Role is not Manager or Superuser, redirecting...");
-                    Navigation.NavigateTo("capacity");
+
+                    if (ActiveUserRoleType == RoleType.Developer || ActiveUserRoleType == RoleType.Reader)
+                    {
+                        Navigation.NavigateTo("capacity");
+                    }
+                    else if (ActiveUserRoleType == RoleType.Finance)
+                    {
+                        Navigation.NavigateTo("managefinancialitems/summary");
+                    }
+                    else
+                    {
+                        Navigation.NavigateTo("datadashboard");
+                    }
                 }
 
                 // Get switch setting
@@ -105,7 +117,7 @@ namespace PPMTool.Pages
             else
             {
                 // Show just the logged in user's projects
-                proj = proj.Where(x => x.ProjectManager?.PersonId == ActiveUser?.PersonId).ToList();
+                proj = proj.Where(x => x.ProjectManager?.PersonId == ActiveUser?.Person?.PersonId).ToList();
             }
 
             // Build the dictionary

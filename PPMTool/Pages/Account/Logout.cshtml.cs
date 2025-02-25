@@ -1,5 +1,6 @@
-using System.Threading.Tasks;
+#if LOCAL
 using Microsoft.AspNetCore.Authentication;
+#endif
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
