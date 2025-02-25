@@ -1,5 +1,5 @@
 #! /bin/bash
-sudo systemctl stop kestrel-capx.service
-sudo cp -rf ~/CapX/PPMTool/bin/Release/net6.0/publish/* /var/www/capx/
-sudo systemctl start kestrel-capx.service
-sudo systemctl status kestrel-capx.service
+sudo systemctl stop kestrel-tits.service
+sudo cp -rf ~/T-ITS/PPMTool/bin/Release/net6.0/publish/* /var/www/tits/
+sudo systemctl start kestrel-tits.service
+sudo systemctl status kestrel-tits.service

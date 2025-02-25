@@ -29,19 +29,19 @@ if [ -z "$migration" ] || [ -z "$tag" ]; then
 fi
 
 # Copy the DB from production and roll back to migration
-if sudo cp /var/www/capx/PPMTool.db ~/CapX/PPMTool/; then
-    sudo chown mbgm6ah3:users ~/CapX/PPMTool/PPMTool.db
+if sudo cp /var/www/tits/PPMTool.db ~/T-ITS/PPMTool/; then
+    sudo chown mbgm6ah3:users ~/T-ITS/PPMTool/PPMTool.db
 else
     echo "Failed to copy the database."
     exit 1
 fi
 
-cd ~/CapX/PPMTool || exit
+cd ~/T-ITS/PPMTool || exit
 dotnet tool restore
 dotnet ef database update "$migration"
 
 # Check out tag to roll back to
-cd ~/CapX || exit
+cd ~/T-ITS || exit
 git fetch
 git checkout "$tag"
 git submodule update --init --recursive
@@ -52,6 +52,6 @@ cd PPMTool || exit
 dotnet publish -c Release -f net6.0
 
 # Copy rolled back DB to publish folder and deploy
-cp ~/CapX/PPMTool/PPMTool.db ~/CapX/PPMTool/bin/Release/net6.0/publish/
+cp ~/T-ITS/PPMTool/PPMTool.db ~/T-ITS/PPMTool/bin/Release/net6.0/publish/
 cd ~/
 ./publish.sh
