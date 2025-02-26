@@ -78,6 +78,22 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool superuserShowSynopsisForAllStaff = false;
+
+        public bool SuperuserShowSynopsisForAllStaff
+        {
+            get => superuserShowSynopsisForAllStaff;
+            private set
+            {
+                if (value != superuserShowSynopsisForAllStaff)
+                {
+                    superuserShowSynopsisForAllStaff = value;
+                    SessionStorage.SetItemAsync<bool?>("timesheets-superuser-showall", superuserShowSynopsisForAllStaff);
+                    EnqueueLoadData(GenerateTask());
+                }
+            }
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -95,7 +111,9 @@ namespace PPMTool.Pages
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showall-reports");
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showsynopsis");
-            if (temp != null) showSynopsis = temp ?? true;
+            if (temp != null) ShowSynopsis = temp ?? true;
+            temp = await SessionStorage.GetItemAsync<bool?>("timesheets-superuser-showall");
+            if (temp != null) SuperuserShowSynopsisForAllStaff = temp ?? true;
             EnqueueLoadData(GenerateTask());
         }
 
@@ -135,6 +153,14 @@ namespace PPMTool.Pages
 
             // Show second grid if user manages staff - need to see the timesheets they have submitted.
             var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser?.Person);
+
+            // If Superuser then _potentially_ they may not manage staff but can see staff synopsis for all staff
+            if (IsSuperuser(ActiveUser.Person) && SuperuserShowSynopsisForAllStaff)
+            {
+                // Get all staff if switch is selected
+                managedPeople = PersonService.GetAllShallow(Context);
+            }
+
             if (managedPeople.Count() > 0)  // Is a manager
             {
                 hideStaffResults = false;  // Show/Hide the second grid based on this
