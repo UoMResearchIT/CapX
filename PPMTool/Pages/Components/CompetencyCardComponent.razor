@@ -3,7 +3,7 @@
 @using PPMTool.Enums
 @using PPMTool.Services
 
-<RadzenCard Style="min-height:1rem">
+<RadzenCard Style="min-height:1rem; background-color: var(--rz-base-100);">
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText class="competency-highlightable" Text="@Competency.GetHierarchyId()" TextStyle="TextStyle.H5" />
@@ -12,15 +12,15 @@
         <RadzenText class="competency-highlightable" TextStyle="TextStyle.H5">
             @((MarkupString)Competency.Description)
         </RadzenText>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                 <RadzenText Text="Objective" TextStyle="TextStyle.Subtitle1" />
                 <RadzenText class="competency-highlightable" TextStyle="TextStyle.Body1">
                     @((MarkupString)Competency.Objective)
                 </RadzenText>
             </RadzenStack>
-            <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="AddAssessment" Disabled="@(assessmentToEdit != null || SelectedPerson == null || (SelectedPerson?.PersonId != ActiveUserId && !EditAuthorised))" />
         </RadzenStack>
+        <RadzenButton class="align-self-end" Text="Add Assessment" Icon="add" Click="AddAssessment" Disabled="@(assessmentToEdit != null || SelectedPerson == null || (SelectedPerson?.PersonId != ActiveUserId && !EditAuthorised))" />
         @if (assessmentToEdit != null)
         {
             <RadzenStack class="radzen-group" Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" Gap="0.5rem">
