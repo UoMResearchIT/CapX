@@ -199,7 +199,7 @@ namespace PPMTool.Pages
                             .OrderByDescending(x => x.DateCreated)
                             .GroupBy(x => x.AssociatedCompetency.CompetencyId);
 
-                    // Get a list of competency IDs for those where the lastest assessment is fully met
+                    // Get a list of competency IDs for those where the latest assessment is fully met
                     var exceptionList = new List<int>();
                     foreach (var group in latestAssessments)
                     {
@@ -426,7 +426,8 @@ namespace PPMTool.Pages
                             var cat = group.CompetencySelectionState.First(x => x.Key == category).Key;
                             group.CompetencySelectionState[cat] = true;
                         }
-                    };
+                    }
+                    ;
                     await InvokeAsync(StateHasChanged);
 
                     // Highlight matching text on the page with a JS call
