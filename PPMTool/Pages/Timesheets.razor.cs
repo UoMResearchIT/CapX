@@ -155,7 +155,7 @@ namespace PPMTool.Pages
             var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser?.Person);
 
             // If Superuser then _potentially_ they may not manage staff but can see staff synopsis for all staff
-            if (IsSuperuser(ActiveUser.Person) && SuperuserShowSynopsisForAllStaff)
+            if ((ActiveUserRoleType == RoleType.Superuser) && SuperuserShowSynopsisForAllStaff)
             {
                 // Get all staff if switch is selected
                 managedPeople = PersonService.GetAllShallow(Context);
