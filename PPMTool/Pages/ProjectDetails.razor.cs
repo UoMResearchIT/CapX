@@ -853,6 +853,7 @@ namespace PPMTool.Pages
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
             LogInformation($"Added note for {project.GetFullName()}");
+            noteSearchTerms = string.Empty;
             PopulateNotes();
             ShowOrHideEditor(false);
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
