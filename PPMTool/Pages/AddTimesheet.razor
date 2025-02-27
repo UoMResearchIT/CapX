@@ -32,7 +32,7 @@
                 {
                     <h1>Edit Timesheet</h1>
                 }
-                @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+                @if (!timesheet?.IsOwner(ActiveUser) ?? false)
                 {
                     <RadzenText Text="@timesheet?.Owner.Name" TextStyle="TextStyle.DisplayH5" />
                 }
