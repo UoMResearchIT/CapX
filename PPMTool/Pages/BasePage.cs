@@ -93,16 +93,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Check whether the current user is a superuser
-        /// </summary>
-        /// <param name="person"></param>
-        /// <returns></returns>
-        protected bool IsSuperuser(Person person)
-        {
-            return ActiveUserRoleType == RoleType.Superuser;
-        }
-
-        /// <summary>
         /// Logs the error to the Sentry platform
         /// </summary>
         /// <param name="message"></param>
