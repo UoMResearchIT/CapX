@@ -17,6 +17,9 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private TagService TagService { get; set; }
+
         private bool tableEmpty;
         private IEnumerable<Person> people;
         private int count;
@@ -45,17 +48,27 @@ namespace PPMTool.Pages
             LogInformation($"Viewing people grid");
         }
 
+        /// <summary>
+        /// Callback for add person clicked
+        /// </summary>
         private void AddPerson()
         {
             Navigation.NavigateTo($"people/addperson/-1");
         }
 
+        /// <summary>
+        /// Callback for edit person clicked
+        /// </summary>
+        /// <param name="person"></param>
         private void EditPerson(Person person)
         {
             Navigation.NavigateTo($"people/addperson/{person.PersonId}");
         }
 
-        // Necessary to ensure that we can filter the skills tags on the fly
+        /// <summary>
+        /// Manual load of datagrid data. Necessary to ensure that we can filter the skills tags on the fly.
+        /// </summary>
+        /// <param name="args"></param>
         private void LoadData(LoadDataArgs args)
         {
             // Order by name by default
@@ -94,14 +107,30 @@ namespace PPMTool.Pages
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
-                    query = query.Where(x => x.SkillTags.Any(x => x.Name.Contains(filterValue)));
+                    query = query.Where(x => x.SkillTags.Any(x => x.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
                 }
             }
 
+            // Apply the ordering process on skills count manually
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                // Sort via the OrderBy method
-                query = query.OrderBy(args.OrderBy);
+                var order = args.OrderBy.Split(" ");
+                if (order.Length > 0 && order[0] == "SkillsCount")
+                {
+                    if (order.Length > 1 && order[1] == "asc")
+                    {
+                        query = query.OrderBy(x => TagService.GetCountForPerson(Context, x.PersonId));
+                    }
+                    else
+                    {
+                        query = query.OrderByDescending(x => TagService.GetCountForPerson(Context, x.PersonId));
+                    }
+                }
+                else
+                {
+                    // Sort via the OrderBy method
+                    query = query.OrderBy(args.OrderBy);
+                }
             }
 
             // Important!!! Make sure the Count property of RadzenDataGrid is set.

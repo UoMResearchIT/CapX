@@ -86,7 +86,12 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
                         <Template Context="p">
-                            @string.Join(',', p.SkillTags.Select(t => t.Name))
+                            @string.Join(", ", p.SkillTags.Select(t => t.Name))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px">
+                        <Template Context="p">
+                            @TagService.GetCountForPerson(Context, p.PersonId).ToString()
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
