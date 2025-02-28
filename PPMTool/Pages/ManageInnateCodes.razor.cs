@@ -27,6 +27,8 @@ namespace PPMTool.Pages
         {
             base.OnAfterRender(firstRender);
 
+            if (!firstRender) return;
+
             // Set the default filter value of the columns to be just the active values
             if (dataGrid != null)
             {

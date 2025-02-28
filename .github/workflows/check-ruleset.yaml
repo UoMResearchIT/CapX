@@ -1,0 +1,148 @@
+# GitHub Actions Workflow: Check Repository Ruleset
+# 
+# This workflow ensures that the repository's branch protection rules
+# match the expected ruleset defined in '.github/Key Branch Protection Rules.json'.
+#
+# It runs on pushes to the main branch and pull requests.
+#
+# Steps:
+# 1. Check out the repository.
+# 2. Install jq for JSON processing.
+# 3. Load expected Branch Protection Rulesets defined by RSE Department from manually exported json file.
+# 4. Fetch the working repository's Branch Protection Rulesets from GitHub API.
+# 5. Compare the expected and actual rulesets.
+
+name: Check Repository Ruleset
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-ruleset:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq (JSON processor)
+        run: sudo apt-get install -y jq
+
+      - name: Load RSE Department's Ruleset
+        run: |
+          EXPECTED_RULESET_FILE=".github/Key Branch Protection Rules.json"
+          echo "Loading expected ruleset from $EXPECTED_RULESET_FILE..."
+          # Extract the "rules" array from the JSON file using jq
+          EXPECTED_RULESET=$(jq '.rules' "$EXPECTED_RULESET_FILE")
+          # Output the extracted rules
+          echo "$EXPECTED_RULESET" > expected_ruleset.json
+          # Optionally, print the extracted rules for debugging
+          cat expected_ruleset.json
+
+      - name: Fetch Repository Ruleset from GitHub API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          # Fetch default branch dynamically
+          DEFAULT_BRANCH=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO_NAME" | jq -r '.default_branch')
+          echo "Default branch detected: $DEFAULT_BRANCH"
+          echo "Fetching ruleset for repository: $REPO_NAME, branch: $DEFAULT_BRANCH..."
+
+          API_URL="https://api.github.com/repos/$REPO_NAME/rules/branches/$DEFAULT_BRANCH"
+
+          echo "Fetching expected ruleset from $API_URL"
+
+          # Fetch the response and save it as 'ruleset_response.json'
+          RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" "$API_URL")
+
+          # Save the API response to 'ruleset_response.json' file
+          echo "$RESPONSE" > ruleset_response.json
+          cat ruleset_response.json
+
+          # Output the raw response for debugging (optional)
+          echo "Raw API Response: $RESPONSE" > raw_response.json
+
+          # Check if the response is empty or not an array
+          RULESET_COUNT=$(echo "$RESPONSE" | jq length)
+          if [[ "$RULESET_COUNT" -eq 0 ]]; then
+            echo "No branch protection rules are found for repository $REPO_NAME on branch $DEFAULT_BRANCH."
+            echo "Please define branch protection rules for $REPO_NAME repository."
+            exit 1
+          fi
+
+      - name: Compare Rulesets
+        run: |
+          echo "Comparing repository ruleset with RSE Department's defined ruleset.."
+      
+          # Load actual and expected rulesets using jq
+          ACTUAL_RULES=$(jq -c 'map({type, parameters: (if has("parameters") then .parameters else {} end)})' ruleset_response.json)
+          EXPECTED_RULES=$(jq -c 'map({type, parameters: (if has("parameters") then .parameters else {} end)})' expected_ruleset.json)
+      
+          echo "Actual Rules: $ACTUAL_RULES"
+          echo "Expected Rules: $EXPECTED_RULES"
+      
+          # Ensure the rules are properly retrieved
+          if [[ -z "$ACTUAL_RULES" || "$ACTUAL_RULES" == "null" || -z "$EXPECTED_RULES" || "$EXPECTED_RULES" == "null" ]]; then
+            echo "Error: One of the rulesets is empty or invalid. Check API response."
+            exit 1
+          fi
+      
+          # Function to compare rules dynamically
+          compare_rule() {
+              local expected_rule=$1
+              local actual_rule=$2
+      
+              # Extract and compare parameters
+              EXPECTED_PARAMS=$(echo "$expected_rule" | jq -c '.parameters // {}')
+              ACTUAL_PARAMS=$(echo "$actual_rule" | jq -c '.parameters // {}')
+      
+              # Ensure all expected parameters exist in actual (ignore extra ones)
+              while read -r param; do
+                EXPECTED_VALUE=$(echo "$EXPECTED_PARAMS" | jq -r --arg param "$param" '.[$param]')
+                ACTUAL_VALUE=$(echo "$ACTUAL_PARAMS" | jq -r --arg param "$param" '.[$param]')
+      
+                if [[ "$EXPECTED_VALUE" != "$ACTUAL_VALUE" ]]; then
+                  echo "Mismatch found in parameter '$param':"
+                  echo "Expected: $EXPECTED_VALUE"
+                  echo "Actual: $ACTUAL_VALUE"
+                  return 1
+                fi
+              done < <(echo "$EXPECTED_PARAMS" | jq -r 'keys[]')
+      
+              return 0
+          }
+      
+          MATCHED=true
+      
+          # Compare each expected rule against actual rules
+          while read -r expected_rule; do
+            rule_type=$(echo "$expected_rule" | jq -r '.type')
+            actual_rule=$(echo "$ACTUAL_RULES" | jq -c --arg type "$rule_type" '.[] | select(.type == $type)')
+      
+            if [[ -z "$actual_rule" ]]; then
+              echo "Missing expected rule: $rule_type"
+              MATCHED=false
+              continue
+            fi
+      
+            if ! compare_rule "$expected_rule" "$actual_rule"; then
+              MATCHED=false
+            fi
+          done < <(echo "$EXPECTED_RULES" | jq -c '.[]')
+      
+          if [[ "$MATCHED" == false ]]; then
+            echo "❌ Ruleset mismatch - your Branch Protection Rules do not match with the RSE Department's defined Branch Protection Rules."
+            exit 1
+          else
+            echo "✅ Ruleset matched with RSE Department's defined Branch Protection Rules"
+          fi
