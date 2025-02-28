@@ -14,30 +14,25 @@
             <h1>@($"Manage Projects")</h1>
         </div>
         <div class="col-auto">
-            <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled=!EditAuthorised />
-        </div>
-    </div>
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else if (projects == null)
-    {
-        <spinner> </spinner>
-        <div class="card">
-            <p class="lead">No data to show</p>
-        </div>
-    }
-    else
-    {
-        <div class="card">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                 <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
                 <RadzenSwitch @bind-Value="@IncludeFinished" />
+                <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled="@(!EditAuthorised || Loading)" />
             </RadzenStack>
         </div>
-        <div class="card">
+    </div>
+    <hr />
+    <div class="card">
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else if (projects == null)
+        {
+            <p class="lead">No data to show</p>
+        }
+        else
+        {
             <RadzenDataGrid AllowFiltering="@(projects != null && projects.Count() > 0)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.CheckBoxList"
@@ -105,6 +100,6 @@
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
-        </div>
-    }
+        }
+    </div>
 </div>

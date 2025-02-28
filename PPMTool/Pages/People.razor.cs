@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -34,7 +35,8 @@ namespace PPMTool.Pages
                 if (value != includeLeavers)
                 {
                     includeLeavers = value;
-                    LoadData(new LoadDataArgs());
+                    Loading = true;
+                    EnqueueLoadData(GetLoadTask);
                 }
             }
         }
@@ -42,10 +44,30 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            Loading = true;
+            EnqueueLoadData(GetLoadTask);
 
-            // Get people from the database
-            LoadData(new LoadDataArgs());
             LogInformation($"Viewing people grid");
+        }
+
+        /// <summary>
+        /// Generates a task to call the load data method
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask()
+        {
+            return Task.Run(() =>
+            {
+                // Get people from the database
+                LoadData(new LoadDataArgs());
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
 
         /// <summary>
