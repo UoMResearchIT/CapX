@@ -28,6 +28,46 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
+        /// Gets the background colour code from the enum if it has the attribute. Otherwise returns UoM purple.
+        /// </summary>
+        /// <param name="enumValue"></param>
+        /// <returns></returns>
+        public static string GetBackgroundColourCode(this Enum enumValue)
+        {
+            MemberInfo[] member = enumValue.GetType().GetMember(enumValue.ToString());
+            if (member != null && member.Length != 0)
+            {
+                object[] customAttributes = member[0].GetCustomAttributes(typeof(ColourAttribute), inherit: false);
+                if (customAttributes != null && customAttributes.Count() > 0)
+                {
+                    return ((ColourAttribute)customAttributes.ElementAt(0)).BackgroundColourCode;
+                }
+            }
+
+            return "#609";
+        }
+
+        /// <summary>
+        /// Gets the text colour code from the enum if it has the attribute. Otherwise returns white.
+        /// </summary>
+        /// <param name="enumValue"></param>
+        /// <returns></returns>
+        public static string GetTextColourCode(this Enum enumValue)
+        {
+            MemberInfo[] member = enumValue.GetType().GetMember(enumValue.ToString());
+            if (member != null && member.Length != 0)
+            {
+                object[] customAttributes = member[0].GetCustomAttributes(typeof(ColourAttribute), inherit: false);
+                if (customAttributes != null && customAttributes.Count() > 0)
+                {
+                    return ((ColourAttribute)customAttributes.ElementAt(0)).TextColourCode;
+                }
+            }
+
+            return "#FFF";
+        }
+
+        /// <summary>
         /// Project status is one of the cancelled states or finished
         /// </summary>
         /// <param name="status"></param>
@@ -80,21 +120,26 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
-        /// Method to return a badge style based on status
+        /// Custom attribute to assign a badge style to an enum
+        /// </summary>
+        public class BadgeStyleAttribute : Attribute
+        {
+            public BadgeStyleAttribute(BadgeStyle style)
+            {
+                Style = style;
+            }
+
+            public BadgeStyle Style { get; }
+        }
+
+        /// <summary>
+        /// Gets the badge style of an enum based on the attribute
         /// </summary>
         /// <param name="status"></param>
         /// <returns></returns>
-        public static BadgeStyle GetBadgeStyle(this AssessmentStatus status)
+        public static BadgeStyle GetBadgeStyle(this Enum status)
         {
-            if (status == AssessmentStatus.FullyMet)
-            {
-                return BadgeStyle.Success;
-            }
-            else if (status == AssessmentStatus.PartiallyMet)
-            {
-                return BadgeStyle.Warning;
-            }
-            return BadgeStyle.Danger;
+            return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
         }
 
         /// <summary>
@@ -113,16 +158,6 @@ namespace PPMTool.Enums
                 return "background-color: var(--rz-warning-lighter);";
             }
             return "background-color: var(--rz-danger-lighter);";
-        }
-
-        /// <summary>
-        /// Gets the badge style of a timesheet status based on the attribute
-        /// </summary>
-        /// <param name="status"></param>
-        /// <returns></returns>
-        public static BadgeStyle GetBadgeStyle(this TimesheetStatus status)
-        {
-            return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
         }
     }
 }

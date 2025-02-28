@@ -40,10 +40,10 @@ namespace PPMTool.Pages
 
             // Available people are all if superuser or self and people they manage and are current staff
             availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
-            if (RolesService.GetRoleTypeForUsername(Context, ActiveUserName) != RoleType.Superuser)
+            if (UserService.GetRoleTypeForUsername(Context, ActiveUserName) != RoleType.Superuser)
             {
                 availablePeople = availablePeople
-                    .Where(x => x.PersonId == ActiveUser?.PersonId || (x.LineManager?.PersonId == ActiveUser?.PersonId && x.IsCurrentStaff()))
+                    .Where(x => x.PersonId == ActiveUser?.Person?.PersonId || (x.LineManager?.PersonId == ActiveUser?.Person?.PersonId && x.IsCurrentStaff()))
                     .OrderBy(x => x.Name);
             }
 
@@ -84,7 +84,7 @@ namespace PPMTool.Pages
 
                 // Adjust the start and end dates to the nearest Monday before and Monday after
                 startDate = startDate.Value.StartOfWeek();
-                endDate = endDate.Value.StartOfWeek().AddDays(7);
+                endDate = endDate.Value.StartOfWeek().AddDays(6);
                 var totalTime = endDate.Value.Subtract(startDate.Value).TotalMilliseconds;
 
                 // For each person selected
@@ -106,71 +106,8 @@ namespace PPMTool.Pages
                         loadingMessage = $"Loading...{person.Name} ({percent}%)";
                         InvokeAsync(StateHasChanged);
 
-                        // Get the workload model change in place on the date of the week start
-                        var wlm = person.GetWorkloadModelOnDateOrDefault(weekStart);
-
-                        // Create a chart item
-                        var item = new WLMWeeklyDataChartItem()
-                        {
-                            WeekStart = weekStart,
-                            WLMWeeklyTargetsByDuty = new Dictionary<Duty, float>
-                            {
-                                { Duty.Other, 0 },
-                                { Duty.ProjectWork, (float)wlm.ProjectWorkFTE },
-                                { Duty.BAU, (float)wlm.BusinessAsUsualFTE },
-                                { Duty.PersonalDevelopment, (float)wlm.PersonalDevelopmentFTE },
-                                { Duty.StaffMgmt, (float)wlm.StaffManagementFTE },
-                                { Duty.ProjectAndServiceMgmt, (float)wlm.ProjectAndServiceManagementFTE},
-                                { Duty.RSA, (float)wlm.ArchitectureFTE },
-                            }
-                        };
-
-                        // Loop over each task in the current timesheet
-                        var currentTimesheet = allTimesheets.FirstOrDefault(x => x.StartDate.Date == weekStart.Date);
-                        if (currentTimesheet != null)
-                        {
-                            foreach (var entry in currentTimesheet.TimesheetEntries)
-                            {
-                                // Update values in the entry as not in DB
-                                entry.UpdateTotalHours();
-
-                                // Add the hours for the task to the relevant item in the dictionary
-                                item.WeeklyValuesByDuty[entry.InnateCodeTask.Duty] += (float)entry.TotalHours;
-                            }
-                        }
-
-                        // Find total hours worked (excluding leave)
-                        float totalHours = 0f;
-                        foreach (var duty in item.WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
-                        {
-                            totalHours += item.WeeklyValuesByDuty[duty];
-                        }
-                        item.TotalHoursForWeek = totalHours;
-
-                        // How many hours expected from WLM
-                        var wlmTargetTotalHours = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value) * 35f;
-
-                        // Convert raw hours to FTE based on standard week
-                        foreach (var duty in item.WeeklyValuesByDuty.Keys)
-                        {
-                            item.WeeklyValuesByDuty[duty] /= 35f;
-                        }
-
-                        // If underbooked due to time on leave or we are on a shorter working week then scale WLM targets for the week
-                        if (totalHours < wlmTargetTotalHours)
-                        {
-                            var fractionWorking = totalHours / wlmTargetTotalHours;
-                            foreach (var duty in item.WeeklyValuesByDuty.Keys)
-                            {
-                                item.WLMWeeklyTargetsByDuty[duty] *= fractionWorking;
-                            }
-                        }
-
-                        // Compute the net
-                        item.UpdateWLMNetValues();
-
-                        // Add to list
-                        data.Add(item);
+                        // Build the data object for the chart
+                        data.Add(WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets));
 
                         // Increment
                         weekStart = weekStart.AddDays(7);

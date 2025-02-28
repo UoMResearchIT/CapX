@@ -47,12 +47,12 @@ namespace PPMTool.Pages
 
         private void AddPerson()
         {
-            Navigation.NavigateTo($"/addperson/-1");
+            Navigation.NavigateTo($"people/addperson/-1");
         }
 
         private void EditPerson(Person person)
         {
-            Navigation.NavigateTo($"addperson/{person.PersonId}");
+            Navigation.NavigateTo($"people/addperson/{person.PersonId}");
         }
 
         // Necessary to ensure that we can filter the skills tags on the fly
@@ -70,7 +70,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x == ActiveUser).ToList();
+                loadedPeople = loadedPeople.Where(x => x.PersonId == ActiveUser?.Person?.PersonId).ToList();
             }
 
             // Set the table empty flag

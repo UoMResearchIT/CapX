@@ -1,6 +1,6 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Radzen;
+using static PPMTool.Enums.Extensions;
 
 namespace PPMTool.Enums
 {
@@ -36,18 +36,5 @@ namespace PPMTool.Enums
         [Description("Approved")]
         [BadgeStyle(BadgeStyle.Success)]
         Approved
-    }
-
-    /// <summary>
-    /// Custom attribute to assign a badge style to a status
-    /// </summary>
-    public class BadgeStyleAttribute : Attribute
-    {
-        public BadgeStyleAttribute(BadgeStyle style)
-        {
-            Style = style;
-        }
-
-        public BadgeStyle Style { get; }
     }
 }

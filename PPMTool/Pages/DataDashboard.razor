@@ -1,6 +1,8 @@
 ﻿@page "/datadashboard"
+@using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 @inherits BasePage
 <PageTitle>Data Dashboard - CapX</PageTitle>
@@ -17,67 +19,50 @@
                                  ExpandTitle="Expand" CollapseAriaLabel="Collapse the Model Variables"
                                  ExpandAriaLabel="Expand the Model Variables">
                 <div class="row">
-                    <div class="col-2">
+                    <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Person Dev Allowance (FTE)" />
                     </div>
-                    <div class="col-2">
+                    <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Research Software Architecture per Project (FTE)" />
                     </div>
-                    <div class="col-2">
+                    <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Project / Service Management per Project (FTE)" />
                     </div>
-                    <div class="col-2">
+                    <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Staff Management per Person (FTE)" />
                     </div>
-                    <div class="col-2">
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-3">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-3">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                    <div class="col-3">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" Disabled="@(!EditAuthorised)" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3">
+                        <RadzenLabel class="radzen-form-label" Text="Staff Managed by HoRSE" />
+                    </div>
+                    <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Coaching Demand per G4/5 (FTE)" />
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="personalDevFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="architectureFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectManFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="staffManFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Staff Managed by HoRSE" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="App Support Leadership (FTE)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Training Leadership (FTE)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Other PSM Leadership (FTE)" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-2">
+                    <div class="col-3">
                         <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" Disabled="@(!EditAuthorised)" />
                     </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="appSupportPSMFTE" Disabled="@(!EditAuthorised)" />
+
+                    <div class="col-3">
+                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
                     </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="trainingPSMFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="otherPSMFTE" Disabled="@(!EditAuthorised)" />
-                    </div>
-                    <div class="col-2">
+                    <div class="col-3">
                         <RadzenButton Text="Refresh" Icon="refresh" Click="GenerateCharts" Disabled="@Loading" />
                     </div>
                 </div>
@@ -126,7 +111,7 @@
                             }
                             else
                             {
-                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="!EditAuthorised" />
+                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance)" />
                             }
                         </RadzenStack>
                     </div>
@@ -285,36 +270,40 @@
                 else if (dutyChartItems != null && dutyChartItems.Count > 0)
                 {
                     <ApexChart TItem="DutyChartItem"
-                               Title="Duty Demand (FTE)"
+                               Title="Duty Capacity (Available FTE vs Demand)"
                                Options="@dutyChartOptions">
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Research Software Architecture"
+                                         Name="@Duty.RSA.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
-                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.RSAShortfall))"
+                                         Color="@Duty.RSA.GetBackgroundColourCode()" />
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Staff Management"
+                                         Name="@Duty.StaffMgmt.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
-                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))"
+                                         Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Project and Service Management"
+                                         Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
-                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))"
+                                         Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
 
                         <ApexPointSeries TItem="DutyChartItem"
                                          Items="dutyChartItems"
                                          SeriesType="@SeriesType.Bar"
-                                         Name="Project Work"
+                                         Name="@Duty.ProjectWork.GetDescription()"
                                          XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
-                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))" />
+                                         YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))"
+                                         Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
 
                     </ApexChart>
                 }
@@ -370,6 +359,13 @@
                                          Name="Actual Costs"
                                          XValue="@(e => e.WeekStart)"
                                          YValue="@(e => Convert.ToDecimal(e.ActualCostsYTD))" />
+
+                        <ApexPointSeries TItem="DemandChartItem"
+                                         Items="demandChartItems"
+                                         SeriesType="@SeriesType.Line"
+                                         Name="Requested Funds"
+                                         XValue="@(e => e.WeekStart)"
+                                         YValue="@(e => Convert.ToDecimal(e.RequestedFundsYTD))" />
 
                         <ApexPointSeries TItem="DemandChartItem"
                                          Items="demandChartItems"

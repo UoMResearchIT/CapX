@@ -23,7 +23,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader,Finance")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
@@ -43,6 +43,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private DialogService DialogService { get; set; }
+
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -79,16 +82,14 @@ namespace PPMTool.Pages
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
+        private FinanceSummaryItem financeSummaryItem;
         private List<ChartItem> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
-        private string plannedCostColour;
-        private string actualCostColour;
-        private string fundsReceivedColour;
         private bool isEditExistingNote;
         private bool editorVisible;
-        private Note noteModel = new Note();
+        private Note noteModel;
         private IList<Person> mentions;
         private string noteSearchTerms;
         private List<Note> filteredNotes;
@@ -102,24 +103,44 @@ namespace PPMTool.Pages
         private RadzenHtmlEditor htmlEditor;
         private bool isCurrentUserFollowing;
         private bool isProjectManager;
-        private bool groupLinkedTasks = false;
+        private bool groupLinkedTasks;
         private ApexChart<GanttBlock> scheduleChart;
         private ApexChart<ChartItem> burnUpChart;
 
+
+        /// <summary>
+        /// Represents a block on the schedule chart
+        /// </summary>
         internal class GanttBlock : IChartItem
         {
-            public GanttBlock(SubTask t, string groupName, bool isFake = false)
+            public GanttBlock(SubTask t, string groupName, bool isFake = false, bool isLeadershipTask = false)
             {
                 Task = t;
                 PredecessorGroupName = groupName;
                 this.isFake = isFake;
+                this.IsLeadershipTask = isLeadershipTask;
             }
 
+            /// <summary>
+            /// The subtask which is associated with the Gantt Block
+            /// </summary>
             public SubTask Task { get; private set; }
 
+            /// <summary>
+            /// When grouping tasks that are linked, this is the name of the group
+            /// </summary>
             public string PredecessorGroupName { get; private set; }
 
+            /// <summary>
+            /// Whether this task is a fake task which exists in either the provisional or confirmed series so they both match in length.
+            /// This is to workaround a bug in Apex Charts where the sorting doesn't work if the series aren't all the same length
+            /// </summary>
             private bool isFake;
+
+            /// <summary>
+            /// Whether this task is a leaderhsip task and hence doesn't have a proper subtask object associated with it in the DB.
+            /// </summary>
+            public bool IsLeadershipTask { get; private set; }
 
             public bool IsFake()
             {
@@ -134,20 +155,38 @@ namespace PPMTool.Pages
 
         protected override void OnParametersSet()
         {
+            // Set the loading flag and redraw the view while the background task runs
             base.OnParametersSet();
             Loading = true;
+            StateHasChanged();
 
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
+            // Fire the load task
+            EnqueueLoadData(GetTask);
+        }
 
-            // Reset the search box
-            noteSearchTerms = string.Empty;
-
-            // Filter the mentions reset
-            cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
-            FilterMentionables();
-
-            Task.Run(() =>
+        /// <summary>
+        /// Method to get the background task that does all the intialisation work
+        /// </summary>
+        /// <returns></returns>
+        private Task GetTask()
+        {
+            return Task.Run(() =>
             {
+                // Create a thread-local context
+                var context = ContextFactory.CreateDbContext();
+
+                // Reset the search box
+                noteSearchTerms = string.Empty;
+
+                // Filter the mentions reset
+                cachedMentionables = UserService
+                    .GetAll(Context)
+                    .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    .DistinctBy(x => x.Person)
+                    .Select(x => x.Person)
+                    .ToList();
+                FilterMentionables();
+
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)
                 {
@@ -159,6 +198,13 @@ namespace PPMTool.Pages
                 if (ProjectId != null)
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        InvoiceService.GetFundsRequested(context, project.ProjectId),
+                        InvoiceService.GetFundsReceived(context, project.ProjectId)
+                    );
 
                     // Generate the blocks for the schedule chart
                     allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
@@ -187,6 +233,29 @@ namespace PPMTool.Pages
                         allBlocks.Add(new GanttBlock(t, groupName));
                     }
 
+                    // Add a gantt block representing the management task
+                    var managementTasks = project.GetLeadershipTaskRanges();
+                    foreach (var dateRange in managementTasks)
+                    {
+                        var leadershipName = "(Leadership)";
+                        allBlocks.Insert(0, new GanttBlock(new SubTask
+                        {
+                            Name = leadershipName,
+                            StartDate = dateRange.StartDate,
+                            EndDate = dateRange.EndDate,
+                            OwningProject = project,
+                            AssignedResources = new List<Resource>
+                            {
+                                new Resource
+                                {
+                                    Person = project.ProjectManager,
+                                    AssignmentFTE = Math.Round(project.LeadershipFTE, 3)
+                                }
+                            }
+
+                        }, leadershipName, isLeadershipTask: true));
+                    }
+
                     // Fill in the data
                     ChartHelper.CompleteChartSeries(
                         allBlocks,
@@ -195,14 +264,11 @@ namespace PPMTool.Pages
                         out provisionalBlocks
                     );
 
-                    // Update the UI
-                    plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
-                    actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
-                    fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                    // Update the UI                    
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
+                    isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
 
                     ganttChartOptions = new ApexChartOptions<GanttBlock>
                     {
@@ -356,10 +422,10 @@ namespace PPMTool.Pages
             }).ContinueWith(t =>
             {
                 Loading = false;
-                InvokeAsync(() =>
+                InvokeAsync(async () =>
                 {
                     StateHasChanged();
-                    OnAfterRender(true);
+                    await OnAfterRenderAsync(true);
                 });
             });
         }
@@ -368,19 +434,34 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             allProjects = ProjectService.GetAll(Context).ToList();
+            showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
 
-            LogInformation($"Initialised project details");
+            Debug.WriteLine($"** Initialised project details");
         }
 
-        protected override void OnAfterRender(bool firstRender)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnAfterRender(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
             if (ProjectId == null) Navigation.NavigateTo("nothinghere");
 
+            // If the path is the legacy path then redirect
+            if (!Navigation.Uri.Contains("projects/projectdetails"))
+            {
+                Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
+                return;
+            }
+
             if (firstRender)
             {
+                // Create a reference to self in JS
+                await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
+
                 // After the page has finished rendering then apply the search string from the parameter
                 if (FilteredNote != null)
                 {
@@ -397,13 +478,10 @@ namespace PPMTool.Pages
                     // Check whether the parameter is present to scroll to the due notes
                     if (FilterDueNotes)
                     {
-                        InvokeAsync(async () =>
-                        {
-                            // Refresh then scroll last due note into view
-                            StateHasChanged();
-                            await Task.Delay(300);
-                            await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
-                        });
+                        // Refresh then scroll last due note into view
+                        StateHasChanged();
+                        await Task.Delay(300);
+                        await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
                     }
                 }
                 else
@@ -413,6 +491,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Handler for switching the group linked tasks option
+        /// </summary>
+        /// <param name="value"></param>
         private void GroupTasksChanged(bool value)
         {
             UpdateScheduleChartAxisLimits();
@@ -421,6 +503,9 @@ namespace PPMTool.Pages
             scheduleChart?.RenderAsync();
         }
 
+        /// <summary>
+        /// Updates the schedule chart axis limits as switching between grouped and ungrouped doesn't auto update properly
+        /// </summary>
         private void UpdateScheduleChartAxisLimits()
         {
             var allBlocks = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake());
@@ -443,16 +528,16 @@ namespace PPMTool.Pages
         private void ToggleFollowing()
         {
             if (ActiveUser == null) return;
-            if (project.Followers.Contains(ActiveUser))
+            if (project.Followers.Contains(ActiveUser?.Person))
             {
-                project.Followers.Remove(ActiveUser);
+                project.Followers.Remove(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
                 LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
-                project.Followers.Add(ActiveUser);
+                project.Followers.Add(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
                 LogInformation($"Now following project {project.GetFullName()}");
@@ -460,11 +545,19 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Stores a reference to the person associated with a current mention
+        /// </summary>
+        /// <param name="person"></param>
         private void HighlightMention(Person person)
         {
             highlightedPerson = person;
         }
 
+        /// <summary>
+        /// Resets the reference to the person associated with a current mention
+        /// </summary>
+        /// <param name="person"></param>
         private void UnHighlightMention(Person person)
         {
             highlightedPerson = null;
@@ -475,22 +568,27 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterMentionables()
         {
-
             if (string.IsNullOrWhiteSpace(mentionSearchString))
             {
                 mentionables = cachedMentionables;
             }
             else
             {
-                mentionables = cachedMentionables.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
+                mentionables = cachedMentionables
+                    .Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower()))
+                    .ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
             Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
         }
 
+        /// <summary>
+        /// Handle changes in the HTML editor
+        /// </summary>
+        /// <param name="args"></param>
         private void ProcessEditorInput(KeyboardEventArgs args)
         {
-            Debug.WriteLine($"** Key pressed in the editor {args.Key}");
+            Debug.WriteLine($"** Key pressed in the editor \"{args.Key}\"");
 
             // If it is a mention trigger but not a mention insertion then open the popup
             if (args.Key == "@")
@@ -510,6 +608,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Handle key presses while the mention popup is visible
+        /// </summary>
+        /// <param name="args"></param>
         private void ProcessMentionSearchInput(KeyboardEventArgs args)
         {
             if (args.Key == "Escape")
@@ -538,29 +640,44 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Open the mention popup via JS
+        /// </summary>
+        /// <returns></returns>
         private async Task OnMentionPopupOpenAsync()
         {
             // Focus on the search box
             await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function(){ document.getElementById('search').focus(); }, 200)");
         }
 
+        /// <summary>
+        /// Insert the initials of the selected person via JS
+        /// </summary>
+        /// <param name="person"></param>
         private void MentionPerson(Person person)
         {
             htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
             {
-                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
-
                 // Close the popup
                 MentionSearchString = string.Empty;
                 await popup.CloseAsync();
+
+                // Insert text and move cursor
+                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
             });
         }
 
+        /// <summary>
+        /// Invoked when the notes filter switch is toggled
+        /// </summary>
         private void FilterSwitchToggled()
         {
             PopulateNotes();
         }
 
+        /// <summary>
+        /// Populates the notes to be show in the list
+        /// </summary>
         private void PopulateNotes()
         {
             Debug.WriteLine("** Populating notes...");
@@ -572,6 +689,9 @@ namespace PPMTool.Pages
             FilterNotes();
         }
 
+        /// <summary>
+        /// Filters the notes in the list via JS and also applies text highlighting if searching
+        /// </summary>
         private void FilterNotes()
         {
             Debug.WriteLine("** Filtering / Highlighting notes...");
@@ -634,12 +754,19 @@ namespace PPMTool.Pages
             });
         }
 
+        /// <summary>
+        /// Clears the search terms and resets the filter
+        /// </summary>
         private void ClearSearch()
         {
             noteSearchTerms = string.Empty;
             FilterNotes();
         }
 
+        /// <summary>
+        /// Shows or hides the HTML editor div with scrolling to the editor via JS
+        /// </summary>
+        /// <param name="show"></param>
         private async void ShowOrHideEditor(bool show)
         {
             // Set visibility
@@ -661,18 +788,40 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Navigate to the edit project page
+        /// </summary>
+        /// <param name="project"></param>
         private void EditProject(Project project)
         {
-            Navigation.NavigateTo($"/addproject/{project.ProjectId}");
+            Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
         }
 
+        /// <summary>
+        /// Navigate to the finance page for that project
+        /// </summary>
+        /// <param name="project"></param>
+        private void EditFinance(Project project)
+        {
+            Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
+        }
+
+        /// <summary>
+        /// Handles the add note button click
+        /// </summary>
         private void AddClicked()
         {
-            noteModel = new Note();
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
             isEditExistingNote = false;
             ShowOrHideEditor(true);
         }
 
+        /// <summary>
+        /// Handles the note edit discard button
+        /// </summary>
         private void DiscardClicked()
         {
             LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
@@ -685,6 +834,9 @@ namespace PPMTool.Pages
             ShowOrHideEditor(false);
         }
 
+        /// <summary>
+        /// Saves a new note to the database and hides the editor
+        /// </summary>
         private void SaveNote()
         {
             if (project == null || project.ProjectId < 0)
@@ -696,23 +848,25 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Author = role.Person;
+            noteModel.Author = ActiveUser;
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
             LogInformation($"Added note for {project.GetFullName()}");
+            noteSearchTerms = string.Empty;
             PopulateNotes();
             ShowOrHideEditor(false);
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
         }
 
+        /// <summary>
+        /// Updates an existing note in the DB and hides the editor
+        /// </summary>
         private void UpdateNote()
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Editor = role.Person;
+            noteModel.Editor = ActiveUser;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
@@ -723,6 +877,10 @@ namespace PPMTool.Pages
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, listOfNoteChanges);
         }
 
+        /// <summary>
+        /// Enters note edit mode
+        /// </summary>
+        /// <param name="noteToEdit"></param>
         private void EditNote(Note noteToEdit)
         {
             // Remove the note from the list so it doesn't confuse the user
@@ -735,6 +893,10 @@ namespace PPMTool.Pages
             isEditExistingNote = true;
         }
 
+        /// <summary>
+        /// Deletes a note
+        /// </summary>
+        /// <param name="noteToDelete"></param>
         private async void DeleteNote(Note noteToDelete)
         {
             bool confirmed = await DialogService.Confirm($"You are about to delete a note from {project.GetFullName()}!", "Delete Note") ?? false;
@@ -747,12 +909,19 @@ namespace PPMTool.Pages
             }
         }
 
-        private async void CopyLinkToNoteToClipboard(Note noteTolink)
+        /// <summary>
+        /// Generates the absolute URL which filters the notes to the one selected via JS
+        /// </summary>
+        /// <param name="noteTolink"></param>
+        private string GetCopyLinkText(Note noteTolink)
         {
-            var link = $"{Configuration["Authentication:HostUrl"]}/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
-            await JSRuntime.InvokeVoidAsync("copyText", link);
+            return $"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{project.ProjectId}?filteredNote={noteTolink.NoteId}";
         }
 
+        /// <summary>
+        /// Marks a due date flag on a note as complete
+        /// </summary>
+        /// <param name="note"></param>
         private void MarkComplete(Note note)
         {
             LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
@@ -766,21 +935,24 @@ namespace PPMTool.Pages
         /// </summary>
         private void ResolveMentionsInCurrentNoteModel()
         {
+            Debug.WriteLine($"** Content Resolve: {noteModel.HtmlContent}");
             // Get list of all new mentions in the note content
             var newMentions = new List<string>();
-            var matches = Regex.Matches(noteModel.HtmlContent, @"@\w+");
-            newMentions.AddRange(matches.Select(x => x.Value).Distinct());
+            var matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)@\w+");
+            newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // Load in the list of managers
-            var managers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            var managers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
-            foreach (var m in newMentions)
+            foreach (Match m in matches)
             {
-                var match = managers.FirstOrDefault(x => x.ShortName.Equals(m.Substring(1), StringComparison.OrdinalIgnoreCase));
-                if (match != null)
+                var trimmedMatch = TrimMatch(m.Value.Trim(), '@');
+                var person = managers.FirstOrDefault(x => x.ShortName.Equals(trimmedMatch.Substring(1), StringComparison.OrdinalIgnoreCase));
+                if (person != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m, $"<span class=\"badge badge-primary\">{match.Name}</span>");
+                    Debug.WriteLine($"** Replacing {trimmedMatch} with {person.Name}");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
                 }
                 else
                 {
@@ -788,7 +960,7 @@ namespace PPMTool.Pages
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "Mention Failure",
-                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct."
+                        Detail = $"The mention {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
@@ -796,7 +968,7 @@ namespace PPMTool.Pages
             // Update the mentions list (for notifications) by extracting the formatted tags
             var resolvedMentions = new List<string>();
             matches = Regex.Matches(noteModel.HtmlContent, @"<span class=""badge badge-primary"">(.*?)<\/span>");
-            resolvedMentions.AddRange(matches.Select(x => x.Groups[1].Value).Distinct());
+            resolvedMentions.AddRange(matches.Select(x => x.Groups[1].Value.Trim()).Distinct());
             mentions = new List<Person>();
             foreach (var m in resolvedMentions)
             {
@@ -810,16 +982,17 @@ namespace PPMTool.Pages
 
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"#RTP-\w+", RegexOptions.IgnoreCase);
-            newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
+            matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
+            newRtpRefs.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
             foreach (var r in newRtpRefs)
             {
-                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
+                var trimmedMatch = TrimMatch(r, '#');
+                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"<a href=\"{Configuration["Authentication:HostUrl"]}/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
                 }
                 else
                 {
@@ -827,15 +1000,37 @@ namespace PPMTool.Pages
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "RTP Reference Failure",
-                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct."
+                        Detail = $"The reference {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
         }
 
+        /// <summary>
+        /// Method to trim the matches to remove their preceding characters if necessary
+        /// </summary>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        private string TrimMatch(string match, char delimiter)
+        {
+            if (match.StartsWith(">") || char.IsWhiteSpace(match[0]))
+            {
+                int atIndex = match.IndexOf(delimiter);
+                if (atIndex != -1)
+                {
+                    return match.Substring(atIndex);
+                }
+            }
+            return match;
+        }
+
+        /// <summary>
+        /// Handler for when a task is selected in the schedule chart -- navigates to the edit task page
+        /// </summary>
+        /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
-            if (!EditAuthorised) return;
+            if (!EditAuthorised || (dataPoint.DataPoint.Items.FirstOrDefault()?.IsLeadershipTask ?? true)) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
@@ -843,33 +1038,51 @@ namespace PPMTool.Pages
                 var task = dataPoint.DataPoint.Items.FirstOrDefault()?.Task;
                 if (task == null) return;
                 Debug.WriteLine($"** Selected {task.Name}. Navigating to task edit page...");
-                Navigation.NavigateTo($"/addtask/{ProjectId}/{task.SubTaskId}");
+                EditTask(task);
             }
         }
 
+        /// <summary>
+        /// Navigates to the edit task page
+        /// </summary>
+        /// <param name="task"></param>
         void EditTask(SubTask task)
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}");
         }
 
+        /// <summary>
+        /// Navigates to the add task page
+        /// </summary>
         void AddTask()
         {
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/-1");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/-1");
         }
 
+        /// <summary>
+        /// Navigates to the add task page with the copy parameter set
+        /// </summary>
+        /// <param name="task"></param>
         void CopyTask(SubTask task)
         {
             // Navigate to the add task page passing the task ID to be copied and the query string parameter to indicate it is a copy
-            Navigation.NavigateTo($"/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
+            Navigation.NavigateTo($"projects/addtask/{project.ProjectId}/{task.SubTaskId}?copy=true");
         }
 
+        /// <summary>
+        /// Navigates to the split task page
+        /// </summary>
+        /// <param name="task"></param>
         void SplitTask(SubTask task)
         {
             // Navigate to the split task page passing the task ID to be split
-            Navigation.NavigateTo($"splittask/{project.ProjectId}/{task.SubTaskId}");
+            Navigation.NavigateTo($"projects/splittask/{project.ProjectId}/{task.SubTaskId}");
         }
 
-        // Necessary to ensure that we can filter the resources on the fly
+        /// <summary>
+        /// Loads the task data grid content. Necessary to ensure that we can filter the resources on the fly.
+        /// </summary>
+        /// <param name="args"></param>
         private void LoadData(LoadDataArgs args)
         {
             var query = project.SubTasks.ToList().AsQueryable();

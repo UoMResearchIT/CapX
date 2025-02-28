@@ -10,7 +10,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class AddPerson : BasePage
     {
         [Inject]
@@ -33,11 +33,14 @@ namespace PPMTool.Pages
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
-
+        private bool canView;
 
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
+
+            // Default view permission based on edit authorisation
+            canView = EditAuthorised;
 
             // Load the person model if necessary
             if (PersonId > 0)
@@ -52,6 +55,9 @@ namespace PPMTool.Pages
 
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+
+                    // Developers can view their own page; managers can view all people pages
+                    canView = EditAuthorised || ActiveUser?.Person?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
                 }
             }
 
@@ -67,13 +73,13 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Find out if superuser for delete button
-            isSuperUser = RolesService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
+            isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
 
             // Map entities to checkbox list items
             availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
             // Map the list of managers for drop down
-            managers = RolesService.GetAll(Context)
+            managers = UserService.GetAll(Context)
                 .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
                 .Select(x => x.Person)
                 .DistinctBy(x => x.PersonId)
@@ -116,7 +122,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing workload model changes...");
-                    Navigation.NavigateTo($"/addavailabilitychange/{personModel.PersonId}");
+                    Navigation.NavigateTo($"people/addavailabilitychange/{personModel.PersonId}");
                 }
             }
         }
@@ -133,7 +139,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing absences...");
-                    Navigation.NavigateTo($"/addabsence/{personModel.PersonId}");
+                    Navigation.NavigateTo($"people/addabsence/{personModel.PersonId}");
                 }
             }
         }

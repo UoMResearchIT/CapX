@@ -133,11 +133,11 @@ namespace PPMTool.Services
             // Delete all workload models created against the person
             context.WorkloadModelChanges.RemoveRange(context.WorkloadModelChanges.Where(x => x.Person.PersonId == entity.PersonId));
 
-            // Delete all roles created against the person
-            context.Roles.RemoveRange(context.Roles.Where(x => x.Person.PersonId == entity.PersonId));
+            // Delete all users created against the person
+            context.Users.RemoveRange(context.Users.Where(x => x.Person.PersonId == entity.PersonId));
 
             // Delete all notes created or edited by the person
-            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.PersonId == entity.PersonId || x.Editor.PersonId == entity.PersonId));
+            context.Notes.RemoveRange(context.Notes.Where(x => x.Author.Person.PersonId == entity.PersonId || x.Editor.Person.PersonId == entity.PersonId));
 
             // Remove entity from the skills tag list
             foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))
@@ -175,6 +175,17 @@ namespace PPMTool.Services
         internal Person GetByName(PPMToolContext context, string name)
         {
             return context.People.Where(x => x.Name == name).Include(x => x.WorkloadModelChanges).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Gets all people managed by the supplied person
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activeUser"></param>
+        /// <returns></returns>
+        internal IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
+        {
+            return context.People.Where(x => activeUser == null ? false : x.LineManager.PersonId == activeUser.PersonId);
         }
     }
 }

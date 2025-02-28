@@ -1,7 +1,13 @@
-﻿function scrollToElement(id) {
+﻿function setDotNetReference(dotNetHelper) {
+    window.dotNetHelper = dotNetHelper;
+}
+
+function scrollToElement(id) {
     const e = document.getElementById(id);
-    e.scrollIntoView();
-    e.focus();
+    if (e != null) {
+        e.scrollIntoView();
+        e.focus();
+    }
 }
 
 function highlightInNotes(keyword) {
@@ -46,15 +52,22 @@ function insertTextAtCaret(text) {
     newRange.setEndAfter(textNode);
     sel.removeAllRanges();
     sel.addRange(newRange);
+
+    // Ensure the cursor position is maintained correctly
+    setTimeout(() => {
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    }, 0);
+
+    // Get the current text in the rz-html-editor-content div
+    var editorContent = document.querySelector('#editor-entry .rz-html-editor-content').innerHTML;
 }
 
 function copyText(text) {
-    setTimeout(() => {
-        navigator.clipboard.writeText(text).then(function () {
-            alert("Link to note copied to clipboard!");
-        })
-        .catch(function (error) {
-            alert(error);
-        });
-    }, 0);
+    navigator.clipboard.writeText(text).then(function () {
+        alert("Link to note copied to clipboard!\n" + text);
+    })
+    .catch(function (error) {
+        alert(error);
+    });
 };

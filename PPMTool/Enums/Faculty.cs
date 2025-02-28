@@ -3,7 +3,7 @@
 namespace PPMTool.Enums
 {
     /// <summary>
-    /// Faculty to which a project belongs
+    /// Faculty / divions to which a project belongs
     /// </summary>
     public enum Faculty
     {
@@ -21,6 +21,8 @@ namespace PPMTool.Enums
         [Description("Research Lifecycle Programme")]
         RLP,
         [Description("Commercial / External")]
-        External
+        External,
+        [Description("Cross-Faculty Research Institutes")]
+        ResInst
     }
 }

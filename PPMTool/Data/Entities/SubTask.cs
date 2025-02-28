@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
             StartDate = DateTime.Today;
 
             // List of status messages to check for each task which will drive icons
-            statusMessages = new List<StatusMessage>()
+            statusMessages = new List<StatusMessage>
             {
                 new StatusMessage("Task will start soon.", StatusMessage.MessageType.Info, () => WillStartWithinAMonth()),
                 new StatusMessage("Task has recently started.", StatusMessage.MessageType.Info, () => HasStartedInTheLastWeek()),
@@ -53,6 +53,11 @@ namespace PPMTool.Data.Entities
         /// For now, restricted to a single predecessor task and an "finish-to-start" contraint
         /// </summary>
         public SubTask Predecessor { get; set; }
+
+        /// <summary>
+        /// Represents the list of tasks for which this task is a predecessor
+        /// </summary>
+        public ICollection<SubTask> Successors { get; set; } = new List<SubTask>();
 
         private bool hasFixedStart;
         /// <summary>
@@ -142,7 +147,12 @@ namespace PPMTool.Data.Entities
         /// If using a cost model that charges leadership, should it be charged on this task.
         /// Typically disabled for maintenance tasks.
         /// </summary>
-        public bool ChargeLeadership { get; set; } = true;
+        public bool RequiresLeadership { get; set; } = true;
+
+        /// <summary>
+        /// Project which owns the subtask
+        /// </summary>
+        public Project OwningProject { get; set; }
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task

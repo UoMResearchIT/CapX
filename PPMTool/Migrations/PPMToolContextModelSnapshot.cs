@@ -237,13 +237,49 @@ namespace PPMTool.Migrations
                     b.ToTable("InnateCodeTasks");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.Invoice", b =>
+                {
+                    b.Property<int>("InvoiceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InvoiceReference")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InvoiceUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("KeyDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("InvoiceId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Invoices");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
                 {
                     b.Property<int>("NoteId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AuthorPersonId")
+                    b.Property<int>("AuthorUserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("CompletedDate")
@@ -258,7 +294,7 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EditedDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("EditorPersonId")
+                    b.Property<int?>("EditorUserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("HtmlContent")
@@ -273,13 +309,44 @@ namespace PPMTool.Migrations
 
                     b.HasKey("NoteId");
 
-                    b.HasIndex("AuthorPersonId");
+                    b.HasIndex("AuthorUserId");
 
-                    b.HasIndex("EditorPersonId");
+                    b.HasIndex("EditorUserId");
 
                     b.HasIndex("ProjectId");
 
                     b.ToTable("Notes");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Payment", b =>
+                {
+                    b.Property<int>("PaymentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("InvoiceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("KeyDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("PaymentId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
@@ -354,11 +421,11 @@ namespace PPMTool.Migrations
                     b.Property<int>("Faculty")
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("FundsReceived")
-                        .HasColumnType("REAL");
-
                     b.Property<int?>("InnateActivityInnateCodeId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<float>("LeadershipFTE")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -453,39 +520,6 @@ namespace PPMTool.Migrations
                     b.ToTable("Resources");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.Role", b =>
-                {
-                    b.Property<int>("RoleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CASUserName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EmailAddress")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastLoggedIn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("PersonId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RoleType")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("RoleId");
-
-                    b.HasIndex("PersonId");
-
-                    b.ToTable("Roles");
-                });
-
             modelBuilder.Entity("PPMTool.Data.Entities.SkillTag", b =>
                 {
                     b.Property<int>("SkillTagId")
@@ -517,9 +551,6 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
-                    b.Property<bool>("ChargeLeadership")
-                        .HasColumnType("INTEGER");
-
                     b.Property<double>("Demand")
                         .HasColumnType("REAL");
 
@@ -548,6 +579,9 @@ namespace PPMTool.Migrations
                     b.Property<double>("OriginalDemand")
                         .HasColumnType("REAL");
 
+                    b.Property<int?>("OwningProjectProjectId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("PlannedCost")
                         .HasColumnType("REAL");
 
@@ -557,7 +591,7 @@ namespace PPMTool.Migrations
                     b.Property<int?>("PredecessorSubTaskId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ProjectId")
+                    b.Property<bool>("RequiresLeadership")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")
@@ -571,9 +605,9 @@ namespace PPMTool.Migrations
 
                     b.HasKey("SubTaskId");
 
-                    b.HasIndex("PredecessorSubTaskId");
+                    b.HasIndex("OwningProjectProjectId");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("PredecessorSubTaskId");
 
                     b.ToTable("SubTasks");
                 });
@@ -656,6 +690,39 @@ namespace PPMTool.Migrations
                     b.ToTable("TimesheetEntries");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CASUserName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmailAddress")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastLoggedIn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleType")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.WorkloadModelChange", b =>
                 {
                     b.Property<int>("WorkloadModelChangeId")
@@ -686,7 +753,13 @@ namespace PPMTool.Migrations
                     b.Property<double>("ProjectAndServiceManagementFTE")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ProjectManagementFTE")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ProjectWorkFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("ServiceManagementFTE")
                         .HasColumnType("REAL");
 
                     b.Property<double>("StaffManagementFTE")
@@ -764,17 +837,28 @@ namespace PPMTool.Migrations
                     b.Navigation("InnateCode");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
+            modelBuilder.Entity("PPMTool.Data.Entities.Invoice", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.Person", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorPersonId")
+                    b.HasOne("PPMTool.Data.Entities.Project", "Project")
+                        .WithMany("Invoices")
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PPMTool.Data.Entities.Person", "Editor")
-                        .WithMany()
-                        .HasForeignKey("EditorPersonId");
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Note", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.User", "Author")
+                        .WithMany("AuthoredNotes")
+                        .HasForeignKey("AuthorUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPMTool.Data.Entities.User", "Editor")
+                        .WithMany("EditedNotes")
+                        .HasForeignKey("EditorUserId");
 
                     b.HasOne("PPMTool.Data.Entities.Project", "Project")
                         .WithMany()
@@ -785,6 +869,23 @@ namespace PPMTool.Migrations
                     b.Navigation("Author");
 
                     b.Navigation("Editor");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Payment", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Invoice", "Invoice")
+                        .WithMany("Payments")
+                        .HasForeignKey("InvoiceId");
+
+                    b.HasOne("PPMTool.Data.Entities.Project", "Project")
+                        .WithMany("Payments")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
 
                     b.Navigation("Project");
                 });
@@ -834,24 +935,17 @@ namespace PPMTool.Migrations
                     b.Navigation("SubTask");
                 });
 
-            modelBuilder.Entity("PPMTool.Data.Entities.Role", b =>
-                {
-                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
-                        .WithMany()
-                        .HasForeignKey("PersonId");
-
-                    b.Navigation("Person");
-                });
-
             modelBuilder.Entity("PPMTool.Data.Entities.SubTask", b =>
                 {
+                    b.HasOne("PPMTool.Data.Entities.Project", "OwningProject")
+                        .WithMany("SubTasks")
+                        .HasForeignKey("OwningProjectProjectId");
+
                     b.HasOne("PPMTool.Data.Entities.SubTask", "Predecessor")
-                        .WithMany()
+                        .WithMany("Successors")
                         .HasForeignKey("PredecessorSubTaskId");
 
-                    b.HasOne("PPMTool.Data.Entities.Project", null)
-                        .WithMany("SubTasks")
-                        .HasForeignKey("ProjectId");
+                    b.Navigation("OwningProject");
 
                     b.Navigation("Predecessor");
                 });
@@ -892,6 +986,15 @@ namespace PPMTool.Migrations
                     b.Navigation("Timesheet");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.User", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId");
+
+                    b.Navigation("Person");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.WorkloadModelChange", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "Person")
@@ -909,6 +1012,11 @@ namespace PPMTool.Migrations
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
                 {
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Invoice", b =>
+                {
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
@@ -930,17 +1038,30 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
+                    b.Navigation("Invoices");
+
+                    b.Navigation("Payments");
+
                     b.Navigation("SubTasks");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.SubTask", b =>
                 {
                     b.Navigation("AssignedResources");
+
+                    b.Navigation("Successors");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Timesheet", b =>
                 {
                     b.Navigation("TimesheetEntries");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.User", b =>
+                {
+                    b.Navigation("AuthoredNotes");
+
+                    b.Navigation("EditedNotes");
                 });
 #pragma warning restore 612, 618
         }

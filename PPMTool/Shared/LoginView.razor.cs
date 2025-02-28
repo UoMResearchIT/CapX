@@ -2,41 +2,30 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.EntityFrameworkCore;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
 namespace PPMTool.Shared
 {
-    public partial class LoginView : ComponentBase, IDisposable
+    public partial class LoginView : BaseComponent, IDisposable
     {
         [Inject]
         private NavigationManager Navigation { get; set; }
 
-        [Inject]
-        private RolesService RoleService { get; set; }
-
-        [Inject]
-        private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
-
-        [CascadingParameter]
-        private Task<AuthenticationState> AuthenticationState { get; set; }
-
         private string displayName;
-        private IEnumerable<Role> roles;
-        private IEnumerable<string> filteredRoles;
+        private IEnumerable<User> users;
+        private IEnumerable<string> filteredUsers;
         private bool showDropDown = false;
-        private string selectedRole;
-        private Role loginAs;
+        private string selectedUser;
+        private User loginAs;
         private string loginLink;
 
         protected override void OnInitialized()
         {
+            base.OnInitialized();
+
             // Subscribe to the navigation manager's location changed event to force a rerender of the login view
             Navigation.LocationChanged += HandleLocationChanged;
 
@@ -44,27 +33,21 @@ namespace PPMTool.Shared
 #if LOCAL
             showDropDown = true;
 #endif
-
-            if (AuthenticationState is not null)
+            if (AuthenticationStateTask is not null)
             {
-                var authState = AuthenticationState.GetAwaiter().GetResult();
+                var authState = AuthenticationStateTask.GetAwaiter().GetResult();
                 var user = authState?.User;
 
-                if (user?.Identity is not null && user.Identity.IsAuthenticated)
+                if (user?.Identity is null || !user.Identity.IsAuthenticated)
                 {
-                    // Lookup the person
-                    var roles = RoleService.GetAll(ContextFactory.CreateDbContext());
-                    var role = roles.FirstOrDefault(x => x.GetStandardisedUserName() == user.Identity.Name.Trim().ToLower());
-                    displayName = role?.GetName() ?? user.Identity.Name;
-                }
-                else
-                {
-                    roles = RoleService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
-                    filteredRoles = roles.Select(x => RoleToString(x));
-                    selectedRole = filteredRoles.FirstOrDefault();
+                    users = UserService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
+                    filteredUsers = users.Select(x => UserToString(x));
+                    selectedUser = filteredUsers.FirstOrDefault();
                     OnChange();
                 }
             }
+
+            displayName = ActiveUser?.Name;
         }
 
         /// <summary>
@@ -72,7 +55,7 @@ namespace PPMTool.Shared
         /// </summary>
         private void OnChange()
         {
-            loginAs = roles.FirstOrDefault(x => RoleToString(x) == selectedRole);
+            loginAs = users.FirstOrDefault(x => UserToString(x) == selectedUser);
             SetLoginLink();
         }
 
@@ -89,13 +72,13 @@ namespace PPMTool.Shared
         }
 
         /// <summary>
-        /// Convert a role to a string in the dropdown
+        /// Convert a user to a string in the dropdown
         /// </summary>
-        /// <param name="role"></param>
+        /// <param name="user"></param>
         /// <returns></returns>
-        private string RoleToString(Role role)
+        private string UserToString(User user)
         {
-            return $"[{role.RoleType.ToString().ToUpper()}] {role.Name} ({role.CASUserName})";
+            return $"[{user.RoleType.ToString().ToUpper()}] {user.Name} ({user.CASUserName})";
         }
 
         public void Dispose()

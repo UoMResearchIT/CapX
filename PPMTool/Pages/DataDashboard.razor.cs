@@ -20,12 +20,9 @@ namespace PPMTool.Pages
     {
         private float personalDevFTE = 0.1f;
         private float architectureFTE = 0.05f;
-        private float projectManFTE = 0.05f;
+        private float projectManFTE = GlobalDefaults.ProjectManagementDefaultFTE;
         private float staffManFTE = 0.05f;
         private float coachFTE = 0.1f;
-        private float appSupportPSMFTE = 0.1f;
-        private float trainingPSMFTE = 0.1f;
-        private float otherPSMFTE = 0.5f;
 
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
@@ -57,6 +54,9 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
+
         private enum ViewOption
         {
             [Description("Last FY")]
@@ -73,7 +73,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Editing only permitted by superusers
-            EditAuthorised = AuthenticationState?.User.IsInRole("Superuser") ?? false;
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
 
             // Get starting lists from the DB
             people = PersonService.GetAll(Context);
@@ -123,7 +123,7 @@ namespace PPMTool.Pages
                         }
                     }
                 },
-                Colors = GetColours()
+                Colors = GetColours(ChartColourSet.MoneyChart)
             };
 
             fteChartOptions = new ApexChartOptions<DemandChartItem>
@@ -284,9 +284,12 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Starting generation...");
 
+                // Create a thread-local context
+                var context = ContextFactory.CreateDbContext();
+
                 // Variable chart options
-                demandChartOptions.Fill.Colors = GetColours();
-                demandChartOptions.Colors = GetColours();
+                demandChartOptions.Fill.Colors = GetColours(ChartColourSet.DutyChart);
+                demandChartOptions.Colors = GetColours(ChartColourSet.DutyChart);
 
                 // Clear the existing demand item lists
                 demandChartItems.Clear();
@@ -311,7 +314,7 @@ namespace PPMTool.Pages
                     float wlmProject = 0f;
                     float wlmBAU = 0f;
                     float wlmPD = 0f;
-                    float wlmPSM = 0f;
+                    float wlmPM = 0f;
                     float wlmStaff = 0f;
                     float wlmRSA = 0f;
                     float assignmentUnder = 0f;
@@ -422,30 +425,35 @@ namespace PPMTool.Pages
 
                     /// Costs ///
 
-                    // Get the expected income for all confirmed projects this week
+                    // Get the budget for all confirmed projects this week
                     var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return x.Budget / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    // Get the actual income for all confirmed projects this week
+                    // Get the funds received for all confirmed projects this week
                     var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
-                        return x.FundsReceived / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                        return InvoiceService.GetFundsReceived(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    // Get the actual income for all confirmed projects this week
+                    // Get the planned costs for all confirmed projects this week
                     var plannedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return x.PlannedCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    // Get the actual income for all confirmed projects this week
+                    // Get the actual costs for all confirmed projects this week
                     var actualYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
                         return x.ActualCost / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
+                    // Get the request income for all confirmed projects this week
+                    var requestedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
+                    {
+                        return InvoiceService.GetFundsRequested(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                    });
 
                     /// People ///
 
@@ -462,7 +470,7 @@ namespace PPMTool.Pages
                         wlmProject += (float)activeModel.ProjectWorkFTE;
                         wlmBAU += (float)activeModel.BusinessAsUsualFTE;
                         wlmPD += (float)activeModel.PersonalDevelopmentFTE;
-                        wlmPSM += (float)activeModel.ProjectAndServiceManagementFTE;
+                        wlmPM += (float)activeModel.ProjectManagementFTE;
                         wlmStaff += (float)activeModel.StaffManagementFTE;
                         wlmRSA += (float)activeModel.ArchitectureFTE;
                         try
@@ -501,6 +509,7 @@ namespace PPMTool.Pages
                         receivedYTD += previousDemandChartItem.ReceivedFundsYTD;
                         plannedYTD += previousDemandChartItem.PlannedCostYTD;
                         actualYTD += previousDemandChartItem.ActualCostsYTD;
+                        requestedYTD += previousDemandChartItem.RequestedFundsYTD;
                     }
                     recoveryYTD += recoveryTargetPerWeek;
 
@@ -511,7 +520,7 @@ namespace PPMTool.Pages
                         ProjectFTE = wlmProject,
                         BAUFTE = wlmBAU,
                         PersonalDevFTE = wlmPD,
-                        PSMFTE = wlmPSM,
+                        PSMFTE = wlmPM,
                         StaffManFTE = wlmStaff,
                         RSAFTE = wlmRSA,
                         NumberOfStaff = numStaff,
@@ -539,6 +548,7 @@ namespace PPMTool.Pages
                         ReceivedFundsYTD = receivedYTD,
                         PlannedCostYTD = plannedYTD,
                         ActualCostsYTD = actualYTD,
+                        RequestedFundsYTD = requestedYTD,
                         RecoverableStaffCostsYTD = recoverableStaffCosts
                     });
 
@@ -547,7 +557,7 @@ namespace PPMTool.Pages
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
                     item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
-                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPSM - (projectManFTE * (numberConfirmed + numberUnconfirmed) + appSupportPSMFTE + trainingPSMFTE + otherPSMFTE), numberOfWeeks);
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - projectManFTE * (numberConfirmed + numberUnconfirmed), numberOfWeeks);
                     item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
 
                     // Move to next week
@@ -599,21 +609,19 @@ namespace PPMTool.Pages
             return (float)Math.Round(oldValue, 2);
         }
 
+        private enum ChartColourSet
+        {
+            DutyChart,
+            MoneyChart
+        }
+
         /// <summary>
         /// Get list of colours for the charts
         /// </summary>
         /// <returns></returns>
-        public List<string> GetColours()
+        private List<string> GetColours(ChartColourSet chartSet)
         {
-            return !showFinishedAsSeparate ? new List<string>
-                {
-                    "#9B5DE5",
-                    "#7AFF60",
-                    "#FEE440",
-                    "#FB8F23",
-                    "#F44A4A",
-                    "#000",
-                } : new List<string>
+            var defaultSet = new List<string>
                 {
                     "#F15BB5",
                     "#9B5DE5",
@@ -624,6 +632,38 @@ namespace PPMTool.Pages
                     "#00F5D4",
                     "#000",
                 };
+
+            switch (chartSet)
+            {
+                case ChartColourSet.DutyChart:
+                    return
+                        !showFinishedAsSeparate ?
+                        new List<string>
+                        {
+                            "#9B5DE5",
+                            "#7AFF60",
+                            "#FEE440",
+                            "#FB8F23",
+                            "#F44A4A",
+                            "#000",
+                        } : defaultSet;
+
+
+
+                case ChartColourSet.MoneyChart:
+                    return new List<string>
+                    {
+                        "#F15BB5",
+                        "#9B5DE5",
+                        "#7AFF60",
+                        "#FEE440",
+                        "#FB8F23",
+                        "#F44A4A",
+                        "#000",
+                    };
+            }
+
+            return defaultSet;
         }
 
         /// <summary>

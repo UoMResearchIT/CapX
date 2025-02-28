@@ -1,22 +1,36 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public class Role : ILoggableClass
+    public class User : ILoggableClass
     {
-        public int RoleId { get; set; }
+        public int UserId { get; set; }
 
+        /// <summary>
+        /// Type of role the user has
+        /// </summary>
         [Required]
         public RoleType RoleType { get; set; }
 
+        /// <summary>
+        /// UoM username of the user
+        /// </summary>
         [Required]
         public string CASUserName { get; set; }
 
+        /// <summary>
+        /// Display name of the user (will get it from the person if there is one)
+        /// </summary>
         [Required]
         public string Name { get; set; }
 
         private Person person;
+        /// <summary>
+        /// Optional person associated with this user
+        /// </summary>
         public Person Person
         {
             get => person;
@@ -33,10 +47,28 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        /// <summary>
+        /// DateTime when the user last logged in
+        /// </summary>
         public string LastLoggedIn { get; set; }
 
+        /// <summary>
+        /// User's email address
+        /// </summary>
         [DataType(DataType.EmailAddress)]
         public string EmailAddress { get; set; }
+
+        /// <summary>
+        /// List of notes this person has authored
+        /// </summary>
+        [InverseProperty("Author")]
+        public ICollection<Note> AuthoredNotes { get; set; } = new List<Note>();
+
+        /// <summary>
+        /// List of notes this person has edited
+        /// </summary>
+        [InverseProperty("Editor")]
+        public ICollection<Note> EditedNotes { get; set; } = new List<Note>();
 
         public string GetSensibleObjectName()
         {

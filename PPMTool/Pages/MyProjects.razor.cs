@@ -38,22 +38,11 @@ namespace PPMTool.Pages
         public string ProjectManagerShortName { get; set; }
 
         private IDictionary<Project, IEnumerable<Note>> ownedProjectsAndDueNotes;
-        private Role userRole;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             Loading = true;
-
-            // Look up the username
-            var uname = AuthenticationState.User.Identity.Name.Trim().ToLower();
-            userRole = RolesService.GetByUsername(Context, uname);
-
-            // Log any time there is no role returned?
-            if (userRole == null)
-            {
-                LogError($"Role is null!");
-            }
 
             LogInformation("Viewing my projects");
         }
@@ -64,10 +53,22 @@ namespace PPMTool.Pages
             if (firstRender)
             {
                 // Navigate away if not a manager
-                if (userRole.RoleType != RoleType.Superuser && userRole.RoleType != RoleType.Manager)
+                if (ActiveUserRoleType != RoleType.Superuser && ActiveUserRoleType != RoleType.Manager)
                 {
                     LogInformation($"Role is not Manager or Superuser, redirecting...");
-                    Navigation.NavigateTo("capacity");
+
+                    if (ActiveUserRoleType == RoleType.Developer || ActiveUserRoleType == RoleType.Reader)
+                    {
+                        Navigation.NavigateTo("capacity");
+                    }
+                    else if (ActiveUserRoleType == RoleType.Finance)
+                    {
+                        Navigation.NavigateTo("managefinancialitems/summary");
+                    }
+                    else
+                    {
+                        Navigation.NavigateTo("datadashboard");
+                    }
                 }
 
                 // Get switch setting
@@ -94,7 +95,7 @@ namespace PPMTool.Pages
                     // Show just the list of alerts for all
                     proj = proj.Where(x =>
                     {
-                        x.UpdateStatusMessages();
+                        x.GetLatestStatusMessages();
                         return x.HasActiveStatusMessages();
                     }).ToList();
                 }
@@ -103,7 +104,7 @@ namespace PPMTool.Pages
                     // Show just the list of errors for all
                     proj = proj.Where(x =>
                     {
-                        x.UpdateStatusMessages();
+                        x.GetLatestStatusMessages();
                         return x.HasActiveErrorMessages();
                     }).ToList();
                 }
@@ -116,7 +117,7 @@ namespace PPMTool.Pages
             else
             {
                 // Show just the logged in user's projects
-                proj = proj.Where(x => x.ProjectManager?.PersonId == userRole.Person?.PersonId).ToList();
+                proj = proj.Where(x => x.ProjectManager?.PersonId == ActiveUser?.Person?.PersonId).ToList();
             }
 
             // Build the dictionary

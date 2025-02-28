@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
@@ -34,6 +36,44 @@ namespace PPMTool.Data.Entities
         [Required]
         public double ArchitectureFTE { get; set; }
 
+        private double serviceManagementFTE;
+        [Required]
+        public double ServiceManagementFTE
+        {
+            get => serviceManagementFTE;
+            set
+            {
+                if (value != serviceManagementFTE)
+                {
+                    serviceManagementFTE = value;
+                    UpdatePSM();
+                }
+            }
+        }
+
+        private double projectManagementFTE;
+        [Required]
+        public double ProjectManagementFTE
+        {
+            get => projectManagementFTE;
+            set
+            {
+                if (value != projectManagementFTE)
+                {
+                    projectManagementFTE = value;
+                    UpdatePSM();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Method to update the Project and Service Management FTE when either Project Management FTE or Service Management FTE is updated
+        /// </summary>
+        private void UpdatePSM()
+        {
+            ProjectAndServiceManagementFTE = Math.Round(1000 * (ProjectManagementFTE + ServiceManagementFTE)) / 1000d;
+        }
+
 
         /// <summary>
         /// Optional notes to explain anything about the change
@@ -52,6 +92,24 @@ namespace PPMTool.Data.Entities
         public double Total()
         {
             return ProjectWorkFTE + BusinessAsUsualFTE + PersonalDevelopmentFTE + StaffManagementFTE + ProjectAndServiceManagementFTE + ArchitectureFTE;
+        }
+
+        /// <summary>
+        /// Method to get the WLM values for each duty as a dictionary
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<Duty, float> GetDutyMapping()
+        {
+            return new Dictionary<Duty, float>
+                {
+                    { Duty.Other, 0 },
+                    { Duty.ProjectWork, (float)ProjectWorkFTE },
+                    { Duty.BAU, (float)BusinessAsUsualFTE },
+                    { Duty.PersonalDevelopment, (float)PersonalDevelopmentFTE },
+                    { Duty.StaffMgmt, (float)StaffManagementFTE },
+                    { Duty.ProjectAndServiceMgmt, (float)ProjectAndServiceManagementFTE},
+                    { Duty.RSA, (float)ArchitectureFTE },
+                };
         }
     }
 }

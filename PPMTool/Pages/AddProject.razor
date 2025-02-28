@@ -1,4 +1,4 @@
-﻿@page "/addproject/{ProjectId:int}"
+﻿@page "/projects/addproject/{ProjectId:int}"
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data
@@ -109,7 +109,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-6">
+                <div class="col-4">
                     <RadzenLabel class="radzen-form-label" Text="Cost Model" /><br />
                     <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.CostModel" Data="@(Enum.GetValues(typeof(CostModel)))">
                         <Template Context="cost">
@@ -118,17 +118,18 @@
                     </RadzenDropDown>
                 </div>
                 <div class="col-2">
+                    <RadzenLabel class="radzen-form-label" Text="Leadership FTE" />
+                    <RadzenIcon class="centre-align" IconStyle=IconStyle.Warning Icon="warning" title="This project has a custom leadership demand. Make sure this is what you want to do as it affects cost and demand reporting." Visible="@(projectModel.LeadershipFTE != GlobalDefaults.ProjectManagementDefaultFTE)" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.LeadershipFTE" />
+                </div>
+                <div class="col-3">
                     <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
                     <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" Disabled="@(projectModel.CostModel != CostModel.DayRate)" />
                 </div>
-                <div class="col-2">
+                <div class="col-3">
                     <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
                     <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" />
-                </div>
-                <div class="col-2">
-                    <RadzenLabel class="radzen-form-label" Text="Funds Received (£)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.FundsReceived" />
                 </div>
             </div>
             <hr />

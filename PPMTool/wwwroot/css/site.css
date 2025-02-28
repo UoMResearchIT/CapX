@@ -248,6 +248,10 @@ mark {
     --rz-grid-cell-padding: 0.5rem;
 }
 
+.border-primary{
+    border-color: #609 !important;
+}
+
 .competency-highlightable {
 }
 
@@ -257,4 +261,44 @@ mark {
 
 :not(.rz-form-field-content) > .rz-textarea:disabled {
     color: #777
+}
+
+.rz-grid-table thead th .rz-column-title {
+    padding-left: 0.5rem;
+}
+
+.timesheet-note {
+    padding: 0.5rem;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    font-weight: bold;
+    background-color: #F5F5F5;
+    border-radius: 2px;
+    border: 1px solid #ccc
+}
+
+.timesheet-synopsis-table {
+    font-size: 0.9rem;
+}
+
+.timesheet-wlm-slice {
+    margin: 0px; 
+    float: left;
+    text-align: center;
+    font-weight: bold;
+}
+
+h4 {
+    line-height: unset;
+}
+
+.notification-badge {
+    float: right;
+    padding: var(--rz-badge-padding);
+    font-size: 0.8rem;
+    margin-top: 0.1rem;
+}
+
+.rounded-frame {
+    border-radius: var(--rz-button-border-radius)
 }

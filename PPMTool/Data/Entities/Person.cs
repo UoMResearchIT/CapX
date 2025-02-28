@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person : ObjectWithStatusMessages
+    public class Person : ObjectWithStatusMessages, IComparable
     {
         public int PersonId { get; set; }
 
@@ -196,6 +196,34 @@ namespace PPMTool.Data.Entities
         internal bool IsCurrentStaff()
         {
             return StartDate <= DateTime.Today && (EndDate == null || EndDate > DateTime.Today);
+        }
+
+        /// <summary>
+        /// Default comparer for person objects compares name
+        /// </summary>
+        /// <param name="obj">Other person</param>
+        /// <returns></returns>
+        public int CompareTo(object obj)
+        {
+            return Name.CompareTo((obj as Person)?.Name);
+        }
+
+        /// <summary>
+        /// Method to return PM capacity for a person based on the WLM active on the provided date
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal double GetProjectManagementCapacityOnDate(DateTime date)
+        {
+            // If there are changes then check them
+            var pmCapacity = 0d;
+            if (WorkloadModelChanges.Count > 0)
+            {
+                var latestChange = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                if (latestChange != null) pmCapacity = latestChange.ProjectManagementFTE;
+            }
+
+            return pmCapacity;
         }
     }
 }
