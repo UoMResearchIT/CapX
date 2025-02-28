@@ -24,6 +24,8 @@ namespace PPMTool.Migrations
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "");
+
+            migrationBuilder.Sql("UPDATE SkillTags SET ControlledName = Name");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
