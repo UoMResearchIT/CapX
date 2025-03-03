@@ -14,9 +14,6 @@ namespace PPMTool
     {
         public static void Main(string[] args)
         {
-#if !RELEASE
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
-#endif
             var host = CreateHostBuilder(args).Build();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Host Created");

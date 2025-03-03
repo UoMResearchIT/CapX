@@ -6,11 +6,31 @@ using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
 using PPMTool.Data.Context;
 using PPMTool.Services;
+#if RELEASE
+using Serilog;
+#endif
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Access the configuration to get the connection string
 var configuration = builder.Configuration;
+
+#if RELEASE
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Logger(l =>
+    {
+        l.WriteTo.Console();
+        l.WriteTo.File(
+            path: configuration.GetValue<string>("LogPath"),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: null,
+            retainedFileTimeLimit: TimeSpan.FromDays(60));
+    })
+    .CreateLogger();
+builder.Host.UseSerilog();
+#endif
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
         options.UseSqlite(configuration.GetConnectionString("PPMToolContextConnection") ?? throw new Exception("Invalid connection string!"))

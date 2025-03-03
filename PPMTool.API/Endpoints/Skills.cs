@@ -51,7 +51,7 @@ public static class Skills
     }
 
     /// <summary>
-    /// Get all skills tags for a person based on their name
+    /// Get all skills tags for a person based on their name with spaces between their names replaced with underscores
     /// </summary>
     /// <param name="context"></param>
     /// <param name="logger"></param>
@@ -64,10 +64,11 @@ public static class Skills
     {
         // Try to retrieve the person
         var person = context.People
-            .FirstOrDefault(x => x.Name.ToLower() == name.Trim().ToLower());
+            .FirstOrDefault(x => x.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
         if (person == null)
         {
-            return Results.NotFound($"Cannot find a person with name \"{name}\" in the database!");
+            logger.LogWarning($"API: GetAllSkillsTagsForPerson: Person = {name} not found in the DB!");
+            return Results.NotFound($"Cannot find a {name} in the database!");
         }
 
         // Get the tags for this person
