@@ -83,6 +83,7 @@ app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints to methods
 app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet("/skills/getAllForPerson/{username}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 
 app.Run();

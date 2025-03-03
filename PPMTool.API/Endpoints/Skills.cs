@@ -27,23 +27,47 @@ public static class Skills
     }
 
     /// <summary>
-    /// Get all skills tags for a person based on their shortname
+    /// Get all skills tags grouped by person
     /// </summary>
     /// <param name="context"></param>
     /// <param name="logger"></param>
-    /// <param name="shortname"></param>
+    /// <returns></returns> 
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, IEnumerable<SkillTag>>))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger)
+    {
+        var people = await context.People.Include(x => x.SkillTags).ToListAsync();
+
+        // Assemble into correct form
+        Dictionary<string, IEnumerable<SkillTag>> results = new Dictionary<string, IEnumerable<SkillTag>>();
+        foreach (var person in people)
+        {
+            results.Add(person.Name, person.SkillTags);
+        }
+
+        logger.LogInformation($"API: GetAllPeopleWithSkillTags: Count = {people.Count}");
+        return Results.Json(results);
+    }
+
+    /// <summary>
+    /// Get all skills tags for a person based on their name
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="name"></param>
     /// <returns></returns>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string shortname)
+    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string name)
     {
         // Try to retrieve the person
         var person = context.People
-            .FirstOrDefault(x => x.ShortName.ToLower() == shortname.Trim().ToLower());
+            .FirstOrDefault(x => x.Name.ToLower() == name.Trim().ToLower());
         if (person == null)
         {
-            return Results.NotFound($"Cannot find a person with short name \"{shortname}\" in the database!");
+            return Results.NotFound($"Cannot find a person with name \"{name}\" in the database!");
         }
 
         // Get the tags for this person
