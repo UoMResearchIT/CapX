@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Web + API (Dev)",
+    "Projects": [
+      {
+        "Path": "PPMTool.csproj",
+        "Action": "Start",
+        "DebugTarget": "IIS Express (Dev)"
+      },
+      {
+        "Path": "..\\PPMTool.API\\PPMTool.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "IIS Express"
+      }
+    ]
+  }
+]
