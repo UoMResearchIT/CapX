@@ -11,30 +11,30 @@
 <PageTitle>Timesheets - CapX</PageTitle>
 
 <div class="container">
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else
-    {
-        <div class="row">
-            <div class="col-auto mr-auto">
-                <h1>My Timesheets</h1>
-                <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
-                <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> { new StatusMessage("You have rejected timesheets to re-submit", StatusMessage.MessageType.Error, () => TimesheetService.HasOwnTimesheetActions) })" />
-            </div>
-            <div class="col-auto align-content-center">
-                <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" />
-            </div>
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h1>My Timesheets</h1>
+            <RadzenText Text="@($"Next timesheet: {dateNextTimesheet.ToLongDateString()} to {dateNextTimesheet.AddDays(6).ToLongDateString()}")" TextStyle="TextStyle.Subtitle1" />
+            <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> { new StatusMessage("You have rejected timesheets to re-submit", StatusMessage.MessageType.Error, () => TimesheetService.HasOwnTimesheetActions) })" />
         </div>
-        <hr />
-        <div class="card">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem;" />
-                <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" />
-            </RadzenStack>
+        <div class="col-auto align-content-center">
+            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" Disabled="@Loading" />
         </div>
-        <div class="card">
+    </div>
+    <hr />
+    <div class="card">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+            <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem;" />
+            <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" Disabled="@Loading" />
+        </RadzenStack>
+    </div>
+    <div class="card">
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else
+        {
             <RadzenDataGrid AllowAlternatingRows="true" 
                             AllowPaging="true" 
                             AllowFiltering=@ShowAllMyTimesheets
@@ -58,39 +58,45 @@
                     <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="timesheet">
                             <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
-                                                       IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
-                                                       OnButtonClick="@(canView => EditTimesheet(timesheet))"
-                                                       ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                                                        IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                                        OnButtonClick="@(canView => EditTimesheet(timesheet))"
+                                                        ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
             <HintComponent Message="Shows your 'New/Unsubmitted' and 'Rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected." />
+        }
+    </div>
+
+    <div style="padding-top: 3rem" hidden="@hideStaffResults">
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <h1>My Staff Timesheets</h1>
+            </div>
         </div>
-
-        <div style="padding-top: 3rem" hidden="@hideStaffResults">
-            <div class="row">
-                <div class="col-auto mr-auto">
-                    <h1>My Staff Timesheets</h1>
-                </div>
-            </div>
-            <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> {new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions)})" />
-            <hr />
-            <div class="card">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" >
-                        <RadzenText Text="Staff Synopsis" Style="margin-bottom: 0.2rem" />
-                        <RadzenSwitch @bind-Value="@ShowSynopsis" />
-                    </RadzenStack>
-                    
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Visible="@(ActiveUserRoleType == RoleType.Superuser)">
-                        <RadzenText Text="Show Synopsis for ALL Staff" Style="margin-bottom: 0.2rem" />
-                        <RadzenSwitch @bind-Value="@SuperuserShowSynopsisForAllStaff" />
-                    </RadzenStack>
+        <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> {new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions)})" />
+        <hr />
+        <div class="card">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" >
+                    <RadzenText Text="Staff Synopsis" Style="margin-bottom: 0.2rem" />
+                    <RadzenSwitch @bind-Value="@ShowSynopsis" Disabled="@Loading" />
                 </RadzenStack>
-            </div>
-            <div class="card" hidden="@(!ShowSynopsis)">
-
+                    
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Visible="@(ActiveUserRoleType == RoleType.Superuser)">
+                    <RadzenText Text="Show Synopsis for ALL Staff" Style="margin-bottom: 0.2rem" />
+                    <RadzenSwitch @bind-Value="@SuperuserShowSynopsisForAllStaff" Disabled="@Loading" />
+                </RadzenStack>
+            </RadzenStack>
+        </div>
+        <div class="card" hidden="@(!ShowSynopsis)">
+            @if (Loading)
+            {
+                <LoadingComponent />
+            }
+            else
+            {
                 <table class="table table-striped table-bordered" style="border: 1px solid #ccc; margin-bottom: 0;">
                     <tr style="background-color: #eee;">
                         <th class="timesheet-synopsis-table">
@@ -145,15 +151,22 @@
                     }
                 </table>
                 <HintComponent Message="Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. Current calendar week is shaded in cream." />
-            </div>
+            }
+        </div>
 
-            <div class="card" style="margin-top: 1rem;">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
-                    <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" />
-                </RadzenStack>
-            </div>
-            <div class="card">
+        <div class="card" style="margin-top: 1rem;">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
+                <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" Disabled="@Loading" />
+            </RadzenStack>
+        </div>
+        <div class="card">
+            @if (Loading)
+            {
+                <LoadingComponent />
+            }
+            else
+            {
                 <RadzenDataGrid AllowAlternatingRows="true"
                                 AllowPaging="true"
                                 AllowFiltering="true"
@@ -178,15 +191,15 @@
                         <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                             <Template Context="timesheet">
                                 <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
-                                                           IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
-                                                           OnButtonClick="@(canView => EditTimesheet(timesheet))"
-                                                           ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                                                            IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                                            OnButtonClick="@(canView => EditTimesheet(timesheet))"
+                                                            ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
                 <HintComponent Message="Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but 'New/Unsubmitted' are shown if the 'Show All Timesheets' option is selected." />
-            </div>
+            }
         </div>
-    }
+    </div>
 </div>
