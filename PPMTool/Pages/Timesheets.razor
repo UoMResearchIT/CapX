@@ -120,7 +120,14 @@
                     {
                         Debug.WriteLine($"** SYNOPSIS : {kvp.Key.Name} [{kvp.Value.Count}] entries");
                         <tr>
-                            <td class="timesheet-synopsis-table">@kvp.Key.Name <span class="badge badge-warning" style="padding: 0.3rem; float: right;">@kvp.Key.ShortName</span></td>
+                            <td class="timesheet-synopsis-table">
+                                @kvp.Key.Name
+                                @if (SuperuserShowSynopsisForAllStaff)
+                                {
+                                    <span class="badge badge-pill badge-info" style="padding: 0.3rem; margin-left: 0.25rem;" title="Line Manager : @kvp.Key.LineManager.Name">@kvp.Key.LineManager.ShortName</span>
+                                }
+                                <span class="badge badge-warning" style="padding: 0.3rem; float: right;">@kvp.Key.ShortName</span>
+                            </td>
                             
                             @for (int i = 0; i < kvp.Value.Count; i++)
                             {
