@@ -34,6 +34,7 @@ namespace PPMTool.Pages
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
+        private bool initialLoadComplete;
 
         public bool ShowAllMyTimesheets
         {
@@ -44,7 +45,11 @@ namespace PPMTool.Pages
                 {
                     showAllMyTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-mine", showAllMyTimesheets);
-                    EnqueueLoadData(GenerateTask());
+                    if (initialLoadComplete)
+                    {
+                        Loading = true;
+                        EnqueueLoadData(GenerateTask);
+                    }
                 }
             }
         }
@@ -59,7 +64,11 @@ namespace PPMTool.Pages
                 {
                     showAllMyStaffTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-reports", showAllMyStaffTimesheets);
-                    EnqueueLoadData(GenerateTask());
+                    if (initialLoadComplete)
+                    {
+                        Loading = true;
+                        EnqueueLoadData(GenerateTask);
+                    }
                 }
             }
         }
@@ -89,7 +98,11 @@ namespace PPMTool.Pages
                 {
                     superuserShowSynopsisForAllStaff = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-superuser-showall", superuserShowSynopsisForAllStaff);
-                    EnqueueLoadData(GenerateTask());
+                    if (initialLoadComplete)
+                    {
+                        Loading = true;
+                        EnqueueLoadData(GenerateTask);
+                    }
                 }
             }
         }
@@ -97,7 +110,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
+            Loading = true;
             LogInformation("Viewing Timesheets");
         }
 
@@ -114,30 +127,38 @@ namespace PPMTool.Pages
             if (temp != null) ShowSynopsis = temp ?? true;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-superuser-showall");
             if (temp != null) SuperuserShowSynopsisForAllStaff = temp ?? true;
-            EnqueueLoadData(GenerateTask());
+            EnqueueLoadData(GenerateTask);
         }
 
         /// <summary>
         /// Generates a task to load data
         /// </summary>
         /// <returns></returns>
-        private Func<Task> GenerateTask()
+        private Task GenerateTask()
         {
-            return async () =>
+            return Task.Run(() =>
             {
-                await LoadData();
-            };
+                LoadData();
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    if (!initialLoadComplete)
+                    {
+                        initialLoadComplete = true;
+                    }
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
 
         /// <summary>
         /// Load in the timesheet data from the service
         /// </summary>
         /// <param name="showAll"></param>
-        private async Task LoadData()
+        private void LoadData()
         {
-            Loading = true;
-            await InvokeAsync(StateHasChanged);
-
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
             myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
@@ -201,9 +222,6 @@ namespace PPMTool.Pages
                 // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
                 myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
             }
-
-            Loading = false;
-            await InvokeAsync(StateHasChanged);
         }
 
         /// <summary>
