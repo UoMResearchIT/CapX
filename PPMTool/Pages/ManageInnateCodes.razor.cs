@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
-using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -14,8 +13,6 @@ namespace PPMTool.Pages
     {
         [Inject]
         public InnateCodeService InnateCodeService { get; set; }
-
-        private RadzenDataGrid<InnateCode> dataGrid;
 
         protected override void OnInitialized()
         {
