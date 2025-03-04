@@ -100,7 +100,7 @@ namespace PPMTool.Data.Entities
             }
 
 
-            // If we wanted to include the year to year variation based on financial references then we could do it like bellow.
+            // If we wanted to include the year to year variation based on financial references then we could do it like below.
             // However, actuals would need to be record year on year to be able to match the planned cost algorithm
 
             //// Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)

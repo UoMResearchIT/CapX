@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 using PPMTool.Enums;
 using static PPMTool.Data.ValidationAttributes;
 
@@ -349,7 +350,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to run the calculation of leaderhsip costs planned or actual
+        /// Method to run the calculation of leadership costs planned or actual
         /// </summary>
         /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
         /// <param name="financialReferences"></param>
@@ -362,8 +363,25 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
-            // What to use for end date -- use current date if looking for actuals and currently in the middle of a project
-            var endDateOfCalculation = actualCosts ? (DateTime.Today > EndDate ? EndDate : DateTime.Today) : EndDate;
+            // What to use for end date -- just the end date of the project for the planned costs
+            var endDateOfCalculation = EndDate;
+
+            // For actuals, it depends on what the current date is
+            if (actualCosts)
+            {
+                // Use current date if looking for actuals and currently in the middle of the project
+                // Works out actual costs up to the current day from project start
+                if (IsWithin(DateTime.Today))
+                {
+                    endDateOfCalculation = DateTime.Today;
+                }
+
+                // If the today is before the project starts then costs are just zero for actuals
+                else if (DateTime.Today < StartDate)
+                {
+                    return 0d;
+                }
+            }
 
             // For each financial year
             var totalCost = 0d;
