@@ -117,12 +117,12 @@ select {
 }
 
 .radzen-dropdown {
-    margin: 4pt;
+    margin: 0.5rem auto;
     width: 100%;
 }
 
 .radzen-datepicker {
-    margin: 4pt;
+    margin: 0.5rem auto;
     width: 100%;
 }
 
@@ -198,7 +198,7 @@ mark {
 
 .rz-textbox {
     text-indent: 0 !important;
-    margin: 4pt;
+    margin: 0.5rem auto;
 }
 
 .rz-inputtext {
@@ -298,3 +298,4 @@ h4 {
 .rounded-frame {
     border-radius: var(--rz-button-border-radius)
 }
+
