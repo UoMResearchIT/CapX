@@ -33,7 +33,7 @@
                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                     ColumnWidth="12rem">
         <Columns>
-            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person (RSE)" MinWidth="10px">
+            <RadzenDataGridColumn TItem="Role" Property="Person.Name" Title="Person" MinWidth="10px">
                 <EditTemplate Context="role">
                     <RadzenDropDown @bind-Value="role.Person" Data="@people" Style="width:100%; display: block;">
                         <Template Context="person">
