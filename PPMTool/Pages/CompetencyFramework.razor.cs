@@ -11,7 +11,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Superuser,Manager,Developer")]
+    [Authorize(Roles = "Superuser,Manager,Contractor")]
     public partial class CompetencyFramework : BasePage
     {
         [Inject]

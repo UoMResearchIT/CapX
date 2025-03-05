@@ -23,7 +23,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Contractor,Reader")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]

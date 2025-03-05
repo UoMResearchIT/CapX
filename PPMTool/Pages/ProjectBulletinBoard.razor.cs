@@ -13,7 +13,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Developer,Manager,Superuser")]
+    [Authorize(Roles = "Contractor,Manager,Superuser")]
     public partial class ProjectBulletinBoard : BasePage
     {
         [Inject]
