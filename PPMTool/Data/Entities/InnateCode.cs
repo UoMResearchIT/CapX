@@ -36,7 +36,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public string GetCodeAsString()
         {
-            return $"{ActivityCode} - {ActivityName}";
+            return $"{ActivityName}";
         }
 
         /// <summary>
