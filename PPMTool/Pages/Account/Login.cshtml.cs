@@ -53,7 +53,7 @@ namespace PPMTool.Pages.Account
             // Add roles from DB for this user
             var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";
             var roleEntity = _roleService.GetByUsername(_contextFactory.CreateDbContext(), username.Trim().ToLower());
-            var role = string.IsNullOrWhiteSpace(username) || roleEntity == null ? RoleType.None : roleEntity.RoleType;
+            var role = string.IsNullOrWhiteSpace(username) || roleEntity == null ? RoleType.Contractor : roleEntity.RoleType;
             identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
 
             await HttpContext.SignInAsync(
