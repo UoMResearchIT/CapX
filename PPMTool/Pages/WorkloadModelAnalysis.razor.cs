@@ -15,7 +15,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser,Contractor")]
     public partial class WorkloadModelAnalysis : BasePage
     {
         [Inject]
