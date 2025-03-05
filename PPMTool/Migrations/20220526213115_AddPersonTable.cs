@@ -53,7 +53,7 @@ namespace PPMTool.Migrations
             migrationBuilder.Sql(
                 @"
                     INSERT INTO People (Name, ShortName, HourlyRate, AvailabilityFTE, NextAvailable)
-                    VALUES ('Adrian Harwood', 'AH', 100.0, 1.0, '2022-05-26 21:31:15');
+                    VALUES ('Diane Lear', 'DL', 100.0, 1.0, '2022-05-26 21:31:15');
                 "
             );
         }

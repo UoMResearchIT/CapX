@@ -13,7 +13,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Contractor")]
     public partial class Capacity : BaseCapacityPage
     {
         private DateTime queryStartDate = DateTime.Today;
@@ -69,7 +69,7 @@ namespace PPMTool.Pages
             if (!firstRender) return;
 
             // Certain roles can use the dropdowns and save manager settings so need to reload
-            if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
+            if (EditAuthorised)
             {
 
                 // Load settings
@@ -101,7 +101,7 @@ namespace PPMTool.Pages
 
         protected override string GetSessionStorageTag() => "capacity";
 
-        private bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
+        private bool IsDeveloper() => ActiveUserRoleType == RoleType.Contractor;
 
         /// <summary>
         /// Method to setup the dropdown sources

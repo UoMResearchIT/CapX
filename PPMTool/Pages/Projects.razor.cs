@@ -10,7 +10,7 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Contractor,Reader")]
     public partial class Projects : BaseProjectPage
     {
         private IEnumerable<Project> projects;
@@ -84,7 +84,7 @@ namespace PPMTool.Pages
         {
             // Initialise the project list -- developers can only see projects to which they are assigned
             List<Project> proj;
-            if (ActiveUserRoleType == RoleType.Developer)
+            if (ActiveUserRoleType == RoleType.Contractor)
             {
                 proj = ProjectService.GetAll(Context)
                     .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person == ActiveUser)))

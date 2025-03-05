@@ -50,7 +50,7 @@ namespace PPMTool.Shared
                     ActiveUser = role?.Person;
 
                     // Get active user role
-                    ActiveUserRoleType = role?.RoleType ?? RoleType.None;
+                    ActiveUserRoleType = role?.RoleType ?? RoleType.Contractor;
                 }
             }
         }

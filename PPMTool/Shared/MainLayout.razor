@@ -18,7 +18,7 @@
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
                 <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
-                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin-bottom: 0; color: white">CapX - RSE Operational Management Tool</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" Style="margin-bottom: 0; color: white">ITS Timesheets</RadzenText>
             </RadzenStack>
             @if (Environment.IsDevelopment())
             {
@@ -29,12 +29,12 @@
     </RadzenHeader>
     <RadzenSidebar Responsive="false" Style="width: max-content">
         <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="true">
-            <AuthorizeView>
+            @* <AuthorizeView>
                 <Authorized>
                     <RadzenPanelMenuItem Path="datadashboard" Text="Data Dashboard" Icon="speed" />
                 </Authorized>
-            </AuthorizeView>
-            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+            </AuthorizeView> *@
+            @* <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
                         <AuthorizeView Roles="Superuser,Manager">
@@ -50,8 +50,8 @@
                         </AuthorizeView>
                     </RadzenPanelMenuItem>
                 </Authorized>
-            </AuthorizeView>
-            <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
+            </AuthorizeView> *@
+            @* <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Capacity" Icon="lists" Expanded="true">
                         <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="deployed_code_account" />
@@ -62,13 +62,13 @@
                         </AuthorizeView>
                     </RadzenPanelMenuItem>
                 </Authorized>
-            </AuthorizeView>
-            <AuthorizeView Roles="Superuser,Manager,Developer">
+            </AuthorizeView> *@
+            <AuthorizeView Roles="Superuser,Manager,Contractor">
                 <Authorized>
                     <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
                         <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
-                        <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
-                        <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
+                        @* <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
+                        <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" /> *@
                         <RadzenPanelMenuItem Path="timesheets" Icon="timer">
                             <Template>
                                 <div style="flex: 1;">
@@ -80,12 +80,12 @@
                                 </div>
                             </Template>
                         </RadzenPanelMenuItem>
-                        <AuthorizeView Roles="Superuser,Manager">
+                        @* <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
                                 <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
                             </Authorized>
-                        </AuthorizeView>
+                        </AuthorizeView> *@
                     </RadzenPanelMenuItem>
                 </Authorized>
             </AuthorizeView>            
@@ -98,7 +98,7 @@
                                 <RadzenPanelMenuItem Path="managecodes" Text="Timesheet Codes" Icon="punch_clock" />
                             </Authorized>
                         </AuthorizeView>
-                        <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
+                        @* <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" /> *@
                     </RadzenPanelMenuItem>
                 </Authorized>
             </AuthorizeView>
@@ -112,7 +112,7 @@
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="3rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0; color: white" Text="@versionString" />
-            <AuthorizeView>
+            @* <AuthorizeView>
                 <Authorized>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="width: 100%">
                         <div id="magic-bar" style="width: 100%">
@@ -123,8 +123,8 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Light" ButtonType="ButtonType.Button" Click="ClearMagicBar" Icon="close" />
                     </RadzenStack>
                 </Authorized>
-            </AuthorizeView>
-            <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
+            </AuthorizeView> *@
+            <RadzenText TextStyle="TextStyle.Subtitle2" style="margin-bottom: 0; color: white" Text="The University of Manchester - IT Services" />
         </RadzenStack>
     </RadzenFooter>
 </RadzenLayout>

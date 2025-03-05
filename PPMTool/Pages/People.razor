@@ -74,11 +74,11 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Project Work FTE" Width="50px" MinWidth="10px" Sortable="false">
+@*                     <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Project Work FTE" Width="50px" MinWidth="10px" Sortable="false">
                         <Template Context="p">
                             @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.ProjectWorkFTE
                         </Template>
-                    </RadzenDataGridColumn>
+                    </RadzenDataGridColumn> 
                     <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Grade" Width="50px" MinWidth="10px" Sortable="false">
                         <Template Context="p">
                             @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.Grade
@@ -88,7 +88,7 @@
                         <Template Context="p">
                             @string.Join(',', p.SkillTags.Select(t => t.Name))
                         </Template>
-                    </RadzenDataGridColumn>
+                    </RadzenDataGridColumn> *@
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="p">
                             <EditOrViewButtonComponent CanViewOnly="@(ActiveUser?.PersonId == p.PersonId || (ActiveUserRoleType == RoleType.Manager && !IsSuperuserOrLineManagerOfThisPerson(p)))"

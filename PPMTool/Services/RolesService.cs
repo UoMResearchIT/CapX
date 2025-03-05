@@ -72,7 +72,7 @@ namespace PPMTool.Services
             {
                 return match.RoleType;
             }
-            return RoleType.None;
+            return RoleType.Contractor;
         }
 
         public void UpdateLastLoggedIn(PPMToolContext context, Role roleEntity)
