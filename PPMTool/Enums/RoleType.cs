@@ -2,9 +2,7 @@
 {
     public enum RoleType
     {
-        None,
-        Reader,
-        Developer,
+        Contractor,
         Manager,
         Superuser
     }
