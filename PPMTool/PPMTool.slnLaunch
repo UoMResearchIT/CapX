@@ -10,7 +10,7 @@
       {
         "Path": "..\\PPMTool.API\\PPMTool.API.csproj",
         "Action": "Start",
-        "DebugTarget": "IIS Express"
+        "DebugTarget": "IIS Express (Dev)"
       }
     ]
   }
