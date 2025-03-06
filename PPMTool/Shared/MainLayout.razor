@@ -66,13 +66,20 @@
             <AuthorizeView Roles="Superuser,Manager,Contractor">
                 <Authorized>
                     <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
-                        <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
+                        <AuthorizeView Roles="Superuser,Manager">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
+                            </Authorized>
+                        </AuthorizeView>
                         @* <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" /> *@
                         <RadzenPanelMenuItem Path="timesheets" Icon="timer">
                             <Template>
                                 <div style="flex: 1;">
-                                    Timesheets 
+                                    @if (sidebarExpanded)
+                                    {
+                                        <span>Timesheets</span>
+                                    }
                                     @if (totalTimesheetIssues > 0)
                                     {
                                         <span class="rz-badge rz-badge-danger notification-badge">@totalTimesheetIssues</span>
@@ -89,7 +96,7 @@
                     </RadzenPanelMenuItem>
                 </Authorized>
             </AuthorizeView>            
-            <AuthorizeView Roles="Superuser,Manager">
+            <AuthorizeView Roles="Superuser">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
                         <AuthorizeView Roles="Superuser">
