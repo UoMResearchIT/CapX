@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-using PPMTool.Services;
 using Radzen;
 
 namespace PPMTool.Pages
@@ -88,10 +87,9 @@ namespace PPMTool.Pages
             else
             {
                 // Choose the person automatically if not a manager
-                var role = RolesService.GetByUsername(Context, ActiveUserName);
                 chosenPeople = new List<string>
                 {
-                    role.GetName()
+                    ActiveUser.GetName()
                 };
 
                 // Will automatically load the chart source
@@ -214,7 +212,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterToMyStaff()
         {
-            chosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.PersonId).Select(x => x.Name);
+            chosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.Person?.PersonId).Select(x => x.Name);
             PeopleSelectionChanged(chosenPeople);
         }
 
@@ -224,7 +222,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool HasStaffInList()
         {
-            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.PersonId);
+            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.Person?.PersonId);
         }
 
         /// <summary>

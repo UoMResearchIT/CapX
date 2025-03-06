@@ -5,6 +5,7 @@
         <div class="col">
             <div class="row-auto">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.Body2" Text="@($"[{Note.NoteId}]")" Style="margin-bottom: .5rem;"/>
                     <RadzenText TextStyle="TextStyle.Subtitle1" Text="@Note.GetNoteAuthorText()" />
                     @if (Note.IsFinanceInfo)
                     {

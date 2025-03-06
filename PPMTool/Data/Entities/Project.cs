@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 using PPMTool.Enums;
 using static PPMTool.Data.ValidationAttributes;
 
@@ -12,7 +13,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a group of subtask that form a project
     /// </summary>
-    public class Project : BaseTask
+    public class Project : BaseTask, ILoggableClass
     {
         public int ProjectId { get; set; }
 
@@ -70,12 +71,6 @@ namespace PPMTool.Data.Entities
         public CostModel CostModel { get; set; }
 
         /// <summary>
-        /// The funds that we have been paid for this project
-        /// </summary>
-        [Required]
-        public double FundsReceived { get; set; }
-
-        /// <summary>
         /// The status of the project
         /// </summary>
         [Required]
@@ -130,6 +125,16 @@ namespace PPMTool.Data.Entities
         /// The amount of time the management of this project is expected to take in FTE
         /// </summary>
         public float LeadershipFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
+
+        /// <summary>
+        /// List of Invoices associated with this project
+        /// </summary>
+        public ICollection<Invoice> Invoices { get; set; }
+
+        /// <summary>
+        /// List of payments associate with this project
+        /// </summary>
+        public ICollection<Payment> Payments { get; set; }
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -195,7 +200,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedButHasNoScrumProjectLink()
         {
-            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && string.IsNullOrWhiteSpace(ScrumProjectLink);
+            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && !HtmlHelper.IsValidLink(ScrumProjectLink);
         }
 
         /// <summary>
@@ -204,7 +209,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasNoRequestDocLink()
         {
-            return string.IsNullOrWhiteSpace(RequestDocLink) || RequestDocLink.Length < 12;
+            return !HtmlHelper.IsValidLink(RequestDocLink);
         }
 
 
@@ -345,17 +350,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to return the dates in which there is unmet demand as a formatted string.
-        /// </summary>
-        /// <returns>Dates as a formatted string</returns>
-        public string GetUnmetDemandWindowDates()
-        {
-            GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-            return $"{(windowStart <= DateTime.Today ? "Now" : windowStart.ToShortDateString())} - {windowEnd.ToShortDateString()}";
-        }
-
-        /// <summary>
-        /// Method to run the calculation of leaderhsip costs planned or actual
+        /// Method to run the calculation of leadership costs planned or actual
         /// </summary>
         /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
         /// <param name="financialReferences"></param>
@@ -368,8 +363,25 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
-            // What to use for end date -- use current date if looking for actuals and currently in the middle of a project
-            var endDateOfCalculation = actualCosts ? (DateTime.Today > EndDate ? EndDate : DateTime.Today) : EndDate;
+            // What to use for end date -- just the end date of the project for the planned costs
+            var endDateOfCalculation = EndDate;
+
+            // For actuals, it depends on what the current date is
+            if (actualCosts)
+            {
+                // Use current date if looking for actuals and currently in the middle of the project
+                // Works out actual costs up to the current day from project start
+                if (IsWithin(DateTime.Today))
+                {
+                    endDateOfCalculation = DateTime.Today;
+                }
+
+                // If the today is before the project starts then costs are just zero for actuals
+                else if (DateTime.Today < StartDate)
+                {
+                    return 0d;
+                }
+            }
 
             // For each financial year
             var totalCost = 0d;
@@ -389,7 +401,7 @@ namespace PPMTool.Data.Entities
                     // Starts and ends in the same financial year
                     if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
                     {
-                        yearFraction = endDateOfCalculation.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction = (endDateOfCalculation.Subtract(StartDate).TotalDays + 1) / 365f;
                         yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, endDateOfCalculation);
                     }
 
@@ -397,7 +409,7 @@ namespace PPMTool.Data.Entities
                     else
                     {
                         var tempEndDate = new DateTime(finYear + 1, 7, 31);
-                        yearFraction = tempEndDate.Subtract(StartDate).TotalDays / 365f;
+                        yearFraction = (tempEndDate.Subtract(StartDate).TotalDays + 1) / 365f;
                         yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, tempEndDate);
                     }
                 }
@@ -406,7 +418,7 @@ namespace PPMTool.Data.Entities
                 else if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
                 {
                     var tempStartDate = new DateTime(finYear, 8, 1);
-                    yearFraction = endDateOfCalculation.Subtract(tempStartDate).TotalDays / 365f;
+                    yearFraction = (endDateOfCalculation.Subtract(tempStartDate).TotalDays + 1) / 365f;
                     yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, endDateOfCalculation);
                 }
 
@@ -461,10 +473,10 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public IEnumerable<DateRange> GetLeadershipTaskRanges()
         {
-            // Conver the sub tasks to date ranges (adding a day for the end so it isn't inclusive)
+            // Convert the sub tasks to date ranges
             var dateRanges = SubTasks
                 .Where(x => x.RequiresLeadership)
-                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate.AddDays(1) });
+                .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate });
 
             // Merge overlapping date ranges
             var mergedRanges = MergeDateRanges(dateRanges);
@@ -537,6 +549,15 @@ namespace PPMTool.Data.Entities
             mergedRanges.Add(currentRange);
 
             return mergedRanges;
+        }
+
+        /// <summary>
+        /// To identify the project in the logs and on exports
+        /// </summary>
+        /// <returns></returns>
+        public string GetSensibleObjectName()
+        {
+            return GetFullName();
         }
     }
 }

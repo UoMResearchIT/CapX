@@ -1,0 +1,111 @@
+﻿@using PPMTool.Data
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using System.ComponentModel.DataAnnotations
+@using PPMTool.Services
+
+<h2>Project Summary</h2>
+@if (FinanceSummaryItem == null)
+{
+    <p class="lead">No data to show</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Dates</th>
+                    <th>PI</th>
+                    <th>School (Faculty)</th>
+                    <th>PM</th>
+                    <th>Cost Model</th>
+                    <th>Day Rate</th>
+                    <th>Agreed Budget</th>
+                    <th>Planned Cost</th>
+                    <th>Actual Cost</th>
+                    <th>Funds Requested</th>
+                    <th>Funds Received</th>
+                    <th>
+                        Actual Hours
+                        @if (ResetActualsTimeStamp != null)
+                        {
+                            <br />
+                            <RadzenButton Click="ResetActualsTimeStamp" Icon="check" Text="Checked" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Disabled="!EditAuthorised" />
+                        }
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")</td>
+                    <td>@FinanceSummaryItem.ProjectPI</td>
+                    <td>@($"{FinanceSummaryItem.School.ToNiceString()} ({FinanceSummaryItem.Faculty.ToNiceString()})")</td>
+                    <td>@FinanceSummaryItem.ProjectPM</td>
+                    <td>@(FinanceSummaryItem.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
+                    <td>@(FinanceSummaryItem.CostModel == CostModel.DayRate ? FinanceSummaryItem.DayRate.ToString("C0") : "N/A")</td>
+                    <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
+                    <td>
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            @($"Total: ")
+                        }
+                        <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                            @FinanceSummaryItem.PlannedCost.ToString("C0")
+                        </span>
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            <br />
+                            @($"Technical: ")
+                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                                @((FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts).ToString("C0"))
+                            </span>
+                            <br />
+                            @($"Leadership: ")
+                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                                @(FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0"))
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            @($"Total: ")
+                        }
+                        <span style="color:@FinanceSummaryItem.ActualCostColour">
+                            @FinanceSummaryItem.ActualCost.ToString("C0")
+                        </span>
+                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        {
+                            <br />
+                            @($"Technical: ")
+                            <span style="color:@FinanceSummaryItem.ActualCostColour">
+                                @((FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts).ToString("C0"))
+                            </span>
+                            <br />
+                            @($"Leadership: ")
+                            <span style="color:@FinanceSummaryItem.ActualCostColour">
+                                @(FinanceSummaryItem.ActualLeadershipCosts.ToString("C0"))
+                            </span>
+                        }
+                    </td>
+                    <td><span style="color:@FinanceSummaryItem.FundsRequestedColour">@FinanceSummaryItem.FundsRequested.ToString("C0")</span></td>
+                    <td><span style="color:@FinanceSummaryItem.FundsReceivedColour">@FinanceSummaryItem.FundsReceived.ToString("C0")</span></td>
+                    <td>@FinanceSummaryItem.ActualHours</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public FinanceSummaryItem FinanceSummaryItem { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
+
+    [Parameter]
+    public Action ResetActualsTimeStamp { get; set; }
+}

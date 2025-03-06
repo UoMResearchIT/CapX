@@ -1,0 +1,10 @@
+﻿@using PPMTool.Enums
+
+<RadzenBadge Style="margin-bottom: 0.3rem"
+             BadgeStyle="@(ProjectStatus.GetBadgeStyle())"
+             Text="@ProjectStatus.ToNiceString()" />
+
+@code {
+    [Parameter]
+    public ProjectStatus ProjectStatus { get; set; }
+}

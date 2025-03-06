@@ -14,7 +14,7 @@ using Radzen;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Superuser")]
-    public partial class ManageAccess : DataGridPage<Role>
+    public partial class ManageAccess : DataGridPage<User>
     {
         [Inject]
         public PersonService PersonService { get; set; }
@@ -25,8 +25,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            dataGridEntityService = RolesService;
-            dataGridEntities = RolesService.GetAll(Context).OrderBy(x => x.GetName()).ToList();
+            dataGridEntityService = UserService;
+            dataGridEntities = UserService.GetAll(Context).OrderBy(x => x.GetName()).ToList();
 
             // Populate the people and role types for the dropdowns
             roles = Enum.GetValues(typeof(RoleType)).ToDynamicList<RoleType>();
@@ -35,17 +35,17 @@ namespace PPMTool.Pages
             LogInformation($"Viewing access grid");
         }
 
-        protected override async Task DeleteRow(Role entity)
+        protected override async Task DeleteRow(User entity)
         {
             if (await DialogService.Confirm($"You are about to delete access record {entity.GetSensibleObjectName()}.", "Delete Access") ?? false)
             {
                 await base.DeleteRow(entity);
-                RolesService.Delete(Context, entity);
+                UserService.Delete(Context, entity);
                 LogInformation($"Deleted access record for {entity.GetSensibleObjectName()}");
             }
         }
 
-        protected override async Task SaveRow(Role entity)
+        protected override async Task SaveRow(User entity)
         {
             // Validate
             if (string.IsNullOrWhiteSpace(entity.CASUserName))

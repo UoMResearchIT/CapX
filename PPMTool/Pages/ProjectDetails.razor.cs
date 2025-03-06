@@ -23,7 +23,7 @@ using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
+    [Authorize(Roles = "Manager,Superuser,Developer,Reader,Finance")]
     public partial class ProjectDetails : BasePage
     {
         [Inject]
@@ -43,6 +43,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private DialogService DialogService { get; set; }
+
+        [Inject]
+        private InvoiceService InvoiceService { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -79,16 +82,14 @@ namespace PPMTool.Pages
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
+        private FinanceSummaryItem financeSummaryItem;
         private List<ChartItem> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartItem> burnUpChartOptions;
         private int count;
-        private string plannedCostColour;
-        private string actualCostColour;
-        private string fundsReceivedColour;
         private bool isEditExistingNote;
         private bool editorVisible;
-        private Note noteModel = new Note();
+        private Note noteModel;
         private IList<Person> mentions;
         private string noteSearchTerms;
         private List<Note> filteredNotes;
@@ -154,20 +155,38 @@ namespace PPMTool.Pages
 
         protected override void OnParametersSet()
         {
+            // Set the loading flag and redraw the view while the background task runs
             base.OnParametersSet();
             Loading = true;
+            StateHasChanged();
 
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
+            // Fire the load task
+            EnqueueLoadData(GetTask);
+        }
 
-            // Reset the search box
-            noteSearchTerms = string.Empty;
-
-            // Filter the mentions reset
-            cachedMentionables = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).DistinctBy(x => x.Person).Select(x => x.Person).ToList();
-            FilterMentionables();
-
-            Task.Run(() =>
+        /// <summary>
+        /// Method to get the background task that does all the intialisation work
+        /// </summary>
+        /// <returns></returns>
+        private Task GetTask()
+        {
+            return Task.Run(() =>
             {
+                // Create a thread-local context
+                var context = ContextFactory.CreateDbContext();
+
+                // Reset the search box
+                noteSearchTerms = string.Empty;
+
+                // Filter the mentions reset
+                cachedMentionables = UserService
+                    .GetAll(Context)
+                    .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    .DistinctBy(x => x.Person)
+                    .Select(x => x.Person)
+                    .ToList();
+                FilterMentionables();
+
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)
                 {
@@ -179,6 +198,13 @@ namespace PPMTool.Pages
                 if (ProjectId != null)
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        InvoiceService.GetFundsRequested(context, project.ProjectId),
+                        InvoiceService.GetFundsReceived(context, project.ProjectId)
+                    );
 
                     // Generate the blocks for the schedule chart
                     allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
@@ -216,7 +242,7 @@ namespace PPMTool.Pages
                         {
                             Name = leadershipName,
                             StartDate = dateRange.StartDate,
-                            EndDate = dateRange.EndDate.AddDays(-1),
+                            EndDate = dateRange.EndDate,
                             OwningProject = project,
                             AssignedResources = new List<Resource>
                             {
@@ -238,14 +264,11 @@ namespace PPMTool.Pages
                         out provisionalBlocks
                     );
 
-                    // Update the UI
-                    plannedCostColour = project.PlannedCost > project.Budget ? "red" : "green";
-                    actualCostColour = project.ActualCost > project.PlannedCost ? "red" : "green";
-                    fundsReceivedColour = project.FundsReceived < project.Budget ? "red" : "green";
+                    // Update the UI                    
                     count = allTasks.Count;
                     isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
                         project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = role.RoleType == RoleType.Superuser || (role.RoleType == RoleType.Manager && ActiveUser == project?.ProjectManager);
+                    isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
 
                     ganttChartOptions = new ApexChartOptions<GanttBlock>
                     {
@@ -411,6 +434,11 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             allProjects = ProjectService.GetAll(Context).ToList();
+            showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
 
             Debug.WriteLine($"** Initialised project details");
         }
@@ -500,16 +528,16 @@ namespace PPMTool.Pages
         private void ToggleFollowing()
         {
             if (ActiveUser == null) return;
-            if (project.Followers.Contains(ActiveUser))
+            if (project.Followers.Contains(ActiveUser?.Person))
             {
-                project.Followers.Remove(ActiveUser);
+                project.Followers.Remove(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
                 LogInformation($"Stopped following project {project.GetFullName()}");
             }
             else
             {
-                project.Followers.Add(ActiveUser);
+                project.Followers.Add(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
                 LogInformation($"Now following project {project.GetFullName()}");
@@ -546,7 +574,9 @@ namespace PPMTool.Pages
             }
             else
             {
-                mentionables = cachedMentionables.Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower())).ToList();
+                mentionables = cachedMentionables
+                    .Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower()))
+                    .ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
             Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
@@ -635,17 +665,6 @@ namespace PPMTool.Pages
                 // Insert text and move cursor
                 await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
             });
-        }
-
-        /// <summary>
-        /// This method is fired from JS when the content of the HTML editor is changed from JS rather than a key press
-        /// </summary>
-        /// <param name="content"></param>
-        [JSInvokable]
-        public void OnEditorChangeFromJS(string content)
-        {
-            noteModel.HtmlContent = content;
-            Debug.WriteLine($"** After Mention Insert: {noteModel.HtmlContent}");
         }
 
         /// <summary>
@@ -779,11 +798,23 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Navigate to the finance page for that project
+        /// </summary>
+        /// <param name="project"></param>
+        private void EditFinance(Project project)
+        {
+            Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
+        }
+
+        /// <summary>
         /// Handles the add note button click
         /// </summary>
         private void AddClicked()
         {
-            noteModel = new Note();
+            noteModel = new Note
+            {
+                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+            };
             isEditExistingNote = false;
             ShowOrHideEditor(true);
         }
@@ -817,12 +848,12 @@ namespace PPMTool.Pages
 
             // Populate model and add to DB
             noteModel.Project = project;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Author = role.Person;
+            noteModel.Author = ActiveUser;
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
             LogInformation($"Added note for {project.GetFullName()}");
+            noteSearchTerms = string.Empty;
             PopulateNotes();
             ShowOrHideEditor(false);
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
@@ -835,8 +866,7 @@ namespace PPMTool.Pages
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            noteModel.Editor = role.Person;
+            noteModel.Editor = ActiveUser;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
@@ -912,16 +942,17 @@ namespace PPMTool.Pages
             newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // Load in the list of managers
-            var managers = RolesService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            var managers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
 
             // For each mention, attempt to resolve it and replace in the HTMl content
             foreach (Match m in matches)
             {
-                var person = managers.FirstOrDefault(x => x.ShortName.Equals(m.Value.Trim().Substring(1), StringComparison.OrdinalIgnoreCase));
+                var trimmedMatch = TrimMatch(m.Value.Trim(), '@');
+                var person = managers.FirstOrDefault(x => x.ShortName.Equals(trimmedMatch.Substring(1), StringComparison.OrdinalIgnoreCase));
                 if (person != null)
                 {
-                    Debug.WriteLine($"** Replacing {m} with {person.Name}");
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(m.Value, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
+                    Debug.WriteLine($"** Replacing {trimmedMatch} with {person.Name}");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
                 }
                 else
                 {
@@ -929,7 +960,7 @@ namespace PPMTool.Pages
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "Mention Failure",
-                        Detail = $"The mention {m} could not be resolved! Please edit your note to correct."
+                        Detail = $"The mention {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
@@ -952,15 +983,16 @@ namespace PPMTool.Pages
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
             matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
-            newRtpRefs.AddRange(matches.Select(x => x.Value).Distinct());
+            newRtpRefs.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
             foreach (var r in newRtpRefs)
             {
-                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(r.Substring(5), StringComparison.OrdinalIgnoreCase));
+                var trimmedMatch = TrimMatch(r, '#');
+                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(r, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
                 }
                 else
                 {
@@ -968,10 +1000,28 @@ namespace PPMTool.Pages
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "RTP Reference Failure",
-                        Detail = $"The reference {r} could not be resolved! Please edit your note to correct."
+                        Detail = $"The reference {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to trim the matches to remove their preceding characters if necessary
+        /// </summary>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        private string TrimMatch(string match, char delimiter)
+        {
+            if (match.StartsWith(">") || char.IsWhiteSpace(match[0]))
+            {
+                int atIndex = match.IndexOf(delimiter);
+                if (atIndex != -1)
+                {
+                    return match.Substring(atIndex);
+                }
+            }
+            return match;
         }
 
         /// <summary>

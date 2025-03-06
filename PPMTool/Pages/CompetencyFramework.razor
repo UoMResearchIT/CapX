@@ -12,6 +12,12 @@
         <div class="col">
             <h2>Development Journey Summary</h2>
         </div>
+        <div class="col-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+                <RadzenText Text="Load Only Unmet Competencies:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(() => EnqueueLoadData(GetTask))" />
+            </RadzenStack>
+        </div>
     </div>
     <div class="row">
         <div class="col">
@@ -56,10 +62,14 @@
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
                 <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
                 <RadzenTextBox @bind-Value=@competencySearchTerms
-                                Placeholder="Search Competencies"
-                                Change=@FilterCompetencies
-                                Style="width:100%" />
-                <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                               Placeholder="Search Competencies"
+                               Change=@FilterCompetencies
+                               Disabled="@Loading" />
+                <RadzenButton Icon="clear"
+                              ButtonStyle="ButtonStyle.Light"
+                              Click="@ClearSearch"
+                              MouseEnter="@(args => ShowTooltip(args, "Clear"))"
+                              Disabled="@Loading" />
             </RadzenStack>
         </div>
     </div>
@@ -74,12 +84,18 @@
             <Items>
                 @foreach (var comp in competencyGroups)
                 {
-                    <RadzenAccordionItem Text="@($"Grade {comp.Grade}")" Icon="@comp.Icon" CollapseTitle="Collapse"
-                                         ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
-                                         ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")" Selected="@comp.Selected">
+                    <RadzenAccordionItem Text="@($"Grade {comp.Grade}")"
+                                         Icon="@comp.Icon"
+                                         CollapseTitle="Collapse"
+                                         ExpandTitle="Expand"
+                                         CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
+                                         ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")"
+                                         Selected="@comp.Selected">
                         <Template>
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
-                                         AlignItems="AlignItems.Center" Style="width:100%">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                         JustifyContent="JustifyContent.SpaceBetween"
+                                         AlignItems="AlignItems.Center"
+                                         Style="width:100%">
                                 <h3 style="margin-bottom:0.2rem; color: #609">@comp.Description</h3>
                                 <RadzenProgressBar Value="@comp.Met"
                                                    Max="@comp.Total"
@@ -95,9 +111,14 @@
                                     @foreach (var group in comp.CompetenciesGroupedByCategory)
                                     {
                                         var key = group.Key;
-                                        <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")" Icon="@(group.Key.GetAttribute<IconAttribute>().Name)" CollapseTitle="Collapse"
-                                                             ExpandTitle="Expand" CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
-                                                             ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")" Selected="@(comp.CompetencySelectionState[key])">
+                                        <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                             Icon="@(group.Key.GetAttribute<IconAttribute>().Name)"
+                                                             CollapseTitle="Collapse"
+                                                             ExpandTitle="Expand"
+                                                             CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                             ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                             Selected="@(comp.CompetencySelectionState[key])"
+                                                             Style="background-color: var(--rz-base-50);">
                                             <Template>
                                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                                                     <h4 style="margin-bottom:0.2rem; width:50%">@($"{group.FirstOrDefault()?.GetCategoryId()} {group.Key.GetDescription()}")</h4>

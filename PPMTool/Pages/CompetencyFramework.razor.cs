@@ -149,6 +149,7 @@ namespace PPMTool.Pages
         private int activeUserId;
         private string competencySearchTerms;
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
+        private bool showUnMetOnly;
 
         /// <summary>
         /// Method to update the met count of each available competency group
@@ -187,6 +188,31 @@ namespace PPMTool.Pages
                         .OrderBy(x => x.Name);
                 }
                 competencies = CompetencyService.GetAllActive(Context);
+
+                // Filter the competencies by those with only unmet or no assessments
+                if (showUnMetOnly)
+                {
+                    // Get assessments grouped by competency ID
+                    var latestAssessments = competencies
+                            .SelectMany(x => x.Assessments)
+                            .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                            .OrderByDescending(x => x.DateCreated)
+                            .GroupBy(x => x.AssociatedCompetency.CompetencyId);
+
+                    // Get a list of competency IDs for those where the latest assessment is fully met
+                    var exceptionList = new List<int>();
+                    foreach (var group in latestAssessments)
+                    {
+                        var assessment = group.First();
+                        if (assessment.Status == AssessmentStatus.FullyMet)
+                        {
+                            exceptionList.Add(group.Key);
+                        }
+                    }
+
+                    // Remove from the competencies all those within the exception list
+                    competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
+                }
 
                 // Setup the accordion data
                 var groups = new List<CompetencyGroup>();
@@ -248,12 +274,11 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Check user permissions
-            var role = RolesService.GetByUsername(Context, ActiveUserName);
-            userIsSuperuser = role?.RoleType == RoleType.Superuser;
-            activeUserId = ActiveUser?.PersonId ?? 0;
+            userIsSuperuser = ActiveUser?.RoleType == RoleType.Superuser;
+            activeUserId = ActiveUser?.Person?.PersonId ?? 0;
 
             // Get the active user by default
-            SelectedPerson = ActiveUser;
+            SelectedPerson = ActiveUser?.Person;
 
             // Kick off a DB task to get the data
             EnqueueLoadData(GetTask);
@@ -401,7 +426,8 @@ namespace PPMTool.Pages
                             var cat = group.CompetencySelectionState.First(x => x.Key == category).Key;
                             group.CompetencySelectionState[cat] = true;
                         }
-                    };
+                    }
+                    ;
                     await InvokeAsync(StateHasChanged);
 
                     // Highlight matching text on the page with a JS call

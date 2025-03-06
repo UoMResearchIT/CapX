@@ -18,12 +18,12 @@ namespace PPMTool.Shared
 
         protected string ActiveUserName { get; private set; } = "None";
 
-        public Person ActiveUser { get; private set; }
+        public User ActiveUser { get; private set; }
 
         protected RoleType ActiveUserRoleType { get; private set; }
 
         [Inject]
-        protected RolesService RolesService { get; set; }
+        protected UserService UserService { get; set; }
 
         [Inject]
         protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
@@ -35,9 +35,9 @@ namespace PPMTool.Shared
             if (AuthenticationStateTask is not null)
             {
                 var authState = AuthenticationStateTask.GetAwaiter().GetResult();
-                var user = authState?.User;
+                var claimsPrincipal = authState?.User;
 
-                if (user?.Identity is not null && user.Identity.IsAuthenticated)
+                if (claimsPrincipal?.Identity is not null && claimsPrincipal.Identity.IsAuthenticated)
                 {
                     // Create the context on every page
                     Context = ContextFactory.CreateDbContext();
@@ -46,11 +46,11 @@ namespace PPMTool.Shared
                     ActiveUserName = authState?.User.Identity.Name.Trim().ToLower();
 
                     // Get the active user
-                    var role = RolesService.GetByUsername(Context, ActiveUserName);
-                    ActiveUser = role?.Person;
+                    var user = UserService.GetByUsername(Context, ActiveUserName);
+                    ActiveUser = user;
 
                     // Get active user role
-                    ActiveUserRoleType = role?.RoleType ?? RoleType.None;
+                    ActiveUserRoleType = user?.RoleType ?? RoleType.None;
                 }
             }
         }
