@@ -46,7 +46,8 @@ namespace PPMTool.Services
         public override IEnumerable<Role> GetAll(PPMToolContext context)
         {
             return context.Roles
-                .Include(x => x.Person);
+                .Include(x => x.Person)
+                .Include(x => x.Person.LineManager);
         }
 
         public override int Update(PPMToolContext context, Role entity, bool commitChanges = true)
