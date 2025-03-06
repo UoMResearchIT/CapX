@@ -125,6 +125,12 @@ namespace PPMTool.Pages
                 InnateCode = innateCode,
                 Duty = Enums.Duty.ProjectWork
             });
+            dataGridEntities.Add(new InnateCodeTask
+            {
+                TaskName = "Maintenance",
+                InnateCode = innateCode,
+                Duty = Enums.Duty.ProjectWork
+            });
             await dataGrid.Reload();
         }
     }
