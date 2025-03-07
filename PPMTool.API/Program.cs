@@ -32,6 +32,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 #endif
 
+// Add the custom appsettings file to the configuration
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+// Use a different connection string in production
 builder.Services.AddDbContext<PPMToolContext>(options =>
         options.UseSqlite(
             configuration.GetConnectionString(
