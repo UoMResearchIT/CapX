@@ -32,7 +32,12 @@
         <Columns>
             <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px">
                 <EditTemplate Context="tag">
-                    <RadzenTextBox class="no-margin" @bind-Value="tag.Name" ValueProperty="Name" />
+                    <RadzenTextBox class="no-margin" @bind-Value="tag.Name" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SkillTag" Property="ControlledName" Title="Controlled Name" Width="280px" MinWidth="10px">
+                <EditTemplate Context="tag">
+                    <RadzenTextBox class="no-margin" @bind-Value="tag.ControlledName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">

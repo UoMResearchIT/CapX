@@ -11,6 +11,10 @@ git pull
 cd PPMTool
 dotnet publish -c Release -f net6.0
 
+# Publish the API to folder
+cd ../PPMTool.API
+dotnet publish -c Release -f net6.0
+
 # Copy live DB back to source directory and backup
 cd ~/
 sudo cp /var/www/capx/PPMTool.db  ~/CapX/PPMTool/

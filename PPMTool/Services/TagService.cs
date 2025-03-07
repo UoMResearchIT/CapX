@@ -72,9 +72,26 @@ namespace PPMTool.Services
             return tag.SkillTagId;
         }
 
+        /// <summary>
+        /// Detect a duplicate tag
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, SkillTag entity)
         {
-            return GetAll(context).Any(x => x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() && x.SkillTagId != entity.SkillTagId);
+            return GetAll(context).Any(x => (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.ControlledName.Trim().ToLower() == entity.ControlledName.Trim().ToLower()) && x.SkillTagId != entity.SkillTagId);
+        }
+
+        /// <summary>
+        /// Get the number of skills tags associated with a given person
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="PersonId"></param>
+        /// <returns></returns>
+        public int GetCountForPerson(PPMToolContext context, int PersonId)
+        {
+            return context.SkillTags.Where(x => x.People.Any(x => x.PersonId == PersonId)).Count();
         }
     }
 }
