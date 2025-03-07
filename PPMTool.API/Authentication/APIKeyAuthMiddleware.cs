@@ -42,10 +42,6 @@
                 return;
             }
 
-            // Log successful API key validation
-            var logger = context.RequestServices.GetRequiredService<ILogger<APIKeyAuthMiddleware>>();
-            logger.LogInformation("API key validated successfully.");
-
             await next(context);
         }
     }

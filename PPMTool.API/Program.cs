@@ -108,6 +108,11 @@ builder.Services.AddSwaggerGen(
 
 var app = builder.Build();
 
+#if RELEASE
+// Set the base path
+app.UsePathBase("/api");
+#endif
+
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
@@ -117,6 +122,7 @@ app.UseHttpsRedirection();
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints to methods
+app.UseRouting();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
