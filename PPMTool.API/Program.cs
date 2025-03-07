@@ -33,7 +33,15 @@ builder.Host.UseSerilog();
 #endif
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
-        options.UseSqlite(configuration.GetConnectionString("PPMToolContextConnection") ?? throw new Exception("Invalid connection string!"))
+        options.UseSqlite(
+            configuration.GetConnectionString(
+#if RELEASE
+                "PPMToolContextConnectionProduction"
+#else
+                "PPMToolContextConnection"
+#endif
+                ) ?? throw new Exception("Invalid connection string!")
+        )
     );
 builder.Services.AddScoped<TagService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
