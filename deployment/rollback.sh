@@ -51,6 +51,10 @@ git pull
 cd PPMTool || exit
 dotnet publish -c Release -f net6.0
 
+# Build the rolled back API
+cd ../PPMTool.API || exit
+dotnet publish -c Release -f net6.0
+
 # Copy rolled back DB to publish folder and deploy
 cp ~/CapX/PPMTool/PPMTool.db ~/CapX/PPMTool/bin/Release/net6.0/publish/
 cd ~/
