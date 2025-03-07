@@ -117,8 +117,16 @@ app.UseHttpsRedirection();
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints to methods
-app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
-app.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
+    endpoints.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
+    endpoints.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+    endpoints.MapFallback(context =>
+    {
+        context.Response.StatusCode = 404;
+        return context.Response.WriteAsync($"Endpoint {context.Request.Path} not found!");
+    });
+});
 
 app.Run();
