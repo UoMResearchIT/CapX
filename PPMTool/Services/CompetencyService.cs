@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;

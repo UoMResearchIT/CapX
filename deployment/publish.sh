@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# SPDX-FileCopyrightText: 2025 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 # Publish the application
 sudo systemctl stop kestrel-capx.service
 sudo cp /var/www/capx/PPMTool.db ~/PPMTool-old.db
