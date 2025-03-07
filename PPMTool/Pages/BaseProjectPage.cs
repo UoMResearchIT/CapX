@@ -1,7 +1,3 @@
-// SPDX-FileCopyrightText: 2025 University of Manchester
-//
-// SPDX-License-Identifier: apache-2.0
-
 ﻿using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;

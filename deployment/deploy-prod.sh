@@ -1,9 +1,5 @@
 #! /bin/bash
 
-# SPDX-FileCopyrightText: 2025 University of Manchester
-#
-# SPDX-License-Identifier: apache-2.0
-
 # Fetch from GitHub
 cd ~/T-ITS/ITS-Timesheet-Tool
 git fetch

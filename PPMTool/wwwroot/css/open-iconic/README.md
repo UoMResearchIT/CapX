@@ -1,9 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2025 University of Manchester
-
-SPDX-License-Identifier: apache-2.0
--->
-
 [Open Iconic v1.1.1](http://useiconic.com/open)
 ===========
 

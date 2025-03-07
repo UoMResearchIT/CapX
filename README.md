@@ -1,9 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2025 University of Manchester
-
-SPDX-License-Identifier: apache-2.0
--->
-
 # CapX
 This is a PPM tool written in .NET Blazor Server. This is being used as a stop-gap solution for the capacity planning system the ITS Governance and Delivery management Office (GaDMO) currently use which is of limited use to us day to day. Instead, CapX has an export facility which allows its data to be output in a format GaDMO can read into their system.
 

@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# SPDX-FileCopyrightText: 2025 University of Manchester
-#
-# SPDX-License-Identifier: apache-2.0
-
 # Function to display help
 show_help() {
     echo "Usage: $0 -m <migration> -t <tag>"

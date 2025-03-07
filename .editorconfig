@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: 2025 University of Manchester
-#
-# SPDX-License-Identifier: apache-2.0
-
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
