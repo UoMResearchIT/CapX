@@ -21,9 +21,22 @@ public static class Skills
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public static async Task<IResult> GetAllSkillTagsAsync(PPMToolContext context, ILogger logger)
     {
-        var tags = await context.SkillTags.ToListAsync();
-        logger.LogInformation($"API: GetAllSkillsTags: Count = {tags.Count}");
-        return Results.Json(tags);
+        try
+        {
+            var tags = await context.SkillTags.ToListAsync();
+            if (tags == null)
+            {
+                logger.LogWarning($"API: GetAllSkillsTags: No tags returned!");
+                Results.NotFound("");
+            }
+            logger.LogInformation($"API: GetAllSkillsTags: Count = {tags?.Count}");
+            return Results.Json(tags);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"API: GetAllSkillsTags: {ex}");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
