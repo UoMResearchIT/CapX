@@ -54,7 +54,7 @@ builder.Services.AddSwaggerGen(
     {
         opt.SwaggerDoc(
             name: "v1",
-            info: new() { Title = "PPMTool", Version = "v1" }
+            info: new() { Title = "CapX API", Version = "v1" }
         );
 
         string? docFilePath = Directory.GetFiles(

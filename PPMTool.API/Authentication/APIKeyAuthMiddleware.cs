@@ -38,7 +38,7 @@
             if (apiKey != extractedApiKey)
             {
                 context.Response.StatusCode = 401;
-                await context.Response.WriteAsync("Invalid API Key");
+                await context.Response.WriteAsync($"Invalid API Key {apiKey} vs {extractedApiKey}");
                 return;
             }
 

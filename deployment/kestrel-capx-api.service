@@ -11,7 +11,8 @@ KillSignal=SIGINT
 SyslogIdentifier=capx-api
 User=www-data
 # Set this to "Production" on the production server and "Development" on the development server
-Environment=ASPNETCORE_ENVIRONMENT=Development 
+Environment=ASPNETCORE_ENVIRONMENT=Development
+Environment=ASPNETCORE_URLS=http://*:6000
 
 [Install]
 WantedBy=multi-user.target
