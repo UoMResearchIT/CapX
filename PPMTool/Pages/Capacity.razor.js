@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 ﻿window.downloadFileFromStream = async (fileName, contentStreamReference) => {
     const arrayBuffer = await contentStreamReference.arrayBuffer();
     const blob = new Blob([arrayBuffer]);
