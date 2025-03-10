@@ -183,14 +183,17 @@ namespace PPMTool
 
                 // Map claims from assertion and sign in
                 var assertion = context.Assertion;
-                feedbackMessage += $"[CAS Attributes = {assertion.Attributes.First().Value.ToString()} | Principal Name = {assertion.PrincipalName}]";
+                feedbackMessage += $"[Principal Name = {assertion.PrincipalName} || CAS Attributes = ]";
+                foreach (var attribute in assertion.Attributes)
+                {
+                    feedbackMessage += $"{attribute.Key} : {attribute.Value} | ";
+                }
 
                 // Map UoM user name to claim
-                string username = GetUserAttributeFromCAS(assertion, "uid");
                 string emailAddress = GetUserAttributeFromCAS(assertion, "mail");
-                identity.AddClaim(new Claim(ClaimTypes.Name, username));
-                feedbackMessage += $"[Username : {username}]";
-                feedbackMessage += $"[Email address : {emailAddress}]";
+                feedbackMessage += $"[Username = {assertion.PrincipalName}]";
+                feedbackMessage += $"[Email Address = {emailAddress}]";
+                identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
 
                 // Lookup the username in the DB and add role claim
                 // Has to be done manually since service provider not built yet?
@@ -203,11 +206,11 @@ namespace PPMTool
                 if (role != null)
                 {
                     identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
-                    feedbackMessage += $"[Role details : {role.RoleType.ToString()}]";
+                    feedbackMessage += $"[Role Type = {role.RoleType.ToString()}]";
                 }
                 else
                 {
-                    feedbackMessage += $"[NO ROLE FOUND FOR {username}]";
+                    feedbackMessage += $"[NO ROLE FOUND FOR {assertion.PrincipalName}]";
                 }
 
                 await context.HttpContext.SignInAsync(context.Principal);
