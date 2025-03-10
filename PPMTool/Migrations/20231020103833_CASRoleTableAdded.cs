@@ -59,6 +59,10 @@ namespace PPMTool.Migrations
                 @"
                     INSERT INTO Roles (RoleType, CASUserName, PersonId)
                     VALUES (2, 'mtessdl3', 1);
+                    INSERT INTO Roles (RoleType, CASUserName, PersonId)
+                    VALUES (2, 'mbgm6ah3', 2);
+                    INSERT INTO Roles (RoleType, CASUserName, PersonId)
+                    VALUES (2, 'mfztsphb', 3);
                 "
             );
         }

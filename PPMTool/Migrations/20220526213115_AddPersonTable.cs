@@ -54,6 +54,10 @@ namespace PPMTool.Migrations
                 @"
                     INSERT INTO People (Name, ShortName, HourlyRate, AvailabilityFTE, NextAvailable)
                     VALUES ('Diane Lear', 'DL', 100.0, 1.0, '2022-05-26 21:31:15');
+                    INSERT INTO People (Name, ShortName, HourlyRate, AvailabilityFTE, NextAvailable)
+                    VALUES ('Adrian Harwood, 'AH', 100.0, 1.0, '2022-05-26 21:31:15');
+                    INSERT INTO People (Name, ShortName, HourlyRate, AvailabilityFTE, NextAvailable)
+                    VALUES ('Phil Bradbury', 'PB', 100.0, 1.0, '2022-05-26 21:31:15');
                 "
             );
         }
