@@ -24,7 +24,7 @@ namespace PPMTool.Pages
             if (PersonId > 0)
             {
                 personModel = PersonService.GetById(Context, PersonId);
-                dataGridEntities = personModel.Absences.ToList();
+                dataGridEntities = personModel.Absences.OrderByDescending(x => x.StartDate).ToList();
             }
             else
             {
