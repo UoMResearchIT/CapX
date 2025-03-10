@@ -58,11 +58,11 @@ namespace PPMTool.Migrations
             migrationBuilder.Sql(
                 @"
                     INSERT INTO Roles (RoleType, CASUserName, PersonId)
-                    VALUES (2, 'mtessdl3', 1);
+                    VALUES (3, 'mtessdl3', 1);
                     INSERT INTO Roles (RoleType, CASUserName, PersonId)
-                    VALUES (2, 'mbgm6ah3', 2);
+                    VALUES (3, 'mbgm6ah3', 2);
                     INSERT INTO Roles (RoleType, CASUserName, PersonId)
-                    VALUES (2, 'mfztsphb', 3);
+                    VALUES (3, 'mfztsphb', 3);
                 "
             );
         }
