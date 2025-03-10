@@ -24,7 +24,6 @@ using PPMTool.Services;
 using Radzen;
 #if RELEASE
 using Sentry;
-using Serilog;
 #endif
 
 namespace PPMTool
