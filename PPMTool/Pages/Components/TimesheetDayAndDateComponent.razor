@@ -1,0 +1,27 @@
+﻿<RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="-0.25rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+    <div>@DayName.Substring(0, 3)</div>
+    <div style="font-size: 0.8rem;">@GetDateForDay(StartOfWeek, DayName)</div>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public String DayName { get; set; }
+
+    [Parameter]
+    public DateTime StartOfWeek { get; set; }
+
+    /// <summary>
+    /// Returns an abbreviated date for a day of the week when the start of the week is known
+    /// </summary>
+    /// <param name="startOfWeek">The datetime for the start of the week</param>
+    /// <param name="dayName">The day we want  the date for</param>
+    private static string GetDateForDay(DateTime startOfWeek, string dayName)
+    {
+        if (Enum.TryParse<DayOfWeek>(dayName, true, out DayOfWeek targetDay))
+        {
+            int daysToAdd = ((int)targetDay - (int)startOfWeek.DayOfWeek + 7) % 7;
+            return $"({startOfWeek.AddDays(daysToAdd).ToString($"dd/MM")})";
+        }
+        throw new ArgumentException("Invalid day name.");
+    }
+}
