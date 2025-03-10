@@ -183,7 +183,7 @@ namespace PPMTool
 
                 // Map claims from assertion and sign in
                 var assertion = context.Assertion;
-                feedbackMessage += $"[CAS assertion : {assertion.ToString()}]";
+                feedbackMessage += $"[CAS Attributes = {assertion.Attributes.First().Value.ToString()} | Principal Name = {assertion.PrincipalName}]";
 
                 // Map UoM user name to claim
                 string username = GetUserAttributeFromCAS(assertion, "uid");
