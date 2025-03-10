@@ -753,21 +753,5 @@ namespace PPMTool.Pages
             // Force a reload of the page - seems the only way to be sure that we're getting the fresh data!
             Navigation.NavigateTo($"/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}", true);
         }
-
-
-        /// <summary>
-        /// Returns an abbreviated date for a day of the week when the start of the week is known
-        /// </summary>
-        /// <param name="startOfWeek">The datetime for the start of the week</param>
-        /// <param name="dayName">The day we want  the date for</param>
-        private static string GetDateForDay(DateTime startOfWeek, string dayName)
-        {
-            if (Enum.TryParse<DayOfWeek>(dayName, true, out DayOfWeek targetDay))
-            {
-                int daysToAdd = ((int)targetDay - (int)startOfWeek.DayOfWeek + 7) % 7;
-                return $"({startOfWeek.AddDays(daysToAdd).ToString($"dd/MM")})";
-            }
-            throw new ArgumentException("Invalid day name.");
-        }
     }
 }
