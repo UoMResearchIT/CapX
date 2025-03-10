@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Blazored.SessionStorage;
 using GSS.Authentication.CAS.AspNetCore;
+using GSS.Authentication.CAS.Security;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -182,8 +183,9 @@ namespace PPMTool
                 var assertion = context.Assertion;
 
                 // Map UoM user name to claim
-                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
-                identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
+                string username = GetUserAttributeFromCAS(assertion, "uid");
+                string emailAddress = GetUserAttributeFromCAS(assertion, "mail");
+                identity.AddClaim(new Claim(ClaimTypes.Name, username));
 
                 // Lookup the username in the DB and add role claim
                 // Has to be done manually since service provider not built yet?
@@ -255,6 +257,25 @@ namespace PPMTool
             context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
             context.HandleResponse();
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Get the attribute value for the given parameter from the CAS ticket returned
+        /// </summary>
+        /// <param name="casData"></param>
+        /// <param name="attributeName"></param>
+        /// <returns></returns>
+        private static string GetUserAttributeFromCAS(Assertion casData, string attributeName)
+        {
+            // Search the assertion data for the relevant attribute, then strip out the value
+            // by excluding the first [string length of attribute name] characters
+            if (casData != null && casData.Attributes.Count > 0)
+            {
+                var attributes = casData.Attributes.First();
+                return attributes.Value.FirstOrDefault(x => x.StartsWith(attributeName))?.Substring(attributeName.Length) ?? $"CAS attribute [{attributeName}] not found";
+            }
+
+            return null;
         }
     }
 }
