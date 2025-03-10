@@ -24,6 +24,7 @@ using PPMTool.Services;
 using Radzen;
 #if RELEASE
 using Sentry;
+using Serilog;
 #endif
 
 namespace PPMTool
@@ -179,13 +180,18 @@ namespace PPMTool
 
             if (context.Principal?.Identity is ClaimsIdentity identity)
             {
+                string feedbackMessage = "";
+
                 // Map claims from assertion and sign in
                 var assertion = context.Assertion;
+                feedbackMessage += $"[CAS assertion : {assertion.ToString()}]";
 
                 // Map UoM user name to claim
                 string username = GetUserAttributeFromCAS(assertion, "uid");
                 string emailAddress = GetUserAttributeFromCAS(assertion, "mail");
                 identity.AddClaim(new Claim(ClaimTypes.Name, username));
+                feedbackMessage += $"[Username : {username}]";
+                feedbackMessage += $"[Email address : {emailAddress}]";
 
                 // Lookup the username in the DB and add role claim
                 // Has to be done manually since service provider not built yet?
@@ -198,12 +204,19 @@ namespace PPMTool
                 if (role != null)
                 {
                     identity.AddClaim(new Claim(ClaimTypes.Role, role.RoleType.ToString()));
+                    feedbackMessage += $"[Role details : {role.RoleType.ToString()}]";
+                }
+                else
+                {
+                    feedbackMessage += $"[NO ROLE FOUND FOR {username}]";
                 }
 
                 await context.HttpContext.SignInAsync(context.Principal);
 
                 // Update last logged in and log
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
+                logger?.LogInformation(feedbackMessage);
+
                 var roleService = context.HttpContext.RequestServices.GetRequiredService<RolesService>();
                 if (roleService != null)
                 {
