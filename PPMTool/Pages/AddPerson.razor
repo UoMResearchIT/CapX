@@ -25,17 +25,20 @@
                 }
                 else
                 {
-                    <div class="row">
+                    <div class="row align-items-center">
                         <div class="col">
                             <h1>Edit <i>@personModel.Name</i></h1>
                             <StatusMessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
                         </div>
                         @if (PersonId > 0)
                         {
-                            <div class="col-auto" style="align-content: center">
+                            <div class="col-auto">
+                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@EditSkillTags" Text="Skills" Icon="style" Disabled="@(!IsSuperuserOrLineManagerOrPerson(personModel))" />
+                            </div>
+                            <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
                             </div>
-                            <div class="col-auto" style="align-content: center">
+                            <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
                             </div>
                         }
@@ -77,7 +80,7 @@
                 </div>
                 <hr />
                 <div class="row">
-                    <div class="col">
+                    @* <div class="col">
                         <div class="row">
                             <div class="col-auto mr-auto py-2">
                                 <h3>Skill Tags</h3>
@@ -121,9 +124,9 @@
                                 </Template>
                             </RadzenDataList>
                         </div>
-                    </div>
-                    <div class="col">
-                        <div class="row">
+                    </div> *@
+                    <div class="col mt-2" style="min-width: 500px">
+                        <div class="row align-items-center">
                             <div class="col-auto mr-auto py-2">
                                 <h3>Workload Model Changes</h3>
                             </div>
@@ -179,8 +182,9 @@
                                 </div>
                             </Template>
                         </RadzenDataList>
-                        <br /><br />
-                        <div class="row">
+                    </div>
+                    <div class="col mt-2" style="min-width: 500px">
+                        <div class="row align-items-center">
                             <div class="col-auto mr-auto py-2">
                                 <h3>Absence</h3>
                             </div>
@@ -211,9 +215,10 @@
                         </RadzenDataList>
                     </div>
                 </div>
+                <hr />
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-                <div class="row">
+                <div class="row float-right">
                     <div class="col">
                         <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled=!EditAuthorised />
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />

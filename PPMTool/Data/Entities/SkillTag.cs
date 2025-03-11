@@ -15,7 +15,7 @@ namespace PPMTool.Data.Entities
         public string Name { get; set; }
 
         /// <summary>
-        /// This is the controlled vocabulary name for the skill tag -- historical has come from Wikipedia main entries
+        /// This is the controlled vocabulary name for the skill tag -- historically it has come from Wikipedia main entries
         /// </summary>
         [Required]
         public string ControlledName { get; set; }

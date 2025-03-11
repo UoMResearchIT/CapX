@@ -171,7 +171,8 @@ namespace PPMTool.Pages
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
                         return;
-                    };
+                    }
+                    ;
                 }
                 else
                 {
@@ -234,6 +235,14 @@ namespace PPMTool.Pages
         private void ViewCapacity()
         {
             Navigation.NavigateTo($"capacity?filterid={personModel.PersonId}");
+        }
+
+        /// <summary>
+        /// Method to navigate to the skills page for this person
+        /// </summary>
+        private void EditSkillTags()
+        {
+            Navigation.NavigateTo($"people/addskills/{personModel?.PersonId}");
         }
     }
 }

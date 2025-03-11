@@ -83,7 +83,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
                         <Template Context="p">
-                            @string.Join(", ", p.SkillTags.Select(t => t.Name))
+                            @string.Join(", ", p.SkillTags.Select(t => t.Name).OrderBy(x => x))
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px">
