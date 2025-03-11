@@ -126,6 +126,9 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Monday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.MondayHours == 0 ? "" : entry.MondayHours.ToString("F2"))
@@ -140,7 +143,11 @@
                                 </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
+
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Tuesday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.TuesdayHours == 0 ? "" : entry.TuesdayHours.ToString("F2"))
@@ -155,7 +162,11 @@
                                 </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
+
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Wednesday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.WednesdayHours == 0 ? "" : entry.WednesdayHours.ToString("F2"))
@@ -170,7 +181,11 @@
                                 </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
+
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Thursday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.ThursdayHours == 0 ? "" : entry.ThursdayHours.ToString("F2"))
@@ -185,7 +200,11 @@
                                 </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
+
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Friday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.FridayHours == 0 ? "" : entry.FridayHours.ToString("F2"))
@@ -200,7 +219,11 @@
                                 </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
+
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Saturday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.SaturdayHours == 0 ? "" : entry.SaturdayHours.ToString("F2"))
@@ -215,7 +238,11 @@
                                 </RadzenText>
                             </FooterTemplate>
                         </RadzenDataGridColumn>
+
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
+                            <HeaderTemplate>
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Sunday" StartOfWeek="@timesheet.StartDate" />
+                            </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
                                     @(entry.SundayHours == 0 ? "" : entry.SundayHours.ToString("F2"))
