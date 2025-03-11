@@ -127,7 +127,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="MondayHours" Title="Mon" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Monday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Monday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
@@ -146,7 +146,7 @@
 
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="TuesdayHours" Title="Tue" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Tuesday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Tuesday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
@@ -165,7 +165,7 @@
 
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="WednesdayHours" Title="Wed" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Wednesday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Wednesday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
@@ -184,7 +184,7 @@
 
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="ThursdayHours" Title="Thu" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Thursday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Thursday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
@@ -203,7 +203,7 @@
 
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="FridayHours" Title="Fri" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Friday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Friday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
@@ -222,7 +222,7 @@
 
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SaturdayHours" Title="Sat" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Saturday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Saturday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
@@ -241,7 +241,7 @@
 
                         <RadzenDataGridColumn TItem="TimesheetEntry" Property="SundayHours" Title="Sun" MinWidth="10px" FormatString="{0:F2}" Resizable="false" TextAlign="TextAlign.Center" Sortable="false">
                             <HeaderTemplate>
-                                <TimesheetDayAndDateComponent DayName="Sunday" StartOfWeek="@timesheet.StartDate" />
+                                <TimesheetDayAndDateComponent Day="DayOfWeek.Sunday" StartOfWeek="@timesheet.StartDate" />
                             </HeaderTemplate>
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
