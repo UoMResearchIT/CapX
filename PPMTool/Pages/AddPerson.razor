@@ -33,7 +33,7 @@
                         @if (PersonId > 0)
                         {
                             <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@EditSkillTags" Text="Skills" Icon="style" Disabled="@(!IsSuperuserOrLineManagerOrPerson(personModel))" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@EditSkills" Text="Edit Skills" Icon="edit" Disabled="@(!IsSuperuserOrLineManagerOrPerson(personModel))" />
                             </div>
                             <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
@@ -80,51 +80,6 @@
                 </div>
                 <hr />
                 <div class="row">
-                    @* <div class="col">
-                        <div class="row">
-                            <div class="col-auto mr-auto py-2">
-                                <h3>Skill Tags</h3>
-                            </div>
-                        </div>
-                        <hr />
-                        <div class="row">
-                            <div class="col-auto flexbox">
-                                <RadzenIcon Icon="search" />
-                            </div>
-                            <div class="col flexbox pr-3 pl-0">
-                                <RadzenAutoComplete @bind-Value=@autoCompleteText
-                                                    Placeholder="Search for Skill Tags to Add"
-                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                    Data=@availableTags
-                                                    TextProperty="Name"
-                                                    Change=@OnChange
-                                                    Style="width:100%"
-                                                    Disabled=!EditAuthorised  />
-                            </div>
-                        </div>
-                        <div class="row">
-                            <RadzenDataList AllowVirtualization=true
-                                            class="full-height-list"
-                                            WrapItems="false"
-                                            AllowPaging="false"
-                                            Data="@chosenTags"
-                                            TItem="SkillTag">
-                                <Template Context="tag">
-                                    <div class="row flexbox p-0">
-                                        <div class="col">
-                                            @tag.Name
-                                        </div>
-                                        <div class="col">
-                                            @($"{tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0} other(s) with this tag")
-                                        </div>
-                                        <div class="col-auto">
-                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Clear"))" Disabled=!EditAuthorised />
-                                        </div>
-                                    </div>
-                                </Template>
-                            </RadzenDataList>
-                        </div>
-                    </div> *@
                     <div class="col mt-2" style="min-width: 500px">
                         <div class="row align-items-center">
                             <div class="col-auto mr-auto py-2">

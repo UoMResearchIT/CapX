@@ -17,19 +17,13 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private TagService TagService { get; set; }
-
-        [Inject]
         private DialogService DialogService { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }
 
         private Person personModel = new();
-        private IEnumerable<SkillTag> availableTags;
-        private IList<SkillTag> chosenTags = new List<SkillTag>();
         private IList<Person> managers = new List<Person>();
-        private string autoCompleteText;
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
@@ -47,12 +41,8 @@ namespace PPMTool.Pages
             {
                 personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
-                // Update the chosen tags
                 if (personModel != null)
                 {
-                    // Update chosen tags
-                    chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
-
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
@@ -75,9 +65,6 @@ namespace PPMTool.Pages
             // Find out if superuser for delete button
             isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
 
-            // Map entities to checkbox list items
-            availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
-
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
                 .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
@@ -89,27 +76,9 @@ namespace PPMTool.Pages
             LogInformation("Initialising add/edit person page");
         }
 
-        void OnChange(dynamic args)
-        {
-            var match = availableTags.FirstOrDefault(x => x.Name.Trim() == autoCompleteText.Trim());
-            if (match != null && !chosenTags.Contains(match))
-            {
-                chosenTags.Add(match);
-                chosenTags = chosenTags.OrderBy(x => x.Name).ToList();
-            }
-        }
-
-        void OnDelete(SkillTag tag)
-        {
-            var match = chosenTags.FirstOrDefault(x => x.Name == tag.Name);
-            if (match != null)
-            {
-                LogInformation($"Removing skill tag {tag.Name}");
-                chosenTags.Remove(match);
-                chosenTags = chosenTags.OrderBy(x => x.Name).ToList();
-            }
-        }
-
+        /// <summary>
+        /// Method to navigate to the availability page for this person after validating the model
+        /// </summary>
         private void EditAvailability()
         {
             // Check the existing model is valid first
@@ -127,6 +96,9 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method to navigate to the absences page for this person after validating the model
+        /// </summary>
         private void EditAbsence()
         {
             // Check the existing model is valid first
@@ -144,14 +116,31 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method to navigate to the skills page for this person after validating the model
+        /// </summary>
+        private void EditSkills()
+        {
+            // Check the existing model is valid first
+            messageStore.Clear();
+            if (editContext.Validate())
+            {
+                HandleSubmit();
+
+                // Check for any further messages added by DB interactions
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    LogInformation("Editing skills...");
+                    Navigation.NavigateTo($"people/addskills/{personModel?.PersonId}");
+                }
+            }
+        }
+
         private void HandleSubmit()
         {
             messageStore.Clear();
             if (editContext.Validate())
             {
-                // Add tags to person model
-                personModel.SkillTags = chosenTags.ToList();
-
                 if (PersonId > 0)
                 {
                     LogInformation($"Saving person {personModel?.Name}...");
@@ -235,14 +224,6 @@ namespace PPMTool.Pages
         private void ViewCapacity()
         {
             Navigation.NavigateTo($"capacity?filterid={personModel.PersonId}");
-        }
-
-        /// <summary>
-        /// Method to navigate to the skills page for this person
-        /// </summary>
-        private void EditSkillTags()
-        {
-            Navigation.NavigateTo($"people/addskills/{personModel?.PersonId}");
         }
     }
 }
