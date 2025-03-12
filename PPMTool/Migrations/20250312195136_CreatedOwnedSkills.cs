@@ -17,9 +17,9 @@ namespace PPMTool.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     OwnerPersonId = table.Column<int>(type: "INTEGER", nullable: false),
                     SkillTagId = table.Column<int>(type: "INTEGER", nullable: false),
-                    LastUsed = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Proficiency = table.Column<int>(type: "INTEGER", nullable: false),
-                    OpportunityWanted = table.Column<bool>(type: "INTEGER", nullable: false)
+                    LastUsed = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValue: "0001-01-01 00:00:00"),
+                    Proficiency = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    OpportunityWanted = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {

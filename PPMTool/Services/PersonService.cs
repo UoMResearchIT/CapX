@@ -62,6 +62,7 @@ namespace PPMTool.Services
         {
             return context.People
                 .Include(p => p.OwnedSkills)
+                .ThenInclude(x => x.SkillTag)
                 .Include(p => p.WorkloadModelChanges)
                 .Include(p => p.Absences)
                 .ToList();
@@ -140,10 +141,7 @@ namespace PPMTool.Services
             context.Notes.RemoveRange(context.Notes.Where(x => x.Author.Person.PersonId == entity.PersonId || x.Editor.Person.PersonId == entity.PersonId));
 
             // Remove entity from the owned skills
-            foreach (var ownedSkill in context.OwnedSkills.Where(x => x.Owner.PersonId == entity.PersonId))
-            {
-                context.OwnedSkills.Remove(ownedSkill);
-            }
+            context.OwnedSkills.RemoveRange(context.OwnedSkills.Where(x => x.Owner.PersonId == entity.PersonId));
 
             // Remove the person from the table
             context.People.Remove(entity);
