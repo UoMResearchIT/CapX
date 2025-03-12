@@ -117,7 +117,12 @@ namespace PPMTool.Migrations
                 WHERE ControlledName IN (
                     'AngularJS', 'Artificial Intelligence', 'Data Science', 'Design Patterns', 
                     'Embedded systems', 'GitHub', 'JavaScript', 'Jquery', 'Machine learning', 
-                    'Natural Language Processing', 'Software testing', 'Version control', 'Virtual Reality'
+                    'Natural Language Processing', 'Software testing', 'Version control', 'Virtual Reality',
+                    'Android SDK', 'Apache', '.NET MVC', 'Atmospheric science', '.NET Blazor', 
+                    'C Sharp (programming language)', 'C++', 'CSS', 'GraphQL', 'High-performance computing', 
+                    'Linux', 'Mathematical model', 'Message Passing Interface', 'Mobile app development', 
+                    'Monte Carlo method', 'Node.js', 'User interface design', 'Visual Studio Code', 
+                    'Web development', 'Web API', 'Xamarin'
                 );
 
                 -- Step 2: Create a second temporary table to store all SkillTagId values for matching ControlledName entries
