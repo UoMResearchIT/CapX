@@ -63,9 +63,9 @@ namespace PPMTool.Data.Entities
         public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
 
         /// <summary>
-        /// Collection of skills
+        /// Collection of skill tag instances owned by this person
         /// </summary>
-        public ICollection<SkillTag> SkillTags { get; set; } = new List<SkillTag>();
+        public ICollection<OwnedSkill> SkillTags { get; set; } = new List<OwnedSkill>();
 
         /// <summary>
         /// Collection of absences

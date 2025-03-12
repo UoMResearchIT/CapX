@@ -19,7 +19,7 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private TagService TagService { get; set; }
+        private SkillTagService TagService { get; set; }
 
         private bool tableEmpty;
         private IEnumerable<Person> people;

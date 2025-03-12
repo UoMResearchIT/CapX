@@ -16,7 +16,7 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private TagService TagService { get; set; }
+        private SkillTagService TagService { get; set; }
 
         /// <summary>
         /// Method to detect a duplicate on save or update and display error message

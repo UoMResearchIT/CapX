@@ -14,7 +14,7 @@ namespace PPMTool.Pages
         public PersonService PersonService { get; set; }
 
         [Inject]
-        private TagService TagService { get; set; }
+        private SkillTagService TagService { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }

@@ -102,9 +102,9 @@ public static class Skills
             }
 
             // Get the tags for this person
-            var tags = await context.SkillTags
-                .Include(x => x.People)
-                .Where(x => x.People.Any(p => p.PersonId == person.PersonId))
+            var tags = await context.OwnedSkills
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == person.PersonId)
                 .ToListAsync();
             logger.LogInformation($"API: GetAllSkillsTagsForPerson: Person = {person.Name}, Count = {tags.Count}");
             return Results.Json(tags);

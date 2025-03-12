@@ -6,7 +6,7 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
 {
-    public class TagService : BaseEntityService<SkillTag>
+    public class SkillTagService : BaseEntityService<SkillTag>
     {
         /// <summary>
         /// Returns all skill tags in the DB
@@ -91,7 +91,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public int GetCountForPerson(PPMToolContext context, int PersonId)
         {
-            return context.SkillTags.Where(x => x.People.Any(x => x.PersonId == PersonId)).Count();
+            return context.OwnedSkills.Where(x => x.Owner.PersonId == PersonId).Count();
         }
     }
 }

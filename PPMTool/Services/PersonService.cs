@@ -139,10 +139,10 @@ namespace PPMTool.Services
             // Delete all notes created or edited by the person
             context.Notes.RemoveRange(context.Notes.Where(x => x.Author.Person.PersonId == entity.PersonId || x.Editor.Person.PersonId == entity.PersonId));
 
-            // Remove entity from the skills tag list
-            foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))
+            // Remove entity from the owned skills
+            foreach (var ownedSkill in context.OwnedSkills.Where(x => x.Owner.PersonId == entity.PersonId))
             {
-                skill.People.Remove(entity);
+                context.OwnedSkills.Remove(ownedSkill);
             }
 
             // Remove the person from the table
