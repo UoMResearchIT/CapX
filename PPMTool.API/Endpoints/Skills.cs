@@ -45,7 +45,7 @@ public static class Skills
     /// <param name="context"></param>
     /// <param name="logger"></param>
     /// <returns></returns> 
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, IEnumerable<SkillTag>>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, IEnumerable<OwnedSkill>>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger)
@@ -60,7 +60,7 @@ public static class Skills
             }
 
             // Assemble into correct form
-            Dictionary<string, IEnumerable<SkillTag>> results = new Dictionary<string, IEnumerable<SkillTag>>();
+            Dictionary<string, IEnumerable<OwnedSkill>> results = new Dictionary<string, IEnumerable<OwnedSkill>>();
             foreach (var person in people)
             {
                 results.Add(person.Name, person.SkillTags);
@@ -85,7 +85,7 @@ public static class Skills
     /// <param name="logger"></param>
     /// <param name="name"></param>
     /// <returns></returns>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<OwnedSkill>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string name)

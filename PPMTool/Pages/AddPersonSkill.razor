@@ -44,17 +44,21 @@
                                         WrapItems="false"
                                         AllowPaging="false"
                                         Style="width:100%;"
-                                        Data="@chosenTags"
-                                        TItem="SkillTag">
+                                        Data="@ownedTags"
+                                        TItem="OwnedSkill">
                             <Template Context="tag">
                                 <div class="row align-items-center">
                                     <div class="col">
-                                        <RadzenText Text="@tag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                        <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                                     </div>
                                     <div class="col">
                                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                                             @{
-                                                var count = tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0;
+                                                var count = TagService.GetCountForTag(Context, tag.SkillTag.SkillTagId) - 1;
+                                                if (count < 0)
+                                                {
+                                                    count = 0;
+                                                }
                                                 <RadzenImage Path="@($"images/emb_{tag.GetRareness(count)}.png")" Style="width: 2.5rem; height: 2.5rem;" title="@($"{count} other(s) with this tag")" />
                                             }
                                         </RadzenStack>

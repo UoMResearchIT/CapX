@@ -21,7 +21,7 @@ namespace PPMTool.Pages
 
         private Person personModel;
         private IEnumerable<SkillTag> availableTags;
-        private IList<SkillTag> chosenTags = new List<SkillTag>();
+        private IList<OwnedSkill> ownedTags = new List<OwnedSkill>();
         private string autoCompleteText;
 
         protected override void OnInitialized()
@@ -39,7 +39,7 @@ namespace PPMTool.Pages
                 if (personModel != null)
                 {
                     // Update chosen tags
-                    chosenTags = personModel.SkillTags.OrderBy(x => x.Name).ToList();
+                    ownedTags = personModel.SkillTags.OrderBy(x => x.SkillTag.Name).ToList();
 
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
@@ -75,11 +75,15 @@ namespace PPMTool.Pages
         void OnChange(dynamic args)
         {
             var match = availableTags.FirstOrDefault(x => x.Name.Trim() == autoCompleteText.Trim());
-            if (match != null && !chosenTags.Contains(match))
+            if (match != null && !ownedTags.Any(x => x.SkillTag.SkillTagId == match.SkillTagId))
             {
-                chosenTags.Add(match);
+                ownedTags.Add(new OwnedSkill
+                {
+                    SkillTag = match,
+                    Owner = personModel
+                });
                 ClearSearch();
-                chosenTags = chosenTags.OrderBy(x => x.Name).ToList();
+                ownedTags = ownedTags.OrderBy(x => x.SkillTag.Name).ToList();
                 ShowNotification(new CapXNotificationMessage
                 {
                     Severity = Radzen.NotificationSeverity.Success,
@@ -92,15 +96,15 @@ namespace PPMTool.Pages
         /// <summary>
         /// When a skills tag is removed from the data list
         /// </summary>
-        /// <param name="tag"></param>
-        void OnDelete(SkillTag tag)
+        /// <param name="ownedTag"></param>
+        void OnDelete(OwnedSkill ownedTag)
         {
-            var match = chosenTags.FirstOrDefault(x => x.Name == tag.Name);
+            var match = ownedTags.FirstOrDefault(x => x.SkillTag.SkillTagId == ownedTag.SkillTag.SkillTagId);
             if (match != null)
             {
-                LogInformation($"Removing skill tag {tag.Name}");
-                chosenTags.Remove(match);
-                chosenTags = chosenTags.OrderBy(x => x.Name).ToList();
+                LogInformation($"Removing skill tag {ownedTag.SkillTag.Name}");
+                ownedTags.Remove(match);
+                ownedTags = ownedTags.OrderBy(x => x.SkillTag.Name).ToList();
             }
         }
 
@@ -112,7 +116,7 @@ namespace PPMTool.Pages
                 ErrorMessage = null;
 
                 // Add tags to person model
-                personModel.SkillTags = chosenTags.ToList();
+                personModel.SkillTags = ownedTags.ToList();
 
                 // Write to the database
                 LogInformation($"Saving skills for {personModel.Name}.");

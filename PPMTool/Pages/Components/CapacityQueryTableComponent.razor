@@ -14,7 +14,7 @@
         {
             <tr>
                 <td>@res.Person.Name</td>
-                <td>@string.Join(",", res.Person.SkillTags.Select(x => x.Name))</td>
+                <td>@string.Join(",", res.Person.SkillTags.Select(x => x.SkillTag.Name))</td>
                 <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
                 <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
                 <td>@(res.AvailabilityPercent) FTE</td>

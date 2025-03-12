@@ -55,14 +55,9 @@ namespace PPMTool.Pages
                 await base.DeleteRow(entity);
 
                 // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(Context).Where(x => x.SkillTags.Contains(entity));
-                foreach (var person in people)
-                {
-                    LogInformation($"Removing skills tag {entity.GetSensibleObjectName()} from {person.Name}");
-                    person.SkillTags.Remove(entity);
-                    PersonService.Update(Context, person);
-                }
+                TagService.DeleteOwnedSkillsAssociatedWithTag(Context, entity);
 
+                // Remove from data grid
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }

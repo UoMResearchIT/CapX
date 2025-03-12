@@ -87,11 +87,34 @@ namespace PPMTool.Services
         /// Get the number of skills tags associated with a given person
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="PersonId"></param>
+        /// <param name="personId"></param>
         /// <returns></returns>
-        public int GetCountForPerson(PPMToolContext context, int PersonId)
+        public int GetCountForPerson(PPMToolContext context, int personId)
         {
-            return context.OwnedSkills.Where(x => x.Owner.PersonId == PersonId).Count();
+            return context.OwnedSkills.Where(x => x.Owner.PersonId == personId).Count();
+        }
+
+        /// <summary>
+        /// Get the number of owned skills associated with a given tag
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillTagId"></param>
+        /// <returns></returns>
+        public int GetCountForTag(PPMToolContext context, int skillTagId)
+        {
+            return context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == skillTagId).Count();
+        }
+
+        /// <summary>
+        /// Delete all owned skills associated with a given tag
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        public void DeleteOwnedSkillsAssociatedWithTag(PPMToolContext context, SkillTag entity, bool commitChanges = true)
+        {
+            var ownedSkillsToRemove = context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == entity.SkillTagId);
+            context.OwnedSkills.RemoveRange(ownedSkillsToRemove);
+            if (commitChanges) context.SaveChanges();
         }
     }
 }
