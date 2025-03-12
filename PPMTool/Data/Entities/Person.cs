@@ -65,7 +65,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Collection of skill tag instances owned by this person
         /// </summary>
-        public ICollection<OwnedSkill> SkillTags { get; set; } = new List<OwnedSkill>();
+        public ICollection<OwnedSkill> OwnedSkills { get; set; } = new List<OwnedSkill>();
 
         /// <summary>
         /// Collection of absences

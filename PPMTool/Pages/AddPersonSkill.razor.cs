@@ -39,7 +39,7 @@ namespace PPMTool.Pages
                 if (personModel != null)
                 {
                     // Update chosen tags
-                    ownedTags = personModel.SkillTags.OrderBy(x => x.SkillTag.Name).ToList();
+                    ownedTags = personModel.OwnedSkills.OrderBy(x => x.SkillTag.Name).ToList();
 
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
@@ -116,7 +116,7 @@ namespace PPMTool.Pages
                 ErrorMessage = null;
 
                 // Add tags to person model
-                personModel.SkillTags = ownedTags.ToList();
+                personModel.OwnedSkills = ownedTags.ToList();
 
                 // Write to the database
                 LogInformation($"Saving skills for {personModel.Name}.");

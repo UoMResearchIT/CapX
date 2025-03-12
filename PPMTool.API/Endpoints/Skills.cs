@@ -52,7 +52,7 @@ public static class Skills
     {
         try
         {
-            var people = await context.People.Include(x => x.SkillTags).ToListAsync();
+            var people = await context.People.Include(x => x.OwnedSkills).ToListAsync();
             if (people == null || people.Count == 0)
             {
                 logger.LogWarning($"API: GetAllPeopleWithSkillTags: No people found!");
@@ -63,7 +63,7 @@ public static class Skills
             Dictionary<string, IEnumerable<OwnedSkill>> results = new Dictionary<string, IEnumerable<OwnedSkill>>();
             foreach (var person in people)
             {
-                results.Add(person.Name, person.SkillTags);
+                results.Add(person.Name, person.OwnedSkills);
             }
 
             logger.LogInformation($"API: GetAllPeopleWithSkillTags: Count = {people.Count}");

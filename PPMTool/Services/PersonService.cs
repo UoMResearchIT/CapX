@@ -61,7 +61,7 @@ namespace PPMTool.Services
         public override IEnumerable<Person> GetAll(PPMToolContext context)
         {
             return context.People
-                .Include(p => p.SkillTags)
+                .Include(p => p.OwnedSkills)
                 .Include(p => p.WorkloadModelChanges)
                 .Include(p => p.Absences)
                 .ToList();
