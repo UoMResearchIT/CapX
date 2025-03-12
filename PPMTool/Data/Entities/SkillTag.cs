@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
@@ -33,6 +34,35 @@ namespace PPMTool.Data.Entities
         public string GetSensibleObjectName()
         {
             return $"Skill Tag: {Name}";
+        }
+
+        /// <summary>
+        /// Get the icon name for the emblem for the skill based on how many people have it
+        /// </summary>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public SkillRareness GetRareness(int count)
+        {
+            if (count < 3)
+            {
+                return SkillRareness.Legendary;
+            }
+            else if (count < 6)
+            {
+                return SkillRareness.Epic;
+            }
+            else if (count < 9)
+            {
+                return SkillRareness.Rare;
+            }
+            else if (count < 12)
+            {
+                return SkillRareness.Uncommon;
+            }
+            else
+            {
+                return SkillRareness.Common;
+            }
         }
     }
 }

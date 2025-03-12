@@ -1,6 +1,7 @@
 ﻿@page "/people/addskills/{PersonId:int}"
 @inherits BasePage
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add Skills - CapX</PageTitle>
 
@@ -47,17 +48,24 @@
                                         Data="@chosenTags"
                                         TItem="SkillTag">
                             <Template Context="tag">
-                                <div class="row align-items-center">
-                                    <div class="col">
-                                        @tag.Name
+                                @{
+                                    var count = tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0;
+                                    var rareness = tag.GetRareness(count);
+                                    <div class="row align-items-center" style="margin: -0.8rem;">
+                                        <div class="col">
+                                            <RadzenText Text="@tag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                        </div>
+                                        <div class="col">
+                                            <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+                                                <RadzenImage Path="@($"images/emb_{rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{count} other(s) with this tag")" />
+                                                <RadzenText Text="@rareness.ToString()" Style="@($"color: {rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+                                            </RadzenStack>
+                                        </div>
+                                        <div class="col-auto">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />
+                                        </div>
                                     </div>
-                                    <div class="col">
-                                        @($"{tag.People?.Where(x => x.PersonId != personModel.PersonId)?.Count() ?? 0} other(s) with this tag")
-                                    </div>
-                                    <div class="col-auto">
-                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />
-                                    </div>
-                                </div>
+                                }
                             </Template>
                         </RadzenDataList>
                     </div>
