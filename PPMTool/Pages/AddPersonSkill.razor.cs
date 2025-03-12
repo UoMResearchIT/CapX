@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -125,6 +126,16 @@ namespace PPMTool.Pages
                 // Navigate back
                 Navigation.NavigateTo($"people/addperson/{PersonId}");
             }
+        }
+
+        /// <summary>
+        /// Fired when the rating component on a particular owned skill is changed
+        /// </summary>
+        /// <param name="skill"></param>
+        /// <param name="stars"></param>
+        private void ProficiencyChanged(OwnedSkill skill, int stars)
+        {
+            Debug.WriteLine($"Skill = {skill?.SkillTag?.Name} | Stars = {stars}");
         }
     }
 }

@@ -53,6 +53,15 @@
                                         <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                                     </div>
                                     <div class="col">
+                                        <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.2rem">
+                                            <RadzenRating Change="@(args => ProficiencyChanged(tag, args))" />
+                                            <RadzenText TextStyle="TextStyle.Body2" Text="@(tag.Proficiency.ToString())" Style="@("color: var(--rz-primary); margin-bottom: 0;")" />
+                                        </RadzenStack>
+                                    </div>
+                                    <div class="col">
+                                        <RadzenDatePicker @bind-Value="tag.LastUsed" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                                    </div>
+                                    <div class="col">
                                         @{
                                             var count = TagService.GetCountForTag(Context, tag.SkillTag.SkillTagId) - 1;
                                             if (count < 0)
@@ -62,7 +71,7 @@
                                             var rareness = tag.GetRareness(count);
                                             <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
                                                 <RadzenImage Path="@($"images/emb_{rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{count} other(s) with this tag")" />
-                                                <RadzenText Text="@rareness.ToString()" Style="@($"color: {rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+                                                <RadzenText TextStyle="TextStyle.Body2" Text="@rareness.ToString()" Style="@($"color: {rareness.GetTextColourCode()}; margin-bottom: 0;")" />
                                             </RadzenStack>
                                         }
                                     </div>
