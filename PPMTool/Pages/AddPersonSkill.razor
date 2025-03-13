@@ -67,7 +67,9 @@
                         <Template Context="tag">
                             <div class="row align-items-center" style="margin: -0.8rem;">
                                 <div class="col">
-                                    <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                    <a href="@($"https://en.wikipedia.org/wiki/{tag.SkillTag.ControlledName.Replace(" ","_")}")" target="_blank">
+                                        <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                    </a>
                                 </div>
                                 <div class="col">
                                     <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.2rem">
