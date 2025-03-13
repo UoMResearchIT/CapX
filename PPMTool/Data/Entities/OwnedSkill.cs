@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -43,6 +44,16 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public bool OpportunityWanted { get; set; }
+
+        /// <summary>
+        /// Special un-mapped property to allow binding to ratings control
+        /// </summary>
+        [NotMapped]
+        public int ProficiencyRating
+        {
+            get => (int)Proficiency;
+            set => Proficiency = (SkillProficiency)value;
+        }
 
         /// <summary>
         /// Get the icon name for the emblem for the skill based on how many people have it
