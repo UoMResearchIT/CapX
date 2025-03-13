@@ -47,7 +47,11 @@
                                             Change=@OnChange
                                             Style="width:100%"
                                             Disabled="@(!EditAuthorised)"  />
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Click="@(args => ClearSearch())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Icon="clear"
+                                      Click="@(args => ClearSearch())"
+                                      MouseEnter="@(args => ShowTooltip(args, "Clear"))"
+                                      Disabled=!EditAuthorised />
                     </RadzenStack>
                 </div>
             </div>
@@ -67,18 +71,22 @@
                                 </div>
                                 <div class="col">
                                     <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.2rem">
-                                        <RadzenRating @bind-Value="@tag.ProficiencyRating" Stars="4" />
+                                        <RadzenRating @bind-Value="@tag.ProficiencyRating" Stars="4" ReadOnly=!EditAuthorised />
                                         <RadzenText TextStyle="TextStyle.Body2" Text="@(tag.Proficiency.ToString())" Style="@("color: var(--rz-primary); margin-bottom: 0;")" />
                                     </RadzenStack>
                                 </div>
-                                <div class="col">
-                                    <RadzenDatePicker @bind-Value="tag.LastUsed" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                                <div class="col text-center">
+                                    <RadzenDatePicker @bind-Value="tag.LastUsed"
+                                                      ShowTime="false"
+                                                      DateFormat="dd/MM/yyyy"
+                                                      Disabled=!EditAuthorised />
                                 </div>
-                                <div class="col">
+                                <div class="col text-center">
                                     <RadzenButton Icon="@(tag.FavouriteSkill ? "check_circle" : "radio_button_unchecked")"
                                                   Text="Favourite"
                                                   ButtonStyle="@(tag.FavouriteSkill ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                                  Click="@(() => ToggleFavourite(tag))" />
+                                                  Click="@(() => ToggleFavourite(tag))"
+                                                  Disabled=!EditAuthorised />
                                 </div>
                                 <div class="col">
                                     @{

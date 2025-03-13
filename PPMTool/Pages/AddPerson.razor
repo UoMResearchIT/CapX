@@ -33,7 +33,12 @@
                         @if (PersonId > 0)
                         {
                             <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@EditSkills" Text="Edit Skills" Icon="edit" Disabled="@(!IsSuperuserOrLineManagerOrPerson(personModel))" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                              ButtonType="ButtonType.Button"
+                                              Click="@EditSkills"
+                                              Text="@($"{(IsSuperuserOrLineManagerOrPerson(personModel) ? "Edit" : "View")} Skills")"
+                                              Icon="@(IsSuperuserOrLineManagerOrPerson(personModel) ? "edit" : "visibility")"
+                                              Disabled="@(ActiveUserRoleType != RoleType.Manager && !IsSuperuserOrLineManagerOrPerson(personModel))" />
                             </div>
                             <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />

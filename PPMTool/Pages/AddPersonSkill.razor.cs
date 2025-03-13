@@ -42,7 +42,7 @@ namespace PPMTool.Pages
                     ownedTags = personModel.OwnedSkills.OrderBy(x => x.SkillTag.Name).ToList();
 
                     // Edit should only be authorised for the line manager or superusers
-                    EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+                    EditAuthorised = IsSuperuserOrLineManagerOrPerson(personModel);
                 }
             }
 
