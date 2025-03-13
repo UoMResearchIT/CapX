@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Net.Http;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
@@ -14,11 +18,29 @@ namespace PPMTool.Data.Entities
         [Required]
         public string Name { get; set; }
 
+        private string controlledName;
         /// <summary>
         /// This is the controlled vocabulary name for the skill tag -- historically it has come from Wikipedia main entries
         /// </summary>
         [Required]
-        public string ControlledName { get; set; }
+        public string ControlledName
+        {
+            get => controlledName;
+            set
+            {
+                if (controlledName != value)
+                {
+                    controlledName = value;
+                    UpdateValidLink();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Whether or not the controlled name, when spaces are swapped for underscores, resolves to a wikipedia main entry
+        /// </summary>
+        [Required]
+        public LinkCheckState HasValidWikiLink { get; set; }
 
         /// <summary>
         /// Instances of this skill tag owned by people (not serialisable to avoid circular references)
@@ -33,6 +55,64 @@ namespace PPMTool.Data.Entities
         public string GetSensibleObjectName()
         {
             return $"Skill Tag: {Name}";
+        }
+
+        /// <summary>
+        /// Generate a wikipedia link for this skill tag
+        /// </summary>
+        /// <returns></returns>
+        public string GetWikiLink()
+        {
+            return GetWikiLink(ControlledName);
+        }
+
+        /// <summary>
+        /// Static version of the method
+        /// </summary>
+        /// <param name="controlledName"></param>
+        /// <returns></returns>
+        public static string GetWikiLink(string controlledName)
+        {
+            return $"https://en.wikipedia.org/wiki/{controlledName.Replace(' ', '_')}";
+        }
+
+        /// <summary>
+        /// Check whether the <see cref="controlledName"/> resolves to a proper Wikipeida link
+        /// </summary>
+        private void UpdateValidLink()
+        {
+            HasValidWikiLink = LinkCheckState.Pending;
+            var url = GetWikiLink();
+
+            Task.Run(async () =>
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(3);
+
+                    try
+                    {
+                        HttpResponseMessage response = await client.GetAsync(url);
+
+                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            HasValidWikiLink = LinkCheckState.Success;
+                        }
+                        else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            HasValidWikiLink = LinkCheckState.Fail;
+                        }
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Timeout occurred -- should we log somewhere?
+                    }
+                    catch (Exception)
+                    {
+                        // Other exceptions
+                    }
+                }
+            });
         }
     }
 }

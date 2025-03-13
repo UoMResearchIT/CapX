@@ -67,9 +67,24 @@
                         <Template Context="tag">
                             <div class="row align-items-center" style="margin: -0.8rem;">
                                 <div class="col">
-                                    <a href="@($"https://en.wikipedia.org/wiki/{tag.SkillTag.ControlledName.Replace(" ","_")}")" target="_blank">
-                                        <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-                                    </a>
+                                    @if (tag.SkillTag.HasValidWikiLink == LinkCheckState.Success)
+                                    {
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success)" title="Controlled name verified" />
+                                            <a href="@tag.SkillTag.GetWikiLink()" target="_blank">
+                                                <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                            </a>
+                                        </RadzenStack>
+                                    }
+                                    else
+                                    {
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                            <RadzenIcon Icon="@(tag.SkillTag.HasValidWikiLink == LinkCheckState.Fail ? "cancel" : "do_not_disturb")"
+                                                        Style="@($"color: {(tag.SkillTag.HasValidWikiLink == LinkCheckState.Fail ? "var(--rz-danger)" : "var(--rz-warning)")}")"
+                                                        title="@($"{(tag.SkillTag.HasValidWikiLink == LinkCheckState.Fail ? "Controlled name verification failed!" : "Verification of controlled name pending")}")" />
+                                            <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                        </RadzenStack>
+                                    }
                                 </div>
                                 <div class="col">
                                     <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.2rem">
