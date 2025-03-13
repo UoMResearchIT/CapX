@@ -20,7 +20,7 @@
                         <h3>Skill Tags</h3>
                     </div>
                     <div class="col-auto py-2 align-items-center">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled="@(!EditAuthorised)" />
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Icon="check" Disabled="@(!EditAuthorised)" />
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
                     </div>
                 </div>
@@ -75,6 +75,12 @@
                                     <RadzenDatePicker @bind-Value="tag.LastUsed" ShowTime="false" DateFormat="dd/MM/yyyy" />
                                 </div>
                                 <div class="col">
+                                    <RadzenButton Icon="@(tag.FavouriteSkill ? "check_circle" : "radio_button_unchecked")"
+                                                  Text="Favourite"
+                                                  ButtonStyle="@(tag.FavouriteSkill ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                                  Click="@(() => ToggleFavourite(tag))" />
+                                </div>
+                                <div class="col">
                                     @{
                                         var count = TagService.GetCountForTag(Context, tag.SkillTag.SkillTagId) - 1;
                                         if (count < 0)
@@ -89,7 +95,7 @@
                                     }
                                 </div>
                                 <div class="col-auto">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="clear" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />
                                 </div>
                             </div>
                         </Template>

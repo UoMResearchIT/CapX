@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -129,13 +128,12 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Fired when the rating component on a particular owned skill is changed
+        /// Toggles the favourite setting in the model
         /// </summary>
         /// <param name="skill"></param>
-        /// <param name="stars"></param>
-        private void ProficiencyChanged(OwnedSkill skill, int stars)
+        private void ToggleFavourite(OwnedSkill skill)
         {
-            Debug.WriteLine($"Skill = {skill?.SkillTag?.Name} | Stars = {stars}");
+            skill.FavouriteSkill = !skill.FavouriteSkill;
         }
     }
 }

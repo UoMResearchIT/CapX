@@ -43,7 +43,7 @@ namespace PPMTool.Data.Entities
         /// Whether this person would like to be considered for opportunities to develop this skill
         /// </summary>
         [Required]
-        public bool OpportunityWanted { get; set; }
+        public bool FavouriteSkill { get; set; }
 
         /// <summary>
         /// Special un-mapped property to allow binding to ratings control
