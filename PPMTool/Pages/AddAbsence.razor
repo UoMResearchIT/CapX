@@ -16,6 +16,7 @@
                 <div class="row">
                     <div class="col">
                         <h2>Current Absences</h2>
+                        <RadzenText Text="@personModel?.Name" TextStyle="TextStyle.DisplayH5" />
                     </div>
                     <div class="col-auto" style="align-content: center">
                         <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || !IsSuperuserOrLineManagerOfThisPerson(personModel)) />

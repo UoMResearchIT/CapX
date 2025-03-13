@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
 
         public override string GetSensibleObjectName()
         {
-            return $"Absence entry for {Person?.Name}";
+            return $"Absence entry for {Person?.Name} from {StartDate.ToShortDateString()} to {EndDate?.ToShortDateString()}";
         }
 
         /// <summary>
