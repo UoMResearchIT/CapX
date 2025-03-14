@@ -1,0 +1,58 @@
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using PPMTool.Enums;
+
+namespace PPMTool.Data.Entities
+{
+    /// <summary>
+    /// This represents an instance of a skill tag owned by a person
+    /// </summary>
+    public class OwnedSkill
+    {
+        /// <summary>
+        /// Id of the owned skill
+        /// </summary>
+        public int OwnedSkillId { get; set; }
+
+        /// <summary>
+        /// The owner of the skill tag instance
+        /// </summary>
+        [Required]
+        public Person Owner { get; set; }
+
+        /// <summary>
+        /// Which skill tag this instance refers to
+        /// </summary>
+        [Required]
+        public SkillTag SkillTag { get; set; }
+
+        /// <summary>
+        /// The last time this skill was used "in anger"
+        /// </summary>
+        [Required]
+        public DateTime LastUsed { get; set; }
+
+        /// <summary>
+        /// How proficient / experienced is this person with this skill
+        /// </summary>
+        [Required]
+        public SkillProficiency Proficiency { get; set; }
+
+        /// <summary>
+        /// Whether this person would like to be considered for opportunities to develop this skill
+        /// </summary>
+        [Required]
+        public bool FavouriteSkill { get; set; }
+
+        /// <summary>
+        /// Special un-mapped property to allow binding to ratings control
+        /// </summary>
+        [NotMapped]
+        public int ProficiencyRating
+        {
+            get => (int)Proficiency;
+            set => Proficiency = (SkillProficiency)value;
+        }
+    }
+}

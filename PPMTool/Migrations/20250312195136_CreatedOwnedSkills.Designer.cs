@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250312195136_CreatedOwnedSkills")]
+    partial class CreatedOwnedSkills
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -309,11 +311,11 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("FavouriteSkill")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("LastUsed")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("OpportunityWanted")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("OwnerPersonId")
                         .HasColumnType("INTEGER");
@@ -544,9 +546,6 @@ namespace PPMTool.Migrations
                     b.Property<string>("ControlledName")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("HasValidWikiLink")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()

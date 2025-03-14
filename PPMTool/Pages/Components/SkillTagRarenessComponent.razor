@@ -1,0 +1,32 @@
+﻿@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Services
+
+<RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+    <RadzenImage Path="@($"images/emb_{rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{count - 1} other(s) with this tag")" />
+    <RadzenText TextStyle="TextStyle.Body2" Text="@rareness.ToString()" Style="@($"color: {rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+</RadzenStack>
+
+@code {
+
+    [Inject]
+    private SkillTagService TagService { get; set; }
+
+    [Parameter]
+    public SkillTag SkillTag { get; set; }
+
+    [Parameter]
+    public PPMToolContext Context { get; set; }
+
+    private int count;
+    private SkillRareness rareness;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        count = TagService.GetCountForTag(Context, SkillTag.SkillTagId);
+            rareness = SkillTag.GetRareness(count);
+    }
+}

@@ -74,19 +74,19 @@
                     <div class="col-2">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                             <RadzenLabel class="radzen-form-label" Text="Start Date" />
-                            <RadzenDatePicker class="radzen-datepicker" TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" Change="StartDateChanged" />
+                            <RadzenDatePicker class="radzen-datepicker" TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" Change="StartDateChanged" Disabled="@Loading" />
                         </RadzenStack>
                     </div>
                     <div class="col-2">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                             <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
-                            <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" Change="YearsAheadChanged" />
+                            <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" Change="YearsAheadChanged" Disabled="@Loading" />
                         </RadzenStack>
                     </div>
                     <div class="col-2">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                             <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
-                            <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" />
+                            <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" Disabled="@Loading" />
                         </RadzenStack>
                     </div>
                     <div class="col-auto">
@@ -111,7 +111,7 @@
                             }
                             else
                             {
-                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance)" />
+                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading)" />
                             }
                         </RadzenStack>
                     </div>

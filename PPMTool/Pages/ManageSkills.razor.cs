@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -16,7 +17,7 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private TagService TagService { get; set; }
+        private SkillTagService TagService { get; set; }
 
         /// <summary>
         /// Method to detect a duplicate on save or update and display error message
@@ -55,17 +56,39 @@ namespace PPMTool.Pages
                 await base.DeleteRow(entity);
 
                 // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(Context).Where(x => x.SkillTags.Contains(entity));
-                foreach (var person in people)
-                {
-                    LogInformation($"Removing skills tag {entity.GetSensibleObjectName()} from {person.Name}");
-                    person.SkillTags.Remove(entity);
-                    PersonService.Update(Context, person);
-                }
+                TagService.DeleteOwnedSkillsAssociatedWithTag(Context, entity);
 
+                // Remove from data grid
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }
+        }
+
+        /// <summary>
+        /// Verify the controlled names for those pending and save to DB
+        /// </summary>
+        private void VerifyControlledNames()
+        {
+            Loading = true;
+            Task.Run(async () =>
+            {
+                var toVerify = dataGridEntities.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToList();
+                foreach (var tag in toVerify)
+                {
+                    var res = await tag.UpdateValidLink();
+                    if (res != LinkCheckState.Pending)
+                    {
+                        TagService.Update(Context, tag);
+                    }
+                }
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }
