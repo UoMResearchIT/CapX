@@ -31,7 +31,7 @@ namespace PPMTool.Data.Entities
                 if (controlledName != value)
                 {
                     controlledName = value;
-                    UpdateValidLink();
+                    HasValidWikiLink = LinkCheckState.Pending;
                 }
             }
         }
@@ -79,40 +79,68 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Check whether the <see cref="controlledName"/> resolves to a proper Wikipeida link
         /// </summary>
-        private void UpdateValidLink()
+        public async Task<LinkCheckState> UpdateValidLink()
         {
             HasValidWikiLink = LinkCheckState.Pending;
             var url = GetWikiLink();
 
-            Task.Run(async () =>
+            using (HttpClient client = new HttpClient())
             {
-                using (HttpClient client = new HttpClient())
+                client.Timeout = TimeSpan.FromSeconds(3);
+
+                try
                 {
-                    client.Timeout = TimeSpan.FromSeconds(3);
+                    HttpResponseMessage response = await client.GetAsync(url);
 
-                    try
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        HttpResponseMessage response = await client.GetAsync(url);
-
-                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            HasValidWikiLink = LinkCheckState.Success;
-                        }
-                        else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                        {
-                            HasValidWikiLink = LinkCheckState.Fail;
-                        }
+                        HasValidWikiLink = LinkCheckState.Success;
                     }
-                    catch (TaskCanceledException)
+                    else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
-                        // Timeout occurred -- should we log somewhere?
-                    }
-                    catch (Exception)
-                    {
-                        // Other exceptions
+                        HasValidWikiLink = LinkCheckState.Fail;
                     }
                 }
-            });
+                catch (TaskCanceledException)
+                {
+                    // Timeout occurred -- should we log somewhere?
+                }
+                catch (Exception)
+                {
+                    // Other exceptions
+                }
+            }
+
+            return HasValidWikiLink;
+        }
+
+        /// <summary>
+        /// Get the icon name for the emblem for the skill based on how many people have it
+        /// </summary>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public static SkillRareness GetRareness(int count)
+        {
+            if (count < 3)
+            {
+                return SkillRareness.Legendary;
+            }
+            else if (count < 6)
+            {
+                return SkillRareness.Epic;
+            }
+            else if (count < 9)
+            {
+                return SkillRareness.Rare;
+            }
+            else if (count < 12)
+            {
+                return SkillRareness.Uncommon;
+            }
+            else
+            {
+                return SkillRareness.Common;
+            }
         }
     }
 }
