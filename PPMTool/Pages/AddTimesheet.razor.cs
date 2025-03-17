@@ -411,21 +411,20 @@ namespace PPMTool.Pages
             // Check if submitting with inactive Task Codes (only if not a rejected timesheet)
             if (timesheet.TimesheetEntries.Count > 0 && timesheet.Status != TimesheetStatus.Rejected)
             {
-                bool usesInactiveTasks = false;
-                foreach (TimesheetEntry item in timesheet.TimesheetEntries)
-                {
-                    // Set the usesInactivetasks variable if there are hours logged to an inactive task code
-                    if (item.InnateCodeTask.InnateCode.IsActive == false && item.TotalHours > 0) { usesInactiveTasks = true; }
-                }
-
+                // Set the usesInactivetasks variable if there are hours logged to an inactive task code
+                bool usesInactiveTasks = timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0);
                 if (usesInactiveTasks)
                 {
-                    var inactiveTasksCheck = await DialogService.Alert($"You cannot submit a timesheet which uses an inactive activity code. If you need a code to be reactivated then contact your Line Manager to organise this.", "Inactive code being used!") ?? false;
+                    var inactiveTasksCheck = await DialogService.Alert(
+                        $"You cannot submit a timesheet which uses an inactive activity code." +
+                        $"If you need a code to be reactivated then contact your line manager to organise this.",
+                        "Booked to Inactive Code"
+                    ) ?? false;
                     return;
                 }
             }
 
-            // Prompt
+            // Prompt to change of status
             var confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
                 "Change Timesheet Status") ?? false;
             if (!confirmed) return;
@@ -651,15 +650,12 @@ namespace PPMTool.Pages
         /// <param name="args"></param>
         private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
         {
-            bool isActiveCode = true;
+
 
             if (args != null)
             {
-                // Null check to catch when adding new task to the timesheet which initially has no associated InnateCode
-                if (args.Data.InnateCodeTask != null)
-                {
-                    if (args.Data.InnateCodeTask.InnateCode.IsActive == false) { isActiveCode = false; }
-                }
+                // ActiveUser by default if no task is found (e.g. when there are no rows) otherwise based on code state
+                bool isActiveCode = args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true;
 
                 if (args.Column.Property != null)
                 {
