@@ -7,8 +7,9 @@
 
 <AuthorizeView>
     <Authorized>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
-            <RadzenText Text="@($"Hello, {displayName}!")" Style="color: white; margin-bottom: 0;"/>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.3rem">
+            <RadzenText Text="@($"Hello, {displayName}!")" Style="color: white; margin-bottom: 0;" class="mr-3"/>
+            <RadzenButton Icon="settings" ButtonStyle="ButtonStyle.Light" Click="GoToProfile" />
             @* Chose to wrap links here but could use a force reload on NavigateTo as well: https://stackoverflow.com/questions/71725951/navigationmanager-redirect-to-identity-cshtml-not-working-properly*@
             <a href="/Account/Logout"><RadzenButton class="mx-2" Text="Log out" ButtonStyle="ButtonStyle.Light" /></a>
         </RadzenStack>

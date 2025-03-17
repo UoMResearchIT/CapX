@@ -20,7 +20,7 @@
         </div>
         <div class="row">
             <div class="col">
-                <h2>@ActiveUser?.Name</h2>
+                <RadzenText Text="@ActiveUser?.Name" TextStyle="TextStyle.DisplayH5" />
             </div>
         </div>
         <hr />
@@ -34,11 +34,11 @@
             <div class="row">
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Name" /><br>
-                    <RadzenTextBox Value="ActiveUser?.Name" Disabled="true" />
+                    <RadzenTextBox Value="@ActiveUser?.Name" Disabled="true" />
                 </div>
                 <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Role" /><br>
-                    <RadzenTextBox Value="ActiveUserRoleType.ToNiceString()" Disabled="true" />
+                    <RadzenTextBox Value="@ActiveUserRoleType.ToNiceString()" Disabled="true" />
                 </div>
             </div>
             <hr />
