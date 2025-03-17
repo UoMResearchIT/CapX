@@ -1,0 +1,77 @@
+﻿@page "/profile"
+@inherits BasePage
+@using PPMTool.Data
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+<PageTitle>Profile - CapX</PageTitle>
+
+<div class="container">
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <h1>Profile</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <h2>@ActiveUser?.Name</h2>
+            </div>
+        </div>
+        <hr />
+
+        <div class="card">
+            <div class="row">
+                <div class="col">
+                    <h2>Details</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Name" /><br>
+                    <RadzenTextBox Value="ActiveUser?.Name" Disabled="true" />
+                </div>
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Role" /><br>
+                    <RadzenTextBox Value="ActiveUserRoleType.ToNiceString()" Disabled="true" />
+                </div>
+            </div>
+            <hr />
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3>API Keys</h3>
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Icon="add" ButtonType="ButtonType.Button" Text="Generate API Key" Click="@(() => GenerateApiKey())" />
+                </div>
+            </div>
+            <RadzenDataList Data="@ApiKeys"
+                            TItem="ApiKey"
+                            AllowVirtualization=true
+                            WrapItems="false"
+                            AllowPaging="false">
+                <Template Context="key">
+                    <div class="row p-0">
+                        <div class="col">
+                            @key.Description
+                        </div>
+                        <div class="col">
+                            <b>Expires:</b> @key.ExpiresAt.ToString("ddd dd MMMM yyyy HH:mm:ss")
+                        </div>
+                        <div class="col-auto">
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="copy" Size="ButtonSize.Medium" class="ms-1" Style="padding: 0" MouseEnter="@(args => ShowTooltip(args, "Copy Key"))">
+                                <div onclick="copyText('@(key.Key)')" style="padding: 0.5rem"><i class="notranslate rz-button-icon-left rzi">@((MarkupString)"link")</i></div>
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(key))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                        </div>
+                    </div>
+                </Template>
+            </RadzenDataList>
+        </div>
+    }
+</div>
