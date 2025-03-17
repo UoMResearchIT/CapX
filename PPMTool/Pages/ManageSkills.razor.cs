@@ -23,6 +23,7 @@ namespace PPMTool.Pages
 
         private int count;
         private int pageCount = 15;
+        private bool tableEmpty = true;
 
         protected override void OnInitialized()
         {
@@ -102,6 +103,9 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** {query.Count()} tags loaded!");
 
+            // Set the flag
+            tableEmpty = query.Count() == 0;
+
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
@@ -123,21 +127,20 @@ namespace PPMTool.Pages
             // Sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                var order = args.OrderBy.Split(" ");
-                if (order.Length > 0 && order[0] == "Rareness")
+                if (args.OrderBy.StartsWith("Rareness"))
                 {
-                    if (order.Length > 1 && order[1] == "asc")
+                    var order = args.Sorts.FirstOrDefault(x => x.Property == "Rareness");
+                    if (order.SortOrder == SortOrder.Ascending)
                     {
-                        query = query.OrderBy(x => x.Rareness);
+                        query = query.OrderBy(x => (int)x.Rareness);
                     }
                     else
                     {
-                        query = query.OrderByDescending(x => x.Rareness);
+                        query = query.OrderByDescending(x => (int)x.Rareness);
                     }
                 }
                 else
                 {
-                    // Sort via the OrderBy method
                     query = query.OrderBy(args.OrderBy);
                 }
             }
