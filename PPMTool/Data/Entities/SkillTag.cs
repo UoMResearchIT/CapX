@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using PPMTool.Enums;
+using static PPMTool.Services.SkillTagService;
 
 namespace PPMTool.Data.Entities
 {
@@ -54,6 +55,12 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [NotMapped]
         public SkillRareness Rareness { get; set; }
+
+        /// <summary>
+        /// Number of people with owned instance of the skill tag -- not stored in the DB
+        /// </summary>
+        [NotMapped]
+        public int RarenessCount { get; set; }
 
         /// <summary>
         /// Required override for logging identification
@@ -119,6 +126,12 @@ namespace PPMTool.Data.Entities
             }
 
             return HasValidWikiLink;
+        }
+
+        internal void UpdateRareness(SkillTagRareness rareness)
+        {
+            Rareness = rareness.Rareness;
+            RarenessCount = rareness.Count;
         }
     }
 }

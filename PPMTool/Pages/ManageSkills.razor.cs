@@ -103,24 +103,32 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** {query.Count()} tags loaded!");
 
-            // Set the flag
+            // Set the flag here so the filter doesn't disappear when there are no matching results
             tableEmpty = query.Count() == 0;
+
+            // Update the skill tag rareness
+            foreach (var skill in query)
+            {
+                // Initialise the rareness for the tag
+                var rareness = TagService.GetRareness(Context, skill.SkillTagId);
+                skill.UpdateRareness(rareness);
+            }
 
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                query = query.Where(args.Filter);
-            }
-
-            // Now apply the skills tag filter
-            if (args.Filters != null && args.Filters.Count() > 0)
-            {
-                // Filter on rareness if necessary
-                var filter = args.Filters.FirstOrDefault(x => x.Property == "Rareness");
-                var filterValue = filter?.FilterValue as string;
-                if (filter != null && filterValue != null)
+                if (args.Filter.StartsWith("Rareness"))
                 {
-                    query = query.Where(x => x.Rareness.ToString().ToLower() == filterValue.ToLower());
+                    var filter = args.Filters.FirstOrDefault(x => x.Property == "Rareness");
+                    var filterValue = filter?.FilterValue as int?;
+                    if (filterValue != null)
+                    {
+                        query = query.Where(x => (int)x.Rareness == filterValue);
+                    }
+                }
+                else
+                {
+                    query = query.Where(args.Filter);
                 }
             }
 
@@ -132,11 +140,11 @@ namespace PPMTool.Pages
                     var order = args.Sorts.FirstOrDefault(x => x.Property == "Rareness");
                     if (order.SortOrder == SortOrder.Ascending)
                     {
-                        query = query.OrderBy(x => (int)x.Rareness);
+                        query = query.OrderBy(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
                     }
                     else
                     {
-                        query = query.OrderByDescending(x => (int)x.Rareness);
+                        query = query.OrderByDescending(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
                     }
                 }
                 else
