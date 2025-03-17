@@ -420,7 +420,7 @@ namespace PPMTool.Pages
 
                 if (usesInactiveTasks)
                 {
-                    var inactiveTasksCheck = await DialogService.Alert($"You cannot submit a timesheet which uses inactive tasks. If you still need to code to be active then you'll need to contact your Line Manager to get it reinstated.", "Inactive code being used!") ?? false;
+                    var inactiveTasksCheck = await DialogService.Alert($"You cannot submit a timesheet which uses an inactive activity code. If you need a code to be reactivated then contact your Line Manager to organise this.", "Inactive code being used!") ?? false;
                     return;
                 }
             }
@@ -673,7 +673,7 @@ namespace PPMTool.Pages
                         {
                             args.Attributes.Add("style", $"background-color : #FFD6D7;");
                         }
-                        args.Attributes.Add("title", "Task code is not active");
+                        args.Attributes.Add("title", "Activity code is no longer active");
                     }
                     else
                     {
