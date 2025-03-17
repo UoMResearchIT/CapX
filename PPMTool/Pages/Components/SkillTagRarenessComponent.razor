@@ -4,8 +4,8 @@
 @using PPMTool.Services
 
 <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-    <RadzenImage Path="@($"images/emb_{rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{count - 1} other(s) with this tag")" />
-    <RadzenText TextStyle="TextStyle.Body2" Text="@rareness.ToString()" Style="@($"color: {rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+    <RadzenImage Path="@($"images/emb_{SkillTag.Rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{count} RSE(s) with this tag")" />
+    <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
 </RadzenStack>
 
 @code {
@@ -20,13 +20,14 @@
     public PPMToolContext Context { get; set; }
 
     private int count;
-    private SkillRareness rareness;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
-        count = TagService.GetCountForTag(Context, SkillTag.SkillTagId);
-            rareness = SkillTag.GetRareness(count);
+        // Initialise the rareness for the tag
+        var rareness = TagService.GetRareness(Context, SkillTag.SkillTagId);
+        SkillTag.Rareness = rareness.Rareness;
+        count = rareness.Count;
     }
 }

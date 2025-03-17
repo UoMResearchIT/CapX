@@ -23,14 +23,16 @@
     <RadzenDataGrid @ref="dataGrid"
                     AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
                     AllowPaging="true"
-                    PageSize="15"
+                    PageSize="@pageCount"
+                    Count="@count"
                     AllowSorting="true"
                     EditMode="DataGridEditMode.Single"
                     Data="@dataGridEntities"
                     TItem="SkillTag"
                     RowUpdate="@OnUpdateRow"
                     RowCreate="@OnCreateRow"
-                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    LoadData="LoadDataGrid">
         <Columns>
             <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px">
                 <EditTemplate Context="tag">
@@ -62,7 +64,7 @@
                     <RadzenTextBox class="no-margin" @bind-Value="tag.ControlledName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+            <RadzenDataGridColumn TItem="SkillTag" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Rareness">
                 <Template Context="tag">
                     <SkillTagRarenessComponent SkillTag="@tag" Context="Context" />
                 </Template>
