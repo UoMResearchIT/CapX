@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace PPMTool.Data.Entities
 {
@@ -50,6 +51,7 @@ namespace PPMTool.Data.Entities
         /// Line manager of this person
         /// </summary>
         [Required]
+        [JsonIgnore]
         public Person LineManager { get; set; }
 
         /// <summary>
@@ -65,6 +67,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Collection of skill tag instances owned by this person
         /// </summary>
+        [JsonIgnore]
         public ICollection<OwnedSkill> OwnedSkills { get; set; } = new List<OwnedSkill>();
 
         /// <summary>
@@ -104,6 +107,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// List of people that this person manages as their line manager
         /// </summary>
+        [JsonIgnore]
         public ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
 
         public Person()

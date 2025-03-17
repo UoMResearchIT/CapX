@@ -128,7 +128,7 @@ namespace PPMTool.Data.Entities
             return HasValidWikiLink;
         }
 
-        internal void UpdateRareness(SkillTagRareness rareness)
+        public void UpdateRareness(SkillTagRareness rareness)
         {
             Rareness = rareness.Rareness;
             RarenessCount = rareness.Count;
