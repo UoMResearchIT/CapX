@@ -63,7 +63,7 @@ namespace PPMTool.Pages
         {
             return Task.Run(() =>
             {
-                LoadDataGrid(new LoadDataArgs());
+                dataGridEntities = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
             })
                 .ContinueWith(t =>
             {

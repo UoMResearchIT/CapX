@@ -27,10 +27,9 @@
     else
     {
         <RadzenDataGrid @ref="dataGrid"
-                        AllowFiltering="@(!tableEmpty)"
+                        AllowFiltering="true"
                         AllowPaging="true"
-                        PageSize="@pageCount"
-                        Count="@count"
+                        PageSize="15"
                         AllowSorting="true"
                         EditMode="DataGridEditMode.Single"
                         Data="@dataGridEntities"
@@ -38,8 +37,7 @@
                         RowUpdate="@OnUpdateRow"
                         RowCreate="@OnCreateRow"
                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        FilterMode="FilterMode.Simple"
-                        LoadData="LoadDataGrid">
+                        FilterMode="FilterMode.Simple">
             <Columns>
                 <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px" FilterOperator="FilterOperator.Contains">
                     <EditTemplate Context="tag">
