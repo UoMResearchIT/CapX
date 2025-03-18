@@ -54,34 +54,5 @@ namespace PPMTool.Data.Entities
             get => (int)Proficiency;
             set => Proficiency = (SkillProficiency)value;
         }
-
-        /// <summary>
-        /// Get the icon name for the emblem for the skill based on how many people have it
-        /// </summary>
-        /// <param name="count"></param>
-        /// <returns></returns>
-        public SkillRareness GetRareness(int count)
-        {
-            if (count < 3)
-            {
-                return SkillRareness.Legendary;
-            }
-            else if (count < 6)
-            {
-                return SkillRareness.Epic;
-            }
-            else if (count < 9)
-            {
-                return SkillRareness.Rare;
-            }
-            else if (count < 12)
-            {
-                return SkillRareness.Uncommon;
-            }
-            else
-            {
-                return SkillRareness.Common;
-            }
-        }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -61,6 +62,33 @@ namespace PPMTool.Pages
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }
+        }
+
+        /// <summary>
+        /// Verify the controlled names for those pending and save to DB
+        /// </summary>
+        private void VerifyControlledNames()
+        {
+            Loading = true;
+            Task.Run(async () =>
+            {
+                var toVerify = dataGridEntities.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToList();
+                foreach (var tag in toVerify)
+                {
+                    var res = await tag.UpdateValidLink();
+                    if (res != LinkCheckState.Pending)
+                    {
+                        TagService.Update(Context, tag);
+                    }
+                }
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }
