@@ -15,16 +15,16 @@ namespace PPMTool.Data.Entities
         public string Name { get; set; }
 
         /// <summary>
-        /// This is the controlled vocabulary name for the skill tag -- historical has come from Wikipedia main entries
+        /// This is the controlled vocabulary name for the skill tag -- historically it has come from Wikipedia main entries
         /// </summary>
         [Required]
         public string ControlledName { get; set; }
 
         /// <summary>
-        /// The people who have this skill (not serialisable to avoid circular references)
+        /// Instances of this skill tag owned by people (not serialisable to avoid circular references)
         /// </summary>
         [JsonIgnore]
-        public ICollection<Person> People { get; set; }
+        public ICollection<OwnedSkill> OwnedSkills { get; set; }
 
         /// <summary>
         /// Required override for logging identification

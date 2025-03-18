@@ -50,7 +50,7 @@ builder.Services.AddDbContext<PPMToolContext>(options =>
                 ) ?? throw new Exception("Invalid connection string!")
         )
     );
-builder.Services.AddScoped<TagService>();
+builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 
 // Add services to the container.

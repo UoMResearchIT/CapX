@@ -19,7 +19,7 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private TagService TagService { get; set; }
+        private SkillTagService TagService { get; set; }
 
         private bool tableEmpty;
         private IEnumerable<Person> people;
@@ -129,7 +129,7 @@ namespace PPMTool.Pages
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
-                    query = query.Where(x => x.SkillTags.Any(x => x.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
+                    query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
                 }
             }
 

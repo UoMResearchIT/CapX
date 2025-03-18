@@ -45,14 +45,14 @@ public static class Skills
     /// <param name="context"></param>
     /// <param name="logger"></param>
     /// <returns></returns> 
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, IEnumerable<SkillTag>>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, IEnumerable<OwnedSkill>>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger)
     {
         try
         {
-            var people = await context.People.Include(x => x.SkillTags).ToListAsync();
+            var people = await context.People.Include(x => x.OwnedSkills).ToListAsync();
             if (people == null || people.Count == 0)
             {
                 logger.LogWarning($"API: GetAllPeopleWithSkillTags: No people found!");
@@ -60,10 +60,10 @@ public static class Skills
             }
 
             // Assemble into correct form
-            Dictionary<string, IEnumerable<SkillTag>> results = new Dictionary<string, IEnumerable<SkillTag>>();
+            Dictionary<string, IEnumerable<OwnedSkill>> results = new Dictionary<string, IEnumerable<OwnedSkill>>();
             foreach (var person in people)
             {
-                results.Add(person.Name, person.SkillTags);
+                results.Add(person.Name, person.OwnedSkills);
             }
 
             logger.LogInformation($"API: GetAllPeopleWithSkillTags: Count = {people.Count}");
@@ -85,7 +85,7 @@ public static class Skills
     /// <param name="logger"></param>
     /// <param name="name"></param>
     /// <returns></returns>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<OwnedSkill>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string name)
@@ -102,9 +102,9 @@ public static class Skills
             }
 
             // Get the tags for this person
-            var tags = await context.SkillTags
-                .Include(x => x.People)
-                .Where(x => x.People.Any(p => p.PersonId == person.PersonId))
+            var tags = await context.OwnedSkills
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == person.PersonId)
                 .ToListAsync();
             logger.LogInformation($"API: GetAllSkillsTagsForPerson: Person = {person.Name}, Count = {tags.Count}");
             return Results.Json(tags);
