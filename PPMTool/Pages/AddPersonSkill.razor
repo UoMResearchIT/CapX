@@ -67,9 +67,16 @@
                         <Template Context="tag">
                             <div class="row align-items-center" style="margin: -0.8rem;">
                                 <div class="col">
-                                    <a href="@($"https://en.wikipedia.org/wiki/{tag.SkillTag.ControlledName.Replace(" ","_")}")" target="_blank">
+                                    @if (tag.SkillTag.HasValidWikiLink == LinkCheckState.Success)
+                                    {
+                                        <a href="@tag.SkillTag.GetWikiLink()" target="_blank">
+                                            <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                        </a>
+                                    }
+                                    else
+                                    {
                                         <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-                                    </a>
+                                    }
                                 </div>
                                 <div class="col">
                                     <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.2rem">
@@ -91,18 +98,7 @@
                                                   Disabled=!EditAuthorised />
                                 </div>
                                 <div class="col">
-                                    @{
-                                        var count = TagService.GetCountForTag(Context, tag.SkillTag.SkillTagId) - 1;
-                                        if (count < 0)
-                                        {
-                                            count = 0;
-                                        }
-                                        var rareness = tag.GetRareness(count);
-                                        <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-                                            <RadzenImage Path="@($"images/emb_{rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{count} other(s) with this tag")" />
-                                            <RadzenText TextStyle="TextStyle.Body2" Text="@rareness.ToString()" Style="@($"color: {rareness.GetTextColourCode()}; margin-bottom: 0;")" />
-                                        </RadzenStack>
-                                    }
+                                    <SkillTagRarenessComponent SkillTag="@tag.SkillTag" Context="Context" />
                                 </div>
                                 <div class="col-auto">
                                     <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />

@@ -1,16 +1,18 @@
 ﻿@page "/manageskills"
 @inherits DataGridPage<SkillTag>
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Manage Skills - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
-        <div class="col-auto mr-auto">
+        <div class="col py-2">
             <h1>Manage Skills</h1>
         </div>
-        <div class="col-auto">
-            <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null)" />
+        <div class="col-auto py-2 align-items-center">
+            <RadzenButton Text="Verify" Icon="cloud_done" Click="@VerifyControlledNames" Disabled="@(entityToInsert != null || Loading)" />
+            <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading)" />
         </div>
     </div>
     @if (ErrorMessage != null)
@@ -36,14 +38,39 @@
                 </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="SkillTag" Property="ControlledName" Title="Controlled Name" Width="280px" MinWidth="10px">
+                <Template Context="tag">
+                    @if (tag.HasValidWikiLink == LinkCheckState.Success)
+                    {
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success)" title="Controlled name verified" />
+                            <a href="@tag.GetWikiLink()" target="_blank">
+                                <RadzenText Text="@tag.ControlledName" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                            </a>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                            <RadzenIcon Icon="@(tag.HasValidWikiLink == LinkCheckState.Fail ? "cancel" : "do_not_disturb")"
+                                        Style="@($"color: {(tag.HasValidWikiLink == LinkCheckState.Fail ? "var(--rz-danger)" : "var(--rz-warning)")}")"
+                                        title="@($"{(tag.HasValidWikiLink == LinkCheckState.Fail ? "Controlled name verification failed!" : "Verification of controlled name pending")}")" />
+                            <RadzenText Text="@tag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                        </RadzenStack>
+                    }
+                </Template>
                 <EditTemplate Context="tag">
                     <RadzenTextBox class="no-margin" @bind-Value="tag.ControlledName" />
                 </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                 <Template Context="tag">
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                    <SkillTagRarenessComponent SkillTag="@tag" Context="Context" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                <Template Context="tag">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@Loading" />
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@Loading"  />
                 </Template>
                 <EditTemplate Context="tag">
                     <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
