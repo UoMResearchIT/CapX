@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -19,27 +21,16 @@ namespace PPMTool.Pages
         [Inject]
         private SkillTagService TagService { get; set; }
 
-        /// <summary>
-        /// Method to detect a duplicate on save or update and display error message
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        private bool IsDuplicatedSkill(SkillTag entity)
-        {
-            if (TagService.DuplicateDetected(Context, entity))
-            {
-                ErrorMessage = new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error);
-                return true;
-            }
-            ErrorMessage = null;
-            return false;
-        }
+        private int count;
+        private int pageCount = 15;
+        private bool tableEmpty = true;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             dataGridEntityService = TagService;
-            dataGridEntities = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            Loading = true;
+            EnqueueLoadData(GetLoadTask);
             LogInformation($"Viewing skills tags");
         }
 
@@ -61,6 +52,116 @@ namespace PPMTool.Pages
                 // Remove from data grid
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
+            }
+        }
+
+        /// <summary>
+        /// Returns a standard task to get the data for the grid
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask()
+        {
+            return Task.Run(() =>
+            {
+                LoadDataGrid(new LoadDataArgs());
+            })
+                .ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+
+        /// <summary>
+        /// Method to detect a duplicate on save or update and display error message
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        private bool IsDuplicatedSkill(SkillTag entity)
+        {
+            if (TagService.DuplicateDetected(Context, entity))
+            {
+                ErrorMessage = new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error);
+                return true;
+            }
+            ErrorMessage = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Method fired when a column is filtered or sorted to allow us to custom filter or sort
+        /// </summary>
+        /// <param name="args"></param>
+        private void LoadDataGrid(LoadDataArgs args)
+        {
+            // Order by name by default
+            IQueryable<SkillTag> query = TagService.GetAll(Context).OrderBy(x => x.Name).AsQueryable();
+
+            Debug.WriteLine($"** {query.Count()} tags loaded!");
+
+            // Set the flag here so the filter doesn't disappear when there are no matching results
+            tableEmpty = query.Count() == 0;
+
+            // Update the skill tag rareness
+            foreach (var skill in query)
+            {
+                // Initialise the rareness for the tag
+                var rareness = TagService.GetRareness(Context, skill.SkillTagId);
+                skill.UpdateRareness(rareness);
+            }
+
+            // Filtering
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                if (args.Filter.StartsWith("Rareness"))
+                {
+                    var filter = args.Filters.FirstOrDefault(x => x.Property == "Rareness");
+                    var filterValue = filter?.FilterValue as int?;
+                    if (filterValue != null)
+                    {
+                        query = query.Where(x => (int)x.Rareness == filterValue);
+                    }
+                }
+                else
+                {
+                    query = query.Where(args.Filter);
+                }
+            }
+
+            // Sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                if (args.OrderBy.StartsWith("Rareness"))
+                {
+                    var order = args.Sorts.FirstOrDefault(x => x.Property == "Rareness");
+                    if (order.SortOrder == SortOrder.Ascending)
+                    {
+                        query = query.OrderBy(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
+                    }
+                    else
+                    {
+                        query = query.OrderByDescending(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
+                    }
+                }
+                else
+                {
+                    query = query.OrderBy(args.OrderBy);
+                }
+            }
+
+            // Assign to grid source
+            count = query.Count();
+            if (args.Skip == null)
+            {
+                dataGridEntities = query.Take(pageCount).ToList();
+            }
+            else
+            {
+                dataGridEntities = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
         }
 

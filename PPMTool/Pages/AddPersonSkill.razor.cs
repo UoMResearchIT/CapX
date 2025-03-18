@@ -41,6 +41,14 @@ namespace PPMTool.Pages
                     // Update chosen tags
                     ownedTags = personModel.OwnedSkills.OrderBy(x => x.SkillTag.Name).ToList();
 
+                    // Update the rareness information for the related tags
+                    foreach (var skill in ownedTags)
+                    {
+                        // Initialise the rareness for the tag
+                        var rareness = TagService.GetRareness(Context, skill.SkillTag.SkillTagId);
+                        skill.SkillTag.UpdateRareness(rareness);
+                    }
+
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOrPerson(personModel);
                 }
