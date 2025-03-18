@@ -84,7 +84,7 @@
                                &nbsp;
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Innate Code" MinWidth="7px" Width="12rem">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Activity Code" MinWidth="7px" Width="12rem">
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
                             </Template>
@@ -94,7 +94,7 @@
                                     <RadzenDropDown TValue="string"
                                                     FilterOperator="StringFilterOperator.Contains"
                                                     AllowFiltering="true"
-                                                    Placeholder="Search for Innate Code"
+                                                    Placeholder="Search for Activity Code"
                                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                     Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
                                                     Style="width: 100%"
@@ -398,7 +398,7 @@
                             }
                             @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                             {
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(totalHours == 0 || entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
                             }
                         </div>
                     </RadzenStack>

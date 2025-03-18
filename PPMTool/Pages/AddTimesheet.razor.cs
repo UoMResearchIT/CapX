@@ -408,7 +408,23 @@ namespace PPMTool.Pages
         /// </summary>
         private async void HandleValidSubmit()
         {
-            // Prompt
+            // Check if submitting with inactive Task Codes (only if not a rejected timesheet)
+            if (timesheet.TimesheetEntries.Count > 0 && timesheet.Status != TimesheetStatus.Rejected)
+            {
+                // Set the usesInactivetasks variable if there are hours logged to an inactive task code
+                bool usesInactiveTasks = timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0);
+                if (usesInactiveTasks)
+                {
+                    var inactiveTasksCheck = await DialogService.Alert(
+                        $"You cannot submit a timesheet which uses an inactive activity code." +
+                        $"If you need a code to be reactivated then contact your line manager to organise this.",
+                        "Booked to Inactive Code"
+                    ) ?? false;
+                    return;
+                }
+            }
+
+            // Prompt to change of status
             var confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
                 "Change Timesheet Status") ?? false;
             if (!confirmed) return;
@@ -634,20 +650,52 @@ namespace PPMTool.Pages
         /// <param name="args"></param>
         private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
         {
+
+
             if (args != null)
             {
+                // ActiveUser by default if no task is found (e.g. when there are no rows) otherwise based on code state
+                bool isActiveCode = args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true;
+
                 if (args.Column.Property != null)
                 {
-                    string theDay = args.Column.Title.ToLower().Trim();
-                    if (DayColours.ContainsKey(theDay))
+                    if (!isActiveCode)
                     {
-                        args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                        if (args.Column.Property == "IsInTemplate")
+                        {
+                            args.Attributes.Add("style", $"background-color : red;");
+                        }
+                        else
+                        {
+                            args.Attributes.Add("style", $"background-color : #FFD6D7;");
+                        }
+                        args.Attributes.Add("title", "Activity code is no longer active");
                     }
-
-                    if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
+                    else
                     {
-                        args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
-                        args.Attributes.Add("title", "Task is part of your default template");
+                        string theDay = args.Column.Title.ToLower().Trim();
+                        if (DayColours.ContainsKey(theDay))
+                        {
+                            args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                        }
+
+                        if (args.Column.Property == "IsInTemplate")
+                        {
+                            // Styling for items which are in the user's template
+                            if (args.Data.IsInTemplate == true)
+                            {
+                                args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
+                                args.Attributes.Add("title", "Task is part of your default template");
+                            }
+
+                            if (!isActiveCode)
+                            {
+                                // Reset the styling to get the darker red regardless of whether the item is in the user's template
+                                args.Attributes.Clear();
+                                args.Attributes.Add("style", $"background-color : red;");
+                                args.Attributes.Add("title", "Code is inactive - no further time can be allocated to it.");
+                            }
+                        }
                     }
                 }
             }
