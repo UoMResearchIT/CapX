@@ -302,3 +302,7 @@ h4 {
 .rounded-frame {
     border-radius: var(--rz-button-border-radius)
 }
+
+.rzi-star {
+    font-variation-settings: 'FILL' 1;
+}

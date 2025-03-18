@@ -8,6 +8,7 @@
     @if (personModel != null)
     {
         <h1>Workload Model Changes</h1>
+        <RadzenText Text="@personModel.Name" TextStyle="TextStyle.DisplayH5" />
         <hr />
         <div class="card">
             <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">

@@ -93,6 +93,18 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Whether the active user is the person about which a page is concerned, the LM of the person or a superuser
+        /// </summary>
+        /// <param name="person"></param>
+        /// <returns></returns>
+        protected bool IsSuperuserOrLineManagerOrPerson(Person person)
+        {
+            var p = (person?.PersonId ?? 0) == (ActiveUser?.Person?.PersonId ?? -1);
+            var sulm = IsSuperuserOrLineManagerOfThisPerson(person);
+            return p || sulm;
+        }
+
+        /// <summary>
         /// Logs the error to the Sentry platform
         /// </summary>
         /// <param name="message"></param>

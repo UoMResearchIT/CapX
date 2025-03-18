@@ -61,7 +61,8 @@ namespace PPMTool.Services
         public override IEnumerable<Person> GetAll(PPMToolContext context)
         {
             return context.People
-                .Include(p => p.SkillTags)
+                .Include(p => p.OwnedSkills)
+                .ThenInclude(x => x.SkillTag)
                 .Include(p => p.WorkloadModelChanges)
                 .Include(p => p.Absences)
                 .ToList();
@@ -139,11 +140,8 @@ namespace PPMTool.Services
             // Delete all notes created or edited by the person
             context.Notes.RemoveRange(context.Notes.Where(x => x.Author.Person.PersonId == entity.PersonId || x.Editor.Person.PersonId == entity.PersonId));
 
-            // Remove entity from the skills tag list
-            foreach (var skill in context.SkillTags.Where(x => x.People.Contains(entity)))
-            {
-                skill.People.Remove(entity);
-            }
+            // Remove entity from the owned skills
+            context.OwnedSkills.RemoveRange(context.OwnedSkills.Where(x => x.Owner.PersonId == entity.PersonId));
 
             // Remove the person from the table
             context.People.Remove(entity);

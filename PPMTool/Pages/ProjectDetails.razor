@@ -40,7 +40,7 @@
                                       Text=@(isCurrentUserFollowing ? "Following" : "Follow?")
                                       ButtonStyle="ButtonStyle.Primary"
                                       Click="ToggleFollowing"
-                        Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId) />
+                                      Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId) />
                     }
                     <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" />
                     <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
