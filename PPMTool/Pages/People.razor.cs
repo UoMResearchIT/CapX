@@ -60,7 +60,8 @@ namespace PPMTool.Pages
             {
                 // Get people from the database
                 LoadData(new LoadDataArgs());
-            }).ContinueWith(t =>
+            })
+                .ContinueWith(t =>
             {
                 InvokeAsync(() =>
                 {

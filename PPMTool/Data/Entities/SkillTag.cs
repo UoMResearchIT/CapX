@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using PPMTool.Enums;
+using static PPMTool.Services.SkillTagService;
 
 namespace PPMTool.Data.Entities
 {
@@ -47,6 +49,18 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [JsonIgnore]
         public ICollection<OwnedSkill> OwnedSkills { get; set; }
+
+        /// <summary>
+        /// Rareness of the skill based on how many people have an owned instance of it -- not stored in the DB
+        /// </summary>
+        [NotMapped]
+        public SkillRareness Rareness { get; set; }
+
+        /// <summary>
+        /// Number of people with owned instance of the skill tag -- not stored in the DB
+        /// </summary>
+        [NotMapped]
+        public int RarenessCount { get; set; }
 
         /// <summary>
         /// Required override for logging identification
@@ -114,33 +128,10 @@ namespace PPMTool.Data.Entities
             return HasValidWikiLink;
         }
 
-        /// <summary>
-        /// Get the icon name for the emblem for the skill based on how many people have it
-        /// </summary>
-        /// <param name="count"></param>
-        /// <returns></returns>
-        public static SkillRareness GetRareness(int count)
+        public void UpdateRareness(SkillTagRareness rareness)
         {
-            if (count < 3)
-            {
-                return SkillRareness.Legendary;
-            }
-            else if (count < 6)
-            {
-                return SkillRareness.Epic;
-            }
-            else if (count < 9)
-            {
-                return SkillRareness.Rare;
-            }
-            else if (count < 12)
-            {
-                return SkillRareness.Uncommon;
-            }
-            else
-            {
-                return SkillRareness.Common;
-            }
+            Rareness = rareness.Rareness;
+            RarenessCount = rareness.Count;
         }
     }
 }

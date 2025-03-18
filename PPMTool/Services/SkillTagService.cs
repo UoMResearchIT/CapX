@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -115,6 +116,60 @@ namespace PPMTool.Services
             var ownedSkillsToRemove = context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == entity.SkillTagId);
             context.OwnedSkills.RemoveRange(ownedSkillsToRemove);
             if (commitChanges) context.SaveChanges();
+        }
+
+        /// <summary>
+        /// Get the rareness of the provided skill tag based on how many people own instances of it
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillTagId"></param>
+        /// <returns></returns>
+        public SkillTagRareness GetRareness(PPMToolContext context, int skillTagId)
+        {
+            var count = GetCountForTag(context, skillTagId);
+            return new SkillTagRareness
+            {
+                Rareness = GetRareness(count),
+                Count = count
+            };
+        }
+
+        /// <summary>
+        /// Represents the rareness information of a skill tag
+        /// </summary>
+        public class SkillTagRareness
+        {
+            public SkillRareness Rareness { get; set; }
+            public int Count { get; set; }
+        }
+
+        /// <summary>
+        /// Get the icon name for the emblem for the skill based on how many people have it
+        /// </summary>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        private SkillRareness GetRareness(int count)
+        {
+            if (count < 3)
+            {
+                return SkillRareness.Legendary;
+            }
+            else if (count < 6)
+            {
+                return SkillRareness.Epic;
+            }
+            else if (count < 9)
+            {
+                return SkillRareness.Rare;
+            }
+            else if (count < 12)
+            {
+                return SkillRareness.Uncommon;
+            }
+            else
+            {
+                return SkillRareness.Common;
+            }
         }
     }
 }
