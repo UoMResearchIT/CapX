@@ -15,7 +15,7 @@
     {
         <div class="row">
             <div class="col">
-                <h1>Profile</h1>
+                <h1>Developer Settings</h1>
             </div>
         </div>
         <div class="row">
@@ -28,7 +28,7 @@
         <div class="card">
             <div class="row">
                 <div class="col">
-                    <h2>Details</h2>
+                    <h2>User Details</h2>
                 </div>
             </div>
             <div class="row">
@@ -51,11 +51,11 @@
                 </div>
             </div>
             <RadzenDataList Data="@apiKeys"
-            TItem="ApiKey"
-            AllowVirtualization=true
-            WrapItems="false"
-            AllowPaging="false"
-            @ref=dataList>
+                            TItem="ApiKey"
+                            AllowVirtualization=true
+                            WrapItems="false"
+                            AllowPaging="false"
+                            @ref=dataList>
                 <Template Context="key">
                     <div class="row p-0">
                         <div class="col align-content-center">

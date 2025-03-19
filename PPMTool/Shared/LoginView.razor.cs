@@ -92,13 +92,5 @@ namespace PPMTool.Shared
             // Force a rerender of the login view
             StateHasChanged();
         }
-
-        /// <summary>
-        /// Navigate to the profile page of the active user
-        /// </summary>
-        private void GoToProfile()
-        {
-            Navigation.NavigateTo("profile");
-        }
     }
 }
