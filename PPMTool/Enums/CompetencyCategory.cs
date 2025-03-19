@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace PPMTool.Enums
 {
@@ -41,15 +40,5 @@ namespace PPMTool.Enums
         [Description("Service and Project Management")]
         [Icon("support_agent")]
         ServiceProjectManagement
-    }
-
-    public class IconAttribute : Attribute
-    {
-        public string Name { get; private set; }
-
-        public IconAttribute(string name)
-        {
-            Name = name;
-        }
     }
 }
