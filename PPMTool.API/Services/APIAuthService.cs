@@ -4,6 +4,9 @@ using PPMTool.Data.Entities;
 
 namespace PPMTool.API.Services
 {
+    /// <summary>
+    /// Service to check the validity of the API key
+    /// </summary>
     public class APIAuthService
     {
         /// <summary>

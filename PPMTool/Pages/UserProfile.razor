@@ -59,19 +59,19 @@
                 <Template Context="key">
                     <div class="row p-0">
                         <div class="col align-content-center">
-                            <b>Description:</b> @key.Description
+                            <b>Description: </b>@key.Description
                         </div>
                         <div class="col align-content-center">
-                            @key.Key.Substring(0, 3)********************
+                            @key.Key.Substring(0, 3)********************@key.Key.Substring(key.Key.Length - 4, 3)
                         </div>
                         <div class="col align-content-center">
                             @if (key.ExpiresAt < DateTime.UtcNow)
                             {
-                                <b>EXPIRED</b>
+                                <b class="red">EXPIRED</b>
                             }
                             else
                             {
-                                <b>Expires:</b> @key.ExpiresAt.ToString("ddd dd MMMM yyyy HH:mm:ss")
+                                <b>Expires: </b>@key.ExpiresAt.ToString("ddd dd MMMM yyyy HH:mm:ss")
                             }
                         </div>
                         <div class="col-auto">
