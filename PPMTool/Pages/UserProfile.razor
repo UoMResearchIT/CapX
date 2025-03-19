@@ -62,12 +62,15 @@
                             <b>Description: </b>@key.Description
                         </div>
                         <div class="col align-content-center">
-                            @key.Key.Substring(0, 3)********************@key.Key.Substring(key.Key.Length - 4, 3)
+                            ********************@key.Key.Substring(key.Key.Length - 5, 5)
                         </div>
                         <div class="col align-content-center">
                             @if (key.ExpiresAt < DateTime.UtcNow)
                             {
-                                <b class="red">EXPIRED</b>
+                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="warning" IconStyle="IconStyle.Danger" />
+                                    <b class="red">EXPIRED</b>
+                                </RadzenStack>
                             }
                             else
                             {
