@@ -50,41 +50,41 @@
                     <RadzenButton Icon="add" ButtonType="ButtonType.Button" Text="Generate API Key" Click="@(() => GenerateApiKey())" Disabled="Loading" />
                 </div>
             </div>
-            @if (Loading)
-            {
-                <LoadingComponent />
-            }
-            else
-            {
-                <RadzenDataList Data="@apiKeys"
-                                TItem="ApiKey"
-                                AllowVirtualization=true
-                                WrapItems="false"
-                                AllowPaging="false"
-                                @ref=dataList>
-                    <Template Context="key">
-                        <div class="row p-0">
-                            <div class="col align-content-center">
-                                <b>Description:</b> @key.Description
-                            </div>
-                            <div class="col align-content-center">
-                                @key.Key.Substring(0, 3)********************
-                            </div>
-                            <div class="col align-content-center">
-                                <b>Expires:</b> @key.ExpiresAt.ToString("ddd dd MMMM yyyy HH:mm:ss")
-                            </div>
-                            <div class="col-auto">
-                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Medium" class="ms-1" Style="padding: 0" MouseEnter="@(args => ShowTooltip(args, "Copy Key"))">
-                                        <div onclick="copyText('@(key.Key)')" style="padding: 0.5rem"><i class="notranslate rz-button-icon-left rzi">@((MarkupString)"content_copy")</i></div>
-                                    </RadzenButton>
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(key))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
-                                </RadzenStack>
-                            </div>
+            <RadzenDataList Data="@apiKeys"
+            TItem="ApiKey"
+            AllowVirtualization=true
+            WrapItems="false"
+            AllowPaging="false"
+            @ref=dataList>
+                <Template Context="key">
+                    <div class="row p-0">
+                        <div class="col align-content-center">
+                            <b>Description:</b> @key.Description
                         </div>
-                    </Template>
-                </RadzenDataList>
-            }
+                        <div class="col align-content-center">
+                            @key.Key.Substring(0, 3)********************
+                        </div>
+                        <div class="col align-content-center">
+                            @if (key.ExpiresAt < DateTime.UtcNow)
+                            {
+                                <b>EXPIRED</b>
+                            }
+                            else
+                            {
+                                <b>Expires:</b> @key.ExpiresAt.ToString("ddd dd MMMM yyyy HH:mm:ss")
+                            }
+                        </div>
+                        <div class="col-auto">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Medium" class="ms-1" Style="padding: 0" MouseEnter="@(args => ShowTooltip(args, "Copy Key"))">
+                                    <div onclick="copyText('@(key.Key)')" style="padding: 0.5rem"><i class="notranslate rz-button-icon-left rzi">@((MarkupString)"content_copy")</i></div>
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(key))" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                            </RadzenStack>
+                        </div>
+                    </div>
+                </Template>
+            </RadzenDataList>
         </div>
     }
 </div>

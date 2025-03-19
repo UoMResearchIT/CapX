@@ -45,6 +45,16 @@ namespace PPMTool.Pages
                 InvokeAsync(() =>
                 {
                     Loading = false;
+                    try
+                    {
+                        StateHasChanged();
+                    }
+                    catch
+                    {
+                        // Sometimes this throws a wobbler.
+                        // Not sure why so putting this here to just stop a hard crash.
+                        // #Classy
+                    }
                 });
             });
         }

@@ -1,4 +1,8 @@
-﻿namespace PPMTool.API.Authentication
+﻿using Microsoft.EntityFrameworkCore;
+using PPMTool.API.Services;
+using PPMTool.Data.Context;
+
+namespace PPMTool.API.Authentication
 {
     /// <summary>
     /// Middleware to authenticate API key
@@ -6,17 +10,23 @@
     public class APIKeyAuthMiddleware
     {
         private readonly RequestDelegate next;
-        private readonly IConfiguration configuration;
+        private readonly PPMToolContext dbContext;
+        private readonly APIAuthService authService;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="next"></param>
-        /// <param name="configuration"></param>
-        public APIKeyAuthMiddleware(RequestDelegate next, IConfiguration configuration)
+        /// <param name="contextFactory"></param>
+        /// <param name="authService"></param>
+        public APIKeyAuthMiddleware(
+            RequestDelegate next,
+            IDbContextFactory<PPMToolContext> contextFactory,
+            APIAuthService authService)
         {
             this.next = next;
-            this.configuration = configuration;
+            dbContext = contextFactory.CreateDbContext();
+            this.authService = authService;
         }
 
         /// <summary>
@@ -33,9 +43,9 @@
                 return;
             }
 
-            var apiKey = configuration["Authentication:ApiKey"];
+            var matchingUser = authService.GetUserIfApiKeyActive(dbContext, extractedApiKey);
 
-            if (apiKey != extractedApiKey)
+            if (matchingUser == null)
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsync("Invalid API Key");
