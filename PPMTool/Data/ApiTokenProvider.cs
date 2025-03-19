@@ -24,28 +24,35 @@ namespace PPMTool.Data
         /// <returns></returns>
         public string CreateToken(User user)
         {
-            string secretKey = configuration["Jwt:SecretKey"];
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
+            try
             {
-                Subject = new ClaimsIdentity(new[]
+                string secretKey = configuration["Jwt:SecretKey"];
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                var tokenDescriptor = new SecurityTokenDescriptor
                 {
+                    Subject = new ClaimsIdentity(new[]
+                    {
                     new Claim("UserId", user.UserId.ToString()),
                     new Claim("RoleType", user.RoleType.ToString())
                 }),
-                Expires = System.DateTime.UtcNow.AddDays(configuration.GetValue<double>("Jwt:ExpirationInDays")),
-                SigningCredentials = credentials
-            };
+                    Expires = System.DateTime.UtcNow.AddDays(configuration.GetValue<double>("Jwt:ExpirationInDays")),
+                    SigningCredentials = credentials
+                };
 
-            var handler = new JsonWebTokenHandler();
-            var key = handler.CreateToken(tokenDescriptor);
+                var handler = new JsonWebTokenHandler();
+                var key = handler.CreateToken(tokenDescriptor);
 
-            Debug.WriteLine($"Created key for {user.Name} => {key}");
+                Debug.WriteLine($"Created key for {user.Name} => {key}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.WriteLine($"Error creating token: {ex.Message}");
+            }
 
-            return key;
+            return string.Empty;
         }
     }
 }

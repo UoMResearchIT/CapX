@@ -31,6 +31,7 @@ namespace PPMTool.API.Services
                     key.Active = false;
                     context.Update(key);
                     context.SaveChanges();
+                    return null;
                 }
 
                 return key.Owner;

@@ -117,6 +117,12 @@
             var value = new ApiTokenProvider(Configuration).CreateToken(ActiveUser);
             apiKey.Key = value;
 
+            // Exit early if the key is empty
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
             // Add the Key to the DB
             ApiKeyService.Add(Context, apiKey);
 
@@ -129,10 +135,14 @@
             {
                 loading = false;
 
-                if (!t.IsFaulted)
+                if (!string.IsNullOrEmpty(apiKey.Key))
                 {
                     // Close the form
                     CloseForm(true);
+                }
+                else
+                {
+                    errorMessage = "Failed to generate key! Check secret settings!";
                 }
             });
         });        
