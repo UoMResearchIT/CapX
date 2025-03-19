@@ -130,7 +130,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public double GetFundsRequested(PPMToolContext context, int projectId)
         {
-            return context.Invoices.Where(x => x.Project.ProjectId == projectId).RoundedSum(x => x.Value, 0);
+            return context.Invoices.Where(x => x.Project.ProjectId == projectId && x.Status != Enums.InvoiceStatus.Cancelled).RoundedSum(x => x.Value, 0);
         }
     }
 }
