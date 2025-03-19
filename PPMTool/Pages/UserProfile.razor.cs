@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -18,23 +19,43 @@ namespace PPMTool.Pages
         [Inject]
         private DialogService DialogService { get; set; }
 
-        private IEnumerable<ApiKey> ApiKeys;
+        private IEnumerable<ApiKey> apiKeys;
         private RadzenDataList<ApiKey> dataList;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
+            Loading = true;
+            EnqueueLoadData(GetLoadTask);
             LogInformation("Viewing profile");
         }
 
         /// <summary>
-        /// Generates a new API key and saves it to the DB
+        /// Gets the load data task
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask()
+        {
+            return Task.Run(() =>
+            {
+                apiKeys = ApiKeyService.GetForUser(Context, ActiveUser.UserId);
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                });
+            });
+        }
+
+        /// <summary>
+        /// Opens the dialog to generate a new API key
         /// </summary>
         private void GenerateApiKey()
         {
-            // TODO: Pop up a dialog to ask them to add a description
-            DialogService.Open<ApiKeyConfigComponent>(
+            // Pop up a dialog to ask them to add a description
+            DialogService.OpenAsync<ApiKeyConfigComponent>(
                 "Configure API Key",
                 new Dictionary<string, object>
                     {
@@ -68,7 +89,7 @@ namespace PPMTool.Pages
             if (confirm)
             {
                 ApiKeyService.Delete(Context, key);
-                ApiKeys = ApiKeyService.GetForUser(Context, ActiveUser.UserId);
+                apiKeys = ApiKeyService.GetForUser(Context, ActiveUser.UserId);
                 StateHasChanged();
             }
         }
@@ -80,16 +101,6 @@ namespace PPMTool.Pages
         {
             dataList?.Reload();
             StateHasChanged();
-        }
-
-
-        /// <summary>
-        /// Copy the API key to the clipboard
-        /// </summary>
-        /// <param name="key"></param>
-        private void OnCopy(ApiKey key)
-        {
-
         }
     }
 }

@@ -65,7 +65,7 @@ function insertTextAtCaret(text) {
 
 function copyText(text) {
     navigator.clipboard.writeText(text).then(function () {
-        alert("Link to note copied to clipboard!\n" + text);
+        alert("Text copied to clipboard!");
     })
     .catch(function (error) {
         alert(error);

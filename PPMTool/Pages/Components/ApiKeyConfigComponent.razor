@@ -15,16 +15,22 @@
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenLabel Component="Expiration" Text="Validity" />
             <RadzenDropDown TValue="ApiKeyExpirationOptions"
-            Data="@expirationOptions"
-            Name="Expiration"
-            Change="ValidityChosen"
-            Style="width:100%;">
+                            Data="@expirationOptions"
+                            Name="Expiration"
+                            Change="ValidityChosen"
+                            @bind-Value="selectedValidity"
+                            Style="width:100%;"
+                            Disabled="loading">
                 <Template Context="item">
                     @(((ApiKeyExpirationOptions)item).GetDescription())
                 </Template>
             </RadzenDropDown>
             <RadzenLabel Component="KeyDescription" Text="Description" />
-            <RadzenTextBox @bind-Value="apiKey.Description" Name="KeyDescription" Placeholder="Enter a description for this key..." Style="width:100%; margin-left: 0;" />
+            <RadzenTextBox @bind-Value="apiKey.Description"
+                           Name="KeyDescription"
+                           Placeholder="Enter a description for this key..."
+                           Style="width:100%; margin-left: 0;"
+                           Disabled="loading" />
         </RadzenStack>
     </RadzenFieldset>
     <br />
@@ -36,8 +42,8 @@
         </RadzenStack>
     }
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
-        <RadzenButton Text="Create" Icon="add" ButtonType="ButtonType.Submit" />
-        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
+        <RadzenButton Text="Create" Icon="add" ButtonType="ButtonType.Submit" Disabled="loading" />
+        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" Disabled="loading" />
     </RadzenStack>
 </RadzenTemplateForm>
 
@@ -66,7 +72,9 @@
 
     private ApiKey apiKey;
     private string errorMessage;
+    private ApiKeyExpirationOptions selectedValidity;
     private IEnumerable<ApiKeyExpirationOptions> expirationOptions;
+    private bool loading;
 
     protected override void OnInitialized()
     {
@@ -100,18 +108,34 @@
             return;
         }
 
-        // Generate the key
-        var value = new ApiTokenProvider(Configuration).CreateToken(ActiveUser);
-        apiKey.Key = value;
+        loading = true;
 
-        // Add the Key to the DB
-        ApiKeyService.Add(Context, apiKey);
+        // Do the generation in a background task
+        Task.Run(() =>
+        {
+            // Generate the key
+            var value = new ApiTokenProvider(Configuration).CreateToken(ActiveUser);
+            apiKey.Key = value;
 
-        // Log the creation
-        Logger.LogInformation("Created API key");
+            // Add the Key to the DB
+            ApiKeyService.Add(Context, apiKey);
 
-        // Close the form
-        CloseForm(true);
+            // Log the creation
+            Logger.LogInformation("Created API key");
+
+        }).ContinueWith(t =>
+        {
+            InvokeAsync(() =>
+            {
+                loading = false;
+
+                if (!t.IsFaulted)
+                {
+                    // Close the form
+                    CloseForm(true);
+                }
+            });
+        });        
     }
 
     /// <summary>
