@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -17,6 +19,7 @@ namespace PPMTool.Pages
         private DialogService DialogService { get; set; }
 
         private IEnumerable<ApiKey> ApiKeys;
+        private RadzenDataList<ApiKey> dataList;
 
         protected override void OnInitialized()
         {
@@ -31,6 +34,19 @@ namespace PPMTool.Pages
         private void GenerateApiKey()
         {
             // TODO: Pop up a dialog to ask them to add a description
+            DialogService.Open<ApiKeyConfigComponent>(
+                "Configure API Key",
+                new Dictionary<string, object>
+                    {
+                        { nameof(ApiKeyConfigComponent.Logger), Logger },
+                        { nameof(ApiKeyConfigComponent.Context), Context },
+                        { nameof(ApiKeyConfigComponent.ActiveUser), ActiveUser },
+                        { nameof(ApiKeyConfigComponent.FormClosed), () => FormClosedHandler() }
+                    },
+                    new DialogOptions
+                    {
+                        ShowClose = false
+                    });
 
             LogInformation("Generated API Key");
         }
@@ -55,6 +71,15 @@ namespace PPMTool.Pages
                 ApiKeys = ApiKeyService.GetForUser(Context, ActiveUser.UserId);
                 StateHasChanged();
             }
+        }
+
+        /// <summary>
+        /// Callback which runs when the form closes
+        /// </summary>
+        private void FormClosedHandler()
+        {
+            dataList?.Reload();
+            StateHasChanged();
         }
 
 

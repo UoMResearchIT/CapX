@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Diagnostics;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -35,13 +36,16 @@ namespace PPMTool.Data
                     new Claim("UserId", user.UserId.ToString()),
                     new Claim("RoleType", user.RoleType.ToString())
                 }),
-                Expires = System.DateTime.UtcNow.AddMinutes(30),
+                Expires = System.DateTime.UtcNow.AddDays(configuration.GetValue<double>("Jwt:ExpirationInDays")),
                 SigningCredentials = credentials
             };
 
             var handler = new JsonWebTokenHandler();
+            var key = handler.CreateToken(tokenDescriptor);
 
-            return handler.CreateToken(tokenDescriptor);
+            Debug.WriteLine($"Created key for {user.Name} => {key}");
+
+            return key;
         }
     }
 }
