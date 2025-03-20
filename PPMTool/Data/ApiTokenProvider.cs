@@ -46,6 +46,7 @@ namespace PPMTool.Data
                 var key = handler.CreateToken(tokenDescriptor);
 
                 Debug.WriteLine($"Created key for {user.Name} => {key}");
+                return key;
             }
             catch (System.Exception ex)
             {
