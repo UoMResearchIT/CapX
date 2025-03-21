@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
+using PPMTool.API.Services;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 #if RELEASE
@@ -51,6 +52,7 @@ builder.Services.AddDbContext<PPMToolContext>(options =>
         )
     );
 builder.Services.AddScoped<SkillTagService>();
+builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 
 // Add services to the container.

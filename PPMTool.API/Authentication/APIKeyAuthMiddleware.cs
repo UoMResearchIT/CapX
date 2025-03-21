@@ -1,30 +1,36 @@
-﻿namespace PPMTool.API.Authentication
+﻿using PPMTool.API.Services;
+using PPMTool.Data.Context;
+
+namespace PPMTool.API.Authentication
 {
     /// <summary>
     /// Middleware to authenticate API key
     /// </summary>
-    public class APIKeyAuthMiddleware
+    public sealed class APIKeyAuthMiddleware
     {
         private readonly RequestDelegate next;
-        private readonly IConfiguration configuration;
+        private readonly APIAuthService authService;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="next"></param>
-        /// <param name="configuration"></param>
-        public APIKeyAuthMiddleware(RequestDelegate next, IConfiguration configuration)
+        /// <param name="authService"></param>
+        public APIKeyAuthMiddleware(
+            RequestDelegate next,
+            APIAuthService authService)
         {
             this.next = next;
-            this.configuration = configuration;
+            this.authService = authService;
         }
 
         /// <summary>
         /// Middleware implementation
         /// </summary>
-        /// <param name="context"></param>
+        /// <param name="context">HTTP Context</param>
+        /// <param name="dbContext">DB Context</param>
         /// <returns></returns>
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context, PPMToolContext dbContext)
         {
             if (!context.Request.Headers.TryGetValue("x-api-key", out var extractedApiKey))
             {
@@ -33,9 +39,9 @@
                 return;
             }
 
-            var apiKey = configuration["Authentication:ApiKey"];
+            var matchingUser = authService.GetUserIfApiKeyActive(dbContext, extractedApiKey);
 
-            if (apiKey != extractedApiKey)
+            if (matchingUser == null)
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsync("Invalid API Key");

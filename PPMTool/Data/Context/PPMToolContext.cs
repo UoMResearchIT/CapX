@@ -27,6 +27,8 @@ namespace PPMTool.Data.Context
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
 
+        public DbSet<ApiKey> ApiKeys { get; set; }
+
         /// <summary>
         /// Inject options.
         /// </summary>
