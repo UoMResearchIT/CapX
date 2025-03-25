@@ -50,6 +50,9 @@ namespace PPMTool.Pages
         [Inject]
         private PaymentService PaymentService { get; set; }
 
+        [Inject]
+        private FundingSourceService FundingSourceService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -201,10 +204,12 @@ namespace PPMTool.Pages
                 if (ProjectId != null)
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+                    var sources = FundingSourceService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId);
 
                     // Generate the finance item
                     financeSummaryItem = new FinanceSummaryItem(
                         project,
+                        sources,
                         InvoiceService.GetFundsRequested(context, project.ProjectId),
                         PaymentService.GetFundsReceived(context, project.ProjectId)
                     );

@@ -139,7 +139,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// List of funding sources for this project
         /// </summary>
-        public ICollection<FundingSource> Fundingsources { get; set; }
+        public ICollection<FundingSource> FundingSources { get; set; }
 
         /// <summary>
         /// Constructor also adds default status messages

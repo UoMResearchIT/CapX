@@ -898,7 +898,7 @@ namespace PPMTool.Migrations
             modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Project", "Project")
-                        .WithMany("Fundingsources")
+                        .WithMany("FundingSources")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1139,7 +1139,7 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
-                    b.Navigation("Fundingsources");
+                    b.Navigation("FundingSources");
 
                     b.Navigation("Invoices");
 

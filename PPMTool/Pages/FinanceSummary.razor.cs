@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -20,6 +21,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private PaymentService PaymentService { get; set; }
+
+        [Inject]
+        private FundingSourceService FundingSourceService { get; set; }
 
         private IList<FinanceSummaryItem> items;
         private RadzenDataGrid<FinanceSummaryItem> dataGrid;
@@ -53,11 +57,13 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Loading finance data...");
                 items = new List<FinanceSummaryItem>();
                 var projects = ProjectService.GetAll(Context);
+                var sources = FundingSourceService.GetAll(Context);
                 foreach (var project in projects)
                 {
                     items.Add(
                         new FinanceSummaryItem(
                             project,
+                            sources.Where(x => x.Project.ProjectId == project.ProjectId),
                             InvoiceService.GetFundsRequested(Context, project.ProjectId),
                             PaymentService.GetFundsReceived(Context, project.ProjectId)
                         )

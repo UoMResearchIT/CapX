@@ -154,6 +154,7 @@ namespace PPMTool.Pages
             {
                 financeSummaryItem = new FinanceSummaryItem(
                     selectedProject,
+                    FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
                     PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)
                 );
