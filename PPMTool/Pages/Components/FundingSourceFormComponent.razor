@@ -5,22 +5,23 @@
 @using PPMTool.Services
 @using Radzen
 @using PPMTool.Data.Entities
+@using DotNetExtensions;
 
 <RadzenTemplateForm TItem="FundingSource" Submit="@HandleValidSubmit" Data="@Source">
     <RadzenFieldset Text="Funding Source Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
-            <RadzenLabel Component="SourceType" Text="Source Type" />
-            <RadzenDropDown @bind-Value="Source.FundingSourceType" Name="SourceType" @Data="@sourceTypes">
+            <RadzenLabel Component="SourceType" Text="Source Type" class="font-weight-bold" />
+            <RadzenDropDown @bind-Value="Source.FundingSourceType" Name="SourceType" Data="@sourceTypes">
                 <Template Context="item">
-                    @item.GetDescription();
+                    @(((FundingSourceType)item).GetDescription())
                 </Template>
             </RadzenDropDown>
-            <RadzenLabel Component="HasAccount" Text="Has Account Code" />
+            <RadzenLabel Component="HasAccount" Text="Account Code Associated with Source?" class="font-weight-bold" />
             <RadzenSwitch @bind-Value="Source.HasAccountCode" Name="HasAccount" />
             @if (Source.HasAccountCode)
             {
-                <RadzenLabel Component="AccountCode" Text="Has Account Code" />
-                <RadzenTextBox @bind-Value="Source.AccountCode" Name="AccountCode" />
+                <RadzenLabel Component="AccountCode" Text="Account Code" class="font-weight-bold" />
+                <RadzenTextBox @bind-Value="Source.AccountCode" Name="AccountCode" Placeholder="e.g. R123456" />
             }
         </RadzenStack>
     </RadzenFieldset>
