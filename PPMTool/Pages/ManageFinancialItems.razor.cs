@@ -40,17 +40,22 @@ namespace PPMTool.Pages
         private PaymentService PaymentService { get; set; }
 
         [Inject]
+        private FundingSourceService FundingSourceService { get; set; }
+
+        [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
         private FinanceSummaryItem financeSummaryItem;
         private IEnumerable<Invoice> invoices;
         private IEnumerable<Payment> payments;
+        private IEnumerable<FundingSource> sources;
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
         private int selectedTab;
         private RadzenDataGrid<Payment> dataGridPayments;
         private RadzenDataGrid<Invoice> dataGridInvoices;
+        private RadzenDataGrid<FundingSource> dataGridSources;
         private bool exportRunning;
 
         protected override void OnInitialized()
@@ -127,12 +132,14 @@ namespace PPMTool.Pages
 
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
             payments = PaymentService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
+            sources = FundingSourceService.GetAll(Context).OrderByDescending(x => x.FundingSourceId);
 
             // Filter if a project is selected
             if (selectedProject != null)
             {
                 invoices = invoices.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 payments = payments.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
+                sources = sources.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
             }
 
             Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments.");
@@ -174,7 +181,7 @@ namespace PPMTool.Pages
         /// Method to load the dialog to add or edit a payment or invoice
         /// </summary>
         /// <param name="item"></param>
-        private void AddOrEditPaymentOrInvoice(FinanceItem item)
+        private void AddOrEditFinanceItem(BaseFinanceItem item)
         {
             if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
@@ -216,6 +223,10 @@ namespace PPMTool.Pages
                     }
                 );
             }
+            else if ((item == null && selectedTab == 2) || item is FundingSource)
+            {
+                // TODO
+            }
             else
             {
                 LogError("Unkown finance item type!");
@@ -229,6 +240,7 @@ namespace PPMTool.Pages
         {
             dataGridInvoices?.Reload();
             dataGridPayments?.Reload();
+            dataGridSources?.Reload();
             UpdateSummaryComponent();
             StateHasChanged();
         }

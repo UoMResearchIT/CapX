@@ -3,7 +3,7 @@ using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public class FundingSource
+    public class FundingSource : BaseFinanceItem
     {
         public int FundingSourceId { get; set; }
 
@@ -23,11 +23,5 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public FundingSourceType FundingSourceType { get; set; }
-
-        /// <summary>
-        /// Project which uses this funding source
-        /// </summary>
-        [Required]
-        public Project Project { get; set; }
     }
 }
