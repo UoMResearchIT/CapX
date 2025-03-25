@@ -25,5 +25,14 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public string Description { get; set; }
+
+        /// <summary>
+        /// Method to get a suitable description of the item for posting to a note
+        /// </summary>
+        /// <returns></returns>
+        public override string GetDescription()
+        {
+            return Description;
+        }
     }
 }

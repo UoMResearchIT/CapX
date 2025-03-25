@@ -86,11 +86,15 @@ namespace PPMTool.Pages.Components
         /// </summary>
         /// <param name="type"></param>
         /// <param name="isInvoice"></param>
-        protected void PostNoteToProject(FinanceItemChangeType type, FinanceItem item)
+        protected void PostNoteToProject(FinanceItemChangeType type, BaseFinanceItem item)
         {
+            // Select options
+            var badgeType = item is Invoice ? "warning" : (item is Payment ? "success" : "info");
+            var badgeTitle = item is Invoice ? "Invoice" : (item is Payment ? "Payment" : "Funding Source");
+
             // Create a formatted message
-            string message = $"<p><span class=\"badge badge-{(item is Invoice ? "warning" : "success")}\">{(item is Invoice ? "Invoice" : "Payment")}</span>&nbsp;<b>{type.GetDescription()} ID: {GetItemId()}</b>" +
-                $"<br />{item.Description}</p>";
+            string message = $"<p><span class=\"badge badge-{badgeType}\">{badgeTitle}</span>&nbsp;<b>{type.GetDescription()} ID: {GetItemId()}</b>" +
+                $"<br />{item.GetDescription()}</p>";
 
             // Add the note to the DB
             NoteService.Add(Context, new Note

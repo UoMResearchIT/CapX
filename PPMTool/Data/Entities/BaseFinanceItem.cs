@@ -9,5 +9,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public Project Project { get; set; }
+
+        /// <summary>
+        /// Method to get a suitable description of the item for posting to a note
+        /// </summary>
+        /// <returns></returns>
+        public abstract string GetDescription();
     }
 }

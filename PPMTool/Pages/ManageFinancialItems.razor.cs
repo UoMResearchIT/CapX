@@ -225,7 +225,23 @@ namespace PPMTool.Pages
             }
             else if ((item == null && selectedTab == 2) || item is FundingSource)
             {
-                // TODO
+                DialogService.Open<FundingSourceFormComponent>(
+                    $"{(item == null ? "Add" : "Edit")} Funding Source ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(FundingSourceFormComponent.Source), item },
+                        { nameof(FundingSourceFormComponent.Project), selectedProject == null ? item.Project : selectedProject },
+                        { nameof(FundingSourceFormComponent.Logger), Logger },
+                        { nameof(FundingSourceFormComponent.Context), Context },
+                        { nameof(FundingSourceFormComponent.ActiveUser), ActiveUser },
+                        { nameof(FundingSourceFormComponent.FormClosed), () => FormClosedHandler() },
+                        { nameof(FundingSourceFormComponent.EditAuthorised), EditAuthorised }
+                    },
+                    new DialogOptions
+                    {
+                        ShowClose = false
+                    }
+                );
             }
             else
             {
