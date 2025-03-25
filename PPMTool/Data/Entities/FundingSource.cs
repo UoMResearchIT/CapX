@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using DotNetExtensions;
 using PPMTool.Enums;
 
@@ -24,6 +25,11 @@ namespace PPMTool.Data.Entities
         /// The actual account code e.g. R / P / A code or N/A if not applicable
         /// </summary>
         public string AccountCode { get; set; }
+
+        /// <summary>
+        /// Set of payments attached to this funding source
+        /// </summary>
+        public ICollection<Payment> PaymentsFromSource { get; set; }
 
         /// <summary>
         /// Details about the funding source to be posted to a note
