@@ -142,7 +142,7 @@ namespace PPMTool.Pages
                 sources = sources.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
             }
 
-            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments.");
+            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
 
         /// <summary>
@@ -280,12 +280,16 @@ namespace PPMTool.Pages
                         var workbook = new XLWorkbook();
                         var sheet1 = workbook.Worksheets.Add("Invoices");
                         var sheet2 = workbook.Worksheets.Add("Payments");
+                        var sheet3 = workbook.Worksheets.Add("Funding Sources");
 
                         // Write headers and data for Invoices sheet
                         WriteDataToSheet(sheet1, invoices);
 
                         // Write headers and data for Payments sheet
                         WriteDataToSheet(sheet2, payments);
+
+                        // Write headers and data for Source sheet
+                        WriteDataToSheet(sheet3, sources);
 
                         var stream = new MemoryStream();
                         workbook.SaveAs(stream);
