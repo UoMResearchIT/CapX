@@ -37,6 +37,9 @@ namespace PPMTool.Pages
         private InvoiceService InvoiceService { get; set; }
 
         [Inject]
+        private PaymentService PaymentService { get; set; }
+
+        [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
@@ -123,7 +126,7 @@ namespace PPMTool.Pages
             UpdateSummaryComponent();
 
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
-            payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
+            payments = PaymentService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
 
             // Filter if a project is selected
             if (selectedProject != null)
@@ -145,7 +148,7 @@ namespace PPMTool.Pages
                 financeSummaryItem = new FinanceSummaryItem(
                     selectedProject,
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
-                    InvoiceService.GetFundsReceived(Context, selectedProject.ProjectId)
+                    PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)
                 );
             }
         }

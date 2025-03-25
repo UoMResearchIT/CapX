@@ -86,7 +86,7 @@
                     <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Title="Funds Received" FormatString="{0:C0}" Filterable="false" MinWidth="10px">
                         <Template Context="project">
-                            @(InvoiceService.GetFundsReceived(Context, project.ProjectId).ToString("C0"))
+                            @(PaymentService.GetFundsReceived(Context, project.ProjectId).ToString("C0"))
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="LeadershipFTE" Title="Mgmt FTE" MinWidth="10px" />

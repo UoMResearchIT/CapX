@@ -34,6 +34,9 @@ namespace PPMTool.Pages.Components
         protected InvoiceService InvoiceService { get; set; }
 
         [Inject]
+        protected PaymentService PaymentService { get; set; }
+
+        [Inject]
         protected DialogService DialogService { get; set; }
 
         [Inject]

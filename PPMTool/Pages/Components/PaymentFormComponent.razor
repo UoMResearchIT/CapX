@@ -82,12 +82,12 @@
 
         if (Payment.PaymentId > 0)
         {
-            InvoiceService.UpdatePayment(Context, Payment);
+            PaymentService.Update(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Update, Payment);
         }
         else
         {
-            InvoiceService.AddPayment(Context, Payment);
+            PaymentService.Add(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Add, Payment);
         }
 
@@ -105,7 +105,7 @@
         {
             Logger?.LogInformation($"Deleting payment ID {Payment.PaymentId}");
 
-            InvoiceService.DeletePayment(Context, Payment);
+            PaymentService.Delete(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Delete, Payment);
             CloseForm(true);
         }

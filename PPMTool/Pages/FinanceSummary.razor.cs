@@ -18,6 +18,9 @@ namespace PPMTool.Pages
         [Inject]
         private InvoiceService InvoiceService { get; set; }
 
+        [Inject]
+        private PaymentService PaymentService { get; set; }
+
         private IList<FinanceSummaryItem> items;
         private RadzenDataGrid<FinanceSummaryItem> dataGrid;
 
@@ -56,7 +59,7 @@ namespace PPMTool.Pages
                         new FinanceSummaryItem(
                             project,
                             InvoiceService.GetFundsRequested(Context, project.ProjectId),
-                            InvoiceService.GetFundsReceived(Context, project.ProjectId)
+                            PaymentService.GetFundsReceived(Context, project.ProjectId)
                         )
                     );
                 }

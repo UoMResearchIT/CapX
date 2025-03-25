@@ -57,6 +57,9 @@ namespace PPMTool.Pages
         [Inject]
         private InvoiceService InvoiceService { get; set; }
 
+        [Inject]
+        private PaymentService PaymentService { get; set; }
+
         private enum ViewOption
         {
             [Description("Last FY")]
@@ -434,7 +437,7 @@ namespace PPMTool.Pages
                     // Get the funds received for all confirmed projects this week
                     var receivedYTD = (float)projectsThisWeekConfirmed.Sum(x =>
                     {
-                        return InvoiceService.GetFundsReceived(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
+                        return PaymentService.GetFundsReceived(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
                     // Get the planned costs for all confirmed projects this week

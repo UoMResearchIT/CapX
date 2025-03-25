@@ -47,6 +47,9 @@ namespace PPMTool.Pages
         [Inject]
         private InvoiceService InvoiceService { get; set; }
 
+        [Inject]
+        private PaymentService PaymentService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -203,7 +206,7 @@ namespace PPMTool.Pages
                     financeSummaryItem = new FinanceSummaryItem(
                         project,
                         InvoiceService.GetFundsRequested(context, project.ProjectId),
-                        InvoiceService.GetFundsReceived(context, project.ProjectId)
+                        PaymentService.GetFundsReceived(context, project.ProjectId)
                     );
 
                     // Generate the blocks for the schedule chart
