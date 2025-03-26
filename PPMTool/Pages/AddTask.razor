@@ -174,13 +174,14 @@
                                         Data=@availableTags
                                         TextProperty="Name"
                                         Change=@OnChange
-                                        Style="width:100%" />
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.25rem">
+                                        Style="width:100%; margin-bottom: 0.5rem;" />
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.25rem" AlignItems="AlignItems.Center">
                         @foreach (var skill in skillsRequired)
                         {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Info">
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Style="@($"background-color: {skill.Rareness.GetTextColourCode()};")">
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                    @skill.Name <RadzenButton Size="ButtonSize.ExtraSmall" Icon="clear" Click="@(() => RemoveSkill(skill))" />
+                                    <RadzenText Text="@skill.Name" Style="color: white; margin-bottom: 0;" />
+                                    <RadzenButton Size="ButtonSize.ExtraSmall" Icon="clear" Click="@(() => RemoveSkill(skill))" />
                                 </RadzenStack>
                             </RadzenBadge>
                         }
