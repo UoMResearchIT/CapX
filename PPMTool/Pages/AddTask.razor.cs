@@ -249,7 +249,6 @@ namespace PPMTool.Pages
             // Set state change
             Loading = true;
             var tempActuals = new List<ActualsReportRow>();
-            StateHasChanged();
 
             // Queue background task
             EnqueueLoadData(async () =>
@@ -265,7 +264,11 @@ namespace PPMTool.Pages
                     {
                         UpdateActualsColumnSums(tempActuals);
                         Loading = false;
-                        StateHasChanged();
+                        try
+                        {
+                            StateHasChanged();
+                        }
+                        catch { }
                     });
                 });
             });
