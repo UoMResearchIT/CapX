@@ -60,6 +60,9 @@ namespace PPMTool.Pages
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
+        [Inject]
+        private SkillTagService SkillTagService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -130,6 +133,8 @@ namespace PPMTool.Pages
         private DateTime? actualsStartDate;
         private DateTime? actualsEndDate;
         private bool hideEmptyWeeks = false;
+        private IEnumerable<SkillTag> availableTags;
+        private string autoCompleteText;
 
         protected override void OnInitialized()
         {
@@ -155,6 +160,7 @@ namespace PPMTool.Pages
                 .OrderBy(x => x.Name)
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
+            availableTags = SkillTagService.GetAll(Context);
 
             // Get project model from DB and manually restore it in case it has been modified elsewhere
             ProjectModel = ProjectService.GetById(Context, ProjectId);
@@ -462,6 +468,9 @@ namespace PPMTool.Pages
             durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate;
         }
 
+        /// <summary>
+        /// Delete a subtask and clean up as part of the process
+        /// </summary>
         private async void DeleteSubTask()
         {
             if (TaskId != null && TaskId > 0)
@@ -524,6 +533,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Cancel the row edit and restore the model modifications
+        /// </summary>
+        /// <param name="resource"></param>
         protected override void CancelEdit(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Cancel edit row for {resource.GetSensibleObjectName()}");
@@ -533,6 +546,10 @@ namespace PPMTool.Pages
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
+        /// <summary>
+        /// Create a new row in the datagrid
+        /// </summary>
+        /// <param name="resource"></param>
         protected override void OnCreateRow(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
@@ -541,12 +558,21 @@ namespace PPMTool.Pages
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
+        /// <summary>
+        /// Remove the chosen resource from the available list
+        /// </summary>
+        /// <param name="entity"></param>
         protected override void OnUpdateRow(Resource entity)
         {
             Reset();
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
+        /// <summary>
+        /// Remove a resource row from the data grid
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected override async Task DeleteRow(Resource entity)
         {
             await base.DeleteRow(entity);
@@ -554,6 +580,11 @@ namespace PPMTool.Pages
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
+        /// <summary>
+        /// Save the row in the data grid
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
             await base.SaveRow(entity);
@@ -561,18 +592,30 @@ namespace PPMTool.Pages
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
+        /// <summary>
+        /// Insert a new row in the data grid
+        /// </summary>
+        /// <returns></returns>
         protected override async Task InsertRow()
         {
             await base.InsertRow();
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
+        /// <summary>
+        /// Edit a row in the data grid
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected override async Task EditRow(Resource entity)
         {
             await base.EditRow(entity);
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
+        /// <summary>
+        /// Discard changes to the page
+        /// </summary>
         private void DiscardChanges()
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Discarding task changes!");
@@ -637,7 +680,8 @@ namespace PPMTool.Pages
             {
                 error = "Task name must be unique within the project";
                 IsValid = false;
-            };
+            }
+            ;
 
             if (TaskModel.OriginalDemand <= 0)
             {
@@ -771,6 +815,38 @@ namespace PPMTool.Pages
         internal PPMToolContext GetContext()
         {
             return Context;
+        }
+
+        /// <summary>
+        /// When the search box is changed
+        /// </summary>
+        /// <param name="args"></param>
+        void OnChange(dynamic args)
+        {
+            var match = availableTags.FirstOrDefault(x => x.Name.Trim() == autoCompleteText.Trim());
+            if (match != null && !TaskModel.SkillsRequired.Any(x => x.SkillTagId == match.SkillTagId))
+            {
+                TaskModel.SkillsRequired.Add(match);
+                ClearSearch();
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Simply clear the search box
+        /// </summary>
+        private void ClearSearch()
+        {
+            autoCompleteText = string.Empty;
+        }
+
+        /// <summary>
+        /// Remove the skill from the current model
+        /// </summary>
+        /// <param name="skill"></param>
+        private void RemoveSkill(SkillTag skill)
+        {
+            TaskModel.SkillsRequired.Remove(skill);
         }
     }
 }

@@ -157,7 +157,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Skills that this task requires
         /// </summary>
-        public IEnumerable<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
+        public IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task

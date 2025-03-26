@@ -163,6 +163,31 @@
                 </div>
             </div>
 
+            <hr />
+            <h2>Skills</h2>
+            <div class="row">
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Skills Required" />
+                    <RadzenAutoComplete @bind-Value=@autoCompleteText
+                                        Placeholder="Search for Skill Tags to Add"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        Data=@availableTags
+                                        TextProperty="Name"
+                                        Change=@OnChange
+                                        Style="width:100%" />
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.25rem">
+                        @foreach (var skill in TaskModel.SkillsRequired)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info">
+                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    @skill.Name <RadzenButton Size="ButtonSize.ExtraSmall" Icon="clear" Click="@(() => RemoveSkill(skill))" />
+                                </RadzenStack>
+                            </RadzenBadge>
+                        }
+                    </RadzenStack>
+                </div>
+            </div>
+
             @if (TaskId != null && TaskId > 0)
             {
                 <hr />
