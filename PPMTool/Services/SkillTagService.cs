@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
@@ -127,9 +128,12 @@ namespace PPMTool.Services
         public SkillTagRareness GetRareness(PPMToolContext context, int skillTagId)
         {
             var count = GetCountForTag(context, skillTagId);
+            var totalActivePeople = context.People
+                .Where(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today))
+                .Count();
             return new SkillTagRareness
             {
-                Rareness = GetRareness(count),
+                Rareness = GetRareness(count, totalActivePeople),
                 Count = count
             };
         }
@@ -148,21 +152,22 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="count"></param>
         /// <returns></returns>
-        private SkillRareness GetRareness(int count)
+        private SkillRareness GetRareness(int count, int total)
         {
-            if (count < 3)
+            var percent = (count / (double)total) * 100;
+            if (percent < 5)
             {
                 return SkillRareness.Legendary;
             }
-            else if (count < 6)
+            else if (percent < 10)
             {
                 return SkillRareness.Epic;
             }
-            else if (count < 9)
+            else if (percent < 18)
             {
                 return SkillRareness.Rare;
             }
-            else if (count < 12)
+            else if (percent < 30)
             {
                 return SkillRareness.Uncommon;
             }
