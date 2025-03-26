@@ -123,12 +123,13 @@
                                     @ref="@dataGridPayments">
                         <Columns>
                             <RadzenDataGridColumn TItem="Payment" Property="PaymentId" Title="Payment ID" MinWidth="10px" Width="3rem" />
+                            <RadzenDataGridColumn TItem="Payment" Property="Project.RTP" Title="RTP" MinWidth="10px" Width="3rem"/>
+                            <RadzenDataGridColumn TItem="Payment" Property="Source.FundingSourceId" Title="Funding Source" MinWidth="10px" Width="3rem" />
                             <RadzenDataGridColumn TItem="Payment" Property="Invoice.InvoiceId" Title="Associated Invoice" MinWidth="10px" Width="3rem">
                                 <Template Context="payment">
                                     @(payment.Invoice == null ? "-" : payment.Invoice.InvoiceId)
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="Invoice" Property="Project.RTP" Title="RTP" MinWidth="10px" Width="3rem"/>
                             <RadzenDataGridColumn TItem="Payment" Property="KeyDate" Title="Payment Date" FormatString="{0:d}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="Payment" Property="Value" Title="Amount" FormatString="{0:C0}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="Payment" Property="Description" Title="Notes" MinWidth="10px" Width="10rem">
