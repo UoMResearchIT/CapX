@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250326073627_AddedOptionalPaymentFundingSourceLink")]
+    partial class AddedOptionalPaymentFundingSourceLink
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -407,7 +409,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SourceFundingSourceId")
+                    b.Property<int?>("SourceFundingSourceId")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("Value")
@@ -991,9 +993,7 @@ namespace PPMTool.Migrations
 
                     b.HasOne("PPMTool.Data.Entities.FundingSource", "Source")
                         .WithMany("PaymentsFromSource")
-                        .HasForeignKey("SourceFundingSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SourceFundingSourceId");
 
                     b.Navigation("Invoice");
 
