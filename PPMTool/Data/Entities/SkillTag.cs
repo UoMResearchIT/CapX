@@ -63,6 +63,11 @@ namespace PPMTool.Data.Entities
         public int RarenessCount { get; set; }
 
         /// <summary>
+        /// The tasks that require this skill
+        /// </summary>
+        public ICollection<SubTask> TasksNeedingThisSkill { get; set; }
+
+        /// <summary>
         /// Required override for logging identification
         /// </summary>
         /// <returns></returns>
