@@ -176,7 +176,7 @@
                                         Change=@OnChange
                                         Style="width:100%" />
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.25rem">
-                        @foreach (var skill in TaskModel.SkillsRequired)
+                        @foreach (var skill in skillsRequired)
                         {
                             <RadzenBadge BadgeStyle="BadgeStyle.Info">
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
