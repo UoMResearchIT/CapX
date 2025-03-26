@@ -135,7 +135,6 @@ namespace PPMTool.Pages
         private bool hideEmptyWeeks = false;
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
-        private IList<SkillTag> skillsRequired = new List<SkillTag>();
 
         protected override void OnInitialized()
         {
@@ -192,7 +191,6 @@ namespace PPMTool.Pages
                 // Get task and restore it in case it has been modified elsewhere
                 var referenceTask = ProjectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
                 if (restoreModels) SubTaskService.RestoreModel(Context, ref referenceTask);
-                skillsRequired = SkillTagService.GetAllSkillsForSubTask(Context, referenceTask.SubTaskId).ToList();
 
                 Debug.WriteLine($"** Reference Task: Start: {referenceTask.StartDate.ToShortDateString()} | End: {referenceTask.EndDate.ToShortDateString()} | Work: {referenceTask.PlannedWorkHours} | Duration: {referenceTask.DurationDays}");
 
@@ -755,9 +753,6 @@ namespace PPMTool.Pages
                     TaskModel.OwningProject = ProjectModel;
                     Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Owning project ID = {taskModel.OwningProject?.ProjectId}");
 
-                    // Update the skills on the model
-                    TaskModel.SkillsRequired = skillsRequired;
-
                     // Add new new to task list for project if it is a new one
                     if (TaskModel.SubTaskId <= 0)
                     {
@@ -832,9 +827,9 @@ namespace PPMTool.Pages
         void OnChange(dynamic args)
         {
             var match = availableTags.FirstOrDefault(x => x.Name.Trim() == autoCompleteText.Trim());
-            if (match != null && !skillsRequired.Any(x => x.SkillTagId == match.SkillTagId))
+            if (match != null && !TaskModel.SkillsRequired.Any(x => x.SkillTagId == match.SkillTagId))
             {
-                skillsRequired.Add(match);
+                TaskModel.SkillsRequired.Add(match);
                 ClearSearch();
                 StateHasChanged();
             }
@@ -854,7 +849,7 @@ namespace PPMTool.Pages
         /// <param name="skill"></param>
         private void RemoveSkill(SkillTag skill)
         {
-            skillsRequired.Remove(skill);
+            TaskModel.SkillsRequired.Remove(skill);
         }
     }
 }

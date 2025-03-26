@@ -99,6 +99,8 @@ namespace PPMTool.Services
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)
                             .ThenInclude(r => r.WorkloadModelChanges)
+                .Include(p => p.SubTasks)
+                    .ThenInclude(x => x.SkillsRequired)
                 .Include(x => x.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)

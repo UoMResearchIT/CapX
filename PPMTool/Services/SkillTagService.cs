@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -176,28 +175,6 @@ namespace PPMTool.Services
             {
                 return SkillRareness.Common;
             }
-        }
-
-        /// <summary>
-        /// Get all the skill tags that are associated with the given subtask
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="subTaskId"></param>
-        /// <returns></returns>
-        public IEnumerable<SkillTag> GetAllSkillsForSubTask(PPMToolContext context, int subTaskId)
-        {
-            var tags = context.SubTasks
-                .Where(x => x.SubTaskId == subTaskId)
-                .Include(x => x.SkillsRequired)
-                .SelectMany(x => x.SkillsRequired);
-
-            foreach (var skill in tags)
-            {
-                var rareness = GetRareness(context, skill.SkillTagId);
-                skill.UpdateRareness(rareness);
-            }
-
-            return tags;
         }
     }
 }
