@@ -10,16 +10,30 @@
     <RadzenFieldset Text="Invoice Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                <RadzenDatePicker @bind-Value="Invoice.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
-                <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")" />
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    <RadzenLabel Component="Date" Text="Invoice Date" class="font-weight-bold" />
+                    <RadzenDatePicker @bind-Value="Invoice.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    <RadzenLabel Component="Amount" Text="Amount" class="font-weight-bold" />
+                    <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")" />
+                </RadzenStack>
             </RadzenStack>
+            <RadzenLabel Component="Notes" Text="Notes" class="font-weight-bold" />
             <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Mandatory notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
+            <RadzenLabel Component="InvoieReference" Text="Invoice Reference" class="font-weight-bold" />
             <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
-            <RadzenDropDown Data="@statuses" @bind-Value="Invoice.Status" Name="Status" Style="width:100%;">
+            <RadzenLabel Component="Status" Text="Status" class="font-weight-bold" />
+            <RadzenDropDown Data="@statuses"
+                            @bind-Value="Invoice.Status"
+                            Name="Status"
+                            Style="width:100%;"
+                            Placeholder="Select Invoice Status">
                 <Template Context="item">
                     @(((InvoiceStatus)item).GetDescription())
                 </Template>
             </RadzenDropDown>
+            <RadzenLabel Component="InvoiceURL" Text="Link to Invoice" class="font-weight-bold" />
             <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%; margin-left: 0;" />
         </RadzenStack>
     </RadzenFieldset>
