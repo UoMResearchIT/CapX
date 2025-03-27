@@ -43,8 +43,12 @@ namespace PPMTool.Shared
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
+        [Inject]
+        private InnateCodeService InnateCodeService { get; set; }
+
         private LoginView loginView;
         private int totalTimesheetIssues;
+        private int totalTimesheetCodeIssues;
 
         protected override void OnInitialized()
         {
@@ -60,9 +64,11 @@ namespace PPMTool.Shared
 
             if (loginView != null && loginView.ActiveUser != null)
             {
-                var oldValue = totalTimesheetIssues;
+                var oldTimesheetIssuesValue = totalTimesheetIssues;
+                var oldTimesheetCodeIssuesValue = totalTimesheetCodeIssues;
                 totalTimesheetIssues = TimesheetService.GetIssueCount(context, loginView.ActiveUser?.Person?.PersonId ?? 0);
-                if (oldValue != totalTimesheetIssues)
+                totalTimesheetCodeIssues = InnateCodeService.GetIssueCount(context, loginView.ActiveUser?.Person?.PersonId ?? 0);
+                if (oldTimesheetIssuesValue != totalTimesheetIssues || oldTimesheetCodeIssuesValue != totalTimesheetCodeIssues)
                 {
                     StateHasChanged();
                 }
