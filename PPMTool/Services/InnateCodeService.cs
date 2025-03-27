@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -120,6 +121,20 @@ namespace PPMTool.Services
         {
             return context.InnateCodeTasks
                 .Include(x => x.InnateCode);
+        }
+
+        /// <summary>
+        /// Gets details of the total number of rejected timesheet number (for self)
+        /// and submitted timesheets (for direct reports).
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activeUserId"></param>
+        /// <returns></returns>
+        public int GetIssueCount(PPMToolContext context, int activeUserId)
+        {
+            // Calculate how many codes can now be made inactive
+            Debug.WriteLine("** Updating timesheet code issues count");
+            return 0;
         }
     }
 }
