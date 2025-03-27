@@ -33,13 +33,6 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Update rareness
-            foreach (var skill in tags)
-            {
-                var rareness = tagService.GetRareness(context, skill.SkillTagId);
-                skill.UpdateRareness(rareness);
-            }
-
             logger.LogInformation($"API: GetAllSkillsTags: Count = {tags?.Count}");
             return Results.Json(tags);
         }
@@ -82,13 +75,6 @@ public static class Skills
                 .Select(x => x.SkillTag)
                 .ToListAsync();
 
-            // Update rareness
-            foreach (var skill in tags)
-            {
-                var rareness = tagService.GetRareness(context, skill.SkillTagId);
-                skill.UpdateRareness(rareness);
-            }
-
             logger.LogInformation($"API: GetAllSkillsTagsForPerson: Person = {person.Name}, Count = {tags.Count}");
             return Results.Json(tags);
         }
@@ -130,17 +116,6 @@ public static class Skills
             foreach (var person in people)
             {
                 var skillTags = ownedSkills.Where(x => x.Owner.PersonId == person.PersonId).Select(x => x.SkillTag);
-
-                // Update rareness
-                foreach (var skill in skillTags)
-                {
-                    if (skill.Rareness == 0 && skill.RarenessCount == 0)
-                    {
-                        var rareness = tagService.GetRareness(context, skill.SkillTagId);
-                        skill.UpdateRareness(rareness);
-                    }
-                }
-
                 results.Add(person.Name, skillTags);
             }
 

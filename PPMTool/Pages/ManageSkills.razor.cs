@@ -106,14 +106,6 @@ namespace PPMTool.Pages
             // Set the flag here so the filter doesn't disappear when there are no matching results
             tableEmpty = query.Count() == 0;
 
-            // Update the skill tag rareness
-            foreach (var skill in query)
-            {
-                // Initialise the rareness for the tag
-                var rareness = TagService.GetRareness(Context, skill.SkillTagId);
-                skill.UpdateRareness(rareness);
-            }
-
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {

@@ -197,13 +197,6 @@ namespace PPMTool.Pages
                 // Clone the reference task if copying
                 TaskModel = IsCopy ? SubTaskService.Clone(Context, referenceTask) : referenceTask;
 
-                // Update the rareness
-                foreach (var skill in TaskModel.SkillsRequired)
-                {
-                    var rareness = SkillTagService.GetRareness(Context, skill.SkillTagId);
-                    skill.UpdateRareness(rareness);
-                }
-
                 // Assign the predecessor option
                 InitialisePredecessorBinding();
 

@@ -4,7 +4,6 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -102,7 +101,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="skillTagId"></param>
         /// <returns></returns>
-        public int GetCountForTag(PPMToolContext context, int skillTagId)
+        public int GetOwnedSkillCountForTag(PPMToolContext context, int skillTagId)
         {
             return context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == skillTagId).Count();
         }
@@ -125,55 +124,19 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="skillTagId"></param>
         /// <returns></returns>
-        public SkillTagRareness GetRareness(PPMToolContext context, int skillTagId)
+        public void UpdateSkillTagRareness(PPMToolContext context, SkillTag entity, bool commitChanges = true)
         {
-            var count = GetCountForTag(context, skillTagId);
+            // Get owned skill count
+            var count = GetOwnedSkillCountForTag(context, entity.SkillTagId);
             var totalActivePeople = context.People
                 .Where(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today))
                 .Count();
-            return new SkillTagRareness
-            {
-                Rareness = GetRareness(count, totalActivePeople),
-                Count = count
-            };
-        }
 
-        /// <summary>
-        /// Represents the rareness information of a skill tag
-        /// </summary>
-        public class SkillTagRareness
-        {
-            public SkillRareness Rareness { get; set; }
-            public int Count { get; set; }
-        }
-
-        /// <summary>
-        /// Get the icon name for the emblem for the skill based on how many people have it
-        /// </summary>
-        /// <param name="count"></param>
-        /// <returns></returns>
-        private SkillRareness GetRareness(int count, int total)
-        {
-            var percent = (count / (double)total) * 100;
-            if (percent < 5)
+            // Update the rarness of the skill tag
+            entity.UpdateRareness(count, totalActivePeople);
+            if (commitChanges)
             {
-                return SkillRareness.Legendary;
-            }
-            else if (percent < 10)
-            {
-                return SkillRareness.Epic;
-            }
-            else if (percent < 18)
-            {
-                return SkillRareness.Rare;
-            }
-            else if (percent < 30)
-            {
-                return SkillRareness.Uncommon;
-            }
-            else
-            {
-                return SkillRareness.Common;
+                context.SaveChanges();
             }
         }
     }

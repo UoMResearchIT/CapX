@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using PPMTool.Enums;
-using static PPMTool.Services.SkillTagService;
 
 namespace PPMTool.Data.Entities
 {
@@ -51,15 +49,13 @@ namespace PPMTool.Data.Entities
         public ICollection<OwnedSkill> OwnedSkills { get; set; }
 
         /// <summary>
-        /// Rareness of the skill based on how many people have an owned instance of it -- not stored in the DB
+        /// Rareness of the skill based on how many people have an owned instance of it
         /// </summary>
-        [NotMapped]
         public SkillRareness Rareness { get; set; }
 
         /// <summary>
-        /// Number of people with owned instance of the skill tag -- not stored in the DB
+        /// Number of people with owned instance of the skill tag
         /// </summary>
-        [NotMapped]
         public int RarenessCount { get; set; }
 
         /// <summary>
@@ -133,10 +129,36 @@ namespace PPMTool.Data.Entities
             return HasValidWikiLink;
         }
 
-        public void UpdateRareness(SkillTagRareness rareness)
+        /// <summary>
+        /// Update the rareness for the skill based on how many people have it as an owned skill
+        /// </summary>
+        /// <param name="count"></param>
+        /// <param name="total"></param>
+        /// <returns></returns>
+        public void UpdateRareness(int count, int total)
         {
-            Rareness = rareness.Rareness;
-            RarenessCount = rareness.Count;
+            var percent = (count / (double)total) * 100;
+            var rareness = SkillRareness.Common;
+            if (percent < 5)
+            {
+                rareness = SkillRareness.Legendary;
+            }
+            else if (percent < 10)
+            {
+                rareness = SkillRareness.Epic;
+            }
+            else if (percent < 18)
+            {
+                rareness = SkillRareness.Rare;
+            }
+            else if (percent < 30)
+            {
+                rareness = SkillRareness.Uncommon;
+            }
+
+            // Set the values in the entity
+            Rareness = rareness;
+            RarenessCount = count;
         }
     }
 }
