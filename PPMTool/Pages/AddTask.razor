@@ -178,7 +178,7 @@
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.25rem" AlignItems="AlignItems.Center">
                         @foreach (var skill in TaskModel.SkillsRequired)
                         {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Style="@($"background-color: {skill.Rareness.GetTextColourCode()};")">
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Style="@($"background-color: {skill.Rareness.GetTextColourCode()}; padding: 0.1rem")">
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                                     <RadzenText Text="@skill.Name" Style="color: white; margin-bottom: 0;" />
                                     <RadzenButton Size="ButtonSize.ExtraSmall" Icon="clear" Click="@(() => RemoveSkill(skill))" />
