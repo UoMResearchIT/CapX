@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.API.Attributes;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -21,6 +22,7 @@ public static class Skills
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [SkillTagShallowSchema]
     public static async Task<IResult> GetAllSkillTagsAsync(PPMToolContext context, ILogger logger, SkillTagService tagService)
     {
         try
@@ -54,6 +56,7 @@ public static class Skills
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [SkillTagShallowSchema]
     public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, SkillTagService tagService, string name)
     {
         try
@@ -95,6 +98,7 @@ public static class Skills
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<string, IEnumerable<SkillTag>>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [SkillTagShallowSchema]
     public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger, SkillTagService tagService)
     {
         try
