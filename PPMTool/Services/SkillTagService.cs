@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -138,6 +139,34 @@ namespace PPMTool.Services
             {
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Given a project ID, returns the unique list of skill tags aggregate from its subtasks
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        public IEnumerable<SkillTag> GetSkillsForProject(PPMToolContext context, int projectId)
+        {
+            // Find all the subtasks for the project
+            var subtasks = context.SubTasks
+                .Include(x => x.OwningProject)
+                .Where(x => x.OwningProject.ProjectId == projectId);
+
+            var skills = new List<SkillTag>();
+            foreach (var subtask in subtasks)
+            {
+                skills.AddRange(
+                    context.SkillTags
+                        .Include(x => x.TasksNeedingThisSkill)
+                        .Where(x => x.TasksNeedingThisSkill
+                            .Any(x => x.SubTaskId == subtask.SubTaskId)
+                        )
+                    );
+            }
+
+            return skills.DistinctBy(x => x.SkillTagId);
         }
     }
 }

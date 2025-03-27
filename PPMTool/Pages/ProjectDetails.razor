@@ -72,6 +72,13 @@
     else if (project?.SubTasks != null && project?.SubTasks.Count > 0)
     {
         <div class="row">
+            <div class="col">
+                <h2>Skills Required</h2>
+                <SkillsAsBadgesComponent SkillsList="@skillsRequiredForProject" />
+            </div>
+        </div>
+        <hr />
+        <div class="row">
             <div class="col" style="min-width: 500px">
                 <h2>Burn-Up Chart</h2>
                 <div class="card">
