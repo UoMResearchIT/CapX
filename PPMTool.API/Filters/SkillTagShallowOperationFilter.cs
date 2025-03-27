@@ -8,7 +8,7 @@ namespace PPMTool.API.Filters
     /// <summary>
     /// Method to ensure that if SkillTag is featured in a return structure, the documentation only shows a shallow object
     /// </summary>
-    public class SkillTagShallowOperationFilter : IOperationFilter
+    internal class SkillTagShallowOperationFilter : IOperationFilter
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
