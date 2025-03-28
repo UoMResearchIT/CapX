@@ -20,6 +20,9 @@ namespace PPMTool.Pages
         [Inject]
         private InvoiceService InvoiceService { get; set; }
 
+        [Inject]
+        private SkillTagService SkillTagService { get; set; }
+
         private IEnumerable<ProjectWithSkills> projectsWithSkills;
         private RadzenDataGrid<ProjectWithSkills> dataGrid;
         private int count;
@@ -125,16 +128,8 @@ namespace PPMTool.Pages
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                if (args.Filter.StartsWith("Rareness"))
-                {
-                    var filter = args.Filters.FirstOrDefault(x => x.Property == "Rareness");
-                    var filterValue = filter?.FilterValue as int?;
-                    if (filterValue != null)
-                    {
-                        query = query.Where(x => (int)x.Rareness == filterValue);
-                    }
-                }
-                else
+                // Apply standard filters to the query by ignoring the special "Skills" filter
+                if (!args.Filter.StartsWith("Skills"))
                 {
                     query = query.Where(args.Filter);
                 }
@@ -143,40 +138,40 @@ namespace PPMTool.Pages
             // Sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                if (args.OrderBy.StartsWith("Rareness"))
+                // Apply standard sorting -- sorting disabled on the special "Skills" column
+                query = query.OrderBy(args.OrderBy);
+            }
+
+            // Convert the remaining projects to a list of ProjectWithSkills DTOs
+            var dtos = query.Select(x => new ProjectWithSkills
+            {
+                Project = x,
+                Skills = SkillTagService.GetSkillsForProject(Context, x.ProjectId)
+            });
+
+            // Skill Tag Filtering
+            if (!string.IsNullOrEmpty(args.Filter) && args.Filter.StartsWith("Skills"))
+            {
+                var filter = args.Filters.FirstOrDefault(x => x.Property == "Skills");
+                var filterValue = filter?.FilterValue as string;
+                if (filterValue != null)
                 {
-                    var order = args.Sorts.FirstOrDefault(x => x.Property == "Rareness");
-                    if (order.SortOrder == SortOrder.Ascending)
-                    {
-                        query = query.OrderBy(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
-                    }
-                    else
-                    {
-                        query = query.OrderByDescending(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
-                    }
-                }
-                else
-                {
-                    query = query.OrderBy(args.OrderBy);
+                    dtos = dtos.Where(x => x.Skills.Any(x => x.Name == filterValue));
                 }
             }
 
             // Assign to grid source
-            count = query.Count();
-            IList<Project> projectsAsList = null;
+            count = dtos.Count();
             if (args.Skip == null)
             {
-                projectsAsList = query.Take(pageCount).ToList();
+                projectsWithSkills = dtos.Take(pageCount).ToList();
             }
             else
             {
-                projectsAsList = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                projectsWithSkills = dtos.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
 
-            // TODO: Convert to with skills
-
-
-            Debug.WriteLine($"** {projectsWithSkills.Count()} projects loaded.");
+            Debug.WriteLine($"** {dtos.Count()} projects loaded. {projectsWithSkills.Count()} displayed.");
         }
 
         /// <summary>
