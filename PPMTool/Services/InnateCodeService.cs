@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -124,17 +123,23 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets details of the total number of rejected timesheet number (for self)
-        /// and submitted timesheets (for direct reports).
+        /// Gets details of the timesheet codes which could be marked
+        /// as inactive as they are not associated with projects that are still active
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="activeUserId"></param>
         /// <returns></returns>
-        public int GetIssueCount(PPMToolContext context, int activeUserId)
+        public IEnumerable<InnateCode> GetCodesToDeactivate(PPMToolContext context)
         {
-            // Calculate how many codes can now be made inactive
-            Debug.WriteLine("** Updating timesheet code issues count");
-            return 0;
+            // Get codes which are active, contain "rtp" (project codes) and 
+            // which are not associated with any currently active projects
+            var unusedTimesheetCodes = context.InnateCodes
+                .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("rtp"))
+                .Where(ic => !context.Projects.Any(p => p.InnateActivity.InnateCodeId == ic.InnateCodeId && (int)p.ProjectStatus < 7));
+
+            // PHB : Need to possibly do more work to weed out only those which won't have further time logged to them -
+            // i.e. the RSEs using them have up-to-date timesheets so shouldn't need them any more
+
+            return unusedTimesheetCodes;
         }
     }
 }
