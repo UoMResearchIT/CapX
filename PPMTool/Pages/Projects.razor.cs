@@ -125,16 +125,6 @@ namespace PPMTool.Pages
             // Set the flag here so the filter doesn't disappear when there are no matching results
             tableEmpty = query.Count() == 0;
 
-            // Filtering
-            if (!string.IsNullOrEmpty(args.Filter))
-            {
-                // Apply standard filters to the query by ignoring the special "Skills" filter
-                if (!args.Filter.StartsWith("Skills"))
-                {
-                    query = query.Where(args.Filter.Replace("Project.", ""));
-                }
-            }
-
             // Sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -146,18 +136,14 @@ namespace PPMTool.Pages
             var dtos = query.Select(x => new ProjectWithSkills
             {
                 Project = x,
-                Skills = SkillTagService.GetSkillsForProject(Context, x.ProjectId)
+                SkillNames = SkillTagService.GetSkillsForProject(Context, x.ProjectId).Select(x => x.Name)
             });
 
-            // Skill Tag Filtering
-            if (!string.IsNullOrEmpty(args.Filter) && args.Filter.StartsWith("Skills"))
+            // Filtering
+            if (!string.IsNullOrEmpty(args.Filter))
             {
-                var filter = args.Filters.FirstOrDefault(x => x.Property == "Skills");
-                var filterValue = filter?.FilterValue as string;
-                if (filterValue != null)
-                {
-                    dtos = dtos.Where(x => x.Skills.Any(x => x.Name == filterValue));
-                }
+                // Apply standard filters to the DTOs
+                dtos = dtos.Where(args.Filter);
             }
 
             // Assign to grid source
