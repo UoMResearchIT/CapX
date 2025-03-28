@@ -48,7 +48,8 @@ namespace PPMTool.Shared
 
         private LoginView loginView;
         private int totalTimesheetIssues;
-        private int totalTimesheetCodeIssues;
+        private int totalTimesheetCodesToDeactivate;
+        private bool adminMenuItemExpanded = false;
 
         protected override void OnInitialized()
         {
@@ -56,6 +57,7 @@ namespace PPMTool.Shared
             versionString = $"v{Configuration["VersionNumber"]}";
             context = ContextFactory.CreateDbContext();
             razorComponentReference = DotNetObjectReference.Create(this);
+
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -65,11 +67,13 @@ namespace PPMTool.Shared
             if (loginView != null && loginView.ActiveUser != null)
             {
                 var oldTimesheetIssuesValue = totalTimesheetIssues;
-                var oldTimesheetCodeIssuesValue = totalTimesheetCodeIssues;
+                var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
                 totalTimesheetIssues = TimesheetService.GetIssueCount(context, loginView.ActiveUser?.Person?.PersonId ?? 0);
-                totalTimesheetCodeIssues = InnateCodeService.GetIssueCount(context, loginView.ActiveUser?.Person?.PersonId ?? 0);
-                if (oldTimesheetIssuesValue != totalTimesheetIssues || oldTimesheetCodeIssuesValue != totalTimesheetCodeIssues)
+                totalTimesheetCodesToDeactivate = InnateCodeService.GetCodesToDeactivate(context).Count();
+                if (oldTimesheetIssuesValue != totalTimesheetIssues || oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate)
                 {
+                    // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
+                    adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
                     StateHasChanged();
                 }
             }
