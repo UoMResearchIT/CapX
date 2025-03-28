@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -16,15 +17,6 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Developer,Manager,Superuser")]
     public partial class ProjectBulletinBoard : BasePage
     {
-        /// <summary>
-        /// Represents a Project with Associated Skills
-        /// </summary>
-        private class ProjectWithSkills
-        {
-            public Project Project { get; set; }
-            public IEnumerable<SkillTag> Skills { get; set; }
-        }
-
         [Inject]
         private ProjectService ProjectService { get; set; }
 

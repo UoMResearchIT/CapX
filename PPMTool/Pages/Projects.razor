@@ -4,6 +4,7 @@
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
+@using PPMTool.Data
 @using static PPMTool.Enums.Extensions
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Projects - CapX</PageTitle>
@@ -27,82 +28,78 @@
         {
             <LoadingComponent />
         }
-        else if (projects == null)
+        else if (projectsWithSkills == null)
         {
             <p class="lead">No data to show</p>
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="@(projects != null && projects.Count() > 0)"
+            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.CheckBoxList"
                             EditMode="DataGridEditMode.Single"
-                            AllowSorting="true"
-                            PageSize="10"
+                            AllowSorting="@(!tableEmpty)"
+                            PageSize="@pageCount"
+                            Count="@count"
                             AllowPaging="true"
                             ShowPagingSummary="true"
-                            Data="@projects"
-                            TItem="Project"
+                            Data="@projectsWithSkills"
+                            TItem="ProjectWithSkills"
                             ColumnWidth="8rem"
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             @bind-Settings="@Settings"
-                            LoadData="@OnLoadData"
-                            @ref=dataGrid>
+                            @ref="dataGrid"
+                            LoadData="@OnLoadData">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="5rem" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="16rem" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="PI" Title="PI" Width="14rem" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectManager.Name" Title="PM" Width="14rem" MinWidth="10px">
-                        <Template Context="proj">
-                            @(proj.ProjectManager?.Name ?? "Not Set")
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="ProjectStatus" Title="Project Status" MinWidth="10px">
-                        <Template Context="proj">
-                            @proj.ProjectStatus.ToNiceString()
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px">
-                        <Template Context="proj">
-                            @proj.Faculty.ToNiceString()
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px">
-                        <Template Context="proj">
-                            @proj.School.ToNiceString()
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="CostModel" Title="Cost Model" Width="14rem" MinWidth="10px">
-                        <Template Context="proj">
-                            @(proj.CostModel.GetAttribute<DisplayAttribute>().Name)
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="8rem" MinWidth="10px">
-                        <Template Context="proj">
-                            @(proj.CostModel == CostModel.DayRate ? proj.DayRate.ToString("C0") : "N/A")
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Title="Funds Received" FormatString="{0:C0}" Filterable="false" MinWidth="10px">
-                        <Template Context="project">
-                            @(InvoiceService.GetFundsReceived(Context, project.ProjectId).ToString("C0"))
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="LeadershipFTE" Title="Mgmt FTE" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
-                    @* <RadzenDataGridColumn TItem="Project" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="RTP" Title="RTP" Frozen="true" Width="5rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="Name" Title="Name" Frozen="true" Width="16rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="PI" Title="PI" Width="14rem" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="ProjectManager.Name" Title="PM" Width="14rem" MinWidth="10px">
                         <Template Context="p">
-                            @string.Join(", ", p.OwnedSkills.Select(t => t.SkillTag.Name).OrderBy(x => x))
+                            @(p.Project.ProjectManager?.Name ?? "Not Set")
                         </Template>
-                    </RadzenDataGridColumn> *@
-                    <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
-                        <Template Context="proj">
-                            <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="ProjectStatus" Title="Project Status" MinWidth="10px">
+                        <Template Context="p">
+                            @p.Project.ProjectStatus.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="Faculty" Title="Faculty" MinWidth="10px">
+                        <Template Context="p">
+                            @p.Project.Faculty.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="School" Title="School" MinWidth="10px">
+                        <Template Context="p">
+                            @p.Project.School.ToNiceString()
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="CostModel" Title="Cost Model" Width="14rem" MinWidth="10px">
+                        <Template Context="p">
+                            @(p.Project.CostModel.GetAttribute<DisplayAttribute>().Name)
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="DayRate" Title="Day Rate" Width="8rem" MinWidth="10px">
+                        <Template Context="p">
+                            @(p.Project.CostModel == CostModel.DayRate ? p.Project.DayRate.ToString("C0") : "N/A")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="Budget" Title="Budget" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Title="Funds Received" FormatString="{0:C0}" Filterable="false" MinWidth="10px">
+                        <Template Context="p">
+                            @(InvoiceService.GetFundsReceived(Context, p.Project.ProjectId).ToString("C0"))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="LeadershipFTE" Title="Mgmt FTE" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="ProjectWithSkills" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="p">
+                            <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(p.Project.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
