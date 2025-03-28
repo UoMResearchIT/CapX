@@ -131,7 +131,7 @@ namespace PPMTool.Pages
                 // Apply standard filters to the query by ignoring the special "Skills" filter
                 if (!args.Filter.StartsWith("Skills"))
                 {
-                    query = query.Where(args.Filter);
+                    query = query.Where(args.Filter.Replace("Project.", ""));
                 }
             }
 
@@ -139,7 +139,7 @@ namespace PPMTool.Pages
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
                 // Apply standard sorting -- sorting disabled on the special "Skills" column
-                query = query.OrderBy(args.OrderBy);
+                query = query.OrderBy(args.OrderBy.Replace("Project.", ""));
             }
 
             // Convert the remaining projects to a list of ProjectWithSkills DTOs
