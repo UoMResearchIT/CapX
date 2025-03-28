@@ -47,7 +47,9 @@
                             SelectionMode="DataGridSelectionMode.Single"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             LogicalFilterOperator="LogicalFilterOperator.And"
-                            @bind-Settings="@Settings">
+                            @bind-Settings="@Settings"
+                            LoadData="@OnLoadData"
+                            @ref=dataGrid>
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Property="RTP" Title="RTP" Frozen="true" Width="5rem" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="16rem" MinWidth="10px" />
@@ -93,6 +95,11 @@
                     <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" Filterable="false" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
+                    @* <RadzenDataGridColumn TItem="Project" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
+                        <Template Context="p">
+                            @string.Join(", ", p.OwnedSkills.Select(t => t.SkillTag.Name).OrderBy(x => x))
+                        </Template>
+                    </RadzenDataGridColumn> *@
                     <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
                         <Template Context="proj">
                             <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(proj.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />

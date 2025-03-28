@@ -8,6 +8,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -18,6 +19,7 @@ namespace PPMTool.Pages
         private InvoiceService InvoiceService { get; set; }
 
         private IEnumerable<Project> projects;
+        private RadzenDataGrid<Project> dataGrid;
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -32,8 +34,10 @@ namespace PPMTool.Pages
                 {
                     includeFinished = value;
                     SessionStorage.SetItemAsync("project-show-active", includeFinished);
-                    LoadProjectData(false);
                 }
+
+                Debug.WriteLine($"** Include finished set to {value}. Reloading...");
+                dataGrid?.Reload();
             }
         }
 
@@ -58,6 +62,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             Loading = true;
+            EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
         }
 
@@ -66,26 +71,39 @@ namespace PPMTool.Pages
             // Load settings the first time
             if (firstRender)
             {
+                // Get data grid filters and sort settings
+                settings = await SessionStorage.GetItemAsync<DataGridSettings>("project-settings");
+
                 // Get switch setting
                 includeFinished = await SessionStorage.GetItemAsync<bool>("project-show-active");
-
-                // Load data
-                LoadProjectData(true);
-
-                // Get the grid settings
-                Debug.WriteLine($"** Loading saved session settings for the grid...");
-                await LoadSettingsAsync();
             }
         }
 
-        private async Task LoadSettingsAsync()
+        /// <summary>
+        /// Gets the task responsible for loading the data
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask(LoadDataArgs args = null)
         {
-            settings = await SessionStorage.GetItemAsync<DataGridSettings>("project-settings");
-            StateHasChanged();
+            return Task.Run(() =>
+            {
+                // Get people from the database
+                OnLoadData(args ?? new LoadDataArgs());
+            })
+                .ContinueWith(t =>
+                {
+                    InvokeAsync(() =>
+                    {
+                        Loading = false;
+                        StateHasChanged();
+                    });
+                });
         }
 
-        private void LoadProjectData(bool initial)
+        private void OnLoadData(LoadDataArgs args)
         {
+            Debug.WriteLine($"** Loading data...");
+
             // Initialise the project list -- developers can only see projects to which they are assigned
             List<Project> proj;
             if (ActiveUserRoleType == RoleType.Developer)
@@ -102,15 +120,23 @@ namespace PPMTool.Pages
             // Remove the ones that are not active if necessary
             if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
 
+
+            // TODO: Filtering and sorting
+
+
+
+
+
+
             // Assign data for the data grid
             projects = proj;
 
-            // Disable spinner now load complete
-            Loading = false;
-
-            Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
+            Debug.WriteLine($"** {proj.Count()} projects loaded.");
         }
 
+        /// <summary>
+        /// Navigate to the add project page
+        /// </summary>
         private void AddProject()
         {
             Navigation.NavigateTo($"projects/addproject/-1");
