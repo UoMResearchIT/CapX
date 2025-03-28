@@ -19,8 +19,8 @@ namespace PPMTool.Data
         public IEnumerable<SkillTag> Skills { get; set; }
 
         /// <summary>
-        /// The names of the skills only (useful for filtering in datagrids)
+        /// Comma separate skill names (for data grids)
         /// </summary>
-        public IEnumerable<string> SkillNames { get; set; }
+        public string SkillNames { get; set; }
     }
 }

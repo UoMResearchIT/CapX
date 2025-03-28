@@ -133,11 +133,15 @@ namespace PPMTool.Pages
             }
 
             // Convert the remaining projects to a list of ProjectWithSkills DTOs
-            var dtos = query.Select(x => new ProjectWithSkills
+            var dtos = query.ToList().Select(x =>
             {
-                Project = x,
-                SkillNames = SkillTagService.GetSkillsForProject(Context, x.ProjectId).Select(x => x.Name)
-            });
+                var skills = SkillTagService.GetSkillsForProject(Context, x.ProjectId).Select(x => x.Name);
+                return new ProjectWithSkills
+                {
+                    Project = x,
+                    SkillNames = skills.Count() > 0 ? string.Join(", ", skills.OrderBy(x => x)) : ""
+                };
+            }).AsQueryable();
 
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
