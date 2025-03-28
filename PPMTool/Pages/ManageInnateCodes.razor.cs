@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -14,12 +15,15 @@ namespace PPMTool.Pages
         [Inject]
         public InnateCodeService InnateCodeService { get; set; }
 
+        private List<InnateCode> codesToDeactivate;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
             dataGridEntityService = InnateCodeService;
             dataGridEntities = InnateCodeService.GetAll(Context)
                 .ToList();
+            codesToDeactivate = InnateCodeService.GetCodesToDeactivate(Context).ToList() ?? new List<InnateCode>();
             LogInformation($"Viewing innate code grid");
         }
 
