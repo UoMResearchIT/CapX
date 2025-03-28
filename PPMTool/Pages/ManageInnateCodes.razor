@@ -20,6 +20,26 @@
         <StatusMessageComponent Message="ErrorMessage" />
     }
     <hr />
+    @if (codesToDeactivate.Count > 0)
+    {
+        <div class="row" style="margin-bottom: 1rem;">
+            <div class="col-auto mr-auto">
+                <h3>Codes which can be marked as inactive</h3>
+            </div>
+        </div>
+        <RadzenDataGrid @ref="dataGrid"
+                        PageSize="10"
+                        Data="@codesToDeactivate"
+                        TItem="InnateCode"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        Style="margin-bottom: 2rem;">
+            <Columns>
+                <RadzenDataGridColumn TItem="InnateCode" Property="ActivityCode" Title="Activity Code" Width="15rem" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="InnateCode" Property="ActivityName" Title="Activity Name" Width="20rem" MinWidth="10px" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    
     <RadzenDataGrid @ref="dataGrid"
                     AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
                     AllowPaging="true"
