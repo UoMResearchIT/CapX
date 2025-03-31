@@ -346,12 +346,14 @@ namespace PPMTool.Pages
                         recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
                     }
 
-                    // Get the projects that are running during the week (exclude those projects with no tasks as they will have "default" start date)
-                    var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6)));
+                    // Get the projects that are running at the start of the week (exclude those projects with no tasks as they will have "default" start date)
+                    var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart));
 
 
                     /// Cancelled ///
-                    var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+
+                    // Get tasks for cancelled projects running at the start of the week
+                    var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
@@ -364,8 +366,8 @@ namespace PPMTool.Pages
                     var numberUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed()).Count();
                     var numberConfirmed = projectsThisWeekNotCancelled.Count() - numberUnconfirmed;
 
-                    // Get all tasks that run during the week
-                    var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    // Get all tasks that run at the start of the week
+                    var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
 
                     // Get demand totals from tasks
                     var unmetDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -377,7 +379,7 @@ namespace PPMTool.Pages
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
-                    var tasksOnFinishedProjectsThisWeek = projectsThisWeekThatAreFinished.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnFinishedProjectsThisWeek = projectsThisWeekThatAreFinished.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
                     var totalDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.Demand);
                     var unmetDemandFinished = (float)tasksOnFinishedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
@@ -395,7 +397,7 @@ namespace PPMTool.Pages
                     }
 
                     // Get tasks
-                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
 
                     // Get met and unmet demand for this subset
                     var unmetDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -415,7 +417,7 @@ namespace PPMTool.Pages
                     }
 
                     // Get tasks
-                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart, currentWeekStart.AddDays(6))));
+                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
 
                     // Calculate the unconfirmed totals
                     var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -457,7 +459,7 @@ namespace PPMTool.Pages
 
                     /// People ///
 
-                    // Get the people who are employed for at least one day during the week
+                    // Get the people who are employed at the beginning of the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));
 
                     // Compute people based totals
