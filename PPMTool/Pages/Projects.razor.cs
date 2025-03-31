@@ -5,7 +5,6 @@ using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -20,14 +19,10 @@ namespace PPMTool.Pages
         [Inject]
         private InvoiceService InvoiceService { get; set; }
 
-        [Inject]
-        private SkillTagService SkillTagService { get; set; }
-
-        private IEnumerable<ProjectWithSkills> projectsWithSkills;
-        private RadzenDataGrid<ProjectWithSkills> dataGrid;
+        private IEnumerable<Project> projects;
+        private RadzenDataGrid<Project> dataGrid;
         private int count;
         private int pageCount = 15;
-        private bool tableEmpty = true;
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -122,46 +117,33 @@ namespace PPMTool.Pages
             // Remove the ones that are not active if necessary
             if (!includeFinished) query = query.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
 
-            // Set the flag here so the filter doesn't disappear when there are no matching results
-            tableEmpty = query.Count() == 0;
-
-            // Sorting
-            if (!string.IsNullOrEmpty(args.OrderBy))
-            {
-                // Apply standard sorting -- sorting disabled on the special "Skills" column
-                query = query.OrderBy(args.OrderBy.Replace("Project.", ""));
-            }
-
-            // Convert the remaining projects to a list of ProjectWithSkills DTOs
-            var dtos = query.ToList().Select(x =>
-            {
-                var skills = SkillTagService.GetSkillsForProject(Context, x.ProjectId).Select(x => x.Name);
-                return new ProjectWithSkills
-                {
-                    Project = x,
-                    SkillNames = skills.Count() > 0 ? string.Join(", ", skills.OrderBy(x => x)) : ""
-                };
-            }).AsQueryable();
-
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
                 // Apply standard filters to the DTOs
-                dtos = dtos.Where(args.Filter);
+                query = query.Where(args.Filter);
+            }
+
+            // Sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                // Apply standard sorting
+                query = query.OrderBy(args.OrderBy);
             }
 
             // Assign to grid source
-            count = dtos.Count();
+            var data = query.ToList();
+            count = query.Count();
             if (args.Skip == null)
             {
-                projectsWithSkills = dtos.Take(pageCount).ToList();
+                projects = data.Take(pageCount).ToList();
             }
             else
             {
-                projectsWithSkills = dtos.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                projects = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
 
-            Debug.WriteLine($"** {dtos.Count()} projects loaded. {projectsWithSkills.Count()} displayed.");
+            Debug.WriteLine($"** {data.Count()} projects loaded. {projects.Count()} displayed.");
         }
 
         /// <summary>

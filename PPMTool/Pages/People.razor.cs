@@ -21,7 +21,6 @@ namespace PPMTool.Pages
         [Inject]
         private SkillTagService TagService { get; set; }
 
-        private bool tableEmpty;
         private IEnumerable<Person> people;
         private int count;
         private int pageCount = 10;
@@ -95,28 +94,21 @@ namespace PPMTool.Pages
         private void LoadData(LoadDataArgs args)
         {
             // Order by name by default
-            var loadedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            var query = PersonService.GetAll(Context).OrderBy(x => x.Name).AsQueryable();
 
             // Reduce to just current people
             if (!IncludeLeavers)
             {
-                loadedPeople = loadedPeople.Where(x => x.EndDate == null || x.EndDate >= DateTime.Now).ToList();
+                query = query.Where(x => x.EndDate == null || x.EndDate >= DateTime.Now);
             }
 
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x.PersonId == ActiveUser?.Person?.PersonId).ToList();
+                query = query.Where(x => x.PersonId == ActiveUser.Person.PersonId);
             }
 
-            // Set the table empty flag
-            tableEmpty = loadedPeople.Count == 0;
-
-            Debug.WriteLine($"** {loadedPeople.Count()} people loaded!");
-
-            // Convert to queryable
-            var query = loadedPeople.AsQueryable();
-
+            // Apply filter
             if (!string.IsNullOrEmpty(args.Filter))
             {
                 // Filter via the Where method
@@ -157,17 +149,20 @@ namespace PPMTool.Pages
             }
 
             // Important!!! Make sure the Count property of RadzenDataGrid is set.
-            count = query.Count();
+            var data = query.ToList();
+            count = data.Count();
 
             // Perform paging via Skip and Take.
             if (args.Skip == null)
             {
-                people = query.Take(pageCount).ToList();
+                people = data.Take(pageCount).ToList();
             }
             else
             {
-                people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                people = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
+
+            Debug.WriteLine($"** {data.Count()} people loaded. {people.Count()} displayed.");
         }
     }
 }

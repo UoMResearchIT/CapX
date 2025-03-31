@@ -17,10 +17,5 @@ namespace PPMTool.Data
         /// List of skills entities
         /// </summary>
         public IEnumerable<SkillTag> Skills { get; set; }
-
-        /// <summary>
-        /// Comma separate skill names (for data grids)
-        /// </summary>
-        public string SkillNames { get; set; }
     }
 }
