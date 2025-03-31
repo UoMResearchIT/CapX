@@ -132,14 +132,9 @@ namespace PPMTool.Services
         {
             // Get codes which are active, contain "rtp" (project codes) and 
             // which are not associated with any currently active projects
-            var unusedTimesheetCodes = context.InnateCodes
-                .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("rtp"))
+            return context.InnateCodes
+                .Where(ic => ic.IsActive && (ic.ActivityCode.ToLower().Contains("rtp") || ic.ActivityCode.ToLower().Contains("res")))
                 .Where(ic => !context.Projects.Any(p => p.InnateActivity.InnateCodeId == ic.InnateCodeId && (int)p.ProjectStatus < 7));
-
-            // PHB : Need to possibly do more work to weed out only those which won't have further time logged to them -
-            // i.e. the RSEs using them have up-to-date timesheets so shouldn't need them any more
-
-            return unusedTimesheetCodes;
         }
     }
 }
