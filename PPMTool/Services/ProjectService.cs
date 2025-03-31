@@ -107,8 +107,7 @@ namespace PPMTool.Services
                             .ThenInclude(pp => pp.Absences)
                 .Include(p => p.ProjectManager)
                 .Include(p => p.InnateActivity)
-                .Include(p => p.Followers)
-                .ToList();
+                .Include(p => p.Followers);
         }
 
         /// <summary>
