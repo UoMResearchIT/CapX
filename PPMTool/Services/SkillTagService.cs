@@ -168,5 +168,20 @@ namespace PPMTool.Services
 
             return skills.DistinctBy(x => x.SkillTagId);
         }
+
+        /// <summary>
+        /// Given a subtask ID, returns the unique list of skill tags associated with it
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="subtaskId"></param>
+        /// <returns></returns>
+        public IEnumerable<SkillTag> GetSkillsForSubTask(PPMToolContext context, int subtaskId)
+        {
+            return context.SkillTags
+                .Include(x => x.TasksNeedingThisSkill)
+                .Where(x => x.TasksNeedingThisSkill
+                    .Any(x => x.SubTaskId == subtaskId)
+                );
+        }
     }
 }

@@ -3,7 +3,7 @@
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.3rem" AlignItems="AlignItems.Center">
     @if (SkillsList == null || SkillsList.Count() == 0)
     {
-        <RadzenText Text="No skill tags associated with the tasks in this project" />
+        <RadzenText Text="@(string.IsNullOrWhiteSpace(EmptyMessage) ? "No skill tags associated with the tasks in this project" : EmptyMessage)" />
     }
     else
     {
@@ -30,5 +30,8 @@
 
     [Parameter]
     public Action<SkillTag> RemoveSkill { get; set; }
+
+    [Parameter]
+    public string EmptyMessage { get; set; }
 
 }
