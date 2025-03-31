@@ -296,7 +296,7 @@ namespace PPMTool.Pages
                 dutyChartItems.Clear();
 
                 // Tracked values
-                var currentWeekStart = startDate;
+                var currentWeekStart = startDate.Date;
                 var currentFY = 0;
                 var endDate = startDate.AddYears(yearsAhead);
                 var startFY = FinancialReference.GetFinancialYear(startDate);
