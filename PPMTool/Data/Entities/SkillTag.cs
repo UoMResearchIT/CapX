@@ -137,23 +137,30 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public void UpdateRareness(int count, int total)
         {
-            var percent = (count / (double)total) * 100;
             var rareness = SkillRareness.Common;
-            if (percent < 5)
+            if (total == 0)
             {
                 rareness = SkillRareness.Legendary;
             }
-            else if (percent < 10)
+            else
             {
-                rareness = SkillRareness.Epic;
-            }
-            else if (percent < 18)
-            {
-                rareness = SkillRareness.Rare;
-            }
-            else if (percent < 30)
-            {
-                rareness = SkillRareness.Uncommon;
+                var percent = (count / (double)total) * 100;
+                if (percent < 5)
+                {
+                    rareness = SkillRareness.Legendary;
+                }
+                else if (percent < 10)
+                {
+                    rareness = SkillRareness.Epic;
+                }
+                else if (percent < 18)
+                {
+                    rareness = SkillRareness.Rare;
+                }
+                else if (percent < 30)
+                {
+                    rareness = SkillRareness.Uncommon;
+                }
             }
 
             // Set the values in the entity
