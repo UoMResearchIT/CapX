@@ -21,6 +21,7 @@ namespace PPMTool.Shared
         private string selectedRole;
         private Role loginAs;
         private string loginLink;
+        private bool redirectRequired = false;
 
         protected override void OnInitialized()
         {
@@ -44,10 +45,25 @@ namespace PPMTool.Shared
                     filteredRoles = roles.Select(x => RoleToString(x));
                     selectedRole = filteredRoles.FirstOrDefault();
                     OnChange();
+
+                    redirectRequired = true;
                 }
             }
 
             displayName = ActiveUser?.Name;
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            if (firstRender && redirectRequired)
+            {
+#if !LOCAL
+                Debug.WriteLine("** Sending user to login!");
+                Navigation.NavigateTo(loginLink, true);
+#endif
+            }
         }
 
         /// <summary>
