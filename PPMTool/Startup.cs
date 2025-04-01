@@ -24,6 +24,7 @@ using PPMTool.Services;
 using Radzen;
 #if RELEASE
 using Sentry;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 #endif
 
 namespace PPMTool
