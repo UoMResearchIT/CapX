@@ -68,8 +68,9 @@ namespace PPMTool.Shared
             if (firstRender)
             {
 #if !LOCAL
-                int count = Regex.Matches(loginLink, "returnUrl").Count;
-                if (notLoggedIn && count == 1)
+                var uri = new Uri(loginLink);
+                var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                if (notLoggedIn && queryParams.AllKeys.Contains("returnUrl"))
                 {
                     Logger.LogInformation($"User not logged in -- auto-redirecting to {loginLink}...");
                     Navigation.NavigateTo(loginLink, true);
