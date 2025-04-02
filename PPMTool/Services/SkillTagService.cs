@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -101,7 +102,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="skillTagId"></param>
         /// <returns></returns>
-        public int GetCountForTag(PPMToolContext context, int skillTagId)
+        public int GetOwnedSkillCountForTag(PPMToolContext context, int skillTagId)
         {
             return context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == skillTagId).Count();
         }
@@ -124,52 +125,63 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="skillTagId"></param>
         /// <returns></returns>
-        public SkillTagRareness GetRareness(PPMToolContext context, int skillTagId)
+        public void UpdateSkillTagRareness(PPMToolContext context, SkillTag entity, bool commitChanges = true)
         {
-            var count = GetCountForTag(context, skillTagId);
-            return new SkillTagRareness
+            // Get owned skill count
+            var count = GetOwnedSkillCountForTag(context, entity.SkillTagId);
+            var totalActivePeople = context.People
+                .Where(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today))
+                .Count();
+
+            // Update the rarness of the skill tag
+            entity.UpdateRareness(count, totalActivePeople);
+            if (commitChanges)
             {
-                Rareness = GetRareness(count),
-                Count = count
-            };
+                context.SaveChanges();
+            }
         }
 
         /// <summary>
-        /// Represents the rareness information of a skill tag
+        /// Given a project ID, returns the unique list of skill tags aggregate from its subtasks
         /// </summary>
-        public class SkillTagRareness
-        {
-            public SkillRareness Rareness { get; set; }
-            public int Count { get; set; }
-        }
-
-        /// <summary>
-        /// Get the icon name for the emblem for the skill based on how many people have it
-        /// </summary>
-        /// <param name="count"></param>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
         /// <returns></returns>
-        private SkillRareness GetRareness(int count)
+        public IEnumerable<SkillTag> GetSkillsForProject(PPMToolContext context, int projectId)
         {
-            if (count < 3)
+            // Find all the subtasks for the project
+            var subtasks = context.SubTasks
+                .Include(x => x.OwningProject)
+                .Where(x => x.OwningProject.ProjectId == projectId);
+
+            var skills = new List<SkillTag>();
+            foreach (var subtask in subtasks)
             {
-                return SkillRareness.Legendary;
+                skills.AddRange(
+                    context.SkillTags
+                        .Include(x => x.TasksNeedingThisSkill)
+                        .Where(x => x.TasksNeedingThisSkill
+                            .Any(x => x.SubTaskId == subtask.SubTaskId)
+                        )
+                    );
             }
-            else if (count < 6)
-            {
-                return SkillRareness.Epic;
-            }
-            else if (count < 9)
-            {
-                return SkillRareness.Rare;
-            }
-            else if (count < 12)
-            {
-                return SkillRareness.Uncommon;
-            }
-            else
-            {
-                return SkillRareness.Common;
-            }
+
+            return skills.DistinctBy(x => x.SkillTagId);
+        }
+
+        /// <summary>
+        /// Given a subtask ID, returns the unique list of skill tags associated with it
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="subtaskId"></param>
+        /// <returns></returns>
+        public IEnumerable<SkillTag> GetSkillsForSubTask(PPMToolContext context, int subtaskId)
+        {
+            return context.SkillTags
+                .Include(x => x.TasksNeedingThisSkill)
+                .Where(x => x.TasksNeedingThisSkill
+                    .Any(x => x.SubTaskId == subtaskId)
+                );
         }
     }
 }

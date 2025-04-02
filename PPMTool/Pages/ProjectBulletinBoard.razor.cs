@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
@@ -19,12 +20,16 @@ namespace PPMTool.Pages
         [Inject]
         private ProjectService ProjectService { get; set; }
 
-        private IEnumerable<Project> availableProjects;
-        private IEnumerable<IGrouping<ProjectStatus, Project>> availableProjectsGrouped;
-        private IEnumerable<Project> allProjects;
+        [Inject]
+        private SkillTagService SkillTagService { get; set; }
+
+        private IEnumerable<ProjectWithSkills> availableProjects;
+        private IEnumerable<IGrouping<ProjectStatus, ProjectWithSkills>> availableProjectsGrouped;
+        private IList<ProjectWithSkills> allProjectsWithSkills;
         private DateTime? startDate;
         private DateTime? endDate;
         private bool groupByStatus = true;
+        private bool skillsInitialised;
 
 
         protected override void OnInitialized()
@@ -80,7 +85,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterProjects()
         {
-            if (allProjects == null) return;
+            if (allProjectsWithSkills == null) return;
 
             if (startDate != null && endDate != null)
             {
@@ -90,19 +95,29 @@ namespace PPMTool.Pages
                 }
             }
 
+            /// First time through, initialise the skills
+            if (!skillsInitialised)
+            {
+                foreach (var projWithSkills in allProjectsWithSkills)
+                {
+                    projWithSkills.Skills = SkillTagService.GetSkillsForProject(Context, projWithSkills.Project.ProjectId);
+                }
+                skillsInitialised = true;
+            }
+
             // Get projects with unmet demand in the window and order by the start of the window then by the maximum unmet demand
-            availableProjects = allProjects
-                .Where(x => x.HasUnmetDemandInWindow(startDate, endDate))
+            availableProjects = allProjectsWithSkills
+                .Where(x => x.Project.HasUnmetDemandInWindow(startDate, endDate))
                 .OrderBy(x =>
                 {
-                    x.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                    x.Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
                     return windowStart;
                 })
-                .ThenByDescending(x => x.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
+                .ThenByDescending(x => x.Project.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
 
             if (groupByStatus)
             {
-                availableProjectsGrouped = availableProjects.GroupBy(x => x.ProjectStatus).OrderByDescending(x => x.Key);
+                availableProjectsGrouped = availableProjects.GroupBy(x => x.Project.ProjectStatus).OrderByDescending(x => x.Key);
             }
 
             Debug.WriteLine($"** {availableProjects?.Count()} projects loaded.");
@@ -113,11 +128,24 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadProjectData()
         {
+            // Initialise the list
+            allProjectsWithSkills = new List<ProjectWithSkills>();
+
             // Get projects from the database
             var proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
 
             // Filter to just projects that are active with current or future unmet demand
-            allProjects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandInWindow() && x.ProjectStatus != ProjectStatus.Paused);
+            var projects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandInWindow() && x.ProjectStatus != ProjectStatus.Paused);
+
+            // Convert to new object type
+            foreach (var project in projects)
+            {
+                allProjectsWithSkills.Add(new ProjectWithSkills
+                {
+                    Project = project,
+                    Skills = new List<SkillTag>()
+                });
+            }
         }
     }
 }

@@ -4,14 +4,11 @@
 @using PPMTool.Services
 
 <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-    <RadzenImage Path="@($"images/emb_{SkillTag.Rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="width: 3rem; height: 3rem;" title="@($"{SkillTag.RarenessCount} RSE(s) with this tag")" />
+    <SkillTagRarenessEmblemComponent SkillTag="SkillTag" />
     <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
 </RadzenStack>
 
 @code {
-
-    [Inject]
-    private SkillTagService TagService { get; set; }
 
     [Parameter]
     public SkillTag SkillTag { get; set; }

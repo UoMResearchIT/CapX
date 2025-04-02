@@ -105,14 +105,11 @@
                     <div class="col-auto" style="align-content: center">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                             <RadzenLabel class="radzen-form-label" Text="Finance Report for Period" />
-                            @if (exportRunning)
-                            {
-                                <LoadingComponent />
-                            }
-                            else
-                            {
-                                <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinancialReport" Text="Export" Icon="download" Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading)" />
-                            }
+                            <RadzenButton ButtonType="ButtonType.Button"
+                                          Click="ExportFinancialReport"
+                                          Text="@(exportRunning ? "Exporting" : "Export")"
+                                          Icon="@(exportRunning ? "hourglass_empty" : "download")"
+                                          Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
                         </RadzenStack>
                     </div>
                 </div>
