@@ -28,7 +28,9 @@ namespace PPMTool.Shared
         private string selectedUser;
         private User loginAs;
         private string loginLink = string.Empty;
+#if !LOCAL
         private bool notLoggedIn;
+#endif
 
         protected override void OnInitialized()
         {
