@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-#if !LOCAL
 using System.Text.RegularExpressions;
-#endif
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Logging;
@@ -28,9 +26,7 @@ namespace PPMTool.Shared
         private string selectedUser;
         private User loginAs;
         private string loginLink = string.Empty;
-#if !LOCAL
-        private bool notLoggedIn;
-#endif
+        private bool notLoggedIn = false;
 
         protected override void OnInitialized()
         {
@@ -67,14 +63,15 @@ namespace PPMTool.Shared
 
             if (firstRender)
             {
-#if !LOCAL
+
                 int count = Regex.Matches(loginLink, "returnUrl").Count;
                 if (notLoggedIn && count == 1)
                 {
+#if !LOCAL
                     Logger.LogInformation($"User not logged in -- auto-redirecting to {loginLink}...");
                     Navigation.NavigateTo(loginLink, true);
-                }
 #endif
+                }
             }
         }
 
