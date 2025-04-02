@@ -1,0 +1,49 @@
+﻿@using Microsoft.Extensions.Logging
+@using PPMTool.Data
+@using System.Diagnostics
+<h2>Suggested Resources</h2>
+<div class="card">
+    <CapacityQueryTableComponent Results="queryResults" />
+</div>
+<hr />
+
+@code {
+    private IEnumerable<CapacityQueryItem> queryResults;
+
+    [Parameter]
+    public DateTime QueryStartDate { get; set; }
+
+    [Parameter]
+    public DateTime QueryEndDate { get; set; }
+
+    [Inject]
+    private ILogger Logger { get; set; }
+
+    /// <summary>
+    /// Runs the capacity query and updates the query result property
+    /// </summary>
+    private void RunQuery()
+    {
+        Debug.WriteLine("** Running query...");
+
+        // Add error
+        if (QueryStartDate >= QueryEndDate)
+        {
+            return;
+        }
+
+        // Re-initialise the results
+        queryResults = new List<CapacityQueryItem>();
+
+        // Start query state
+        Logger.LogInformation("Looking for resource suggestions...");
+
+        // TODO: Have a think about how we do this.
+        // We still need the availability profile of an individual during the period of the task
+        // We can then possibly show something graphical rather than the table?
+        // We then need to look at this on a per block basis?
+        // Order by descending match quality
+        // Take into account whether availability is provisional or not
+
+    }
+}

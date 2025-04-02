@@ -289,6 +289,12 @@
             </div>
             <div class="row">
                 <div class="col">
+                    <SuggestResourcesComponent QueryStartDate="TaskModel.StartDate"
+                                               QueryEndDate="TaskModel.EndDate" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
                     <RadzenLabel class="radzen-form-label" Text="Unmet Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="The difference between the minimum demand required and the sum of the resources assigned" />
                     @if(TaskModel.UnmetDemand > 0)
                     {
