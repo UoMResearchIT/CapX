@@ -133,7 +133,7 @@ namespace PPMTool.Services
             // Get codes which are active, contain "rtp" (project codes) and 
             // which are not associated with any currently active projects
             return context.InnateCodes
-                .Where(ic => ic.IsActive && (ic.ActivityCode.ToLower().Contains("rtp") || ic.ActivityCode.ToLower().Contains("res")))
+                .Where(ic => ic.IsActive && (ic.ActivityCode.ToLower().Contains("rtp")))
                 .Where(ic => !context.Projects.Any(p => p.InnateActivity.InnateCodeId == ic.InnateCodeId && (int)p.ProjectStatus < 7));
         }
     }
