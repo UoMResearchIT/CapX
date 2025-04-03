@@ -320,6 +320,7 @@
                                 RTP-24 Project Name
                             </span>.
                             Failed linking, if either the person or project does not exist, will leave the text unchanged.
+                            <b>Currently there must be a space before and after the reference for the link to be detected.</b>
                         </RadzenText>
                         <div class="grip">
                             <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />
