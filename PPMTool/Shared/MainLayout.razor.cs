@@ -66,6 +66,7 @@ namespace PPMTool.Shared
 
             if (loginView != null && loginView.ActiveUser != null)
             {
+                // Update the badges in the sidebar if necessary
                 var oldTimesheetIssuesValue = totalTimesheetIssues;
                 var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
                 totalTimesheetIssues = TimesheetService.GetIssueCount(context, loginView.ActiveUser?.Person?.PersonId ?? 0);
@@ -79,6 +80,9 @@ namespace PPMTool.Shared
             }
         }
 
+        /// <summary>
+        /// Clear the magic bar
+        /// </summary>
         private void ClearMagicBar()
         {
             searchTerm = string.Empty;
@@ -86,6 +90,9 @@ namespace PPMTool.Shared
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Kicked off when a search term is entered into the magic bar
+        /// </summary>
         private async void OnSearchTermEntered()
         {
             // If nothing being typed
@@ -128,6 +135,11 @@ namespace PPMTool.Shared
             await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName), razorComponentReference);
         }
 
+        /// <summary>
+        /// Can be invoked from JS when an item in the popup is clicked.
+        /// Navigates to the apporpriate page
+        /// </summary>
+        /// <param name="selectedItem"></param>
         [JSInvokable]
         public void OnItemSelected(string selectedItem)
         {
@@ -152,6 +164,9 @@ namespace PPMTool.Shared
             razorComponentReference?.Dispose();
         }
 
+        /// <summary>
+        /// Specific object for populating the magic bar popup
+        /// </summary>
         private class MagicBarItem
         {
             public int EntityId { get; }

@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -130,11 +131,11 @@ namespace PPMTool.Services
         /// <returns></returns>
         public IEnumerable<InnateCode> GetCodesToDeactivate(PPMToolContext context)
         {
-            // Get codes which are active, contain "rtp" (project codes) and 
+            // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
             // which are not associated with any currently active projects
             return context.InnateCodes
-                .Where(ic => ic.IsActive && (ic.ActivityCode.ToLower().Contains("rtp")))
-                .Where(ic => !context.Projects.Any(p => p.InnateActivity.InnateCodeId == ic.InnateCodeId && (int)p.ProjectStatus < 7));
+                .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-"))
+                .Where(ic => !context.Projects.Any(p => p.InnateActivity.InnateCodeId == ic.InnateCodeId && p.ProjectStatus < ProjectStatus.Finished));
         }
     }
 }
