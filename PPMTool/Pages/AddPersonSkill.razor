@@ -1,6 +1,7 @@
 ﻿@page "/people/addskills/{PersonId:int}"
 @inherits BasePage
 @using DotNetExtensions
+@using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
@@ -37,7 +38,8 @@
             <HintComponent Message="Add skills to your profile by searching for them in the search box. If the skill tag you want to add is not in the available list then propose to your manager that it be added to the database. If you favourite a skill, managers will look for assignments where you can develop it." />
             @if (ownedTags.Any(x => !x.RecordComplete()))
             {
-                <HintComponent Message="You have incomplete skill records highlighted below. Please ensure you have provided a proficiency assessment and a last used date (if applicable) for each skill." />
+                <hr />
+                <StatusMessageComponent Message="@(new StatusMessage("You have incomplete skill records! Proficiency assessment and Last Used date missing!", StatusMessage.MessageType.Warning))" />
             }
             <hr />
             <div class="row my-2">
