@@ -137,6 +137,11 @@ namespace PPMTool.Data.Entities
         public ICollection<Payment> Payments { get; set; }
 
         /// <summary>
+        /// List of funding sources for this project
+        /// </summary>
+        public ICollection<FundingSource> FundingSources { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -161,8 +166,18 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
+                new StatusMessage("This project has no funding sources but is running or has run in the past!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Determine whether the project has any funding sources and is in an active, paused, maintenance or finished state
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoFundingSourcesButRan()
+        {
+            return !ProjectStatus.IsCancelled() && !ProjectStatus.IsUnfunded() && !FundingSources.Any();
         }
 
         /// <summary>

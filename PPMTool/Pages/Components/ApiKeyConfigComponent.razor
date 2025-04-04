@@ -114,7 +114,7 @@
         Task.Run(() =>
         {
             // Generate the key
-            var value = new ApiTokenProvider(Configuration).CreateToken(ActiveUser);
+            var value = new ApiTokenProvider(Configuration).CreateToken(ActiveUser, selectedValidity.GetAttribute<ExpirationInDaysAttribute>().Days);
             apiKey.Key = value;
 
             // Exit early if the key is empty

@@ -1,0 +1,116 @@
+﻿@inherits BaseFinanceItemFormComponent
+@using Microsoft.Extensions.Logging
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Services
+@using Radzen
+@using PPMTool.Data.Entities
+@using DotNetExtensions;
+
+<RadzenTemplateForm TItem="FundingSource" Submit="@HandleValidSubmit" Data="@Source">
+    <RadzenFieldset Text="Funding Source Details">
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenLabel Component="SourceType" Text="Source Type" class="font-weight-bold" />
+            <RadzenDropDown @bind-Value="Source.FundingSourceType" Name="SourceType" Data="@sourceTypes">
+                <Template Context="item">
+                    @(((FundingSourceType)item).GetDescription())
+                </Template>
+            </RadzenDropDown>
+            <RadzenLabel Component="HasAccount" Text="Account Code Associated with Source?" class="font-weight-bold" />
+            <RadzenSwitch @bind-Value="Source.HasAccountCode" Name="HasAccount" />
+            @if (Source.HasAccountCode)
+            {
+                <RadzenLabel Component="AccountCode" Text="Account Code" class="font-weight-bold" />
+                <RadzenTextBox @bind-Value="Source.AccountCode" Name="AccountCode" Placeholder="e.g. R123456" />
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+    <br />
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+            <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+            <RadzenText Text="@errorMessage" Style="color: red" />
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Source?.FundingSourceId < 1 || !EditAuthorised)" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" Disabled="@(!EditAuthorised)" />
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+
+    [Parameter]
+    public FundingSource Source { get; set; }
+
+    [Inject]
+    private FundingSourceService FundingSourceService { get; set; }
+
+    private IEnumerable<FundingSourceType> sourceTypes;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // If no source model set then create a new one
+        if (Source == null)
+        {
+            Source = new FundingSource
+            {
+                Project = Project
+            };
+        }
+        sourceTypes = Enum.GetValues<FundingSourceType>();
+    }
+
+    protected override void HandleValidSubmit()
+    {
+        base.HandleValidSubmit();
+
+        if (Source.FundingSourceType != FundingSourceType.Other && Source.HasAccountCode && string.IsNullOrWhiteSpace(Source.AccountCode))
+        {
+            errorMessage = "You must provide an account code for this funding source e.g. R123456";
+            return;
+        }
+
+        if (Source.FundingSourceId > 0)
+        {
+            FundingSourceService.Update(Context, Source);
+            PostNoteToProject(FinanceItemChangeType.Update, Source);
+        }
+        else
+        {
+            FundingSourceService.Add(Context, Source);
+            PostNoteToProject(FinanceItemChangeType.Add, Source);
+        }
+
+        CloseForm(true);
+    }
+
+    /// <summary>
+    /// Method to delete a payment after a prompt
+    /// </summary>
+    private async void DeletePayment()
+    {
+        bool confirmed = await DialogService.Confirm($"You are about to delete funding source with ID {Source.FundingSourceId}. This cannot be undone!",
+                    "Delete Funding Source") ?? false;
+        if (confirmed)
+        {
+            Logger?.LogInformation($"Deleting funding source ID {Source.FundingSourceId}");
+
+            FundingSourceService.Delete(Context, Source);
+            PostNoteToProject(FinanceItemChangeType.Delete, Source);
+            CloseForm(true);
+        }
+    }
+
+    /// Return the payment ID
+    protected override int GetItemId()
+    {
+        return Source?.FundingSourceId ?? 0;
+    }
+}
