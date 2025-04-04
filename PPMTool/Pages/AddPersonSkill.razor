@@ -1,5 +1,6 @@
 ﻿@page "/people/addskills/{PersonId:int}"
 @inherits BasePage
+@using DotNetExtensions
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
@@ -34,6 +35,10 @@
                 }
             </EditForm>
             <HintComponent Message="Add skills to your profile by searching for them in the search box. If the skill tag you want to add is not in the available list then propose to your manager that it be added to the database. If you favourite a skill, managers will look for assignments where you can develop it." />
+            @if (ownedTags.Any(x => !x.RecordComplete()))
+            {
+                <HintComponent Message="You have incomplete skill records highlighted below. Please ensure you have provided a proficiency assessment and a last used date (if applicable) for each skill." />
+            }
             <hr />
             <div class="row my-2">
                 <div class="col mx-1">
@@ -65,7 +70,7 @@
                                     Data="@ownedTags"
                                     TItem="OwnedSkill">
                         <Template Context="tag">
-                            <div class="row align-items-center" style="margin: -0.8rem;">
+                            <div class="row align-items-center" style="@($"margin: -0.8rem; {(!tag.RecordComplete() ? "background-color: #FFF3CD;" : "")}")">
                                 <div class="col">
                                     @if (tag.SkillTag.HasValidWikiLink == LinkCheckState.Success)
                                     {
@@ -80,8 +85,8 @@
                                 </div>
                                 <div class="col">
                                     <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.2rem">
-                                        <RadzenRating @bind-Value="@tag.ProficiencyRating" Stars="4" ReadOnly=!EditAuthorised />
-                                        <RadzenText TextStyle="TextStyle.Body2" Text="@(tag.Proficiency.ToString())" Style="@("color: var(--rz-primary); margin-bottom: 0;")" />
+                                        <RadzenRating @bind-Value="@tag.ProficiencyRating" Stars="5" ReadOnly=!EditAuthorised />
+                                        <RadzenText TextStyle="TextStyle.Body2" Text="@(tag.Proficiency.GetDescription())" Style="@("color: var(--rz-primary); margin-bottom: 0;")" />
                                     </RadzenStack>
                                 </div>
                                 <div class="col text-center">

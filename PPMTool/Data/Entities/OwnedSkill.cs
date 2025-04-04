@@ -54,5 +54,15 @@ namespace PPMTool.Data.Entities
             get => (int)Proficiency;
             set => Proficiency = (SkillProficiency)value;
         }
+
+        /// <summary>
+        /// Measure of whether this skill record is complete.
+        /// Needs to have a last used date if any kind of proficiency is present.
+        /// </summary>
+        /// <returns></returns>
+        public bool RecordComplete()
+        {
+            return (Proficiency != SkillProficiency.NotRated && LastUsed != default) || Proficiency == SkillProficiency.None;
+        }
     }
 }
