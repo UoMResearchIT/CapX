@@ -1,6 +1,7 @@
 ﻿@inherits BaseFinanceItemFormComponent
 @using Microsoft.Extensions.Logging
 @using PPMTool.Data.Context
+@using PPMTool.Enums
 @using PPMTool.Services
 @using Radzen
 @using PPMTool.Data.Entities
@@ -9,18 +10,38 @@
     <RadzenFieldset Text="Payment Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:50%;" />
-                <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:50%;" Format="@("£0.00")"/>
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    <RadzenLabel Component="Date" Text="Payment Date" class="font-weight-bold" />
+                    <RadzenDatePicker @bind-Value="Payment.KeyDate" Name="Date" DateFormat="dd/MM/yyyy" ShowTime="false" Style="width:100%;" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    <RadzenLabel Component="Amount" Text="Amount" class="font-weight-bold" />
+                    <RadzenNumeric @bind-Value="Payment.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:100%;" Format="@("£0.00")"/>
+                </RadzenStack>
             </RadzenStack>
+            <RadzenLabel Component="Notes" Text="Notes" class="font-weight-bold" />
             <RadzenTextArea @bind-Value="Payment.Description" Name="Notes" Placeholder="Mandatory notes to describe the nature of the payment" Style="width: 100%; height: 10rem;" />
         </RadzenStack>
     </RadzenFieldset>
+    <RadzenFieldset Text="Associated Funding Source">
+        <RadzenDropDown Data="@sources"
+                        @bind-Value="Payment.Source"
+                        Name="FundingId"
+                        AllowClear="true"
+                        Style="width: 100%;"
+                        Placeholder="Select Funding Source">
+            <Template Context="item">
+                @($"{(item as FundingSource)?.FundingSourceId}: {(((item as FundingSource)?.HasAccountCode ?? false) ? (item as FundingSource)?.AccountCode : "No Acc Code")} ({(item as FundingSource).FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value})")
+            </Template>
+        </RadzenDropDown>
+    </RadzenFieldset>
     <RadzenFieldset Text="Associated Invoice">
         <RadzenDropDown Data="@invoices"
-        @bind-Value="Payment.Invoice"
-        Name="InvoiceId"
-        AllowClear="true"
-        Style="width: 100%;">
+                        @bind-Value="Payment.Invoice"
+                        Name="InvoiceId"
+                        AllowClear="true"
+                        Style="width: 100%;"
+                        Placeholder="Select Invoice">
             <Template Context="item">
                 @($"{(item as Invoice)?.InvoiceId}: {(item as Invoice)?.InvoiceReference ?? "No Ref"} ({(item as Invoice)?.Value.ToString("C2")})")
             </Template>
@@ -48,7 +69,11 @@
     [Parameter]
     public Payment Payment { get; set; }
 
+    [Inject]
+    private FundingSourceService FundingSourceService { get; set; }
+
     private IEnumerable<Invoice> invoices;
+    private IEnumerable<FundingSource> sources;
 
     protected override void OnInitialized()
     {
@@ -68,6 +93,12 @@
             .GetAll(Context)
             .Where(x => x.Project?.ProjectId == Project?.ProjectId)
             .OrderBy(x => x.InvoiceId);
+
+        // Load funding sources for the dropdown
+        sources = FundingSourceService
+            .GetAll(Context)
+            .Where(x => x.Project?.ProjectId == Project?.ProjectId)
+            .OrderBy(x => x.FundingSourceId);
     }
 
     protected override void HandleValidSubmit()
@@ -82,12 +113,12 @@
 
         if (Payment.PaymentId > 0)
         {
-            InvoiceService.UpdatePayment(Context, Payment);
+            PaymentService.Update(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Update, Payment);
         }
         else
         {
-            InvoiceService.AddPayment(Context, Payment);
+            PaymentService.Add(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Add, Payment);
         }
 
@@ -105,7 +136,7 @@
         {
             Logger?.LogInformation($"Deleting payment ID {Payment.PaymentId}");
 
-            InvoiceService.DeletePayment(Context, Payment);
+            PaymentService.Delete(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Delete, Payment);
             CloseForm(true);
         }

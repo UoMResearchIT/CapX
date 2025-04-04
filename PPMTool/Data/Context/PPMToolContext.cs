@@ -26,8 +26,8 @@ namespace PPMTool.Data.Context
         public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
-
         public DbSet<ApiKey> ApiKeys { get; set; }
+        public DbSet<FundingSource> FundingSources { get; set; }
 
         /// <summary>
         /// Inject options.

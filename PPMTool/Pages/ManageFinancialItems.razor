@@ -5,12 +5,12 @@
 @using PPMTool.Pages.Components
 @using Radzen
 @using DotNetExtensions
-<PageTitle>Payments and Invoices - CapX</PageTitle>
+<PageTitle>Manage Financial Items - CapX</PageTitle>
 
 <div class="container">
     <div class="row align-items-center">
         <div class="col mr-auto">
-            <h1>Payments and Invoices</h1>
+            <h1>Manage Financial Items</h1>
             <RadzenText Text="@(selectedProject?.GetFullName() ?? "All Projects")" TextStyle="TextStyle.Subtitle1" />
         </div>
         <div class="col-auto">
@@ -65,7 +65,7 @@
             </div>
             <div class="col-auto align-content-end">
                 <RadzenButton ButtonType="ButtonType.Button" Click="ExportFinanceItems" Text="Export" Icon="download" Disabled="@(!EditAuthorised || exportRunning)" class="mr-2" />
-                <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditPaymentOrInvoice(null))" Disabled="@(selectedProject == null || !EditAuthorised)" />
+                <RadzenButton Icon="add" Text="Add" Click="@(() => AddOrEditFinanceItem(null))" Disabled="@(selectedProject == null || !EditAuthorised)" />
             </div>
         </div>
         <RadzenTabs @bind-SelectedIndex="selectedTab">
@@ -103,7 +103,7 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Invoice" Title="Actions" MinWidth="10px">
                                 <Template Context="invoice">
-                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditPaymentOrInvoice(invoice))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
+                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditFinanceItem(invoice))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
                                     <RadzenButton Icon="visibility" Click="@(args => ViewInvoiceDocumentAsync(invoice))" Disabled="@(string.IsNullOrWhiteSpace(invoice.InvoiceUrl))" MouseEnter="@(args => ShowTooltip(args, "View"))" />
                                 </Template>
                             </RadzenDataGridColumn>
@@ -123,12 +123,13 @@
                                     @ref="@dataGridPayments">
                         <Columns>
                             <RadzenDataGridColumn TItem="Payment" Property="PaymentId" Title="Payment ID" MinWidth="10px" Width="3rem" />
+                            <RadzenDataGridColumn TItem="Payment" Property="Project.RTP" Title="RTP" MinWidth="10px" Width="3rem"/>
+                            <RadzenDataGridColumn TItem="Payment" Property="Source.FundingSourceId" Title="Funding Source" MinWidth="10px" Width="3rem" />
                             <RadzenDataGridColumn TItem="Payment" Property="Invoice.InvoiceId" Title="Associated Invoice" MinWidth="10px" Width="3rem">
                                 <Template Context="payment">
                                     @(payment.Invoice == null ? "-" : payment.Invoice.InvoiceId)
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="Invoice" Property="Project.RTP" Title="RTP" MinWidth="10px" Width="3rem"/>
                             <RadzenDataGridColumn TItem="Payment" Property="KeyDate" Title="Payment Date" FormatString="{0:d}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="Payment" Property="Value" Title="Amount" FormatString="{0:C0}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="Payment" Property="Description" Title="Notes" MinWidth="10px" Width="10rem">
@@ -138,7 +139,47 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Payment" Title="Actions" MinWidth="10px" Width="2rem">
                                 <Template Context="payment">
-                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditPaymentOrInvoice(payment))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditFinanceItem(payment))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Funding Sources">
+                    <RadzenDataGrid Data="@sources"
+                                    TItem="FundingSource"
+                                    ColumnWidth="5rem"
+                                    FilterMode="FilterMode.Simple"
+                                    AllowSorting="true"
+                                    AllowFiltering="true"
+                                    class="white-space:pre-wrap"
+                                    PageSize="10"
+                                    AllowPaging="true"
+                                    @ref="@dataGridSources">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceId" Title="Source ID" MinWidth="10px" Width="3rem" />
+                            <RadzenDataGridColumn TItem="FundingSource" Property="FundingSource.Project.RTP" Title="RTP" MinWidth="10px" Width="3rem" />
+                            <RadzenDataGridColumn TItem="FundingSource" Property="HasAccountCode" Title="Has Account?" MinWidth="10px"/>
+                            <RadzenDataGridColumn TItem="FundingSource" Property="AccountCode" Title="Account Code" MinWidth="10px">
+                                <Template Context="item">
+                                    @if (item.HasAccountCode)
+                                    {
+                                        @item.AccountCode
+                                    }
+                                    else
+                                    {
+                                        <div>N/A</div>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceType" Title="Source Type" MinWidth="10px">
+                                <Template Context="source">
+                                    @(source.FundingSourceType.GetDescription())
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FundingSource" Title="Actions" MinWidth="10px" Width="2rem">
+                                <Template Context="source">
+                                    <RadzenButton Icon="edit" Click="@(args => AddOrEditFinanceItem(source))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>

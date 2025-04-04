@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
@@ -59,8 +62,10 @@ namespace PPMTool.Data
 
         public string FundsOwedColour { get; }
 
+        public MarkupString ListOfFundingSources { get; }
 
-        public FinanceSummaryItem(Project project, double fundsRequested, double fundsReceived)
+
+        public FinanceSummaryItem(Project project, IEnumerable<FundingSource> sources, double fundsRequested, double fundsReceived)
         {
             if (project == null)
             {
@@ -93,6 +98,11 @@ namespace PPMTool.Data
             FundsRequestedColour = (FundsRequested > FundsReceived || (FundsRequested == 0 && Budget > 0)) ? "red" : "green";
             FundsOwed = FundsRequested - FundsReceived;
             FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
+
+            var sourcesAsList = sources
+                .Select(x => $"{(x.HasAccountCode ? x.AccountCode : "Other")}&nbsp;({(x.FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value)})")
+                .Distinct();
+            ListOfFundingSources = (MarkupString)((sourcesAsList != null && sourcesAsList.Count() > 0) ? string.Join("<br />", sourcesAsList) : "None");
         }
     }
 }

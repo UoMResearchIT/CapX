@@ -27,14 +27,8 @@ else
                     <th>Actual Cost</th>
                     <th>Funds Requested</th>
                     <th>Funds Received</th>
-                    <th>
-                        Actual Hours
-                        @if (ResetActualsTimeStamp != null)
-                        {
-                            <br />
-                            <RadzenButton Click="ResetActualsTimeStamp" Icon="check" Text="Checked" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Disabled="!EditAuthorised" />
-                        }
-                    </th>
+                    <th>Actual Hours</th>
+                    <th>Funding Sources</th>
                 </tr>
             </thead>
             <tbody>
@@ -93,6 +87,7 @@ else
                     <td><span style="color:@FinanceSummaryItem.FundsRequestedColour">@FinanceSummaryItem.FundsRequested.ToString("C0")</span></td>
                     <td><span style="color:@FinanceSummaryItem.FundsReceivedColour">@FinanceSummaryItem.FundsReceived.ToString("C0")</span></td>
                     <td>@FinanceSummaryItem.ActualHours</td>
+                    <td>@FinanceSummaryItem.ListOfFundingSources</td>
                 </tr>
             </tbody>
         </table>
@@ -105,7 +100,4 @@ else
 
     [Parameter]
     public bool EditAuthorised { get; set; }
-
-    [Parameter]
-    public Action ResetActualsTimeStamp { get; set; }
 }

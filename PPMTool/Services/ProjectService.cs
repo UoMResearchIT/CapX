@@ -106,6 +106,7 @@ namespace PPMTool.Services
                 .Include(p => p.ProjectManager)
                 .Include(p => p.InnateActivity)
                 .Include(p => p.Followers)
+                .Include(p => p.FundingSources)
                 .ToList();
         }
 

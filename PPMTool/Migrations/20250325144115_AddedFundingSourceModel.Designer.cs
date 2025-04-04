@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250325144115_AddedFundingSourceModel")]
+    partial class AddedFundingSourceModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -407,9 +409,6 @@ namespace PPMTool.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SourceFundingSourceId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<double>("Value")
                         .HasColumnType("REAL");
 
@@ -418,8 +417,6 @@ namespace PPMTool.Migrations
                     b.HasIndex("InvoiceId");
 
                     b.HasIndex("ProjectId");
-
-                    b.HasIndex("SourceFundingSourceId");
 
                     b.ToTable("Payments");
                 });
@@ -989,17 +986,9 @@ namespace PPMTool.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PPMTool.Data.Entities.FundingSource", "Source")
-                        .WithMany("PaymentsFromSource")
-                        .HasForeignKey("SourceFundingSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Invoice");
 
                     b.Navigation("Project");
-
-                    b.Navigation("Source");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
@@ -1119,11 +1108,6 @@ namespace PPMTool.Migrations
             modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>
                 {
                     b.Navigation("Assessments");
-                });
-
-            modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
-                {
-                    b.Navigation("PaymentsFromSource");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>

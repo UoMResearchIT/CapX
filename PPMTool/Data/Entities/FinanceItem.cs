@@ -6,7 +6,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// A generic finance item
     /// </summary>
-    public abstract class FinanceItem
+    public abstract class FinanceItem : BaseFinanceItem
     {
         /// <summary>
         /// A key date associated with the item (e.g. invoice raised or payment received)
@@ -27,9 +27,12 @@ namespace PPMTool.Data.Entities
         public string Description { get; set; }
 
         /// <summary>
-        /// Project associated with this item
+        /// Method to get a suitable description of the item for posting to a note
         /// </summary>
-        [Required]
-        public Project Project { get; set; }
+        /// <returns></returns>
+        public override string GetDescription()
+        {
+            return Description;
+        }
     }
 }

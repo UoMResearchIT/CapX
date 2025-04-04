@@ -40,12 +40,14 @@
                                       Text=@(isCurrentUserFollowing ? "Following" : "Follow?")
                                       ButtonStyle="ButtonStyle.Primary"
                                       Click="ToggleFollowing"
-                                      Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId) />
+                                      Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId)
+                                      Size="ButtonSize.Small" />
                     }
-                    <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" />
-                    <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
-                    <RequestAndScrumButtonsComponent Project="@project" />
-                    <RadzenButton Click="@(args => EditFinance(project))" Text="Finance" Icon="payments" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance && ActiveUserRoleType != RoleType.Reader)" />
+                    <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" Size="ButtonSize.Small" />
+                    <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" Size="ButtonSize.Small" />
+                    <RadzenButton Click="ResetActualsTimeStamp" Icon="timer" Text="Actuals OK?" ButtonStyle="ButtonStyle.Primary" Disabled="@(!isProjectManager)" Size="ButtonSize.Small" />
+                    <RequestAndScrumButtonsComponent Project="@project" ButtonSize="ButtonSize.Small"/>
+                    <RadzenButton Click="@(args => EditFinance(project))" Text="Finance" Icon="payments" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance && ActiveUserRoleType != RoleType.Reader)" Size="ButtonSize.Small" />
                 }
             </RadzenStack>
         </div>
@@ -60,8 +62,7 @@
         <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
         <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem"
-                                        EditAuthorised="@EditAuthorised"
-                                        ResetActualsTimestamp="@ResetActualsTimeStamp" />
+                                        EditAuthorised="@EditAuthorised" />
     }
     <hr />
     
@@ -320,6 +321,7 @@
                                 RTP-24 Project Name
                             </span>.
                             Failed linking, if either the person or project does not exist, will leave the text unchanged.
+                            <b>Currently there must be a space before and after the reference for the link to be detected.</b>
                         </RadzenText>
                         <div class="grip">
                             <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />
