@@ -43,8 +43,13 @@ namespace PPMTool.Shared
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
+        [Inject]
+        private InnateCodeService InnateCodeService { get; set; }
+
         private LoginView loginView;
         private int totalTimesheetIssues;
+        private int totalTimesheetCodesToDeactivate;
+        private bool adminMenuItemExpanded = false;
 
         protected override void OnInitialized()
         {
@@ -52,6 +57,7 @@ namespace PPMTool.Shared
             versionString = $"v{Configuration["VersionNumber"]}";
             context = ContextFactory.CreateDbContext();
             razorComponentReference = DotNetObjectReference.Create(this);
+
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -60,15 +66,23 @@ namespace PPMTool.Shared
 
             if (loginView != null && loginView.ActiveUser != null)
             {
-                var oldValue = totalTimesheetIssues;
+                // Update the badges in the sidebar if necessary
+                var oldTimesheetIssuesValue = totalTimesheetIssues;
+                var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
                 totalTimesheetIssues = TimesheetService.GetIssueCount(context, loginView.ActiveUser?.Person?.PersonId ?? 0);
-                if (oldValue != totalTimesheetIssues)
+                totalTimesheetCodesToDeactivate = InnateCodeService.GetCodesToDeactivate(context).Count();
+                if (oldTimesheetIssuesValue != totalTimesheetIssues || oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate)
                 {
+                    // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
+                    adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
                     StateHasChanged();
                 }
             }
         }
 
+        /// <summary>
+        /// Clear the magic bar
+        /// </summary>
         private void ClearMagicBar()
         {
             searchTerm = string.Empty;
@@ -76,6 +90,9 @@ namespace PPMTool.Shared
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Kicked off when a search term is entered into the magic bar
+        /// </summary>
         private async void OnSearchTermEntered()
         {
             // If nothing being typed
@@ -118,6 +135,11 @@ namespace PPMTool.Shared
             await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName), razorComponentReference);
         }
 
+        /// <summary>
+        /// Can be invoked from JS when an item in the popup is clicked.
+        /// Navigates to the apporpriate page
+        /// </summary>
+        /// <param name="selectedItem"></param>
         [JSInvokable]
         public void OnItemSelected(string selectedItem)
         {
@@ -142,6 +164,9 @@ namespace PPMTool.Shared
             razorComponentReference?.Dispose();
         }
 
+        /// <summary>
+        /// Specific object for populating the magic bar popup
+        /// </summary>
         private class MagicBarItem
         {
             public int EntityId { get; }

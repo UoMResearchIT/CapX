@@ -48,6 +48,12 @@ namespace PPMTool.Pages
         private InvoiceService InvoiceService { get; set; }
 
         [Inject]
+        private PaymentService PaymentService { get; set; }
+
+        [Inject]
+        private FundingSourceService FundingSourceService { get; set; }
+
+        [Inject]
         private SkillTagService SkillTagService { get; set; }
 
         [Parameter]
@@ -202,6 +208,7 @@ namespace PPMTool.Pages
                 if (ProjectId != null)
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+                    var sources = FundingSourceService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId);
 
                     // Generate the list of skills
                     skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
@@ -209,8 +216,9 @@ namespace PPMTool.Pages
                     // Generate the finance item
                     financeSummaryItem = new FinanceSummaryItem(
                         project,
+                        sources,
                         InvoiceService.GetFundsRequested(context, project.ProjectId),
-                        InvoiceService.GetFundsReceived(context, project.ProjectId)
+                        PaymentService.GetFundsReceived(context, project.ProjectId)
                     );
 
                     // Generate the blocks for the schedule chart

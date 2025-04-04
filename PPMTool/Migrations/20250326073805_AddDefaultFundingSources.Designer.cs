@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,10 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250326073805_AddDefaultFundingSources")]
+    partial class AddDefaultFundingSources
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.35");
@@ -407,7 +409,7 @@ namespace PPMTool.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SourceFundingSourceId")
+                    b.Property<int?>("SourceFundingSourceId")
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("Value")
@@ -611,12 +613,6 @@ namespace PPMTool.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Rareness")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RarenessCount")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("SkillTagId");
 
@@ -856,21 +852,6 @@ namespace PPMTool.Migrations
                     b.ToTable("WorkloadModelChanges");
                 });
 
-            modelBuilder.Entity("SkillTagSubTask", b =>
-                {
-                    b.Property<int>("SkillsRequiredSkillTagId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TasksNeedingThisSkillSubTaskId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("SkillsRequiredSkillTagId", "TasksNeedingThisSkillSubTaskId");
-
-                    b.HasIndex("TasksNeedingThisSkillSubTaskId");
-
-                    b.ToTable("SkillTagSubTask");
-                });
-
             modelBuilder.Entity("PersonProject", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Project", null)
@@ -1012,9 +993,7 @@ namespace PPMTool.Migrations
 
                     b.HasOne("PPMTool.Data.Entities.FundingSource", "Source")
                         .WithMany("PaymentsFromSource")
-                        .HasForeignKey("SourceFundingSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SourceFundingSourceId");
 
                     b.Navigation("Invoice");
 
@@ -1135,21 +1114,6 @@ namespace PPMTool.Migrations
                         .HasForeignKey("PersonId");
 
                     b.Navigation("Person");
-                });
-
-            modelBuilder.Entity("SkillTagSubTask", b =>
-                {
-                    b.HasOne("PPMTool.Data.Entities.SkillTag", null)
-                        .WithMany()
-                        .HasForeignKey("SkillsRequiredSkillTagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PPMTool.Data.Entities.SubTask", null)
-                        .WithMany()
-                        .HasForeignKey("TasksNeedingThisSkillSubTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>

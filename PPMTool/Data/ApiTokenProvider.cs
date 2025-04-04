@@ -22,7 +22,7 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public string CreateToken(User user)
+        public string CreateToken(User user, double expirationInDays)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace PPMTool.Data
                     new Claim("UserId", user.UserId.ToString()),
                     new Claim("RoleType", user.RoleType.ToString())
                 }),
-                    Expires = System.DateTime.UtcNow.AddDays(configuration.GetValue<double>("Jwt:ExpirationInDays")),
+                    Expires = System.DateTime.UtcNow.AddDays(expirationInDays),
                     SigningCredentials = credentials
                 };
 

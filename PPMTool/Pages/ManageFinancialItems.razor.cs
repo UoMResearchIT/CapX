@@ -37,17 +37,25 @@ namespace PPMTool.Pages
         private InvoiceService InvoiceService { get; set; }
 
         [Inject]
+        private PaymentService PaymentService { get; set; }
+
+        [Inject]
+        private FundingSourceService FundingSourceService { get; set; }
+
+        [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
         private FinanceSummaryItem financeSummaryItem;
         private IEnumerable<Invoice> invoices;
         private IEnumerable<Payment> payments;
+        private IEnumerable<FundingSource> sources;
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
         private int selectedTab;
         private RadzenDataGrid<Payment> dataGridPayments;
         private RadzenDataGrid<Invoice> dataGridInvoices;
+        private RadzenDataGrid<FundingSource> dataGridSources;
         private bool exportRunning;
 
         protected override void OnInitialized()
@@ -123,16 +131,18 @@ namespace PPMTool.Pages
             UpdateSummaryComponent();
 
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
-            payments = InvoiceService.GetAllPayments(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
+            payments = PaymentService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
+            sources = FundingSourceService.GetAll(Context).OrderByDescending(x => x.FundingSourceId);
 
             // Filter if a project is selected
             if (selectedProject != null)
             {
                 invoices = invoices.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 payments = payments.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
+                sources = sources.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
             }
 
-            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments.");
+            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
 
         /// <summary>
@@ -144,8 +154,9 @@ namespace PPMTool.Pages
             {
                 financeSummaryItem = new FinanceSummaryItem(
                     selectedProject,
+                    FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
-                    InvoiceService.GetFundsReceived(Context, selectedProject.ProjectId)
+                    PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)
                 );
             }
         }
@@ -171,7 +182,7 @@ namespace PPMTool.Pages
         /// Method to load the dialog to add or edit a payment or invoice
         /// </summary>
         /// <param name="item"></param>
-        private void AddOrEditPaymentOrInvoice(FinanceItem item)
+        private void AddOrEditFinanceItem(BaseFinanceItem item)
         {
             if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
@@ -213,6 +224,26 @@ namespace PPMTool.Pages
                     }
                 );
             }
+            else if ((item == null && selectedTab == 2) || item is FundingSource)
+            {
+                DialogService.Open<FundingSourceFormComponent>(
+                    $"{(item == null ? "Add" : "Edit")} Funding Source ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    new Dictionary<string, object>
+                    {
+                        { nameof(FundingSourceFormComponent.Source), item },
+                        { nameof(FundingSourceFormComponent.Project), selectedProject == null ? item.Project : selectedProject },
+                        { nameof(FundingSourceFormComponent.Logger), Logger },
+                        { nameof(FundingSourceFormComponent.Context), Context },
+                        { nameof(FundingSourceFormComponent.ActiveUser), ActiveUser },
+                        { nameof(FundingSourceFormComponent.FormClosed), () => FormClosedHandler() },
+                        { nameof(FundingSourceFormComponent.EditAuthorised), EditAuthorised }
+                    },
+                    new DialogOptions
+                    {
+                        ShowClose = false
+                    }
+                );
+            }
             else
             {
                 LogError("Unkown finance item type!");
@@ -226,6 +257,7 @@ namespace PPMTool.Pages
         {
             dataGridInvoices?.Reload();
             dataGridPayments?.Reload();
+            dataGridSources?.Reload();
             UpdateSummaryComponent();
             StateHasChanged();
         }
@@ -249,12 +281,16 @@ namespace PPMTool.Pages
                         var workbook = new XLWorkbook();
                         var sheet1 = workbook.Worksheets.Add("Invoices");
                         var sheet2 = workbook.Worksheets.Add("Payments");
+                        var sheet3 = workbook.Worksheets.Add("Funding Sources");
 
                         // Write headers and data for Invoices sheet
                         WriteDataToSheet(sheet1, invoices);
 
                         // Write headers and data for Payments sheet
                         WriteDataToSheet(sheet2, payments);
+
+                        // Write headers and data for Source sheet
+                        WriteDataToSheet(sheet3, sources);
 
                         var stream = new MemoryStream();
                         workbook.SaveAs(stream);
