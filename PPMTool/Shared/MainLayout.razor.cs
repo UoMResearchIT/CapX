@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Shared
@@ -53,6 +54,7 @@ namespace PPMTool.Shared
         private int totalIncompleteSkills;
         private bool adminMenuItemExpanded = false;
         private int? activeUserId;
+        private RoleType activeUserRoleType;
 
         protected override void OnInitialized()
         {
@@ -72,6 +74,7 @@ namespace PPMTool.Shared
 
                 // Store the active user ID
                 activeUserId = loginView.ActiveUser?.Person?.PersonId ?? 0;
+                activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
 
                 // Update timesheet badge
                 var oldTimesheetIssuesValue = totalTimesheetIssues;
