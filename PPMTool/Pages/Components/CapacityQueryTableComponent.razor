@@ -1,31 +1,38 @@
 ﻿@using PPMTool.Data
-<table class="table table-sm table-striped table-bordered">
-    <thead>
-        <tr>
-            <th class="col-2">Name</th>
-            <th class="col-5">Skills</th>
-            <th class="col-1">Start</th>
-            <th class="col-1">End</th>
-            <th class="col-1">FTE</th>
-            <th class="col-1">Duration?</th>
-            <th class="col-1">FTE?</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var res in Results)
-        {
+@if (Results == null || Results.Count() == 0)
+{
+    <span>No suggested resources for this task</span>
+}
+else
+{
+    <table class="table table-sm table-striped table-bordered">
+        <thead>
             <tr>
-                <td>@res.Person.Name</td>
-                <td><SkillsAsBadgesComponent SkillsList="@res.Person.OwnedSkills.Select(x => x.SkillTag)" /></td>
-                <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                <td>@(res.AvailableFTE) FTE</td>
-                <td><RadzenIcon Icon="@(res.DurationMatch ? "check" : "clear")" IconStyle="@(res.DurationMatch ? IconStyle.Success : IconStyle.Danger)" /></td>
-                <td><RadzenIcon Icon="@(res.FteMatch ? "check" : "clear")" IconStyle="@(res.FteMatch ? IconStyle.Success : IconStyle.Danger)" /></td>
+                <th class="col-2">Name</th>
+                <th class="col-5">Skills</th>
+                <th class="col-1">Start</th>
+                <th class="col-1">End</th>
+                <th class="col-1">FTE</th>
+                <th class="col-1">Duration?</th>
+                <th class="col-1">FTE?</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var res in Results)
+            {
+                <tr>
+                    <td>@res.Person.Name</td>
+                    <td><SkillsAsBadgesComponent SkillsList="@res.Person.OwnedSkills.Select(x => x.SkillTag)" /></td>
+                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
+                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
+                    <td>@(res.AvailableFTE) FTE</td>
+                    <td><RadzenIcon Icon="@(res.DurationMatch ? "check" : "clear")" IconStyle="@(res.DurationMatch ? IconStyle.Success : IconStyle.Danger)" /></td>
+                    <td><RadzenIcon Icon="@(res.FteMatch ? "check" : "clear")" IconStyle="@(res.FteMatch ? IconStyle.Success : IconStyle.Danger)" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
     [Parameter]

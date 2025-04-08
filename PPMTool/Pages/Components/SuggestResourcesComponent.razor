@@ -16,6 +16,9 @@
     [Parameter]
     public DateTime QueryEndDate { get; set; }
 
+    [Parameter]
+    public double RequiredFTE { get; set; }
+
     [Inject]
     private ILogger Logger { get; set; }
 
