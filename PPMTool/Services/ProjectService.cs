@@ -88,7 +88,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the projects with all their related tables -- pretty heavy operation now!
+        /// Gets all the projects with all their related tables -- pretty heavy operation now! Needs some optimisation!
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
@@ -100,6 +100,8 @@ namespace PPMTool.Services
                         .ThenInclude(r => r.Person)
                             .ThenInclude(r => r.WorkloadModelChanges)
                 .Include(p => p.SubTasks)
+                    .ThenInclude(x => x.SkillsRequired)
+                .Include(x => x.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)
                             .ThenInclude(pp => pp.Absences)

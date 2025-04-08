@@ -1,7 +1,11 @@
-﻿namespace PPMTool.Enums
+﻿using System.ComponentModel;
+
+namespace PPMTool.Enums
 {
     public enum SkillProficiency
     {
+        [Description("Not Yet Rated")]
+        NotRated,
         None,
         Beginner,
         Intermediate,

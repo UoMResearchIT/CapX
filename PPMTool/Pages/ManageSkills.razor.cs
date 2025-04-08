@@ -16,14 +16,10 @@ namespace PPMTool.Pages
     public partial class ManageSkills : DataGridPage<SkillTag>
     {
         [Inject]
-        private PersonService PersonService { get; set; }
-
-        [Inject]
         private SkillTagService TagService { get; set; }
 
         private int count;
         private int pageCount = 15;
-        private bool tableEmpty = true;
 
         protected override void OnInitialized()
         {
@@ -101,19 +97,6 @@ namespace PPMTool.Pages
             // Order by name by default
             IQueryable<SkillTag> query = TagService.GetAll(Context).OrderBy(x => x.Name).AsQueryable();
 
-            Debug.WriteLine($"** {query.Count()} tags loaded!");
-
-            // Set the flag here so the filter doesn't disappear when there are no matching results
-            tableEmpty = query.Count() == 0;
-
-            // Update the skill tag rareness
-            foreach (var skill in query)
-            {
-                // Initialise the rareness for the tag
-                var rareness = TagService.GetRareness(Context, skill.SkillTagId);
-                skill.UpdateRareness(rareness);
-            }
-
             // Filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
@@ -154,15 +137,18 @@ namespace PPMTool.Pages
             }
 
             // Assign to grid source
-            count = query.Count();
+            var data = query.ToList();
+            count = data.Count;
             if (args.Skip == null)
             {
-                dataGridEntities = query.Take(pageCount).ToList();
+                dataGridEntities = data.Take(pageCount).ToList();
             }
             else
             {
-                dataGridEntities = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                dataGridEntities = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
+
+            Debug.WriteLine($"** {data.Count()} skills loaded. {dataGridEntities.Count()} displayed.");
         }
 
         /// <summary>

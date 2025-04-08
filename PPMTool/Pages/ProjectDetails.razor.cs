@@ -53,6 +53,9 @@ namespace PPMTool.Pages
         [Inject]
         private FundingSourceService FundingSourceService { get; set; }
 
+        [Inject]
+        private SkillTagService SkillTagService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -112,6 +115,7 @@ namespace PPMTool.Pages
         private bool groupLinkedTasks;
         private ApexChart<GanttBlock> scheduleChart;
         private ApexChart<ChartItem> burnUpChart;
+        private IEnumerable<SkillTag> skillsRequiredForProject;
 
 
         /// <summary>
@@ -205,6 +209,9 @@ namespace PPMTool.Pages
                 {
                     project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
                     var sources = FundingSourceService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId);
+
+                    // Generate the list of skills
+                    skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
 
                     // Generate the finance item
                     financeSummaryItem = new FinanceSummaryItem(

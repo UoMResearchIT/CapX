@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -14,7 +15,7 @@ namespace PPMTool.Pages
         public PersonService PersonService { get; set; }
 
         [Inject]
-        private SkillTagService TagService { get; set; }
+        private SkillTagService SkillTagService { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }
@@ -27,10 +28,25 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+        }
+
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+
+            Debug.WriteLine($"** Loading owned skills for person {PersonId}");
 
             // Map entities to checkbox list items
-            availableTags = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            availableTags = SkillTagService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
+            // Assign active user if the parameter is zero
+            if (PersonId == 0)
+            {
+                PersonId = ActiveUser?.Person?.PersonId ?? 0;
+                Debug.WriteLine($"** Setting person ID to {PersonId}");
+            }
+
+            // If a valid person then load
             if (PersonId > 0)
             {
                 personModel = PersonService.GetById(Context, PersonId);
@@ -40,14 +56,6 @@ namespace PPMTool.Pages
                 {
                     // Update chosen tags
                     ownedTags = personModel.OwnedSkills.OrderBy(x => x.SkillTag.Name).ToList();
-
-                    // Update the rareness information for the related tags
-                    foreach (var skill in ownedTags)
-                    {
-                        // Initialise the rareness for the tag
-                        var rareness = TagService.GetRareness(Context, skill.SkillTag.SkillTagId);
-                        skill.SkillTag.UpdateRareness(rareness);
-                    }
 
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOrPerson(personModel);
@@ -129,6 +137,13 @@ namespace PPMTool.Pages
                 // Write to the database
                 LogInformation($"Saving skills for {personModel.Name}.");
                 PersonService.Update(Context, personModel);
+
+                // Update the skills tag rareness based on these changes
+                foreach (var ownedSkill in personModel.OwnedSkills)
+                {
+                    var tag = ownedSkill.SkillTag;
+                    SkillTagService.UpdateSkillTagRareness(Context, tag);
+                }
 
                 // Navigate back
                 Navigation.NavigateTo($"people/addperson/{PersonId}");

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -8,6 +9,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
@@ -18,6 +20,9 @@ namespace PPMTool.Pages
         private PaymentService PaymentService { get; set; }
 
         private IEnumerable<Project> projects;
+        private RadzenDataGrid<Project> dataGrid;
+        private int count;
+        private int pageCount = 15;
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -32,8 +37,10 @@ namespace PPMTool.Pages
                 {
                     includeFinished = value;
                     SessionStorage.SetItemAsync("project-show-active", includeFinished);
-                    LoadProjectData(false);
                 }
+
+                Debug.WriteLine($"** Include finished set to {value}. Reloading...");
+                dataGrid?.Reload();
             }
         }
 
@@ -58,6 +65,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             Loading = true;
+            EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
         }
 
@@ -66,51 +74,81 @@ namespace PPMTool.Pages
             // Load settings the first time
             if (firstRender)
             {
+                // Get data grid filters and sort settings
+                settings = await SessionStorage.GetItemAsync<DataGridSettings>("project-settings");
+
                 // Get switch setting
                 includeFinished = await SessionStorage.GetItemAsync<bool>("project-show-active");
-
-                // Load data
-                LoadProjectData(true);
-
-                // Get the grid settings
-                Debug.WriteLine($"** Loading saved session settings for the grid...");
-                await LoadSettingsAsync();
             }
         }
 
-        private async Task LoadSettingsAsync()
+        /// <summary>
+        /// Gets the task responsible for loading the data
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask(LoadDataArgs args = null)
         {
-            settings = await SessionStorage.GetItemAsync<DataGridSettings>("project-settings");
-            StateHasChanged();
+            return Task.Run(() =>
+            {
+                // Get people from the database
+                OnLoadData(args ?? new LoadDataArgs());
+            })
+                .ContinueWith(t =>
+                {
+                    InvokeAsync(() =>
+                    {
+                        Loading = false;
+                        StateHasChanged();
+                    });
+                });
         }
 
-        private void LoadProjectData(bool initial)
+        private void OnLoadData(LoadDataArgs args)
         {
+            Debug.WriteLine($"** Loading data...");
+
             // Initialise the project list -- developers can only see projects to which they are assigned
-            List<Project> proj;
+            IQueryable<Project> query = ProjectService.GetAll(Context).OrderBy(x => x.RTP).AsQueryable();
             if (ActiveUserRoleType == RoleType.Developer)
             {
-                proj = ProjectService.GetAll(Context)
-                    .Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person?.PersonId == ActiveUser?.Person?.PersonId)))
-                    .OrderBy(x => x.RTP).ToList();
-            }
-            else
-            {
-                proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
+                query = query.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person.PersonId == ActiveUser.Person.PersonId)));
             }
 
             // Remove the ones that are not active if necessary
-            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
+            if (!includeFinished) query = query.Where(x => !x.ProjectStatus.IsFinishedOrCancelled());
 
-            // Assign data for the data grid
-            projects = proj;
+            // Filtering
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                // Apply standard filters to the DTOs
+                query = query.Where(args.Filter);
+            }
 
-            // Disable spinner now load complete
-            Loading = false;
+            // Sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                // Apply standard sorting
+                query = query.OrderBy(args.OrderBy);
+            }
 
-            Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
+            // Assign to grid source
+            var data = query.ToList();
+            count = query.Count();
+            if (args.Skip == null)
+            {
+                projects = data.Take(pageCount).ToList();
+            }
+            else
+            {
+                projects = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            }
+
+            Debug.WriteLine($"** {data.Count()} projects loaded. {projects.Count()} displayed.");
         }
 
+        /// <summary>
+        /// Navigate to the add project page
+        /// </summary>
         private void AddProject()
         {
             Navigation.NavigateTo($"projects/addproject/-1");

@@ -131,7 +131,7 @@ namespace PPMTool.Pages
                 if (!editContext.GetValidationMessages().Any())
                 {
                     LogInformation("Editing skills...");
-                    Navigation.NavigateTo($"people/addskills/{personModel?.PersonId}");
+                    Navigation.NavigateTo($"skills/{personModel?.PersonId}");
                 }
             }
         }

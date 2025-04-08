@@ -1,0 +1,12 @@
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
+
+<RadzenImage Path="@($"images/emb_{SkillTag.Rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="@($"width: {SizeInRem}rem; height: {SizeInRem}rem;")" title="@($"{SkillTag.RarenessCount} RSE(s) with this tag")" />
+
+@code {
+    [Parameter]
+    public SkillTag SkillTag { get; set; }
+
+    [Parameter]
+    public double SizeInRem { get; set; } = 3;
+}

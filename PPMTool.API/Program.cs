@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
+using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data.Context;
 using PPMTool.Services;
+
 #if RELEASE
 using Serilog;
 #endif
@@ -65,6 +67,10 @@ builder.Services.AddSwaggerGen(
             name: "v1",
             info: new() { Title = "CapX API", Version = "v1" }
         );
+        opt.UseInlineDefinitionsForEnums();
+
+        // Operation filters for schema simplifications
+        opt.OperationFilter<SkillTagShallowOperationFilter>();
 
         string? docFilePath = Directory.GetFiles(
             path: Directory.GetCurrentDirectory(),

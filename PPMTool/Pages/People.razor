@@ -13,7 +13,7 @@
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                 <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
-                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="Loading" />
+                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@(Loading || ActiveUserRoleType == RoleType.Developer)" />
                 <RadzenButton Text="Add" Icon="add" Click="@AddPerson" Disabled="@(!EditAuthorised || Loading)" />
             </RadzenStack>
         </div>
@@ -30,7 +30,7 @@
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
+            <RadzenDataGrid AllowFiltering="true"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
