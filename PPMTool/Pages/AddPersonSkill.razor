@@ -22,9 +22,99 @@
                     <div class="col py-2">
                         <h3>Skill Tags</h3>
                     </div>
-                    <div class="col-auto py-2 align-items-center">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Icon="check" Disabled="@(!EditAuthorised)" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                </div>
+                <HintComponent Message="@("Add skills to your profile by searching for them in the search box. If the skill tag you want to add is not in the available list then propose to your manager that it be added to the database. If you mark a skill as \"to develop\", managers will try to find suitable assignments where you can develop that skill. If you have stated you have no proficiency in a skill then it is expected that you will mark it as \"to develop\" and a \"last used\" date is not required.")" />
+                @if (ownedTags.Any(x => !x.RecordComplete()))
+                {
+                    <hr />
+                    <StatusMessageComponent Message="@(new StatusMessage("You have incomplete skill records! Proficiency assessment and Last Used date missing!", StatusMessage.MessageType.Warning))" />
+                }
+                <hr />
+                <div class="row my-2">
+                    <div class="col mx-1">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.Stretch" AlignItems="AlignItems.Center">
+                            <RadzenIcon Icon="search" />
+                            <RadzenAutoComplete @bind-Value=@autoCompleteText
+                                                Placeholder="Search for Skill Tags to Add"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                Data=@availableTags
+                                                TextProperty="Name"
+                                                Change=@OnChange
+                                                Style="width:100%"
+                                                Disabled="@(!EditAuthorised)"  />
+                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                          Icon="clear"
+                                          Click="@(args => ClearSearch())"
+                                          MouseEnter="@(args => ShowTooltip(args, "Clear"))"
+                                          Disabled=!EditAuthorised />
+                        </RadzenStack>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <RadzenDataList AllowVirtualization=true
+                                        class="half-height-list"
+                                        WrapItems="false"
+                                        AllowPaging="false"
+                                        Style="width:100%;"
+                                        Data="@ownedTags"
+                                        TItem="OwnedSkill">
+                            <Template Context="tag">
+                                <div class="row align-items-center" style="@($"margin: -0.8rem; {(!tag.RecordComplete() ? "background-color: #FFF3CD;" : "")}")">
+                                    <div class="col">
+                                        @if (tag.SkillTag.HasValidWikiLink == LinkCheckState.Success)
+                                        {
+                                            <a href="@tag.SkillTag.GetWikiLink()" target="_blank">
+                                                <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                        }
+                                    </div>
+                                    <div class="col">
+                                        <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Proficiency:" />
+                                            <RadzenRating @bind-Value="@tag.ProficiencyRating" Stars="5" ReadOnly=!EditAuthorised />
+                                            <RadzenText TextStyle="TextStyle.Body2" Text="@(tag.Proficiency.GetDescription())" Style="@("color: var(--rz-primary); margin-bottom: 0;")" />
+                                        </RadzenStack>
+                                    </div>
+                                    <div class="col text-center">
+                                        <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Skill Last Used:" />
+                                            <RadzenDatePicker @bind-Value="tag.LastUsed"
+                                                              ShowTime="false"
+                                                              DateFormat="dd/MM/yyyy"
+                                                              Disabled="@(!EditAuthorised || tag.Proficiency == SkillProficiency.None)"
+                                                              Style="margin-bottom: 0.5rem;" />
+                                        </RadzenStack>
+                                    </div>
+                                    <div class="col text-center">
+                                        <RadzenButton Icon="@(tag.FavouriteSkill ? "check_circle" : "radio_button_unchecked")"
+                                                      Text="To Develop"
+                                                      ButtonStyle="@(tag.FavouriteSkill ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                                      Click="@(() => ToggleFavourite(tag))"
+                                                      Disabled=!EditAuthorised />
+                                    </div>
+                                    <div class="col">
+                                        <SkillTagRarenessComponent SkillTag="@tag.SkillTag" Context="Context" />
+                                    </div>
+                                    <div class="col-auto">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />
+                                    </div>
+                                </div>
+                            </Template>
+                        </RadzenDataList>
+                    </div>
+                </div>
+                <hr />
+                <div class="row">
+                    <div class="col py-2 align-items-center">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Icon="check" Disabled="@(!EditAuthorised)" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
+                        </RadzenStack>
                     </div>
                 </div>
                 @if (ErrorMessage != null)
@@ -36,91 +126,6 @@
                     </div>
                 }
             </EditForm>
-            <HintComponent Message="@("Add skills to your profile by searching for them in the search box. If the skill tag you want to add is not in the available list then propose to your manager that it be added to the database. If you mark a skill as \"to develop\", managers will try to find suitable assignments where you can develop that skill. If you have stated you have no proficiency in a skill then it is expected that you will mark it as \"to develop\" and a \"last used\" date is not required.")" />
-            @if (ownedTags.Any(x => !x.RecordComplete()))
-            {
-                <hr />
-                <StatusMessageComponent Message="@(new StatusMessage("You have incomplete skill records! Proficiency assessment and Last Used date missing!", StatusMessage.MessageType.Warning))" />
-            }
-            <hr />
-            <div class="row my-2">
-                <div class="col mx-1">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.Stretch" AlignItems="AlignItems.Center">
-                        <RadzenIcon Icon="search" />
-                        <RadzenAutoComplete @bind-Value=@autoCompleteText
-                                            Placeholder="Search for Skill Tags to Add"
-                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                            Data=@availableTags
-                                            TextProperty="Name"
-                                            Change=@OnChange
-                                            Style="width:100%"
-                                            Disabled="@(!EditAuthorised)"  />
-                        <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                      Icon="clear"
-                                      Click="@(args => ClearSearch())"
-                                      MouseEnter="@(args => ShowTooltip(args, "Clear"))"
-                                      Disabled=!EditAuthorised />
-                    </RadzenStack>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <RadzenDataList AllowVirtualization=true
-                                    class="full-height-list"
-                                    WrapItems="false"
-                                    AllowPaging="false"
-                                    Style="width:100%;"
-                                    Data="@ownedTags"
-                                    TItem="OwnedSkill">
-                        <Template Context="tag">
-                            <div class="row align-items-center" style="@($"margin: -0.8rem; {(!tag.RecordComplete() ? "background-color: #FFF3CD;" : "")}")">
-                                <div class="col">
-                                    @if (tag.SkillTag.HasValidWikiLink == LinkCheckState.Success)
-                                    {
-                                        <a href="@tag.SkillTag.GetWikiLink()" target="_blank">
-                                            <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <RadzenText Text="@tag.SkillTag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-                                    }
-                                </div>
-                                <div class="col">
-                                    <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Proficiency:" />
-                                        <RadzenRating @bind-Value="@tag.ProficiencyRating" Stars="5" ReadOnly=!EditAuthorised />
-                                        <RadzenText TextStyle="TextStyle.Body2" Text="@(tag.Proficiency.GetDescription())" Style="@("color: var(--rz-primary); margin-bottom: 0;")" />
-                                    </RadzenStack>
-                                </div>
-                                <div class="col text-center">
-                                    <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Text="Skill Last Used:" />
-                                        <RadzenDatePicker @bind-Value="tag.LastUsed"
-                                                          ShowTime="false"
-                                                          DateFormat="dd/MM/yyyy"
-                                                          Disabled="@(!EditAuthorised || tag.Proficiency == SkillProficiency.None)"
-                                                          Style="margin-bottom: 0.5rem;" />
-                                    </RadzenStack>
-                                </div>
-                                <div class="col text-center">
-                                    <RadzenButton Icon="@(tag.FavouriteSkill ? "check_circle" : "radio_button_unchecked")"
-                                                  Text="To Develop"
-                                                  ButtonStyle="@(tag.FavouriteSkill ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                                  Click="@(() => ToggleFavourite(tag))"
-                                                  Disabled=!EditAuthorised />
-                                </div>
-                                <div class="col">
-                                    <SkillTagRarenessComponent SkillTag="@tag.SkillTag" Context="Context" />
-                                </div>
-                                <div class="col-auto">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="@(args => OnDelete(tag))" MouseEnter="@(args => ShowTooltip(args, "Remove"))" Disabled=!EditAuthorised />
-                                </div>
-                            </div>
-                        </Template>
-                    </RadzenDataList>
-                </div>
-            </div>
         </div>
     }
 </div>
