@@ -4,6 +4,7 @@
 @using System.Diagnostics
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Services
 
 <div class="row">
@@ -33,6 +34,9 @@
 
     [Inject]
     IDbContextFactory<PPMToolContext> DbContextFactory { get; set; }
+
+    [Inject]
+    ProjectService ProjectService { get; set; }
 
     protected override void OnParametersSet()
     {
@@ -74,18 +78,84 @@
         var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
         Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
 
-        // Generate availability profiles over the period for the people
+        // Get projects
+        var validProjects = ProjectService
+            .GetAll(context)
+            .Where(x => !x.ProjectStatus.IsCancelled())
+            .Where(x => x.StartDate.Year > 2000);
+        if (validProjects.Count() == 0)
+        {
+            Debug.WriteLine("** No valid projects found!");
+            return;
+        }
+        var startDate = validProjects.Min(x => x.StartDate);
+        var endDate = validProjects.Max(x => x.EndDate);
 
-        // Convert these profiles to chart query items including the relevant meta data of each block
+        // Go through the people
+        foreach (var person in matchingPeople)
+        {
+            // Create list of assignments for this person
+            var assignments = new List<Assignment>();
+            foreach (var project in validProjects)
+            {
+                foreach (var subTask in project.SubTasks)
+                {
+                    if (subTask.AssignedResources.Any(z => z.Person == person))
+                    {
+                        assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                    }
+                }
+            }
 
-        // Sort the results based on some criteria
+            // Generate availability profiles over the period
+            // Value 1 function produces the availability of the individual taking into account their current assignments and WLM
+            var blocksAsChartItems = ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+                person,
+                assignments,
+                assignments =>
+                {
+                    // TODO: This needs to compute the difference between the requirement of the task 
+                    // and the person's availability based on their project work allowance
 
-        // TODO: Have a think about how we do this.
-        // We still need the availability profile of an individual during the period of the task
-        // We can then possibly show something graphical rather than the table?
-        // We then need to look at this on a per block basis?
-        // Order by descending match quality (i.e. skills, FTE, duration)
-        // Take into account whether availability is provisional or not
+                    return assignments.RoundedSum(assignment =>
+                    {
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        return resource?.AssignmentFTE ?? 0;
+                    });
+                },
+                (value1, value2) =>
+                {
+                    return ChartItem.GetColourStringFTE(value1, value2);
+                },
+                person.Name,
+                startDate,
+                endDate,
+                assignments =>
+                {
+                    return assignments.Any(assignment =>
+                    {
+                        // If any resources are marked as provisional or the project owning the task
+                        // is not funded, active or in maintenance
+                        return
+                            assignment.ProjectStatus.IsUnconfirmed() ||
+                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional ?? true);
+                    });
+                },
+                gapFillingFunction: (assignments, gapStart, gapEnd) =>
+                {
+                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
+                }
+            );
+
+
+            // Convert these profiles to chart query items including the relevant meta data of each block
+
+            // Order by descending match quality (i.e. to develop skill, most skills by number, most FTE, most duration)
+
+            // Take into account whether availability is provisional or not
+
+            // The plotting will essentially be an assembly of divs up to 100 percent of the query duration
+        }
 
     }
 }
