@@ -17,7 +17,7 @@ namespace PPMTool.Pages
     public partial class Projects : BaseProjectPage
     {
         [Inject]
-        private InvoiceService InvoiceService { get; set; }
+        private PaymentService PaymentService { get; set; }
 
         private IEnumerable<Project> projects;
         private RadzenDataGrid<Project> dataGrid;

@@ -39,7 +39,7 @@ namespace PPMTool.Pages
         private FinancialReferenceService FinancialReferenceService { get; set; }
 
         [Inject]
-        private InvoiceService InvoiceService { get; set; }
+        private PaymentService PaymentService { get; set; }
 
         [Parameter]
         public int ProjectId { get; set; }
@@ -66,7 +66,7 @@ namespace PPMTool.Pages
                 projectModel = ProjectService.GetById(Context, ProjectId);
 
                 // Get funds received
-                fundsReceived = InvoiceService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
+                fundsReceived = PaymentService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
 
                 // If editing a project, only allow the project manager to edit it or a superuser
                 EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;

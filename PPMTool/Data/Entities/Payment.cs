@@ -19,6 +19,12 @@ namespace PPMTool.Data.Entities
         public Invoice Invoice { get; set; }
 
         /// <summary>
+        /// Mandatory funding source to which payment is attached
+        /// </summary>
+        [Required]
+        public FundingSource Source { get; set; }
+
+        /// <summary>
         /// To identify the Invoice in the logs and on exports
         /// </summary>
         /// <returns></returns>
