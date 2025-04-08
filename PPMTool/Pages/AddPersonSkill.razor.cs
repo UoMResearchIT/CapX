@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -27,10 +28,25 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+        }
+
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+
+            Debug.WriteLine($"** Loading owned skills for person {PersonId}");
 
             // Map entities to checkbox list items
             availableTags = SkillTagService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
+            // Assign active user if the parameter is zero
+            if (PersonId == 0)
+            {
+                PersonId = ActiveUser?.Person?.PersonId ?? 0;
+                Debug.WriteLine($"** Setting person ID to {PersonId}");
+            }
+
+            // If a valid person then load
             if (PersonId > 0)
             {
                 personModel = PersonService.GetById(Context, PersonId);

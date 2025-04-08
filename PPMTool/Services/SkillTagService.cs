@@ -183,5 +183,22 @@ namespace PPMTool.Services
                     .Any(x => x.SubTaskId == subtaskId)
                 );
         }
+
+        /// <summary>
+        /// Returns the count of incomplete skills records for the given user
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activeUserId"></param>
+        /// <returns></returns>
+        public int GetIncompleteRecordCount(PPMToolContext context, int activeUserId)
+        {
+            var recordsForUser = context.OwnedSkills
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == activeUserId)
+                .ToList();
+            return recordsForUser
+                .Where(x => !x.RecordComplete())
+                .Count();
+        }
     }
 }

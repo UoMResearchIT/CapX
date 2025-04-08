@@ -71,6 +71,20 @@
             <AuthorizeView Roles="Superuser,Manager,Developer">
                 <Authorized>
                     <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
+                        <RadzenPanelMenuItem Path="skills" Icon="military_tech">
+                            <Template>
+                                <div style="flex: 1;">
+                                    @if (sidebarExpanded)
+                                    {
+                                        <span>My Skills</span>
+                                    }
+                                    @if (totalIncompleteSkills > 0)
+                                    {
+                                        <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalIncompleteSkills</span>
+                                    }
+                                </div>
+                            </Template>
+                        </RadzenPanelMenuItem>
                         <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
@@ -90,7 +104,7 @@
                         </RadzenPanelMenuItem>
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
+                                <RadzenPanelMenuItem Path="manageskills" Text="Manage Skills Tags" Icon="style" />
                                 <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
                             </Authorized>
                         </AuthorizeView>
