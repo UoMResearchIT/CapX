@@ -35,7 +35,7 @@
                     </div>
                 }
             </EditForm>
-            <HintComponent Message="@("Add skills to your profile by searching for them in the search box. If the skill tag you want to add is not in the available list then propose to your manager that it be added to the database. If you mark a skill as \"to develop\", managers will try to find suitable assignments where you can develop that skill.")" />
+            <HintComponent Message="@("Add skills to your profile by searching for them in the search box. If the skill tag you want to add is not in the available list then propose to your manager that it be added to the database. If you mark a skill as \"to develop\", managers will try to find suitable assignments where you can develop that skill. If you have stated you have no proficiency in a skill then it is expected that you will mark it as \"to develop\" and a \"last used\" date is not required.")" />
             @if (ownedTags.Any(x => !x.RecordComplete()))
             {
                 <hr />

@@ -62,7 +62,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool RecordComplete()
         {
-            return (Proficiency != SkillProficiency.NotRated && LastUsed != default) || Proficiency == SkillProficiency.None;
+            return (Proficiency != SkillProficiency.NotRated && LastUsed != default) || (Proficiency == SkillProficiency.None && FavouriteSkill);
         }
     }
 }
