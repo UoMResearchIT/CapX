@@ -98,7 +98,7 @@
                                         <RadzenDatePicker @bind-Value="tag.LastUsed"
                                                           ShowTime="false"
                                                           DateFormat="dd/MM/yyyy"
-                                                          Disabled=!EditAuthorised
+                                                          Disabled="@(!EditAuthorised || tag.Proficiency == SkillProficiency.None)"
                                                           Style="margin-bottom: 0.5rem;" />
                                     </RadzenStack>
                                 </div>
