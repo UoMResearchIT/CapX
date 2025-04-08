@@ -1,7 +1,19 @@
-﻿@using Microsoft.Extensions.Logging
+﻿@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Logging
 @using PPMTool.Data
 @using System.Diagnostics
-<h2>Suggested Resources</h2>
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Services
+
+<div class="row">
+    <div class="col">
+        <h2>Suggested Resources</h2>
+    </div>
+    <div class="col-auto" style="align-content: center">
+        <RadzenButton Text="Refresh" Icon="refresh" Click="@Refresh" />
+    </div>
+</div>
 <div class="card">
     <CapacityQueryTableComponent Results="queryResults" />
 </div>
@@ -11,41 +23,68 @@
     private IEnumerable<CapacityQueryItem> queryResults;
 
     [Parameter]
-    public DateTime QueryStartDate { get; set; }
-
-    [Parameter]
-    public DateTime QueryEndDate { get; set; }
-
-    [Parameter]
-    public double RequiredFTE { get; set; }
+    public SubTask TaskModel { get; set; }
 
     [Inject]
     private ILogger Logger { get; set; }
+
+    [Inject]
+    SkillTagService SkillTagService { get; set; }
+
+    [Inject]
+    IDbContextFactory<PPMToolContext> DbContextFactory { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        RunQuery();
+    }
+
+    /// <summary>
+    /// Refresh the suggestions
+    /// </summary>
+    private void Refresh()
+    {
+        RunQuery();
+    }
 
     /// <summary>
     /// Runs the capacity query and updates the query result property
     /// </summary>
     private void RunQuery()
     {
-        Debug.WriteLine("** Running query...");
-
-        // Add error
-        if (QueryStartDate >= QueryEndDate)
-        {
-            return;
-        }
+        Debug.WriteLine($"** Running query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel.SkillsRequired ?? new List<SkillTag>())}...");
 
         // Re-initialise the results
         queryResults = new List<CapacityQueryItem>();
 
+        // Return early if the query doesn't make sense
+        if (TaskModel.UnmetDemand <= 0)
+        {
+            Debug.WriteLine("** Unmet demand is zero!");
+            return;
+        }
+
         // Start query state
         Logger.LogInformation("Looking for resource suggestions...");
+
+        // Find people with at least one matching skill tag
+        var context = DbContextFactory.CreateDbContext();
+        var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
+        Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
+
+        // Generate availability profiles over the period for the people
+
+        // Convert these profiles to chart query items including the relevant meta data of each block
+
+        // Sort the results based on some criteria
 
         // TODO: Have a think about how we do this.
         // We still need the availability profile of an individual during the period of the task
         // We can then possibly show something graphical rather than the table?
         // We then need to look at this on a per block basis?
-        // Order by descending match quality
+        // Order by descending match quality (i.e. skills, FTE, duration)
         // Take into account whether availability is provisional or not
 
     }

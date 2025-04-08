@@ -410,9 +410,7 @@
             <br />
             <div class="row">
                 <div class="col">
-                    <SuggestResourcesComponent QueryStartDate="TaskModel.StartDate"
-                                               QueryEndDate="TaskModel.EndDate"
-                                               RequiredFTE="TaskModel.UnmetDemand" />
+                    <SuggestResourcesComponent TaskModel="@taskModel" />
                 </div>
             </div>
             <hr />

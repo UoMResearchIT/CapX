@@ -200,5 +200,29 @@ namespace PPMTool.Services
                 .Where(x => !x.RecordComplete())
                 .Count();
         }
+
+        /// <summary>
+        /// Returns a list of people who own a skill contained within the list of skill tags provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillsToMatch"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetPeopleWithAtLeastOneMatch(PPMToolContext context, IEnumerable<SkillTag> skillsToMatch)
+        {
+            IEnumerable<Person> results = new List<Person>();
+            foreach (var skillTag in skillsToMatch)
+            {
+                // Fetch people with this skill
+                var peopleWithTag = context.OwnedSkills
+                    .Include(x => x.SkillTag)
+                    .Include(x => x.Owner)
+                    .Where(x => x.SkillTag.SkillTagId == skillTag.SkillTagId)
+                    .Select(x => x.Owner);
+
+                // Union the lists
+                results = results.UnionBy(peopleWithTag, x => x.PersonId);
+            }
+            return results;
+        }
     }
 }
