@@ -67,6 +67,14 @@
                 Show = false
             },
             Xaxis = new XAxis { },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Min = TaskModel.StartDate.Date.ToUnixTimeMilliseconds(),
+                    Max = TaskModel.EndDate.Date.ToUnixTimeMilliseconds()
+                }
+            },
             Fill = new Fill
             {
                 Opacity = 1,
