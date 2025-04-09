@@ -10,11 +10,7 @@ else
             <tr>
                 <th class="col-2">Name</th>
                 <th class="col-5">Skills</th>
-                <th class="col-1">Start</th>
-                <th class="col-1">End</th>
-                <th class="col-1">FTE</th>
-                <th class="col-1">Duration?</th>
-                <th class="col-1">FTE?</th>
+                <th class="col-5">Match Details</th>
             </tr>
         </thead>
         <tbody>
@@ -22,7 +18,7 @@ else
             {
                 <tr>
                     <td>@res.Person.Name</td>
-                    <td><SkillsAsBadgesComponent SkillsList="@res.Person.OwnedSkills.Select(x => x.SkillTag)" /></td>
+                    <td><SkillsAsBadgesComponent SkillsList="@res.MatchedSkills" /></td>
                     
                 </tr>
             }

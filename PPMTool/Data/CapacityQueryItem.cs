@@ -19,6 +19,11 @@ namespace PPMTool.Data
         public IEnumerable<ChartItem> Blocks { get; }
 
         /// <summary>
+        /// The skills the person has that match the needs of the task being queried
+        /// </summary>
+        public IEnumerable<SkillTag> MatchedSkills { get; }
+
+        /// <summary>
         /// The total cumulative unmet demand summed over all the blocks after assignment
         /// </summary>
         public double UnmetDemand { get; }
@@ -47,13 +52,15 @@ namespace PPMTool.Data
         /// <param name="unmatchedSkills"></param>
         /// <param name="unmetDemand"></param>
         /// <param name="unmetDemandNoProvisional"></param>
+        /// <param name="matchedSkills"></param>
         public CapacityQueryItem(
             Person person,
             IEnumerable<ChartItem> blocks,
             double unmetDemand,
             double unmetDemandNoProvisional,
             int unmatchedSkills,
-            bool skillToDevelop)
+            bool skillToDevelop,
+            IEnumerable<SkillTag> matchedSkills)
         {
             Person = person;
             Blocks = blocks;
@@ -61,6 +68,7 @@ namespace PPMTool.Data
             UnmetDemandNoProvisional = unmetDemandNoProvisional;
             UnmatchedSkills = unmatchedSkills;
             IsToDevelop = skillToDevelop;
+            MatchedSkills = matchedSkills;
         }
     }
 }

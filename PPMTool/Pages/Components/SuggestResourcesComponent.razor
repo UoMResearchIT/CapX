@@ -162,7 +162,7 @@
                                 return 0;
                             }
                             var resource = (assignment as Assignment)?.SubTask.AssignedResources
-                                .First(x => x.Person.Name == person.Name && !x.IsProvisional);
+                                .FirstOrDefault(x => x.Person.Name == person.Name && !x.IsProvisional);
                             return resource?.AssignmentFTE ?? 0;
                         });
 
@@ -187,16 +187,20 @@
                 .Any(x => skillTagsForTaskAsIds.Contains(x.SkillTag.SkillTagId) && x.FavouriteSkill);
             var skillsUnMatched = skillTagsForTaskAsIds
                 .Where(x => !allSkillsForPersonAsIds.Contains(x));
+            var skillsMatched = allSkillsForPerson
+                .Where(x => TaskModel.SkillsRequired.Select(x => x.SkillTagId).Contains(x.SkillTag.SkillTagId))
+                .Select(x => x.SkillTag);
             tempResults.Add(new CapacityQueryItem(
                 person,
                 blocksAsChartItems,
                 blocksAsChartItems.Sum(x => x.Value1),
                 blocksAsChartItems.Sum(x => x.Value2),
                 skillsUnMatched.Count(),
-                hasMatchedSkillsToDevelop
+                hasMatchedSkillsToDevelop,
+                skillsMatched
             ));
 
-            Debug.WriteLine($"** Person: {person.Name}: {System.Text.Json.JsonSerializer.Serialize(tempResults.Last())}");
+            queryResults = tempResults;
 
             // TODO: Store values for plotting e.g. bar widths as percentage etc?
         }
