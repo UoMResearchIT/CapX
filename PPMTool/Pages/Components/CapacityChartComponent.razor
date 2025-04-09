@@ -17,8 +17,8 @@ else
                TItem="ChartItem"
                Options=@chartOptions
                XAxisType="XAxisType.Datetime"
-               OnDataPointSelection=@OnDataPointSelection
-               OnZoomed="@OnChartZoomed">
+               OnDataPointSelection="@(args => OnDataPointSelection?.Invoke(args))"
+               OnZoomed="@(args => OnChartZoomed?.Invoke(args))">
         <ChildContent>
             <ApexRangeSeries TItem="ChartItem"
                              Items="@confirmedChartItems"

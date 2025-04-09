@@ -292,7 +292,7 @@
                 </div>
             </div>
 
-            @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && currentWLM != null && wlmChartItem != null)
+            @if ((timesheet?.IsLineManager(ActiveUser) ?? false || ActiveUserRoleType == RoleType.Superuser) && currentWLM != null && wlmChartItem != null)
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">

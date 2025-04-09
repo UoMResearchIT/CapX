@@ -149,6 +149,8 @@ namespace PPMTool.Pages
         /// <param name="restoreModels">Restore the model based on its current context object</param>
         public void InitialiseComponent(PPMToolContext referenceContext = null, bool restoreModels = true)
         {
+            Debug.WriteLine("** Initialise component...");
+
             // Overwrite the context
             if (referenceContext != null && referenceContext != Context)
             {
