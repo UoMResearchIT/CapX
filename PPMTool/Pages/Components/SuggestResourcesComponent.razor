@@ -6,6 +6,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Services
+@using static PPMTool.Pages.BaseCapacityPage
 
 <div class="row">
     <div class="col">
@@ -16,13 +17,18 @@
     </div>
 </div>
 <div class="card">
-    <CapacityQueryTableComponent Results="queryResults" />
+    @if (chartModel == null)
+    {
+        <span>No suggested resources for this task</span>
+    }
+    else
+    {
+        <CapacityChartComponent ChartModel=@chartModel />
+    }
 </div>
 <hr />
 
 @code {
-    private IEnumerable<CapacityQueryItem> queryResults;
-
     [Parameter]
     public SubTask TaskModel { get; set; }
 
@@ -37,6 +43,48 @@
 
     [Inject]
     ProjectService ProjectService { get; set; }
+
+    private ChartModel chartModel;
+    private ApexChartOptions<ChartItem> options;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        options = new ApexChartOptions<ChartItem>
+        {
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = true,
+                    RangeBarOverlap = true,
+                    RangeBarGroupRows = true
+                }
+            },
+            Legend = new Legend
+            {
+                Show = false
+            },
+            Xaxis = new XAxis { },
+            Fill = new Fill
+            {
+                Opacity = 1,
+                Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                Pattern = new FillPattern
+                {
+                    Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                }
+            },
+            Chart = new Chart
+            {
+                Zoom = new Zoom
+                {
+                    AllowMouseWheelZoom = false
+                }
+            }
+        };
+    }
 
     protected override void OnParametersSet()
     {
@@ -61,7 +109,8 @@
         Debug.WriteLine($"** Running query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel.SkillsRequired ?? new List<SkillTag>())}...");
 
         // Re-initialise the results
-        queryResults = new List<CapacityQueryItem>();
+        chartModel = null;
+        var blocksAsChartItems = new List<ChartItem>();
 
         // Return early if the query doesn't make sense
         if (TaskModel.UnmetDemand <= 0)
@@ -79,18 +128,18 @@
         var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
         Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
 
-        // Get projects
+        // Get projects that run during this task
         var validProjects = ProjectService
             .GetAll(context)
             .Where(x => !x.ProjectStatus.IsCancelled())
-            .Where(x => x.StartDate.Year > 2000);
+            .Where(x => x.StartDate.Date <= TaskModel.EndDate.Date && x.EndDate.Date >= TaskModel.StartDate.Date);
         if (validProjects.Count() == 0)
         {
             Debug.WriteLine("** No valid projects found!");
             return;
         }
-        var startDate = validProjects.Min(x => x.StartDate);
-        var endDate = validProjects.Max(x => x.EndDate);
+        var startDate = TaskModel.StartDate.Date;
+        var endDate = TaskModel.EndDate.Date;
 
         // Go through the people
         foreach (var person in matchingPeople)
@@ -111,7 +160,7 @@
             // Generate availability profiles over the period
             // Value 1 function produces the availability of the individual taking into account their 
             // current assignments and WLM
-            var blocksAsChartItems = ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+            blocksAsChartItems.AddRange(ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
                 (assignments, currentDay) =>
@@ -129,11 +178,11 @@
                     var unassigned = available - assignmentsOnDay;
 
                     // Value 1 is the remaining demand after this person is assigned
-                    return TaskModel.Demand - unassigned;
+                    return Math.Round(TaskModel.Demand - unassigned, 3);
                 },
                 (value1, value2) =>
                 {
-                    // The colour will be decided by a more complicated logic later
+                    // TODO: The colour of a block needs defining propoerly here
                     return "#609";
                 },
                 person.Name,
@@ -167,43 +216,48 @@
                         });
 
                     var unassigned = available - assignmentsOnDay;
-                    return TaskModel.Demand - unassigned;
+                    return Math.Round(TaskModel.Demand - unassigned, 3);
                 },
                 (assignments, gapStart, gapEnd) =>
                 {
+                    // TODO: This might need looking at as well as it uses a fixed logic to colour the blocks
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
                 }
-            );
-
-
-            // Convert these profiles to chart query items including the relevant meta data of each block
-            var allSkillsForPerson = SkillTagService.GetOwnedSkillsForPerson(context, person.PersonId)
-                .ToList();
-            var allSkillsForPersonAsIds = allSkillsForPerson
-                .Select(x => x.SkillTag.SkillTagId);
-            var skillTagsForTaskAsIds = TaskModel.SkillsRequired
-                .Select(x => x.SkillTagId);
-            var hasMatchedSkillsToDevelop = allSkillsForPerson
-                .Any(x => skillTagsForTaskAsIds.Contains(x.SkillTag.SkillTagId) && x.FavouriteSkill);
-            var skillsUnMatched = skillTagsForTaskAsIds
-                .Where(x => !allSkillsForPersonAsIds.Contains(x));
-            var skillsMatched = allSkillsForPerson
-                .Where(x => TaskModel.SkillsRequired.Select(x => x.SkillTagId).Contains(x.SkillTag.SkillTagId))
-                .Select(x => x.SkillTag);
-            tempResults.Add(new CapacityQueryItem(
-                person,
-                blocksAsChartItems,
-                blocksAsChartItems.Sum(x => x.Value1),
-                blocksAsChartItems.Sum(x => x.Value2),
-                skillsUnMatched.Count(),
-                hasMatchedSkillsToDevelop,
-                skillsMatched
             ));
 
-            queryResults = tempResults;
+            // var allSkillsForPerson = SkillTagService.GetOwnedSkillsForPerson(context, person.PersonId)
+            //     .ToList();
+            // var allSkillsForPersonAsIds = allSkillsForPerson
+            //     .Select(x => x.SkillTag.SkillTagId);
+            // var skillTagsForTaskAsIds = TaskModel.SkillsRequired
+            //     .Select(x => x.SkillTagId);
+            // var hasMatchedSkillsToDevelop = allSkillsForPerson
+            //     .Any(x => skillTagsForTaskAsIds.Contains(x.SkillTag.SkillTagId) && x.FavouriteSkill);
+            // var skillsUnMatched = skillTagsForTaskAsIds
+            //     .Where(x => !allSkillsForPersonAsIds.Contains(x));
+            // var skillsMatched = allSkillsForPerson
+            //     .Where(x => TaskModel.SkillsRequired.Select(x => x.SkillTagId).Contains(x.SkillTag.SkillTagId))
+            //     .Select(x => x.SkillTag);
+            // tempResults.Add(new CapacityQueryItem(
+            //     person,
+            //     blocksAsChartItems,
+            //     blocksAsChartItems.Sum(x => x.Value1),
+            //     blocksAsChartItems.Sum(x => x.Value2),
+            //     skillsUnMatched.Count(),
+            //     hasMatchedSkillsToDevelop,
+            //     skillsMatched
+            // ));
 
             // TODO: Store values for plotting e.g. bar widths as percentage etc?
         }
 
+        // Convert to appropriate chart models
+        chartModel = new ChartModel
+        {
+            ChartTitle = "Suggested Resources",
+            ChartOptions = options,
+            ConfirmedChartItems = blocksAsChartItems.Where(x => !x.IsHatched()).ToList(),
+            ProvisionalChartItems = blocksAsChartItems.Where(x => x.IsHatched()).ToList()
+        };
     }
 }
