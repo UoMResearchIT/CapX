@@ -23,11 +23,7 @@ else
                 <tr>
                     <td>@res.Person.Name</td>
                     <td><SkillsAsBadgesComponent SkillsList="@res.Person.OwnedSkills.Select(x => x.SkillTag)" /></td>
-                    <td>@res.StartDate.ToString("dd/MM/yyyy")</td>
-                    <td>@res.EndDate.ToString("dd/MM/yyyy")</td>
-                    <td>@(res.AvailableFTE) FTE</td>
-                    <td><RadzenIcon Icon="@(res.DurationMatch ? "check" : "clear")" IconStyle="@(res.DurationMatch ? IconStyle.Success : IconStyle.Danger)" /></td>
-                    <td><RadzenIcon Icon="@(res.FteMatch ? "check" : "clear")" IconStyle="@(res.FteMatch ? IconStyle.Success : IconStyle.Danger)" /></td>
+                    
                 </tr>
             }
         </tbody>

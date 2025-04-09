@@ -248,7 +248,7 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment =>
                     {
@@ -308,7 +308,7 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment =>
                     {

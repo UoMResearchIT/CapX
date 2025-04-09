@@ -97,6 +97,20 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Get the owned skill instances for the person provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public IEnumerable<OwnedSkill> GetOwnedSkillsForPerson(PPMToolContext context, int personId)
+        {
+            return context.OwnedSkills
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == personId)
+                .Include(x => x.SkillTag);
+        }
+
+        /// <summary>
         /// Get the number of owned skills associated with a given tag
         /// </summary>
         /// <param name="context"></param>

@@ -101,7 +101,7 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
@@ -150,7 +150,7 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },

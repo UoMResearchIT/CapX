@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
@@ -14,54 +14,53 @@ namespace PPMTool.Data
         public Person Person { get; }
 
         /// <summary>
-        /// Date from which they have availability
+        /// The list of blocks that represent this person's availability
         /// </summary>
-        public DateTime StartDate { get; }
+        public IEnumerable<ChartItem> Blocks { get; }
 
         /// <summary>
-        /// Date to which they have availability
+        /// The total unmet days summed over all the blocks after assignment
         /// </summary>
-        public DateTime EndDate { get; }
+        public double UnmetDemand { get; }
 
         /// <summary>
-        /// What FTE are they available during the period
+        /// The total unmet days after assignment disregarding provisional assignments
         /// </summary>
-        public double AvailableFTE { get; }
+        public double UnmetDemandNoProvisional { get; }
 
         /// <summary>
-        /// Whether this query item is a match to the requested query FTE
+        /// Number of skills not matched
         /// </summary>
-        public bool FteMatch { get; }
+        public int UnmatchedSkills { get; }
 
         /// <summary>
-        /// Whether this query item is a match to the requested query duration
+        /// Whether any skills matched are marked to develop
         /// </summary>
-        public bool DurationMatch { get; }
+        public bool IsToDevelop { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="person"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="availableFTE"></param>
+        /// <param name="blocks"></param>
+        /// <param name="skillToDevelop"></param>
+        /// <param name="unmatchedSkills"></param>
+        /// <param name="unmetArea"></param>
+        /// <param name="unmetAreaNoProvisional"></param>
         public CapacityQueryItem(
             Person person,
-            DateTime startDate,
-            DateTime endDate,
-            double availableFTE,
-            DateTime queryStart,
-            DateTime queryEnd,
-            double queryFTE)
+            IEnumerable<ChartItem> blocks,
+            double unmetArea,
+            double unmetAreaNoProvisional,
+            int unmatchedSkills,
+            bool skillToDevelop)
         {
             Person = person;
-            StartDate = startDate;
-            EndDate = endDate;
-            AvailableFTE = availableFTE;
-
-            // Set flags
-            FteMatch = availableFTE == queryFTE;
-            DurationMatch = startDate.Date == queryStart.Date && endDate.Date == queryEnd.Date;
+            Blocks = blocks;
+            UnmetDemand = unmetArea;
+            UnmetDemandNoProvisional = unmetAreaNoProvisional;
+            UnmatchedSkills = unmatchedSkills;
+            IsToDevelop = skillToDevelop;
         }
     }
 }

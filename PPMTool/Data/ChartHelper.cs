@@ -27,7 +27,7 @@ namespace PPMTool.Data
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
             IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, double> valueFunction,
+            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
@@ -131,7 +131,7 @@ namespace PPMTool.Data
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
             IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, double> valueFunction,
+            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
@@ -165,7 +165,7 @@ namespace PPMTool.Data
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
             IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, double> valueFunction,
+            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
             Func<double, double, string> colourFunction,
             string label,
             DateTime startDate,
@@ -210,7 +210,7 @@ namespace PPMTool.Data
                 var within = assignments.Where(x => x.IsWithin(currentDay));
 
                 // Sum value for the current day -- truncate to 2 DP
-                valueDay = valueFunction(within);
+                valueDay = valueFunction(within, currentDay);
 
                 // Set hatched for the current day
                 hatchedDay = hatchedFunction != null ? hatchedFunction(within) : false;
