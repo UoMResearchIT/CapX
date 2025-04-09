@@ -124,11 +124,9 @@
                         return resource?.AssignmentFTE ?? 0;
                     });
 
+                    // Actual availability based on current assignments
+                    // Will be negative if overallocated
                     var unassigned = available - assignmentsOnDay;
-                    if (unassigned < 0)
-                    {
-                        unassigned = 0;
-                    }
 
                     // Value 1 is the remaining demand after this person is assigned
                     return TaskModel.Demand - unassigned;
@@ -169,11 +167,6 @@
                         });
 
                     var unassigned = available - assignmentsOnDay;
-                    if (unassigned < 0)
-                    {
-                        unassigned = 0;
-                    }
-
                     return TaskModel.Demand - unassigned;
                 },
                 (assignments, gapStart, gapEnd) =>
@@ -203,7 +196,7 @@
                 hasMatchedSkillsToDevelop
             ));
 
-            Debug.WriteLine($"** Person: {person.Name}: {System.Text.Json.JsonSerializer.Serialize(tempResults.Last())}")
+            Debug.WriteLine($"** Person: {person.Name}: {System.Text.Json.JsonSerializer.Serialize(tempResults.Last())}");
 
             // TODO: Store values for plotting e.g. bar widths as percentage etc?
         }

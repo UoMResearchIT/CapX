@@ -19,12 +19,12 @@ namespace PPMTool.Data
         public IEnumerable<ChartItem> Blocks { get; }
 
         /// <summary>
-        /// The total unmet days summed over all the blocks after assignment
+        /// The total cumulative unmet demand summed over all the blocks after assignment
         /// </summary>
         public double UnmetDemand { get; }
 
         /// <summary>
-        /// The total unmet days after assignment disregarding provisional assignments
+        /// The total cumulative unmet demand after assignment disregarding provisional assignments
         /// </summary>
         public double UnmetDemandNoProvisional { get; }
 
@@ -45,20 +45,20 @@ namespace PPMTool.Data
         /// <param name="blocks"></param>
         /// <param name="skillToDevelop"></param>
         /// <param name="unmatchedSkills"></param>
-        /// <param name="unmetArea"></param>
-        /// <param name="unmetAreaNoProvisional"></param>
+        /// <param name="unmetDemand"></param>
+        /// <param name="unmetDemandNoProvisional"></param>
         public CapacityQueryItem(
             Person person,
             IEnumerable<ChartItem> blocks,
-            double unmetArea,
-            double unmetAreaNoProvisional,
+            double unmetDemand,
+            double unmetDemandNoProvisional,
             int unmatchedSkills,
             bool skillToDevelop)
         {
             Person = person;
             Blocks = blocks;
-            UnmetDemand = unmetArea;
-            UnmetDemandNoProvisional = unmetAreaNoProvisional;
+            UnmetDemand = unmetDemand;
+            UnmetDemandNoProvisional = unmetDemandNoProvisional;
             UnmatchedSkills = unmatchedSkills;
             IsToDevelop = skillToDevelop;
         }
