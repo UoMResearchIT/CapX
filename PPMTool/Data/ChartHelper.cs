@@ -378,6 +378,7 @@ namespace PPMTool.Data
         /// <param name="value1FromWLMFunction"></param>
         /// <param name="value2FromWLMFunction"></param>
         /// <param name="colourFunction"></param>
+        /// <param name="tooltipMessageGenerator"></param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> FillGapsBetweenChartItemsFromWorkloadModels(
             Person person,
@@ -385,7 +386,8 @@ namespace PPMTool.Data
             DateTime endDate,
             Func<WorkloadModelChange, double> value1FromWLMFunction,
             Func<WorkloadModelChange, double> value2FromWLMFunction,
-            Func<double, double, bool, string> colourFunction
+            Func<double, double, bool, string> colourFunction,
+            Func<Person, string> tooltipMessageGenerator = null
         )
         {
             var blocks = new List<ChartItem>();
@@ -429,7 +431,7 @@ namespace PPMTool.Data
             {
                 blocks.Add(
                     new ChartItem(colourFunction(value1FromWLMFunction(null), value2FromWLMFunction(null), false), person.Name, startDate, endDate,
-                        value1FromWLMFunction(null), value2FromWLMFunction(null), false
+                        value1FromWLMFunction(null), value2FromWLMFunction(null), false, tooltipMessageGenerator != null ? tooltipMessageGenerator(person) : null
                     )
                 );
             }
@@ -457,7 +459,7 @@ namespace PPMTool.Data
                 // of the window if there isn't any changes after
                 blocks.Add(
                     new ChartItem(colourFunction(value1, value2, false), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
-                        value1, value2, false
+                        value1, value2, false, tooltipMessageGenerator != null ? tooltipMessageGenerator(person) : null
                     )
                 );
 
@@ -468,7 +470,8 @@ namespace PPMTool.Data
                     blocks.Add(
                         new ChartItem(colourFunction(value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false), person.Name, changesAfter[i].ChangeDate,
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false
+                            value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false,
+                            tooltipMessageGenerator != null ? tooltipMessageGenerator(person) : null
                         )
                     );
                 }

@@ -238,5 +238,37 @@ namespace PPMTool.Services
             }
             return results;
         }
+
+        /// <summary>
+        /// Get the list of skills a person has that match those in the list provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillsToMatch"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public IEnumerable<SkillTag> GetAllMatchedSkillsForPerson(PPMToolContext context, IEnumerable<SkillTag> skillsToMatch, int personId)
+        {
+            // Initialise
+            IList<SkillTag> results = new List<SkillTag>();
+
+            // Get the person and their skills
+            var person = context.People
+                .Include(x => x.OwnedSkills)
+                .ThenInclude(x => x.SkillTag)
+                .FirstOrDefault(x => x.PersonId == personId);
+
+            // Bail if no matching person
+            if (person == null) return results;
+
+            // For each skill tag to match see if it is in the person's skills and add to list
+            foreach (var skillTag in skillsToMatch)
+            {
+                if (person.OwnedSkills.Any(x => x.SkillTag.SkillTagId == skillTag.SkillTagId))
+                {
+                    results.Add(skillTag);
+                }
+            }
+            return results;
+        }
     }
 }

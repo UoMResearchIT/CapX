@@ -10,10 +10,10 @@
 
 <div class="row">
     <div class="col">
-        <h2>Suggested Resources</h2>
+        <h3>Suggested Resources</h3>
     </div>
     <div class="col-auto" style="align-content: center">
-        <RadzenButton Text="Refresh" Icon="refresh" Click="@Refresh" Disabled="@queryRunning" />
+        <RadzenButton Text="Refresh" Icon="refresh" Click="@Refresh" Disabled="@queryRunning" class="my-2" />
     </div>
 </div>
 <div class="card">
@@ -29,9 +29,7 @@
         }
         else
         {
-            <CapacityChartComponent ChartModel=@chartModel
-                                    Value1TooltipFormatter="@FormatValue1Tooltip"
-                                    Value2TooltipFormatter="@FormatValue2Tooltip" />
+            <CapacityChartComponent ChartModel=@chartModel Value1TooltipFormatter="@FormatValue1Tooltip" Value2TooltipFormatter="@FormatValue2Tooltip" />
         }
     }
 </div>
@@ -60,6 +58,7 @@
     private ApexChartOptions<ChartItem> options;
     private bool queryRunning;
     private int totalRowsOnChart;
+    private Dictionary<Person, IEnumerable<SkillTag>> matchedSkills;
 
     protected override void OnInitialized()
     {
@@ -159,6 +158,7 @@
             // Re-initialise the results
             chartModel = null;
             var blocksAsChartItems = new List<ChartItem>();
+            matchedSkills = new Dictionary<Person, IEnumerable<SkillTag>>();
 
             // Return early if the query doesn't make sense
             if (TaskModel.UnmetDemand <= 0)
@@ -195,6 +195,9 @@
             // Go through the people
             foreach (var person in matchingPeopleEmployedDuringTask)
             {
+                // Add to dictionary of skill matches
+                matchedSkills.Add(person, SkillTagService.GetAllMatchedSkillsForPerson(context, TaskModel.SkillsRequired, person.PersonId));
+
                 // Create list of assignments for this person
                 var assignments = new List<Assignment>();
                 foreach (var project in validProjects)
@@ -278,13 +281,18 @@
                             gapEnd,
                             wlm => wlm?.ProjectWorkFTE ?? 0, 
                             wlm => wlm?.ProjectWorkFTE ?? 0,
-                            GetColourOfBlock
+                            GetColourOfBlock,
+                            GenerateTooltipMessages
                         );
+                    },
+                    assignments =>
+                    {
+                        return GenerateTooltipMessages(person);
                     }
                 ));
             }
 
-            // Convert to appropriate chart models
+            // Convert to appropriate chart model and set up chart
             totalRowsOnChart = matchingPeopleEmployedDuringTask.Count();
             options.Chart = new Chart
             {
@@ -313,6 +321,30 @@
                 StateHasChanged();
             });
         });
+    }
+
+    /// <summary>
+    /// Generate tooltip messages for blocks
+    /// </summary>
+    /// <param name="person"></param>
+    /// <returns></returns>
+    private string GenerateTooltipMessages(Person person)
+    {
+        // Add number of matched skills to the tooltip
+        var numberMatched = 0;
+        if (matchedSkills.TryGetValue(person, out var matches))
+        {
+            numberMatched = matches.Count();
+        }
+        var message = $"{numberMatched} Matched Skill(s): ";
+        if (numberMatched > 0)
+        {
+            foreach (var skill in matches)
+            {
+                message += $"<div class=\"rz-badge m-1\" style=\"background-color: {skill.Rareness.GetTextColourCode()}; padding: 0.3rem;\" title=\"{skill.RarenessCount} RSE(s) with this tag\">{skill.Name}</div>";
+            }
+        }
+        return message;
     }
 
     /// <summary>
