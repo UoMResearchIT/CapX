@@ -747,6 +747,26 @@ namespace PPMTool.Pages
                         return;
                     }
 
+                    // Fail if demand, original demand or assigned resources are assigned less than 3 DP
+                    if (TaskModel.Demand != 0 && HasDigitsAfterThirdDecimalPlace(TaskModel.Demand))
+                    {
+                        IsValid = false;
+                        error = "Demand has digits after the third decimal place which is not allowed!";
+                        return;
+                    }
+                    if (HasDigitsAfterThirdDecimalPlace(TaskModel.OriginalDemand))
+                    {
+                        IsValid = false;
+                        error = "Original Demand has digits after the third decimal place which is not allowed!";
+                        return;
+                    }
+                    if (TaskModel.AssignedResources.Any(x => HasDigitsAfterThirdDecimalPlace(x.AssignmentFTE)))
+                    {
+                        IsValid = false;
+                        error = "One or more resources have Assignment FTE with digits after the third decimal place which is not allowed!";
+                        return;
+                    }
+
                     LogInformation($"Task {TaskModel?.SubTaskId}: Saving sub task...");
 
                     // Add reference to the project
@@ -785,6 +805,18 @@ namespace PPMTool.Pages
                 LogError($"Task {TaskModel?.SubTaskId}: Cannot save task as it has no project model!");
             }
         }
+
+        /// <summary>
+        /// Method to check whether there are any digits after the third decimal place
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        private bool HasDigitsAfterThirdDecimalPlace(double number)
+        {
+            double truncatedNumber = Math.Truncate(number * 1000) / 1000;
+            return number != truncatedNumber;
+        }
+
 
         /// <summary>
         /// Method to update the source for the resource dropdown to filter out based on search text
