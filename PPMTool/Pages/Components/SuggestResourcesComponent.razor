@@ -115,21 +115,25 @@
     /// <summary>
     /// How to format the tooltip for value 1
     /// </summary>
-    /// <param name="value1"></param>
+    /// <param name="item"></param>
     /// <returns></returns>
-    private string FormatValue1Tooltip(double value1)
+    private MarkupString FormatValue1Tooltip(ChartItem item)
     {
-        return $"{value1} FTE Available";
+        return (MarkupString)$"<h3>{item?.Value1} FTE Available</h3>";
     }
 
     /// <summary>
     /// How to format the tooltip for value 2
     /// </summary>
-    /// <param name="value2"></param>
+    /// <param name="item"></param>
     /// <returns></returns>
-    private string FormatValue2Tooltip(double value2)
+    private MarkupString FormatValue2Tooltip(ChartItem item)
     {
-        return $"({value2} FTE Confirmed)";
+        if (item.IsHatched())
+        {
+            return (MarkupString)$"<h5>(Possibly up to {item?.Value2} FTE)</h5>";
+        }
+        return (MarkupString)"";        
     }
 
     /// <summary>
@@ -214,19 +218,19 @@
                     (assignments, currentDay) =>
                     {
                         var available = person.GetAvailabilityOnDate(currentDay);
-                        var assignmentsOnDay = assignments.RoundedSum(assignment =>
+                        var assignmentsOnDay = assignments.Sum(assignment =>
                         {
                             var resource = (assignment as Assignment)?.SubTask.AssignedResources
                                 .First(x => x.Person.Name == person.Name);
                             return resource?.AssignmentFTE ?? 0;
-                        }, 3);
+                        });
 
                         // Actual availability based on current assignments
                         // Will be negative if overallocated
                         var unassigned = available - assignmentsOnDay;
 
                         // Value 1 is the remaining demand after this person is assigned
-                        return unassigned;
+                        return Math.Round(unassigned, 3);
                     },
                     (value1, value2) =>
                     {
@@ -253,7 +257,7 @@
                         return assignments.Any(assignment =>
                         {
                             // If any resources are marked as provisional or the project owning the task
-                            // is not funded, active or in maintenance
+                            // is not funded, active or in maintenance then hatched
                             return
                                 assignment.ProjectStatus.IsUnconfirmed() ||
                                 ((assignment as Assignment)?.SubTask.AssignedResources
@@ -264,7 +268,7 @@
                     {
                         // Compute what the remaining demand would be if the person's provisional assignments were removed
                         var available = person.GetAvailabilityOnDate(currentDay);
-                        var assignmentsOnDay = assignments.RoundedSum(assignment =>
+                        var assignmentsOnDay = assignments.Sum(assignment =>
                             {
                                 if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
                                 {
@@ -273,10 +277,10 @@
                                 var resource = (assignment as Assignment)?.SubTask.AssignedResources
                                     .FirstOrDefault(x => x.Person.Name == person.Name && !x.IsProvisional);
                                 return resource?.AssignmentFTE ?? 0;
-                            }, 3);
+                            });
 
                         var unassigned = available - assignmentsOnDay;
-                        return unassigned;
+                        return Math.Round(unassigned, 3);
                     },
                     (assignments, gapStart, gapEnd) =>
                     {

@@ -43,8 +43,8 @@ else
                         {
                             @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
                         }
-                        <h3>@Value1TooltipFormatter(point.Items.FirstOrDefault()?.Value1 ?? 0)</h3>
-                        <h5>@Value2TooltipFormatter(point.Items.FirstOrDefault()?.Value2 ?? 0)</h5>
+                        @Value1TooltipFormatter(point.Items.FirstOrDefault())
+                        @Value2TooltipFormatter(point.Items.FirstOrDefault())
                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                     </div>
@@ -69,10 +69,10 @@ else
     public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
 
     [Parameter]
-    public Func<double, string> Value1TooltipFormatter { get; set; }
+    public Func<ChartItem, MarkupString> Value1TooltipFormatter { get; set; }
 
     [Parameter]
-    public Func<double, string> Value2TooltipFormatter { get; set; }
+    public Func<ChartItem, MarkupString> Value2TooltipFormatter { get; set; }
 
     private string title;
     private ApexChartOptions<ChartItem> chartOptions;
@@ -109,20 +109,20 @@ else
     /// <summary>
     /// If there is no formatter for value 1 in the tooltip provided then this will be used
     /// </summary>
-    /// <param name="value"></param>
+    /// <param name="item"></param>
     /// <returns></returns>
-    private string DefaultValue1Formatter(double value)
+    private MarkupString DefaultValue1Formatter(ChartItem item)
     {
-        return $"{value} FTE";
+        return (MarkupString)$"<h3>{item?.Value1} FTE</h3>";
     }
 
     /// <summary>
     /// If there is no formatter for value 2 in the tooltip provided then this will be used
     /// </summary>
-    /// <param name="value"></param>
+    /// <param name="item"></param>
     /// <returns></returns>
-    private string DefaultValue2Formatter(double value)
+    private MarkupString DefaultValue2Formatter(ChartItem item)
     {
-        return $"({value} FTE Availability)";
+        return (MarkupString)$"<h5>({item?.Value2} FTE Availability)</h5>";
     }
 }
