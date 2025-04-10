@@ -369,26 +369,31 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Generic method for filling in the gaps in chart items with a specific value2 value
+        /// Generic method for filling in the gaps in chart items with value1 and value2 driven by 
+        /// functions which accept the current WLM active on the day.
         /// </summary>
         /// <param name="person"></param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
+        /// <param name="value1FromWLMFunction"></param>
         /// <param name="value2FromWLMFunction"></param>
+        /// <param name="colourFunction"></param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> FillGapsBetweenChartItemsFromWorkloadModels(
             Person person,
             DateTime startDate,
             DateTime endDate,
-            Func<WorkloadModelChange, double> value2FromWLMFunction
+            Func<WorkloadModelChange, double> value1FromWLMFunction,
+            Func<WorkloadModelChange, double> value2FromWLMFunction,
+            Func<double, double, bool, string> colourFunction
         )
         {
             var blocks = new List<ChartItem>();
 
-            // Get any workload model changes in force at the beginning of the query or during it
+            // Get any workload model changes in force at the beginning of, or during, the window
             var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
 
-            // Add to the changes any leaving date within the window as a zero availability
+            // If person has a leaving date in the window then set zero availability after by adding a fake change
             if (person.EndDate != null)
             {
                 changes.Add(new WorkloadModelChange()
@@ -401,17 +406,10 @@ namespace PPMTool.Data
                 changes = changes.Where(x => x.ChangeDate <= person.EndDate?.AddDays(1)).ToList();
             }
 
-            // Add to the changes any start date within the window as WLM with getter default (if no availablity change on the start date)
+            // If person starts within the window but doesn't have a WLM in place on the day they start
+            // set their availability to zero with a fake WLM
             if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
             {
-                changes.Add(new WorkloadModelChange()
-                {
-                    Person = person,
-                    ChangeDate = person.StartDate,
-                    ProjectWorkFTE = value2FromWLMFunction(null),
-                    ProjectManagementFTE = value2FromWLMFunction(null)
-                });
-
                 // Keep only changes on or after the start date
                 changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
 
@@ -426,12 +424,12 @@ namespace PPMTool.Data
             // Sort by date
             changes = changes.OrderBy(x => x.ChangeDate).ToList();
 
-            // If no changes then use default value getter provides for value2
+            // If no changes then use default value functions provide if no WLM provided to the function
             if (changes.Count == 0)
             {
                 blocks.Add(
-                    new ChartItem(ChartItem.GetColourStringFTE(0, value2FromWLMFunction(null)), person.Name, startDate, endDate,
-                        0, value2FromWLMFunction(null), false
+                    new ChartItem(colourFunction(value1FromWLMFunction(null), value2FromWLMFunction(null), false), person.Name, startDate, endDate,
+                        value1FromWLMFunction(null), value2FromWLMFunction(null), false
                     )
                 );
             }
@@ -439,22 +437,27 @@ namespace PPMTool.Data
             // Work through the workload model changes to establish blocks of availability
             else
             {
-                // We need to establish the availability at the beginning of the query window which will be getter default
-                double initialFTE = value2FromWLMFunction(null);
+                // Establish the default values
+                double value1 = value1FromWLMFunction(null);
+                double value2 = value2FromWLMFunction(null);
 
                 // Find the change immediately before the query window or on day one
                 // if there is one on the first day of the query window
                 var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (changeBefore != null) initialFTE = value2FromWLMFunction(changeBefore);
+                if (changeBefore != null)
+                {
+                    value1 = value1FromWLMFunction(changeBefore);
+                    value2 = value2FromWLMFunction(changeBefore);
+                }
 
                 // Any relevant changes after must be after the start of the window but before the end
                 var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
 
-                // First period uses the initial FTE up to the first change after the window begins or the end
+                // First period uses the initial values up to the first change after the window begins or the end
                 // of the window if there isn't any changes after
                 blocks.Add(
-                    new ChartItem(ChartItem.GetColourStringFTE(0, initialFTE), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
-                        0, initialFTE, false
+                    new ChartItem(colourFunction(value1, value2, false), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
+                        value1, value2, false
                     )
                 );
 
@@ -463,9 +466,9 @@ namespace PPMTool.Data
                 {
                     // If the last change then use query end date for block end otherwise it is date of next change
                     blocks.Add(
-                        new ChartItem(ChartItem.GetColourStringFTE(0, value2FromWLMFunction(changesAfter[i])), person.Name, changesAfter[i].ChangeDate,
+                        new ChartItem(colourFunction(value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false), person.Name, changesAfter[i].ChangeDate,
                             i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
-                            0, value2FromWLMFunction(changesAfter[i]), false
+                            value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false
                         )
                     );
                 }

@@ -122,7 +122,14 @@ namespace PPMTool.Pages
                 },
                 (assignments, gapStart, gapEnd) =>
                 {
-                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectManagementFTE ?? 0);
+                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                        person,
+                        gapStart,
+                        gapEnd,
+                        wlm => 0,
+                        wlm => wlm?.ProjectManagementFTE ?? 0,
+                        (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
+                    );
                 },
                 assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
             );

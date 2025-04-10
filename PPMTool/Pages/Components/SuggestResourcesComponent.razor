@@ -233,30 +233,7 @@
                     },
                     (value1, value2, isHatched) =>
                     {
-                        // Different logic for colour based on whether the block is provisional or not
-                        if (!isHatched)
-                        {
-                            if (value1 >= TaskModel.Demand)
-                            {
-                                return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights);
-                            }
-                            else if (value1 < TaskModel.Demand && value1 > 0)
-                            {
-                                return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights); ;
-                            }
-                            return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights); ;
-                        }
-
-                        // If provisional then need to consider whether removal of provisional assignments improve the situation
-                        if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
-                        {
-                            return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights); ;
-                        }
-                        else if (value2 > 0 && value1 < TaskModel.Demand)
-                        {
-                            return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights); ;
-                        }
-                        return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights); ;
+                        return GetColourOfBlock(value1, value2, isHatched);
                     },
                     person.Name,
                     startDate,
@@ -293,8 +270,16 @@
                     },
                     (assignments, gapStart, gapEnd) =>
                     {
-                        // TODO: This might need looking at as well as it uses a fixed logic to colour the blocks
-                        return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
+                        // Gaps should simply show as available for the task as a gap means no assignments
+                        // Value 2 can be chosen as anything to ensure the colouring is correct as it is not used for anything else
+                        return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                            person,
+                            gapStart,
+                            gapEnd,
+                            wlm => wlm?.ProjectWorkFTE ?? 0, 
+                            wlm => wlm?.ProjectWorkFTE ?? 0,
+                            GetColourOfBlock
+                        );
                     }
                 ));
             }
@@ -328,5 +313,40 @@
                 StateHasChanged();
             });
         });
+    }
+
+    /// <summary>
+    /// Method to get the colour of a block in the chart
+    /// </summary>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <param name="isHatched"></param>
+    /// <returns></returns>
+    private string GetColourOfBlock(double value1, double value2, bool isHatched)
+    {
+        // Different logic for colour based on whether the block is provisional or not
+        if (!isHatched)
+        {
+            if (value1 >= TaskModel.Demand)
+            {
+                return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights);
+            }
+            else if (value1 < TaskModel.Demand && value1 > 0)
+            {
+                return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights);
+            }
+            return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights);
+        }
+
+        // If provisional then need to consider whether removal of provisional assignments improve the situation
+        if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
+        {
+            return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights);
+        }
+        else if (value2 > 0 && value1 < TaskModel.Demand)
+        {
+            return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights);
+        }
+        return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights);
     }
 }
