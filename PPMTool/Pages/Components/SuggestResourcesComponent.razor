@@ -59,6 +59,7 @@
     private ChartModel chartModel;
     private ApexChartOptions<ChartItem> options;
     private bool queryRunning;
+    private int totalRowsOnChart;
 
     protected override void OnInitialized()
     {
@@ -95,13 +96,6 @@
                 Pattern = new FillPattern
                 {
                     Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
-                }
-            },
-            Chart = new Chart
-            {
-                Zoom = new Zoom
-                {
-                    AllowMouseWheelZoom = false
                 }
             }
         };
@@ -293,6 +287,15 @@
             }
 
             // Convert to appropriate chart models
+            totalRowsOnChart = matchingPeopleEmployedDuringTask.Count();
+            options.Chart = new Chart
+            {
+                Height = $"{totalRowsOnChart * 25}rem",
+                Zoom = new Zoom
+                {
+                    AllowMouseWheelZoom = false
+                }
+            };
             chartModel = new ChartModel
             {
                 ChartTitle = "Suggested Resources",
