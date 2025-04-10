@@ -14,25 +14,25 @@
 else
 {
     <ApexChart Title="@title"
-               TItem="ChartItem"
-               Options=@chartOptions
-               XAxisType="XAxisType.Datetime"
-               OnDataPointSelection="@(args => OnDataPointSelection?.Invoke(args))"
-               OnZoomed="@(args => OnChartZoomed?.Invoke(args))">
+    TItem="ChartItem"
+    Options=@chartOptions
+    XAxisType="XAxisType.Datetime"
+    OnDataPointSelection="@(args => OnDataPointSelection?.Invoke(args))"
+    OnZoomed="@(args => OnChartZoomed?.Invoke(args))">
         <ChildContent>
             <ApexRangeSeries TItem="ChartItem"
-                             Items="@confirmedChartItems"
-                             XValue="@(e => e.Label)"
-                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                             PointColor="@(e => e.Colour)" />
+            Items="@confirmedChartItems"
+            XValue="@(e => e.Label)"
+            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+            PointColor="@(e => e.Colour)" />
 
             <ApexRangeSeries TItem="ChartItem"
-                             Items="@provisionalChartItems"
-                             XValue="@(e => e.Label)"
-                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-                             PointColor="@(e => e.Colour)" />
+            Items="@provisionalChartItems"
+            XValue="@(e => e.Label)"
+            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+            PointColor="@(e => e.Colour)" />
         </ChildContent>
         <ApexPointTooltip>
             <div class="m-2">
@@ -43,8 +43,8 @@ else
                         {
                             @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
                         }
-                        <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
-                        <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
+                        <h3>@Value1TooltipFormatter(point.Items.FirstOrDefault()?.Value1 ?? 0)</h3>
+                        <h5>@Value2TooltipFormatter(point.Items.FirstOrDefault()?.Value2 ?? 0)</h5>
                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                     </div>
@@ -68,6 +68,12 @@ else
     [Parameter]
     public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
 
+    [Parameter]
+    public Func<double, string> Value1TooltipFormatter { get; set; }
+
+    [Parameter]
+    public Func<double, string> Value2TooltipFormatter { get; set; }
+
     public string title;
     public ApexChartOptions<ChartItem> chartOptions;
     public IEnumerable<ChartItem> confirmedChartItems;
@@ -88,5 +94,35 @@ else
             confirmedChartItems = ChartModel.ConfirmedChartItems;
             provisionalChartItems = ChartModel.ProvisionalChartItems;
         }
+
+        if (Value2TooltipFormatter == null)
+        {
+            Value2TooltipFormatter = DefaultValue2Formatter;
+        };
+
+        if (Value1TooltipFormatter == null)
+        {
+            Value1TooltipFormatter = DefaultValue1Formatter;
+        };
+    }
+
+    /// <summary>
+    /// If there is no formatter for value 1 in the tooltip provided then this will be used
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    private string DefaultValue1Formatter(double value)
+    {
+        return $"{value} FTE";
+    }
+
+    /// <summary>
+    /// If there is no formatter for value 2 in the tooltip provided then this will be used
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    private string DefaultValue2Formatter(double value)
+    {
+        return $"({value} FTE Availability)";
     }
 }
