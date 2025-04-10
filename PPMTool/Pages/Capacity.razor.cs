@@ -321,7 +321,7 @@ namespace PPMTool.Pages
                 (value1, value2, isHatched) =>
                 {
                     // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, isTotalRow ? ColourScale.Capacity : ColourScale.Load);
                 },
                 seriesName,
                 startDate,

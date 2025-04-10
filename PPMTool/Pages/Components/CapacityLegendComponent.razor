@@ -1,4 +1,5 @@
 ﻿@using PPMTool.Data
+@using PPMTool.Enums
 <div class="card">
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
@@ -41,8 +42,8 @@
                     <svg width=200 height=20 xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="Gradient1">
-                                <stop offset="0%" stop-color="@ChartItem.GetColourStringPercentage(0, true)" />
-                                <stop offset="100%" stop-color="@ChartItem.GetColourStringPercentage(100, true)" />
+                                <stop offset="0%" stop-color="@ChartItem.GetColourStringPercentage(0, ColourScale.Load)" />
+                                <stop offset="100%" stop-color="@ChartItem.GetColourStringPercentage(100, ColourScale.Load)" />
                             </linearGradient>
                         </defs>
                         <rect width="200" height="20" rx="15" fill="url(#Gradient1)" />

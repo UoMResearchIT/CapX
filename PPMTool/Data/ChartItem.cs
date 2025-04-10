@@ -1,4 +1,5 @@
 ﻿using System;
+using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
@@ -52,8 +53,9 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="value"></param>
         /// <param name="capacity"></param>
+        /// <param name="scale"></param>
         /// <returns></returns>
-        public static string GetColourStringFTE(double value, double capacity, bool useHotColdScale = false)
+        public static string GetColourStringFTE(double value, double capacity, ColourScale scale = ColourScale.Capacity)
         {
             // If someone has zero capacity
             int percent = 0;
@@ -67,22 +69,18 @@ namespace PPMTool.Data
             {
                 percent = (int)Math.Round(value * 100 / capacity);
             }
-            return GetColourStringPercentage(percent, useHotColdScale);
+            return GetColourStringPercentage(percent, scale);
         }
 
         /// <summary>
         /// Helper method to get the colour string from a percentage
         /// </summary>
         /// <param name="percent"></param>
-        /// <param name="useHotColdScale"></param>
+        /// <param name="scale"></param>
         /// <returns></returns>
-        public static string GetColourStringPercentage(int percent, bool useHotColdScale = false)
+        public static string GetColourStringPercentage(int percent, ColourScale scale = ColourScale.Capacity)
         {
-            if (useHotColdScale)
-            {
-                return InterpolateColor(280, 0.1, 1, 1, 0.3, percent);
-            }
-            else
+            if (scale == ColourScale.Capacity)
             {
                 if (percent < 50) return "#488f31";
                 if (percent < 75) return "#76a263";
@@ -91,6 +89,17 @@ namespace PPMTool.Data
                 if (percent < 125) return "#d69fa1";
                 if (percent < 150) return "#dd757d";
                 return "#de425b";
+
+            }
+            else if (scale == ColourScale.Load)
+            {
+                return InterpolateColor(280, 0.1, 1, 1, 0.3, percent);
+            }
+            else // TrafficLights
+            {
+                if (percent < 33) return "#de425b";
+                if (percent < 66) return "#fc3";
+                return "#488f31";
             }
         }
 

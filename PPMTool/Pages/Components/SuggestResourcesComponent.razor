@@ -238,25 +238,25 @@
                         {
                             if (value1 >= TaskModel.Demand)
                             {
-                                return "#0f0";
+                                return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights);
                             }
                             else if (value1 < TaskModel.Demand && value1 > 0)
                             {
-                                return "#fc3";
+                                return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights); ;
                             }
-                            return "#f00";
+                            return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights); ;
                         }
 
                         // If provisional then need to consider whether removal of provisional assignments improve the situation
                         if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
                         {
-                            return "#0f0";
+                            return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights); ;
                         }
-                        else if (value1 > 0 && value2 < TaskModel.Demand)
+                        else if (value2 > 0 && value1 < TaskModel.Demand)
                         {
-                            return "#fc3";
+                            return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights); ;
                         }
-                        return "#f00";
+                        return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights); ;
                     },
                     person.Name,
                     startDate,

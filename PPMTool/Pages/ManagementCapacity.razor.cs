@@ -159,7 +159,7 @@ namespace PPMTool.Pages
                 {
                     // Shading function based on value 1 and value 2
                     return isTotalRow ?
-                        ChartItem.GetColourStringFTE(value1, value2, false) :
+                        ChartItem.GetColourStringFTE(value1, value2) :
                         (
                             value1 > GlobalDefaults.ProjectManagementDefaultFTE ?
                                 "#FF9800" :
