@@ -256,7 +256,7 @@ namespace PPMTool.Pages
                         return resource?.AssignmentFTE ?? 0;
                     });
                 },
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
                 },
@@ -318,7 +318,7 @@ namespace PPMTool.Pages
                     });
                 },
                 // Colour function
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     // Shading function based on value 1 and value 2
                     return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);

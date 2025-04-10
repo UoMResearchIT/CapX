@@ -232,22 +232,32 @@
                         // Value 1 is the remaining demand after this person is assigned
                         return Math.Round(unassigned, 3);
                     },
-                    (value1, value2) =>
+                    (value1, value2, isHatched) =>
                     {
-                        // Based on whether they can do this or not
-                        if (value1 <= 0 && value2 <= 0)
+                        // Different logic for colour based on whether the block is provisional or not
+                        if (!isHatched)
                         {
+                            if (value1 >= TaskModel.Demand)
+                            {
+                                return "#0f0";
+                            }
+                            else if (value1 < TaskModel.Demand && value1 > 0)
+                            {
+                                return "#fc3";
+                            }
                             return "#f00";
                         }
-                        else if (value2 > 0 && value2 < TaskModel.Demand)
-                        {
-                            return "#fc3";
-                        }
-                        else if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
+
+                        // If provisional then need to consider whether removal of provisional assignments improve the situation
+                        if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
                         {
                             return "#0f0";
                         }
-                        return "#609";
+                        else if (value1 > 0 && value2 < TaskModel.Demand)
+                        {
+                            return "#fc3";
+                        }
+                        return "#f00";
                     },
                     person.Name,
                     startDate,

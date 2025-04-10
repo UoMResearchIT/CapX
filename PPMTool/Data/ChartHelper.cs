@@ -28,7 +28,7 @@ namespace PPMTool.Data
             Person person,
             IEnumerable<BaseAssignment> assignments,
             Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
-            Func<double, double, string> colourFunction,
+            Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
@@ -132,7 +132,7 @@ namespace PPMTool.Data
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
             IEnumerable<BaseAssignment> assignments,
             Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
-            Func<double, double, string> colourFunction,
+            Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
@@ -166,7 +166,7 @@ namespace PPMTool.Data
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
             IEnumerable<BaseAssignment> assignments,
             Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
-            Func<double, double, string> colourFunction,
+            Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
@@ -236,7 +236,7 @@ namespace PPMTool.Data
                         var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
                         temp.Add(new ChartItem(
-                            colourFunction(valueTracked, value2Tracked),
+                            colourFunction(valueTracked, value2Tracked, hatchedTracked ?? false),
                             label,
                             currentBlockStartDay,
                             currentDay,
@@ -262,7 +262,7 @@ namespace PPMTool.Data
                 // Consider the end date to be inclusive of the final block so do not move back a day like above
                 var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay));
                 temp.Add(new ChartItem(
-                    colourFunction(valueDay, value2Day),
+                    colourFunction(valueDay, value2Day, hatchedDay),
                     label,
                     currentBlockStartDay,
                     currentDay,

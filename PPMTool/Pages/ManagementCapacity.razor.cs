@@ -105,7 +105,7 @@ namespace PPMTool.Pages
                 {
                     return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
                 },
@@ -155,7 +155,7 @@ namespace PPMTool.Pages
                     return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
                 // Colour function
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     // Shading function based on value 1 and value 2
                     return isTotalRow ?
