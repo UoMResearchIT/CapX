@@ -13,17 +13,26 @@
         <h2>Suggested Resources</h2>
     </div>
     <div class="col-auto" style="align-content: center">
-        <RadzenButton Text="Refresh" Icon="refresh" Click="@Refresh" />
+        <RadzenButton Text="Refresh" Icon="refresh" Click="@Refresh" Disabled="@queryRunning" />
     </div>
 </div>
 <div class="card">
-    @if (chartModel == null)
+    @if (queryRunning)
     {
-        <span>No suggested resources for this task</span>
+        <LoadingComponent />
     }
     else
     {
-        <CapacityChartComponent ChartModel=@chartModel />
+        @if (chartModel == null)
+        {
+            <span>No suggested resources for this task</span>
+        }
+        else
+        {
+            <CapacityChartComponent ChartModel=@chartModel
+                                    Value1TooltipFormatter="@FormatValue1Tooltip"
+                                    Value2TooltipFormatter="@FormatValue2Tooltip" />
+        }
     }
 </div>
 <hr />
@@ -36,16 +45,20 @@
     private ILogger Logger { get; set; }
 
     [Inject]
-    SkillTagService SkillTagService { get; set; }
+    private SkillTagService SkillTagService { get; set; }
 
     [Inject]
-    IDbContextFactory<PPMToolContext> DbContextFactory { get; set; }
+    private IDbContextFactory<PPMToolContext> DbContextFactory { get; set; }
 
     [Inject]
-    ProjectService ProjectService { get; set; }
+    private ProjectService ProjectService { get; set; }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
 
     private ChartModel chartModel;
     private ApexChartOptions<ChartItem> options;
+    private bool queryRunning;
 
     protected override void OnInitialized()
     {
@@ -94,11 +107,35 @@
         };
     }
 
-    protected override void OnParametersSet()
+    protected override void OnAfterRender(bool firstRender)
     {
-        base.OnParametersSet();
+        base.OnAfterRender(firstRender);
 
-        RunQuery();
+        if (firstRender)
+        {
+            // Run the query the first time this component is drawn
+            RunQuery();
+        }
+    }
+
+    /// <summary>
+    /// How to format the tooltip for value 1
+    /// </summary>
+    /// <param name="value1"></param>
+    /// <returns></returns>
+    private string FormatValue1Tooltip(double value1)
+    {
+        return $"{value1} FTE Available";
+    }
+
+    /// <summary>
+    /// How to format the tooltip for value 2
+    /// </summary>
+    /// <param name="value2"></param>
+    /// <returns></returns>
+    private string FormatValue2Tooltip(double value2)
+    {
+        return $"({value2} FTE Confirmed)";
     }
 
     /// <summary>
@@ -106,7 +143,7 @@
     /// </summary>
     private void Refresh()
     {
-        RunQuery();
+        if (!queryRunning) RunQuery();
     }
 
     /// <summary>
@@ -114,158 +151,166 @@
     /// </summary>
     private void RunQuery()
     {
-        Debug.WriteLine($"** Running query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel.SkillsRequired ?? new List<SkillTag>())}...");
+        queryRunning = true;
+        StateHasChanged();
 
-        // Re-initialise the results
-        chartModel = null;
-        var blocksAsChartItems = new List<ChartItem>();
-
-        // Return early if the query doesn't make sense
-        if (TaskModel.UnmetDemand <= 0)
+        Task.Run(() =>
         {
-            Debug.WriteLine("** Unmet demand is zero!");
-            return;
-        }
+            Debug.WriteLine($"** Running query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel?.SkillsRequired?.Select(x => x.Name) ?? new List<string>())}...");
 
-        // Start query state
-        Logger.LogInformation("Looking for resource suggestions...");
-        var tempResults = new List<CapacityQueryItem>();
+            // Re-initialise the results
+            chartModel = null;
+            var blocksAsChartItems = new List<ChartItem>();
 
-        // Find people with at least one matching skill tag
-        var context = DbContextFactory.CreateDbContext();
-        var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
-        Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
-
-        // Get projects that run during this task
-        var validProjects = ProjectService
-            .GetAll(context)
-            .Where(x => !x.ProjectStatus.IsCancelled())
-            .Where(x => x.StartDate.Date <= TaskModel.EndDate.Date && x.EndDate.Date >= TaskModel.StartDate.Date);
-        if (validProjects.Count() == 0)
-        {
-            Debug.WriteLine("** No valid projects found!");
-            return;
-        }
-        var startDate = TaskModel.StartDate.Date;
-        var endDate = TaskModel.EndDate.Date;
-
-        // Go through the people
-        foreach (var person in matchingPeople)
-        {
-            // Create list of assignments for this person
-            var assignments = new List<Assignment>();
-            foreach (var project in validProjects)
+            // Return early if the query doesn't make sense
+            if (TaskModel.UnmetDemand <= 0)
             {
-                foreach (var subTask in project.SubTasks)
-                {
-                    if (subTask.AssignedResources.Any(z => z.Person == person))
-                    {
-                        assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                    }
-                }
+                Debug.WriteLine("** Unmet demand is zero!");
+                return;
             }
 
-            // Generate availability profiles over the period
-            // Value 1 function produces the availability of the individual taking into account their 
-            // current assignments and WLM
-            blocksAsChartItems.AddRange(ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                person,
-                assignments,
-                (assignments, currentDay) =>
-                {
-                    var available = person.GetAvailabilityOnDate(currentDay);
-                    var assignmentsOnDay = assignments.RoundedSum(assignment =>
-                    {
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources
-                            .First(x => x.Person.Name == person.Name);
-                        return resource?.AssignmentFTE ?? 0;
-                    });
+            // Start query state
+            Logger.LogInformation("Looking for resource suggestions...");
+            var tempResults = new List<CapacityQueryItem>();
 
-                    // Actual availability based on current assignments
-                    // Will be negative if overallocated
-                    var unassigned = available - assignmentsOnDay;
+            // Find people with at least one matching skill tag
+            var context = DbContextFactory.CreateDbContext();
+            var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
+            Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
 
-                    // Value 1 is the remaining demand after this person is assigned
-                    return Math.Round(TaskModel.Demand - unassigned, 3);
-                },
-                (value1, value2) =>
+            // Get projects that run during this task
+            var validProjects = ProjectService
+                .GetAll(context)
+                .Where(x => !x.ProjectStatus.IsCancelled())
+                .Where(x => x.StartDate.Date <= TaskModel.EndDate.Date && x.EndDate.Date >= TaskModel.StartDate.Date);
+            if (validProjects.Count() == 0)
+            {
+                Debug.WriteLine("** No valid projects found!");
+                return;
+            }
+            var startDate = TaskModel.StartDate.Date;
+            var endDate = TaskModel.EndDate.Date;
+
+            // Just consider those employed during the task
+            var matchingPeopleEmployedDuringTask = matchingPeople
+                .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate));
+
+            // Go through the people
+            foreach (var person in matchingPeopleEmployedDuringTask)
+            {
+                // Create list of assignments for this person
+                var assignments = new List<Assignment>();
+                foreach (var project in validProjects)
                 {
-                    // TODO: The colour of a block needs defining propoerly here
-                    return "#609";
-                },
-                person.Name,
-                startDate,
-                endDate,
-                assignments =>
-                {
-                    return assignments.Any(assignment =>
+                    foreach (var subTask in project.SubTasks)
                     {
-                        // If any resources are marked as provisional or the project owning the task
-                        // is not funded, active or in maintenance
-                        return
-                            assignment.ProjectStatus.IsUnconfirmed() ||
-                            ((assignment as Assignment)?.SubTask.AssignedResources
-                                .First(x => x.Person == person).IsProvisional ?? true);
-                    });
-                },
-                (assignments, value1, currentDay) =>
-                {
-                    // Compute what the remaining demand would be if the person's provisional assignments were removed
-                    var available = person.GetAvailabilityOnDate(currentDay);
-                    var assignmentsOnDay = assignments.RoundedSum(assignment =>
+                        if (subTask.AssignedResources.Any(z => z.Person == person))
                         {
-                            if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
-                            {
-                                return 0;
-                            }
-                            var resource = (assignment as Assignment)?.SubTask.AssignedResources
-                                .FirstOrDefault(x => x.Person.Name == person.Name && !x.IsProvisional);
-                            return resource?.AssignmentFTE ?? 0;
-                        });
-
-                    var unassigned = available - assignmentsOnDay;
-                    return Math.Round(TaskModel.Demand - unassigned, 3);
-                },
-                (assignments, gapStart, gapEnd) =>
-                {
-                    // TODO: This might need looking at as well as it uses a fixed logic to colour the blocks
-                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
+                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                        }
+                    }
                 }
-            ));
 
-            // var allSkillsForPerson = SkillTagService.GetOwnedSkillsForPerson(context, person.PersonId)
-            //     .ToList();
-            // var allSkillsForPersonAsIds = allSkillsForPerson
-            //     .Select(x => x.SkillTag.SkillTagId);
-            // var skillTagsForTaskAsIds = TaskModel.SkillsRequired
-            //     .Select(x => x.SkillTagId);
-            // var hasMatchedSkillsToDevelop = allSkillsForPerson
-            //     .Any(x => skillTagsForTaskAsIds.Contains(x.SkillTag.SkillTagId) && x.FavouriteSkill);
-            // var skillsUnMatched = skillTagsForTaskAsIds
-            //     .Where(x => !allSkillsForPersonAsIds.Contains(x));
-            // var skillsMatched = allSkillsForPerson
-            //     .Where(x => TaskModel.SkillsRequired.Select(x => x.SkillTagId).Contains(x.SkillTag.SkillTagId))
-            //     .Select(x => x.SkillTag);
-            // tempResults.Add(new CapacityQueryItem(
-            //     person,
-            //     blocksAsChartItems,
-            //     blocksAsChartItems.Sum(x => x.Value1),
-            //     blocksAsChartItems.Sum(x => x.Value2),
-            //     skillsUnMatched.Count(),
-            //     hasMatchedSkillsToDevelop,
-            //     skillsMatched
-            // ));
+                // Generate availability profiles over the period
+                // Value 1 function produces the availability of the individual taking into account their 
+                // current assignments and WLM
+                blocksAsChartItems.AddRange(ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+                    person,
+                    assignments,
+                    (assignments, currentDay) =>
+                    {
+                        var available = person.GetAvailabilityOnDate(currentDay);
+                        var assignmentsOnDay = assignments.RoundedSum(assignment =>
+                        {
+                            var resource = (assignment as Assignment)?.SubTask.AssignedResources
+                                .First(x => x.Person.Name == person.Name);
+                            return resource?.AssignmentFTE ?? 0;
+                        }, 3);
 
-            // TODO: Store values for plotting e.g. bar widths as percentage etc?
-        }
+                        // Actual availability based on current assignments
+                        // Will be negative if overallocated
+                        var unassigned = available - assignmentsOnDay;
 
-        // Convert to appropriate chart models
-        chartModel = new ChartModel
+                        // Value 1 is the remaining demand after this person is assigned
+                        return unassigned;
+                    },
+                    (value1, value2) =>
+                    {
+                        // Based on whether they can do this or not
+                        if (value1 <= 0 && value2 <= 0)
+                        {
+                            return "#f00";
+                        }
+                        else if (value2 > 0 && value2 < TaskModel.Demand)
+                        {
+                            return "#fc3";
+                        }
+                        else if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
+                        {
+                            return "#0f0";
+                        }
+                        return "#609";
+                    },
+                    person.Name,
+                    startDate,
+                    endDate,
+                    assignments =>
+                    {
+                        return assignments.Any(assignment =>
+                        {
+                            // If any resources are marked as provisional or the project owning the task
+                            // is not funded, active or in maintenance
+                            return
+                                assignment.ProjectStatus.IsUnconfirmed() ||
+                                ((assignment as Assignment)?.SubTask.AssignedResources
+                                    .First(x => x.Person == person).IsProvisional ?? true);
+                        });
+                    },
+                    (assignments, value1, currentDay) =>
+                    {
+                        // Compute what the remaining demand would be if the person's provisional assignments were removed
+                        var available = person.GetAvailabilityOnDate(currentDay);
+                        var assignmentsOnDay = assignments.RoundedSum(assignment =>
+                            {
+                                if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
+                                {
+                                    return 0;
+                                }
+                                var resource = (assignment as Assignment)?.SubTask.AssignedResources
+                                    .FirstOrDefault(x => x.Person.Name == person.Name && !x.IsProvisional);
+                                return resource?.AssignmentFTE ?? 0;
+                            }, 3);
+
+                        var unassigned = available - assignmentsOnDay;
+                        return unassigned;
+                    },
+                    (assignments, gapStart, gapEnd) =>
+                    {
+                        // TODO: This might need looking at as well as it uses a fixed logic to colour the blocks
+                        return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
+                    }
+                ));
+            }
+
+            // Convert to appropriate chart models
+            chartModel = new ChartModel
+            {
+                ChartTitle = "Suggested Resources",
+                ChartOptions = options,
+                ConfirmedChartItems = blocksAsChartItems.Where(x => !x.IsHatched()).ToList(),
+                ProvisionalChartItems = blocksAsChartItems.Where(x => x.IsHatched()).ToList()
+            };
+
+            Debug.WriteLine("** Chart model updated!");
+
+        }).ContinueWith(t =>
         {
-            ChartTitle = "Suggested Resources",
-            ChartOptions = options,
-            ConfirmedChartItems = blocksAsChartItems.Where(x => !x.IsHatched()).ToList(),
-            ProvisionalChartItems = blocksAsChartItems.Where(x => x.IsHatched()).ToList()
-        };
+            InvokeAsync(() =>
+            {
+                // Force the chart to re-draw
+                queryRunning = false;
+                StateHasChanged();
+            });
+        });
     }
 }

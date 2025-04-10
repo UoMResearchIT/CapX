@@ -135,11 +135,12 @@ namespace PPMTool.Pages
         private bool hideEmptyWeeks = false;
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
+        private bool isInitialised;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            InitialiseComponent();
+            if (!isInitialised) InitialiseComponent();
         }
 
         /// <summary>
@@ -239,6 +240,9 @@ namespace PPMTool.Pages
             {
                 KickOffActualsReportTask();
             }
+
+            // Finished
+            isInitialised = true;
         }
 
         /// <summary>

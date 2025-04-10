@@ -14,25 +14,25 @@
 else
 {
     <ApexChart Title="@title"
-    TItem="ChartItem"
-    Options=@chartOptions
-    XAxisType="XAxisType.Datetime"
-    OnDataPointSelection="@(args => OnDataPointSelection?.Invoke(args))"
-    OnZoomed="@(args => OnChartZoomed?.Invoke(args))">
+               TItem="ChartItem"
+               Options=@chartOptions
+               XAxisType="XAxisType.Datetime"
+               OnDataPointSelection="@(args => OnDataPointSelection?.Invoke(args))"
+               OnZoomed="@(args => OnChartZoomed?.Invoke(args))">
         <ChildContent>
             <ApexRangeSeries TItem="ChartItem"
-            Items="@confirmedChartItems"
-            XValue="@(e => e.Label)"
-            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-            PointColor="@(e => e.Colour)" />
+                             Items="@confirmedChartItems"
+                             XValue="@(e => e.Label)"
+                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                             PointColor="@(e => e.Colour)" />
 
             <ApexRangeSeries TItem="ChartItem"
-            Items="@provisionalChartItems"
-            XValue="@(e => e.Label)"
-            YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-            YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
-            PointColor="@(e => e.Colour)" />
+                             Items="@provisionalChartItems"
+                             XValue="@(e => e.Label)"
+                             YMinValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                             YMaxValue="@(e => e.EndDate.ToUnixTimeMilliseconds())"
+                             PointColor="@(e => e.Colour)" />
         </ChildContent>
         <ApexPointTooltip>
             <div class="m-2">
@@ -74,10 +74,10 @@ else
     [Parameter]
     public Func<double, string> Value2TooltipFormatter { get; set; }
 
-    public string title;
-    public ApexChartOptions<ChartItem> chartOptions;
-    public IEnumerable<ChartItem> confirmedChartItems;
-    public IEnumerable<ChartItem> provisionalChartItems;
+    private string title;
+    private ApexChartOptions<ChartItem> chartOptions;
+    private IEnumerable<ChartItem> confirmedChartItems;
+    private IEnumerable<ChartItem> provisionalChartItems;
 
     protected override void OnInitialized()
     {
