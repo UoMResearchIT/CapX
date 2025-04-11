@@ -29,6 +29,7 @@
         }
         else
         {
+            <CapacityLegendComponent MainColourScale="ColourScale.TrafficLights" />
             <CapacityChartComponent ChartModel=@chartModel Value1TooltipFormatter="@FormatValue1Tooltip" Value2TooltipFormatter="@FormatValue2Tooltip" />
         }
     }
@@ -296,7 +297,7 @@
             totalRowsOnChart = matchingPeopleEmployedDuringTask.Count();
             options.Chart = new Chart
             {
-                Height = $"{totalRowsOnChart * 25}rem",
+                Height = $"{(totalRowsOnChart * 30) + 100}px",
                 Zoom = new Zoom
                 {
                     AllowMouseWheelZoom = false

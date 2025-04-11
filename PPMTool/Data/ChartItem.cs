@@ -98,7 +98,7 @@ namespace PPMTool.Data
             else // TrafficLights
             {
                 if (percent < 33) return "#de425b";
-                if (percent < 66) return "#fc3";
+                if (percent < 66) return "#ff9800";
                 return "#488f31";
             }
         }
