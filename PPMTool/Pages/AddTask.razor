@@ -350,7 +350,7 @@
                                 <EditTemplate Context="res">
                                     <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
                                         <RadzenSwitch @bind-Value="@res.IsProvisional" />
-                                     </RadzenStack>
+                                    </RadzenStack>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="ActualWorkHours" Title="Actual Hours" MinWidth="10px">
@@ -407,6 +407,15 @@
                     </RadzenDataGrid>
                 </div>
             </div>
+            @if (TaskModel.UnmetDemand > 0)
+            {
+                <br />
+                <div class="row">
+                    <div class="col">
+                        <SuggestResourcesComponent TaskModel="@taskModel" CurrentResources="@dataGridEntities"/>
+                    </div>
+                </div>
+            }
 
             <hr />
             <DataAnnotationsValidator />

@@ -101,11 +101,11 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
                 },
@@ -122,7 +122,14 @@ namespace PPMTool.Pages
                 },
                 (assignments, gapStart, gapEnd) =>
                 {
-                    return FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectManagementFTE ?? 0);
+                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                        person,
+                        gapStart,
+                        gapEnd,
+                        wlm => 0,
+                        wlm => wlm?.ProjectManagementFTE ?? 0,
+                        (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
+                    );
                 },
                 assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
             );
@@ -150,16 +157,16 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
                 },
                 // Colour function
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     // Shading function based on value 1 and value 2
                     return isTotalRow ?
-                        ChartItem.GetColourStringFTE(value1, value2, false) :
+                        ChartItem.GetColourStringFTE(value1, value2) :
                         (
                             value1 > GlobalDefaults.ProjectManagementDefaultFTE ?
                                 "#FF9800" :
@@ -179,7 +186,8 @@ namespace PPMTool.Pages
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty),
+                ignoreZeroValue1Entries: !isTotalRow
             );
         }
 

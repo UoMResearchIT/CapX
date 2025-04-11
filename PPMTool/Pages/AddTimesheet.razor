@@ -60,7 +60,7 @@
                     </div>
                     <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
                         <a href="https://livemanchesterac-my.sharepoint.com/shared?listurl=https%3A%2F%2Flivemanchesterac%2Esharepoint%2Ecom%2Fsites%2FUOM%2DITS%2DResearch%2DIT%2FShared%20Documents&id=%2Fsites%2FUOM%2DITS%2DResearch%2DIT%2FShared%20Documents%2FRSE%20Team%2FRead%2DOnly%2FPolicies%20and%20Processes%2FRSE%5FRoles%5FExpectations%5Fand%5FTime%5FTracking%2Epdf&parent=%2Fsites%2FUOM%2DITS%2DResearch%2DIT%2FShared%20Documents%2FRSE%20Team%2FRead%2DOnly%2FPolicies%20and%20Processes" target="_blank">
-                            <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" title="Open the timesheet task categorisation document" Disabled=@(!timesheet.IsOwner(ActiveUser)) />
+                            <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet task categorisation document"))" />
                         </a>
                         <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" Disabled=@(entityToInsert != null || entityToUpdate != null || !timesheet.IsOwner(ActiveUser)) Style="margin-right: 0.75rem;" />
                         <RadzenButton Text="Add New Task" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) Style="padding: 0 2rem" />
@@ -292,7 +292,7 @@
                 </div>
             </div>
 
-            @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && currentWLM != null && wlmChartItem != null)
+            @if ((timesheet?.IsLineManager(ActiveUser) ?? false || ActiveUserRoleType == RoleType.Superuser) && currentWLM != null && wlmChartItem != null)
             {
                 <div class="card" style="margin-top: 0.5rem;">
                     <div class="row">

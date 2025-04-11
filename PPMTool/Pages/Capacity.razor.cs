@@ -15,19 +15,6 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class Capacity : BaseCapacityPage
     {
-        private DateTime queryStartDate = DateTime.Today;
-        public DateTime QueryStartDate
-        {
-            get => queryStartDate;
-            set
-            {
-                queryStartDate = value;
-
-                // Update the end date to be a week ahead of the start date by default if it is behind
-                if (queryEndDate < queryStartDate) queryEndDate = queryStartDate.AddDays(7);
-            }
-        }
-
         private Person chosenManager;
         public Person ChosenManager
         {
@@ -44,15 +31,6 @@ namespace PPMTool.Pages
 
         private IList<Person> managers;
         private IList<Person> filteredManagers;
-        private DateTime queryEndDate = DateTime.Today.AddDays(7);
-        private bool queryResultsAvailable;
-        private string queryErrorMessage;
-        private bool queryActive;
-        private double requiredFTE = 0.5;
-        private List<CapacityQueryItem> fullMatch;
-        private List<CapacityQueryItem> partialMatchPercent;
-        private List<CapacityQueryItem> partialMatchDuration;
-        private List<CapacityQueryItem> partialMatchBoth;
 
         protected override void OnInitialized()
         {
@@ -225,121 +203,14 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Wrapper for the chart configuration event that sets the optional paramters
+        /// Wrapper for the chart configuration event that sets the optional paramters relevant for this page
         /// </summary>
         private void ConfigureChartSource()
         {
             ConfigureChartSource(
-                ConvertChartItemsToQueryResults,
-                queryActive ? QueryStartDate : null,
-                queryActive ? queryEndDate : null,
                 customChartTitleGenerator: (name) => $"Load for {(!string.IsNullOrEmpty(name) ? name : "All")} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
-                () => ManagerChosen()
+                projectModeCondition: () => ManagerChosen()
             );
-        }
-
-        /// <summary>
-        /// Resets the page to its initial state
-        /// </summary>
-        private void ClearQuery(bool regenerateChart = true)
-        {
-            Debug.WriteLine("** Clearing Query...");
-            queryResultsAvailable = false;
-            queryErrorMessage = null;
-            queryActive = false;
-            chosenPeople = new List<string>();
-            if (regenerateChart) ConfigureChartSource();
-
-            LogInformation($"Query cleared");
-        }
-
-        /// <summary>
-        /// Runs the capacity query and updates the query result property
-        /// </summary>
-        private void RunQuery()
-        {
-            Debug.WriteLine("** Running query...");
-
-            // Add error
-            if (QueryStartDate >= queryEndDate)
-            {
-                queryErrorMessage = "End date must be after the start date!";
-                return;
-            }
-
-            // Reset query results but don't regenerate the chart as we are going to do it again in a minute
-            ClearQuery(false);
-
-            // Start query state
-            queryActive = true;
-            LogInformation($"Query running.");
-
-            // Update the chart source as this is used to drive the query results
-            ConfigureChartSource();
-        }
-
-        /// <summary>
-        /// Method to take the result of the chart configuration and convert it to query results in the table
-        /// </summary>
-        private void ConvertChartItemsToQueryResults()
-        {
-            if (queryActive)
-            {
-                // Convert the chart results to capacity query results
-                var results = new List<CapacityQueryItem>();
-                var mergedItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems));
-                foreach (var item in mergedItems)
-                {
-                    // Get person from item label
-                    var person = people.FirstOrDefault(p => p.Name == item.Label);
-                    if (person == null)
-                    {
-                        Debug.WriteLine($"** Couldn't find person {item.Label}");
-                        continue;
-                    }
-
-                    // Availability of individual is value 2 in the chart item
-                    var availabilityFTE = item.Value2;
-
-                    // Invert value (value 1 here is the assignment value) -- truncate to 2 DP
-                    var unassignedFTE = Math.Round(100 * (availabilityFTE - item.Value1)) / 100;
-
-                    // Only add if the block (item) has a non-zero length and the person isn't already over-allocated which would give a negative inverse
-                    if (item.StartDate != item.EndDate && unassignedFTE > 0)
-                    {
-                        // Add to range
-                        results.Add(new CapacityQueryItem(person, item.StartDate, item.EndDate, unassignedFTE));
-                    }
-                }
-
-                // Check against the desired availabilty and sort into match, partial match FTE, partial match duration, partial match FTE and time
-                fullMatch = OrganiseQueryResults(results
-                    .Where(x => x.AvailabilityPercent == requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-                partialMatchPercent = OrganiseQueryResults(results
-                    .Where(x => x.AvailabilityPercent == requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-                partialMatchDuration = OrganiseQueryResults(results
-                    .Where(x => x.AvailabilityPercent != requiredFTE && x.EndDate == queryEndDate && x.StartDate == queryStartDate));
-                partialMatchBoth = OrganiseQueryResults(results
-                    .Where(x => x.AvailabilityPercent != requiredFTE && (x.EndDate != queryEndDate || x.StartDate != queryStartDate)));
-
-                // Results available
-                queryResultsAvailable = results.Count() > 0;
-
-                LogInformation("Query results generated.");
-            }
-        }
-
-        /// <summary>
-        /// Method to order the capacity query results
-        /// </summary>
-        /// <param name="results"></param>
-        /// <returns></returns>
-        private List<CapacityQueryItem> OrganiseQueryResults(IEnumerable<CapacityQueryItem> results)
-        {
-            return results
-                .OrderBy(x => x.Person.Name)
-                .ThenByDescending(x => x.AvailabilityPercent)
-                .ToList();
         }
 
         /// <summary>
@@ -377,7 +248,7 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
                 person,
                 assignments,
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment =>
                     {
@@ -385,13 +256,13 @@ namespace PPMTool.Pages
                         return resource?.AssignmentFTE ?? 0;
                     });
                 },
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
                 },
                 person.Name,
-                queryActive ? QueryStartDate : startDate,
-                queryActive ? queryEndDate : endDate,
+                startDate,
+                endDate,
                 assignments =>
                 {
                     return assignments.Any(assignment =>
@@ -400,18 +271,14 @@ namespace PPMTool.Pages
                         // is not funded, active or in maintenance
                         return
                             assignment.ProjectStatus.IsUnconfirmed() ||
-                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional ?? true);
+                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId).IsProvisional ?? true);
                     });
                 },
                 (assignments, value1, currentDay) =>
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
-                (assignments, gapStart, gapEnd) =>
-                {
-                    return FillGapsBetweenChartItemsFromWorkloadModels(person, gapStart, gapEnd, wlm => wlm?.ProjectWorkFTE ?? person.FTE);
-                },
-                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -437,31 +304,31 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                assignments =>
+                (assignments, currentDay) =>
                 {
                     return assignments.RoundedSum(assignment =>
                     {
                         // Value is the effort of the chosen person
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
                         return resource?.AssignmentFTE ?? 0;
                     });
                 },
                 // Colour function
-                (value1, value2) =>
+                (value1, value2, isHatched) =>
                 {
                     // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, !isTotalRow);
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, isTotalRow ? ColourScale.Capacity : ColourScale.Load);
                 },
                 seriesName,
-                queryActive ? QueryStartDate : startDate,
-                queryActive ? queryEndDate : endDate,
+                startDate,
+                endDate,
                 // Hatched function
                 assignments =>
                 {
                     return assignments.Any(assignment =>
                     {
                         // Get the set of resources to check the condition against
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
 
                         // If resource is marked as provisional or the project owning the task
                         // is not funded, active or in maintenance
@@ -489,7 +356,7 @@ namespace PPMTool.Pages
                         messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
 
                         // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person == person) ?? false);
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person.PersonId == person.PersonId) ?? false);
                         if (assignedWithinBlockWithChosenPerson.Any(x => (x as Assignment)?.SubTask.HasUnmetDemand() ?? false))
                         {
                             var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => (x as Assignment)?.SubTask.UnmetDemand ?? 0);
@@ -501,7 +368,8 @@ namespace PPMTool.Pages
                     messages = GenerateTooltipMessages(assignmentsWithinBlock, person, messages);
 
                     return messages;
-                }
+                },
+                ignoreZeroValue1Entries: !isTotalRow
             );
         }
 
@@ -517,7 +385,7 @@ namespace PPMTool.Pages
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional) ?? true))
+            if (assignmentsWithinBlock.Any(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
             {
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }

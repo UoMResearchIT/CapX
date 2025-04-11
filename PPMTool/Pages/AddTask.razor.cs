@@ -135,11 +135,12 @@ namespace PPMTool.Pages
         private bool hideEmptyWeeks = false;
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
+        private bool isInitialised;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            InitialiseComponent();
+            if (!isInitialised) InitialiseComponent();
         }
 
         /// <summary>
@@ -149,6 +150,8 @@ namespace PPMTool.Pages
         /// <param name="restoreModels">Restore the model based on its current context object</param>
         public void InitialiseComponent(PPMToolContext referenceContext = null, bool restoreModels = true)
         {
+            Debug.WriteLine("** Initialise component...");
+
             // Overwrite the context
             if (referenceContext != null && referenceContext != Context)
             {
@@ -237,6 +240,9 @@ namespace PPMTool.Pages
             {
                 KickOffActualsReportTask();
             }
+
+            // Finished
+            isInitialised = true;
         }
 
         /// <summary>

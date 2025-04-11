@@ -97,6 +97,20 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Get the owned skill instances for the person provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public IEnumerable<OwnedSkill> GetOwnedSkillsForPerson(PPMToolContext context, int personId)
+        {
+            return context.OwnedSkills
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == personId)
+                .Include(x => x.SkillTag);
+        }
+
+        /// <summary>
         /// Get the number of owned skills associated with a given tag
         /// </summary>
         /// <param name="context"></param>
@@ -199,6 +213,62 @@ namespace PPMTool.Services
             return recordsForUser
                 .Where(x => !x.RecordComplete())
                 .Count();
+        }
+
+        /// <summary>
+        /// Returns a list of people who own a skill contained within the list of skill tags provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillsToMatch"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetPeopleWithAtLeastOneMatch(PPMToolContext context, IEnumerable<SkillTag> skillsToMatch)
+        {
+            IEnumerable<Person> results = new List<Person>();
+            foreach (var skillTag in skillsToMatch)
+            {
+                // Fetch people with this skill
+                var peopleWithTag = context.OwnedSkills
+                    .Include(x => x.SkillTag)
+                    .Include(x => x.Owner)
+                    .Where(x => x.SkillTag.SkillTagId == skillTag.SkillTagId)
+                    .Select(x => x.Owner);
+
+                // Union the lists
+                results = results.UnionBy(peopleWithTag, x => x.PersonId);
+            }
+            return results;
+        }
+
+        /// <summary>
+        /// Get the list of skills a person has that match those in the list provided
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="skillsToMatch"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public IEnumerable<SkillTag> GetAllMatchedSkillsForPerson(PPMToolContext context, IEnumerable<SkillTag> skillsToMatch, int personId)
+        {
+            // Initialise
+            IList<SkillTag> results = new List<SkillTag>();
+
+            // Get the person and their skills
+            var person = context.People
+                .Include(x => x.OwnedSkills)
+                .ThenInclude(x => x.SkillTag)
+                .FirstOrDefault(x => x.PersonId == personId);
+
+            // Bail if no matching person
+            if (person == null) return results;
+
+            // For each skill tag to match see if it is in the person's skills and add to list
+            foreach (var skillTag in skillsToMatch)
+            {
+                if (person.OwnedSkills.Any(x => x.SkillTag.SkillTagId == skillTag.SkillTagId))
+                {
+                    results.Add(skillTag);
+                }
+            }
+            return results;
         }
     }
 }

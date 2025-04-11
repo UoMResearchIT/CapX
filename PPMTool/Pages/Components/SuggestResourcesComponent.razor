@@ -1,0 +1,391 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Logging
+@using PPMTool.Data
+@using System.Diagnostics
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Services
+@using static PPMTool.Pages.BaseCapacityPage
+
+<div class="row">
+    <div class="col">
+        <h3>Suggested Resources</h3>
+    </div>
+    <div class="col-auto" style="align-content: center">
+        <RadzenButton Text="Refresh" Icon="refresh" Click="@Refresh" Disabled="@queryRunning" class="my-2" />
+    </div>
+</div>
+<div class="card">
+    @if (queryRunning)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        @if (chartModel == null)
+        {
+            <span>No suggested resources for this task</span>
+        }
+        else
+        {
+            <CapacityLegendComponent MainColourScale="ColourScale.TrafficLights" />
+            <CapacityChartComponent ChartModel=@chartModel Value1TooltipFormatter="@FormatValue1Tooltip" Value2TooltipFormatter="@FormatValue2Tooltip" />
+        }
+    }
+</div>
+<hr />
+
+@code {
+    [Parameter]
+    public SubTask TaskModel { get; set; }
+
+    [Parameter]
+    public IEnumerable<Resource> CurrentResources { get; set; }
+
+    [Inject]
+    private ILogger Logger { get; set; }
+
+    [Inject]
+    private SkillTagService SkillTagService { get; set; }
+
+    [Inject]
+    private IDbContextFactory<PPMToolContext> DbContextFactory { get; set; }
+
+    [Inject]
+    private ProjectService ProjectService { get; set; }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    private ChartModel chartModel;
+    private ApexChartOptions<ChartItem> options;
+    private bool queryRunning;
+    private int totalRowsOnChart;
+    private Dictionary<Person, IEnumerable<SkillTag>> matchedSkills;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        options = new ApexChartOptions<ChartItem>
+        {
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = true,
+                    RangeBarOverlap = true,
+                    RangeBarGroupRows = true
+                }
+            },
+            Legend = new Legend
+            {
+                Show = false
+            },
+            Xaxis = new XAxis { },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Min = TaskModel.StartDate.Date.ToUnixTimeMilliseconds(),
+                    Max = TaskModel.EndDate.Date.ToUnixTimeMilliseconds()
+                }
+            },
+            Fill = new Fill
+            {
+                Opacity = 1,
+                Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                Pattern = new FillPattern
+                {
+                    Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                }
+            }
+        };
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        if (firstRender)
+        {
+            // Run the query the first time this component is drawn
+            RunQuery();
+        }
+    }
+
+    /// <summary>
+    /// How to format the tooltip for value 1
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    private MarkupString FormatValue1Tooltip(ChartItem item)
+    {
+        return (MarkupString)$"<h3>{item?.Value1} FTE Available</h3>";
+    }
+
+    /// <summary>
+    /// How to format the tooltip for value 2
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    private MarkupString FormatValue2Tooltip(ChartItem item)
+    {
+        if (item.IsHatched())
+        {
+            return (MarkupString)$"<h5>(Possibly up to {item?.Value2} FTE)</h5>";
+        }
+        return (MarkupString)"";        
+    }
+
+    /// <summary>
+    /// Refresh the suggestions
+    /// </summary>
+    private void Refresh()
+    {
+        if (!queryRunning) RunQuery();
+    }
+
+    /// <summary>
+    /// Runs the capacity query and updates the query result property
+    /// </summary>
+    private void RunQuery()
+    {
+        queryRunning = true;
+        StateHasChanged();
+
+        Task.Run(() =>
+        {
+            Debug.WriteLine($"** Running query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel?.SkillsRequired?.Select(x => x.Name) ?? new List<string>())}...");
+
+            // Re-initialise the results
+            chartModel = null;
+            var blocksAsChartItems = new List<ChartItem>();
+            matchedSkills = new Dictionary<Person, IEnumerable<SkillTag>>();
+
+            // Return early if the query doesn't make sense
+            if (TaskModel.UnmetDemand <= 0)
+            {
+                Debug.WriteLine("** Unmet demand is zero!");
+                return;
+            }
+
+            // Start query state
+            Logger.LogInformation("Looking for resource suggestions...");
+
+            // Find people with at least one matching skill tag
+            var context = DbContextFactory.CreateDbContext();
+            var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
+            Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
+
+            // Get projects that run during this task
+            var validProjects = ProjectService
+                .GetAll(context)
+                .Where(x => !x.ProjectStatus.IsCancelled())
+                .Where(x => x.StartDate.Date <= TaskModel.EndDate.Date && x.EndDate.Date >= TaskModel.StartDate.Date);
+            if (validProjects.Count() == 0)
+            {
+                Debug.WriteLine("** No valid projects found!");
+                return;
+            }
+            var startDate = TaskModel.StartDate.Date;
+            var endDate = TaskModel.EndDate.Date;
+
+            // Just consider those employed during the task
+            var matchingPeopleEmployedDuringTask = matchingPeople
+                .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate));
+
+            // Go through the people
+            foreach (var person in matchingPeopleEmployedDuringTask)
+            {
+                // Add to dictionary of skill matches
+                matchedSkills.Add(person, SkillTagService.GetAllMatchedSkillsForPerson(context, TaskModel.SkillsRequired, person.PersonId));
+
+                // Create list of assignments for this person
+                var assignments = new List<Assignment>();
+                foreach (var project in validProjects)
+                {
+                    foreach (var subTask in project.SubTasks)
+                    {
+                        // Don't use the task model from the DB list but instead use the current resource settings
+                        if (subTask.SubTaskId == TaskModel.SubTaskId)
+                        {
+                            // Add the datagrid entities to the TaskModel
+                            TaskModel.AssignedResources = CurrentResources.ToList();
+
+                            // Create assignment for this task
+                            if (TaskModel.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
+                            {
+                                assignments.Add(new Assignment(TaskModel, project.ProjectStatus));
+                            }
+                        }
+                        else
+                        {
+                            if (subTask.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
+                            {
+                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                            }
+                        }
+                    }
+                }
+
+                Debug.WriteLine($"** {assignments.Count} assignments built for {person.Name}");
+
+                // Generate availability profiles over the period
+                // Value 1 function produces the availability of the individual taking into account their 
+                // current assignments and WLM
+                blocksAsChartItems.AddRange(ChartHelper.ConvertAssignmentsToChartItemsForPerson(
+                    person,
+                    assignments,
+                    (assignments, currentDay) =>
+                    {
+                        var available = person.GetAvailabilityOnDate(currentDay);
+                        var assignmentsOnDay = assignments.Sum(assignment =>
+                        {
+                            var resource = (assignment as Assignment)?.SubTask.AssignedResources
+                                .First(x => x.Person.PersonId == person.PersonId);
+                            return resource?.AssignmentFTE ?? 0;
+                        });
+
+                        // Actual availability based on current assignments
+                        // Will be negative if overallocated
+                        var unassigned = available - assignmentsOnDay;
+
+                        // Value 1 is the remaining demand after this person is assigned
+                        return Math.Round(unassigned, 3);
+                    },
+                    (value1, value2, isHatched) =>
+                    {
+                        return GetColourOfBlock(value1, value2, isHatched);
+                    },
+                    person.Name,
+                    startDate,
+                    endDate,
+                    assignments =>
+                    {
+                        return assignments.Any(assignment =>
+                        {
+                            // If any resources are marked as provisional or the project owning the task
+                            // is not funded, active or in maintenance then hatched
+                            return
+                                assignment.ProjectStatus.IsUnconfirmed() ||
+                                ((assignment as Assignment)?.SubTask.AssignedResources
+                                    .First(x => x.Person.PersonId == person.PersonId).IsProvisional ?? true);
+                        });
+                    },
+                    (assignments, value1, currentDay) =>
+                    {
+                        // Compute what the remaining demand would be if the person's provisional assignments were removed
+                        var available = person.GetAvailabilityOnDate(currentDay);
+                        var assignmentsOnDay = assignments.Sum(assignment =>
+                            {
+                                if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
+                                {
+                                    return 0;
+                                }
+                                var resource = (assignment as Assignment)?.SubTask.AssignedResources
+                                    .FirstOrDefault(x => x.Person.PersonId == person.PersonId && !x.IsProvisional);
+                                return resource?.AssignmentFTE ?? 0;
+                            });
+
+                        var unassigned = available - assignmentsOnDay;
+                        return Math.Round(unassigned, 3);
+                    },
+                    tooltipMessageFormatter: assignments =>
+                    {
+                        return GenerateTooltipMessages(person);
+                    }
+                ));
+            }
+
+            // Convert to appropriate chart model and set up chart
+            totalRowsOnChart = matchingPeopleEmployedDuringTask.Count();
+            options.Chart = new Chart
+            {
+                Height = $"{(totalRowsOnChart * 30) + 100}px",
+                Zoom = new Zoom
+                {
+                    AllowMouseWheelZoom = false
+                }
+            };
+            chartModel = new ChartModel
+            {
+                ChartTitle = "Suggested Resources",
+                ChartOptions = options,
+                ConfirmedChartItems = blocksAsChartItems.Where(x => !x.IsHatched()).ToList(),
+                ProvisionalChartItems = blocksAsChartItems.Where(x => x.IsHatched()).ToList()
+            };
+
+            Debug.WriteLine("** Chart model updated!");
+
+        }).ContinueWith(t =>
+        {
+            InvokeAsync(() =>
+            {
+                // Force the chart to re-draw
+                queryRunning = false;
+                StateHasChanged();
+            });
+        });
+    }
+
+    /// <summary>
+    /// Generate tooltip messages for blocks
+    /// </summary>
+    /// <param name="person"></param>
+    /// <returns></returns>
+    private string GenerateTooltipMessages(Person person)
+    {
+        // Add number of matched skills to the tooltip
+        var numberMatched = 0;
+        if (matchedSkills.TryGetValue(person, out var matches))
+        {
+            numberMatched = matches.Count();
+        }
+        var message = $"{numberMatched} Matched Skill(s): ";
+        if (numberMatched > 0)
+        {
+            foreach (var skill in matches)
+            {
+                message += $"<div class=\"rz-badge m-1\" style=\"background-color: {skill.Rareness.GetTextColourCode()}; padding: 0.3rem;\" title=\"{skill.RarenessCount} RSE(s) with this tag\">{skill.Name}</div>";
+            }
+        }
+        return message;
+    }
+
+    /// <summary>
+    /// Method to get the colour of a block in the chart
+    /// </summary>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <param name="isHatched"></param>
+    /// <returns></returns>
+    private string GetColourOfBlock(double value1, double value2, bool isHatched)
+    {
+        // Different logic for colour based on whether the block is provisional or not
+        if (!isHatched)
+        {
+            if (value1 >= TaskModel.Demand)
+            {
+                return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights);
+            }
+            else if (value1 < TaskModel.Demand && value1 > 0)
+            {
+                return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights);
+            }
+            return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights);
+        }
+
+        // If provisional then need to consider whether removal of provisional assignments improve the situation
+        if (value1 >= TaskModel.Demand && value2 >= TaskModel.Demand)
+        {
+            return ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights);
+        }
+        else if (value2 > 0 && value1 < TaskModel.Demand)
+        {
+            return ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights);
+        }
+        return ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights);
+    }
+}
