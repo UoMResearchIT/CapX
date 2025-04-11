@@ -40,6 +40,9 @@
     [Parameter]
     public SubTask TaskModel { get; set; }
 
+    [Parameter]
+    public IEnumerable<Resource> CurrentResources { get; set; }
+
     [Inject]
     private ILogger Logger { get; set; }
 
@@ -205,12 +208,29 @@
                 {
                     foreach (var subTask in project.SubTasks)
                     {
-                        if (subTask.AssignedResources.Any(z => z.Person == person))
+                        // Don't use the task model from the DB list but instead use the current resource settings
+                        if (subTask.SubTaskId == TaskModel.SubTaskId)
                         {
-                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                            // Add the datagrid entities to the TaskModel
+                            TaskModel.AssignedResources = CurrentResources.ToList();
+
+                            // Create assignment for this task
+                            if (TaskModel.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
+                            {
+                                assignments.Add(new Assignment(TaskModel, project.ProjectStatus));
+                            }
+                        }
+                        else
+                        {
+                            if (subTask.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
+                            {
+                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
+                            }
                         }
                     }
                 }
+
+                Debug.WriteLine($"** {assignments.Count} assignments built for {person.Name}");
 
                 // Generate availability profiles over the period
                 // Value 1 function produces the availability of the individual taking into account their 
@@ -224,7 +244,7 @@
                         var assignmentsOnDay = assignments.Sum(assignment =>
                         {
                             var resource = (assignment as Assignment)?.SubTask.AssignedResources
-                                .First(x => x.Person.Name == person.Name);
+                                .First(x => x.Person.PersonId == person.PersonId);
                             return resource?.AssignmentFTE ?? 0;
                         });
 
@@ -251,7 +271,7 @@
                             return
                                 assignment.ProjectStatus.IsUnconfirmed() ||
                                 ((assignment as Assignment)?.SubTask.AssignedResources
-                                    .First(x => x.Person == person).IsProvisional ?? true);
+                                    .First(x => x.Person.PersonId == person.PersonId).IsProvisional ?? true);
                         });
                     },
                     (assignments, value1, currentDay) =>
@@ -265,28 +285,14 @@
                                     return 0;
                                 }
                                 var resource = (assignment as Assignment)?.SubTask.AssignedResources
-                                    .FirstOrDefault(x => x.Person.Name == person.Name && !x.IsProvisional);
+                                    .FirstOrDefault(x => x.Person.PersonId == person.PersonId && !x.IsProvisional);
                                 return resource?.AssignmentFTE ?? 0;
                             });
 
                         var unassigned = available - assignmentsOnDay;
                         return Math.Round(unassigned, 3);
                     },
-                    (assignments, gapStart, gapEnd) =>
-                    {
-                        // Gaps should simply show as available for the task as a gap means no assignments
-                        // Value 2 can be chosen as anything to ensure the colouring is correct as it is not used for anything else
-                        return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
-                            person,
-                            gapStart,
-                            gapEnd,
-                            wlm => wlm?.ProjectWorkFTE ?? 0, 
-                            wlm => wlm?.ProjectWorkFTE ?? 0,
-                            GetColourOfBlock,
-                            GenerateTooltipMessages
-                        );
-                    },
-                    assignments =>
+                    tooltipMessageFormatter: assignments =>
                     {
                         return GenerateTooltipMessages(person);
                     }

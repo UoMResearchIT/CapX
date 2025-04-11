@@ -271,25 +271,14 @@ namespace PPMTool.Pages
                         // is not funded, active or in maintenance
                         return
                             assignment.ProjectStatus.IsUnconfirmed() ||
-                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person).IsProvisional ?? true);
+                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId).IsProvisional ?? true);
                     });
                 },
                 (assignments, value1, currentDay) =>
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
-                (assignments, gapStart, gapEnd) =>
-                {
-                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
-                        person,
-                        gapStart,
-                        gapEnd,
-                        wlm => 0,
-                        wlm => wlm?.ProjectWorkFTE ?? person.FTE,
-                        (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
-                    );
-                },
-                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -320,7 +309,7 @@ namespace PPMTool.Pages
                     return assignments.RoundedSum(assignment =>
                     {
                         // Value is the effort of the chosen person
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
                         return resource?.AssignmentFTE ?? 0;
                     });
                 },
@@ -339,7 +328,7 @@ namespace PPMTool.Pages
                     return assignments.Any(assignment =>
                     {
                         // Get the set of resources to check the condition against
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person == person);
+                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
 
                         // If resource is marked as provisional or the project owning the task
                         // is not funded, active or in maintenance
@@ -367,7 +356,7 @@ namespace PPMTool.Pages
                         messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
 
                         // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person == person) ?? false);
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person.PersonId == person.PersonId) ?? false);
                         if (assignedWithinBlockWithChosenPerson.Any(x => (x as Assignment)?.SubTask.HasUnmetDemand() ?? false))
                         {
                             var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => (x as Assignment)?.SubTask.UnmetDemand ?? 0);
@@ -379,7 +368,8 @@ namespace PPMTool.Pages
                     messages = GenerateTooltipMessages(assignmentsWithinBlock, person, messages);
 
                     return messages;
-                }
+                },
+                ignoreZeroValue1Entries: !isTotalRow
             );
         }
 
@@ -395,7 +385,7 @@ namespace PPMTool.Pages
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person == personOfInterest && x.IsProvisional) ?? true))
+            if (assignmentsWithinBlock.Any(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
             {
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }

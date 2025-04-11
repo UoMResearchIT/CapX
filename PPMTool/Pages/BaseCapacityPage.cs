@@ -223,7 +223,7 @@ namespace PPMTool.Pages
                     {
                         foreach (var subTask in project.SubTasks)
                         {
-                            if (subTask.AssignedResources.Any(z => z.Person == person))
+                            if (subTask.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
                             {
                                 assignments.Add(new Assignment(subTask, project.ProjectStatus));
                             }

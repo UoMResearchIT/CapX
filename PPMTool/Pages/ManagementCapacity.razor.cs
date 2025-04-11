@@ -186,7 +186,8 @@ namespace PPMTool.Pages
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty),
+                ignoreZeroValue1Entries: !isTotalRow
             );
         }
 
