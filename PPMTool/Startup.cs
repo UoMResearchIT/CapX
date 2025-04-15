@@ -55,24 +55,8 @@ namespace PPMTool
 
             services.AddRadzenComponents();
 
-            // Get the API key from the local environment
-            var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-            if (!string.IsNullOrEmpty(apiKeySecret))
-            {
-                var configurationSection = Configuration as IConfigurationRoot;
-                configurationSection?.Providers.FirstOrDefault()?.Set("Jwt:SecretKey", apiKeySecret);
-            }
-
             // REMOVE LATER
-            Console.WriteLine($"** API_KEY_SECRET: {apiKeySecret}");
             Console.WriteLine($"** Jwt:SecretKey: {Configuration["Jwt:SecretKey"]}");
-            var dict = Environment.GetEnvironmentVariables();
-            var keys = dict.Keys.ToDynamicList();
-            keys.Sort();
-            foreach (var key in keys)
-            {
-                Console.WriteLine($"** {key}: {dict[key]}");
-            }
 
             services.AddScoped<InnateCodeService>();
             services.AddScoped<UserService>();
