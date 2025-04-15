@@ -49,9 +49,8 @@ namespace PPMTool.Data
                 Debug.WriteLine($"Created key for {user.Name} => {key}");
                 return key;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Key = {configuration["Jwt:SecretKey"]};\n Error = {ex.Message}");
                 Debug.WriteLine($"Error creating token: {ex.Message}");
             }
 

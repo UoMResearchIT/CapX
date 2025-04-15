@@ -55,9 +55,6 @@ namespace PPMTool
 
             services.AddRadzenComponents();
 
-            // REMOVE LATER
-            Console.WriteLine($"** Jwt:SecretKey: {Configuration["Jwt:SecretKey"]}");
-
             services.AddScoped<InnateCodeService>();
             services.AddScoped<UserService>();
             services.AddScoped<PersonService>();
