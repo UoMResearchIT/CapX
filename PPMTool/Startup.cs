@@ -65,6 +65,7 @@ namespace PPMTool
 
             // REMOVE LATER
             Console.WriteLine($"** API_KEY_SECRET: {apiKeySecret}");
+            Console.WriteLine($"** Jwt:SecretKey: {Configuration["Jwt:SecretKey"]}");
             var dict = Environment.GetEnvironmentVariables();
             var keys = dict.Keys.ToDynamicList();
             keys.Sort();
