@@ -1,5 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+
 #if RELEASE
 using Microsoft.Extensions.Configuration;
 #endif
@@ -41,6 +43,10 @@ namespace PPMTool
                     logging.AddSerilog();
                 })
 #endif
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddEnvironmentVariables();
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStaticWebAssets();
