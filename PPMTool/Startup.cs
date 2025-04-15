@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
@@ -65,13 +64,13 @@ namespace PPMTool
             }
 
             // REMOVE LATER
-            Debug.WriteLine($"** API_KEY_SECRET: {apiKeySecret}");
+            Console.WriteLine($"** API_KEY_SECRET: {apiKeySecret}");
             var dict = Environment.GetEnvironmentVariables();
             var keys = dict.Keys.ToDynamicList();
             keys.Sort();
             foreach (var key in keys)
             {
-                Debug.WriteLine($"** {key}: {dict[key]}");
+                Console.WriteLine($"** {key}: {dict[key]}");
             }
 
             services.AddScoped<InnateCodeService>();
