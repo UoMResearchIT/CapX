@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -50,6 +51,7 @@ namespace PPMTool.Data
             }
             catch (System.Exception ex)
             {
+                Console.WriteLine($"Key = {configuration["Jwt:SecretKey"]};\n Error = {ex.Message}");
                 Debug.WriteLine($"Error creating token: {ex.Message}");
             }
 
