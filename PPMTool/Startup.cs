@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
@@ -60,6 +62,16 @@ namespace PPMTool
             {
                 var configurationSection = Configuration as IConfigurationRoot;
                 configurationSection?.Providers.FirstOrDefault()?.Set("Jwt:SecretKey", apiKeySecret);
+            }
+
+            // REMOVE LATER
+            Debug.WriteLine($"** API_KEY_SECRET: {apiKeySecret}");
+            var dict = Environment.GetEnvironmentVariables();
+            var keys = dict.Keys.ToDynamicList();
+            keys.Sort();
+            foreach (var key in keys)
+            {
+                Debug.WriteLine($"** {key}: {dict[key]}");
             }
 
             services.AddScoped<InnateCodeService>();
