@@ -1,0 +1,22 @@
+﻿<RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="-0.25rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+    <div>@Day.ToString().Substring(0, 3)</div>
+    <div style="font-size: 0.8rem;">@dateForDay</div>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public DayOfWeek Day { get; set; }
+
+    [Parameter]
+    public DateTime StartOfWeek { get; set; }
+
+    private string dateForDay;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        int daysToAdd = ((int)Day - (int)(StartOfWeek.DayOfWeek) + 7) % 7;
+        dateForDay = $"({StartOfWeek.AddDays(daysToAdd).ToString($"dd/MM")})";
+    }
+}

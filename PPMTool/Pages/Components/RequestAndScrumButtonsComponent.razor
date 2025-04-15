@@ -3,8 +3,8 @@
 @using System.Diagnostics
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
-    <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" />
-    <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? scrumText : null) Icon="view_kanban" MouseEnter="@(args => ShowTooltip?.Invoke(args, scrumText))" Disabled="@(!hasScrumLink)" />
+    <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" Size="@ButtonSize" />
+    <RadzenButton Click=@(args => ViewScrumBoardClickedAsync(Project)) Text=@(ShowTooltip == null ? scrumText : null) Icon="view_kanban" MouseEnter="@(args => ShowTooltip?.Invoke(args, scrumText))" Disabled="@(!hasScrumLink)" Size="@ButtonSize" />
 </RadzenStack>
 
 @code {
@@ -17,6 +17,9 @@
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
+
+    [Parameter]
+    public ButtonSize ButtonSize { get; set; } = ButtonSize.Medium;
 
     private bool hasScrumLink;
     private bool hasRequestDoc;
@@ -41,7 +44,7 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        hasScrumLink = !HtmlHelper.IsValidLink(Project.ScrumProjectLink);
+        hasScrumLink = HtmlHelper.IsValidLink(Project.ScrumProjectLink);
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
         scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
         requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";

@@ -18,6 +18,7 @@ namespace PPMTool.Data.Context
         public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<SkillTag> SkillTags { get; set; }
+        public DbSet<OwnedSkill> OwnedSkills { get; set; }
         public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<FinancialReference> FinancialReferences { get; set; }
@@ -25,6 +26,8 @@ namespace PPMTool.Data.Context
         public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
+        public DbSet<FundingSource> FundingSources { get; set; }
 
         /// <summary>
         /// Inject options.

@@ -45,7 +45,11 @@
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                     @foreach (var project in group)
                     {
-                        <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" FilterStartDate="@startDate" FilterEndDate="@endDate" />
+                        <ProjectBulletinCardComponent Project="@project.Project"
+                                                      ShowDetailsButton="EditAuthorised"
+                                                      FilterStartDate="@startDate"
+                                                      FilterEndDate="@endDate"
+                                                      SkillsList="@project.Skills" />
                     }
                 </RadzenStack>
                 <hr />
@@ -56,7 +60,11 @@
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
                 @foreach (var project in availableProjects)
                 {
-                    <ProjectBulletinCardComponent Project="@project" ShowDetailsButton="EditAuthorised" FilterStartDate="@startDate" FilterEndDate="@endDate" />
+                    <ProjectBulletinCardComponent Project="@project.Project"
+                                                  ShowDetailsButton="EditAuthorised"
+                                                  FilterStartDate="@startDate"
+                                                  FilterEndDate="@endDate"
+                                                  SkillsList="@project.Skills" />
                 }
             </RadzenStack>
             <hr />

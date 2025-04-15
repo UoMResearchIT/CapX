@@ -32,21 +32,6 @@ namespace PPMTool.Migrations
                     b.ToTable("PersonProject");
                 });
 
-            modelBuilder.Entity("PersonSkillTag", b =>
-                {
-                    b.Property<int>("PeoplePersonId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SkillTagsSkillTagId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PeoplePersonId", "SkillTagsSkillTagId");
-
-                    b.HasIndex("SkillTagsSkillTagId");
-
-                    b.ToTable("PersonSkillTag");
-                });
-
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
                     b.Property<int>("AbsenceId")
@@ -67,6 +52,36 @@ namespace PPMTool.Migrations
                     b.HasIndex("PersonId");
 
                     b.ToTable("Absence");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.ApiKey", b =>
+                {
+                    b.Property<int>("ApiKeyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OwnerUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ApiKeyId");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.ToTable("ApiKeys");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>
@@ -190,6 +205,31 @@ namespace PPMTool.Migrations
                     b.HasKey("FinancialReferenceId");
 
                     b.ToTable("FinancialReferences");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
+                {
+                    b.Property<int>("FundingSourceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AccountCode")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FundingSourceType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("HasAccountCode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("FundingSourceId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("FundingSources");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
@@ -318,6 +358,36 @@ namespace PPMTool.Migrations
                     b.ToTable("Notes");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.OwnedSkill", b =>
+                {
+                    b.Property<int>("OwnedSkillId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("FavouriteSkill")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastUsed")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OwnerPersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Proficiency")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SkillTagId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("OwnedSkillId");
+
+                    b.HasIndex("OwnerPersonId");
+
+                    b.HasIndex("SkillTagId");
+
+                    b.ToTable("OwnedSkills");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Payment", b =>
                 {
                     b.Property<int>("PaymentId")
@@ -337,6 +407,9 @@ namespace PPMTool.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("SourceFundingSourceId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("Value")
                         .HasColumnType("REAL");
 
@@ -345,6 +418,8 @@ namespace PPMTool.Migrations
                     b.HasIndex("InvoiceId");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("SourceFundingSourceId");
 
                     b.ToTable("Payments");
                 });
@@ -526,8 +601,22 @@ namespace PPMTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("ControlledName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("HasValidWikiLink")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Rareness")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RarenessCount")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("SkillTagId");
 
@@ -767,6 +856,21 @@ namespace PPMTool.Migrations
                     b.ToTable("WorkloadModelChanges");
                 });
 
+            modelBuilder.Entity("SkillTagSubTask", b =>
+                {
+                    b.Property<int>("SkillsRequiredSkillTagId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TasksNeedingThisSkillSubTaskId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("SkillsRequiredSkillTagId", "TasksNeedingThisSkillSubTaskId");
+
+                    b.HasIndex("TasksNeedingThisSkillSubTaskId");
+
+                    b.ToTable("SkillTagSubTask");
+                });
+
             modelBuilder.Entity("PersonProject", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Project", null)
@@ -782,21 +886,6 @@ namespace PPMTool.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PersonSkillTag", b =>
-                {
-                    b.HasOne("PPMTool.Data.Entities.Person", null)
-                        .WithMany()
-                        .HasForeignKey("PeoplePersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PPMTool.Data.Entities.SkillTag", null)
-                        .WithMany()
-                        .HasForeignKey("SkillTagsSkillTagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "Person")
@@ -804,6 +893,17 @@ namespace PPMTool.Migrations
                         .HasForeignKey("PersonId");
 
                     b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.ApiKey", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.CompetencyAssessment", b =>
@@ -819,6 +919,17 @@ namespace PPMTool.Migrations
                     b.Navigation("AssociatedCompetency");
 
                     b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Project", "Project")
+                        .WithMany("FundingSources")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCodeTask", b =>
@@ -868,6 +979,25 @@ namespace PPMTool.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.OwnedSkill", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Person", "Owner")
+                        .WithMany("OwnedSkills")
+                        .HasForeignKey("OwnerPersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPMTool.Data.Entities.SkillTag", "SkillTag")
+                        .WithMany("OwnedSkills")
+                        .HasForeignKey("SkillTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("SkillTag");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Payment", b =>
                 {
                     b.HasOne("PPMTool.Data.Entities.Invoice", "Invoice")
@@ -880,9 +1010,17 @@ namespace PPMTool.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PPMTool.Data.Entities.FundingSource", "Source")
+                        .WithMany("PaymentsFromSource")
+                        .HasForeignKey("SourceFundingSourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Invoice");
 
                     b.Navigation("Project");
+
+                    b.Navigation("Source");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Person", b =>
@@ -999,9 +1137,29 @@ namespace PPMTool.Migrations
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("SkillTagSubTask", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.SkillTag", null)
+                        .WithMany()
+                        .HasForeignKey("SkillsRequiredSkillTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPMTool.Data.Entities.SubTask", null)
+                        .WithMany()
+                        .HasForeignKey("TasksNeedingThisSkillSubTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Competency", b =>
                 {
                     b.Navigation("Assessments");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
+                {
+                    b.Navigation("PaymentsFromSource");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>
@@ -1022,6 +1180,8 @@ namespace PPMTool.Migrations
 
                     b.Navigation("ManagedProjects");
 
+                    b.Navigation("OwnedSkills");
+
                     b.Navigation("PeopleManaged");
 
                     b.Navigation("Timesheets");
@@ -1033,11 +1193,18 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
+                    b.Navigation("FundingSources");
+
                     b.Navigation("Invoices");
 
                     b.Navigation("Payments");
 
                     b.Navigation("SubTasks");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.SkillTag", b =>
+                {
+                    b.Navigation("OwnedSkills");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.SubTask", b =>

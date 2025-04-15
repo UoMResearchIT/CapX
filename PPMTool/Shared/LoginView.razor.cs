@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.Extensions.Logging;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -14,13 +16,17 @@ namespace PPMTool.Shared
         [Inject]
         private NavigationManager Navigation { get; set; }
 
+        [Inject]
+        private ILogger Logger { get; set; }
+
         private string displayName;
         private IEnumerable<User> users;
         private IEnumerable<string> filteredUsers;
         private bool showDropDown = false;
         private string selectedUser;
         private User loginAs;
-        private string loginLink;
+        private string loginLink = string.Empty;
+        private bool notLoggedIn = false;
 
         protected override void OnInitialized()
         {
@@ -44,10 +50,29 @@ namespace PPMTool.Shared
                     filteredUsers = users.Select(x => UserToString(x));
                     selectedUser = filteredUsers.FirstOrDefault();
                     OnChange();
+                    notLoggedIn = true;
                 }
             }
 
             displayName = ActiveUser?.Name;
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            if (firstRender)
+            {
+
+                int count = Regex.Matches(loginLink, "returnUrl").Count;
+                if (notLoggedIn && count == 1)
+                {
+#if !LOCAL
+                    Logger.LogInformation($"User not logged in -- auto-redirecting to {loginLink}...");
+                    Navigation.NavigateTo(loginLink, true);
+#endif
+                }
+            }
         }
 
         /// <summary>
@@ -64,11 +89,12 @@ namespace PPMTool.Shared
         /// </summary>
         private void SetLoginLink()
         {
+
             loginLink = $"/Account/Login?returnUrl={Navigation?.Uri}";
 #if LOCAL
             loginLink += $"&username={loginAs.CASUserName}";
 #endif
-            Debug.WriteLine($"** Login using {loginLink}");
+            Debug.WriteLine($"** Setting login link as {loginLink}");
         }
 
         /// <summary>

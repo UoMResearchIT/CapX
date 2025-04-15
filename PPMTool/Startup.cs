@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
@@ -59,13 +60,16 @@ namespace PPMTool
             services.AddScoped<PersonService>();
             services.AddScoped<ProjectService>();
             services.AddScoped<SubTaskService>();
-            services.AddScoped<TagService>();
+            services.AddScoped<SkillTagService>();
             services.AddScoped<EmailService>();
             services.AddScoped<NoteService>();
             services.AddScoped<FinancialReferenceService>();
             services.AddScoped<CompetencyService>();
             services.AddScoped<TimesheetService>();
             services.AddScoped<InvoiceService>();
+            services.AddScoped<PaymentService>();
+            services.AddScoped<ApiKeyService>();
+            services.AddScoped<FundingSourceService>();
             services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Startup>>());
 
             services.Configure<ForwardedHeadersOptions>(options =>

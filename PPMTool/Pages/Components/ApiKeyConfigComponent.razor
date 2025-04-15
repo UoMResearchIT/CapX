@@ -1,0 +1,172 @@
+﻿@inherits ComponentBase
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Logging
+@using PPMTool.Data
+@using PPMTool.Data.Context
+@using PPMTool.Enums
+@using PPMTool.Services
+@using Radzen
+@using PPMTool.Data.Entities
+@using DotNetExtensions
+@using System.Diagnostics
+
+<RadzenTemplateForm TItem="ApiKey" Submit="@HandleValidSubmit" Data="@apiKey">
+    <RadzenFieldset Text="Key Configuration">
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenLabel Component="Expiration" Text="Validity" />
+            <RadzenDropDown TValue="ApiKeyExpirationOptions"
+                            Data="@expirationOptions"
+                            Name="Expiration"
+                            Change="ValidityChosen"
+                            @bind-Value="selectedValidity"
+                            Style="width:100%;"
+                            Disabled="loading">
+                <Template Context="item">
+                    @(((ApiKeyExpirationOptions)item).GetDescription())
+                </Template>
+            </RadzenDropDown>
+            <RadzenLabel Component="KeyDescription" Text="Description" />
+            <RadzenTextBox @bind-Value="apiKey.Description"
+                           Name="KeyDescription"
+                           Placeholder="Enter a description for this key..."
+                           Style="width:100%; margin-left: 0;"
+                           Disabled="loading" />
+        </RadzenStack>
+    </RadzenFieldset>
+    <br />
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+            <RadzenIcon IconStyle="IconStyle.Danger" Icon="warning" />
+            <RadzenText Text="@errorMessage" Style="color: red" />
+        </RadzenStack>
+    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Create" Icon="add" ButtonType="ButtonType.Submit" Disabled="loading" />
+        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" Disabled="loading" />
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+
+    [Parameter]
+    public PPMToolContext Context { get; set; }
+
+    [Parameter]
+    public ILogger Logger { get; set; }
+
+    [Parameter]
+    public User ActiveUser { get; set; }
+
+    [Parameter]
+    public Action FormClosed { get; set; }
+
+    [Inject]
+    private ApiKeyService ApiKeyService { get; set; }
+
+    [Inject]
+    private DialogService DialogService { get; set; }
+
+    [Inject]
+    private IConfiguration Configuration { get; set; }
+
+    private ApiKey apiKey;
+    private string errorMessage;
+    private ApiKeyExpirationOptions selectedValidity;
+    private IEnumerable<ApiKeyExpirationOptions> expirationOptions;
+    private bool loading;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Create new key model
+        apiKey = new ApiKey()
+        {
+            Active = true,
+            Owner = ActiveUser,
+            ExpiresAt = DateTime.UtcNow.AddDays(
+                (default(ApiKeyExpirationOptions)).GetAttribute<ExpirationInDaysAttribute>()
+                .Days)
+        };
+
+        // Statuses for the dropdown
+        expirationOptions = Enum.GetValues(typeof(ApiKeyExpirationOptions)).Cast<ApiKeyExpirationOptions>();
+    }
+
+    /// <summary>
+    /// Handle form submission
+    /// </summary>
+    private void HandleValidSubmit()
+    {
+        errorMessage = null;
+
+        // Validate
+        if (string.IsNullOrWhiteSpace(apiKey.Description))
+        {
+            errorMessage = "You must give this item a description!";
+            return;
+        }
+
+        loading = true;
+
+        // Do the generation in a background task
+        Task.Run(() =>
+        {
+            // Generate the key
+            var value = new ApiTokenProvider(Configuration).CreateToken(ActiveUser, selectedValidity.GetAttribute<ExpirationInDaysAttribute>().Days);
+            apiKey.Key = value;
+
+            // Exit early if the key is empty
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
+            // Add the Key to the DB
+            ApiKeyService.Add(Context, apiKey);
+
+            // Log the creation
+            Logger.LogInformation("Created API key");
+
+        }).ContinueWith(t =>
+        {
+            InvokeAsync(() =>
+            {
+                loading = false;
+
+                if (!string.IsNullOrEmpty(apiKey.Key))
+                {
+                    // Close the form
+                    CloseForm(true);
+                }
+                else
+                {
+                    errorMessage = "Failed to generate key! Check secret settings!";
+                    StateHasChanged();
+                }
+            });
+        });        
+    }
+
+    /// <summary>
+    /// Execute on dialog close
+    /// </summary>
+    /// <param name="status"></param>
+    protected virtual void CloseForm(bool status)
+    {
+        DialogService.Close(status);
+        FormClosed?.Invoke();
+    }
+
+    /// <summary>
+    /// Fired when the value in the dropdown is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private void ValidityChosen(object value)
+    {
+        var days = ((ApiKeyExpirationOptions)value).GetAttribute<ExpirationInDaysAttribute>().Days;
+        apiKey.ExpiresAt = DateTime.UtcNow.AddDays(days);
+        Debug.WriteLine($"Expiry set to {apiKey.ExpiresAt.ToString("R")} => {days} Days");
+    }
+}

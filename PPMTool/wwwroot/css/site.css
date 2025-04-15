@@ -201,10 +201,6 @@ mark {
     margin: 4pt;
 }
 
-.rz-inputtext {
-    text-indent: 0 !important;
-}
-
 .rz-text-subtitle1 {
     font-weight: 500
 }
@@ -301,4 +297,8 @@ h4 {
 
 .rounded-frame {
     border-radius: var(--rz-button-border-radius)
+}
+
+.rzi-star {
+    font-variation-settings: 'FILL' 1;
 }

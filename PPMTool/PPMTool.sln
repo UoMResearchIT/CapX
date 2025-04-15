@@ -10,6 +10,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PPMTool", "PPMTool.csproj",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazor-ApexCharts", "..\Blazor-ApexCharts\src\Blazor-ApexCharts\Blazor-ApexCharts.csproj", "{338E563D-0B27-48F7-9BAD-172ACDAFCCF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.API", "..\PPMTool.API\PPMTool.API.csproj", "{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,12 @@ Global
 		{338E563D-0B27-48F7-9BAD-172ACDAFCCF7}.Local|Any CPU.Build.0 = Debug|Any CPU
 		{338E563D-0B27-48F7-9BAD-172ACDAFCCF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{338E563D-0B27-48F7-9BAD-172ACDAFCCF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}.Local|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}.Local|Any CPU.Build.0 = Debug|Any CPU
+		{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B40AA25-6105-4B98-BDCB-A7FFD354CCF6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

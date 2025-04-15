@@ -8,6 +8,7 @@
 @using Microsoft.Extensions.Logging
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
@@ -71,7 +72,21 @@
             <AuthorizeView Roles="Superuser,Manager,Developer">
                 <Authorized>
                     <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
-                        <RadzenPanelMenuItem Path="people" Text="Manage People" Icon="manage_accounts" />
+                        <RadzenPanelMenuItem Path="people" Text="@(activeUserRoleType == RoleType.Developer ? "My Details" : "Manage People")" Icon="manage_accounts" />
+                        <RadzenPanelMenuItem Path="skills" Icon="military_tech">
+                            <Template>
+                                <div style="flex: 1;">
+                                    @if (sidebarExpanded)
+                                    {
+                                        <span>My Skills</span>
+                                    }
+                                    @if (totalIncompleteSkills > 0)
+                                    {
+                                        <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalIncompleteSkills</span>
+                                    }
+                                </div>
+                            </Template>
+                        </RadzenPanelMenuItem>
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
                         <RadzenPanelMenuItem Path="timesheets" Icon="timer">
@@ -90,7 +105,6 @@
                         </RadzenPanelMenuItem>
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
                                 <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
                             </Authorized>
                         </AuthorizeView>
@@ -99,15 +113,34 @@
             </AuthorizeView>            
             <AuthorizeView Roles="Superuser,Manager">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
+                    <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
                         <AuthorizeView Roles="Superuser">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
-                                <RadzenPanelMenuItem Path="managecodes" Text="Timesheet Codes" Icon="punch_clock" />
+                                <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
+                                    <Template>
+                                        <div style="flex: 1;">
+                                            @if (sidebarExpanded)
+                                            {
+                                                <span>Timesheet Codes</span>
+                                            }
+                                            @if (totalTimesheetCodesToDeactivate > 0)
+                                            {
+                                                <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalTimesheetCodesToDeactivate</span>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenPanelMenuItem>
                             </Authorized>
                         </AuthorizeView>
                         <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
+                        <RadzenPanelMenuItem Path="manageskills" Text="Manage Skills Tags" Icon="style" />
                     </RadzenPanelMenuItem>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView>
+                <Authorized>
+                    <RadzenPanelMenuItem Path="profile" Text="Developer Settings" Icon="code" />
                 </Authorized>
             </AuthorizeView>
         </RadzenPanelMenu>

@@ -1,0 +1,18 @@
+﻿@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Services
+
+<RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+    <SkillTagRarenessEmblemComponent SkillTag="SkillTag" />
+    <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+</RadzenStack>
+
+@code {
+
+    [Parameter]
+    public SkillTag SkillTag { get; set; }
+
+    [Parameter]
+    public PPMToolContext Context { get; set; }
+}

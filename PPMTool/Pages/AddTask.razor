@@ -163,6 +163,23 @@
                 </div>
             </div>
 
+            <hr />
+            <h2>Skills</h2>
+            <div class="row">
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label" Text="Skills Required" />
+                    <RadzenAutoComplete @bind-Value=@autoCompleteText
+                                        Placeholder="Search for Skill Tags to Add"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        Data=@availableTags
+                                        TextProperty="Name"
+                                        Change=@OnChange
+                                        Style="width:100%; margin-bottom: 0.5rem;" />
+                    <SkillsAsBadgesComponent SkillsList="TaskModel.SkillsRequired"
+                                             RemoveSkill="RemoveSkill" />
+                </div>
+            </div>
+
             @if (TaskId != null && TaskId > 0)
             {
                 <hr />
@@ -333,7 +350,7 @@
                                 <EditTemplate Context="res">
                                     <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
                                         <RadzenSwitch @bind-Value="@res.IsProvisional" />
-                                     </RadzenStack>
+                                    </RadzenStack>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="ActualWorkHours" Title="Actual Hours" MinWidth="10px">
@@ -390,6 +407,15 @@
                     </RadzenDataGrid>
                 </div>
             </div>
+            @if (TaskModel.UnmetDemand > 0)
+            {
+                <br />
+                <div class="row">
+                    <div class="col">
+                        <SuggestResourcesComponent TaskModel="@taskModel" CurrentResources="@dataGridEntities"/>
+                    </div>
+                </div>
+            }
 
             <hr />
             <DataAnnotationsValidator />

@@ -1,9 +1,12 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -13,35 +16,18 @@ namespace PPMTool.Pages
     public partial class ManageSkills : DataGridPage<SkillTag>
     {
         [Inject]
-        private PersonService PersonService { get; set; }
+        private SkillTagService TagService { get; set; }
 
-        [Inject]
-        private TagService TagService { get; set; }
-
-        private bool IsDuplicatedSkill(SkillTag entity)
-        {
-            if (TagService.DuplicateDetected(Context, entity))
-            {
-                ErrorMessage = new StatusMessage("An entry with the same skill already exists.", StatusMessage.MessageType.Error);
-                return true;
-            }
-            ErrorMessage = null;
-            return false;
-        }
+        private int count;
+        private int pageCount = 15;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             dataGridEntityService = TagService;
-            dataGridEntities = TagService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            Loading = true;
+            EnqueueLoadData(GetLoadTask);
             LogInformation($"Viewing skills tags");
-        }
-
-        protected override async Task EditRow(SkillTag entity)
-        {
-            if (IsDuplicatedSkill(entity)) return;
-            await base.EditRow(entity);
-
         }
 
         protected override async Task SaveRow(SkillTag entity)
@@ -57,17 +43,139 @@ namespace PPMTool.Pages
                 await base.DeleteRow(entity);
 
                 // Remove the tag from all the people to whom it is attached
-                var people = PersonService.GetAll(Context).Where(x => x.SkillTags.Contains(entity));
-                foreach (var person in people)
-                {
-                    LogInformation($"Removing skills tag {entity.GetSensibleObjectName()} from {person.Name}");
-                    person.SkillTags.Remove(entity);
-                    PersonService.Update(Context, person);
-                }
+                TagService.DeleteOwnedSkillsAssociatedWithTag(Context, entity);
 
+                // Remove from data grid
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
             }
+        }
+
+        /// <summary>
+        /// Returns a standard task to get the data for the grid
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask()
+        {
+            return Task.Run(() =>
+            {
+                LoadDataGrid(new LoadDataArgs());
+            })
+                .ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+
+        /// <summary>
+        /// Method to detect a duplicate on save or update and display error message
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        private bool IsDuplicatedSkill(SkillTag entity)
+        {
+            if (TagService.DuplicateDetected(Context, entity))
+            {
+                ErrorMessage = new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error);
+                return true;
+            }
+            ErrorMessage = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Method fired when a column is filtered or sorted to allow us to custom filter or sort
+        /// </summary>
+        /// <param name="args"></param>
+        private void LoadDataGrid(LoadDataArgs args)
+        {
+            // Order by name by default
+            IQueryable<SkillTag> query = TagService.GetAll(Context).OrderBy(x => x.Name).AsQueryable();
+
+            // Filtering
+            if (!string.IsNullOrEmpty(args.Filter))
+            {
+                if (args.Filter.StartsWith("Rareness"))
+                {
+                    var filter = args.Filters.FirstOrDefault(x => x.Property == "Rareness");
+                    var filterValue = filter?.FilterValue as int?;
+                    if (filterValue != null)
+                    {
+                        query = query.Where(x => (int)x.Rareness == filterValue);
+                    }
+                }
+                else
+                {
+                    query = query.Where(args.Filter);
+                }
+            }
+
+            // Sorting
+            if (!string.IsNullOrEmpty(args.OrderBy))
+            {
+                if (args.OrderBy.StartsWith("Rareness"))
+                {
+                    var order = args.Sorts.FirstOrDefault(x => x.Property == "Rareness");
+                    if (order.SortOrder == SortOrder.Ascending)
+                    {
+                        query = query.OrderBy(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
+                    }
+                    else
+                    {
+                        query = query.OrderByDescending(x => (int)x.Rareness).ThenByDescending(x => x.RarenessCount);
+                    }
+                }
+                else
+                {
+                    query = query.OrderBy(args.OrderBy);
+                }
+            }
+
+            // Assign to grid source
+            var data = query.ToList();
+            count = data.Count;
+            if (args.Skip == null)
+            {
+                dataGridEntities = data.Take(pageCount).ToList();
+            }
+            else
+            {
+                dataGridEntities = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            }
+
+            Debug.WriteLine($"** {data.Count()} skills loaded. {dataGridEntities.Count()} displayed.");
+        }
+
+        /// <summary>
+        /// Verify the controlled names for those pending and save to DB
+        /// </summary>
+        private void VerifyControlledNames()
+        {
+            Loading = true;
+            Task.Run(async () =>
+            {
+                var toVerify = dataGridEntities.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToList();
+                foreach (var tag in toVerify)
+                {
+                    var res = await tag.UpdateValidLink();
+                    if (res != LinkCheckState.Pending)
+                    {
+                        TagService.Update(Context, tag);
+                    }
+                }
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
     }
 }

@@ -10,30 +10,27 @@
         <div class="col-auto mr-auto">
             <h1>People</h1>
         </div>
+        <div class="col-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
+                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@(Loading || ActiveUserRoleType == RoleType.Developer)" />
+                <RadzenButton Text="Add" Icon="add" Click="@AddPerson" Disabled="@(!EditAuthorised || Loading)" />
+            </RadzenStack>
+        </div>
     </div>
     <hr />
-    <div class="row">
-        <div class="col">
-            <h2>All People</h2>
-        </div>
-        <div class="col-auto">
-            <RadzenButton Text="Add" Icon="add" Click="@AddPerson" Disabled=!EditAuthorised />
-        </div>
-    </div>
     <div class="card">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-            <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
-            <RadzenSwitch @bind-Value="@IncludeLeavers" />
-        </RadzenStack>
-    </div>
-    <div class="card">
-        @if (people == null)
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else if (people == null)
         {
             <p class="lead">No data to show</p>
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="@(!tableEmpty)"
+            <RadzenDataGrid AllowFiltering="true"
                             AllowColumnResize="true"
                             FilterMode="FilterMode.Simple"
                             AllowSorting="true"
@@ -86,7 +83,12 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
                         <Template Context="p">
-                            @string.Join(',', p.SkillTags.Select(t => t.Name))
+                            @string.Join(", ", p.OwnedSkills.Select(t => t.SkillTag.Name).OrderBy(x => x))
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px">
+                        <Template Context="p">
+                            @TagService.GetCountForPerson(Context, p.PersonId).ToString()
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">

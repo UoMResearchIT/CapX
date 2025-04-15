@@ -23,19 +23,21 @@ namespace PPMTool.Data
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
+        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
             Person person,
             IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, double> valueFunction,
-            Func<double, double, string> colourFunction,
+            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
+            Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
             Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
+            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
+            bool ignoreZeroValue1Entries = false
         )
         {
             // If person starts after the start date then reset the start date to that date
@@ -53,7 +55,8 @@ namespace PPMTool.Data
             // Get the chart items
             var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter
+                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter,
+                ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
 
@@ -63,7 +66,7 @@ namespace PPMTool.Data
                 var extraItems = new List<ChartItem>();
 
                 // If no items or if the first chart item starts after the (corrected) start date
-                // then fill in with "zero items" based on availability profile
+                // then fill in gaps
                 if (chartItems.Count() < 1 || chartItems.First().StartDate > startDate)
                 {
                     // Define fill region end date
@@ -128,23 +131,26 @@ namespace PPMTool.Data
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
+        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
             IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, double> valueFunction,
-            Func<double, double, string> colourFunction,
+            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
+            Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
             Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
+            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
+            bool ignoreZeroValue1Entries = false
         )
         {
             return AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter
+                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter,
+                ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
         }
 
@@ -162,18 +168,20 @@ namespace PPMTool.Data
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
+        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
             IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, double> valueFunction,
-            Func<double, double, string> colourFunction,
+            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
+            Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
             Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null
+            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
+            bool ignoreZeroValue1Entries = false
         )
         {
             // Each block is considered an element of a series.
@@ -196,11 +204,11 @@ namespace PPMTool.Data
 
             // Parameters used to determine when a block should be completed and a new block started
             // Initialise tracked values to something unique so we can detect the first pass through
-            double valueTracked = -1d;
+            double? valueTracked = null;
             double valueDay = 0d;
             bool? hatchedTracked = null;
             bool hatchedDay = false;
-            double value2Tracked = -1d;
+            double? value2Tracked = null;
             double value2Day = 0d;
 
             // March through
@@ -210,7 +218,7 @@ namespace PPMTool.Data
                 var within = assignments.Where(x => x.IsWithin(currentDay));
 
                 // Sum value for the current day -- truncate to 2 DP
-                valueDay = valueFunction(within);
+                valueDay = valueFunction(within, currentDay);
 
                 // Set hatched for the current day
                 hatchedDay = hatchedFunction != null ? hatchedFunction(within) : false;
@@ -219,33 +227,34 @@ namespace PPMTool.Data
                 value2Day = value2Function != null ? value2Function(within, valueDay, currentDay) : 0;
 
                 // Set colour state for the first time
-                if (value2Tracked == -1d) value2Tracked = value2Day;
+                if (value2Tracked == null) value2Tracked = value2Day;
 
                 // Set hatched state for the first time
                 if (hatchedTracked == null) hatchedTracked = hatchedDay;
 
                 // Set the value for the first block
-                if (valueTracked == -1d) valueTracked = valueDay;
+                if (valueTracked == null) valueTracked = valueDay;
 
                 // If any of the tracked parameters have changed then complete block and reset tracking params
                 if (valueDay != valueTracked || hatchedDay != hatchedTracked || value2Day != value2Tracked)
                 {
-                    // Only add a block if its value is non-zero
-                    if (valueTracked != 0d)
+                    // Only add a block if its value is non-zero if flag set
+                    if (!ignoreZeroValue1Entries || (ignoreZeroValue1Entries && valueTracked != 0d))
                     {
                         var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
                         temp.Add(new ChartItem(
-                            colourFunction(valueTracked, value2Tracked),
+                            colourFunction(valueTracked ?? -99, value2Tracked ?? -99, hatchedTracked ?? false),
                             label,
                             currentBlockStartDay,
                             currentDay,
-                            valueTracked,
-                            value2Tracked,
+                            valueTracked ?? -99,
+                            value2Tracked ?? -99,
                             hatchedTracked ?? false,
                             tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
                         ));
                     }
+
                     currentBlockStartDay = currentDay;
                     valueTracked = valueDay;
                     hatchedTracked = hatchedDay;
@@ -257,12 +266,12 @@ namespace PPMTool.Data
             }
 
             // Add the final block if it had a non-zero value
-            if (valueTracked != 0d)
+            if (!ignoreZeroValue1Entries || (ignoreZeroValue1Entries && valueTracked != 0d))
             {
                 // Consider the end date to be inclusive of the final block so do not move back a day like above
                 var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay));
                 temp.Add(new ChartItem(
-                    colourFunction(valueDay, value2Day),
+                    colourFunction(valueDay, value2Day, hatchedDay),
                     label,
                     currentBlockStartDay,
                     currentDay,
@@ -366,6 +375,118 @@ namespace PPMTool.Data
                     provisionalItems.Add(c);
                 }
             }
+        }
+
+        /// <summary>
+        /// Generic method for filling in the gaps in chart items with value1 and value2 driven by 
+        /// functions which accept the current WLM active on the day.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="value1FromWLMFunction"></param>
+        /// <param name="value2FromWLMFunction"></param>
+        /// <param name="colourFunction"></param>
+        /// <param name="tooltipMessageGenerator"></param>
+        /// <returns></returns>
+        public static IEnumerable<ChartItem> FillGapsBetweenChartItemsFromWorkloadModels(
+            Person person,
+            DateTime startDate,
+            DateTime endDate,
+            Func<WorkloadModelChange, double> value1FromWLMFunction,
+            Func<WorkloadModelChange, double> value2FromWLMFunction,
+            Func<double, double, bool, string> colourFunction,
+            Func<Person, string> tooltipMessageGenerator = null
+        )
+        {
+            var blocks = new List<ChartItem>();
+
+            // Get any workload model changes in force at the beginning of, or during, the window
+            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
+
+            // If person has a leaving date in the window then set zero availability after by adding a fake change
+            if (person.EndDate != null)
+            {
+                changes.Add(new WorkloadModelChange()
+                {
+                    Person = person,
+                    ChangeDate = person.EndDate?.AddDays(1) ?? DateTime.Today
+                });
+
+                // Keep only changes on or before the end date
+                changes = changes.Where(x => x.ChangeDate <= person.EndDate?.AddDays(1)).ToList();
+            }
+
+            // If person starts within the window but doesn't have a WLM in place on the day they start
+            // set their availability to zero with a fake WLM
+            if (person.StartDate > startDate && !changes.Any(x => x.ChangeDate == person.StartDate))
+            {
+                // Keep only changes on or after the start date
+                changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
+
+                // Enforce a zero availability before they start
+                changes.Add(new WorkloadModelChange()
+                {
+                    Person = person,
+                    ChangeDate = startDate
+                });
+            }
+
+            // Sort by date
+            changes = changes.OrderBy(x => x.ChangeDate).ToList();
+
+            // If no changes then use default value functions provide if no WLM provided to the function
+            if (changes.Count == 0)
+            {
+                blocks.Add(
+                    new ChartItem(colourFunction(value1FromWLMFunction(null), value2FromWLMFunction(null), false), person.Name, startDate, endDate,
+                        value1FromWLMFunction(null), value2FromWLMFunction(null), false, tooltipMessageGenerator != null ? tooltipMessageGenerator(person) : null
+                    )
+                );
+            }
+
+            // Work through the workload model changes to establish blocks of availability
+            else
+            {
+                // Establish the default values
+                double value1 = value1FromWLMFunction(null);
+                double value2 = value2FromWLMFunction(null);
+
+                // Find the change immediately before the query window or on day one
+                // if there is one on the first day of the query window
+                var changeBefore = changes.Where(x => x.ChangeDate <= startDate).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
+                if (changeBefore != null)
+                {
+                    value1 = value1FromWLMFunction(changeBefore);
+                    value2 = value2FromWLMFunction(changeBefore);
+                }
+
+                // Any relevant changes after must be after the start of the window but before the end
+                var changesAfter = changes.Where(x => x.ChangeDate > startDate && x.ChangeDate < endDate).OrderBy(x => x.ChangeDate).ToList();
+
+                // First period uses the initial values up to the first change after the window begins or the end
+                // of the window if there isn't any changes after
+                blocks.Add(
+                    new ChartItem(colourFunction(value1, value2, false), person.Name, startDate, changesAfter.FirstOrDefault()?.ChangeDate ?? endDate,
+                        value1, value2, false, tooltipMessageGenerator != null ? tooltipMessageGenerator(person) : null
+                    )
+                );
+
+                // Subsequent ones use the latest change information
+                for (int i = 0; i < changesAfter.Count; ++i)
+                {
+                    // If the last change then use query end date for block end otherwise it is date of next change
+                    blocks.Add(
+                        new ChartItem(colourFunction(value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false), person.Name, changesAfter[i].ChangeDate,
+                            i == changesAfter.Count - 1 ? endDate : changesAfter[i + 1].ChangeDate,
+                            value1FromWLMFunction(changesAfter[i]), value2FromWLMFunction(changesAfter[i]), false,
+                            tooltipMessageGenerator != null ? tooltipMessageGenerator(person) : null
+                        )
+                    );
+                }
+            }
+
+            return blocks;
         }
     }
 }

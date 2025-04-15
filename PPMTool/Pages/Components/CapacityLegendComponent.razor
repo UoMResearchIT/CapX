@@ -1,37 +1,59 @@
 ﻿@using PPMTool.Data
+@using PPMTool.Enums
 <div class="card">
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
-            <RadzenText Text="Capacity:" TextStyle="TextStyle.Subtitle1" class="center-text" />
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(49)" /></svg>
-                <RadzenText Text="&lt;50%" class="center-text" />
+        @if (MainColourScale == ColourScale.Capacity)
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
+                <RadzenText Text="Capacity:" TextStyle="TextStyle.Subtitle1" class="center-text" />
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(49)" /></svg>
+                    <RadzenText Text="&lt;50%" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(74)" /></svg>
+                    <RadzenText Text="&lt;75%" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(99)" /></svg>
+                    <RadzenText Text="&lt;100%" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg>
+                    <RadzenText Text="=100%" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(101)" /></svg>
+                    <RadzenText Text="&gt;100%" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(126)" /></svg>
+                    <RadzenText Text="&gt;125%" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(151)" /></svg>
+                    <RadzenText Text="&gt;150%" class="center-text" />
+                </RadzenStack>
             </RadzenStack>
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(74)" /></svg>
-                <RadzenText Text="&lt;75%" class="center-text" />
+        }
+        else if (MainColourScale == ColourScale.TrafficLights)
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
+                <RadzenText Text="Capacity:" TextStyle="TextStyle.Subtitle1" class="center-text" />
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(0, ColourScale.TrafficLights)" /></svg>
+                    <RadzenText Text="Unavailable" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(50, ColourScale.TrafficLights)" /></svg>
+                    <RadzenText Text="Partially Available" class="center-text" />
+                </RadzenStack>
+                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100, ColourScale.TrafficLights)" /></svg>
+                    <RadzenText Text="Fully Availalble" class="center-text" />
+                </RadzenStack>
             </RadzenStack>
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(99)" /></svg>
-                <RadzenText Text="&lt;100%" class="center-text" />
-            </RadzenStack>
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg>
-                <RadzenText Text="=100%" class="center-text" />
-            </RadzenStack>
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(101)" /></svg>
-                <RadzenText Text="&gt;100%" class="center-text" />
-            </RadzenStack>
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(126)" /></svg>
-                <RadzenText Text="&gt;125%" class="center-text" />
-            </RadzenStack>
-            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(151)" /></svg>
-                <RadzenText Text="&gt;150%" class="center-text" />
-            </RadzenStack>
-        </RadzenStack>
+        }
         @if (ShowProjectModeLegend)
         {
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" Gap="0.4rem">
@@ -41,8 +63,8 @@
                     <svg width=200 height=20 xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="Gradient1">
-                                <stop offset="0%" stop-color="@ChartItem.GetColourStringPercentage(0, true)" />
-                                <stop offset="100%" stop-color="@ChartItem.GetColourStringPercentage(100, true)" />
+                                <stop offset="0%" stop-color="@ChartItem.GetColourStringPercentage(0, ColourScale.Load)" />
+                                <stop offset="100%" stop-color="@ChartItem.GetColourStringPercentage(100, ColourScale.Load)" />
                             </linearGradient>
                         </defs>
                         <rect width="200" height="20" rx="15" fill="url(#Gradient1)" />
@@ -57,4 +79,7 @@
 @code {
     [Parameter]
     public bool ShowProjectModeLegend { get; set; }
+
+    [Parameter]
+    public ColourScale MainColourScale { get; set; }
 }

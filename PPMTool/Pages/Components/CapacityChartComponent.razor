@@ -17,8 +17,8 @@ else
                TItem="ChartItem"
                Options=@chartOptions
                XAxisType="XAxisType.Datetime"
-               OnDataPointSelection=@OnDataPointSelection
-               OnZoomed="@OnChartZoomed">
+               OnDataPointSelection="@(args => OnDataPointSelection?.Invoke(args))"
+               OnZoomed="@(args => OnChartZoomed?.Invoke(args))">
         <ChildContent>
             <ApexRangeSeries TItem="ChartItem"
                              Items="@confirmedChartItems"
@@ -43,8 +43,8 @@ else
                         {
                             @((MarkupString)point.Items.FirstOrDefault().TooltipMessages)
                         }
-                        <h3>@point.Items.FirstOrDefault()?.Value1 FTE</h3>
-                        <h5>(@point.Items.FirstOrDefault()?.Value2 FTE Availability)</h5>
+                        @Value1TooltipFormatter(point.Items.FirstOrDefault())
+                        @Value2TooltipFormatter(point.Items.FirstOrDefault())
                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                     </div>
@@ -68,10 +68,16 @@ else
     [Parameter]
     public Action<ZoomedData<ChartItem>> OnChartZoomed { get; set; }
 
-    public string title;
-    public ApexChartOptions<ChartItem> chartOptions;
-    public IEnumerable<ChartItem> confirmedChartItems;
-    public IEnumerable<ChartItem> provisionalChartItems;
+    [Parameter]
+    public Func<ChartItem, MarkupString> Value1TooltipFormatter { get; set; }
+
+    [Parameter]
+    public Func<ChartItem, MarkupString> Value2TooltipFormatter { get; set; }
+
+    private string title;
+    private ApexChartOptions<ChartItem> chartOptions;
+    private IEnumerable<ChartItem> confirmedChartItems;
+    private IEnumerable<ChartItem> provisionalChartItems;
 
     protected override void OnInitialized()
     {
@@ -88,5 +94,35 @@ else
             confirmedChartItems = ChartModel.ConfirmedChartItems;
             provisionalChartItems = ChartModel.ProvisionalChartItems;
         }
+
+        if (Value2TooltipFormatter == null)
+        {
+            Value2TooltipFormatter = DefaultValue2Formatter;
+        };
+
+        if (Value1TooltipFormatter == null)
+        {
+            Value1TooltipFormatter = DefaultValue1Formatter;
+        };
+    }
+
+    /// <summary>
+    /// If there is no formatter for value 1 in the tooltip provided then this will be used
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    private MarkupString DefaultValue1Formatter(ChartItem item)
+    {
+        return (MarkupString)$"<h3>{item?.Value1} FTE</h3>";
+    }
+
+    /// <summary>
+    /// If there is no formatter for value 2 in the tooltip provided then this will be used
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    private MarkupString DefaultValue2Formatter(ChartItem item)
+    {
+        return (MarkupString)$"<h5>({item?.Value2} FTE Availability)</h5>";
     }
 }

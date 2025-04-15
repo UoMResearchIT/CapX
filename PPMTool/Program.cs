@@ -1,8 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
-#if RELEASE
 using Microsoft.Extensions.Configuration;
-#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,9 +13,6 @@ namespace PPMTool
     {
         public static void Main(string[] args)
         {
-#if !RELEASE
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
-#endif
             var host = CreateHostBuilder(args).Build();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Host Created");
@@ -44,6 +40,21 @@ namespace PPMTool
                     logging.AddSerilog();
                 })
 #endif
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddEnvironmentVariables();
+
+                    // Get the API key from the environment
+                    var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
+                    if (!string.IsNullOrEmpty(apiKeySecret))
+                    {
+                        // Add or override the Jwt:SecretKey in the configuration
+                        config.AddInMemoryCollection(new Dictionary<string, string>
+                        {
+                            { "Jwt:SecretKey", apiKeySecret }
+                        });
+                    }
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStaticWebAssets();

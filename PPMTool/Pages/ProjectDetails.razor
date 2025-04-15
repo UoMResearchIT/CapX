@@ -40,12 +40,14 @@
                                       Text=@(isCurrentUserFollowing ? "Following" : "Follow?")
                                       ButtonStyle="ButtonStyle.Primary"
                                       Click="ToggleFollowing"
-                        Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId) />
+                                      Disabled=@(ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId)
+                                      Size="ButtonSize.Small" />
                     }
-                    <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" />
-                    <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" />
-                    <RequestAndScrumButtonsComponent Project="@project" />
-                    <RadzenButton Click="@(args => EditFinance(project))" Text="Finance" Icon="payments" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance && ActiveUserRoleType != RoleType.Reader)" />
+                    <RadzenButton Icon="info" Click="@ViewDescription" Text="Description" Disabled="@(project?.HasNoDescription() ?? true)" Size="ButtonSize.Small" />
+                    <RadzenButton Click="@(args => EditProject(project))" Text="Edit" Icon="edit" Disabled="@(!isProjectManager)" Size="ButtonSize.Small" />
+                    <RadzenButton Click="ResetActualsTimeStamp" Icon="timer" Text="Actuals OK?" ButtonStyle="ButtonStyle.Primary" Disabled="@(!isProjectManager)" Size="ButtonSize.Small" />
+                    <RequestAndScrumButtonsComponent Project="@project" ButtonSize="ButtonSize.Small"/>
+                    <RadzenButton Click="@(args => EditFinance(project))" Text="Finance" Icon="payments" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance && ActiveUserRoleType != RoleType.Reader)" Size="ButtonSize.Small" />
                 }
             </RadzenStack>
         </div>
@@ -60,8 +62,7 @@
         <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
         <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem"
-                                        EditAuthorised="@EditAuthorised"
-                                        ResetActualsTimestamp="@ResetActualsTimeStamp" />
+                                        EditAuthorised="@EditAuthorised" />
     }
     <hr />
     
@@ -72,27 +73,34 @@
     else if (project?.SubTasks != null && project?.SubTasks.Count > 0)
     {
         <div class="row">
+            <div class="col">
+                <h2>Skills Required</h2>
+                <SkillsAsBadgesComponent SkillsList="@skillsRequiredForProject" />
+            </div>
+        </div>
+        <hr />
+        <div class="row">
             <div class="col" style="min-width: 500px">
                 <h2>Burn-Up Chart</h2>
                 <div class="card">
                     <ApexChart TItem="ChartItem"
-                                XAxisType="XAxisType.Datetime"
-                                Options="burnUpChartOptions"
-                                @ref="burnUpChart">
+                               XAxisType="XAxisType.Datetime"
+                               Options="burnUpChartOptions"
+                               @ref="burnUpChart">
 
                         <ApexPointSeries TItem="ChartItem"
-                                            Items="burnUpChartSource"
-                                            SeriesType="@SeriesType.Area"
-                                            Name="Planned Work"
-                                            XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YValue="@(e => Convert.ToDecimal(e.Value1))" />
+                                         Items="burnUpChartSource"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work"
+                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YValue="@(e => Convert.ToDecimal(e.Value1))" />
 
                         <ApexPointSeries TItem="ChartItem"
-                                            Items="burnUpChartSource"
-                                            SeriesType="@SeriesType.Area"
-                                            Name="Planned Work (Adjusted for Unmet Demand)"
-                                            XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                            YValue="@(e => Convert.ToDecimal(e.Value2))" />
+                                         Items="burnUpChartSource"
+                                         SeriesType="@SeriesType.Area"
+                                         Name="Planned Work (Adjusted for Unmet Demand)"
+                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                         YValue="@(e => Convert.ToDecimal(e.Value2))" />
 
                     </ApexChart>
                 </div>
@@ -102,26 +110,26 @@
                 <h2>Schedule</h2>
                 <div class="card">
                     <ApexChart TItem="GanttBlock"
-                                XAxisType="XAxisType.Datetime"
-                                Options=ganttChartOptions
-                                OnDataPointSelection="TaskSelected"
-                                @ref="scheduleChart">
+                               XAxisType="XAxisType.Datetime"
+                               Options=ganttChartOptions
+                               OnDataPointSelection="TaskSelected"
+                               @ref="scheduleChart">
                         <ChildContent>
                             <ApexRangeSeries TItem="GanttBlock"
-                                                Items="confirmedBlocks"
-                                                Name="Resources Confirmed"
-                                                XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                                PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             Items="confirmedBlocks"
+                                             Name="Resources Confirmed"
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
                             <ApexRangeSeries TItem="GanttBlock"
-                                                Items="provisionalBlocks"
-                                                Name="Resources Provisional"
-                                                XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                                PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                             Items="provisionalBlocks"
+                                             Name="Resources Provisional"
+                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                         </ChildContent>
                         <ApexPointTooltip>
                             <div class="m-2">
@@ -148,13 +156,15 @@
                                                 <h4 class="me-1 text-info">[Currently No Demand]</h4>
                                             }
                                         }
-                                        else
-                                        {
-
-                                        }
                                         <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                         <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                                        @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
+                                        {
+                                            var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
+                                            var skillsList = SkillTagService.GetSkillsForSubTask(Context, taskId);
+                                            <SkillsAsBadgesComponent SkillsList="@skillsList" EmptyMessage="- No skill tags for this task" />
+                                        }
                                     </div>
                                 }
                             </div>
@@ -320,6 +330,7 @@
                                 RTP-24 Project Name
                             </span>.
                             Failed linking, if either the person or project does not exist, will leave the text unchanged.
+                            <b>Currently there must be a space before and after the reference for the link to be detected.</b>
                         </RadzenText>
                         <div class="grip">
                             <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />

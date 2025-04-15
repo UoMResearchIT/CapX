@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -17,7 +18,9 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
-        private bool tableEmpty;
+        [Inject]
+        private SkillTagService TagService { get; set; }
+
         private IEnumerable<Person> people;
         private int count;
         private int pageCount = 10;
@@ -31,7 +34,8 @@ namespace PPMTool.Pages
                 if (value != includeLeavers)
                 {
                     includeLeavers = value;
-                    LoadData(new LoadDataArgs());
+                    Loading = true;
+                    EnqueueLoadData(GetLoadTask);
                 }
             }
         }
@@ -39,48 +43,72 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            Loading = true;
+            EnqueueLoadData(GetLoadTask);
 
-            // Get people from the database
-            LoadData(new LoadDataArgs());
             LogInformation($"Viewing people grid");
         }
 
+        /// <summary>
+        /// Generates a task to call the load data method
+        /// </summary>
+        /// <returns></returns>
+        private Task GetLoadTask()
+        {
+            return Task.Run(() =>
+            {
+                // Get people from the database
+                LoadData(new LoadDataArgs());
+            })
+                .ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+        /// <summary>
+        /// Callback for add person clicked
+        /// </summary>
         private void AddPerson()
         {
             Navigation.NavigateTo($"people/addperson/-1");
         }
 
+        /// <summary>
+        /// Callback for edit person clicked
+        /// </summary>
+        /// <param name="person"></param>
         private void EditPerson(Person person)
         {
             Navigation.NavigateTo($"people/addperson/{person.PersonId}");
         }
 
-        // Necessary to ensure that we can filter the skills tags on the fly
+        /// <summary>
+        /// Manual load of datagrid data. Necessary to ensure that we can filter the skills tags on the fly.
+        /// </summary>
+        /// <param name="args"></param>
         private void LoadData(LoadDataArgs args)
         {
             // Order by name by default
-            var loadedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
+            var query = PersonService.GetAll(Context).OrderBy(x => x.Name).AsQueryable();
 
             // Reduce to just current people
             if (!IncludeLeavers)
             {
-                loadedPeople = loadedPeople.Where(x => x.EndDate == null || x.EndDate >= DateTime.Now).ToList();
+                query = query.Where(x => x.EndDate == null || x.EndDate >= DateTime.Now);
             }
 
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                loadedPeople = loadedPeople.Where(x => x.PersonId == ActiveUser?.Person?.PersonId).ToList();
+                query = query.Where(x => x.PersonId == ActiveUser.Person.PersonId);
             }
 
-            // Set the table empty flag
-            tableEmpty = loadedPeople.Count == 0;
-
-            Debug.WriteLine($"** {loadedPeople.Count()} people loaded!");
-
-            // Convert to queryable
-            var query = loadedPeople.AsQueryable();
-
+            // Apply filter
             if (!string.IsNullOrEmpty(args.Filter))
             {
                 // Filter via the Where method
@@ -94,28 +122,47 @@ namespace PPMTool.Pages
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
-                    query = query.Where(x => x.SkillTags.Any(x => x.Name.Contains(filterValue)));
+                    query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
                 }
             }
 
+            // Apply the ordering process on skills count manually
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                // Sort via the OrderBy method
-                query = query.OrderBy(args.OrderBy);
+                var order = args.OrderBy.Split(" ");
+                if (order.Length > 0 && order[0] == "SkillsCount")
+                {
+                    if (order.Length > 1 && order[1] == "asc")
+                    {
+                        query = query.OrderBy(x => TagService.GetCountForPerson(Context, x.PersonId));
+                    }
+                    else
+                    {
+                        query = query.OrderByDescending(x => TagService.GetCountForPerson(Context, x.PersonId));
+                    }
+                }
+                else
+                {
+                    // Sort via the OrderBy method
+                    query = query.OrderBy(args.OrderBy);
+                }
             }
 
             // Important!!! Make sure the Count property of RadzenDataGrid is set.
-            count = query.Count();
+            var data = query.ToList();
+            count = data.Count();
 
             // Perform paging via Skip and Take.
             if (args.Skip == null)
             {
-                people = query.Take(pageCount).ToList();
+                people = data.Take(pageCount).ToList();
             }
             else
             {
-                people = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                people = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
+
+            Debug.WriteLine($"** {data.Count()} people loaded. {people.Count()} displayed.");
         }
     }
 }

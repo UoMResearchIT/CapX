@@ -29,7 +29,7 @@ namespace PPMTool.Pages
             dataGridEntities = UserService.GetAll(Context).OrderBy(x => x.GetName()).ToList();
 
             // Populate the people and role types for the dropdowns
-            roles = Enum.GetValues(typeof(RoleType)).ToDynamicList<RoleType>();
+            roles = Enum.GetValues<RoleType>().ToList();
             people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
 
             LogInformation($"Viewing access grid");
