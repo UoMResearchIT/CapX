@@ -2,6 +2,7 @@
 Description=CapX app kestrel server
 
 [Service]
+Environment=/var/www/capx/variables.env
 WorkingDirectory=/var/www/capx
 ExecStart=/usr/bin/dotnet /var/www/capx/PPMTool.dll
 Restart=always
