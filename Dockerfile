@@ -9,7 +9,6 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY nuget.config nuget.config
 
-COPY Blazor-ApexCharts Blazor-ApexCharts
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
 
