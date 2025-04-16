@@ -94,8 +94,8 @@ namespace PPMTool.Data
             ActualHours = project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0;
             PlannedCostColour = PlannedCost > Budget ? "red" : "green";
             ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
-            FundsReceivedColour = (FundsReceived < Budget || (FundsReceived == 0 && Budget > 0)) ? "red" : "green";
-            FundsRequestedColour = (FundsRequested > FundsReceived || (FundsRequested == 0 && Budget > 0)) ? "red" : "green";
+            FundsReceivedColour = FundsReceived < FundsRequested ? "red" : "green";
+            FundsRequestedColour = FundsRequested < Budget ? "red" : "green";
             FundsOwed = FundsRequested - FundsReceived;
             FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
 

@@ -111,6 +111,12 @@
             return;
         }
 
+        if (Payment.Source == null || Payment.Source.FundingSourceId == 0)
+        {
+            errorMessage = "You must select a valid funding source whence this payment came!";
+            return;
+        }
+
         if (Payment.PaymentId > 0)
         {
             PaymentService.Update(Context, Payment);
