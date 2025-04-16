@@ -1,11 +1,11 @@
 # Based on https://github.com/abmdev86/blazor-server-docker/tree/bb8e4fe2ce95863f9bfa257f4aa56217830b76a2
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY nuget.config nuget.config
 
@@ -24,7 +24,7 @@ COPY PPMTool PPMTool
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
-RUN dotnet publish -c Local -o /app/publish -f net6.0 "PPMTool/PPMTool.sln"
+RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool/PPMTool.sln"
 RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
 VOLUME /app/publish/state
