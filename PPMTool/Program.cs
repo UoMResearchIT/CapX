@@ -18,18 +18,8 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Host level configuration
-builder.Host
-    .ConfigureWebHostDefaults(webBuilder =>
-    {
-        webBuilder.UseStaticWebAssets();
 #if RELEASE
-        webBuilder.UseSentry();
-#endif
-    });
-
 // Configure logging
-#if RELEASE
 builder.Logging.AddSerilog(new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.File(
@@ -166,6 +156,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
+app.Run();
 
 /// <summary>
 /// What to do when a ticket is to be created from a CAS callback
