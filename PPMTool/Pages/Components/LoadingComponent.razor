@@ -5,22 +5,23 @@
 </RadzenStack>
 
 @code {
-    private string spinnerText = "Loading...";
 
     [Parameter]
-    public string SpinnerText
-    {
-        get => spinnerText;
-        set
-        {
-            if (spinnerText != value)
-            {
-                spinnerText = value;
-                SpinnerTextChanged.InvokeAsync(value);
-            }
-        }
-    }
+    public string SpinnerText { get; set; }
 
     [Parameter]
     public EventCallback<string> SpinnerTextChanged { get; set; }
+
+    private string spinnerText = "Loading...";
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (spinnerText != SpinnerText)
+        {
+            spinnerText = SpinnerText;
+            SpinnerTextChanged.InvokeAsync(spinnerText);
+        }
+    }
 }
