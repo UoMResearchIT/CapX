@@ -39,21 +39,6 @@ try
             logging.AddSerilog();
         })
 #endif
-        .ConfigureAppConfiguration((hostingContext, config) =>
-        {
-            config.AddEnvironmentVariables();
-
-            // Get the API key from the environment
-            var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-            if (!string.IsNullOrEmpty(apiKeySecret))
-            {
-                // Add or override the Jwt:SecretKey in the configuration
-                config.AddInMemoryCollection(new Dictionary<string, string>
-                {
-                                { "Jwt:SecretKey", apiKeySecret }
-                });
-            }
-        })
         .ConfigureWebHostDefaults(webBuilder =>
         {
             webBuilder.UseStaticWebAssets();
@@ -72,6 +57,20 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// Add environment variables to the configuration
+builder.Configuration.AddEnvironmentVariables();
+
+// Get the API key from the environment
+var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
+if (!string.IsNullOrEmpty(apiKeySecret))
+{
+    // Add or override the Jwt:SecretKey in the configuration
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
+        {
+            { "Jwt:SecretKey", apiKeySecret }
+        });
 }
 
 // Configure the services
@@ -130,7 +129,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.None;
         options.Events = new CookieAuthenticationEvents
         {
-            OnSigningOut = OnCookieSigningOut,
+            OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
         };
     })
     .AddCAS(options =>
@@ -169,6 +168,7 @@ var app = builder.Build();
     });
 #endif
 
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -190,13 +190,13 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapBlazorHub();
-    endpoints.MapFallbackToPage("/_Host");
-});
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
-private async Task OnCreatingTicket(CasCreatingTicketContext context)
+/// <summary>
+/// What to do when a ticket is to be created from a CAS callback
+/// </summary>
+async Task OnCreatingTicket(CasCreatingTicketContext context)
 {
     if (context.Identity == null)
     {
@@ -246,16 +246,19 @@ private async Task OnCreatingTicket(CasCreatingTicketContext context)
     }
 }
 
-private Task OnCookieSigningOut(CookieSigningOutContext context)
+/// <summary>
+/// What to do when the user signs out from a CAS session
+/// </summary>
+Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configuration)
 {
     // Single Sign-Out
-    var casUrl = new Uri(Configuration["Authentication:CAS:ServerUrlBase"]);
+    var casUrl = new Uri(configuration["Authentication:CAS:ServerUrlBase"]);
     var redirectUri = UriHelper.BuildAbsolute(
         casUrl.Scheme,
         new HostString(casUrl.Host, casUrl.Port),
         casUrl.LocalPath,
         "/logout",
-        QueryString.Create("service", Configuration["HostUrl"])
+        QueryString.Create("service", configuration["HostUrl"])
     );
 
     var logoutRedirectContext = new RedirectContext<CookieAuthenticationOptions>(
@@ -270,7 +273,10 @@ private Task OnCookieSigningOut(CookieSigningOutContext context)
     return Task.CompletedTask;
 }
 
-private Task OnRemoteFailure(RemoteFailureContext context)
+/// <summary>
+/// What to do when there is a failure during login
+/// </summary>
+Task OnRemoteFailure(RemoteFailureContext context)
 {
     var failure = context.Failure;
     var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
