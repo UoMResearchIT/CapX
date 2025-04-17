@@ -12,52 +12,42 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 using Radzen;
-using Serilog;
 #if RELEASE
-using Sentry;
+using Serilog;
 #endif
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Host level configuration
-try
-{
-    builder.Host
+builder.Host
+    .ConfigureWebHostDefaults(webBuilder =>
+    {
+        webBuilder.UseStaticWebAssets();
 #if RELEASE
-        .ConfigureLogging((context, logging) =>
-        {
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Logger(l =>
-                {
-                    l.WriteTo.Console();
-                    l.WriteTo.File(context.Configuration.GetValue<string>("LogPath"),
-                        rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: null,
-                        retainedFileTimeLimit: TimeSpan.FromDays(60));
-                })
-                .CreateLogger();
-            logging.AddSerilog();
-        })
+        webBuilder.UseSentry();
 #endif
-        .ConfigureWebHostDefaults(webBuilder =>
-        {
-            webBuilder.UseStaticWebAssets();
+    });
+
+// Configure logging
 #if RELEASE
-            webBuilder.UseSentry();
+builder.Logging.AddSerilog(new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: builder.Configuration.GetValue<string>("LogPath"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: null,
+        retainedFileTimeLimit: TimeSpan.FromDays(30)
+    )
+.CreateLogger());
+
+// Configure Sentry
+SentrySdk.Init(o =>
+{
+    o.Dsn = builder.Configuration.GetValue<string>("Sentry:Dsn");
+    o.Release = builder.Configuration.GetValue<string>("VersionNumber");
+    o.Debug = true;
+});
 #endif
-        });
-
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Host builder error");
-
-    throw;
-}
-finally
-{
-    Log.CloseAndFlush();
-}
 
 // Add environment variables to the configuration
 builder.Configuration.AddEnvironmentVariables();
@@ -79,15 +69,11 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 {
     o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
 });
-
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("PPMToolContextConnection"))
 );
-
 builder.Services.AddBlazoredSessionStorage();
-
 builder.Services.AddRadzenComponents();
-
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();
@@ -104,20 +90,17 @@ builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
-
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.ForwardLimit = 2;
 });
-
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.Secure = CookieSecurePolicy.Always;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
-
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -153,21 +136,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             OnRemoteFailure = OnRemoteFailure
         };
     });
-
 builder.Services.AddAuthorization();
 
 // Build the application from the configuration
 var app = builder.Build();
 
-#if RELEASE
-    SentrySdk.Init(o =>
-    {
-        o.Dsn = Configuration.GetValue<string>("Sentry:Dsn");
-        o.Release = Configuration.GetValue<string>("VersionNumber");
-        o.Debug = true;
-    });
-#endif
-
+// Set up middleware
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
 {

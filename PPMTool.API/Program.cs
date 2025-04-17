@@ -20,13 +20,20 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 #if RELEASE
+// Get the log path from the configuration file
+var logPath = configuration.GetValue<string>("LogPath");
+if (string.IsNullOrEmpty(logPath))
+{
+    throw new Exception("LogPath configuration is missing or empty!");
+}
+
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Logger(l =>
     {
         l.WriteTo.Console();
         l.WriteTo.File(
-            path: configuration.GetValue<string>("LogPath"),
+            path: logPath,
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: null,
             retainedFileTimeLimit: TimeSpan.FromDays(60));
