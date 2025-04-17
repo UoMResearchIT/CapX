@@ -129,18 +129,16 @@ app.UseHttpsRedirection();
 // https://youtu.be/GrJJXixjR8M?feature=shared&t=775
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
-// Map endpoints to methods
-app.UseRouting();
-app.UseEndpoints(endpoints =>
+// Map endpoints directly using top-level routing
+app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
+app.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+
+// Fallback for unmatched routes
+app.MapFallback(async context =>
 {
-    endpoints.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
-    endpoints.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
-    endpoints.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-    endpoints.MapFallback(context =>
-    {
-        context.Response.StatusCode = 404;
-        return context.Response.WriteAsync($"Endpoint {context.Request.Path} not found!");
-    });
+    context.Response.StatusCode = 404;
+    await context.Response.WriteAsync($"Endpoint {context.Request.Path} not found!");
 });
 
 app.Run();
