@@ -24,7 +24,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Format
       run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
       
@@ -42,7 +42,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Ensure GitHub NuGet Source
       run: |
         dotnet nuget update source UoMResearchITGitHub \
