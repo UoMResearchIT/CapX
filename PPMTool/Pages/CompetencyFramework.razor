@@ -111,7 +111,7 @@
                                     @foreach (var group in comp.CompetenciesGroupedByCategory)
                                     {
                                         var key = group.Key;
-                                        <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")"
+                                        <RadzenAccordionItem Text="@($"Grade {comp.Grade} {group.Key.GetDescription()} Competencies")"
                                                              Icon="@(group.Key.GetAttribute<IconAttribute>().Name)"
                                                              CollapseTitle="Collapse"
                                                              ExpandTitle="Expand"
