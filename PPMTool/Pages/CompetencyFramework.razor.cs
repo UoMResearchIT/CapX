@@ -397,6 +397,7 @@ namespace PPMTool.Pages
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.AddAssessment(Context, assessment);
+                UpdateMet();
             }
             else
             {
@@ -415,6 +416,7 @@ namespace PPMTool.Pages
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.UpdateAssessment(Context, assessment);
+                UpdateMet();
             }
             else
             {
