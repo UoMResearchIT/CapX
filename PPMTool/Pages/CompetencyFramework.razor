@@ -91,7 +91,7 @@
                                          CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
                                          ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")"
                                          Selected="@comp.Selected"
-                                         onclick="@(() => comp.ToggleAccordion())">
+                                         @onclick="@(() => comp.ToggleAccordion())">
                         <Template>
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal"
                                          JustifyContent="JustifyContent.SpaceBetween"
@@ -119,7 +119,7 @@
                                                              CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                              ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                              Selected="@(comp.CompetencySelectionState[key])"
-                                                             onclick="@(() => comp.ToggleAccordion(key))
+                                                             @onclick="@(() => comp.ToggleAccordion(key))"
                                                              Style="background-color: var(--rz-base-50);">
                                             <Template>
                                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
