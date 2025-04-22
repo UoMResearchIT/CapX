@@ -1,6 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -90,9 +88,9 @@ namespace PPMTool.Data.Entities
                 // Update the actuals
                 ActualCost = (ActualWorkHours / 7f) * annualCostPerBillableDay;
 
-                // Update the planned (get std or jun rates by passing grade 6 or 5 as argument)
+                // Update the planned (get std or jun rates by passing grade 6 or 5 as argument) -- TODO: Update this
                 var annualCostPerBillableDayPlanned = financialReference.GetJuniorOrStandardAnnualCosts(
-                    costModel == CostModel.TwoTierRateTechOnlyStd || costModel == CostModel.TwoTierTechStdAndLeadership ?
+                    costModel == CostModel.TechOnly ?
                     6 :
                     5
                 ) / 220;

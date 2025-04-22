@@ -41,14 +41,14 @@ else
                     <td>@(FinanceSummaryItem.CostModel == CostModel.DayRate ? FinanceSummaryItem.DayRate.ToString("C0") : "N/A")</td>
                     <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             @($"Total: ")
                         }
                         <span style="color:@FinanceSummaryItem.PlannedCostColour">
                             @FinanceSummaryItem.PlannedCost.ToString("C0")
                         </span>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             <br />
                             @($"Technical: ")
@@ -63,14 +63,14 @@ else
                         }
                     </td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             @($"Total: ")
                         }
                         <span style="color:@FinanceSummaryItem.ActualCostColour">
                             @FinanceSummaryItem.ActualCost.ToString("C0")
                         </span>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             <br />
                             @($"Technical: ")

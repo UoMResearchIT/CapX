@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
-using System.Linq;
-using Microsoft.CodeAnalysis;
 using PPMTool.Enums;
 using static PPMTool.Data.ValidationAttributes;
 
@@ -373,7 +369,7 @@ namespace PPMTool.Data.Entities
         private double CalculateLeadershipCosts(bool actualCosts, IEnumerable<FinancialReference> financialReferences)
         {
             // If not using the leadership cost models then this is zero
-            if (CostModel != CostModel.TwoTierTechStdAndLeadership && CostModel != CostModel.TwoTierTechJunAndLeadership)
+            if (CostModel != CostModel.TechAndLeadership)
             {
                 return 0;
             }
