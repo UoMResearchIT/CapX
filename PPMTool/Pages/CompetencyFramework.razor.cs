@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
+using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -81,6 +79,38 @@ namespace PPMTool.Pages
             public IEnumerable<CompetencyAssessment> CompetencyAssessments { get; }
 
             /// <summary>
+            /// Event fired when an accordion state is toggled
+            /// </summary>
+            public event EventHandler<AccordionToggledEventArgs> OnAccordionToggled;
+
+            /// <summary>
+            /// Event arguments passed by accordion toggle event
+            /// </summary>
+            public class AccordionToggledEventArgs
+            {
+                /// <summary>
+                ///  Title of the accordion
+                /// </summary>
+                public string Title { get; }
+
+                /// <summary>
+                /// New selected state of accordion
+                /// </summary>
+                public bool State { get; }
+
+                /// <summary>
+                /// Constructor
+                /// </summary>
+                /// <param name="title"></param>
+                /// <param name="state"></param>
+                public AccordionToggledEventArgs(string title, bool state)
+                {
+                    Title = title;
+                    State = state;
+                }
+            }
+
+            /// <summary>
             /// Constructor
             /// </summary>
             /// <param name="grade"></param>
@@ -104,6 +134,39 @@ namespace PPMTool.Pages
                     CompetencySelectionState.Add(category, false);
                     CompetencyMetValues.Add(category, 0);
                 }
+            }
+
+            /// <summary>
+            /// Will take a boolean flag for the state of an accordion and toggle it
+            /// </summary>
+            /// <param name="state"></param>
+            public void ToggleAccordion(CompetencyCategory? category = null)
+            {
+                // Decide on which accordion to expand
+                if (category == null)
+                {
+                    Selected = !Selected;
+                }
+                else
+                {
+                    CompetencyCategory key = category ?? default;
+                    CompetencySelectionState[key] = !CompetencySelectionState[key];
+                }
+
+                // Fire event
+                var title = $"Grade {Grade}";
+                var state = Selected;
+                if (category != null)
+                {
+                    var group = CompetenciesGroupedByCategory.FirstOrDefault(x => x.Key == category);
+                    title += $"| {group?.Key.GetDescription()}";
+                    var key = group?.Key ?? default;
+                    if (group != null)
+                    {
+                        state = CompetencySelectionState[key];
+                    }
+                }
+                OnAccordionToggled?.Invoke(this, new AccordionToggledEventArgs(title, state));
             }
 
             /// <summary>
@@ -216,7 +279,7 @@ namespace PPMTool.Pages
 
                 // Setup the accordion data
                 var groups = new List<CompetencyGroup>();
-                groups.Add(new CompetencyGroup(
+                var newGroup = new CompetencyGroup(
                     5,
                     "Foundation Level (Grade 5)",
                     "counter_1",
@@ -228,8 +291,11 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.Person.PersonId == selectedPerson.PersonId)
-                ));
-                groups.Add(new CompetencyGroup(
+                );
+                newGroup.OnAccordionToggled += OnAccordionToggled;
+                groups.Add(newGroup);
+
+                newGroup = new CompetencyGroup(
                     6,
                     "Advanced Level (Grade 6)",
                     "counter_2",
@@ -241,8 +307,11 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.Person.PersonId == selectedPerson.PersonId)
-                ));
-                groups.Add(new CompetencyGroup(
+                );
+                newGroup.OnAccordionToggled += OnAccordionToggled;
+                groups.Add(newGroup);
+
+                newGroup = new CompetencyGroup(
                     7,
                     "Leadership Level (Grade 7)",
                     "counter_3",
@@ -254,9 +323,13 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.Person.PersonId == selectedPerson.PersonId)
-                ));
+                );
+                newGroup.OnAccordionToggled += OnAccordionToggled;
+                groups.Add(newGroup);
+
                 competencyGroups = groups;
                 UpdateMet();
+
             }).ContinueWith(t =>
             {
                 Debug.WriteLine($"** ...Competency load task complete: {t.Status}");
@@ -267,6 +340,17 @@ namespace PPMTool.Pages
                     StateHasChanged();
                 });
             });
+        }
+
+        /// <summary>
+        /// Handles accordion toggle events and refreshes the view
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnAccordionToggled(object sender, CompetencyGroup.AccordionToggledEventArgs e)
+        {
+            Debug.WriteLine($"** Accordion {e.Title} state changed to {e.State}");
+            StateHasChanged();
         }
 
         protected override void OnInitialized()
