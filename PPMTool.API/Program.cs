@@ -20,13 +20,20 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 #if RELEASE
+// Get the log path from the configuration file
+var logPath = configuration.GetValue<string>("LogPath");
+if (string.IsNullOrEmpty(logPath))
+{
+    throw new Exception("LogPath configuration is missing or empty!");
+}
+
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Logger(l =>
     {
         l.WriteTo.Console();
         l.WriteTo.File(
-            path: configuration.GetValue<string>("LogPath"),
+            path: logPath,
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: null,
             retainedFileTimeLimit: TimeSpan.FromDays(60));
@@ -129,18 +136,16 @@ app.UseHttpsRedirection();
 // https://youtu.be/GrJJXixjR8M?feature=shared&t=775
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
-// Map endpoints to methods
-app.UseRouting();
-app.UseEndpoints(endpoints =>
+// Map endpoints directly using top-level routing
+app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
+app.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+
+// Fallback for unmatched routes
+app.MapFallback(async context =>
 {
-    endpoints.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
-    endpoints.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
-    endpoints.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-    endpoints.MapFallback(context =>
-    {
-        context.Response.StatusCode = 404;
-        return context.Response.WriteAsync($"Endpoint {context.Request.Path} not found!");
-    });
+    context.Response.StatusCode = 404;
+    await context.Response.WriteAsync($"Endpoint {context.Request.Path} not found!");
 });
 
 app.Run();
