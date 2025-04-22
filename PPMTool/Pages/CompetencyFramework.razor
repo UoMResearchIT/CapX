@@ -90,7 +90,8 @@
                                          ExpandTitle="Expand"
                                          CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
                                          ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")"
-                                         Selected="@comp.Selected">
+                                         Selected="@comp.Selected"
+                                         @onclick="@(() => comp.ToggleAccordion())">
                         <Template>
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal"
                                          JustifyContent="JustifyContent.SpaceBetween"
@@ -111,13 +112,14 @@
                                     @foreach (var group in comp.CompetenciesGroupedByCategory)
                                     {
                                         var key = group.Key;
-                                        <RadzenAccordionItem Text="@($"Grade 5 {group.Key.GetDescription()} Competencies")"
+                                        <RadzenAccordionItem Text="@($"Grade {comp.Grade} {group.Key.GetDescription()} Competencies")"
                                                              Icon="@(group.Key.GetAttribute<IconAttribute>().Name)"
                                                              CollapseTitle="Collapse"
                                                              ExpandTitle="Expand"
                                                              CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                              ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                              Selected="@(comp.CompetencySelectionState[key])"
+                                                             @onclick="@(() => comp.ToggleAccordion(key))"
                                                              Style="background-color: var(--rz-base-50);">
                                             <Template>
                                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
