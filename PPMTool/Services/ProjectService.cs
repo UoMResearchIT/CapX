@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -101,6 +98,9 @@ namespace PPMTool.Services
                             .ThenInclude(r => r.WorkloadModelChanges)
                 .Include(p => p.SubTasks)
                     .ThenInclude(x => x.SkillsRequired)
+                .Include(x => x.SubTasks)
+                    .ThenInclude(s => s.AssignedResources)
+                        .ThenInclude(x => x.FundedFrom)
                 .Include(x => x.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)

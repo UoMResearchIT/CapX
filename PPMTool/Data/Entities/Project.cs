@@ -163,6 +163,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("This project has no funding sources but is running or has run in the past!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
+                new StatusMessage("This project has a task with a resource without a associated funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -269,6 +270,16 @@ namespace PPMTool.Data.Entities
         public bool HasUnmetDemandInWindow(DateTime? startDate = null, DateTime? endDate = null)
         {
             return SubTasks?.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0) ?? false;
+        }
+
+        /// <summary>
+        /// Checks whether this project has any tasks that are running, or have run, but have no funding source
+        /// </summary>
+        /// <returns></returns>
+        public bool HasResourcesWithNoFundingSourceOnRunningTask()
+        {
+            // Check if any of the subtasks have resources with no funding source
+            return SubTasks?.Any(x => x.HasResourceWithNoFundingSourceAndRunning()) ?? false;
         }
 
         /// <summary>
