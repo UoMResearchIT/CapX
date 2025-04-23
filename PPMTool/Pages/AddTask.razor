@@ -392,6 +392,23 @@
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
                             }
+                            else
+                            {
+                                <RadzenDataGridColumn TItem="Resource" Property="Rate" Width="120px" Title="Rate" MinWidth="10px">
+                                    <Template Context="res">
+                                        <RadzenText Text="@res.Rate.ToString()" />
+                                    </Template>
+                                    <EditTemplate Context="res">
+                                        <RadzenDropDown @bind-Value="res.Rate"
+                                                        Data="@availableRates"
+                                                        Style="width:100%; display: block;">
+                                            <Template Context="res1">
+                                                <RadzenText Text="@res1.Rate.ToString()" />
+                                            </Template>
+                                        </RadzenDropDown>
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                            }
                             <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions">
                                 <Template Context="res">
                                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))"/>
