@@ -31,7 +31,7 @@ namespace PPMTool.Data.Helpers
 
             // DI is based on the salary costs and assignments of the resources
             var di = resources
-                .Where(x => x.FundedFrom.FundingSourceType == Enums.FundingSourceType.DI)
+                .Where(x => x.FundedFrom?.FundingSourceType == Enums.FundingSourceType.DI)
                 .RoundedSum(x => x.PlannedCost, 2);
 
             // Create the item adding in the invoiced amounts and the direct payments

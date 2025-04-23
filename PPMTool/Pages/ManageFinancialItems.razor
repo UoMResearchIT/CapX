@@ -172,6 +172,11 @@
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FundingSource" Title="Amount" MinWidth="10px" Filterable="false" Sortable="false">
+                                <Template Context="source">
+                                    @source.AmountAvailable.ToString("C0")
+                                </Template>
+                            </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceType" Title="Source Type" MinWidth="10px">
                                 <Template Context="source">
                                     @(source.FundingSourceType.GetDescription())

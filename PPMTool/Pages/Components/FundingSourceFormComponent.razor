@@ -10,12 +10,20 @@
 <RadzenTemplateForm TItem="FundingSource" Submit="@HandleValidSubmit" Data="@Source">
     <RadzenFieldset Text="Funding Source Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
-            <RadzenLabel Component="SourceType" Text="Source Type" class="font-weight-bold" />
-            <RadzenDropDown @bind-Value="Source.FundingSourceType" Name="SourceType" Data="@sourceTypes">
-                <Template Context="item">
-                    @(((FundingSourceType)item).GetDescription())
-                </Template>
-            </RadzenDropDown>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    <RadzenLabel Component="SourceType" Text="Source Type" class="font-weight-bold" />
+                    <RadzenDropDown @bind-Value="Source.FundingSourceType" Name="SourceType" Data="@sourceTypes">
+                        <Template Context="item">
+                            @(((FundingSourceType)item).GetDescription())
+                        </Template>
+                    </RadzenDropDown>
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    <RadzenLabel Component="Amount" Text="Amount Available" class="font-weight-bold" />
+                    <RadzenNumeric @bind-Value="Source.AmountAvailable" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:100%;" Format="@("£0.00")" />
+                </RadzenStack>
+            </RadzenStack>
             <RadzenLabel Component="HasAccount" Text="Account Code Associated with Source?" class="font-weight-bold" />
             <RadzenSwitch @bind-Value="Source.HasAccountCode" Name="HasAccount" />
             @if (Source.HasAccountCode)
@@ -76,6 +84,12 @@
         if (Source.FundingSourceType != FundingSourceType.Other && Source.HasAccountCode && string.IsNullOrWhiteSpace(Source.AccountCode))
         {
             errorMessage = "You must provide an account code for this funding source e.g. R123456";
+            return;
+        }
+
+        if (Source.FundingSourceType != FundingSourceType.Other && Source.AmountAvailable <= 0)
+        {
+            errorMessage = "There must be a non-zero amount of funds available to pay for the service in a DA/DI funding source!";
             return;
         }
 
