@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using DotNetExtensions;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -105,23 +102,12 @@ namespace PPMTool.Data
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();
 
-            // Set default WLM to be G6
-            WorkloadModelChange defaultWLM = new WorkloadModelChange()
-            {
-                Person = person,
-                ChangeDate = startDate,
-                Grade = 6
-            };
+            // Get WLM in force on the first day of the window or set to default G6
+            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate);
 
-            // If there isn't a WLM change on the first day of the window then create one
+            // If there isn't a WLM change on the first day of the window then add the default
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
             {
-                var tempWlm = person.GetWorkloadModelOnDateOrDefault(startDate);
-                if (tempWlm != null)
-                {
-                    defaultWLM.Grade = tempWlm.Grade;
-                }
-
                 // Add the start WLM to the list of WLMs active in the window
                 wlms.Add(defaultWLM);
             }

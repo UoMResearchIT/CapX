@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
@@ -424,7 +421,7 @@ namespace PPMTool.Data
                 // Keep only changes on or after the start date
                 changes = changes.Where(x => x.ChangeDate >= person.StartDate).ToList();
 
-                // Enforce a zero availability before they start
+                // Enforce a zero availability before they start by adding a fake change
                 changes.Add(new WorkloadModelChange()
                 {
                     Person = person,

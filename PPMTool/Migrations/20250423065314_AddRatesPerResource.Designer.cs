@@ -11,8 +11,8 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20250422165430_AdjustProjectLevelCostModels")]
-    partial class AdjustProjectLevelCostModels
+    [Migration("20250423065314_AddRatesPerResource")]
+    partial class AddRatesPerResource
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -567,6 +567,9 @@ namespace PPMTool.Migrations
 
                     b.Property<double>("PlannedWorkHours")
                         .HasColumnType("REAL");
+
+                    b.Property<int>("Rate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SubTaskId")
                         .HasColumnType("INTEGER");

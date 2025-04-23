@@ -10,14 +10,19 @@ namespace PPMTool.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // TODO: Need to add a migration here to map the existing enum values to the new values now the values have simplified.
-            // TODO: Might need to do this in combination with adding resource-level settings of junior/standard rates?
+            // TODO: Map the existing enum values to the new values now the values have simplified.
+            // TODO: Set appropriate rate for individuals based on the former project model and the grade of the person
+            migrationBuilder.Sql(@"
+                
+            ");
+
+
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
+            // Not really a reversible migration due to data loss
         }
     }
 }
