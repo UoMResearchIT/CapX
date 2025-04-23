@@ -177,6 +177,7 @@
                                     @(source.FundingSourceType.GetDescription())
                                 </Template>
                             </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FundingSource" Property="Description" Title="Description" MinWidth="10px" Width="8rem" />
                             <RadzenDataGridColumn TItem="FundingSource" Title="Actions" MinWidth="10px" Width="2rem">
                                 <Template Context="source">
                                     <RadzenButton Icon="edit" Click="@(args => AddOrEditFinanceItem(source))" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />

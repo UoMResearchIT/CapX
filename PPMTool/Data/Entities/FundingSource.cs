@@ -26,6 +26,11 @@ namespace PPMTool.Data.Entities
         public string AccountCode { get; set; }
 
         /// <summary>
+        ///  Some information about what this funding source is if known
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
         /// Set of payments attached to this funding source
         /// </summary>
         public ICollection<Payment> PaymentsFromSource { get; set; }
