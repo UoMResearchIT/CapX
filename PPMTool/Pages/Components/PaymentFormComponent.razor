@@ -31,7 +31,7 @@
                         Style="width: 100%;"
                         Placeholder="Select Funding Source">
             <Template Context="item">
-                @($"{(item as FundingSource)?.FundingSourceId}: {(((item as FundingSource)?.HasAccountCode ?? false) ? (item as FundingSource)?.AccountCode : "No Acc Code")} ({(item as FundingSource).FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value})")
+                @((item as FundingSource)?.GetSensibleObjectName() ?? "NULL")
             </Template>
         </RadzenDropDown>
     </RadzenFieldset>
