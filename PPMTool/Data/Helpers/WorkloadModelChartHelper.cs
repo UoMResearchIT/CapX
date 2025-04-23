@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using PPMTool.Data.Entities;
+﻿using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Helpers
 {
     /// <summary>
     /// Helper class for generating workload model chart data
     /// </summary>
-    public static class WorkloadModelChartHelper
+    public abstract class WorkloadModelChartHelper
     {
         /// <summary>
         /// Generates workload model chart item for a person on a given date based on their workload model and timesheets

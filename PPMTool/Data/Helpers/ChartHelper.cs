@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using PPMTool.Data.Entities;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Helpers
 {
     public abstract class ChartHelper
     {
@@ -236,7 +236,7 @@ namespace PPMTool.Data
                 if (valueDay != valueTracked || hatchedDay != hatchedTracked || value2Day != value2Tracked)
                 {
                     // Only add a block if its value is non-zero if flag set
-                    if (!ignoreZeroValue1Entries || (ignoreZeroValue1Entries && valueTracked != 0d))
+                    if (!ignoreZeroValue1Entries || ignoreZeroValue1Entries && valueTracked != 0d)
                     {
                         var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay.AddDays(-1)));
                         // Add the chart item to the results
@@ -263,7 +263,7 @@ namespace PPMTool.Data
             }
 
             // Add the final block if it had a non-zero value
-            if (!ignoreZeroValue1Entries || (ignoreZeroValue1Entries && valueTracked != 0d))
+            if (!ignoreZeroValue1Entries || ignoreZeroValue1Entries && valueTracked != 0d)
             {
                 // Consider the end date to be inclusive of the final block so do not move back a day like above
                 var assignmentsInBlock = assignments.Where(x => x.IsWithin(currentBlockStartDay, currentDay));

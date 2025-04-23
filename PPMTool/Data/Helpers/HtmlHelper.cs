@@ -1,13 +1,11 @@
-﻿using System;
-using System.IO;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Helpers
 {
     /// <summary>
     /// Taken from https://stackoverflow.com/questions/286813/how-do-you-convert-html-to-plain-text
     /// </summary>
-    public class HtmlHelper
+    public abstract class HtmlHelper
     {
         /// <summary>
         /// Converts HTML to plain text / strips tags.
@@ -49,7 +47,7 @@ namespace PPMTool.Data
                 case HtmlNodeType.Text:
                     // script and style must not be output
                     string parentName = node.ParentNode.Name;
-                    if ((parentName == "script") || (parentName == "style"))
+                    if (parentName == "script" || parentName == "style")
                         break;
 
                     // get text
