@@ -394,8 +394,15 @@ namespace PPMTool.Pages
         private void AddAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
-            if (ValidateAssessment(assessment, out var message)) CompetencyService.AddAssessment(Context, assessment);
-            else ShowValidationError(message);
+            if (ValidateAssessment(assessment, out var message))
+            {
+                CompetencyService.AddAssessment(Context, assessment);
+                UpdateMet();
+            }
+            else
+            {
+                ShowValidationError(message);
+            }
             StateHasChanged();
         }
 
@@ -406,8 +413,15 @@ namespace PPMTool.Pages
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
-            if (ValidateAssessment(assessment, out var message)) CompetencyService.UpdateAssessment(Context, assessment);
-            else ShowValidationError(message);
+            if (ValidateAssessment(assessment, out var message))
+            {
+                CompetencyService.UpdateAssessment(Context, assessment);
+                UpdateMet();
+            }
+            else
+            {
+                ShowValidationError(message);
+            }
             StateHasChanged();
         }
 
@@ -450,19 +464,12 @@ namespace PPMTool.Pages
             return true;
         }
 
+        /// <summary>
+        /// Callback for when a person is selected from the dropdown
+        /// </summary>
         private void PersonSelected()
         {
             EnqueueLoadData(GetTask);
-        }
-
-        /// <summary>
-        /// Method to strip out the expected (non-compliant) input characters and replace with something standard
-        /// </summary>
-        /// <param name="line"></param>
-        /// <returns></returns>
-        private string Clean(string line)
-        {
-            return line.Replace("\r", "").Replace("\"", "");
         }
 
         /// <summary>
