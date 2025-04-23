@@ -59,10 +59,14 @@ namespace PPMTool.Data
 
         public string FundsOwedColour { get; }
 
+        public double FundsDA { get; }
+
+        public double FundsDI { get; }
+
         public MarkupString ListOfFundingSources { get; }
 
 
-        public FinanceSummaryItem(Project project, IEnumerable<FundingSource> sources, double fundsRequested, double fundsReceived)
+        public FinanceSummaryItem(Project project, TransactionBreakdown transactionBreakdown)
         {
             if (project == null)
             {
@@ -86,8 +90,10 @@ namespace PPMTool.Data
             PlannedLeadershipCosts = project.PlannedLeadershipCosts;
             ActualCost = project.ActualCost;
             ActualLeadershipCosts = project.ActualLeadershipCosts;
-            FundsRequested = fundsRequested;
-            FundsReceived = fundsReceived;
+            FundsDA = transactionBreakdown.DirectlyAllocated;
+            FundsDI = transactionBreakdown.DirectlyIncurred;
+            FundsRequested = transactionBreakdown.Invoices;
+            FundsReceived = transactionBreakdown.Payments;
             ActualHours = project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0;
             PlannedCostColour = PlannedCost > Budget ? "red" : "green";
             ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
@@ -96,7 +102,7 @@ namespace PPMTool.Data
             FundsOwed = FundsRequested - FundsReceived;
             FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
 
-            var sourcesAsList = sources
+            var sourcesAsList = transactionBreakdown.FundingSources
                 .Select(x => x.GetSensibleObjectName().Replace(" ", "&nbsp;"))
                 .Distinct();
             ListOfFundingSources = (MarkupString)((sourcesAsList != null && sourcesAsList.Count() > 0) ? string.Join("<br />", sourcesAsList) : "None");

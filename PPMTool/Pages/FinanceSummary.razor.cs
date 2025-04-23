@@ -58,12 +58,18 @@ namespace PPMTool.Pages
                 var sources = FundingSourceService.GetAll(Context);
                 foreach (var project in projects)
                 {
+                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                        Context,
+                        project.SubTasks.SelectMany(x => x.AssignedResources),
+                        sources.Where(x => x.Project.ProjectId == project.ProjectId),
+                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
+                        PaymentService.GetFundsReceived(Context, project.ProjectId)
+                    );
+
                     items.Add(
                         new FinanceSummaryItem(
                             project,
-                            sources.Where(x => x.Project.ProjectId == project.ProjectId),
-                            InvoiceService.GetFundsRequested(Context, project.ProjectId),
-                            PaymentService.GetFundsReceived(Context, project.ProjectId)
+                            transactions
                         )
                     );
                 }

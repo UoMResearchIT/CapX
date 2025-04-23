@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -735,7 +730,7 @@ namespace PPMTool.Pages
                 var threadContext = ContextFactory.CreateDbContext();
 
                 // Create blank list of data
-                var allData = new List<ExportHelper.AssignmentChunk>();
+                var allData = new List<AssignmentChunk>();
 
                 // Set the report length
                 var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1);
@@ -771,7 +766,7 @@ namespace PPMTool.Pages
                         {
 
                             // Write header row
-                            var props = typeof(ExportHelper.AssignmentChunk).GetProperties();
+                            var props = typeof(AssignmentChunk).GetProperties();
                             var propNames = props.Select(x => x.Name);
                             var headers = propNames.ToList();
                             writer.WriteLine(string.Join(",", headers));

@@ -31,6 +31,13 @@ namespace PPMTool.Data.Entities
         public string Description { get; set; }
 
         /// <summary>
+        /// This is the amount of money available in the funding source for RSE costs
+        /// </summary>
+        [Required]
+        [DataType(DataType.Currency)]
+        public double AmountAvailable { get; set; }
+
+        /// <summary>
         /// Set of payments attached to this funding source
         /// </summary>
         public ICollection<Payment> PaymentsFromSource { get; set; }

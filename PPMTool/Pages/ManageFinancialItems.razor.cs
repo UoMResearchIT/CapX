@@ -148,11 +148,17 @@ namespace PPMTool.Pages
         {
             if (selectedProject != null)
             {
-                financeSummaryItem = new FinanceSummaryItem(
-                    selectedProject,
+                var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                    Context,
+                    selectedProject.SubTasks.SelectMany(x => x.AssignedResources),
                     FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
                     PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)
+                );
+
+                financeSummaryItem = new FinanceSummaryItem(
+                    selectedProject,
+                    transactions
                 );
             }
         }

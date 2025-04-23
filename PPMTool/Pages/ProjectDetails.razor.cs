@@ -209,12 +209,19 @@ namespace PPMTool.Pages
                     // Generate the list of skills
                     skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
 
-                    // Generate the finance item
-                    financeSummaryItem = new FinanceSummaryItem(
-                        project,
+                    // Generate the funds requested and received
+                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                        context,
+                        project.SubTasks.SelectMany(x => x.AssignedResources),
                         sources,
                         InvoiceService.GetFundsRequested(context, project.ProjectId),
                         PaymentService.GetFundsReceived(context, project.ProjectId)
+                    );
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        transactions
                     );
 
                     // Generate the blocks for the schedule chart
