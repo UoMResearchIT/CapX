@@ -59,6 +59,9 @@ namespace PPMTool.Pages
         [Inject]
         private SkillTagService SkillTagService { get; set; }
 
+        [Inject]
+        private FundingSourceService FundingSourceService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -118,6 +121,7 @@ namespace PPMTool.Pages
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
         private IEnumerable<Rate> availableRates = new List<Rate>();
+        private IEnumerable<FundingSource> availableSources = new List<FundingSource>();
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
@@ -155,6 +159,13 @@ namespace PPMTool.Pages
                 Context = referenceContext;
             }
 
+            // Get project model from DB and manually restore it in case it has been modified elsewhere
+            ProjectModel = ProjectService.GetById(Context, ProjectId);
+            if (restoreModels)
+            {
+                ProjectService.RestoreModel(Context, ref projectModel);
+            }
+
             // Initialise the lists
             people = PersonService.GetAll(Context)
                 .Where(x => x.EndDate == null || x.EndDate >= DateTime.Now)
@@ -163,13 +174,7 @@ namespace PPMTool.Pages
             taskTypes = Enum.GetValues<TaskType>().ToList();
             availableTags = SkillTagService.GetAll(Context);
             availableRates = Enum.GetValues<Rate>().ToList();
-
-            // Get project model from DB and manually restore it in case it has been modified elsewhere
-            ProjectModel = ProjectService.GetById(Context, ProjectId);
-            if (restoreModels)
-            {
-                ProjectService.RestoreModel(Context, ref projectModel);
-            }
+            availableSources = FundingSourceService.GetFundingSources(Context, ProjectId ?? 0).ToList();
 
             // No project then stop initialising
             if (ProjectModel == null)

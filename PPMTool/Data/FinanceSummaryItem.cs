@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
@@ -100,7 +97,7 @@ namespace PPMTool.Data
             FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
 
             var sourcesAsList = sources
-                .Select(x => $"{(x.HasAccountCode ? x.AccountCode : "Other")}&nbsp;({(x.FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value)})")
+                .Select(x => x.GetSensibleObjectName().Replace(" ", "&nbsp;"))
                 .Distinct();
             ListOfFundingSources = (MarkupString)((sourcesAsList != null && sourcesAsList.Count() > 0) ? string.Join("<br />", sourcesAsList) : "None");
         }

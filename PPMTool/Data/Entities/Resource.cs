@@ -64,15 +64,18 @@ namespace PPMTool.Data.Entities
         public Rate Rate { get; set; }
 
         /// <summary>
+        /// This represents where the resource is funded from in terms of known funding sources for the project.
+        /// It is optional since it needs to be possible to associated resources with tasks before the funding sources are known.
+        /// </summary>
+        public FundingSource FundedFrom { get; set; }
+
+        /// <summary>
         /// The task on the project this resource is assigned to
         /// </summary>
         [Required]
         public SubTask SubTask { get; set; }
 
-        /// <summary>
         /// <inheritdoc/>
-        /// </summary>
-        /// <returns></returns>
         public string GetSensibleObjectName()
         {
             return $"{Person?.Name} (Resource)";

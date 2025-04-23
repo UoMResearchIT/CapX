@@ -409,6 +409,20 @@
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
                             }
+                            <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="120px" Title="Funding Source" MinWidth="10px">
+                                <Template Context="res">
+                                    <RadzenText Text="@res.FundedFrom.GetSensibleObjectName()" />
+                                </Template>
+                                <EditTemplate Context="res">
+                                    <RadzenDropDown @bind-Value="res.FundedFrom"
+                                                    Data="@availableSources"
+                                                    Style="width:100%; display: block;">
+                                        <Template Context="source">
+                                            <RadzenText Text="@source.GetSensibleObjectName()" />
+                                        </Template>
+                                    </RadzenDropDown>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions">
                                 <Template Context="res">
                                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))"/>
