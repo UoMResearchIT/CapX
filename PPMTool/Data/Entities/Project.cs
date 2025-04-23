@@ -368,7 +368,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private double CalculateLeadershipCosts(bool actualCosts, IEnumerable<FinancialReference> financialReferences)
         {
-            // If not using the leadership cost models then this is zero
+            // If not using the leadership cost model then this is zero
             if (CostModel != CostModel.TechAndLeadership)
             {
                 return 0;

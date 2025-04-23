@@ -402,8 +402,8 @@
                                         <RadzenDropDown @bind-Value="res.Rate"
                                                         Data="@availableRates"
                                                         Style="width:100%; display: block;">
-                                            <Template Context="res1">
-                                                <RadzenText Text="@res1.Rate.ToString()" />
+                                            <Template Context="rate">
+                                                <RadzenText Text="@rate.ToString()" />
                                             </Template>
                                         </RadzenDropDown>
                                     </EditTemplate>
