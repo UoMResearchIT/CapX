@@ -125,7 +125,14 @@
                 <div class="col-3">
                     <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
                     <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" Disabled="@(projectModel.CostModel != CostModel.DayRate)" />
+                    @if (projectModel.CostModel == CostModel.DayRate)
+                    {
+                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
+                    }
+                    else
+                    {
+                        <RadzenTextBox Value="N/A" Disabled="true" />
+                    }
                 </div>
                 <div class="col-3">
                     <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
