@@ -116,7 +116,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task ViewInvoiceDocumentAsync(Invoice invoice)
         {
-            await JSRuntime.InvokeAsync<object>("open", $"{invoice.InvoiceUrl}", "_blank");
+            await JSRuntime.InvokeVoidAsync("open", $"{invoice.InvoiceUrl}", "_blank");
         }
 
         /// <summary>

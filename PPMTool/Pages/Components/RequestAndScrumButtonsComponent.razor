@@ -29,12 +29,12 @@
 
     private async Task ViewRequestDocClickedAsync(Project project)
     {
-        await JSRuntime.InvokeAsync<object>("open", $"{project?.RequestDocLink}", "_blank");
+        await JSRuntime.InvokeVoidAsync("open", $"{project?.RequestDocLink}", "_blank");
     }
 
     private async Task ViewScrumBoardClickedAsync(Project project)
     {
-        await JSRuntime.InvokeAsync<object>("open", $"{project?.ScrumProjectLink}", "_blank");
+        await JSRuntime.InvokeVoidAsync("open", $"{project?.ScrumProjectLink}", "_blank");
     }
 
     protected override void OnInitialized()
