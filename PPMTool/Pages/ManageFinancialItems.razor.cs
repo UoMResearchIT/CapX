@@ -289,7 +289,7 @@ namespace PPMTool.Pages
                 {
                     try
                     {
-                        var filename = $"CapX-Finace-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
+                        var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
                         var workbook = new XLWorkbook();
                         var sheet1 = workbook.Worksheets.Add("Invoices");
                         var sheet2 = workbook.Worksheets.Add("Payments");
