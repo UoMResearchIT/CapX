@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -166,6 +167,21 @@ namespace PPMTool.Services
         internal SubTask GetShallowById(PPMToolContext context, int? subTaskId)
         {
             return context.SubTasks.FirstOrDefault(x => x.SubTaskId == subTaskId);
+        }
+
+        /// <summary>
+        /// Returns the actual work in hours summed over all the subtasks for the given project
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        internal double GetActuals(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Include(x => x.SubTasks)
+                .FirstOrDefault(x => x.ProjectId == projectId)
+                .SubTasks?
+                .RoundedSum(x => x.ActualWorkHours) ?? 0;
         }
     }
 }

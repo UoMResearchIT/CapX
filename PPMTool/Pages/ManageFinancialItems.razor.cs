@@ -163,6 +163,8 @@ namespace PPMTool.Pages
 
                 financeSummaryItem = new FinanceSummaryItem(
                     selectedProject,
+                    ProjectService.GetProjectManager(Context, selectedProject.ProjectId),
+                    SubTaskService.GetActuals(Context, selectedProject.ProjectId),
                     transactions
                 );
             }

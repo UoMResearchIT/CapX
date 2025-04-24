@@ -221,6 +221,8 @@ namespace PPMTool.Pages
                     // Generate the finance item
                     financeSummaryItem = new FinanceSummaryItem(
                         project,
+                        project.ProjectManager,
+                        project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
                         transactions
                     );
 

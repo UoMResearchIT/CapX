@@ -72,9 +72,11 @@ namespace PPMTool.Data
         /// <summary>
         /// Ctor
         /// </summary>
-        /// <param name="project"></param>
+        /// <param name="project">A shallow copy of the project entity</param>
+        /// <param name="projectManager"></param>
+        /// <param name="actuals">Actuals summed across all resources and tasks for this project</param>
         /// <param name="transactionBreakdown"></param>
-        public FinanceSummaryItem(Project project, TransactionBreakdown transactionBreakdown)
+        public FinanceSummaryItem(Project project, Person projectManager, double actuals, TransactionBreakdown transactionBreakdown)
         {
             if (project == null)
             {
@@ -89,7 +91,7 @@ namespace PPMTool.Data
             ProjectPI = project.PI;
             School = project.School;
             Faculty = project.Faculty;
-            ProjectPM = project.ProjectManager?.Name ?? "Not Set";
+            ProjectPM = projectManager?.Name ?? "Not Set";
             ProjectStatus = project.ProjectStatus;
             CostModel = project.CostModel;
             DayRate = project.DayRate;
@@ -103,7 +105,7 @@ namespace PPMTool.Data
             AvailableFundsDI = transactionBreakdown.FundingSources.Where(x => x.FundingSourceType == FundingSourceType.DI).RoundedSum(x => x.AmountAvailable, 2);
             FundsRequestedOther = transactionBreakdown.Invoices;
             FundsReceivedOther = transactionBreakdown.Payments;
-            ActualHours = project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0;
+            ActualHours = actuals;
             PlannedCostColour = PlannedCost > Budget ? "red" : "green";
             ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
             FundsReceivedColour = GetAllReceived() < GetAllRequested() ? "red" : "green";

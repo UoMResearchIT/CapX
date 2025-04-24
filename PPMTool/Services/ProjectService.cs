@@ -167,5 +167,19 @@ namespace PPMTool.Services
             if (!success) throw new InvalidOperationException("Could not determine the old status of the project model.");
             return status;
         }
+
+        /// <summary>
+        /// Returns the project manager as a person entity for the given project
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        internal Person GetProjectManager(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Include(x => x.ProjectManager)
+                .FirstOrDefault(x => x.ProjectId == projectId)?
+                .ProjectManager;
+        }
     }
 }

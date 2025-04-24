@@ -23,6 +23,9 @@ namespace PPMTool.Pages
         [Inject]
         private FundingSourceService FundingSourceService { get; set; }
 
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
         private IList<FinanceSummaryItem> items;
         private RadzenDataGrid<FinanceSummaryItem> dataGrid;
 
@@ -54,21 +57,28 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine($"** Loading finance data...");
                 items = new List<FinanceSummaryItem>();
-                var projects = ProjectService.GetAll(Context);
+                var projects = ProjectService.GetAllShallow(Context);
                 var sources = FundingSourceService.GetAll(Context);
                 foreach (var project in projects)
                 {
+                    var resources = SubTaskService.GetResourcesForProject(Context, project.ProjectId);
+
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
                         Context,
-                        project.SubTasks.SelectMany(x => x.AssignedResources),
+                        resources,
                         sources.Where(x => x.Project.ProjectId == project.ProjectId),
                         InvoiceService.GetFundsRequested(Context, project.ProjectId),
                         PaymentService.GetFundsReceived(Context, project.ProjectId)
                     );
 
+                    var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
+                    var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
+
                     items.Add(
                         new FinanceSummaryItem(
                             project,
+                            pm,
+                            actuals,
                             transactions
                         )
                     );
