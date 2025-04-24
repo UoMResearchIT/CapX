@@ -411,7 +411,13 @@
                             }
                             <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="180px" Title="Funding Source" MinWidth="10px">
                                 <Template Context="res">
-                                    <RadzenText Style="margin-bottom: 0rem;" Text="@(res.FundedFrom?.GetSensibleObjectName() ?? "None")" />
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
+                                        @if (res.FundedFrom == null)
+                                        {
+                                            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="No funding source for this resource!" />
+                                        }
+                                        <RadzenText Style="@($"margin-bottom: 0rem; {(res.FundedFrom == null ? "color: red;" : "")}")" Text="@(res.FundedFrom?.GetSensibleObjectName() ?? "None")" />
+                                    </RadzenStack>
                                 </Template>
                                 <EditTemplate Context="res">
                                     <RadzenDropDown @bind-Value="res.FundedFrom"

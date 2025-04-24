@@ -96,13 +96,17 @@
             .Where(x => x.Project?.ProjectId == Project?.ProjectId)
             .OrderBy(x => x.InvoiceId);
 
-        // Load funding sources for the dropdown -- only include other as shouldn't be allowed to create manual payments for other sources as it is against process and would result in double-counting
+        // Load funding sources for the dropdown -- only include "other" types as shouldn't be allowed to create 
+        // manual payments for other sources as it is against process and would result in double-counting
         sources = FundingSourceService
             .GetAll(Context)
             .Where(x => x.Project?.ProjectId == Project?.ProjectId && x.FundingSourceType == FundingSourceType.Other)
             .OrderBy(x => x.FundingSourceId);
     }
 
+    /// <summary>
+    /// Process valid edit form
+    /// </summary>
     protected override void HandleValidSubmit()
     {
         base.HandleValidSubmit();

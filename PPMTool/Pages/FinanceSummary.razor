@@ -77,12 +77,12 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequested" Title="Requested" MinWidth="10px">
                     <Template Context="item">
-                        <span class="@item.FundsRequestedColour">@item.FundsRequested.ToString("C")</span>
+                        <span class="@item.FundsRequestedColour">@item.FundsRequestedOther.ToString("C")</span>
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceived" Title="Received" MinWidth="10px">
                     <Template Context="item">
-                        <span class="@item.FundsReceivedColour">@item.FundsReceived.ToString("C")</span>
+                        <span class="@item.FundsReceivedColour">@item.FundsReceivedOther.ToString("C")</span>
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsOwed" Title="Owed" MinWidth="10px">
