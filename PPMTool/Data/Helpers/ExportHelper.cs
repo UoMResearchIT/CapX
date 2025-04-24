@@ -58,8 +58,14 @@ namespace PPMTool.Data.Helpers
             // Each assignment is at least one row of the report
             foreach (var task in tasksInWindow)
             {
+                // Get project
                 var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
+
+                // Get funding source info
+                var fundingSource = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).FundedFrom;
+
+                // Create a line
                 var initialChunk = new AssignmentChunk
                 {
                     EmployeeName = person.Name,
@@ -73,7 +79,10 @@ namespace PPMTool.Data.Helpers
                     Task = task.Name,
                     StartDate = task.StartDate,
                     EndDate = task.EndDate,
-                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate)
+                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate),
+                    AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
+                    FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
+                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {

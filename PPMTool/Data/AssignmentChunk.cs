@@ -45,11 +45,21 @@ namespace PPMTool.Data
 
         public int FinancialYear { get; set; }
 
+        public string AccountCode { get; set; }
+
+        public string FundingSourceType { get; set; }
+
+        public string FundingSourceDescription { get; set; }
+
         public AssignmentChunk()
         {
 
         }
 
+        /// <summary>
+        /// Copy constructor
+        /// </summary>
+        /// <param name="taskToCopy"></param>
         public AssignmentChunk(AssignmentChunk taskToCopy)
         {
             EmployeeName = taskToCopy.EmployeeName;
@@ -64,7 +74,9 @@ namespace PPMTool.Data
             StartDate = new DateTime(taskToCopy.StartDate.Ticks);
             EndDate = new DateTime(taskToCopy.EndDate.Ticks);
             FinancialYear = taskToCopy.FinancialYear;
+            AccountCode = taskToCopy.AccountCode;
+            FundingSourceType = taskToCopy.FundingSourceType;
+            FundingSourceDescription = taskToCopy.FundingSourceDescription;
         }
-
     }
 }
