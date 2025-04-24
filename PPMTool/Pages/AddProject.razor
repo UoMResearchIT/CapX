@@ -136,8 +136,9 @@
                     }
                 </div>
                 <div class="col-3">
-                    <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" />
+                    <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" />
+                    <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
                 </div>
             </div>
             <hr />
