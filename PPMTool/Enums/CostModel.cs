@@ -12,7 +12,7 @@ namespace PPMTool.Enums
         [Description("Planned costs computed from resource rates; no leadership charge")]
         TechOnly,
         [Display(Name = "Technical and Leadership")]
-        [Description("Planned costs computed from resource rates + leadership charge over duration")]
+        [Description("Planned costs computed from resource rates; leadership charge added over duration")]
         TechAndLeadership
     }
 }

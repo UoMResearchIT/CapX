@@ -94,7 +94,8 @@
             </div>
             <div class="row">
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Public Description" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Description" />
+                    <HintComponent Message="Remember that this description is visible to the whole department. Do not put anything in this field that you would not be happy to share with the wider institution." /><br/>
                     <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
                 </div>
             </div>
