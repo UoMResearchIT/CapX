@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using PPMTool.Enums;
+﻿using PPMTool.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Helpers
 {
     public abstract class DropdownHelper
     {

@@ -24,6 +24,8 @@
         </RadzenStack>
     </RadzenFieldset>
     <RadzenFieldset Text="Associated Funding Source">
+        <HintComponent Message="This only contains funding sources of type 'Other'. DA/DI funding sources should not require manual transfer." />
+        <br/>
         <RadzenDropDown Data="@sources"
                         @bind-Value="Payment.Source"
                         Name="FundingId"
@@ -31,7 +33,7 @@
                         Style="width: 100%;"
                         Placeholder="Select Funding Source">
             <Template Context="item">
-                @($"{(item as FundingSource)?.FundingSourceId}: {(((item as FundingSource)?.HasAccountCode ?? false) ? (item as FundingSource)?.AccountCode : "No Acc Code")} ({(item as FundingSource).FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value})")
+                @((item as FundingSource)?.GetSensibleObjectName() ?? "NULL")
             </Template>
         </RadzenDropDown>
     </RadzenFieldset>
@@ -94,13 +96,17 @@
             .Where(x => x.Project?.ProjectId == Project?.ProjectId)
             .OrderBy(x => x.InvoiceId);
 
-        // Load funding sources for the dropdown
+        // Load funding sources for the dropdown -- only include "other" types as shouldn't be allowed to create 
+        // manual payments for other sources as it is against process and would result in double-counting
         sources = FundingSourceService
             .GetAll(Context)
-            .Where(x => x.Project?.ProjectId == Project?.ProjectId)
+            .Where(x => x.Project?.ProjectId == Project?.ProjectId && x.FundingSourceType == FundingSourceType.Other)
             .OrderBy(x => x.FundingSourceId);
     }
 
+    /// <summary>
+    /// Process valid edit form
+    /// </summary>
     protected override void HandleValidSubmit()
     {
         base.HandleValidSubmit();

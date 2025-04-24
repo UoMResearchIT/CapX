@@ -1,4 +1,4 @@
-﻿using System;
+﻿using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
@@ -96,26 +96,26 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Gets a suitable standard or junior figure from the financial references for annual costs
         /// </summary>
-        /// <param name="grade"></param>
+        /// <param name="rate"></param>
         /// <returns></returns>
-        /// <exception cref="Exception">If a grade lower than 4 is found</exception>
-        internal double GetJuniorOrStandardAnnualCosts(int grade)
+        internal double GetJuniorOrStandardAnnualCosts(Rate rate)
         {
             // Junior Rate
-            if (grade == 4 || grade == 5)
+            if (rate == Rate.Junior)
             {
                 return Grade51Costs;
             }
 
             // Standard Rate
-            else if (grade > 5)
+            else if (rate == Rate.Standard)
             {
                 return Grade71Costs;
             }
 
+            // Senior rate
             else
             {
-                throw new Exception($"Grade {grade} is invalid!");
+                return Grade75Costs;
             }
         }
 

@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen.Blazor;
 
@@ -24,6 +22,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private FundingSourceService FundingSourceService { get; set; }
+
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
 
         private IList<FinanceSummaryItem> items;
         private RadzenDataGrid<FinanceSummaryItem> dataGrid;
@@ -56,16 +57,29 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine($"** Loading finance data...");
                 items = new List<FinanceSummaryItem>();
-                var projects = ProjectService.GetAll(Context);
+                var projects = ProjectService.GetAllShallow(Context);
                 var sources = FundingSourceService.GetAll(Context);
                 foreach (var project in projects)
                 {
+                    var resources = SubTaskService.GetResourcesForProject(Context, project.ProjectId);
+
+                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                        Context,
+                        resources,
+                        sources.Where(x => x.Project.ProjectId == project.ProjectId),
+                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
+                        PaymentService.GetFundsReceived(Context, project.ProjectId)
+                    );
+
+                    var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
+                    var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
+
                     items.Add(
                         new FinanceSummaryItem(
                             project,
-                            sources.Where(x => x.Project.ProjectId == project.ProjectId),
-                            InvoiceService.GetFundsRequested(Context, project.ProjectId),
-                            PaymentService.GetFundsReceived(Context, project.ProjectId)
+                            pm,
+                            actuals,
+                            transactions
                         )
                     );
                 }

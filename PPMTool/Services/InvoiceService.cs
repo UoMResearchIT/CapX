@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Dynamic.Core;
+﻿using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -57,7 +55,9 @@ namespace PPMTool.Services
         /// <returns></returns>
         public double GetFundsRequested(PPMToolContext context, int projectId)
         {
-            return context.Invoices.Where(x => x.Project.ProjectId == projectId && x.Status != Enums.InvoiceStatus.Cancelled).RoundedSum(x => x.Value, 0);
+            return context.Invoices
+                .Where(x => x.Project.ProjectId == projectId && x.Status != Enums.InvoiceStatus.Cancelled)
+                .RoundedSum(x => x.Value, 0);
         }
     }
 }

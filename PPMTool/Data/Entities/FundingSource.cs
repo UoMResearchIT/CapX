@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using DotNetExtensions;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
-    public class FundingSource : BaseFinanceItem
+    public class FundingSource : BaseFinanceItem, ILoggableClass
     {
         public int FundingSourceId { get; set; }
 
@@ -27,9 +26,26 @@ namespace PPMTool.Data.Entities
         public string AccountCode { get; set; }
 
         /// <summary>
+        ///  Some information about what this funding source is if known
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// This is the amount of money available in the funding source for RSE costs
+        /// </summary>
+        [Required]
+        [DataType(DataType.Currency)]
+        public double AmountAvailable { get; set; }
+
+        /// <summary>
         /// Set of payments attached to this funding source
         /// </summary>
         public ICollection<Payment> PaymentsFromSource { get; set; }
+
+        /// <summary>
+        /// Set of resources funded from this source
+        /// </summary>
+        public ICollection<Resource> ResourcesFunded { get; set; }
 
         /// <summary>
         /// Details about the funding source to be posted to a note
@@ -43,6 +59,12 @@ namespace PPMTool.Data.Entities
                 text += $", Account Code = {AccountCode}";
             }
             return text;
+        }
+
+        /// <inheritdoc/>
+        public string GetSensibleObjectName()
+        {
+            return $"[{FundingSourceId}] {(HasAccountCode ? AccountCode : "No Account")} ({FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value})";
         }
     }
 }

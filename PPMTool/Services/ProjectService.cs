@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -103,6 +100,9 @@ namespace PPMTool.Services
                     .ThenInclude(x => x.SkillsRequired)
                 .Include(x => x.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
+                        .ThenInclude(x => x.FundedFrom)
+                .Include(x => x.SubTasks)
+                    .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)
                             .ThenInclude(pp => pp.Absences)
                 .Include(p => p.ProjectManager)
@@ -166,6 +166,20 @@ namespace PPMTool.Services
             var success = context.Entry(projectModel).OriginalValues.TryGetValue<ProjectStatus>(nameof(Project.ProjectStatus), out var status);
             if (!success) throw new InvalidOperationException("Could not determine the old status of the project model.");
             return status;
+        }
+
+        /// <summary>
+        /// Returns the project manager as a person entity for the given project
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        internal Person GetProjectManager(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Include(x => x.ProjectManager)
+                .FirstOrDefault(x => x.ProjectId == projectId)?
+                .ProjectManager;
         }
     }
 }

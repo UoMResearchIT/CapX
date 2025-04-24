@@ -6,7 +6,7 @@
     <RadzenBadge BadgeStyle="BadgeStyle.Light">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
             <RadzenIcon Icon=@icon IconStyle=@iconStyle title="@(string.Join('\n', Messages?.Where(x => x.Type == Type && x.Status).Select(x => x.Message)))" />
-            <RadzenText Style="margin-bottom: 0.1rem" TextAlign="TextAlign.Center" Text=@(Messages?.Where(x => x.Type == Type && x.Status).Count().ToString()) />
+            <RadzenText Style="margin-bottom: 0rem" TextStyle="TextStyle.Body2" TextAlign="TextAlign.Center" Text=@(Messages?.Where(x => x.Type == Type && x.Status).Count().ToString()) />
         </RadzenStack>
     </RadzenBadge>
 }

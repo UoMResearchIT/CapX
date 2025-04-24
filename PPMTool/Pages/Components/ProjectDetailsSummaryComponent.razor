@@ -21,13 +21,15 @@ else
                     <th>School (Faculty)</th>
                     <th>PM</th>
                     <th>Cost Model</th>
-                    <th>Day Rate</th>
+                    @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
+                    {
+                        <th>Day Rate</th>
+                    }
                     <th>Agreed Budget</th>
                     <th>Planned Cost</th>
-                    <th>Actual Cost</th>
+                    <th>Actual Cost (Hours)</th>
                     <th>Funds Requested</th>
                     <th>Funds Received</th>
-                    <th>Actual Hours</th>
                     <th>Funding Sources</th>
                 </tr>
             </thead>
@@ -38,55 +40,99 @@ else
                     <td>@($"{FinanceSummaryItem.School.ToNiceString()} ({FinanceSummaryItem.Faculty.ToNiceString()})")</td>
                     <td>@FinanceSummaryItem.ProjectPM</td>
                     <td>@(FinanceSummaryItem.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
-                    <td>@(FinanceSummaryItem.CostModel == CostModel.DayRate ? FinanceSummaryItem.DayRate.ToString("C0") : "N/A")</td>
+                    @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
+                    {
+                        <td>@FinanceSummaryItem.DayRate.ToString("C0")</td>
+                    }
                     <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             @($"Total: ")
                         }
                         <span style="color:@FinanceSummaryItem.PlannedCostColour">
                             @FinanceSummaryItem.PlannedCost.ToString("C0")
                         </span>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             <br />
                             @($"Technical: ")
-                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                            <span>
                                 @((FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts).ToString("C0"))
                             </span>
                             <br />
                             @($"Leadership: ")
-                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                            <span>
                                 @(FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0"))
                             </span>
                         }
                     </td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             @($"Total: ")
                         }
                         <span style="color:@FinanceSummaryItem.ActualCostColour">
                             @FinanceSummaryItem.ActualCost.ToString("C0")
                         </span>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TwoTierTechStdAndLeadership || FinanceSummaryItem.CostModel == CostModel.TwoTierTechJunAndLeadership)
+                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
                         {
                             <br />
                             @($"Technical: ")
-                            <span style="color:@FinanceSummaryItem.ActualCostColour">
+                            <span>
                                 @((FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts).ToString("C0"))
                             </span>
                             <br />
                             @($"Leadership: ")
-                            <span style="color:@FinanceSummaryItem.ActualCostColour">
+                            <span>
                                 @(FinanceSummaryItem.ActualLeadershipCosts.ToString("C0"))
                             </span>
                         }
+                        <br />
+                        @($" ({FinanceSummaryItem.ActualHours.ToString("F2")})")
                     </td>
-                    <td><span style="color:@FinanceSummaryItem.FundsRequestedColour">@FinanceSummaryItem.FundsRequested.ToString("C0")</span></td>
-                    <td><span style="color:@FinanceSummaryItem.FundsReceivedColour">@FinanceSummaryItem.FundsReceived.ToString("C0")</span></td>
-                    <td>@FinanceSummaryItem.ActualHours</td>
+                    <td>
+                        @($"Total: ")
+                        <span style="color:@FinanceSummaryItem.FundsRequestedColour">
+                            @FinanceSummaryItem.GetAllRequested().ToString("C0")
+                        </span>
+                        <br />
+                        @($"DI: ")
+                        <span style="color:@FinanceSummaryItem.FundsDIColour">
+                            @FinanceSummaryItem.FundsDI.ToString("C0")
+                        </span>
+                        <br />
+                        @($"DA: ")
+                        <span>
+                            @FinanceSummaryItem.FundsDA.ToString("C0")
+                        </span>
+                        <br />
+                        @($"Other: ")
+                        <span>
+                            @FinanceSummaryItem.FundsRequestedOther.ToString("C0")
+                        </span>
+                    </td>
+                    <td>
+                        @($"Total: ")
+                        <span style="color:@FinanceSummaryItem.FundsReceivedColour">
+                            @FinanceSummaryItem.GetAllReceived().ToString("C0")
+                        </span>
+                        <br />
+                        @($"DI: ")
+                        <span style="color:@FinanceSummaryItem.FundsDIColour">
+                            @FinanceSummaryItem.GetReceivedDI().ToString("C0")
+                        </span>
+                        <br />
+                        @($"DA: ")
+                        <span>
+                            @FinanceSummaryItem.FundsDA.ToString("C0")
+                        </span>
+                        <br />
+                        @($"Other: ")
+                        <span>
+                            @FinanceSummaryItem.FundsReceivedOther.ToString("C0")
+                        </span>
+                    </td>
                     <td>@FinanceSummaryItem.ListOfFundingSources</td>
                 </tr>
             </tbody>

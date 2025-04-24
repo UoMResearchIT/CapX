@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -81,7 +79,9 @@ namespace PPMTool.Services
         /// <returns></returns>
         public double GetFundsReceived(PPMToolContext context, int projectId)
         {
-            return context.Payments.Where(x => x.Project.ProjectId == projectId).RoundedSum(x => x.Value, 0);
+            return context.Payments
+                .Where(x => x.Project.ProjectId == projectId)
+                .RoundedSum(x => x.Value, 0);
         }
     }
 }

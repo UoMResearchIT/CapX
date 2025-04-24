@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
@@ -43,6 +39,9 @@ namespace PPMTool.Pages
         private FundingSourceService FundingSourceService { get; set; }
 
         [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
@@ -52,6 +51,7 @@ namespace PPMTool.Pages
         private IEnumerable<FundingSource> sources;
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
+        private IEnumerable<Resource> resources;
         private int selectedTab;
         private RadzenDataGrid<Payment> dataGridPayments;
         private RadzenDataGrid<Invoice> dataGridInvoices;
@@ -120,7 +120,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task ViewInvoiceDocumentAsync(Invoice invoice)
         {
-            await JSRuntime.InvokeAsync<object>("open", $"{invoice.InvoiceUrl}", "_blank");
+            await JSRuntime.InvokeVoidAsync("open", $"{invoice.InvoiceUrl}", "_blank");
         }
 
         /// <summary>
@@ -128,8 +128,6 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
-            UpdateSummaryComponent();
-
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
             payments = PaymentService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
             sources = FundingSourceService.GetAll(Context).OrderByDescending(x => x.FundingSourceId);
@@ -140,7 +138,10 @@ namespace PPMTool.Pages
                 invoices = invoices.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 payments = payments.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 sources = sources.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
+                resources = SubTaskService.GetResourcesForProject(Context, selectedProject.ProjectId);
             }
+
+            UpdateSummaryComponent();
 
             Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
@@ -152,11 +153,19 @@ namespace PPMTool.Pages
         {
             if (selectedProject != null)
             {
-                financeSummaryItem = new FinanceSummaryItem(
-                    selectedProject,
+                var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                    Context,
+                    resources,
                     FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
                     PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)
+                );
+
+                financeSummaryItem = new FinanceSummaryItem(
+                    selectedProject,
+                    ProjectService.GetProjectManager(Context, selectedProject.ProjectId),
+                    SubTaskService.GetActuals(Context, selectedProject.ProjectId),
+                    transactions
                 );
             }
         }
@@ -235,7 +244,7 @@ namespace PPMTool.Pages
                         { nameof(FundingSourceFormComponent.Logger), Logger },
                         { nameof(FundingSourceFormComponent.Context), Context },
                         { nameof(FundingSourceFormComponent.ActiveUser), ActiveUser },
-                        { nameof(FundingSourceFormComponent.FormClosed), () => FormClosedHandler() },
+                        { nameof(FundingSourceFormComponent.FormClosed), () => FormClosedHandler(true) },
                         { nameof(FundingSourceFormComponent.EditAuthorised), EditAuthorised }
                     },
                     new DialogOptions
@@ -253,11 +262,21 @@ namespace PPMTool.Pages
         /// <summary>
         /// Callback which runs when the form closes
         /// </summary>
-        private void FormClosedHandler()
+        private void FormClosedHandler(bool updateBudget = false)
         {
             dataGridInvoices?.Reload();
             dataGridPayments?.Reload();
             dataGridSources?.Reload();
+
+            // If this is a finance source change, update the budget
+            if (updateBudget)
+            {
+                var sources = FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId);
+                selectedProject.Budget = sources.Sum(x => x.AmountAvailable);
+                LogInformation($"Updating budget to {selectedProject.Budget} from {sources.Count()} funding sources");
+                ProjectService.Update(Context, selectedProject);
+            }
+
             UpdateSummaryComponent();
             StateHasChanged();
         }
@@ -277,7 +296,7 @@ namespace PPMTool.Pages
                 {
                     try
                     {
-                        var filename = $"CapX-Finace-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
+                        var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
                         var workbook = new XLWorkbook();
                         var sheet1 = workbook.Worksheets.Add("Invoices");
                         var sheet2 = workbook.Worksheets.Add("Payments");

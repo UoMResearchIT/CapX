@@ -70,7 +70,7 @@
             </div>
             <div class="row">
                 <div class="col-4">
-                    <RadzenLabel class="radzen-form-label" Text="Product Owner" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Principal Investigator" /><br />
                     <RadzenTextBox TValue="string" @bind-Value="projectModel.PI" />
                 </div>
                 <div class="col-4">
@@ -94,7 +94,8 @@
             </div>
             <div class="row">
                 <div class="col">
-                    <RadzenLabel class="radzen-form-label" Text="Public Description" /><br />
+                    <RadzenLabel class="radzen-form-label" Text="Description" />
+                    <HintComponent Message="Remember that this description is visible to the whole department. Do not put anything in this field that you would not be happy to share with the wider institution." /><br/>
                     <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
                 </div>
             </div>
@@ -125,11 +126,19 @@
                 <div class="col-3">
                     <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
                     <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" Disabled="@(projectModel.CostModel != CostModel.DayRate)" />
+                    @if (projectModel.CostModel == CostModel.DayRate)
+                    {
+                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
+                    }
+                    else
+                    {
+                        <RadzenTextBox Value="N/A" Disabled="true" />
+                    }
                 </div>
                 <div class="col-3">
-                    <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" /><br />
-                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" />
+                    <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" />
+                    <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
+                    <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
                 </div>
             </div>
             <hr />

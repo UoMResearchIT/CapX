@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
-using System.Linq;
-using Microsoft.CodeAnalysis;
+using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using static PPMTool.Data.ValidationAttributes;
 
@@ -167,6 +164,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("This project has no funding sources but is running or has run in the past!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
+                new StatusMessage("This project has a task with a resource without a associated funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -276,6 +274,16 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether this project has any tasks that are running, or have run, but have no funding source
+        /// </summary>
+        /// <returns></returns>
+        public bool HasResourcesWithNoFundingSourceOnRunningTask()
+        {
+            // Check if any of the subtasks have resources with no funding source
+            return SubTasks?.Any(x => x.HasResourceWithNoFundingSourceAndRunning()) ?? false;
+        }
+
+        /// <summary>
         /// Updates the project meta data based on the current state of subtasks, resources and actuals
         /// </summary>
         /// <param name="updateSubTaskCosts">Whether to update the subtask costs and save to database</param>
@@ -372,8 +380,8 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private double CalculateLeadershipCosts(bool actualCosts, IEnumerable<FinancialReference> financialReferences)
         {
-            // If not using the leadership cost models then this is zero
-            if (CostModel != CostModel.TwoTierTechStdAndLeadership && CostModel != CostModel.TwoTierTechJunAndLeadership)
+            // If not using the leadership cost model then this is zero
+            if (CostModel != CostModel.TechAndLeadership)
             {
                 return 0;
             }

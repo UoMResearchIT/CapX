@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using ApexCharts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
@@ -213,12 +209,21 @@ namespace PPMTool.Pages
                     // Generate the list of skills
                     skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
 
-                    // Generate the finance item
-                    financeSummaryItem = new FinanceSummaryItem(
-                        project,
+                    // Generate the funds requested and received
+                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                        context,
+                        project.SubTasks.SelectMany(x => x.AssignedResources),
                         sources,
                         InvoiceService.GetFundsRequested(context, project.ProjectId),
                         PaymentService.GetFundsReceived(context, project.ProjectId)
+                    );
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        project.ProjectManager,
+                        project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
+                        transactions
                     );
 
                     // Generate the blocks for the schedule chart
