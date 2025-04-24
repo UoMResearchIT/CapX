@@ -68,10 +68,21 @@ namespace PPMTool.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Not really reversible as we don't store the original values of the funding sources
+
             // Can remove the automatic additions though
             migrationBuilder.Sql(@"
                 DELETE FROM FundingSources
-                WHERE Description = '[Automatically Added] Source added automatically during data migration';
+                WHERE Description = '[Automatically Added] Source added automatically during data migration'
+                AND FundingSourceType = 2;
+            ");
+
+            // And reset the values of the existing other sources to 0 again
+            migrationBuilder.Sql(@"
+                UPDATE FundingSources
+                SET AmountAvailable = 0,
+                Description = NULL
+                WHERE FundingSourceType = 2
+                AND Description = '[Automatically Modified] Source value updated during data migration';
             ");
         }
     }
