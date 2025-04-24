@@ -39,6 +39,9 @@ namespace PPMTool.Pages
         private FundingSourceService FundingSourceService { get; set; }
 
         [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
+        [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
         private Project selectedProject;
@@ -48,6 +51,7 @@ namespace PPMTool.Pages
         private IEnumerable<FundingSource> sources;
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
+        private IEnumerable<Resource> resources;
         private int selectedTab;
         private RadzenDataGrid<Payment> dataGridPayments;
         private RadzenDataGrid<Invoice> dataGridInvoices;
@@ -124,8 +128,6 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
-            UpdateSummaryComponent();
-
             invoices = InvoiceService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.InvoiceId);
             payments = PaymentService.GetAll(Context).OrderByDescending(x => x.KeyDate).ThenByDescending(x => x.PaymentId);
             sources = FundingSourceService.GetAll(Context).OrderByDescending(x => x.FundingSourceId);
@@ -136,7 +138,10 @@ namespace PPMTool.Pages
                 invoices = invoices.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 payments = payments.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 sources = sources.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
+                resources = SubTaskService.GetResourcesForProject(Context, selectedProject.ProjectId);
             }
+
+            UpdateSummaryComponent();
 
             Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
@@ -150,7 +155,7 @@ namespace PPMTool.Pages
             {
                 var transactions = FinanceHelper.ComputeTransactionBreakdown(
                     Context,
-                    selectedProject.SubTasks.SelectMany(x => x.AssignedResources),
+                    resources,
                     FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
                     PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)

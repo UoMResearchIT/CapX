@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -43,8 +40,24 @@ namespace PPMTool.Services
         public override IEnumerable<SubTask> GetAll(PPMToolContext context)
         {
             return context.SubTasks
-                .Include(s => s.AssignedResources)
-                .ToList();
+                .Include(s => s.AssignedResources);
+        }
+
+        /// <summary>
+        /// Returns a flattened list of resources working on a specific project and includes their funding sources
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        public IEnumerable<Resource> GetResourcesForProject(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Where(x => x.ProjectId == projectId)
+                .Include(x => x.SubTasks)
+                    .ThenInclude(x => x.AssignedResources)
+                        .ThenInclude(x => x.FundedFrom)
+                .SelectMany(x => x.SubTasks)
+                .SelectMany(x => x.AssignedResources);
         }
 
         /// <summary>
