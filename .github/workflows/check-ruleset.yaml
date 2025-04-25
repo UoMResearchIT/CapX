@@ -1,16 +1,14 @@
 # GitHub Actions Workflow: Check Repository Ruleset
 # 
 # This workflow ensures that the repository's branch protection rules
-# match the expected ruleset defined in '.github/Key Branch Protection Rules.json'.
+# match the expected ruleset defined in the template repository.
 #
 # It runs on pushes to the main branch and pull requests.
 #
 # Steps:
-# 1. Check out the repository.
-# 2. Install jq for JSON processing.
-# 3. Load expected Branch Protection Rulesets defined by RSE Department from manually exported json file.
-# 4. Fetch the working repository's Branch Protection Rulesets from GitHub API.
-# 5. Compare the expected and actual rulesets.
+# 1. Fetch the expected Branch Protection Rulesets from the template repository.
+# 2. Fetch the current repository's Branch Protection Rulesets.
+# 3. Compare the expected and actual rulesets.
 
 # Copyright (c) 2025 The University of Manchester
 #
@@ -34,9 +32,6 @@ on:
       - main
   pull_request:
 
-permissions:
-  contents: read
-
 jobs:
   check-ruleset:
     runs-on: ubuntu-latest
@@ -44,26 +39,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: Set executable permissions
-        run: chmod +x .github/workflows/ruleset/fetch.bash && chmod +x .github/workflows/ruleset/check.bash
 
       - name: Fetch Standard RSE Ruleset
         id: expected
-        run: .github/workflows/ruleset/fetch.bash
-        env:
-          GH_TOKEN: ${{ secrets.ACTIONS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
-          REPO_NAME: UoMResearchIT/RSE-Repository-Template
+        uses: UoMResearchIT/actions/get-repo-ruleset@v0.3
+        with:
+          repository: UoMResearchIT/RSE-Repository-Template
+          token: ${{ secrets.ACTIONS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Fetch Current Repository Ruleset from GitHub API
+      - name: Fetch This Repository's Ruleset
         id: current
-        run: .github/workflows/ruleset/fetch.bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_NAME: ${{ github.repository }}
+        uses: UoMResearchIT/actions/get-repo-ruleset@v0.3
 
       - name: Compare Rulesets
-        run: .github/workflows/ruleset/check.bash
-        env:
-          EXPECTED_FILE: ${{ steps.expected.outputs.file }}
-          CURRENT_FILE: ${{ steps.current.outputs.file }}
+        uses: UoMResearchIT/actions/check-ruleset-containment@v0.3
+        with:
+          current: ${{ steps.current.outputs.filename }}
+          expected: ${{ steps.expected.outputs.filename }}

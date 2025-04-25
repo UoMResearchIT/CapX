@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
@@ -44,9 +41,9 @@ namespace PPMTool.Data
 
         public double ActualLeadershipCosts { get; set; }
 
-        public double FundsRequested { get; set; }
+        public double FundsRequestedOther { get; set; }
 
-        public double FundsReceived { get; set; }
+        public double FundsReceivedOther { get; set; }
 
         public double ActualHours { get; set; }
 
@@ -62,10 +59,24 @@ namespace PPMTool.Data
 
         public string FundsOwedColour { get; }
 
+        public double FundsDA { get; }
+
+        public double FundsDI { get; }
+
+        public double AvailableFundsDI { get; }
+
+        public string FundsDIColour { get; }
+
         public MarkupString ListOfFundingSources { get; }
 
-
-        public FinanceSummaryItem(Project project, IEnumerable<FundingSource> sources, double fundsRequested, double fundsReceived)
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="project">A shallow copy of the project entity</param>
+        /// <param name="projectManager"></param>
+        /// <param name="actuals">Actuals summed across all resources and tasks for this project</param>
+        /// <param name="transactionBreakdown"></param>
+        public FinanceSummaryItem(Project project, Person projectManager, double actuals, TransactionBreakdown transactionBreakdown)
         {
             if (project == null)
             {
@@ -80,7 +91,7 @@ namespace PPMTool.Data
             ProjectPI = project.PI;
             School = project.School;
             Faculty = project.Faculty;
-            ProjectPM = project.ProjectManager?.Name ?? "Not Set";
+            ProjectPM = projectManager?.Name ?? "Not Set";
             ProjectStatus = project.ProjectStatus;
             CostModel = project.CostModel;
             DayRate = project.DayRate;
@@ -89,20 +100,52 @@ namespace PPMTool.Data
             PlannedLeadershipCosts = project.PlannedLeadershipCosts;
             ActualCost = project.ActualCost;
             ActualLeadershipCosts = project.ActualLeadershipCosts;
-            FundsRequested = fundsRequested;
-            FundsReceived = fundsReceived;
-            ActualHours = project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0;
+            FundsDA = transactionBreakdown.DirectlyAllocated;
+            FundsDI = transactionBreakdown.DirectlyIncurred;
+            AvailableFundsDI = transactionBreakdown.FundingSources.Where(x => x.FundingSourceType == FundingSourceType.DI).RoundedSum(x => x.AmountAvailable, 2);
+            FundsRequestedOther = transactionBreakdown.Invoices;
+            FundsReceivedOther = transactionBreakdown.Payments;
+            ActualHours = actuals;
             PlannedCostColour = PlannedCost > Budget ? "red" : "green";
             ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
-            FundsReceivedColour = (FundsReceived < Budget || (FundsReceived == 0 && Budget > 0)) ? "red" : "green";
-            FundsRequestedColour = (FundsRequested > FundsReceived || (FundsRequested == 0 && Budget > 0)) ? "red" : "green";
-            FundsOwed = FundsRequested - FundsReceived;
+            FundsReceivedColour = GetAllReceived() < GetAllRequested() ? "red" : "green";
+            FundsRequestedColour = GetAllRequested() < Budget ? "red" : "green";
+            FundsOwed = GetAllRequested() - GetAllReceived();
             FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
+            FundsDIColour = (FundsDI > AvailableFundsDI) ? "red" : "green";
 
-            var sourcesAsList = sources
-                .Select(x => $"{(x.HasAccountCode ? x.AccountCode : "Other")}&nbsp;({(x.FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value)})")
+            var sourcesAsList = transactionBreakdown.FundingSources
+                .Select(x => x.GetSensibleObjectName().Replace(" ", "&nbsp;"))
                 .Distinct();
             ListOfFundingSources = (MarkupString)((sourcesAsList != null && sourcesAsList.Count() > 0) ? string.Join("<br />", sourcesAsList) : "None");
+        }
+
+        /// <summary>
+        /// Returns all requested funds from all funding source types
+        /// </summary>
+        /// <returns></returns>
+        public double GetAllRequested()
+        {
+            return FundsDA + FundsDI + FundsRequestedOther;
+        }
+
+        /// <summary>
+        /// Returns all received funds from all funding source types
+        /// </summary>
+        /// <returns></returns>
+        public double GetAllReceived()
+        {
+            return FundsDA + GetReceivedDI() + FundsReceivedOther;
+        }
+
+        /// <summary>
+        /// The amount DI costs received is either the planned costs of the resources (what is on academic timesheets)
+        /// or it is the maximum amount avaialble in the DI funding sources as we can't claim what isn't there
+        /// </summary>
+        /// <returns></returns>
+        public double GetReceivedDI()
+        {
+            return Math.Min(FundsDI, AvailableFundsDI);
         }
     }
 }

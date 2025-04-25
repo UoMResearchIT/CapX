@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,11 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250423065314_AddRatesPerResource")]
+    partial class AddRatesPerResource
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.15");
@@ -199,12 +202,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AccountCode")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("AmountAvailable")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("FundingSourceType")
@@ -559,9 +556,6 @@ namespace PPMTool.Migrations
                     b.Property<double?>("DayRate")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("FundedFromFundingSourceId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<bool>("IsProvisional")
                         .HasColumnType("INTEGER");
 
@@ -584,8 +578,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("ResourceId");
-
-                    b.HasIndex("FundedFromFundingSourceId");
 
                     b.HasIndex("PersonId");
 
@@ -1050,10 +1042,6 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Resource", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.FundingSource", "FundedFrom")
-                        .WithMany("ResourcesFunded")
-                        .HasForeignKey("FundedFromFundingSourceId");
-
                     b.HasOne("PPMTool.Data.Entities.Person", "Person")
                         .WithMany()
                         .HasForeignKey("PersonId")
@@ -1065,8 +1053,6 @@ namespace PPMTool.Migrations
                         .HasForeignKey("SubTaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("FundedFrom");
 
                     b.Navigation("Person");
 
@@ -1180,8 +1166,6 @@ namespace PPMTool.Migrations
             modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
                 {
                     b.Navigation("PaymentsFromSource");
-
-                    b.Navigation("ResourcesFunded");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.InnateCode", b =>

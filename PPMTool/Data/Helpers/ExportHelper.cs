@@ -1,80 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using DotNetExtensions;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Data.Helpers
 {
-    public static class ExportHelper
+    public abstract class ExportHelper
     {
-        /// <summary>
-        /// Represents a chunk of an assignemnt with a constant grade and financial year
-        /// </summary>
-        public class AssignmentChunk
-        {
-            public string EmployeeName { get; set; }
-
-            public int Grade { get; set; }
-
-            public double FTE { get; set; }
-
-            public string Project { get; set; }
-
-            public string LeadRSE { get; set; }
-
-            public string Task { get; set; }
-
-            public string PI { get; set; }
-
-            public string Faculty { get; set; }
-
-            public string School { get; set; }
-
-            public double SalaryCostEstimate { get; set; }
-
-            private DateTime startDate;
-            public DateTime StartDate
-            {
-                get => startDate;
-                set
-                {
-                    if (startDate != value)
-                    {
-                        startDate = value;
-                        FinancialYear = FinancialReference.GetFinancialYear(startDate);
-                    }
-                }
-            }
-
-            public DateTime EndDate { get; set; }
-
-            public int FinancialYear { get; set; }
-
-            public AssignmentChunk()
-            {
-
-            }
-
-            public AssignmentChunk(AssignmentChunk taskToCopy)
-            {
-                EmployeeName = taskToCopy.EmployeeName;
-                Grade = taskToCopy.Grade;
-                FTE = taskToCopy.FTE;
-                Project = taskToCopy.Project;
-                LeadRSE = taskToCopy.LeadRSE;
-                Faculty = taskToCopy.Faculty;
-                School = taskToCopy.School;
-                PI = taskToCopy.PI;
-                Task = taskToCopy.Task;
-                StartDate = new DateTime(taskToCopy.StartDate.Ticks);
-                EndDate = new DateTime(taskToCopy.EndDate.Ticks);
-                FinancialYear = taskToCopy.FinancialYear;
-            }
-
-        }
 
         /// <summary>
         /// Given a person, prepare data from database with a weekly granularity
@@ -105,23 +37,12 @@ namespace PPMTool.Data
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();
 
-            // Set default WLM to be G6
-            WorkloadModelChange defaultWLM = new WorkloadModelChange()
-            {
-                Person = person,
-                ChangeDate = startDate,
-                Grade = 6
-            };
+            // Get WLM in force on the first day of the window or set to default G6
+            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate);
 
-            // If there isn't a WLM change on the first day of the window then create one
+            // If there isn't a WLM change on the first day of the window then add the default
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
             {
-                var tempWlm = person.GetWorkloadModelOnDateOrDefault(startDate);
-                if (tempWlm != null)
-                {
-                    defaultWLM.Grade = tempWlm.Grade;
-                }
-
                 // Add the start WLM to the list of WLMs active in the window
                 wlms.Add(defaultWLM);
             }
@@ -137,8 +58,14 @@ namespace PPMTool.Data
             // Each assignment is at least one row of the report
             foreach (var task in tasksInWindow)
             {
+                // Get project
                 var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
+
+                // Get funding source info
+                var fundingSource = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).FundedFrom;
+
+                // Create a line
                 var initialChunk = new AssignmentChunk
                 {
                     EmployeeName = person.Name,
@@ -152,7 +79,10 @@ namespace PPMTool.Data
                     Task = task.Name,
                     StartDate = task.StartDate,
                     EndDate = task.EndDate,
-                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate)
+                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate),
+                    AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
+                    FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
+                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {

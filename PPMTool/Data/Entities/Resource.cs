@@ -1,6 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -10,8 +8,14 @@ namespace PPMTool.Data.Entities
     /// </summary>
     public class Resource : CostedItem, ILoggableClass
     {
+        /// <summary>
+        /// Primary key
+        /// </summary>
         public int ResourceId { get; set; }
 
+        /// <summary>
+        /// The person associated with this resource
+        /// </summary>
         [Required]
         public Person Person { get; set; }
 
@@ -22,11 +26,20 @@ namespace PPMTool.Data.Entities
         [DataType(DataType.Currency)]
         public double? DayRate { get; set; }
 
+        /// <summary>
+        /// FTE of the resource's assignment to a task
+        /// </summary>
         public double AssignmentFTE { get; set; }
 
+        /// <summary>
+        /// Whether the assignment is provisional
+        /// </summary>
         public bool IsProvisional { get; set; }
 
         private bool useProjectDayRate = true;
+        /// <summary>
+        /// Whether this resource should use the project day rate or its own
+        /// </summary>
         public bool UseProjectDayRate
         {
             get => useProjectDayRate;
@@ -44,9 +57,25 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        /// <summary>
+        /// The cost rate of this person based on RSE costing model
+        /// </summary>
+        [Required]
+        public Rate Rate { get; set; }
+
+        /// <summary>
+        /// This represents where the resource is funded from in terms of known funding sources for the project.
+        /// It is optional since it needs to be possible to associated resources with tasks before the funding sources are known.
+        /// </summary>
+        public FundingSource FundedFrom { get; set; }
+
+        /// <summary>
+        /// The task on the project this resource is assigned to
+        /// </summary>
         [Required]
         public SubTask SubTask { get; set; }
 
+        /// <inheritdoc/>
         public string GetSensibleObjectName()
         {
             return $"{Person?.Name} (Resource)";
@@ -56,7 +85,7 @@ namespace PPMTool.Data.Entities
         /// Updates the planned and actual cost of the resource given either a day rate a financial reference
         /// Assumptions:
         /// 1. Ignores grade-changes mid-task
-        /// 2. Ignores financial reference changes year on year (since actuals don't support this)
+        /// 2. Ignores financial reference changes year on year
         /// </summary>
         /// <param name="costModel"></param>
         /// <param name="taskStart"></param>
@@ -75,33 +104,38 @@ namespace PPMTool.Data.Entities
                 PlannedCost = (PlannedWorkHours / 7f) * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
             }
 
-            // If using the standard and junior rates (two-tier models)
+            // If using the grade-based models
             else
             {
                 // Use a financial reference and the standard or junior rate to compute the cost
-                // assuming it persists throughout the project
+                // assuming it persists throughout the project and doesn't increment year on year
 
-                // Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
-                var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();
+                // Get WLM active at start of task
+                var startWLM = Person.WorkloadModelChanges
+                    .Where(x => x.ChangeDate <= taskStart)
+                    .OrderByDescending(x => x.ChangeDate)
+                    .FirstOrDefault();
 
-                // Get the annual salary costs for individual
-                var annualCostPerBillableDay = financialReference.GetJuniorOrStandardAnnualCosts(startWLM.Grade) / 220;
+                // If they haven't got a WLM then use the G6 default
+                if (startWLM == null)
+                {
+                    startWLM = Person.GetWorkloadModelOnDateOrDefault(taskStart);
+                }
+
+                // Get the annual salary costs for resource based on rate
+                var annualCostPerBillableDay = financialReference.GetJuniorOrStandardAnnualCosts(Rate) / 220;
 
                 // Update the actuals
                 ActualCost = (ActualWorkHours / 7f) * annualCostPerBillableDay;
 
-                // Update the planned (get std or jun rates by passing grade 6 or 5 as argument)
-                var annualCostPerBillableDayPlanned = financialReference.GetJuniorOrStandardAnnualCosts(
-                    costModel == CostModel.TwoTierRateTechOnlyStd || costModel == CostModel.TwoTierTechStdAndLeadership ?
-                    6 :
-                    5
-                ) / 220;
-                PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDayPlanned;
+                // Update the planned
+                PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDay;
             }
 
 
             // If we wanted to include the year to year variation based on financial references then we could do it like below.
-            // However, actuals would need to be record year on year to be able to match the planned cost algorithm
+            // However, actuals would need to be recorded year on year to be able to match the planned cost algorithm
+            // I guess this actually exists now but a job for another day
 
             //// Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
             //var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();

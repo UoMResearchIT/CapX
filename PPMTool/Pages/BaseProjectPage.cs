@@ -27,7 +27,7 @@ namespace PPMTool.Pages
 
             if (newWindow)
             {
-                JSRuntime.InvokeAsync<object>("open", url, "_blank");
+                JSRuntime.InvokeVoidAsync("open", url, "_blank");
             }
             else
             {

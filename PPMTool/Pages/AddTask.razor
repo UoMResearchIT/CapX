@@ -321,21 +321,21 @@
                         <Columns>
                             <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="250px" MinWidth="10px">
                                 <Template Context="res">
-                                    <RadzenText Text="@res.Person.Name" />
+                                    <RadzenText Style="margin-bottom: 0rem;" Text="@res.Person.Name" />
                                 </Template>
                                 <EditTemplate Context="res">
                                     <RadzenDropDown @bind-Value="res.Person" Data="@filteredPeople" Style="width:100%; display: block;" Change="@OnResourcePersonChange"
                                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
                                                     LoadData="@UpdatePeopleDropdownSource">
                                         <Template Context="person">
-                                            <RadzenText Text="@person.Name" />
+                                            <RadzenText Style="margin-bottom: 0rem;"  Text="@person.Name" />
                                         </Template>
                                     </RadzenDropDown>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="80px" MinWidth="10px">
                                 <Template Context="res">
-                                    <RadzenText Text="@res.AssignmentFTE.ToString()" />
+                                    <RadzenText Style="margin-bottom: 0rem;" Text="@res.AssignmentFTE.ToString()" />
                                 </Template>
                                 <EditTemplate Context="res">
                                     <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
@@ -355,7 +355,7 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="ActualWorkHours" Title="Actual Hours" MinWidth="10px">
                                 <Template Context="res">
-                                    <RadzenText Text="@res.ActualWorkHours.ToString("F1")" />
+                                    <RadzenText Style="margin-bottom: 0rem;" Text="@res.ActualWorkHours.ToString("F1")" />
                                 </Template>
                                 <EditTemplate Context="res">
                                     <RadzenNumeric TValue="double" Step=".5" Min="0" @bind-Value="@res.ActualWorkHours" />
@@ -363,7 +363,7 @@
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Property="ActualCost" Title="Actual Cost" MinWidth="10px">
                                 <Template Context="res">
-                                    <RadzenText Text="@res.ActualCost.ToString("C2")" />
+                                    <RadzenText Style="margin-bottom: 0rem;" Text="@res.ActualCost.ToString("C2")" />
                                 </Template>
                             </RadzenDataGridColumn>
 
@@ -373,7 +373,7 @@
                                     <Template Context="res">
                                         <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
                                             <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true />
-                                            <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                            <RadzenText Style="margin-bottom: 0rem;" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
                                         </RadzenStack>
                                     </Template>
                                     <EditTemplate Context="res">
@@ -385,13 +385,50 @@
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate" MinWidth="10px">
                                     <Template Context="res">
-                                        <RadzenText Text="@(res.DayRate?.ToString("C0") ?? "N/A")" />
+                                        <RadzenText Style="margin-bottom: 0rem;" Text="@(res.DayRate?.ToString("C0") ?? "N/A")" />
                                     </Template>
                                     <EditTemplate Context="res">
                                         <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseProjectDayRate)" />
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
                             }
+                            else
+                            {
+                                <RadzenDataGridColumn TItem="Resource" Property="Rate" Width="120px" Title="Rate" MinWidth="10px">
+                                    <Template Context="res">
+                                        <RadzenText Style="margin-bottom: 0rem;" Text="@res.Rate.ToString()" />
+                                    </Template>
+                                    <EditTemplate Context="res">
+                                        <RadzenDropDown @bind-Value="res.Rate"
+                                                        Data="@availableRates"
+                                                        Style="width:100%; display: block;">
+                                            <Template Context="rate">
+                                                <RadzenText Style="margin-bottom: 0rem;" Text="@rate.ToString()" />
+                                            </Template>
+                                        </RadzenDropDown>
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                            }
+                            <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="180px" Title="Funding Source" MinWidth="10px">
+                                <Template Context="res">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
+                                        @if (res.FundedFrom == null)
+                                        {
+                                            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="No funding source for this resource!" />
+                                        }
+                                        <RadzenText Style="@($"margin-bottom: 0rem; {(res.FundedFrom == null ? "color: red;" : "")}")" Text="@(res.FundedFrom?.GetSensibleObjectName() ?? "None")" />
+                                    </RadzenStack>
+                                </Template>
+                                <EditTemplate Context="res">
+                                    <RadzenDropDown @bind-Value="res.FundedFrom"
+                                                    Data="@availableSources"
+                                                    Style="width:100%; display: block;">
+                                        <Template Context="source">
+                                            <RadzenText Text="@source.GetSensibleObjectName()" />
+                                        </Template>
+                                    </RadzenDropDown>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions">
                                 <Template Context="res">
                                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))"/>

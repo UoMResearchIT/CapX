@@ -9,11 +9,11 @@ git pull
 
 # Publish the application to folder
 cd PPMTool
-dotnet publish -c Release -f net6.0
+dotnet publish -c Release -f net8.0
 
 # Publish the API to folder
 cd ../PPMTool.API
-dotnet publish -c Release -f net6.0
+dotnet publish -c Release -f net8.0
 
 # Copy live DB back to source directory and backup
 cd ~/

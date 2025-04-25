@@ -15,7 +15,7 @@
             <h1>Finance Summary</h1>
         </div>
         <div class="col-auto">
-            <RadzenButton Click="@(args => GoToFinanceItems())" Text="Payments" Icon="payments" />
+            <RadzenButton Click="@(args => GoToFinanceItems())" Text="Finance Items" Icon="payments" />
         </div>
     </div>
     <hr />
@@ -75,16 +75,17 @@
                         <span class="@item.ActualCostColour">@item.ActualCost.ToString("C")</span>
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequested" Title="Requested" MinWidth="10px">
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDA" Title="DA Expected" FormatString="{0:C}" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDI" Title="DI Estimate" FormatString="{0:C}" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Title="DI Expected" MinWidth="10px">
                     <Template Context="item">
-                        <span class="@item.FundsRequestedColour">@item.FundsRequested.ToString("C")</span>
+                        <span style="color:@item.FundsDIColour">
+                            @item.GetReceivedDI().ToString("C0")
+                        </span>
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceived" Title="Received" MinWidth="10px">
-                    <Template Context="item">
-                        <span class="@item.FundsReceivedColour">@item.FundsReceived.ToString("C")</span>
-                    </Template>
-                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequestedOther" Title="Other Requested" FormatString="{0:C}" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceivedOther" Title="Other Received" FormatString="{0:C}" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsOwed" Title="Owed" MinWidth="10px">
                     <Template Context="item">
                         <span class="@item.FundsOwedColour">@item.FundsOwed.ToString("C")</span>

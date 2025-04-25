@@ -149,53 +149,54 @@
     [Parameter]
     public string Title { get; set; }
 
-    private bool compareToWorkloadModel;
     [Parameter]
-    public bool CompareToWorkloadModel
-    {
-        get => compareToWorkloadModel;
-        set
-        {
-            if (value != compareToWorkloadModel)
-            {
-                compareToWorkloadModel = value;
+    public bool CompareToWorkloadModel { get; set; }
 
-                // Recompute the min-max if necessary
-                UpdateMinMax();
-            }
-        }
-    }
-
-    private bool normalisedByTotalHours;
     [Parameter]
-    public bool NormalisedByTotalHours
-    {
-        get => normalisedByTotalHours;
-        set
-        {
-            if (value != normalisedByTotalHours)
-            {
-                normalisedByTotalHours = value;
-
-                foreach (var item in ChartItems)
-                {
-                    // Change the normalisation on the data
-                    item.SwitchNormalisation(normalisedByTotalHours);
-
-                    // Recompute the net values
-                    item.UpdateWLMNetValues();
-                }
-
-                // Recompute the min-max
-                UpdateMinMax();
-            }
-        }
-    }
+    public bool NormalisedByTotalHours { get; set; }
 
     public float? Min { get; private set; }
     public float? Max { get; private set; }
 
     private ApexChart<WLMWeeklyDataChartItem> chart;
+    private bool normalisedByTotalHours;
+    private bool compareToWorkloadModel;
+
+    /// <summary>
+    /// In response to changes in the parameters to the component update local values and execute methods
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        var updateMinMax = false;
+        if (NormalisedByTotalHours != normalisedByTotalHours)
+        {
+            normalisedByTotalHours = NormalisedByTotalHours;
+
+            foreach (var item in ChartItems)
+            {
+                // Change the normalisation on the data
+                item.SwitchNormalisation(normalisedByTotalHours);
+
+                // Recompute the net values
+                item.UpdateWLMNetValues();
+            }
+            updateMinMax = true;            
+        }
+
+        if (CompareToWorkloadModel != compareToWorkloadModel)
+        {
+            compareToWorkloadModel = CompareToWorkloadModel;
+            updateMinMax = true;
+        }
+
+        // Recompute min-max
+        if (updateMinMax)
+        {
+            UpdateMinMax();
+        }
+    }
 
     /// <summary>
     /// Updates the vertical axis limits based on the limits of the individual chart items

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -27,6 +24,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
                 new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Warning, () => HasZeroDemandButResourced()),
+                new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
         }
@@ -469,6 +467,15 @@ namespace PPMTool.Data.Entities
         public bool HasZeroDemandButResourced()
         {
             return Demand == 0 && AssignedResources.Count > 0;
+        }
+
+        /// <summary>
+        /// Checks whether any resources on this task have no associated funding source and the task is currently running or ran in the past.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasResourceWithNoFundingSourceAndRunning()
+        {
+            return StartDate.Date <= DateTime.Today && AssignedResources.Any(r => r.FundedFrom == null);
         }
 
         /// <summary>

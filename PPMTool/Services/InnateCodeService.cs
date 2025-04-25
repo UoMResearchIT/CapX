@@ -134,8 +134,12 @@ namespace PPMTool.Services
             // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
             // which are not associated with any currently active projects
             return context.InnateCodes
-                .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-"))
-                .Where(ic => !context.Projects.Any(p => p.InnateActivity.InnateCodeId == ic.InnateCodeId && p.ProjectStatus < ProjectStatus.Finished));
+                .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-") &&
+                    context.Projects.Any(p =>
+                        p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
+                        (int)p.ProjectStatus >= (int)ProjectStatus.Finished
+                    )
+                );
         }
     }
 }
