@@ -58,6 +58,8 @@ namespace PPMTool.Data.Entities
             {
                 text += $", Account Code = {AccountCode}";
             }
+            text += $", Amount = {AmountAvailable.ToString("C")}";
+            text += $", Description = {Description}";
             return text;
         }
 
