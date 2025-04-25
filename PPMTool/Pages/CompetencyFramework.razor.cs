@@ -239,7 +239,7 @@ namespace PPMTool.Pages
 
             return Task.Run(() =>
             {
-                Debug.WriteLine($"** Running competency load task for {selectedPerson}...");
+                Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
 
                 // Get starting lists from the DB
                 availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
