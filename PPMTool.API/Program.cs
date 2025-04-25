@@ -49,17 +49,17 @@ builder.Configuration
     .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 // Use a different connection string in production
-builder.Services.AddDbContext<PPMToolContext>(options =>
-        options.UseSqlite(
-            configuration.GetConnectionString(
+var connectionString = configuration.GetConnectionString(
 #if RELEASE
-                "PPMToolContextConnectionProduction"
+    "PPMToolContextConnectionProduction"
 #else
-                "PPMToolContextConnection"
+    "PPMToolContextConnection"
 #endif
-                ) ?? throw new Exception("Invalid connection string!")
-        )
-    );
+) ?? throw new Exception("Invalid connection string!");
+
+builder.Services.AddDbContext<PPMToolContext>(options =>
+    options.UseSqlite($"{connectionString};Cache=Shared;Mode=ReadWrite;Timeout=30")
+);
 builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
