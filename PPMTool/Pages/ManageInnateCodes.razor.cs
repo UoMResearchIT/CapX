@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Services.InnateCodeService;
 
 namespace PPMTool.Pages
 {
@@ -13,9 +11,12 @@ namespace PPMTool.Pages
     public partial class ManageInnateCodes : DataGridPage<InnateCode>
     {
         [Inject]
-        public InnateCodeService InnateCodeService { get; set; }
+        private InnateCodeService InnateCodeService { get; set; }
 
-        private List<InnateCode> codesToDeactivate;
+        [Inject]
+        private IConfiguration Configuration { get; set; }
+
+        private List<CodeToDeactivate> codesToDeactivate;
 
         protected override void OnInitialized()
         {
@@ -31,7 +32,7 @@ namespace PPMTool.Pages
             return Task.Run(() =>
             {
                 dataGridEntities = InnateCodeService.GetAll(Context).ToList();
-                codesToDeactivate = InnateCodeService.GetCodesToDeactivate(Context).ToList() ?? new List<InnateCode>();
+                codesToDeactivate = InnateCodeService.GetCodesToDeactivate(Context).ToList() ?? new List<CodeToDeactivate>();
 
             }).ContinueWith(t =>
             {
@@ -92,9 +93,10 @@ namespace PPMTool.Pages
         /// <summary>
         /// Deactivate a timesheet code and save to DB
         /// </summary>
-        /// <param name="code"></param>
-        private void DeactivateCode(InnateCode code)
+        /// <param name="toDeactivate"></param>
+        private void DeactivateCode(CodeToDeactivate toDeactivate)
         {
+            var code = InnateCodeService.GetById(Context, toDeactivate.InnateCodeId);
             code.IsActive = false;
             LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
             InnateCodeService.Update(Context, code);
@@ -114,17 +116,20 @@ namespace PPMTool.Pages
             }
 
             // Go over all codes and set their state
+            CodeToDeactivate toDeactive = null;
             InnateCode code = null;
             for (int i = 0; i < codesToDeactivate.Count - 1; ++i)
             {
-                code = codesToDeactivate[i];
+                toDeactive = codesToDeactivate[i];
+                code = InnateCodeService.GetById(Context, toDeactive.InnateCodeId);
                 code.IsActive = false;
                 LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
                 InnateCodeService.Update(Context, code, false);
             }
 
             // Do last one and save changes
-            code = codesToDeactivate.Last();
+            toDeactive = codesToDeactivate.Last();
+            code = InnateCodeService.GetById(Context, toDeactive.InnateCodeId);
             code.IsActive = false;
             LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
             InnateCodeService.Update(Context, code);
