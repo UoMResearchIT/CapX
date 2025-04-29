@@ -42,10 +42,7 @@
                 <RadzenDataGridColumn TItem="CodeToDeactivate" Property="ActivityName" Title="Activity Name" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="CodeToDeactivate" Title="Project Managers" MinWidth="10px" Filterable="false" Sortable="false">
                     <Template Context="code">
-                        @((code.ProjectManagerNames == null || code.ProjectManagerNames.Count() == 0) ?
-                            "None" :
-                            string.Join("\n", code.ProjectManagerNames)
-                        )
+                        @(code.GetProjectManagerNamesAsMarkup())
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="CodeToDeactivate" Title="Projects" MinWidth="10px" Filterable="false" Sortable="false">

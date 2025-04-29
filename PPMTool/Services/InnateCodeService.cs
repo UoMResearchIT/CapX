@@ -187,7 +187,25 @@ namespace PPMTool.Services
                     var temp = new List<string>();
                     foreach (var rtp in ProjectRTP)
                     {
-                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={ProjectRTP}\">RTP-{ProjectRTP.ToString()}</a>");
+                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">RTP-{rtp}</a>");
+                    }
+                    return (MarkupString)string.Join("<br />", temp);
+                }
+                return (MarkupString)"<span>None</span>";
+            }
+
+            /// <summary>
+            /// Method to format the project manager names
+            /// </summary>
+            /// <returns></returns>
+            public MarkupString GetProjectManagerNamesAsMarkup()
+            {
+                if (ProjectManagerNames != null && ProjectManagerNames.Count() > 0)
+                {
+                    var temp = new List<string>();
+                    foreach (var name in ProjectManagerNames)
+                    {
+                        temp.Add($"<span>{name ?? "Not Set"}</span>");
                     }
                     return (MarkupString)string.Join("<br />", temp);
                 }
