@@ -60,7 +60,7 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
     o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
 });
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite($"{builder.Configuration.GetConnectionString("PPMToolContextConnection")};Cache=Shared;Mode=ReadWrite;Timeout=30")
+    options.UseSqlite(builder.Configuration.GetConnectionString("PPMToolContextConnection"))
 );
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddRadzenComponents();
