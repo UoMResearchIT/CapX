@@ -17,7 +17,7 @@ namespace PPMTool.Services
         public override int Add(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Add(taskModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return taskModel.SubTaskId;
         }
 
@@ -29,7 +29,7 @@ namespace PPMTool.Services
         public override int Update(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Update(taskModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return taskModel.SubTaskId;
         }
 
@@ -103,7 +103,7 @@ namespace PPMTool.Services
                 context.Resources.Remove(res);
             }
             context.SubTasks.Remove(subTask);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>

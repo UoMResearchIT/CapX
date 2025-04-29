@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using Radzen;
 
@@ -138,6 +138,34 @@ namespace PPMTool.Data
 
             // Call the other method
             return GetSuitableFinancialReference(list, year);
+        }
+
+        /// <summary>
+        /// Save changes with a retry mechanism for SQLite database when the DB Locked exception is thrown
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="maxRetries"></param>
+        public static void SaveChangesWithRetry(this PPMToolContext context, int maxRetries = 3)
+        {
+            int retries = 0;
+            while (true)
+            {
+                try
+                {
+                    context.SaveChanges();
+                    break;
+                }
+                catch (DbUpdateException ex)
+                    when (ex.InnerException is SqliteException sqliteEx && sqliteEx.SqliteErrorCode == 5)
+                {
+                    if (retries >= maxRetries)
+                        throw new Exception("Max retry attempts hit!", ex);
+                    retries++;
+
+                    // Wait for 1 second before retrying
+                    Thread.Sleep(1000);
+                }
+            }
         }
     }
 }

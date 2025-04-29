@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -28,7 +25,7 @@ namespace PPMTool.Services
             }
 
             context.People.Add(personModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return personModel.PersonId;
         }
 
@@ -107,7 +104,7 @@ namespace PPMTool.Services
                 return -2;
             }
             context.People.Update(personModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return personModel.PersonId;
         }
 
@@ -149,7 +146,7 @@ namespace PPMTool.Services
             // Save changes as required
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 

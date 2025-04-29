@@ -9,5 +9,7 @@
         /// Default amount of time the project management tasks take up in FTE
         /// </summary>
         public static readonly float ProjectManagementDefaultFTE = 0.05f;
+
+        public static readonly float DayRateDefault = 297;
     }
 }

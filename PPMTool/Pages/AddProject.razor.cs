@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.Extensions.Configuration;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Helpers;
 using PPMTool.Enums;
@@ -76,7 +73,7 @@ namespace PPMTool.Pages
             }
             else
             {
-                projectModel.DayRate = double.Parse(Configuration["DefaultDayRate"]);
+                projectModel.DayRate = GlobalDefaults.DayRateDefault;
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
