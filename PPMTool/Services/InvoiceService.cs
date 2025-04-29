@@ -16,7 +16,7 @@ namespace PPMTool.Services
             context.Invoices.Add(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.InvoiceId;
         }
@@ -26,7 +26,7 @@ namespace PPMTool.Services
             context.Invoices.Remove(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 
@@ -42,7 +42,7 @@ namespace PPMTool.Services
             context.Invoices.Update(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.InvoiceId;
         }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -14,14 +12,14 @@ namespace PPMTool.Services
         public override int Add(PPMToolContext context, ApiKey entity, bool commitChanges = true)
         {
             context.ApiKeys.Add(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.ApiKeyId;
         }
 
         public override void Delete(PPMToolContext context, ApiKey entity, bool commitChanges = true)
         {
             context.ApiKeys.Remove(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         public override IEnumerable<ApiKey> GetAll(PPMToolContext context)
@@ -33,7 +31,7 @@ namespace PPMTool.Services
         public override int Update(PPMToolContext context, ApiKey entity, bool commitChanges = true)
         {
             context.ApiKeys.Update(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.ApiKeyId;
         }
 

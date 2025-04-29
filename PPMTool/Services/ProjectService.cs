@@ -25,7 +25,7 @@ namespace PPMTool.Services
             }
 
             context.Projects.Add(projectModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return projectModel.ProjectId;
         }
 
@@ -80,7 +80,7 @@ namespace PPMTool.Services
                 return -2;
             }
             context.Projects.Update(projectModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return projectModel.ProjectId;
         }
 
@@ -140,7 +140,7 @@ namespace PPMTool.Services
         public override void Delete(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             context.Projects.Remove(projectModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>

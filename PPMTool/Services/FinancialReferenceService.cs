@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using PPMTool.Data;
+﻿using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -16,14 +13,14 @@ namespace PPMTool.Services
                 return -1;
             }
             context.FinancialReferences.Add(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.FinancialReferenceId;
         }
 
         public override void Delete(PPMToolContext context, FinancialReference entity, bool commitChanges = true)
         {
             context.FinancialReferences.Remove(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         public override IEnumerable<FinancialReference> GetAll(PPMToolContext context)
@@ -38,7 +35,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.FinancialReferences.Update(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.FinancialReferenceId;
         }
 

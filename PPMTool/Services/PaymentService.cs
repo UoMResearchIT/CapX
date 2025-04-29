@@ -34,7 +34,7 @@ namespace PPMTool.Services
             context.Payments.Add(payment);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return payment.PaymentId;
         }
@@ -51,7 +51,7 @@ namespace PPMTool.Services
             context.Payments.Update(payment);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return payment.PaymentId;
         }
@@ -67,7 +67,7 @@ namespace PPMTool.Services
             context.Payments.Remove(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 

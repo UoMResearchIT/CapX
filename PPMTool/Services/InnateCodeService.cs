@@ -23,7 +23,7 @@ namespace PPMTool.Services
             }
 
             context.InnateCodes.Add(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.InnateCodeId;
         }
 
@@ -46,7 +46,7 @@ namespace PPMTool.Services
             var tasks = context.InnateCodeTasks.Where(x => x.InnateCode.InnateCodeId == entity.InnateCodeId);
             context.InnateCodeTasks.RemoveRange(tasks);
             context.InnateCodes.Remove(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
@@ -64,7 +64,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.InnateCodes.Update(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.InnateCodeId;
         }
 
