@@ -123,11 +123,9 @@ builder.Services.AddSwaggerGen(
 
 var app = builder.Build();
 
-var basePath = "";
 #if RELEASE
-basePath = "/api";
 // Set the base path
-app.UsePathBase(basePath);
+app.UsePathBase("/api");
 #endif
 
 app.UseSwagger();
@@ -139,9 +137,9 @@ app.UseHttpsRedirection();
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints directly using top-level routing
-app.MapGet($"{basePath}/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet($"{basePath}/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
-app.MapGet($"{basePath}/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
+app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>
