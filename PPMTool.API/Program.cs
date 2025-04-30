@@ -16,6 +16,12 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add the custom appsettings file to the configuration
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
 // Access the configuration to get the connection string
 var configuration = builder.Configuration;
 
@@ -41,12 +47,6 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 builder.Host.UseSerilog();
 #endif
-
-// Add the custom appsettings file to the configuration
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 // Use a different connection string in production
 var connectionString = configuration.GetConnectionString(
