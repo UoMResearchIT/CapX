@@ -137,9 +137,13 @@ app.UseHttpsRedirection();
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints directly using top-level routing
-app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
-app.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+var prefix = "";
+#if RELEASE
+prefix = "/api";
+#endif
+app.MapGet($"{prefix}/skills/getAll", Skills.GetAllSkillTagsAsync);
+app.MapGet($"{prefix}/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet($"{prefix}/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>
