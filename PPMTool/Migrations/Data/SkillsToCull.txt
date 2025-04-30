@@ -1,0 +1,234 @@
+.NET
+.NET MVC
+Actor model
+Adobe Creative Suite
+Adobe Dreamweaver
+Aerial photography
+Agile software development
+Air Quality
+Alexa Skills
+Apache Subversion
+Apache Tomcat
+Applications Architecture
+ARM
+Artificial neural network
+ASP.NET Core
+Association Rule Learning
+Automatic programming
+AWK
+Behavior-driven development
+Business analysis
+CSS
+Cave automatic virtual environment
+Chemical transport model
+Climate Change
+Cloud computing
+Cloud physics
+Clustered file system
+Code optimization
+Code review
+Collision detection
+Compiler
+Computer graphics lighting
+Concurrent computing
+Confluence
+Continuous integration
+Curl
+Cyber-physical system
+Data analysis
+Data and information visualization
+Data cluster
+Data integration
+Data Mining
+Data modeling
+Data preparation
+Data transformation
+Design Patterns
+Desktop app
+DevOps
+Digital elevation model
+Digital image processing
+Digital twin
+Distributed computing
+Distributed database
+Eclipse (software)
+Elixir
+Emacs
+Embedded C
+Embedded systems
+Emscripten
+Engineering
+EPOC
+ESP32
+Estimation Theory
+Experimental physics
+Extended reality
+Fossil
+Free and open-source software
+GDAL
+Geant4
+General relativity
+Geospatial data
+GIMP
+Git
+GitHub
+GitHub Actions
+GitLab
+GNU Octave
+GNU Scientific Library
+Gnuplot
+Grid computing
+Head-mounted display
+Health informatics
+HoloLens
+HTC Vive
+HTML
+IGOR Pro
+Infrastructure as code
+Inkscape
+Interaction design
+Jakarta Server Pages
+Jira
+Jq (programming language)
+JSON
+JSON Web Token
+Keras
+Keycloak
+Kinetic PreProcessor
+Leap Motion
+Less (style sheet language)
+Let's Encrypt
+Libvirt
+Link Analysis
+Linux
+macOS
+Manycore processor
+Markdown
+Mathematical model
+Metaverse
+Micro Bit
+Microsoft UI Automation
+Microsoft Windows
+Middleware
+MilSim
+Mixed reality
+Mobile app development
+Molecular dynamics simulation
+Monte Carlo method
+MQTT
+Multispectral imaging
+Multithreading
+Modelâ€“viewâ€“viewmodel
+Neuromorphic engineering
+Numerical software
+NVIDIA Quadro Plex
+Object Pascal
+Object-oriented analysis and design
+Object-oriented programming
+Oculus Quest
+Oculus Rift
+OpenLDAP
+Optimization
+Parallel computing
+Partial differential equation
+Particle physics
+Phoenix
+Photovoltaics
+Physics
+Physiology
+Point cloud
+Population dynamics
+Procedural generation
+Process management
+Product lifecycle management
+Profiling
+PROJ
+Project Jupyter
+Project management
+Proxmox Virtual Environment
+Public key infrastructure
+RabbitMQ
+Raspberry Pi
+Real world data
+Real-time computer graphics
+Real-time networking
+Real-time simulation
+Recommender Systems
+Remote sensing
+Representational state transfer
+Reproducibility
+REST
+RMarkdown
+SASS
+Scene graph
+Scientific workflow system
+Scikit-learn
+Scripting
+Scrum
+Search engine optimization
+Security Assertion Markup Language
+Sensor networks
+Sequential Pattern Mining
+Service-oriented architecture
+Shaders
+Shapefile
+Slurm Workload Manager
+Smart city
+Smartwatch
+Smoothed-particle hydrodynamics
+Software architecture
+Software design
+Software product management
+Software testing
+Solar Energy
+SOLID
+Spatial computing
+Statistical physics
+SVG
+Symbian
+System administrator
+Tailwind
+Tcl
+Test-driven development
+Time series
+Tmux
+Trello
+TrustRank
+Unit Testing
+Usability
+Verilog
+Version control
+Vim
+Virtual instrument software architecture
+Virtual Reality Toolkit (software)
+VirtualBox
+Virtualization
+VisIt
+Visual Studio
+Visualization
+Volume rendering
+Visual Studio Code
+Wearable computing
+Weather Research and Forecasting Model
+Web accessibility
+Web Feature Service
+Web Map Service
+Web search engine
+Web API
+WebAssembly
+WebRTC
+WebSocket
+WebSpam
+WebXR
+Win32
+Windows SDK
+Windows Subsystem for Linux
+Workflow management system
+Workflows
+WxWidgets
+X.509
+XCode
+XML
+XMLStarlet
+Zend
+ZFS
