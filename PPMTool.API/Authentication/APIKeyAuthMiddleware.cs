@@ -32,6 +32,7 @@ namespace PPMTool.API.Authentication
         /// <returns></returns>
         public async Task Invoke(HttpContext context, PPMToolContext dbContext)
         {
+            // Authentication everything else
             if (!context.Request.Headers.TryGetValue("x-api-key", out var extractedApiKey))
             {
                 context.Response.StatusCode = 401;
