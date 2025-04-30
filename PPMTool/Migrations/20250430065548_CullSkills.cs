@@ -18,23 +18,29 @@ namespace PPMTool.Migrations
             // Remove the skill tag from tasks and people and then delete from table
             foreach (var skill in skillsToCull)
             {
+                // Log
+                Console.WriteLine($"Removing \"{skill}\"...");
+
+                // Escape apostrophe
+                var cleanSkill = skill.Replace("'", "''");
+
                 migrationBuilder.Sql(@$"
                     DELETE FROM OwnedSkills
-                    WHERE SkillId IN (
-                        SELECT SkillId
-                        FROM SkillTags
-                        WHERE LOWER(ControlledName) == LOWER({skill})
+                    WHERE SkillTagId IN (
+                        SELECT SkillTagId
+                        FROM SkillTags
+                        WHERE LOWER(ControlledName) == LOWER('{cleanSkill}')
                     );
 
                     DELETE FROM SkillTagSubTask
                     WHERE SkillsRequiredSkillTagId IN (
-                        SELECT SkillId
-                        FROM SkillTags
-                        WHERE LOWER(ControlledName) == LOWER({skill})
+                        SELECT SkillTagId
+                        FROM SkillTags
+                        WHERE LOWER(ControlledName) == LOWER('{cleanSkill}')
                     );
 
                     DELETE FROM SkillTags
-                    WHERE LOWER(ControlledName) == LOWER({skill});
+                    WHERE LOWER(ControlledName) == LOWER('{cleanSkill}');
                 ");
             }
         }
