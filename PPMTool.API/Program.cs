@@ -118,15 +118,15 @@ builder.Services.AddSwaggerGen(
             { scheme, new string[] { } }
         };
         opt.AddSecurityRequirement(requirement);
+
+#if RELEASE
+        // Add the custom DocumentFilter for production
+        opt.DocumentFilter<BasePathDocumentFilter>("/api");
+#endif
     }
 );
 
 var app = builder.Build();
-
-#if RELEASE
-// Set the base path
-app.UsePathBase("/api");
-#endif
 
 app.UseSwagger();
 app.UseSwaggerUI();
