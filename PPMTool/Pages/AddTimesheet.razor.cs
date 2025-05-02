@@ -405,8 +405,8 @@ namespace PPMTool.Pages
         /// </summary>
         private async void HandleValidSubmit()
         {
-            // Check if submitting with inactive Task Codes (only if not a rejected timesheet being resubmitted or it is a reviewer rejecting a timesheet)
-            if (timesheet.TimesheetEntries.Count > 0 && (timesheet.Status != TimesheetStatus.Rejected || newStatus == TimesheetStatus.Rejected))
+            // Check if submitting with inactive Task Codes (only if being submitted but not from a rejected state)
+            if (timesheet.TimesheetEntries.Count > 0 && newStatus == TimesheetStatus.Submitted && timesheet.Status != TimesheetStatus.Rejected)
             {
                 // Present an error and exit early
                 if (timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0))
