@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -409,16 +405,15 @@ namespace PPMTool.Pages
         /// </summary>
         private async void HandleValidSubmit()
         {
-            // Check if submitting with inactive Task Codes (only if not a rejected timesheet)
-            if (timesheet.TimesheetEntries.Count > 0 && timesheet.Status != TimesheetStatus.Rejected)
+            // Check if submitting with inactive Task Codes (only if not a rejected timesheet being resubmitted or it is a reviewer rejecting a timesheet)
+            if (timesheet.TimesheetEntries.Count > 0 && (timesheet.Status != TimesheetStatus.Rejected || newStatus == TimesheetStatus.Rejected))
             {
-                // Set the usesInactivetasks variable if there are hours logged to an inactive task code
-                bool usesInactiveTasks = timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0);
-                if (usesInactiveTasks)
+                // Present an error and exit early
+                if (timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0))
                 {
                     var inactiveTasksCheck = await DialogService.Alert(
                         $"You cannot submit a timesheet which uses an inactive activity code." +
-                        $"If you need a code to be reactivated then contact your line manager to organise this.",
+                        $"If you need a code to be reactivated then contact your project manager to organise this.",
                         "Booked to Inactive Code"
                     ) ?? false;
                     return;
