@@ -10,14 +10,17 @@
 <div class="container">
     <RadzenRow>
         <RadzenColumn>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                <h2>Workload Model Analysis</h2>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                    <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
-                    <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                    <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
+            <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <h2>Workload Model Analysis</h2>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                        <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
+                        <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                        <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
+                    </RadzenStack>
                 </RadzenStack>
+                <HintComponent Message="To view the difference between timesheets and the WLM, enable 'Compare to Workload Model' option. To scale the number of hours booked to 1.0 FTE (i.e. you are then viewing the proportion of time spent rather than the absolute amount), enable the 'Scale by Total Hours' option." />
             </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
