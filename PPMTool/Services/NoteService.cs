@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -12,14 +9,14 @@ namespace PPMTool.Services
         public override int Add(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Add(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.NoteId;
         }
 
         public override void Delete(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Remove(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>
@@ -39,7 +36,7 @@ namespace PPMTool.Services
         public override int Update(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Update(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.NoteId;
         }
 

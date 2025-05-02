@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -30,7 +31,7 @@ namespace PPMTool.API.Services
                 {
                     key.Active = false;
                     context.Update(key);
-                    context.SaveChanges();
+                    context.SaveChangesWithRetry();
                     return null;
                 }
 

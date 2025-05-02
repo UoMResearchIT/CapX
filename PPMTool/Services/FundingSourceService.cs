@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -16,7 +14,7 @@ namespace PPMTool.Services
             context.FundingSources.Add(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.FundingSourceId;
         }
@@ -26,7 +24,7 @@ namespace PPMTool.Services
             context.FundingSources.Remove(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 
@@ -41,7 +39,7 @@ namespace PPMTool.Services
             context.FundingSources.Update(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.FundingSourceId;
         }

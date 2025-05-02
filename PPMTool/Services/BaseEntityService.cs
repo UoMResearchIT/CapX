@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 
 namespace PPMTool.Services
@@ -82,7 +81,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         public virtual void CommitChanges(PPMToolContext context)
         {
-            context.SaveChanges();
+            context.SaveChangesWithRetry();
         }
     }
 }

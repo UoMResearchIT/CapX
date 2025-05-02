@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ApexCharts;
+﻿using ApexCharts;
 using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -56,6 +52,11 @@ namespace PPMTool.Pages
         /// </summary>
         private void DisplayStyleChanged()
         {
+            // Update the chart options
+            foreach (var opt in wlmChartOptions)
+            {
+                opt.Yaxis.First().Title.Text = GetYAxisTitle();
+            }
             StateHasChanged();
         }
 
@@ -160,6 +161,10 @@ namespace PPMTool.Pages
                 {
                     new YAxis
                     {
+                        Title = new AxisTitle
+                        {
+                            Text = GetYAxisTitle()
+                        },
                         Labels = new YAxisLabels
                         {
                             Formatter = @"function (val, index) { return val.toFixed(2); }"
@@ -172,6 +177,17 @@ namespace PPMTool.Pages
                     Categories = Enum.GetValues<Duty>().Select(x => x.GetDescription())
                 }
             });
+        }
+
+        /// <summary>
+        /// Create a suitable Y axis label based on the options
+        /// </summary>
+        /// <returns></returns>
+        private string GetYAxisTitle()
+        {
+            var title = compareToWLM ? "Difference between Time Booked and WLM" : "Time Booked";
+            title += normalisedByTotalHours ? " (FTE w.r.t. 1.0)" : " (FTE)";
+            return title;
         }
     }
 }

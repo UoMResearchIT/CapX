@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Services;
@@ -59,9 +60,12 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 {
     o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
 });
+
+var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("PPMToolContextConnection"))
+    options.UseSqlite(connectionString)
 );
+
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<InnateCodeService>();
@@ -156,6 +160,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
+
+// Set the journal mode on the DB
+using (var connection = new SqliteConnection(connectionString))
+{
+    // Setting this should persist across connections
+    // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
+    connection.Open();
+    using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+    {
+        command.ExecuteNonQuery();
+    }
+    connection.Close();
+}
+
 app.Run();
 
 /// <summary>

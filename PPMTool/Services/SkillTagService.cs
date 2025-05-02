@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -32,7 +29,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.SkillTags.Update(tag);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return tag.SkillTagId;
         }
 
@@ -55,7 +52,7 @@ namespace PPMTool.Services
         public override void Delete(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             context.Remove(tag);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>
@@ -70,7 +67,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.Add(tag);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return tag.SkillTagId;
         }
 
@@ -130,7 +127,7 @@ namespace PPMTool.Services
         {
             var ownedSkillsToRemove = context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == entity.SkillTagId);
             context.OwnedSkills.RemoveRange(ownedSkillsToRemove);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>
@@ -151,7 +148,7 @@ namespace PPMTool.Services
             entity.UpdateRareness(count, totalActivePeople);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 

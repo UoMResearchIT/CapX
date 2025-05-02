@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -24,7 +23,7 @@ namespace PPMTool.Services
             }
 
             context.InnateCodes.Add(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.InnateCodeId;
         }
 
@@ -47,7 +46,7 @@ namespace PPMTool.Services
             var tasks = context.InnateCodeTasks.Where(x => x.InnateCode.InnateCodeId == entity.InnateCodeId);
             context.InnateCodeTasks.RemoveRange(tasks);
             context.InnateCodes.Remove(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
@@ -65,7 +64,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.InnateCodes.Update(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.InnateCodeId;
         }
 
@@ -129,17 +128,89 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<InnateCode> GetCodesToDeactivate(PPMToolContext context)
+        public IEnumerable<CodeToDeactivate> GetCodesToDeactivate(PPMToolContext context)
         {
             // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
             // which are not associated with any currently active projects
-            return context.InnateCodes
+            var codes = context.InnateCodes
                 .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-") &&
                     context.Projects.Any(p =>
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
                         (int)p.ProjectStatus >= (int)ProjectStatus.Finished
                     )
                 );
+
+            // Map the codes to CodeToDeactivate objects
+            IList<CodeToDeactivate> codesToDeactivate = new List<CodeToDeactivate>();
+            foreach (var code in codes)
+            {
+                var projects = context.Projects
+                    .Include(p => p.ProjectManager)
+                    .Include(p => p.InnateActivity)
+                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId);
+                var pmNames = projects.Select(x => x.ProjectManager == null ? "Not Set" : x.ProjectManager.Name);
+                var obj = new CodeToDeactivate(code, pmNames, projects.Select(x => x.RTP));
+                codesToDeactivate.Add(obj);
+            }
+            return codesToDeactivate;
+        }
+
+        /// <summary>
+        /// Object to represent information about a code to be deactivated
+        /// </summary>
+        public class CodeToDeactivate
+        {
+            public int InnateCodeId { get; }
+            public string ActivityCode { get; }
+            public string ActivityName { get; }
+            public IEnumerable<string> ProjectManagerNames { get; }
+            public IEnumerable<int> ProjectRTP { get; }
+
+            public CodeToDeactivate(InnateCode code, IEnumerable<string> projectManagerNames, IEnumerable<int> projectRTP)
+            {
+                InnateCodeId = code.InnateCodeId;
+                ActivityCode = code.ActivityCode;
+                ActivityName = code.ActivityName;
+                ProjectManagerNames = projectManagerNames;
+                ProjectRTP = projectRTP;
+            }
+
+            /// <summary>
+            /// Method to return the strings as links to the projects
+            /// </summary>
+            /// <param name="configuration"></param>
+            /// <returns></returns>
+            public MarkupString GetRTPAsMarkup(IConfiguration configuration)
+            {
+                if (ProjectRTP != null && ProjectRTP.Count() > 0)
+                {
+                    var temp = new List<string>();
+                    foreach (var rtp in ProjectRTP)
+                    {
+                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">RTP-{rtp}</a>");
+                    }
+                    return (MarkupString)string.Join("<br />", temp);
+                }
+                return (MarkupString)"<span>None</span>";
+            }
+
+            /// <summary>
+            /// Method to format the project manager names
+            /// </summary>
+            /// <returns></returns>
+            public MarkupString GetProjectManagerNamesAsMarkup()
+            {
+                if (ProjectManagerNames != null && ProjectManagerNames.Count() > 0)
+                {
+                    var temp = new List<string>();
+                    foreach (var name in ProjectManagerNames)
+                    {
+                        temp.Add($"<span>{name ?? "Not Set"}</span>");
+                    }
+                    return (MarkupString)string.Join("<br />", temp);
+                }
+                return (MarkupString)"<span>None</span>";
+            }
         }
     }
 }

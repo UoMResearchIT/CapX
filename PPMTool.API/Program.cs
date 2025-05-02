@@ -16,6 +16,12 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add the custom appsettings file to the configuration
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
 // Access the configuration to get the connection string
 var configuration = builder.Configuration;
 
@@ -42,24 +48,18 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 #endif
 
-// Add the custom appsettings file to the configuration
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-
 // Use a different connection string in production
-builder.Services.AddDbContext<PPMToolContext>(options =>
-        options.UseSqlite(
-            configuration.GetConnectionString(
+var connectionString = configuration.GetConnectionString(
 #if RELEASE
-                "PPMToolContextConnectionProduction"
+    "PPMToolContextConnectionProduction"
 #else
-                "PPMToolContextConnection"
+    "PPMToolContextConnection"
 #endif
-                ) ?? throw new Exception("Invalid connection string!")
-        )
-    );
+) ?? throw new Exception("Invalid connection string!");
+
+builder.Services.AddDbContext<PPMToolContext>(options =>
+    options.UseSqlite(connectionString)
+);
 builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
@@ -118,15 +118,15 @@ builder.Services.AddSwaggerGen(
             { scheme, new string[] { } }
         };
         opt.AddSecurityRequirement(requirement);
+
+#if RELEASE
+        // Add the custom DocumentFilter for production
+        opt.DocumentFilter<BasePathDocumentFilter>("/api");
+#endif
     }
 );
 
 var app = builder.Build();
-
-#if RELEASE
-// Set the base path
-app.UsePathBase("/api");
-#endif
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -137,9 +137,9 @@ app.UseHttpsRedirection();
 app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints directly using top-level routing
-app.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet("/skills/getAllForPerson/{name}", Skills.GetAllSkillsTagsForPersonAsync);
-app.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
+app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>

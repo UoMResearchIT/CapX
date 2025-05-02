@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -28,7 +24,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.Users.Add(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.UserId;
         }
 
@@ -40,7 +36,7 @@ namespace PPMTool.Services
         public override void Delete(PPMToolContext context, User entity, bool commitChanges = true)
         {
             context.Users.Remove(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         public override IEnumerable<User> GetAll(PPMToolContext context)
@@ -56,7 +52,7 @@ namespace PPMTool.Services
                 return -1;
             }
             context.Users.Update(entity);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entity.UserId;
         }
 
@@ -79,7 +75,7 @@ namespace PPMTool.Services
         {
             UserEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             context.Users.Update(UserEntity);
-            context.SaveChanges();
+            CommitChanges(context);
         }
 
         /// <summary>

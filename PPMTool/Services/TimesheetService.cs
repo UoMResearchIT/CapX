@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using FluentDateTime;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -35,7 +32,7 @@ namespace PPMTool.Services
             }
 
             context.Timesheets.Add(timesheetmodel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return timesheetmodel.TimesheetId;
         }
 
@@ -76,7 +73,7 @@ namespace PPMTool.Services
             }
 
             context.Timesheets.Update(timesheetModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return timesheetModel.TimesheetId;
         }
 
@@ -113,7 +110,7 @@ namespace PPMTool.Services
         public override void Delete(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
             context.Timesheets.Remove(timesheetModel);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>
@@ -141,7 +138,7 @@ namespace PPMTool.Services
         public int AddEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
         {
             context.TimesheetEntries.Add(entry);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entry.TimesheetEntryId;
         }
 
@@ -155,7 +152,7 @@ namespace PPMTool.Services
         public int UpdateEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
         {
             context.TimesheetEntries.Update(entry);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
             return entry.TimesheetEntryId;
         }
 
@@ -168,7 +165,7 @@ namespace PPMTool.Services
         public void DeleteEntry(PPMToolContext context, TimesheetEntry entry, bool commitChanges = true)
         {
             context.TimesheetEntries.Remove(entry);
-            if (commitChanges) context.SaveChanges();
+            if (commitChanges) CommitChanges(context);
         }
 
         /// <summary>
@@ -219,7 +216,7 @@ namespace PPMTool.Services
                 string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
                 person.TimesheetTemplateData = updatedTemplateDetails;
                 context.People.Update(person);
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 
@@ -240,7 +237,7 @@ namespace PPMTool.Services
                 string updatedTemplateDetails = string.Join("|", templateTimesheetTasks);
                 person.TimesheetTemplateData = updatedTemplateDetails;
                 context.People.Update(person);
-                context.SaveChanges();
+                CommitChanges(context);
             }
         }
 
@@ -277,7 +274,7 @@ namespace PPMTool.Services
                     Debug.WriteLine($"** Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
                 }
             }
-            context.SaveChanges();
+            CommitChanges(context);
         }
 
         /// <summary>

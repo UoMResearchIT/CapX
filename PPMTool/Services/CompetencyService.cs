@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -17,7 +15,7 @@ namespace PPMTool.Services
             context.Competencies.Add(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.CompetencyId;
         }
@@ -66,7 +64,7 @@ namespace PPMTool.Services
             context.Competencies.Update(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.CompetencyId;
         }
@@ -106,7 +104,7 @@ namespace PPMTool.Services
             context.CompetencyAssessments.Update(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.CompetencyAssessmentId;
         }
@@ -123,7 +121,7 @@ namespace PPMTool.Services
             context.CompetencyAssessments.Add(entity);
             if (commitChanges)
             {
-                context.SaveChanges();
+                CommitChanges(context);
             }
             return entity.CompetencyAssessmentId;
         }
