@@ -12,28 +12,29 @@
 <PageTitle>Project Details - CapX</PageTitle>
 
 <div class="container">
-    <div class="row">
-        <div class="col-auto mr-auto">
-            @if (project == null)
-            {
-                <h1>Unknown Project</h1>
-            }
-            else
-            {
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <h1>@project.GetFullName()</h1>
-                    <ProjectBadgeComponent ProjectStatus="@project.ProjectStatus" />
-                </RadzenStack>
-            }
-        </div>
-        <div class="col-auto">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-                @if (Loading)
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <div class="row">
+        
+            <div class="col-auto mr-auto">
+                @if (project == null)
                 {
-                    <LoadingComponent />
+                    <h1>Unknown Project</h1>
                 }
                 else
                 {
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <h1>@project.GetFullName()</h1>
+                        <ProjectBadgeComponent ProjectStatus="@project.ProjectStatus" />
+                    </RadzenStack>
+                }
+            </div>
+            <div class="col-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                     @if (EditAuthorised)
                     {
                         <RadzenButton Icon=@(isCurrentUserFollowing ? "check" : "rss_feed")
@@ -48,275 +49,260 @@
                     <RadzenButton Click="ResetActualsTimeStamp" Icon="timer" Text="Actuals OK?" ButtonStyle="ButtonStyle.Primary" Disabled="@(!isProjectManager)" Size="ButtonSize.Small" />
                     <RequestAndScrumButtonsComponent Project="@project" ButtonSize="ButtonSize.Small"/>
                     <RadzenButton Click="@(args => EditFinance(project))" Text="Finance" Icon="payments" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance && ActiveUserRoleType != RoleType.Reader)" Size="ButtonSize.Small" />
-                }
-            </RadzenStack>
+                </RadzenStack>
+            </div>
         </div>
-    </div>
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else if (project != null)
-    {
-        <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
         <hr />
-        <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem"
-                                        EditAuthorised="@EditAuthorised" />
-    }
-    <hr />
+        if (project != null)
+        {
+            <StatusMessageSummaryComponent Messages="project.GetLatestStatusMessages()" />
+            <hr />
+            <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem"
+                                            EditAuthorised="@EditAuthorised" />
+        }
+        <hr />
     
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else if (project?.SubTasks != null && project?.SubTasks.Count > 0)
-    {
-        <div class="row">
-            <div class="col">
-                <h2>Skills Required</h2>
-                <SkillsAsBadgesComponent SkillsList="@skillsRequiredForProject" />
-            </div>
-        </div>
-        <hr />
-        <div class="row">
-            <div class="col" style="min-width: 500px">
-                <h2>Burn-Up Chart</h2>
-                <div class="card">
-                    <ApexChart TItem="ChartItem"
-                               XAxisType="XAxisType.Datetime"
-                               Options="burnUpChartOptions"
-                               @ref="burnUpChart">
-
-                        <ApexPointSeries TItem="ChartItem"
-                                         Items="burnUpChartSource"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Planned Work"
-                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                         YValue="@(e => Convert.ToDecimal(e.Value1))" />
-
-                        <ApexPointSeries TItem="ChartItem"
-                                         Items="burnUpChartSource"
-                                         SeriesType="@SeriesType.Area"
-                                         Name="Planned Work (Adjusted for Unmet Demand)"
-                                         XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                         YValue="@(e => Convert.ToDecimal(e.Value2))" />
-
-                    </ApexChart>
-                </div>
-            </div>
-
-            <div class="col" style="min-width: 500px">
-                <h2>Schedule</h2>
-                <div class="card">
-                    <ApexChart TItem="GanttBlock"
-                               XAxisType="XAxisType.Datetime"
-                               Options=ganttChartOptions
-                               OnDataPointSelection="TaskSelected"
-                               @ref="scheduleChart">
-                        <ChildContent>
-                            <ApexRangeSeries TItem="GanttBlock"
-                                             Items="confirmedBlocks"
-                                             Name="Resources Confirmed"
-                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
-
-                            <ApexRangeSeries TItem="GanttBlock"
-                                             Items="provisionalBlocks"
-                                             Name="Resources Provisional"
-                                             XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                             YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                             YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                             PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
-                        </ChildContent>
-                        <ApexPointTooltip>
-                            <div class="m-2">
-                                @{
-                                    var point = (ListPoint<GanttBlock>)context.DataPoint;
-                                    <div class="m-0 p-3">
-                                        <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
-                                        @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
-                                        {
-                                            @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
-                                            {
-                                                <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
-                                            }
-                                            @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
-                                            {
-                                                <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
-                                            }
-                                            @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
-                                            {
-                                                <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
-                                            }
-                                            @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
-                                            {
-                                                <h4 class="me-1 text-info">[Currently No Demand]</h4>
-                                            }
-                                        }
-                                        <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
-                                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
-                                        @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
-                                        {
-                                            var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
-                                            var skillsList = SkillTagService.GetSkillsForSubTask(Context, taskId);
-                                            <SkillsAsBadgesComponent SkillsList="@skillsList" EmptyMessage="- No skill tags for this task" />
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </ApexPointTooltip>
-                    </ApexChart>
-                </div>
-
-                <div class="my-2">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.4rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
-                            <RadzenText Text="Unmet Demand:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg>
-                                <RadzenText Text="None" class="center-text" />
-                            </RadzenStack>
-                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(124)" /></svg>
-                                <RadzenText Text="&lt;25%" class="center-text" />
-                            </RadzenStack>
-                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(149)" /></svg>
-                                <RadzenText Text="&lt;50%" class="center-text" />
-                            </RadzenStack>
-                            <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(150)" /></svg>
-                                <RadzenText Text="&gt;50%" class="center-text" />
-                            </RadzenStack>
-                        </RadzenStack>
-
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                            <RadzenText Text="Group Linked Tasks" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                            <RadzenSwitch @bind-Value="@groupLinkedTasks" Change="@GroupTasksChanged" />
-                        </RadzenStack>
-                    </RadzenStack>
-                </div>
-            </div>
-        </div>
-        <hr />
-    }
-
-    @if (ActiveUserRoleType != RoleType.Finance)
-    {
-        <div class="row align-items-center">
-            <div class="col">
-                <h2>Tasks</h2>
-            </div>
-            <div class="col-auto">
-                <RadzenButton Click=@AddTask Text="Add" Icon="add" Disabled=!EditAuthorised />
-            </div>
-        </div>
-        <hr />
-
-        @if (project?.SubTasks == null || project?.SubTasks.Count == 0)
+        if (project?.SubTasks != null && project?.SubTasks.Count > 0)
         {
-            <RadzenText Text="There are no tasks to show" />
-        }
-        else
-        {
-            <div class="card">
-                <RadzenDataGrid AllowFiltering="@(project.SubTasks.Count > 0)"
-                                AllowColumnResize="true"
-                                FilterMode="FilterMode.Simple"
-                                AllowSorting="true"
-                                PageSize="10"
-                                AllowPaging="true"
-                                ShowPagingSummary="true"
-                                Data="@allTasks"
-                                TItem="SubTask"
-                                ColumnWidth="6rem"
-                                SelectionMode="DataGridSelectionMode.Single"
-                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                Count="@count"
-                                LoadData="@LoadData">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
-                            <Template Context="t">
-                                <StatusMessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="14rem" MinWidth="10px">
-                            <Template Context="t">
-                                <RadzenText Text=@t.Name />
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="SubTask" Property="UnmetDemand" Title="Unmet Demand" FormatString="{0:F1}" MinWidth="10px">
-                            <Template Context="t">
-                                @if (t.HasUnmetDemand())
-                                {
-                                    <RadzenText Style="color: var(--rz-danger)" Text=@t.UnmetDemand.ToString() />
-                                }
-                                else
-                                {
-                                    @t.UnmetDemand.ToString()
-                                }
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Planned Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="RequiresLeadership" Title="Leadership Required" Width="8rem" Filterable="false" MinWidth="10px">
-                            <Template Context="t">
-                                <RadzenSwitch @bind-Value="t.RequiresLeadership" Disabled="true" />
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type" Width="10rem" MinWidth="10px">
-                            <Template Context="t">
-                                @t.TaskType.ToNiceString()
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
-                            <Template Context="t">
-                                @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" Width="10rem" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" FrozenPosition="FrozenColumnPosition.Right" Title="Actions">
-                            <Template Context="task">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
-                                <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Duplicate"))" />
-                                <RadzenButton Icon="settings_ethernet" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => SplitTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Split"))" />
-                            </Template>
-                        </RadzenDataGridColumn>
-                    </Columns>
-                </RadzenDataGrid>
-            </div>
-        }
-        <hr />
-    }
-
-    @* Notes *@
-    <AuthorizeView Roles="Superuser,Manager,Finance">
-        <Authorized>
-            <div class="row align-items-center">
+            <div class="row">
                 <div class="col">
-                    <h2>Notes</h2>
-                </div>               
-                <div class="col-auto">
-                    <RadzenButton Visible="@(!editorVisible)" Icon ="add" Text="Add" ButtonStyle="ButtonStyle.Primary" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance)" Click="@AddClicked" />
+                    <h2>Skills Required</h2>
+                    <SkillsAsBadgesComponent SkillsList="@skillsRequiredForProject" />
                 </div>
             </div>
             <hr />
-            @if (Loading)
+            <div class="row">
+                <div class="col" style="min-width: 500px">
+                    <h2>Burn-Up Chart</h2>
+                    <div class="card">
+                        <ApexChart TItem="ChartItem"
+                                   XAxisType="XAxisType.Datetime"
+                                   Options="burnUpChartOptions"
+                                   @ref="burnUpChart">
+
+                            <ApexPointSeries TItem="ChartItem"
+                                             Items="burnUpChartSource"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Planned Work"
+                                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                             YValue="@(e => Convert.ToDecimal(e.Value1))" />
+
+                            <ApexPointSeries TItem="ChartItem"
+                                             Items="burnUpChartSource"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Planned Work (Adjusted for Unmet Demand)"
+                                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
+                                             YValue="@(e => Convert.ToDecimal(e.Value2))" />
+
+                        </ApexChart>
+                    </div>
+                </div>
+
+                <div class="col" style="min-width: 500px">
+                    <h2>Schedule</h2>
+                    <div class="card">
+                        <ApexChart TItem="GanttBlock"
+                                   XAxisType="XAxisType.Datetime"
+                                   Options=ganttChartOptions
+                                   OnDataPointSelection="TaskSelected"
+                                   @ref="scheduleChart">
+                            <ChildContent>
+                                <ApexRangeSeries TItem="GanttBlock"
+                                                 Items="confirmedBlocks"
+                                                 Name="Resources Confirmed"
+                                                 XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                                 YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                                 YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                                 PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+
+                                <ApexRangeSeries TItem="GanttBlock"
+                                                 Items="provisionalBlocks"
+                                                 Name="Resources Provisional"
+                                                 XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                                 YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                                 YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                                 PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                            </ChildContent>
+                            <ApexPointTooltip>
+                                <div class="m-2">
+                                    @{
+                                        var point = (ListPoint<GanttBlock>)context.DataPoint;
+                                        <div class="m-0 p-3">
+                                            <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
+                                            @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
+                                            {
+                                                @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
+                                                {
+                                                    <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
+                                                }
+                                                @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
+                                                {
+                                                    <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
+                                                }
+                                                @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
+                                                {
+                                                    <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
+                                                }
+                                                @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
+                                                {
+                                                    <h4 class="me-1 text-info">[Currently No Demand]</h4>
+                                                }
+                                            }
+                                            <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
+                                            <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                                            <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                                            @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
+                                            {
+                                                var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
+                                                var skillsList = SkillTagService.GetSkillsForSubTask(Context, taskId);
+                                                <SkillsAsBadgesComponent SkillsList="@skillsList" EmptyMessage="- No skill tags for this task" />
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </ApexPointTooltip>
+                        </ApexChart>
+                    </div>
+
+                    <div class="my-2">
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.4rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+                                <RadzenText Text="Unmet Demand:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(100)" /></svg>
+                                    <RadzenText Text="None" class="center-text" />
+                                </RadzenStack>
+                                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(124)" /></svg>
+                                    <RadzenText Text="&lt;25%" class="center-text" />
+                                </RadzenStack>
+                                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(149)" /></svg>
+                                    <RadzenText Text="&lt;50%" class="center-text" />
+                                </RadzenStack>
+                                <RadzenStack Gap="0.2rem" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                    <svg width=20 height=20 xmlns="http://www.w3.org/2000/svg"> <circle r="10" cx="10" cy="10" fill="@ChartItem.GetColourStringPercentage(150)" /></svg>
+                                    <RadzenText Text="&gt;50%" class="center-text" />
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <RadzenText Text="Group Linked Tasks" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                                <RadzenSwitch @bind-Value="@groupLinkedTasks" Change="@GroupTasksChanged" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </div>
+                </div>
+            </div>
+            <hr />
+        }
+
+        @if (ActiveUserRoleType != RoleType.Finance)
+        {
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2>Tasks</h2>
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Click=@AddTask Text="Add" Icon="add" Disabled=!EditAuthorised />
+                </div>
+            </div>
+            <hr />
+
+            @if (project?.SubTasks == null || project?.SubTasks.Count == 0)
             {
-                <LoadingComponent />
+                <RadzenText Text="There are no tasks to show" />
             }
             else
             {
+                <div class="card">
+                    <RadzenDataGrid AllowFiltering="@(project.SubTasks.Count > 0)"
+                                    AllowColumnResize="true"
+                                    FilterMode="FilterMode.Simple"
+                                    AllowSorting="true"
+                                    PageSize="10"
+                                    AllowPaging="true"
+                                    ShowPagingSummary="true"
+                                    Data="@allTasks"
+                                    TItem="SubTask"
+                                    ColumnWidth="6rem"
+                                    SelectionMode="DataGridSelectionMode.Single"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    Count="@count"
+                                    LoadData="@LoadData">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
+                                <Template Context="t">
+                                    <StatusMessageSummaryComponent Messages="t.GetLatestStatusMessages()" ShowMessages="false" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="14rem" MinWidth="10px">
+                                <Template Context="t">
+                                    <RadzenText Text=@t.Name />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SubTask" Property="UnmetDemand" Title="Unmet Demand" FormatString="{0:F1}" MinWidth="10px">
+                                <Template Context="t">
+                                    @if (t.HasUnmetDemand())
+                                    {
+                                        <RadzenText Style="color: var(--rz-danger)" Text=@t.UnmetDemand.ToString() />
+                                    }
+                                    else
+                                    {
+                                        @t.UnmetDemand.ToString()
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SubTask" Property="DurationDays" Title="Duration (days)" FormatString="{0:F0}" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="PlannedWorkHours" Title="Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="ActualWorkHours" Title="Actual Work (hrs)" FormatString="{0:F1}" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="PlannedCost" Title="Planned Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="RequiresLeadership" Title="Leadership Required" Width="8rem" Filterable="false" MinWidth="10px">
+                                <Template Context="t">
+                                    <RadzenSwitch @bind-Value="t.RequiresLeadership" Disabled="true" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="EndDate" Title="End Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="TaskType" Title="Type" Width="10rem" MinWidth="10px">
+                                <Template Context="t">
+                                    @t.TaskType.ToNiceString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
+                                <Template Context="t">
+                                    @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" Width="10rem" MinWidth="10px" />
+                            <RadzenDataGridColumn TItem="SubTask" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" FrozenPosition="FrozenColumnPosition.Right" Title="Actions">
+                                <Template Context="task">
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => EditTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                    <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Duplicate"))" />
+                                    <RadzenButton Icon="settings_ethernet" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => SplitTask(task))" @onclick:stopPropagation="true" Disabled=!EditAuthorised MouseEnter="@(args => ShowTooltip(args, "Split"))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </div>
+            }
+            <hr />
+        }
+
+        @* Notes *@
+        <AuthorizeView Roles="Superuser,Manager,Finance">
+            <Authorized>
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h2>Notes</h2>
+                    </div>               
+                    <div class="col-auto">
+                        <RadzenButton Visible="@(!editorVisible)" Icon ="add" Text="Add" ButtonStyle="ButtonStyle.Primary" Disabled="@(!EditAuthorised && ActiveUserRoleType != RoleType.Finance)" Click="@AddClicked" />
+                    </div>
+                </div>
+                <hr />
                 <div id="note-editor">
                     @if (editorVisible)
                     {
@@ -336,16 +322,16 @@
                             <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />
                         </div>
                         <Popup @ref=popup
-                               Lazy=false
-                               Open="@OnMentionPopupOpenAsync"
-                               Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
+                                Lazy=false
+                                Open="@OnMentionPopupOpenAsync"
+                                Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
                             <RadzenTextBox id="search"
-                                           Placeholder="Type to search..."
-                                           Style="width:100%;"
-                                           @onkeydown="@(args => ProcessMentionSearchInput(args))"
-                                           @oninput=@(args => MentionSearchString = $"{args.Value}")
-                                           Value="@MentionSearchString"
-                                           autocomplete="off" />
+                                            Placeholder="Type to search..."
+                                            Style="width:100%;"
+                                            @onkeydown="@(args => ProcessMentionSearchInput(args))"
+                                            @oninput=@(args => MentionSearchString = $"{args.Value}")
+                                            Value="@MentionSearchString"
+                                            autocomplete="off" />
                             <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
                                 @foreach (var person in mentionables)
                                 {
@@ -375,7 +361,7 @@
                                         <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
                                         <RadzenDatePicker @bind-Value="@noteModel.DueDate" Disabled="@noteModel.IsCompleted()"/>
                                         <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="clear" Size="ButtonSize.Small" class="ms-1" Click="@(args => { noteModel.DueDate = null; })"
-                                                      Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
+                                                        Disabled="@(noteModel.DueDate == null || noteModel.IsCompleted())" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                                     </RadzenStack>
                                     @if (noteModel.IsCompleted())
                                     {
@@ -403,9 +389,9 @@
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
                             <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
                             <RadzenTextBox @bind-Value=@noteSearchTerms
-                                           Placeholder="Search Notes"
-                                           Change=@FilterNotes
-                                           Style="width:100%" />
+                                            Placeholder="Search Notes"
+                                            Change=@FilterNotes
+                                            Style="width:100%" />
                             <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                         </RadzenStack>
                         <RadzenText TextStyle="TextStyle.Subtitle2">
@@ -452,7 +438,7 @@
                     }
                 </RadzenStack>
                 <hr/>
-            }
-        </Authorized>
-    </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+    }
 </div>
