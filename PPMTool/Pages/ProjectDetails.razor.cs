@@ -350,13 +350,13 @@ namespace PPMTool.Pages
                         project.SubTasks,
                         (assignments, currentWeek) =>
                         {
-                            // Value 1 requires the number of days is simply the planned work hours up to the end of that week
-                            return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek));
+                            // Value 1 is the planned work assuming all demand is met
+                            return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek, true));
                         },
                         (assignments, currentWeek) =>
                         {
-                            // Value 2 is corrected for the unmet demand on the task
-                            return assignments.RoundedSum(task => task.Demand == 0 ? 0 : (task.GetPlannedWorkWithinCurrentWeek(currentWeek) * (1 - (task.UnmetDemand / task.Demand))));
+                            // Value 2 is based on the planned work calculated by scheduling the resources and stored in the DB
+                            return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek, false));
                         }
                     ).ToList();
 
