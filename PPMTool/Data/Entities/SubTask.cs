@@ -247,12 +247,19 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        /// <summary>
+        /// Sets the calendar days duration based on the start and end dates.
+        /// </summary>
         private void UpdateDurationFromEndDate()
         {
             // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
             DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
         }
 
+        /// <summary>
+        /// Updates the duration of the task based on the units and planned work.
+        /// </summary>
+        /// <param name="units"></param>
         private void UpdateDuration(double units)
         {
             if (units == 0)
@@ -269,6 +276,10 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        /// <summary>
+        /// Updates the work given the units based on the current start date and calendar duration of a task
+        /// </summary>
+        /// <param name="units"></param>
         private void UpdateWork(double units)
         {
             // Duration input is calendar days so need to compute billable days to get work
