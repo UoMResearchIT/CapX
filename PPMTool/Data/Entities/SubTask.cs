@@ -164,9 +164,8 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="permitEndDateToMove">Whether we can move the end date to maintain 
         /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
-        /// <param name="project">Project owning the subtask</param>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule(bool permitEndDateToMove, Project project)
+        public string Schedule(bool permitEndDateToMove)
         {
             try
             {
