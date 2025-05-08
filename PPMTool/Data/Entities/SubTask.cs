@@ -282,14 +282,25 @@ namespace PPMTool.Data.Entities
         private void UpdateWork(double units)
         {
             // Duration input is calendar days so need to compute billable days to get work
-            var endDate = StartDate.AddDays(DurationDays);
-            var billableDays = GetNumberOfBillableDays(StartDate, endDate);
+            var billableDays = GetNumberOfBillableDays(StartDate, DurationDays);
             PlannedWorkHours = (int)Math.Floor(billableDays * 7 * units);
             DurationBillableDays = (int)Math.Ceiling(billableDays);
         }
 
         /// <summary>
-        /// Use 220 billable days per year to estimate the number of billable days between two dates.
+        /// Uses 220 billable days per year to estimate the number of billable days between a start date and a number of calendars into the future.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="durationCalendarDays"></param>
+        /// <returns></returns>
+        internal static double GetNumberOfBillableDays(DateTime startDate, int durationCalendarDays)
+        {
+            var endDate = startDate.AddDays(durationCalendarDays);
+            return GetNumberOfBillableDays(startDate, endDate);
+        }
+
+        /// <summary>
+        /// Uses 220 billable days per year to estimate the number of billable days between two dates.
         /// </summary>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
@@ -512,15 +523,39 @@ namespace PPMTool.Data.Entities
         /// assuming the date time provided is a Monday.
         /// </summary>
         /// <param name="currentWeek"></param>
+        /// <param name="ignoreUnmetDemand">Whether the calculation should be based on the demand figure for the task and ignore whatever resources are assigned to it (unless there are none)</param>
         /// <returns></returns>
-        public double GetPlannedWorkWithinCurrentWeek(DateTime currentWeek)
+        public double GetPlannedWorkWithinCurrentWeek(DateTime currentWeek, bool ignoreUnmetDemand)
         {
             // Current week DateTime needs to be a Monday
             if (currentWeek.DayOfWeek != DayOfWeek.Monday)
                 throw new Exception("This method requires the day to be a Monday!");
 
+            // If there is no demand then the planned work is zero regardless of resources?
+            if (Demand == 0)
+            {
+                return 0;
+            }
+
+            // If there are no resources then the planned work is zero regardless of demand
+            if (AssignedResources.Count == 0)
+            {
+                return 0;
+            }
+
             // Daily work is average planned work
             var workPerDay = PlannedWorkHours / DurationDays;
+
+            // If ignoring unmet demand then we need to update the planned work for the task
+            // since it will have been computed based on the assigned resources which only
+            // partially meet the demand. This only matters for fixed duration tasks since the
+            // work is the driven quantity in those cases.
+            if (ignoreUnmetDemand && UnmetDemand != 0 && TaskType == TaskType.FixedDuration)
+            {
+                var billableDays = GetNumberOfBillableDays(StartDate, DurationDays);
+                var workHours = (int)Math.Floor(billableDays * 7 * Demand);
+                workPerDay = workHours / DurationDays;
+            }
 
             // Compute the duration of the task in days in this week
             // Assume runs for full week initially (i.e. starts before the week and ends after the week)
