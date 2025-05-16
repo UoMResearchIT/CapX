@@ -138,8 +138,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         public void UpdateSkillTagRareness(PPMToolContext context, SkillTag entity, bool commitChanges = true)
         {
-            // Get owned skill count
+            // Get owned skill count (how many people have the skill)
             var count = GetOwnedSkillCountForTag(context, entity.SkillTagId);
+
+            // Get total active people in the team to allow percentage to be computed
             var totalActivePeople = context.People
                 .Where(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today))
                 .Count();
