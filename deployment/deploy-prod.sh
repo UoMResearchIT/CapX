@@ -26,7 +26,7 @@ sudo cp -a ~/CapX/PPMTool/PPMTool.db ~/CapX_Data_Backup/$filename
 cd ~/CapX/PPMTool
 dotnet tool restore
 dotnet ef database update
-cp PPMTool.db ./bin/Release/net6.0/publish/
+cp PPMTool.db ./bin/Release/net8.0/publish/
 
 # Publish and restart the kestrel server
 cd ~/

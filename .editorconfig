@@ -239,3 +239,18 @@ dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
 dotnet_naming_rule.public_members_must_be_capitalized.symbols  = public_symbols
 dotnet_naming_rule.public_members_must_be_capitalized.style    = first_word_upper_case_style
 dotnet_naming_rule.public_members_must_be_capitalized.severity = warning
+
+# Define the symbol group for private fields
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers = 
+
+# Define the naming style: no prefix, camelCase
+dotnet_naming_style.no_underscore_prefix.capitalization = camel_case
+dotnet_naming_style.no_underscore_prefix.required_prefix = 
+dotnet_naming_style.no_underscore_prefix.required_suffix = 
+
+# Define the rule that applies the style to the symbol group
+dotnet_naming_rule.private_fields_no_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_no_underscore.style = no_underscore_prefix
+dotnet_naming_rule.private_fields_no_underscore.severity = error

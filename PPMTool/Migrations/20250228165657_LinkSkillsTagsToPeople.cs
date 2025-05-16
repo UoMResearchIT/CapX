@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,7 +7,7 @@ namespace PPMTool.Migrations
 {
     public partial class LinkSkillsTagsToPeople : Migration
     {
-        string SkillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
+        string skillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
 
         /// <summary>
         /// Gets the skills grouped by person from the RSE Skills Graph repository
@@ -21,7 +17,7 @@ namespace PPMTool.Migrations
         private Dictionary<string, List<string>> GetSkillsFromSkillGraphRepoByPerson()
         {
             using var client = new HttpClient();
-            var response = client.GetAsync(SkillJsonEndpoint).Result.EnsureSuccessStatusCode();
+            var response = client.GetAsync(skillJsonEndpoint).Result.EnsureSuccessStatusCode();
             var content = response.Content.ReadAsStringAsync().Result;
 
             var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");

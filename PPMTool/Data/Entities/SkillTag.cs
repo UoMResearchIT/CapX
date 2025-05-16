@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Net.Http;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -132,15 +128,19 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Update the rareness for the skill based on how many people have it as an owned skill
         /// </summary>
-        /// <param name="count"></param>
-        /// <param name="total"></param>
+        /// <param name="count">Number of people who have the skill</param>
+        /// <param name="total">Number of people in the department currently active</param>
         /// <returns></returns>
         public void UpdateRareness(int count, int total)
         {
             var rareness = SkillRareness.Common;
-            if (total == 0)
+            if (count == 0)
             {
                 rareness = SkillRareness.Legendary;
+            }
+            else if (total == 0)
+            {
+                rareness = SkillRareness.Common;
             }
             else
             {
