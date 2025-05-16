@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
-using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -19,7 +17,6 @@ namespace PPMTool.Pages
         private SkillTagService TagService { get; set; }
 
         private int count;
-        private int pageCount = 15;
 
         protected override void OnInitialized()
         {
@@ -139,14 +136,7 @@ namespace PPMTool.Pages
             // Assign to grid source
             var data = query.ToList();
             count = data.Count;
-            if (args.Skip == null)
-            {
-                dataGridEntities = data.Take(pageCount).ToList();
-            }
-            else
-            {
-                dataGridEntities = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
-            }
+            dataGridEntities = data.ToList();
 
             Debug.WriteLine($"** {data.Count()} skills loaded. {dataGridEntities.Count()} displayed.");
         }
