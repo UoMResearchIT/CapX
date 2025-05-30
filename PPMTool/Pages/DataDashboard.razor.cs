@@ -788,17 +788,49 @@ namespace PPMTool.Pages
                                 var record = allData[row];
                                 for (int col = 0; col < propNames.Count; col++)
                                 {
-                                    var value = record.GetType().GetProperty(propNames[col])?.GetValue(record)?.ToString() ?? string.Empty;
-                                    worksheet.Cell(row + 2, col + 1).Value = value;
+                                    var property = record.GetType().GetProperty(propNames[col]);
+                                    var rawValue = property?.GetValue(record);
+                                    var cell = worksheet.Cell(row + 2, col + 1);
 
-                                    // Format
+                                    // Format and assign
                                     if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
                                     {
-                                        worksheet.Cell(row + 2, col + 1).Style.DateFormat.Format = "dd/MM/yyyy";
+                                        if (rawValue is DateTime dt)
+                                        {
+                                            cell.Value = dt;
+                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
                                     }
                                     else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
                                     {
-                                        worksheet.Cell(row + 2, col + 1).Style.NumberFormat.Format = "£#,##0.00";
+                                        if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
+                                        {
+                                            cell.Value = currencyValue;
+                                            cell.Style.NumberFormat.Format = "£#,##0.00";
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (rawValue is int)
+                                        {
+                                            cell.Value = (int)rawValue;
+                                        }
+                                        else if (rawValue is double)
+                                        {
+                                            cell.Value = (double)rawValue;
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
                                     }
                                 }
                             }

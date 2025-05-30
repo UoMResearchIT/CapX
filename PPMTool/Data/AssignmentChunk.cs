@@ -58,9 +58,9 @@ namespace PPMTool.Data
 
         public string FundingSourceType { get; set; }
 
-        public string FundingSourceDescription { get; set; }
-
         public double FundingSourceAmount { get; set; }
+
+        public string FundingSourceDescription { get; set; }
 
         public AssignmentChunk()
         {
