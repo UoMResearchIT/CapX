@@ -36,7 +36,9 @@ namespace PPMTool.Data.Helpers
             Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
 
             // Get WLM changes for this person that take place during the window
-            var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();
+            var wlms = person.WorkloadModelChanges
+                .Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate)
+                .OrderByDescending(x => x.ChangeDate).ToList();
 
             // Get WLM in force on the first day of the window or set to default G6
             WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate);
@@ -57,7 +59,8 @@ namespace PPMTool.Data.Helpers
             var changesInFinancialYear = startFY != endFY;
 
             // Insert leadership assignments
-            foreach (var project in projectsInWindow.Where(x => x.CostModel == CostModel.TechAndLeadership))
+            foreach (var project in projectsInWindow
+                .Where(x => x.CostModel == CostModel.TechAndLeadership && x.ProjectManager?.PersonId == person.PersonId))
             {
                 // Find leadership tasks and convert to assignment chunk
                 var dateRanges = project.GetLeadershipTaskRanges();
@@ -67,11 +70,11 @@ namespace PPMTool.Data.Helpers
                     var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
 
                     // Add new chunk
-                    data.Add(new AssignmentChunk
+                    var chunk = new AssignmentChunk
                     {
                         EmployeeName = person.Name,
                         Grade = defaultWLM.Grade,
-                        FTE = project.LeadershipFTE,
+                        FTE = Math.Round(project.LeadershipFTE, 3),
                         Project = project.GetFullName(),
                         LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                         Faculty = project.Faculty.GetDescription(),
@@ -81,12 +84,14 @@ namespace PPMTool.Data.Helpers
                         StartDate = dateRange.StartDate,
                         EndDate = dateRange.EndDate,
                         FinancialYear = FinancialReference.GetFinancialYear(dateRange.StartDate),
-                        PlannedCost = totalDaysOfLeadership == 0 ? "£0" : (project.PlannedLeadershipCosts * (daysOfLeadershipForChunk / totalDaysOfLeadership)).ToString("C0"),
+                        PlannedCost = totalDaysOfLeadership == 0 ? 0 : Math.Round(project.PlannedLeadershipCosts * (daysOfLeadershipForChunk / totalDaysOfLeadership), 2),
                         AccountCode = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.AccountCode) ? "Unknown" : project.LeadershipFundingSource?.AccountCode,
                         FundingSourceType = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : project.LeadershipFundingSource?.FundingSourceType.GetDescription(),
                         FundingSourceDescription = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.Description) ? "None" : project.LeadershipFundingSource?.Description,
-                        FundingSourceAmount = project.LeadershipFundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
-                    });
+                        FundingSourceAmount = Math.Round(project.LeadershipFundingSource?.AmountAvailable ?? 0, 2)
+                    };
+                    chunk.UpdateEstimatedSalaryCost(finrefs);
+                    data.Add(chunk);
                 }
             }
 
@@ -105,7 +110,7 @@ namespace PPMTool.Data.Helpers
                 {
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
-                    FTE = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE,
+                    FTE = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE, 3),
                     Project = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
@@ -115,11 +120,11 @@ namespace PPMTool.Data.Helpers
                     StartDate = task.StartDate,
                     EndDate = task.EndDate,
                     FinancialYear = FinancialReference.GetFinancialYear(task.StartDate),
-                    PlannedCost = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost.ToString("C0"),
+                    PlannedCost = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost, 2),
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    FundingSourceAmount = fundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
+                    FundingSourceAmount = Math.Round(fundingSource?.AmountAvailable ?? 0, 2)
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {
@@ -222,16 +227,7 @@ namespace PPMTool.Data.Helpers
                     }
 
                     // Cost estimate based on mid-grade salaries
-                    try
-                    {
-                        var annualCosts = finrefs.GetSuitableFinancialReference(chunk.FinancialYear).GetMidGradeCosts(chunk.Grade);
-                        var fractionOfYear = (chunk.EndDate.Date.Subtract(chunk.StartDate.Date).TotalDays + 1) / 365d;
-                        chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0).ToString("C0");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex.ToString());
-                    }
+                    chunk.UpdateEstimatedSalaryCost(finrefs);
                 }
 
                 // Add task to master list

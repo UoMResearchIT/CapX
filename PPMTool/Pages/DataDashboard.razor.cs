@@ -790,6 +790,16 @@ namespace PPMTool.Pages
                                 {
                                     var value = record.GetType().GetProperty(propNames[col])?.GetValue(record)?.ToString() ?? string.Empty;
                                     worksheet.Cell(row + 2, col + 1).Value = value;
+
+                                    // Format
+                                    if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
+                                    {
+                                        worksheet.Cell(row + 2, col + 1).Style.DateFormat.Format = "dd/MM/yyyy";
+                                    }
+                                    else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
+                                    {
+                                        worksheet.Cell(row + 2, col + 1).Style.NumberFormat.Format = "£#,##0.00";
+                                    }
                                 }
                             }
 
