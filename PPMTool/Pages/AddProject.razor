@@ -145,7 +145,7 @@
                 <div class="col-6">
                     <RadzenLabel class="radzen-form-label" Text="Leadership Funding Source" />
                     <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a leadership funding source" Visible="@(projectModel.CostModel != CostModel.TechAndLeadership)" /><br />
-                    <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.FundingSourceId" Data="@availableFundingSources" Disabled="@(projectModel.CostModel != CostModel.TechAndLeadership)" AllowClear="true">
+                    <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.FundingSourceId" ValueProperty="FundingSourceId" Data="@availableFundingSources" Disabled="@(projectModel.CostModel != CostModel.TechAndLeadership)" AllowClear="true">
                         <Template Context="source">
                             @(source?.GetSensibleObjectName())
                         </Template>
