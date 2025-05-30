@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using ApexCharts;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -11,6 +10,7 @@ using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Fill = ApexCharts.Fill;
 
 namespace PPMTool.Pages
 {

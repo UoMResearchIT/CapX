@@ -82,10 +82,10 @@ namespace PPMTool.Data.Helpers
                         EndDate = dateRange.EndDate,
                         FinancialYear = FinancialReference.GetFinancialYear(dateRange.StartDate),
                         PlannedCost = totalDaysOfLeadership == 0 ? "£0" : (project.PlannedLeadershipCosts * (daysOfLeadershipForChunk / totalDaysOfLeadership)).ToString("C0"),
-                        AccountCode = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.AccountCode) ? "Unknown" : LeadershipFundingSource?.AccountCode,
-                        FundingSourceType = string.IsNullOrWhiteSpace(LeadershipFundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : LeadershipFundingSource?.FundingSourceType.GetDescription(),
-                        FundingSourceDescription = string.IsNullOrWhiteSpace(LeadershipFundingSource?.Description) ? "None" : LeadershipFundingSource?.Description,
-                        FundingSourceAmount = LeadershipFundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
+                        AccountCode = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.AccountCode) ? "Unknown" : project.LeadershipFundingSource?.AccountCode,
+                        FundingSourceType = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : project.LeadershipFundingSource?.FundingSourceType.GetDescription(),
+                        FundingSourceDescription = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.Description) ? "None" : project.LeadershipFundingSource?.Description,
+                        FundingSourceAmount = project.LeadershipFundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
                     });
                 }
             }
