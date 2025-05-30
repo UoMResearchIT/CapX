@@ -67,6 +67,7 @@ namespace PPMTool.Data.Context
             modelBuilder.Entity<Project>()
                 .HasOne(p => p.LeadershipFundingSource)
                 .WithOne(fs => fs.ProjectLeadershipSource)
+                .HasForeignKey<Project>(p => p.FundingSourceId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
 

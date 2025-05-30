@@ -141,6 +141,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// A specific funding source that is used to fund the leadership costs of this project
         /// </summary>
+        public int? FundingSourceId { get; set; }
         public FundingSource LeadershipFundingSource { get; set; }
 
         /// <summary>
