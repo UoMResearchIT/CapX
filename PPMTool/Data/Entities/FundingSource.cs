@@ -48,6 +48,11 @@ namespace PPMTool.Data.Entities
         public ICollection<Resource> ResourcesFunded { get; set; }
 
         /// <summary>
+        /// Project for which this funding source is being used as a leadership funding source
+        /// </summary>
+        public Project ProjectLeadershipSource { get; set; }
+
+        /// <summary>
         /// Details about the funding source to be posted to a note
         /// </summary>
         /// <returns></returns>

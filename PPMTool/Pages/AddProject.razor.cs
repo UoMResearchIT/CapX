@@ -38,6 +38,9 @@ namespace PPMTool.Pages
         [Inject]
         private PaymentService PaymentService { get; set; }
 
+        [Inject]
+        private FundingSourceService FundingSourceService { get; set; } = null!;
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -53,6 +56,7 @@ namespace PPMTool.Pages
         private ValidationMessageStore messageStore;
         private EditContext editContext;
         private double fundsReceived;
+        private IEnumerable<FundingSource> availableFundingSources = new List<FundingSource>();
 
         protected override void OnInitialized()
         {
@@ -70,6 +74,9 @@ namespace PPMTool.Pages
 
                 // Populate school list
                 schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
+
+                // Populate funding source list
+                availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);
             }
             else
             {

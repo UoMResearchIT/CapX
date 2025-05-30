@@ -212,6 +212,8 @@ namespace PPMTool.Pages
                     // Generate the funds requested and received
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
                         context,
+                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
+                        project.PlannedLeadershipCosts,
                         project.SubTasks.SelectMany(x => x.AssignedResources),
                         sources,
                         InvoiceService.GetFundsRequested(context, project.ProjectId),
