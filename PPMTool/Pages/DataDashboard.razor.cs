@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using ApexCharts;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -728,6 +730,8 @@ namespace PPMTool.Pages
             {
                 // Create a context to be accesed on this thread
                 var threadContext = ContextFactory.CreateDbContext();
+                var allProjects = ProjectService.GetAll(threadContext);
+                var allFinRefs = FinancialReferenceService.GetAll(threadContext);
 
                 // Create blank list of data
                 var allData = new List<AssignmentChunk>();
@@ -743,10 +747,10 @@ namespace PPMTool.Pages
                     // Get the row data
                     var data = ExportHelper.GetExportDataForPerson(
                         person,
-                        ProjectService.GetAll(threadContext),
+                        allProjects,
                         startDate,
                         endDate,
-                        FinancialReferenceService.GetAll(threadContext)
+                        allFinRefs
                     );
                     allData.AddRange(data);
                 }
@@ -757,37 +761,42 @@ namespace PPMTool.Pages
                 {
                     try
                     {
-                        // Write to CSV file
-                        var filename = $"Capacity_{DateTime.Now.Ticks}.csv";
+                        // Create file path
+                        var filename = $"Capacity_{DateTime.Now.Ticks}.xlsx";
                         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
                         Directory.CreateDirectory(folder);
-                        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX", filename);
-                        using (var writer = new StreamWriter(path))
+                        var path = Path.Combine(folder, filename);
+
+                        // Create workbook and worksheet
+                        using (var workbook = new XLWorkbook())
                         {
+                            var worksheet = workbook.Worksheets.Add("Capacity");
 
                             // Write header row
                             var props = typeof(AssignmentChunk).GetProperties();
-                            var propNames = props.Select(x => x.Name);
-                            var headers = propNames.ToList();
-                            writer.WriteLine(string.Join(",", headers));
-
-                            // Write rows one at a time
-                            foreach (var record in allData)
+                            var propNames = props.Select(x => x.Name).ToList();
+                            for (int i = 0; i < propNames.Count; i++)
                             {
-                                // Write properties
-                                var valuesAsStrings = new List<string>();
-                                foreach (var name in propNames)
-                                {
-                                    string value = record.GetType().GetProperty(name).GetValue(record)?.ToString() ?? string.Empty;
-
-                                    // Project and task names with a comma will mess up the CSV format so replace with a semi-colon
-                                    valuesAsStrings.Add(value.Replace(",", ";"));
-                                }
-
-                                // Write the row
-                                writer.WriteLine(string.Join(",", valuesAsStrings));
+                                var cell = worksheet.Cell(1, i + 1);
+                                cell.Value = propNames[i];
+                                cell.Style.Font.Bold = true;
                             }
+
+                            // Write data rows
+                            for (int row = 0; row < allData.Count; row++)
+                            {
+                                var record = allData[row];
+                                for (int col = 0; col < propNames.Count; col++)
+                                {
+                                    var value = record.GetType().GetProperty(propNames[col])?.GetValue(record)?.ToString() ?? string.Empty;
+                                    worksheet.Cell(row + 2, col + 1).Value = value;
+                                }
+                            }
+
+                            // Save the workbook
+                            workbook.SaveAs(path);
                         }
+
                         Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
 
                         // Get file stream
