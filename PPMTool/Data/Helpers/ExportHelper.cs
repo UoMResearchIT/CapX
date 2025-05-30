@@ -25,14 +25,15 @@ namespace PPMTool.Data.Helpers
             Debug.WriteLine($"** Building data for {person.Name}...");
 
             // Filter list of tasks to those running during the window
-            var tasksInWindow = projects
+            var projectsInWindow = projects
                 .Where(x => !x.ProjectStatus.IsCancelled())
+                .Where(x => x.IsWithin(startDate, endDate));
+            var tasksInWindow = projectsInWindow
                 .SelectMany(x => x.SubTasks)
                 .Where(x => x.AssignedResources
                     .Any(x => x.Person.PersonId == person.PersonId)
-                )
-                .Where(x => x.IsWithin(startDate, endDate));
-            Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
+                );
+            Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
 
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges.Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate).OrderByDescending(x => x.ChangeDate).ToList();
@@ -54,6 +55,40 @@ namespace PPMTool.Data.Helpers
             var startFY = FinancialReference.GetFinancialYear(startDate);
             var endFY = FinancialReference.GetFinancialYear(endDate);
             var changesInFinancialYear = startFY != endFY;
+
+            // Insert leadership assignments
+            foreach (var project in projectsInWindow.Where(x => x.CostModel == CostModel.TechAndLeadership))
+            {
+                // Find leadership tasks and convert to assignment chunk
+                var dateRanges = project.GetLeadershipTaskRanges();
+                var totalDaysOfLeadership = dateRanges.Sum(x => (x.EndDate - x.StartDate).TotalDays + 1);
+                foreach (var dateRange in dateRanges)
+                {
+                    var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
+
+                    // Add new chunk
+                    data.Add(new AssignmentChunk
+                    {
+                        EmployeeName = person.Name,
+                        Grade = defaultWLM.Grade,
+                        FTE = project.LeadershipFTE,
+                        Project = project.GetFullName(),
+                        LeadRSE = project.ProjectManager?.Name ?? "Unknown",
+                        Faculty = project.Faculty.GetDescription(),
+                        School = project.School.GetDescription(),
+                        PI = project.PI,
+                        Task = "Leadership",
+                        StartDate = dateRange.StartDate,
+                        EndDate = dateRange.EndDate,
+                        FinancialYear = FinancialReference.GetFinancialYear(dateRange.StartDate),
+                        PlannedCost = totalDaysOfLeadership == 0 ? "£0" : (project.PlannedLeadershipCosts * (daysOfLeadershipForChunk / totalDaysOfLeadership)).ToString("C0"),
+                        AccountCode = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.AccountCode) ? "Unknown" : LeadershipFundingSource?.AccountCode,
+                        FundingSourceType = string.IsNullOrWhiteSpace(LeadershipFundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : LeadershipFundingSource?.FundingSourceType.GetDescription(),
+                        FundingSourceDescription = string.IsNullOrWhiteSpace(LeadershipFundingSource?.Description) ? "None" : LeadershipFundingSource?.Description,
+                        FundingSourceAmount = LeadershipFundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
+                    });
+                }
+            }
 
             // Each assignment is at least one row of the report
             foreach (var task in tasksInWindow)
@@ -83,7 +118,7 @@ namespace PPMTool.Data.Helpers
                     PlannedCost = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost.ToString("C0"),
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
-                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "Unknown" : fundingSource?.Description,
+                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
                     FundingSourceAmount = fundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
