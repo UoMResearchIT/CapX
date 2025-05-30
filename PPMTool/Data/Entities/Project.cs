@@ -139,6 +139,11 @@ namespace PPMTool.Data.Entities
         public ICollection<FundingSource> FundingSources { get; set; }
 
         /// <summary>
+        /// A specific funding source that is used to fund the leadership costs of this project
+        /// </summary>
+        public FundingSource LeadershipFundingSource { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
