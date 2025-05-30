@@ -25,7 +25,15 @@ namespace PPMTool.Data
 
         public string School { get; set; }
 
-        public double SalaryCostEstimate { get; set; }
+        /// <summary>
+        /// This is the estiamted salary cost of the individual resource based on their grade and FTE
+        /// </summary>
+        public string SalaryCostEstimate { get; set; }
+
+        /// <summary>
+        /// This is the planned cost of the resource for the assignment chunk as lifted from the task itself -- doesn't take into account grade changes or increments?
+        /// </summary>
+        public string PlannedCost { get; set; }
 
         private DateTime startDate;
         public DateTime StartDate
@@ -50,6 +58,8 @@ namespace PPMTool.Data
         public string FundingSourceType { get; set; }
 
         public string FundingSourceDescription { get; set; }
+
+        public string FundingSourceAmount { get; set; }
 
         public AssignmentChunk()
         {
@@ -77,6 +87,9 @@ namespace PPMTool.Data
             AccountCode = taskToCopy.AccountCode;
             FundingSourceType = taskToCopy.FundingSourceType;
             FundingSourceDescription = taskToCopy.FundingSourceDescription;
+            FundingSourceAmount = taskToCopy.FundingSourceAmount;
+            SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
+            PlannedCost = taskToCopy.PlannedCost;
         }
     }
 }

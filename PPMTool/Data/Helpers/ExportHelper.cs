@@ -80,9 +80,11 @@ namespace PPMTool.Data.Helpers
                     StartDate = task.StartDate,
                     EndDate = task.EndDate,
                     FinancialYear = FinancialReference.GetFinancialYear(task.StartDate),
+                    PlannedCost = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost.ToString("C0"),
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
-                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode
+                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "Unknown" : fundingSource?.Description,
+                    FundingSourceAmount = fundingSource?.AmountAvailable.ToString("C0") ?? "Unknown"
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {
@@ -184,12 +186,12 @@ namespace PPMTool.Data.Helpers
                         chunk.EndDate = endDate;
                     }
 
-                    // Compute cost estimate -- will fail for invalid grades so put in try catch
+                    // Cost estimate based on mid-grade salaries
                     try
                     {
                         var annualCosts = finrefs.GetSuitableFinancialReference(chunk.FinancialYear).GetMidGradeCosts(chunk.Grade);
                         var fractionOfYear = (chunk.EndDate.Date.Subtract(chunk.StartDate.Date).TotalDays + 1) / 365d;
-                        chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0);
+                        chunk.SalaryCostEstimate = Math.Round(annualCosts * chunk.FTE * fractionOfYear, 0).ToString("C0");
                     }
                     catch (Exception ex)
                     {
