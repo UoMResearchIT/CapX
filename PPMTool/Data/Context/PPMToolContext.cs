@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Entities;
 
@@ -63,6 +62,13 @@ namespace PPMTool.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configure the relationship between Project and FundingSource (for leadership) manually
+            modelBuilder.Entity<Project>()
+                .HasOne(p => p.LeadershipFundingSource)
+                .WithOne(fs => fs.ProjectLeadershipSource)
+                .HasForeignKey<Project>(p => p.FundingSourceId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         /// <summary>

@@ -139,6 +139,12 @@ namespace PPMTool.Data.Entities
         public ICollection<FundingSource> FundingSources { get; set; }
 
         /// <summary>
+        /// A specific funding source that is used to fund the leadership costs of this project
+        /// </summary>
+        public int? FundingSourceId { get; set; }
+        public FundingSource LeadershipFundingSource { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -152,6 +158,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
+                new StatusMessage("This project has no funding source for its leadership charges!", StatusMessage.MessageType.Error, () => HasNoLeadershipFundingSourcesButRan()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => Budget == 0),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
@@ -167,6 +174,15 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask()),
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Determines whether the project has no leadership funding sources but has run or is running and is in an active, paused, maintenance or finished state with cost model that includes leadership costs
+        /// </summary>
+        /// <returns></returns>
+        private bool HasNoLeadershipFundingSourcesButRan()
+        {
+            return CostModel == CostModel.TechAndLeadership && !ProjectStatus.IsCancelled() && !ProjectStatus.IsUnfunded() && LeadershipFundingSource == null;
         }
 
         /// <summary>

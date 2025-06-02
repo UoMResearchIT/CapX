@@ -1,4 +1,5 @@
-﻿using PPMTool.Data.Entities;
+﻿using System.Diagnostics;
+using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
@@ -25,7 +26,15 @@ namespace PPMTool.Data
 
         public string School { get; set; }
 
+        /// <summary>
+        /// This is the estiamted salary cost of the individual resource based on their grade and FTE
+        /// </summary>
         public double SalaryCostEstimate { get; set; }
+
+        /// <summary>
+        /// This is the planned cost of the resource for the assignment chunk as lifted from the task itself -- doesn't take into account grade changes or increments?
+        /// </summary>
+        public double PlannedCost { get; set; }
 
         private DateTime startDate;
         public DateTime StartDate
@@ -48,6 +57,8 @@ namespace PPMTool.Data
         public string AccountCode { get; set; }
 
         public string FundingSourceType { get; set; }
+
+        public double FundingSourceAmount { get; set; }
 
         public string FundingSourceDescription { get; set; }
 
@@ -77,6 +88,27 @@ namespace PPMTool.Data
             AccountCode = taskToCopy.AccountCode;
             FundingSourceType = taskToCopy.FundingSourceType;
             FundingSourceDescription = taskToCopy.FundingSourceDescription;
+            FundingSourceAmount = taskToCopy.FundingSourceAmount;
+            SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
+            PlannedCost = taskToCopy.PlannedCost;
+        }
+
+        /// <summary>
+        /// Based on available financial references, updates the estimated salary cost of the assignment based on the mid-grade costs of the assignee
+        /// </summary>
+        /// <param name="finrefs"></param>
+        internal void UpdateEstimatedSalaryCost(IEnumerable<FinancialReference> finrefs)
+        {
+            try
+            {
+                var annualCosts = finrefs.GetSuitableFinancialReference(FinancialYear).GetMidGradeCosts(Grade);
+                var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
+                SalaryCostEstimate = Math.Round(annualCosts * FTE * fractionOfYear, 0);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
         }
     }
 }
