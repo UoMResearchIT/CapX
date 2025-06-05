@@ -238,7 +238,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedButHasNoScrumProjectLink()
         {
-            return DateTime.Today >= StartDate && DateTime.Today <= EndDate && !HtmlHelper.IsValidLink(ScrumProjectLink);
+            return !ProjectStatus.IsCancelled() && DateTime.Today >= StartDate && DateTime.Today <= EndDate && !HtmlHelper.IsValidLink(ScrumProjectLink);
         }
 
         /// <summary>
@@ -288,14 +288,14 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Check whether this project has any tasks with unmet demand within the window given.
+        /// Check whether this project is not in a cancelled state and has any tasks with unmet demand within the window given.
         /// </summary>
         /// <param name="startDate">If null, assumed to be now</param>
         /// <param name="endDate">If null, window just considered to be the future</param>
         /// <returns></returns>
         public bool HasUnmetDemandInWindow(DateTime? startDate = null, DateTime? endDate = null)
         {
-            return SubTasks?.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0) ?? false;
+            return !ProjectStatus.IsCancelled() && (SubTasks?.Any(x => x.GetUnmetDemandInWindow(startDate, endDate) > 0) ?? false);
         }
 
         /// <summary>
