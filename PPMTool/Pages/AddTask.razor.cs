@@ -660,7 +660,7 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
             // Schedule (updates planned work, duration etc.)
-            error = TaskModel.Schedule(false, ProjectModel);
+            error = TaskModel.Schedule(false);
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 

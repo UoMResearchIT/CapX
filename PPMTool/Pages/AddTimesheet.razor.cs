@@ -42,7 +42,7 @@ namespace PPMTool.Pages
         private double totalHours;
         private int entryMinimum = 0;
         private double entryStep = 0.25;
-        private Dictionary<string, string> DayColours = new Dictionary<string, string>
+        private Dictionary<string, string> dayColours = new Dictionary<string, string>
         {
             { "mon", "#EEE" },
             { "wed", "#EEE" },
@@ -670,9 +670,9 @@ namespace PPMTool.Pages
                     else
                     {
                         string theDay = args.Column.Title.ToLower().Trim();
-                        if (DayColours.ContainsKey(theDay))
+                        if (dayColours.ContainsKey(theDay))
                         {
-                            args.Attributes.Add("style", $"background-color : {DayColours[theDay]}");
+                            args.Attributes.Add("style", $"background-color : {dayColours[theDay]}");
                         }
 
                         if (args.Column.Property == "IsInTemplate")

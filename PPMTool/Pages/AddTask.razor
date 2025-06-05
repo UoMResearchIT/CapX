@@ -149,7 +149,8 @@
                     </div>
                 </div>
                 <div class="col-2">
-
+                    <RadzenLabel class="radzen-form-label" Text="Planned Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cost computed from resource day rates and assignment FTE" /><br />
+                    <RadzenText Text="@TaskModel.PlannedCost.ToString("C2")" Style="margin-bottom: 0;"/>
                 </div>
                 <div class="col-4">
                     <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Task work is computed from duration and resources (or demand if no resources)" Visible="@workDisabled" /><br />

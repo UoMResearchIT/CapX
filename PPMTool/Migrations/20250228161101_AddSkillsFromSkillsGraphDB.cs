@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -14,10 +10,10 @@ namespace PPMTool.Migrations
     public partial class AddSkillsFromSkillsGraphDB : Migration
     {
         private string localFilePath = "./Migrations/Data/SkillsFromSkillsGraph-migration.txt";
-        string SkillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
+        private string skillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
 
         /// <summary>
-        /// Get the unique skills from the <see cref="SkillJsonEndpoint"/>, save it to a <see cref="LocalFilePath"/>, update file if it exists, and return it as a HashSet<string>
+        /// Get the unique skills from the <see cref="skillJsonEndpoint"/>, save it to a <see cref="LocalFilePath"/>, update file if it exists, and return it as a HashSet<string>
         /// </summary>
         /// <exception cref="Exception">Fail to deserialise the Json from github</exception>
         /// <exception cref="HttpRequestException">Fail to get the json document on github</exception>
@@ -25,7 +21,7 @@ namespace PPMTool.Migrations
         {
             using var client = new HttpClient();
 
-            var response = client.GetAsync(SkillJsonEndpoint).Result.EnsureSuccessStatusCode();
+            var response = client.GetAsync(skillJsonEndpoint).Result.EnsureSuccessStatusCode();
             var content = response.Content.ReadAsStringAsync().Result;
 
             var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");

@@ -8,13 +8,13 @@ namespace PPMTool.Services
     public class UserService : BaseEntityService<User>
     {
 
-        private ILogger<UserService> _logger;
-        private IDbContextFactory<PPMToolContext> _contextFactory;
+        private ILogger<UserService> logger;
+        private IDbContextFactory<PPMToolContext> contextFactory;
 
         public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory)
         {
-            _logger = logger;
-            _contextFactory = contextFactory;
+            this.logger = logger;
+            this.contextFactory = contextFactory;
         }
 
         public override int Add(PPMToolContext context, User entity, bool commitChanges = true)

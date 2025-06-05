@@ -48,6 +48,11 @@ namespace PPMTool.Data.Entities
         public ICollection<Resource> ResourcesFunded { get; set; }
 
         /// <summary>
+        /// Project for which this funding source is being used as a leadership funding source
+        /// </summary>
+        public Project ProjectLeadershipSource { get; set; }
+
+        /// <summary>
         /// Details about the funding source to be posted to a note
         /// </summary>
         /// <returns></returns>
@@ -66,7 +71,7 @@ namespace PPMTool.Data.Entities
         /// <inheritdoc/>
         public string GetSensibleObjectName()
         {
-            return $"[{FundingSourceId}] {(HasAccountCode ? AccountCode : "No Account")} ({FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value})";
+            return $"{(HasAccountCode ? AccountCode : "No Account")} ({FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value}) {AmountAvailable.ToString("C0")}";
         }
     }
 }
