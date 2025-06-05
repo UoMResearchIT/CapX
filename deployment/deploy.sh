@@ -15,16 +15,17 @@ dotnet publish -c Release -f net8.0
 cd ../PPMTool.API
 dotnet publish -c Release -f net8.0
 
-# Sync DB from production
+# Sync DB from production by copying all files and flushing WAL journal
 cd ~/
-sudo scp -i ~/.ssh/id_rsa mbgm6ah3@balex.itservices.manchester.ac.uk:/var/www/capx/PPMTool.db ~/CapX/PPMTool/
-sudo chown mbgm6ah3:users ~/CapX/PPMTool/PPMTool.db
+sudo scp -i ~/.ssh/id_rsa mbgm6ah3@balex.itservices.manchester.ac.uk:/var/www/capx/PPMTool.db* ~/CapX/PPMTool/
+sudo chown mbgm6ah3:users ~/CapX/PPMTool/PPMTool.db*
+sudo sqlite3 ~/CapX/PPMTool/PPMTool.db VACUUM;
 
 # Run migrations
 cd ~/CapX/PPMTool
 dotnet tool restore
 dotnet ef database update
-cp PPMTool.db ./bin/Release/net6.0/publish/
+cp PPMTool.db* ./bin/Release/net8.0/publish/
 
 # Publish and restart the kestrel server
 cd ~/
