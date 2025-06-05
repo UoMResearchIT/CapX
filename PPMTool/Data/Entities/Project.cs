@@ -182,7 +182,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private bool HasNoBudget()
         {
-            return Budget == 0 && ProjectStatus != ProjectStatus.NewRequest;
+            return Budget == 0 && ProjectStatus != ProjectStatus.NewRequest && !ProjectStatus.IsCancelled();
         }
 
         /// <summary>
