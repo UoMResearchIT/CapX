@@ -347,6 +347,11 @@ namespace PPMTool.Pages
 
                     // Create the burn-up chart items
                     burnUpChartSource = new List<ChartItem>();
+
+                    // TODO:
+
+                    // Get the assignments by week but grouped by resource
+
                     var temp = ChartHelper.AggregateSubTasksByWeek(
                         project.GetFullName(),
                         project.SubTasks,

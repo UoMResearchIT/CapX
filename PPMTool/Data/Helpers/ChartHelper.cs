@@ -226,6 +226,78 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Represents the effort data for a given resource on a given task
+        /// </summary>
+        internal class ResourceEffort
+        {
+            /// <summary>
+            /// ID of the person associated with the resource
+            /// </summary>
+            public int PersonId { get; }
+
+            /// <summary>
+            /// The planned work hours
+            /// </summary>
+            public double PlannedWorkHours { get; }
+
+            /// <summary>
+            /// The actual number of hours worked
+            /// </summary>
+            public double ActualHours { get; }
+
+            public ResourceEffort(int personId, double plannedWorkHours, double actualHours)
+            {
+                PersonId = personId;
+                PlannedWorkHours = plannedWorkHours;
+                ActualHours = actualHours;
+            }
+        }
+
+        /// <summary>
+        /// Represents the effort for tasks and assignments for a given week
+        /// </summary>
+        internal class WeeklyTaskEffort
+        {
+            /// <summary>
+            /// The date of the week beginning
+            /// </summary>
+            public DateTime weekDate { get; }
+
+            /// <summary>
+            /// Sum of the planned work across all tasks assuming all demand is met
+            /// </summary>
+            public double MaxmimumPlannedWorkHours { get; }
+
+            /// <summary>
+            /// Details of every assignment. The sum of the planned work hours will be lower than the <see cref="MaxmimumPlannedWorkHours"/> value if there is unmet demand.
+            /// </summary>
+            public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
+
+            public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek)
+            {
+                weekDate = currentWeek;
+
+                // For every resource on every task build a representation of the information
+                foreach (var subTask in tasksRunningInWeek)
+                {
+                    // Find the total FTE across all resources
+                    var totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                    // TODO: How many hours are expected to be done this week based on if the task runs only partially during this week?
+
+                    foreach (var res in subTask.AssignedResources)
+                    {
+                        // Work out the contribution of this resource
+                        var plannedWorkHours = subTask.PlannedWorkHours * res.AssignmentFTE / totalFTE;
+
+                        // Add a resource effort object
+                        ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHours, res.ActualWorkHours));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Time-marching method for summing up the contribution week-by-week based on the value functions provided.
         /// The results are arranged into blocks exactly one week in length.
         /// </summary>
@@ -235,7 +307,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
         /// <param name="hatchedFunction">Function to determine hatched status for subtasks in the current week</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
+        public static IEnumerable<WeeklyTaskEffort> AggregateSubTasksByWeek(
             string label,
             IEnumerable<SubTask> subTasks,
             Func<IEnumerable<SubTask>, DateTime, double> value1Function,
