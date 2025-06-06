@@ -52,7 +52,7 @@ namespace PPMTool.Data.Helpers
                 ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
 
-            Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
+            Debug.WriteLine($"** Generated {chartItems.Count} block(s) {(person == null ? "" : person.Name)}");
 
             // Only action the gap filler if a person is provided
             if (person != null && gapFillingFunction != null)
