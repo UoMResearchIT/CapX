@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using ApexCharts;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
@@ -512,7 +507,7 @@ namespace PPMTool.Pages
             cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
 
             // Cache all the people
-            cachedPeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
+            cachedPeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
 
             // Load dropdown sources
             ReloadDropDownSources();
