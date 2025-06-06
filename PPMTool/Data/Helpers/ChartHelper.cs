@@ -323,6 +323,7 @@ namespace PPMTool.Data.Helpers
         /// functions which accept the current WLM active on the day.
         /// </summary>
         /// <param name="person"></param>
+        /// <param name="wlmChanges">All WLM changes for this person</param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="value1FromWLMFunction"></param>
@@ -332,6 +333,7 @@ namespace PPMTool.Data.Helpers
         /// <returns></returns>
         public static IEnumerable<ChartItem> FillGapsBetweenChartItemsFromWorkloadModels(
             Person person,
+            IEnumerable<WorkloadModelChange> wlmChanges,
             DateTime startDate,
             DateTime endDate,
             Func<WorkloadModelChange, double> value1FromWLMFunction,
@@ -343,7 +345,7 @@ namespace PPMTool.Data.Helpers
             var blocks = new List<ChartItem>();
 
             // Get any workload model changes in force at the beginning of, or during, the window
-            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
+            var changes = wlmChanges.Where(x => x.ChangeDate < endDate).ToList();
 
             // If person has a leaving date in the window then set zero availability after by adding a fake change
             if (person.EndDate != null)

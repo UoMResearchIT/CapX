@@ -121,6 +121,7 @@ namespace PPMTool.Pages
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
                         person,
+                        PersonService.GetWorkloadModelChanges(Context, person.PersonId),
                         gapStart,
                         gapEnd,
                         wlm => 0,
