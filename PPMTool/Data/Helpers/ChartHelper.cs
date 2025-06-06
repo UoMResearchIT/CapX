@@ -52,7 +52,7 @@ namespace PPMTool.Data.Helpers
             // Get the chart items
             var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter,
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter,
                 ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
             Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
@@ -126,7 +126,6 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate">End of aggregation window</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
-        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
@@ -139,14 +138,13 @@ namespace PPMTool.Data.Helpers
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
-            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
         {
             return AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter,
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter,
                 ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
         }
@@ -163,7 +161,6 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
-        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
@@ -176,7 +173,6 @@ namespace PPMTool.Data.Helpers
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
-            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
