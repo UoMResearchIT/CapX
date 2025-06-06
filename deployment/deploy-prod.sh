@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Fetch from GitHub
-cd ~/CapX
+cd ~/CapX-Prod
 git fetch
 git checkout release
 git submodule update --init --recursive
@@ -15,22 +15,24 @@ dotnet publish -c Release -f net8.0
 cd ../PPMTool.API
 dotnet publish -c Release -f net8.0
 
-# Copy live DB back to source directory and backup
+# Sync DB from production and flush WAL journal
 cd ~/
-sudo cp /var/www/capx/PPMTool.db  ~/CapX/PPMTool/
-sudo chown mbgm6ah3:users ~/CapX/PPMTool/PPMTool.db
-filename=PPMTool-$(date +"%Y%m%d-%H%M%S").db
-sudo cp -a ~/CapX/PPMTool/PPMTool.db ~/CapX_Data_Backup/$filename
+sudo scp -i ~/.ssh/id_rsa mbgm6ah3@balex.itservices.manchester.ac.uk:/var/www/capx/PPMTool.db* ~/CapX-Prod/PPMTool/
+sudo chown mbgm6ah3:users ~/CapX-Prod/PPMTool/PPMTool.db*
+sudo sqlite3 ~/CapX-Prod/PPMTool/PPMTool.db VACUUM;
 
-# Run migrations
-cd ~/CapX/PPMTool
+# Run migrations and copy to publish folder
+cd ~/CapX-Prod/PPMTool
 dotnet tool restore
 dotnet ef database update
-cp PPMTool.db ./bin/Release/net8.0/publish/
+cp PPMTool.db* ./bin/Release/net8.0/publish/
 
-# Publish and restart the kestrel server
+# Copy publish directories over to the production system
 cd ~/
-./publish.sh
+sudo scp -r -i ~/.ssh/id_rsa ~/CapX-Prod mbgm6ah3@balex.itservices.manchester.ac.uk:~/
+
+# Publish and restart the kestrel server on the production system
+ssh mbgm6ah3@balex.itservices.manchester.ac.uk 'bash -s' < "/home/mbgm6ah3/publish-prod.sh"
 
 # Send email to say the deployment ran
 mail -s "[CapX Prod] Deployment Executed" adrian.harwood@manchester.ac.uk <<< "Deployment of CapX Prod has just run!"

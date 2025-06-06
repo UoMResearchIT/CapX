@@ -182,5 +182,18 @@ namespace PPMTool.Services
         {
             return context.People.Where(x => activeUser == null ? false : x.LineManager.PersonId == activeUser.PersonId);
         }
+
+        /// <summary>
+        /// Gets all the workload model changes for the person
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        internal IEnumerable<WorkloadModelChange> GetWorkloadModelChanges(PPMToolContext context, int personId)
+        {
+            return context.WorkloadModelChanges
+                .Include(x => x.Person)
+                .Where(x => x.Person.PersonId == personId);
+        }
     }
 }
