@@ -275,7 +275,19 @@ namespace PPMTool.Pages
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                (assignments, gapStart, gapEnd) =>
+                {
+                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                        person,
+                        PersonService.GetWorkloadModelChanges(Context, person.PersonId),
+                        gapStart,
+                        gapEnd,
+                        wlm => 0,
+                        wlm => wlm?.ProjectWorkFTE ?? 0,
+                        (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
+                    );
+                },
+                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
