@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -99,8 +95,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate)
         {
-            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                person,
+            return ChartHelper.ConvertAssignmentsToChartItems(
                 assignments,
                 (assignments, currentDay) =>
                 {
@@ -113,6 +108,7 @@ namespace PPMTool.Pages
                 person.Name,
                 startDate,
                 endDate,
+                person,
                 assignments =>
                 {
                     return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
@@ -178,12 +174,12 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 // Hatched function
-                assignments =>
+                hatchedFunction: assignments =>
                 {
                     return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
                 },
                 // Value 2 for each block
-                (assignments, value1, currentDay) =>
+                value2Function: (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },

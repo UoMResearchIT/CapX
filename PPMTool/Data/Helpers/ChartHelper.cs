@@ -9,123 +9,16 @@ namespace PPMTool.Data.Helpers
         /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.
         /// Adds special logic to pad whitespace in the timelines and adjust for person start and end dates.
         /// </summary>
-        /// <param name="person">Person of interest</param>
         /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
         /// <param name="label">Chart axis label for the data</param>
         /// <param name="startDate">Start of aggregation window</param>
         /// <param name="endDate">End of aggregation window</param>
+        /// <param name="person">Person of interest if required</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
-        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
-        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
-        /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
-            Person person,
-            IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
-            Func<double, double, bool, string> colourFunction,
-            string label,
-            DateTime startDate,
-            DateTime endDate,
-            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
-            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
-            bool ignoreZeroValue1Entries = false
-        )
-        {
-            // If person starts after the start date then reset the start date to that date
-            if (person.StartDate > startDate)
-            {
-                startDate = person.StartDate;
-            }
-
-            // If person leaves before the end date then reset the end date to that date
-            if (person.EndDate != null && person.EndDate < endDate)
-            {
-                endDate = person.EndDate?.AddDays(1) ?? DateTime.Today;
-            }
-
-            // Get the chart items
-            var chartItems = AggregateAssignmentsIntoBlocks(
-                assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, tooltipMessageFormatter,
-                ignoreZeroValue1Entries
-            ).OrderBy(x => x.StartDate).ToList();
-            Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
-
-            if (gapFillingFunction != null)
-            {
-                // Create an empty list
-                var extraItems = new List<ChartItem>();
-
-                // If no items or if the first chart item starts after the (corrected) start date
-                // then fill in gaps
-                if (chartItems.Count() < 1 || chartItems.First().StartDate > startDate)
-                {
-                    // Define fill region end date
-                    var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
-
-                    // Generate the items
-                    extraItems.AddRange(gapFillingFunction(person, startDate, endFill));
-                }
-
-                // If there is a gap after the last chart item and the end date then fill in
-                if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
-                {
-                    extraItems.AddRange(gapFillingFunction(person, chartItems.Last().EndDate, endDate));
-                }
-
-                // Add the extra items to the chart data
-                if (extraItems.Count > 0)
-                {
-                    // Add the items to the chart items list and reorder
-                    chartItems.AddRange(extraItems);
-                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
-                }
-
-                // If there are any gaps in the chart items where they are free then fill in
-                extraItems.Clear();
-                for (int i = 0; i < chartItems.Count(); ++i)
-                {
-                    // Ignore the last item in the list
-                    if (i < chartItems.Count() - 1)
-                    {
-                        // If there is a gap
-                        if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
-                        {
-                            // Generate chart items from availability to fill the gap
-                            extraItems.AddRange(gapFillingFunction(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
-                        }
-                    }
-                }
-
-                // Add the extra items to the chart data
-                if (extraItems.Count > 0)
-                {
-                    // Add the items to the chart items list and reorder
-                    chartItems.AddRange(extraItems);
-                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
-                }
-            }
-
-            return chartItems;
-        }
-
-        /// <summary>
-        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph.
-        /// </summary>
-        /// <param name="assignments">Set of assignments to aggregate</param>
-        /// <param name="valueFunction">Function to define the primary value of a given block</param>
-        /// <param name="colourFunction">Function to define the colour of a given block</param>
-        /// <param name="label">Chart axis label for the data</param>
-        /// <param name="startDate">Start of aggregation window</param>
-        /// <param name="endDate">End of aggregation window</param>
-        /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
-        /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
@@ -136,17 +29,65 @@ namespace PPMTool.Data.Helpers
             string label,
             DateTime startDate,
             DateTime endDate,
+            Person person = null,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
         {
-            return AggregateAssignmentsIntoBlocks(
+            if (person != null)
+            {
+                if (person.StartDate > startDate)
+                    startDate = person.StartDate;
+
+                if (person.EndDate != null && person.EndDate < endDate)
+                    endDate = person.EndDate?.AddDays(1) ?? DateTime.Today;
+            }
+
+            var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
                 endDate, hatchedFunction, value2Function, tooltipMessageFormatter,
                 ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
+
+            Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
+
+            // Only action the gap filler if a person is provided
+            if (person != null && gapFillingFunction != null)
+            {
+                var extraItems = new List<ChartItem>();
+
+                if (!chartItems.Any() || chartItems.First().StartDate > startDate)
+                {
+                    var endFill = chartItems.Any() ? chartItems.First().StartDate : endDate;
+                    extraItems.AddRange(gapFillingFunction(person, startDate, endFill));
+                }
+
+                if (chartItems.Any() && chartItems.Last().EndDate < endDate)
+                {
+                    extraItems.AddRange(gapFillingFunction(person, chartItems.Last().EndDate, endDate));
+                }
+
+                for (int i = 0; i < chartItems.Count - 1; ++i)
+                {
+                    if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
+                    {
+                        extraItems.AddRange(gapFillingFunction(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
+                    }
+                }
+
+                if (extraItems.Any())
+                {
+                    chartItems.AddRange(extraItems);
+                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
+                }
+
+                Debug.WriteLine($"** {chartItems.Count} block(s) for {person.Name} after gap filling");
+            }
+
+            return chartItems;
         }
 
         /// <summary>

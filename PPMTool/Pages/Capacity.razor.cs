@@ -242,8 +242,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate)
         {
-            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                person,
+            return ChartHelper.ConvertAssignmentsToChartItems(
                 assignments,
                 (assignments, currentDay) =>
                 {
@@ -260,6 +259,7 @@ namespace PPMTool.Pages
                 person.Name,
                 startDate,
                 endDate,
+                person,
                 assignments =>
                 {
                     return assignments.Any(assignment =>
@@ -320,7 +320,7 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 // Hatched function
-                assignments =>
+                hatchedFunction: assignments =>
                 {
                     return assignments.Any(assignment =>
                     {
@@ -333,7 +333,7 @@ namespace PPMTool.Pages
                     });
                 },
                 // Value 2 for each block
-                (assignments, value1, currentDay) =>
+                value2Function: (assignments, value1, currentDay) =>
                 {
                     var peo = people.Where(y => y == person);
 
