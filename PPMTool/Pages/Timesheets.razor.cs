@@ -34,7 +34,7 @@ namespace PPMTool.Pages
         private List<Timesheet> myTimesheets;
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
-        private bool isInitialised;
+        private bool initialLoadComplete;
 
         public bool ShowAllMyTimesheets
         {
@@ -45,7 +45,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-mine", showAllMyTimesheets);
-                    if (isInitialised)
+                    if (initialLoadComplete)
                     {
                         Loading = true;
                         EnqueueLoadData(GenerateTask);
@@ -64,7 +64,7 @@ namespace PPMTool.Pages
                 {
                     showAllMyStaffTimesheets = value;
                     SessionStorage.SetItemAsync<bool?>("timesheets-showall-reports", showAllMyStaffTimesheets);
-                    if (isInitialised)
+                    if (initialLoadComplete)
                     {
                         Loading = true;
                         EnqueueLoadData(GenerateTask);
@@ -87,10 +87,30 @@ namespace PPMTool.Pages
             }
         }
 
+        private bool superuserShowSynopsisForAllStaff = false;
+
+        public bool SuperuserShowSynopsisForAllStaff
+        {
+            get => superuserShowSynopsisForAllStaff;
+            private set
+            {
+                if (value != superuserShowSynopsisForAllStaff)
+                {
+                    superuserShowSynopsisForAllStaff = value;
+                    SessionStorage.SetItemAsync<bool?>("timesheets-superuser-showall", superuserShowSynopsisForAllStaff);
+                    if (initialLoadComplete)
+                    {
+                        Loading = true;
+                        EnqueueLoadData(GenerateTask);
+                    }
+                }
+            }
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
+            Loading = true;
             LogInformation("Viewing Timesheets");
         }
 
@@ -105,6 +125,8 @@ namespace PPMTool.Pages
             if (temp != null) ShowAllMyStaffTimesheets = temp ?? false;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-showsynopsis");
             if (temp != null) showSynopsis = temp ?? true;
+            temp = await SessionStorage.GetItemAsync<bool?>("timesheets-superuser-showall");
+            if (temp != null) SuperuserShowSynopsisForAllStaff = temp ?? true;
 
             Loading = true;
             StateHasChanged();
@@ -117,75 +139,89 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private Task GenerateTask()
         {
+
             return Task.Run(() =>
             {
-                // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
-                myTimesheets = new List<Timesheet>(); // Initialise the list
-                myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser).OrderByDescending(t => t.StartDate).ToList();
-
-                // Set the start date for the next one
-                dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
-
-                if (!ShowAllMyTimesheets)
-                {
-                    // Remove items with Submitted or Approved status
-                    myTimesheets = myTimesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
-                }
-
-                // Show second grid if user manages staff - need to see the timesheets they have submitted.
-                var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser);
-                if (managedPeople.Count() > 0)  // Is a manager
-                {
-                    hideStaffResults = false;  // Show/Hide the second grid based on this
-                    myStaffTimesheets = new List<Timesheet>();
-                    myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
-                    dateMondayThisWeek = GetDateForMondayThisWeek();
-                    synopsisStartDate = GetDateForAMonday(7); // Weeks in the past
-                    synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
-                    synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
-
-                    foreach (Person p in managedPeople
-                        .Where(p => p.PersonId != ActiveUser?.PersonId)
-                        .OrderBy(p => p.ShortName)) // For AH who is self-managed
-                    {
-                        // Get timesheets of the person
-                        myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
-
-                        // Only add the person to the synopsis if they are currently here in the window
-                        if (p.EndDate == null || p.EndDate >= synopsisStartDate)
-                        {
-                            // Get timesheets in the range for that person
-                            myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
-
-                            // Pad the timesheet list with nulls
-                            if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count)
-                            {
-                                myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]);
-                            }
-                        }
-                    }
-
-                    if (!ShowAllMyStaffTimesheets)
-                    {
-                        // Filter the list to only show items with Submitted status
-                        myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted).ToList();
-                    }
-
-                    // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
-                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
-                }
+                LoadData();
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>
                 {
-                    if (!isInitialised)
+                    if (!initialLoadComplete)
                     {
-                        isInitialised = true;
+                        initialLoadComplete = true;
                     }
                     Loading = false;
                     StateHasChanged();
                 });
             });
+
+        }
+
+        private void LoadData() 
+        {
+            // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
+            myTimesheets = new List<Timesheet>(); // Initialise the list
+            myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser).OrderByDescending(t => t.StartDate).ToList();
+
+            // Set the start date for the next one
+            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser);
+
+            if (!ShowAllMyTimesheets)
+            {
+                // Remove items with Submitted or Approved status
+                myTimesheets = myTimesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
+            }
+
+            // Show second grid if user manages staff - need to see the timesheets they have submitted.
+            var managedPeople = PersonService.GetManagedStaff(Context, ActiveUser);
+
+            // If Superuser then _potentially_ they may not manage staff but can see staff synopsis for all staff
+            if ((ActiveUserRoleType == RoleType.Superuser) && SuperuserShowSynopsisForAllStaff)
+            {
+                // Get all staff if switch is selected
+                managedPeople = PersonService.GetAllShallow(Context);
+            }
+            if (managedPeople.Count() > 0)  // Is a manager
+            {
+                hideStaffResults = false;  // Show/Hide the second grid based on this
+                myStaffTimesheets = new List<Timesheet>();
+                myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
+                dateMondayThisWeek = GetDateForMondayThisWeek();
+                synopsisStartDate = GetDateForAMonday(7); // Weeks in the past
+                synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
+                synopsisDates = GetSynopsisDates(synopsisStartDate, synopsisEndDate);
+
+                foreach (Person p in managedPeople
+                    .Where(p => p.PersonId != ActiveUser?.PersonId)
+                    .OrderBy(p => p.ShortName)) // For AH who is self-managed
+                {
+                    // Get timesheets of the person
+                    myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
+
+                    // Only add the person to the synopsis if they are currently here in the window
+                    if (p.EndDate == null || p.EndDate >= synopsisStartDate)
+                    {
+                        // Get timesheets in the range for that person
+                        myStaffTimesheetsInPeriod[p] = TimesheetService.GetAllTimesheetsForPersonInDateRange(Context, p, synopsisStartDate, synopsisEndDate).OrderBy(t => t.StartDate).ToList();
+
+                        // Pad the timesheet list with nulls
+                        if (myStaffTimesheetsInPeriod[p].Count < synopsisDates.Count)
+                        {
+                            myStaffTimesheetsInPeriod[p] = GetPaddedTimesheetList(synopsisDates, myStaffTimesheetsInPeriod[p]);
+                        }
+                    }
+                }
+
+                if (!ShowAllMyStaffTimesheets)
+                {
+                    // Filter the list to only show items with Submitted status
+                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted).ToList();
+                }
+
+                // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
+                myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
+            }
         }
 
         /// <summary>
