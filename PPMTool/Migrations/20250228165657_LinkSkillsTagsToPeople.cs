@@ -17,20 +17,26 @@ namespace PPMTool.Migrations
         private Dictionary<string, List<string>> GetSkillsFromSkillGraphRepoByPerson()
         {
             using var client = new HttpClient();
-            var response = client.GetAsync(skillJsonEndpoint).Result.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
-
-            var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");
-
             Dictionary<string, List<string>> interestsByPerson = new Dictionary<string, List<string>>();
-            foreach (var person in dictionary)
+
+            try
             {
-                person.Value.TryGetValue("interests", out List<string> interests);
-                if (interests is not null)
+                var response = client.GetAsync(skillJsonEndpoint).Result.EnsureSuccessStatusCode();
+                var content = response.Content.ReadAsStringAsync().Result;
+
+                var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");
+
+
+                foreach (var person in dictionary)
                 {
-                    interestsByPerson.Add(CheckSwap(person.Key), person.Value["interests"]);
+                    person.Value.TryGetValue("interests", out List<string> interests);
+                    if (interests is not null)
+                    {
+                        interestsByPerson.Add(CheckSwap(person.Key), person.Value["interests"]);
+                    }
                 }
             }
+            catch { }
 
             return interestsByPerson;
 
