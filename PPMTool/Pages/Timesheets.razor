@@ -39,16 +39,16 @@
         else
         {
             <RadzenDataGrid AllowAlternatingRows="true" 
-            AllowPaging="true" 
-            AllowFiltering=@ShowAllMyTimesheets
-            FilterMode="FilterMode.Simple"
-            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-            PageSize="5" 
-            PagerHorizontalAlign="HorizontalAlign.Right"
-            AllowSorting="true" 
-            Data="@myTimesheets" 
-            TItem="Timesheet"
-            GridLines="DataGridGridLines.Horizontal">
+                            AllowPaging="true" 
+                            AllowFiltering=@ShowAllMyTimesheets
+                            FilterMode="FilterMode.Simple"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            PageSize="5" 
+                            PagerHorizontalAlign="HorizontalAlign.Right"
+                            AllowSorting="true" 
+                            Data="@myTimesheets" 
+                            TItem="Timesheet"
+                            GridLines="DataGridGridLines.Horizontal">
 
                 <Columns>
                     <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" Width="10rem" />
@@ -61,9 +61,9 @@
                     <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="timesheet">
                             <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
-                            IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
-                            OnButtonClick="@(canView => EditTimesheet(timesheet))"
-                            ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                                                       IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                                       OnButtonClick="@(canView => EditTimesheet(timesheet))"
+                                                       ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -190,16 +190,16 @@
             else
             {
                 <RadzenDataGrid AllowAlternatingRows="true"
-                AllowPaging="true"
-                AllowFiltering="true"
-                FilterMode="FilterMode.Simple"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                PageSize="10"
-                PagerHorizontalAlign="HorizontalAlign.Right"
-                AllowSorting="true"
-                Data="@myStaffTimesheets"
-                TItem="Timesheet"
-                GridLines="DataGridGridLines.Horizontal">
+                                AllowPaging="true"
+                                AllowFiltering="true"
+                                FilterMode="FilterMode.Simple"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                PageSize="10"
+                                PagerHorizontalAlign="HorizontalAlign.Right"
+                                AllowSorting="true"
+                                Data="@myStaffTimesheets"
+                                TItem="Timesheet"
+                                GridLines="DataGridGridLines.Horizontal">
 
                     <Columns>
                         <RadzenDataGridColumn Property="Owner.Name" Title="Staff Member" Width="20rem"/>
@@ -213,9 +213,9 @@
                         <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                             <Template Context="timesheet">
                                 <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
-                                IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
-                                OnButtonClick="@(canView => EditTimesheet(timesheet))"
-                                ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
+                                                           IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                                           OnButtonClick="@(canView => EditTimesheet(timesheet))"
+                                                           ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
