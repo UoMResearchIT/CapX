@@ -88,9 +88,9 @@ namespace PPMTool.Pages
         private List<Note> allNotes;
         private Project project;
         private FinanceSummaryItem financeSummaryItem;
-        private List<ChartItem> burnUpChartSource;
+        private List<ChartHelper.WeeklyTaskEffort> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
-        private ApexChartOptions<ChartItem> burnUpChartOptions;
+        private ApexChartOptions<ChartHelper.WeeklyTaskEffort> burnUpChartOptions;
         private int count;
         private bool isEditExistingNote;
         private bool editorVisible;
@@ -110,7 +110,7 @@ namespace PPMTool.Pages
         private bool isProjectManager;
         private bool groupLinkedTasks;
         private ApexChart<GanttBlock> scheduleChart;
-        private ApexChart<ChartItem> burnUpChart;
+        private ApexChart<ChartHelper.WeeklyTaskEffort> burnUpChart;
         private IEnumerable<SkillTag> skillsRequiredForProject;
 
 
@@ -346,52 +346,33 @@ namespace PPMTool.Pages
                     UpdateScheduleChartAxisLimits();
 
                     // Create the burn-up chart items
-                    burnUpChartSource = new List<ChartItem>();
+                    burnUpChartSource = new List<ChartHelper.WeeklyTaskEffort>();
 
-                    // TODO:
+                    // Get details of weekly effort
+                    var temp = ChartHelper.GetWeeklyTaskEffortItems(project.SubTasks).ToList();
 
-                    // Get the assignments by week but grouped by resource
-
-                    var temp = ChartHelper.AggregateSubTasksByWeek(
-                        project.GetFullName(),
-                        project.SubTasks,
-                        (assignments, currentWeek) =>
-                        {
-                            // Value 1 is the planned work assuming all demand is met
-                            return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek, true));
-                        },
-                        (assignments, currentWeek) =>
-                        {
-                            // Value 2 is based on the planned work calculated by scheduling the resources and stored in the DB
-                            return assignments.RoundedSum(task => task.GetPlannedWorkWithinCurrentWeek(currentWeek, false));
-                        }
-                    ).ToList();
-
-                    // Generate series by aggregating the values
-                    double cumulativeValue1 = 0;
-                    double cumulativeValue2 = 0;
-                    foreach (var week in temp)
+                    // Generate burn-up series by aggregating the values
+                    for (var i = 0; i < temp.Count; ++i)
                     {
-                        cumulativeValue1 += week.Value1;
-                        cumulativeValue2 += week.Value2;
-                        burnUpChartSource.Add(new ChartItem(null, week.Label, week.StartDate, week.EndDate, Math.Round(cumulativeValue1), Math.Round(cumulativeValue2), false));
+                        var lastWeek = i == 0 ? null : temp[i - 1];
+                        var thisWeek = temp[i];
+                        burnUpChartSource.Add(new ChartHelper.WeeklyTaskEffort(thisWeek, lastWeek));
                     }
 
                     // Early exit if chartSource has no data
                     if (burnUpChartSource.Count < 1) return;
 
                     // Create a new data point to indicate progress
-                    var seriesStart = burnUpChartSource.Min(x => x.StartDate);
-                    var seriesEnd = burnUpChartSource.Max(x => x.EndDate);
-                    var actualsX = DateTime.Today;
-                    var actualsY = project.SubTasks.RoundedSum(x => x.ActualWorkHours);
+                    var seriesStart = burnUpChartSource.Min(x => x.WeekDate);
+                    var seriesEnd = burnUpChartSource.Max(x => x.WeekDate);
+                    var todayLine = DateTime.Today;
 
                     // If the task has started yet or has already finished then x coordinate is the limits of the series
-                    if (DateTime.Today < seriesStart) actualsX = seriesStart;
-                    else if (DateTime.Today > seriesEnd) actualsX = seriesEnd;
+                    if (DateTime.Today < seriesStart) todayLine = seriesStart;
+                    else if (DateTime.Today > seriesEnd) todayLine = seriesEnd;
 
                     // Set options
-                    burnUpChartOptions = new ApexChartOptions<ChartItem>
+                    burnUpChartOptions = new ApexChartOptions<ChartHelper.WeeklyTaskEffort>
                     {
                         Chart = new Chart
                         {
@@ -404,29 +385,13 @@ namespace PPMTool.Pages
                         {
                             Curve = new CurveSelections(new Curve[] { Curve.Straight })
                         },
-                        Colors = new List<string> { "#1151F3", "#FFC107" },
                         Annotations = new Annotations
                         {
-                            Yaxis = new List<AnnotationsYAxis>
-                            {
-                                new AnnotationsYAxis()
-                                {
-                                    Y = actualsY,
-                                    BorderWidth = 2,
-                                    StrokeDashArray = 5,
-                                    BorderColor = "red",
-                                    Label = new Label
-                                    {
-                                        Text = "Actual (Hours)",
-                                        Position = LabelPosition.Right
-                                    }
-                                }
-                            },
                             Xaxis = new List<AnnotationsXAxis>
                             {
                                 new AnnotationsXAxis()
                                 {
-                                    X = actualsX.ToUnixTimeMilliseconds(),
+                                    X = todayLine.ToUnixTimeMilliseconds(),
                                     BorderWidth = 2,
                                     StrokeDashArray = 5,
                                     BorderColor = "red",

@@ -275,6 +275,16 @@ namespace PPMTool.Data.Helpers
             public double MaxmimumPlannedWorkHours { get; }
 
             /// <summary>
+            /// Sum of the planned work across all tasks based on assignments
+            /// </summary>
+            public double AssignedPlannedWorkHours { get; }
+
+            /// <summary>
+            /// The actual work hours done by all resources across all tasks in this week
+            /// </summary>
+            public double ActualWorkHours { get; }
+
+            /// <summary>
             /// Details of every assignment. The sum of the planned work hours will be lower than the 
             /// <see cref="MaxmimumPlannedWorkHours"/> value if there is unmet demand.
             /// </summary>
@@ -311,7 +321,53 @@ namespace PPMTool.Data.Helpers
                         // Add a resource effort object
                         ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, res.ActualWorkHours));
                     }
+
+                    // Set the planned hours based on assgined resources
+                    AssignedPlannedWorkHours = subTask.AssignedResources.Sum(x => x.AssignmentFTE) * 220 * proportionOfWeek;
+
+                    // Set the actual work hours based on the resources
+                    ActualWorkHours = subTask.AssignedResources.Sum(x => x.ActualWorkHours);
                 }
+            }
+
+            /// <summary>
+            /// Special cosntructor to allow aggregation of the values by adding the values to the previous week values
+            /// </summary>
+            /// <param name="currentWeek"></param>
+            /// <param name="previousWeek"></param>
+            public WeeklyTaskEffort(WeeklyTaskEffort currentWeek, WeeklyTaskEffort previousWeek)
+            {
+                WeekDate = currentWeek.WeekDate;
+                MaxmimumPlannedWorkHours = previousWeek?.MaxmimumPlannedWorkHours ?? 0 + currentWeek.MaxmimumPlannedWorkHours;
+                AssignedPlannedWorkHours = previousWeek?.AssignedPlannedWorkHours ?? 0 + currentWeek.AssignedPlannedWorkHours;
+                ActualWorkHours = previousWeek?.ActualWorkHours ?? 0 + currentWeek.ActualWorkHours;
+
+                foreach (var res in currentWeek.ResourceEffort)
+                {
+                    double lastWeekPlanned = 0;
+                    double lastWeekActual = 0;
+
+                    // Find the existing resource effort for this person from previous week
+                    var existingResource = previousWeek.ResourceEffort.FirstOrDefault(x => x.PersonId == res.PersonId);
+
+                    // Update the planned and actuals based on this
+                    if (existingResource != null)
+                    {
+                        // If exists, add the values to the existing one
+                        lastWeekPlanned = existingResource.PlannedWorkHours;
+                        lastWeekActual = existingResource.ActualHours;
+                    }
+
+                    // Now add the current week's values to the previous week values
+                    ResourceEffort.Add(
+                        new ResourceEffort(
+                            res.PersonId,
+                            lastWeekPlanned + res.PlannedWorkHours,
+                            lastWeekActual + res.ActualHours
+                        )
+                    );
+                }
+
             }
         }
 
@@ -319,19 +375,9 @@ namespace PPMTool.Data.Helpers
         /// Time-marching method for summing up the contribution week-by-week based on the value functions provided.
         /// The results are arranged into blocks exactly one week in length.
         /// </summary>
-        /// <param name="label"></param>
-        /// <param name="subTasks"></param>
-        /// <param name="value1Function">Function to determine a value for subtasks in the current week</param>
-        /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
-        /// <param name="hatchedFunction">Function to determine hatched status for subtasks in the current week</param>
+        /// <param name="subTasks">All subtasks associated with a project</param>
         /// <returns></returns>
-        public static IEnumerable<WeeklyTaskEffort> AggregateSubTasksByWeek(
-            string label,
-            IEnumerable<SubTask> subTasks,
-            Func<IEnumerable<SubTask>, DateTime, double> value1Function,
-            Func<IEnumerable<SubTask>, DateTime, double> value2Function = null,
-            Func<IEnumerable<SubTask>, bool> hatchedFunction = null
-        )
+        public static IEnumerable<WeeklyTaskEffort> GetWeeklyTaskEffortItems(IEnumerable<SubTask> subTasks)
         {
             // Initialise
             var temp = new List<WeeklyTaskEffort>();

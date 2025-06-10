@@ -4,6 +4,7 @@
 @page "/projectdetails"
 @inherits PPMTool.Pages.BasePage
 @using PPMTool.Data;
+@using PPMTool.Data.Helpers
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
@@ -75,24 +76,48 @@
                 <div class="col" style="min-width: 500px">
                     <h2>Burn-Up Chart</h2>
                     <div class="card">
-                        <ApexChart TItem="ChartItem"
+                        <ApexChart TItem="ChartHelper.WeeklyTaskEffort"
                                    XAxisType="XAxisType.Datetime"
                                    Options="burnUpChartOptions"
                                    @ref="burnUpChart">
 
-                            <ApexPointSeries TItem="ChartItem"
+                            <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
                                              SeriesType="@SeriesType.Area"
                                              Name="Planned Work"
-                                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                             YValue="@(e => Convert.ToDecimal(e.Value1))" />
+                                             XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
+                                             YValue="@(e => Convert.ToDecimal(e.MaxmimumPlannedWorkHours))" />
 
-                            <ApexPointSeries TItem="ChartItem"
+                            <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
                                              SeriesType="@SeriesType.Area"
                                              Name="Planned Work (Adjusted for Unmet Demand)"
-                                             XValue="@(e => e.StartDate.ToUnixTimeMilliseconds())"
-                                             YValue="@(e => Convert.ToDecimal(e.Value2))" />
+                                             XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
+                                             YValue="@(e => Convert.ToDecimal(e.AssignedPlannedWorkHours))" />
+
+                            <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
+                                             Items="burnUpChartSource"
+                                             SeriesType="@SeriesType.Area"
+                                             Name="Actual Work"
+                                             XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
+                                             YValue="@(e => Convert.ToDecimal(e.ActualWorkHours))" />
+
+                            @foreach (var resource in burnUpChartSource.FirstOrDefault()?.ResourceEffort)
+                            {
+                                <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
+                                                 Items="burnUpChartSource"
+                                                 SeriesType="@SeriesType.Area"
+                                                 Name="@($"Planned Work ({resource.PersonId})")"
+                                                 XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
+                                                 YValue="@(e => Convert.ToDecimal(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.PlannedWorkHours ?? 0))" />
+
+                                <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
+                                                 Items="burnUpChartSource"
+                                                 SeriesType="@SeriesType.Area"
+                                                 Name="@($"Actual Work ({resource.PersonId})")"
+                                                 XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
+                                                 YValue="@(e => Convert.ToDecimal(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.ActualHours ?? 0))" />
+                            }
 
                         </ApexChart>
                     </div>
