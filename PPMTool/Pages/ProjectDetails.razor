@@ -78,45 +78,45 @@
                     <div class="card">
                         <ApexChart TItem="ChartHelper.WeeklyTaskEffort"
                                    XAxisType="XAxisType.Datetime"
-                                   Options="burnUpChartOptions"
-                                   @ref="burnUpChart">
+                                   Options="burnUpChartOptions">
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
                                              SeriesType="@SeriesType.Area"
                                              Name="Planned Work"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
-                                             YValue="@(e => Convert.ToDecimal(e.MaxmimumPlannedWorkHours))" />
+                                             YValue="@(e => Convert.ToDecimal(Math.Round(e.MaximumPlannedWorkHours)))" />
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
                                              SeriesType="@SeriesType.Area"
                                              Name="Planned Work (Adjusted for Unmet Demand)"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
-                                             YValue="@(e => Convert.ToDecimal(e.AssignedPlannedWorkHours))" />
+                                             YValue="@(e => Convert.ToDecimal(Math.Round(e.AssignedPlannedWorkHours)))" />
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
                                              SeriesType="@SeriesType.Area"
                                              Name="Actual Work"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
-                                             YValue="@(e => Convert.ToDecimal(e.ActualWorkHours))" />
+                                             YValue="@(e => Convert.ToDecimal(Math.Round(e.ActualWorkHours)))" />
 
                             @foreach (var resource in burnUpChartSource.FirstOrDefault()?.ResourceEffort)
                             {
+                                var person = PersonService.GetById(Context, resource.PersonId);
                                 <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                                  Items="burnUpChartSource"
                                                  SeriesType="@SeriesType.Area"
-                                                 Name="@($"Planned Work ({resource.PersonId})")"
+                                                 Name="@($"Planned Work ({person.ShortName})")"
                                                  XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
-                                                 YValue="@(e => Convert.ToDecimal(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.PlannedWorkHours ?? 0))" />
+                                                 YValue="@(e => Convert.ToDecimal(Math.Round(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.PlannedWorkHours ?? 0)))" />
 
                                 <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                                  Items="burnUpChartSource"
                                                  SeriesType="@SeriesType.Area"
-                                                 Name="@($"Actual Work ({resource.PersonId})")"
+                                                 Name="@($"Actual Work ({person.ShortName})")"
                                                  XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
-                                                 YValue="@(e => Convert.ToDecimal(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.ActualHours ?? 0))" />
+                                                 YValue="@(e => Convert.ToDecimal(Math.Round(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.ActualHours ?? 0)))" />
                             }
 
                         </ApexChart>

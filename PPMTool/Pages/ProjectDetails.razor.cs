@@ -52,6 +52,9 @@ namespace PPMTool.Pages
         [Inject]
         private SkillTagService SkillTagService { get; set; }
 
+        [Inject]
+        private PersonService PersonService { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -110,7 +113,6 @@ namespace PPMTool.Pages
         private bool isProjectManager;
         private bool groupLinkedTasks;
         private ApexChart<GanttBlock> scheduleChart;
-        private ApexChart<ChartHelper.WeeklyTaskEffort> burnUpChart;
         private IEnumerable<SkillTag> skillsRequiredForProject;
 
 
@@ -350,6 +352,7 @@ namespace PPMTool.Pages
 
                     // Get details of weekly effort
                     var temp = ChartHelper.GetWeeklyTaskEffortItems(project.SubTasks).ToList();
+                    Debug.WriteLine($"** Returned {temp.Count} weeks of items; {temp.FirstOrDefault()?.ResourceEffort.Count} unqiue resources.");
 
                     // Generate burn-up series by aggregating the values
                     for (var i = 0; i < temp.Count; ++i)
@@ -403,7 +406,10 @@ namespace PPMTool.Pages
                                 }
                             }
                         },
-                        Xaxis = new XAxis { Title = new AxisTitle { Text = "Week Beginning" } },
+                        Xaxis = new XAxis
+                        {
+                            Title = new AxisTitle { Text = "Week Beginning" }
+                        },
                         Yaxis = new List<YAxis>
                         {
                             new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }

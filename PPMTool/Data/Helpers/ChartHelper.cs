@@ -272,7 +272,7 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Sum of the planned work across all tasks assuming all demand is met
             /// </summary>
-            public double MaxmimumPlannedWorkHours { get; }
+            public double MaximumPlannedWorkHours { get; }
 
             /// <summary>
             /// Sum of the planned work across all tasks based on assignments
@@ -286,7 +286,7 @@ namespace PPMTool.Data.Helpers
 
             /// <summary>
             /// Details of every assignment. The sum of the planned work hours will be lower than the 
-            /// <see cref="MaxmimumPlannedWorkHours"/> value if there is unmet demand.
+            /// <see cref="MaximumPlannedWorkHours"/> value if there is unmet demand.
             /// </summary>
             public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
 
@@ -295,7 +295,7 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="currentWeek"></param>
             /// <param name="tasksRunningInWeek"></param>
-            public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek)
+            public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek, IEnumerable<Resource> allResourcesOnProject)
             {
                 WeekDate = currentWeek;
 
@@ -310,23 +310,32 @@ namespace PPMTool.Data.Helpers
                     var plannedHoursForTask = subTask.PlannedWorkHours * proportionOfWeek;
 
                     // Add to the demand for the week
-                    MaxmimumPlannedWorkHours += subTask.Demand * 220 * proportionOfWeek;
+                    MaximumPlannedWorkHours += subTask.Demand * 220 * proportionOfWeek;
 
                     // For each resource on the task, calculate their contribution to the planned work
                     foreach (var res in subTask.AssignedResources)
                     {
                         // Work out the contribution of this resource
-                        var plannedWorkHoursForResource = plannedHoursForTask * res.AssignmentFTE / totalFTE;
+                        var plannedWorkHoursForResource = Math.Round(plannedHoursForTask * res.AssignmentFTE / totalFTE, 2);
 
                         // Add a resource effort object
                         ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, res.ActualWorkHours));
                     }
 
                     // Set the planned hours based on assgined resources
-                    AssignedPlannedWorkHours = subTask.AssignedResources.Sum(x => x.AssignmentFTE) * 220 * proportionOfWeek;
+                    AssignedPlannedWorkHours += subTask.AssignedResources.Sum(x => x.AssignmentFTE) * 220 * proportionOfWeek;
 
                     // Set the actual work hours based on the resources
-                    ActualWorkHours = subTask.AssignedResources.Sum(x => x.ActualWorkHours);
+                    ActualWorkHours += subTask.AssignedResources.Sum(x => x.ActualWorkHours);
+                }
+
+                // Check that there are entries for all resources who worked on the project even if not assigned during that week
+                foreach (var personId in allResourcesOnProject.Select(x => x.Person.PersonId))
+                {
+                    if (!ResourceEffort.Any(x => x.PersonId == personId))
+                    {
+                        ResourceEffort.Add(new ResourceEffort(personId, 0, 0));
+                    }
                 }
             }
 
@@ -338,7 +347,7 @@ namespace PPMTool.Data.Helpers
             public WeeklyTaskEffort(WeeklyTaskEffort currentWeek, WeeklyTaskEffort previousWeek)
             {
                 WeekDate = currentWeek.WeekDate;
-                MaxmimumPlannedWorkHours = previousWeek?.MaxmimumPlannedWorkHours ?? 0 + currentWeek.MaxmimumPlannedWorkHours;
+                MaximumPlannedWorkHours = previousWeek?.MaximumPlannedWorkHours ?? 0 + currentWeek.MaximumPlannedWorkHours;
                 AssignedPlannedWorkHours = previousWeek?.AssignedPlannedWorkHours ?? 0 + currentWeek.AssignedPlannedWorkHours;
                 ActualWorkHours = previousWeek?.ActualWorkHours ?? 0 + currentWeek.ActualWorkHours;
 
@@ -348,7 +357,7 @@ namespace PPMTool.Data.Helpers
                     double lastWeekActual = 0;
 
                     // Find the existing resource effort for this person from previous week
-                    var existingResource = previousWeek.ResourceEffort.FirstOrDefault(x => x.PersonId == res.PersonId);
+                    var existingResource = previousWeek?.ResourceEffort?.FirstOrDefault(x => x.PersonId == res.PersonId);
 
                     // Update the planned and actuals based on this
                     if (existingResource != null)
@@ -383,6 +392,9 @@ namespace PPMTool.Data.Helpers
             var temp = new List<WeeklyTaskEffort>();
             if (subTasks.Count() < 1) return temp;
 
+            // Get all the unique resources
+            var resources = subTasks.SelectMany(x => x.AssignedResources).DistinctBy(x => x.Person.PersonId);
+
             // Get earliest assignment to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
 
@@ -407,7 +419,7 @@ namespace PPMTool.Data.Helpers
                 var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
-                temp.Add(new WeeklyTaskEffort(startOfWeek, within));
+                temp.Add(new WeeklyTaskEffort(startOfWeek, within, resources));
 
                 // Increment by 1 week
                 startOfWeek = startOfWeek.AddDays(7);
