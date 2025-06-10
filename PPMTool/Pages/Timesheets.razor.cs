@@ -139,7 +139,6 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private Task GenerateTask()
         {
-
             return Task.Run(() =>
             {
                 LoadData();
@@ -155,10 +154,9 @@ namespace PPMTool.Pages
                     StateHasChanged();
                 });
             });
-
         }
 
-        private void LoadData() 
+        private void LoadData()
         {
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
