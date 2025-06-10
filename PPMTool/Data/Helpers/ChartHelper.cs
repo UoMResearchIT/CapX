@@ -228,7 +228,7 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Represents the effort data for a given resource on a given task
         /// </summary>
-        internal class ResourceEffort
+        public class ResourceEffort
         {
             /// <summary>
             /// ID of the person associated with the resource
@@ -245,6 +245,12 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             public double ActualHours { get; }
 
+            /// <summary>
+            /// Ctor simply assigns the properties
+            /// </summary>
+            /// <param name="personId"></param>
+            /// <param name="plannedWorkHours"></param>
+            /// <param name="actualHours"></param>
             public ResourceEffort(int personId, double plannedWorkHours, double actualHours)
             {
                 PersonId = personId;
@@ -256,12 +262,12 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Represents the effort for tasks and assignments for a given week
         /// </summary>
-        internal class WeeklyTaskEffort
+        public class WeeklyTaskEffort
         {
             /// <summary>
             /// The date of the week beginning
             /// </summary>
-            public DateTime weekDate { get; }
+            public DateTime WeekDate { get; }
 
             /// <summary>
             /// Sum of the planned work across all tasks assuming all demand is met
@@ -269,13 +275,19 @@ namespace PPMTool.Data.Helpers
             public double MaxmimumPlannedWorkHours { get; }
 
             /// <summary>
-            /// Details of every assignment. The sum of the planned work hours will be lower than the <see cref="MaxmimumPlannedWorkHours"/> value if there is unmet demand.
+            /// Details of every assignment. The sum of the planned work hours will be lower than the 
+            /// <see cref="MaxmimumPlannedWorkHours"/> value if there is unmet demand.
             /// </summary>
             public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
 
+            /// <summary>
+            /// Ctor takes the tasks running and the current week to generate resource breakdown
+            /// </summary>
+            /// <param name="currentWeek"></param>
+            /// <param name="tasksRunningInWeek"></param>
             public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek)
             {
-                weekDate = currentWeek;
+                WeekDate = currentWeek;
 
                 // For every resource on every task build a representation of the information
                 foreach (var subTask in tasksRunningInWeek)
@@ -283,15 +295,21 @@ namespace PPMTool.Data.Helpers
                     // Find the total FTE across all resources
                     var totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
 
-                    // TODO: How many hours are expected to be done this week based on if the task runs only partially during this week?
+                    // How many hours are expected to be done this week based on if the task runs only partially during this week
+                    var proportionOfWeek = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1 / 7d;
+                    var plannedHoursForTask = subTask.PlannedWorkHours * proportionOfWeek;
 
+                    // Add to the demand for the week
+                    MaxmimumPlannedWorkHours += subTask.Demand * 220 * proportionOfWeek;
+
+                    // For each resource on the task, calculate their contribution to the planned work
                     foreach (var res in subTask.AssignedResources)
                     {
                         // Work out the contribution of this resource
-                        var plannedWorkHours = subTask.PlannedWorkHours * res.AssignmentFTE / totalFTE;
+                        var plannedWorkHoursForResource = plannedHoursForTask * res.AssignmentFTE / totalFTE;
 
                         // Add a resource effort object
-                        ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHours, res.ActualWorkHours));
+                        ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, res.ActualWorkHours));
                     }
                 }
             }
@@ -316,7 +334,7 @@ namespace PPMTool.Data.Helpers
         )
         {
             // Initialise
-            var temp = new List<ChartItem>();
+            var temp = new List<WeeklyTaskEffort>();
             if (subTasks.Count() < 1) return temp;
 
             // Get earliest assignment to get start date for marching
@@ -325,7 +343,7 @@ namespace PPMTool.Data.Helpers
             // Move to a Monday
             start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
-            // Get latest assignment finish, adding a day so it is the first day when no work will be done.
+            // Get latest assignment finish, adding a day so the marching stops when there is no work to be done.
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
 
             // Move to the next Sunday if not already a Sunday
@@ -343,17 +361,7 @@ namespace PPMTool.Data.Helpers
                 var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
-                temp.Add(
-                    new ChartItem(
-                        null,
-                        label,
-                        startOfWeek,
-                        endOfWeek,
-                        value1Function(within, startOfWeek),
-                        value2Function != null ? value2Function(within, startOfWeek) : 0,
-                        hatchedFunction != null ? hatchedFunction(within) : false
-                    )
-                );
+                temp.Add(new WeeklyTaskEffort(startOfWeek, within));
 
                 // Increment by 1 week
                 startOfWeek = startOfWeek.AddDays(7);
