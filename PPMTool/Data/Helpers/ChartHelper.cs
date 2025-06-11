@@ -272,7 +272,7 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Sum of the planned work across all tasks assuming all demand is met
             /// </summary>
-            public double MaximumPlannedWorkHours { get; }
+            public double PlannedWorkHoursDemandMet { get; }
 
             /// <summary>
             /// Sum of the planned work across all tasks based on assignments
@@ -286,7 +286,7 @@ namespace PPMTool.Data.Helpers
 
             /// <summary>
             /// Details of every assignment. The sum of the planned work hours will be lower than the 
-            /// <see cref="MaximumPlannedWorkHours"/> value if there is unmet demand.
+            /// <see cref="PlannedWorkHoursDemandMet"/> value if there is unmet demand.
             /// </summary>
             public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
 
@@ -302,31 +302,56 @@ namespace PPMTool.Data.Helpers
                 // For every resource on every task build a representation of the information
                 foreach (var subTask in tasksRunningInWeek)
                 {
+                    // Get the length of the task in days
+                    var taskLengthInDays = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1;
+
+                    // Get the planned hours per day
+                    var plannedHoursPerDay = subTask.PlannedWorkHours / taskLengthInDays;
+
+                    // How many days does task run this week
+                    var taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
+
+                    // How many days has the task run so far (for actuals)
+                    var endDate = subTask.EndDate < currentWeek.AddDays(6) ? subTask.EndDate : currentWeek.AddDays(6);
+                    var daysRunSoFar = endDate.Subtract(subTask.StartDate).TotalDays + 1;
+
                     // Find the total FTE across all resources
                     var totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
 
-                    // How many hours are expected to be done this week based on if the task runs only partially during this week
-                    var proportionOfWeek = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1 / 7d;
-                    var plannedHoursForTask = subTask.PlannedWorkHours * proportionOfWeek;
+                    // Find total actuals across all resources
+                    var totalActuals = subTask.AssignedResources.Sum(x => x.ActualWorkHours);
 
-                    // Add to the demand for the week
-                    MaximumPlannedWorkHours += subTask.Demand * 220 * proportionOfWeek;
+                    // How many hours are planned this week based on assgined resources
+                    var plannedHoursForTaskThisWeek = plannedHoursPerDay * taskDaysThisWeek;
+
+                    // How many hours are planned this week if demand is met
+                    var plannedHoursForTaskThisWeekDemandMet = subTask.Demand * (220 * 7 / 365) * taskDaysThisWeek;
+
+                    // If distributed evenly across the days this task has run, how many actuals per day
+                    var actualsPerDay = totalActuals / daysRunSoFar;
+
+                    // Actuals this week (zero if a week in the future)
+                    var actualsThisWeek = endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
+
+                    // Add to the demand for the week across all tasks
+                    PlannedWorkHoursDemandMet += plannedHoursForTaskThisWeekDemandMet;
+
+                    // Add to the planned hours based on assigned resources
+                    AssignedPlannedWorkHours += plannedHoursForTaskThisWeek;
+
+                    // Add to the actual work hours based on the resources
+                    ActualWorkHours += actualsThisWeek;
 
                     // For each resource on the task, calculate their contribution to the planned work
                     foreach (var res in subTask.AssignedResources)
                     {
-                        // Work out the contribution of this resource
-                        var plannedWorkHoursForResource = Math.Round(plannedHoursForTask * res.AssignmentFTE / totalFTE, 2);
+                        // Work out the contribution of this resource to planned work and actuals
+                        var plannedWorkHoursForResource = (res.AssignmentFTE / totalFTE) * plannedHoursForTaskThisWeek;
+                        var actualWorkHoursForResource = (res.ActualWorkHours / totalActuals) * actualsThisWeek;
 
                         // Add a resource effort object
-                        ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, res.ActualWorkHours));
+                        ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, actualWorkHoursForResource));
                     }
-
-                    // Set the planned hours based on assgined resources
-                    AssignedPlannedWorkHours += subTask.AssignedResources.Sum(x => x.AssignmentFTE) * 220 * proportionOfWeek;
-
-                    // Set the actual work hours based on the resources
-                    ActualWorkHours += subTask.AssignedResources.Sum(x => x.ActualWorkHours);
                 }
 
                 // Check that there are entries for all resources who worked on the project even if not assigned during that week
@@ -347,7 +372,7 @@ namespace PPMTool.Data.Helpers
             public WeeklyTaskEffort(WeeklyTaskEffort currentWeek, WeeklyTaskEffort previousWeek)
             {
                 WeekDate = currentWeek.WeekDate;
-                MaximumPlannedWorkHours = previousWeek?.MaximumPlannedWorkHours ?? 0 + currentWeek.MaximumPlannedWorkHours;
+                PlannedWorkHoursDemandMet = previousWeek?.PlannedWorkHoursDemandMet ?? 0 + currentWeek.PlannedWorkHoursDemandMet;
                 AssignedPlannedWorkHours = previousWeek?.AssignedPlannedWorkHours ?? 0 + currentWeek.AssignedPlannedWorkHours;
                 ActualWorkHours = previousWeek?.ActualWorkHours ?? 0 + currentWeek.ActualWorkHours;
 

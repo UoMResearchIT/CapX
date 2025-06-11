@@ -85,7 +85,7 @@
                                              SeriesType="@SeriesType.Area"
                                              Name="Planned Work"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
-                                             YValue="@(e => Convert.ToDecimal(Math.Round(e.MaximumPlannedWorkHours)))" />
+                                             YValue="@(e => Convert.ToDecimal(Math.Round(e.PlannedWorkHoursDemandMet)))" />
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
