@@ -323,7 +323,7 @@ namespace PPMTool.Data.Helpers
                     var taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
 
                     // How many days has the task run so far (for actuals)
-                    var endDate = subTask.EndDate < currentWeek.AddDays(6) ? subTask.EndDate : currentWeek.AddDays(6);
+                    var endDate = subTask.EndDate < DateTime.Today ? subTask.EndDate : DateTime.Today;
                     var daysRunSoFar = endDate.Subtract(subTask.StartDate).TotalDays + 1;
 
                     // Find the total FTE across all resources
@@ -342,7 +342,7 @@ namespace PPMTool.Data.Helpers
                     var actualsPerDay = totalActuals / daysRunSoFar;
 
                     // Actuals this week (zero if a week in the future)
-                    var actualsThisWeek = 0;// endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
+                    var actualsThisWeek = endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
 
                     // Add to the demand for the week across all tasks
                     PlannedWorkHoursDemandMet += plannedHoursForTaskThisWeekDemandMet;
