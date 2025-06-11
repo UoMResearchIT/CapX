@@ -238,12 +238,12 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// The planned work hours
             /// </summary>
-            public double PlannedWorkHours { get; }
+            public double PlannedWorkHours { get; private set; }
 
             /// <summary>
             /// The actual number of hours worked
             /// </summary>
-            public double ActualHours { get; }
+            public double ActualHours { get; private set; }
 
             /// <summary>
             /// Ctor simply assigns the properties
@@ -256,6 +256,17 @@ namespace PPMTool.Data.Helpers
                 PersonId = personId;
                 PlannedWorkHours = plannedWorkHours;
                 ActualHours = actualHours;
+            }
+
+            /// <summary>
+            /// Update the values for this resource by adding new values to existing
+            /// </summary>
+            /// <param name="plannedWorkHoursForResource"></param>
+            /// <param name="actualWorkHoursForResource"></param>
+            internal void UpdateValues(double plannedWorkHoursForResource, double actualWorkHoursForResource)
+            {
+                PlannedWorkHours += plannedWorkHoursForResource;
+                ActualHours += actualWorkHoursForResource;
             }
         }
 
@@ -325,13 +336,13 @@ namespace PPMTool.Data.Helpers
                     var plannedHoursForTaskThisWeek = plannedHoursPerDay * taskDaysThisWeek;
 
                     // How many hours are planned this week if demand is met
-                    var plannedHoursForTaskThisWeekDemandMet = subTask.Demand * (220 * 7 / 365) * taskDaysThisWeek;
+                    var plannedHoursForTaskThisWeekDemandMet = subTask.Demand * (220 * 7 / 365d) * taskDaysThisWeek;
 
                     // If distributed evenly across the days this task has run, how many actuals per day
                     var actualsPerDay = totalActuals / daysRunSoFar;
 
                     // Actuals this week (zero if a week in the future)
-                    var actualsThisWeek = endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
+                    var actualsThisWeek = 0;// endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
 
                     // Add to the demand for the week across all tasks
                     PlannedWorkHoursDemandMet += plannedHoursForTaskThisWeekDemandMet;
@@ -349,8 +360,16 @@ namespace PPMTool.Data.Helpers
                         var plannedWorkHoursForResource = (res.AssignmentFTE / totalFTE) * plannedHoursForTaskThisWeek;
                         var actualWorkHoursForResource = (res.ActualWorkHours / totalActuals) * actualsThisWeek;
 
-                        // Add a resource effort object
-                        ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, actualWorkHoursForResource));
+                        // Add a resource effort object if required or update existing
+                        var existingResource = ResourceEffort.FirstOrDefault(x => x.PersonId == res.Person.PersonId);
+                        if (existingResource == null)
+                        {
+                            ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, actualWorkHoursForResource));
+                        }
+                        else
+                        {
+                            existingResource.UpdateValues(plannedWorkHoursForResource, actualWorkHoursForResource);
+                        }
                     }
                 }
 

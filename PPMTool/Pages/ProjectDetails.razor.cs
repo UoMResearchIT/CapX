@@ -355,12 +355,13 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Returned {temp.Count} weeks of items; {temp.FirstOrDefault()?.ResourceEffort.Count} unqiue resources.");
 
                     // Generate burn-up series by aggregating the values
-                    for (var i = 0; i < temp.Count; ++i)
-                    {
-                        var lastWeek = i == 0 ? null : temp[i - 1];
-                        var thisWeek = temp[i];
-                        burnUpChartSource.Add(new ChartHelper.WeeklyTaskEffort(thisWeek, lastWeek));
-                    }
+                    //for (var i = 0; i < temp.Count; ++i)
+                    //{
+                    //    var lastWeek = i == 0 ? null : temp[i - 1];
+                    //    var thisWeek = temp[i];
+                    //    burnUpChartSource.Add(new ChartHelper.WeeklyTaskEffort(thisWeek, lastWeek));
+                    //}
+                    burnUpChartSource = temp;
 
                     // Early exit if chartSource has no data
                     if (burnUpChartSource.Count < 1) return;
