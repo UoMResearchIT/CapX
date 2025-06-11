@@ -83,7 +83,7 @@ namespace PPMTool.Data
             {
                 arrayIndex = 0;
             }
-            else if (arrayIndex > standardColours.Length)
+            else if (arrayIndex >= standardColours.Length)
             {
                 arrayIndex = arrayIndex - standardColours.Length;
             }

@@ -317,7 +317,7 @@ namespace PPMTool.Data.Helpers
                     var taskLengthInDays = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1;
 
                     // Get the planned hours per day
-                    var plannedHoursPerDay = subTask.PlannedWorkHours / taskLengthInDays;
+                    var plannedHoursPerDay = taskLengthInDays > 0 ? subTask.PlannedWorkHours / taskLengthInDays : 0;
 
                     // How many days does task run this week
                     var taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
@@ -339,7 +339,7 @@ namespace PPMTool.Data.Helpers
                     var plannedHoursForTaskThisWeekDemandMet = subTask.Demand * (220 * 7 / 365d) * taskDaysThisWeek;
 
                     // If distributed evenly across the days this task has run, how many actuals per day
-                    var actualsPerDay = totalActuals / daysRunSoFar;
+                    var actualsPerDay = daysRunSoFar > 0 ? totalActuals / daysRunSoFar : 0;
 
                     // Actuals this week (zero if a week in the future)
                     var actualsThisWeek = endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
@@ -358,7 +358,7 @@ namespace PPMTool.Data.Helpers
                     {
                         // Work out the contribution of this resource to planned work and actuals
                         var plannedWorkHoursForResource = (res.AssignmentFTE / totalFTE) * plannedHoursForTaskThisWeek;
-                        var actualWorkHoursForResource = (res.ActualWorkHours / totalActuals) * actualsThisWeek;
+                        var actualWorkHoursForResource = totalActuals > 0 ? (res.ActualWorkHours / totalActuals) * actualsThisWeek : 0;
 
                         // Add a resource effort object if required or update existing
                         var existingResource = ResourceEffort.FirstOrDefault(x => x.PersonId == res.Person.PersonId);
