@@ -391,9 +391,9 @@ namespace PPMTool.Data.Helpers
             public WeeklyTaskEffort(WeeklyTaskEffort currentWeek, WeeklyTaskEffort previousWeek)
             {
                 WeekDate = currentWeek.WeekDate;
-                PlannedWorkHoursDemandMet = previousWeek?.PlannedWorkHoursDemandMet ?? 0 + currentWeek.PlannedWorkHoursDemandMet;
-                AssignedPlannedWorkHours = previousWeek?.AssignedPlannedWorkHours ?? 0 + currentWeek.AssignedPlannedWorkHours;
-                ActualWorkHours = previousWeek?.ActualWorkHours ?? 0 + currentWeek.ActualWorkHours;
+                PlannedWorkHoursDemandMet = (previousWeek?.PlannedWorkHoursDemandMet ?? 0) + currentWeek.PlannedWorkHoursDemandMet;
+                AssignedPlannedWorkHours = (previousWeek?.AssignedPlannedWorkHours ?? 0) + currentWeek.AssignedPlannedWorkHours;
+                ActualWorkHours = (previousWeek?.ActualWorkHours ?? 0) + currentWeek.ActualWorkHours;
 
                 foreach (var res in currentWeek.ResourceEffort)
                 {
