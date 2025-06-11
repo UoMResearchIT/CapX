@@ -82,38 +82,44 @@
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
-                                             SeriesType="@SeriesType.Area"
-                                             Name="Planned Work"
+                                             SeriesType="@SeriesType.Line"
+                                             Stroke="@(new SeriesStroke { DashSpace = 5, Width = 2, Color = ChartItem.GetColourString(0) })"
+                                             Name="Demand"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                              YValue="@(e => Convert.ToDecimal(Math.Round(e.PlannedWorkHoursDemandMet)))" />
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
-                                             SeriesType="@SeriesType.Area"
-                                             Name="Planned Work (Adjusted for Unmet Demand)"
+                                             SeriesType="@SeriesType.Line"
+                                             Stroke="@(new SeriesStroke { DashSpace = 5, Width = 2 , Color = ChartItem.GetColourString(1) })"
+                                             Name="Planned Work"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                              YValue="@(e => Convert.ToDecimal(Math.Round(e.AssignedPlannedWorkHours)))" />
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
-                                             SeriesType="@SeriesType.Area"
+                                             SeriesType="@SeriesType.Line"
+                                             Stroke="@(new SeriesStroke { DashSpace = 0, Width = 2 , Color = ChartItem.GetColourString(1) })"
                                              Name="Actual Work"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                              YValue="@(e => Convert.ToDecimal(Math.Round(e.ActualWorkHours)))" />
 
-                            @foreach (var resource in burnUpChartSource.FirstOrDefault()?.ResourceEffort)
+                            @for (var i = 0; i < (burnUpChartSource.FirstOrDefault()?.ResourceEffort.Count ?? 0); ++i)
                             {
+                                var resource = burnUpChartSource.FirstOrDefault()?.ResourceEffort[i];
                                 var person = PersonService.GetById(Context, resource.PersonId);
                                 <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                                  Items="burnUpChartSource"
-                                                 SeriesType="@SeriesType.Area"
+                                                 SeriesType="@SeriesType.Line"
+                                                 Stroke="@(new SeriesStroke { DashSpace = 5, Width = 2, Color = ChartItem.GetColourString(i + 2) })"
                                                  Name="@($"Planned Work ({person.ShortName})")"
                                                  XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                                  YValue="@(e => Convert.ToDecimal(Math.Round(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.PlannedWorkHours ?? 0)))" />
 
                                 <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                                  Items="burnUpChartSource"
-                                                 SeriesType="@SeriesType.Area"
+                                                 SeriesType="@SeriesType.Line"
+                                                 Stroke="@(new SeriesStroke { DashSpace = 0, Width = 2, Color = ChartItem.GetColourString(i + 2) })"
                                                  Name="@($"Actual Work ({person.ShortName})")"
                                                  XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                                  YValue="@(e => Convert.ToDecimal(Math.Round(e.ResourceEffort.FirstOrDefault(x => x.PersonId == resource.PersonId)?.ActualHours ?? 0)))" />

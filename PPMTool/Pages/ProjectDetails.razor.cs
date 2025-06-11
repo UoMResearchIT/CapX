@@ -357,7 +357,7 @@ namespace PPMTool.Pages
                     // Generate burn-up series by aggregating the values
                     for (var i = 0; i < temp.Count; ++i)
                     {
-                        var lastWeek = i == 0 ? null : temp[i - 1];
+                        var lastWeek = i == 0 ? null : burnUpChartSource[i - 1];
                         var thisWeek = temp[i];
                         burnUpChartSource.Add(new ChartHelper.WeeklyTaskEffort(thisWeek, lastWeek));
                     }
