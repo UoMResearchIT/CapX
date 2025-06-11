@@ -388,7 +388,7 @@ namespace PPMTool.Pages
                         },
                         Stroke = new Stroke
                         {
-                            Curve = new CurveSelections(new Curve[] { Curve.Straight })
+                            Curve = new CurveSelections([Curve.Straight])
                         },
                         Annotations = new Annotations
                         {

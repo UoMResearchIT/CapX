@@ -82,7 +82,7 @@
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
-                                             SeriesType="@SeriesType.Area"
+                                             SeriesType="@SeriesType.Line"
                                              Stroke="@(new SeriesStroke { DashSpace = 5, Width = 4, Color = ChartItem.GetColourString(0) })"
                                              Name="Demand"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
@@ -98,7 +98,7 @@
 
                             <ApexPointSeries TItem="ChartHelper.WeeklyTaskEffort"
                                              Items="burnUpChartSource"
-                                             SeriesType="@SeriesType.Area"
+                                             SeriesType="@SeriesType.Line"
                                              Stroke="@(new SeriesStroke { DashSpace = 0, Width = 4 , Color = ChartItem.GetColourString(1) })"
                                              Name="Actual Work"
                                              XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
@@ -126,6 +126,9 @@
                             }
 
                         </ApexChart>
+                    </div>
+                    <div class="my-2">
+                        <RadzenDropDown />
                     </div>
                 </div>
 
