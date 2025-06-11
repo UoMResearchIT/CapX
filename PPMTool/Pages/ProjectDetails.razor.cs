@@ -381,7 +381,9 @@ namespace PPMTool.Pages
                         {
                             Zoom = new Zoom
                             {
-                                AllowMouseWheelZoom = false
+                                AllowMouseWheelZoom = false,
+                                Enabled = true,
+                                Type = AxisType.Xy
                             }
                         },
                         Stroke = new Stroke
@@ -396,12 +398,12 @@ namespace PPMTool.Pages
                                 {
                                     X = todayLine.ToUnixTimeMilliseconds(),
                                     BorderWidth = 2,
-                                    StrokeDashArray = 5,
-                                    BorderColor = "red",
+                                    StrokeDashArray = 3,
+                                    BorderColor = "black",
                                     Label = new Label
                                     {
                                         Text = "Current Week",
-                                        Position = LabelPosition.Left
+                                        Position = LabelPosition.Right
                                     }
                                 }
                             }
