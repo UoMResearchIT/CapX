@@ -527,21 +527,29 @@ namespace PPMTool.Pages
         private void ResourceSelectionChanged(object values)
         {
             var personIds = values as IEnumerable<int>;
+            selectedResources = new List<Person>();
             if (personIds != null)
             {
-                // Reload the chart
-                loadingBurnUpChart = true;
-                var task = LoadBurnUpChart();
-                task.ContinueWith(t =>
+                foreach (var id in personIds)
                 {
-                    InvokeAsync(() =>
-                    {
-                        loadingBurnUpChart = false;
-                        StateHasChanged();
-                    });
-                });
-                StateHasChanged();
+                    // Find the person by ID
+                    var person = resources.First(x => x.PersonId == id);
+                    selectedResources.Add(person);
+                }
             }
+
+            // Reload the chart
+            loadingBurnUpChart = true;
+            var task = LoadBurnUpChart();
+            task.ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    loadingBurnUpChart = false;
+                    StateHasChanged();
+                });
+            });
+            StateHasChanged();
         }
 
         /// <summary>
