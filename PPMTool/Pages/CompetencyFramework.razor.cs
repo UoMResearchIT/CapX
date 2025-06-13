@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using ClosedXML.Excel;
 using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -213,6 +214,189 @@ namespace PPMTool.Pages
         private string competencySearchTerms;
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
         private bool showUnMetOnly;
+        private bool showAllStaff = true;
+        private bool exportRunning;
+
+        private class CompetencyAssessmentExportLine
+        {
+            /// <summary>
+            /// Three digit ID so we can identify grade, category, number
+            /// </summary>
+            public string Id { get; }
+
+            /// <summary>
+            /// The category description
+            /// </summary>
+            public string Category { get; }
+
+            /// <summary>
+            /// Description of the competency
+            /// </summary>
+            public string Description { get; }
+
+            /// <summary>
+            /// DateTime of the latest assessment
+            /// </summary>
+            public DateTime LatestAssessmentDate { get; }
+
+            /// <summary>
+            /// Status of the latest assessment
+            /// </summary>
+            public string AssessmentStatus { get; }
+
+            /// <summary>
+            /// Evidence associated with the latest assessment
+            /// </summary>
+            public string Evidence { get; }
+
+            /// <summary>
+            /// Constructor assigns the properties from the competency and the latest assessment
+            /// </summary>
+            /// <param name="competency"></param>
+            /// <param name="latestAssessment"></param>
+            public CompetencyAssessmentExportLine(Competency competency, CompetencyAssessment latestAssessment)
+            {
+                Id = competency.GetHierarchyId();
+                Category = competency.Category.GetDescription();
+                Description = HtmlHelper.ConvertToPlainText(competency.Description);
+                LatestAssessmentDate = latestAssessment == null ? new DateTime() : DateTime.Parse(latestAssessment.DateCreated);
+                AssessmentStatus = latestAssessment == null ? Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
+                Evidence = latestAssessment == null ? "Never assessed!" : HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
+            }
+        }
+
+        /// <summary>
+        /// Method to export an Excel file with the information in it from the currently displayed journey
+        /// </summary>
+        private void ExportData()
+        {
+            LogInformation($"Exporting development journey for {SelectedPerson?.Name}...");
+
+            exportRunning = true;
+
+            Task.Run(async () =>
+            {
+                // Create a context to be accesed on this thread
+                var threadContext = ContextFactory.CreateDbContext();
+
+                // Create blank list of data
+                var assessments = new List<CompetencyAssessmentExportLine>();
+
+                // Get the assessment info
+                if (SelectedPerson == null)
+                {
+                    LogWarning("Tried to export data without selecting a person!");
+                    return;
+                }
+
+                // Go through the groups and extract the info
+                foreach (var group in competencyGroups)
+                {
+                    foreach (var category in group.CompetenciesGroupedByCategory)
+                    {
+                        foreach (var competency in category.Where(x => x.IsActive))
+                        {
+                            var latestAssessment = competency.Assessments.OrderByDescending(x => x.DateCreated).FirstOrDefault();
+                            assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                        }
+                    }
+                }
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Create file path
+                        var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(folder, filename);
+
+                        // Create workbook and worksheet
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add("Data");
+
+                            // Write header row
+                            var props = typeof(CompetencyAssessmentExportLine).GetProperties();
+                            var propNames = props.Select(x => x.Name).ToList();
+                            for (int i = 0; i < propNames.Count; i++)
+                            {
+                                var cell = worksheet.Cell(1, i + 1);
+                                cell.Value = propNames[i];
+                                cell.Style.Font.Bold = true;
+                            }
+
+                            // Write data rows
+                            for (int row = 0; row < assessments.Count; row++)
+                            {
+                                var record = assessments[row];
+                                for (int col = 0; col < propNames.Count; col++)
+                                {
+                                    var property = record.GetType().GetProperty(propNames[col]);
+                                    var rawValue = property?.GetValue(record);
+                                    var cell = worksheet.Cell(row + 2, col + 1);
+
+                                    // Format and assign
+                                    if (propNames[col] == "LatestAssessmentDate")
+                                    {
+                                        if (rawValue is DateTime dt)
+                                        {
+                                            cell.Value = dt;
+                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (rawValue is int)
+                                        {
+                                            cell.Value = (int)rawValue;
+                                        }
+                                        else if (rawValue is double)
+                                        {
+                                            cell.Value = (double)rawValue;
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Save the workbook
+                            workbook.SaveAs(path);
+                        }
+
+                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
+        }
 
         /// <summary>
         /// Method to update the met count of each available competency group
@@ -226,6 +410,35 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Method to create a background task for loading the available people dropdown
+        /// </summary>
+        /// <returns></returns>
+        private Task GetAvailablePeople()
+        {
+            return Task.Run(() =>
+            {
+                Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
+
+                var context = ContextFactory.CreateDbContext();
+
+                // Get starting lists from the DB
+                availablePeople = PersonService.GetAllShallow(context).OrderBy(x => x.Name);
+                if (!showAllStaff)
+                {
+                    availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
+                }
+                if (!userIsSuperuser)
+                {
+                    // Self plus direct reports
+                    availablePeople = availablePeople
+                        .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
+                        .OrderBy(x => x.Name);
+                }
+            });
+        }
+
+
+        /// <summary>
         /// Generates a background task for loading the competency data
         /// </summary>
         /// <returns></returns>
@@ -237,20 +450,14 @@ namespace PPMTool.Pages
                 StateHasChanged();
             });
 
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
 
-                // Get starting lists from the DB
-                availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
-                if (!userIsSuperuser)
-                {
-                    // Self plus direct reports who are current
-                    availablePeople = availablePeople
-                        .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
-                        .OrderBy(x => x.Name);
-                }
-                competencies = CompetencyService.GetAllActive(Context);
+                await GetAvailablePeople();
+
+                var context = ContextFactory.CreateDbContext();
+                competencies = CompetencyService.GetAllActive(context);
 
                 // Filter the competencies by those with only unmet or no assessments
                 if (showUnMetOnly)

@@ -52,7 +52,8 @@ namespace PPMTool.Services
         /// <returns></returns>
         public IEnumerable<Competency> GetAllActive(PPMToolContext context)
         {
-            return GetAll(context).Where(x => x.IsActive);
+            return GetAll(context)
+                .Where(x => x.IsActive);
         }
 
         public override int Update(PPMToolContext context, Competency entity, bool commitChanges = true)
