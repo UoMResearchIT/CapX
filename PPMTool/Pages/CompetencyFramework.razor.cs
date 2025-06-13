@@ -258,10 +258,10 @@ namespace PPMTool.Pages
             {
                 Id = competency.GetHierarchyId();
                 Category = competency.Category.GetDescription();
-                Description = competency.Description;
+                Description = HtmlHelper.ConvertToPlainText(competency.Description);
                 LatestAssessmentDate = DateTime.Parse(latestAssessment.DateCreated);
                 AssessmentStatus = latestAssessment.Status.ToNiceString();
-                Evidence = latestAssessment.Evidence;
+                Evidence = HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
             }
         }
 

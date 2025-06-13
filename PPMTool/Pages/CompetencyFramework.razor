@@ -12,12 +12,15 @@
         <div class="col">
             <h2>Development Journey Summary</h2>
         </div>
-        <div class="col-auto">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
-                <RadzenText Text="Show All Staff:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(() => EnqueueLoadData(GetTask))" />
-            </RadzenStack>
-        </div>
+        @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
+        {
+            <div class="col-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Show All Staff:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(() => EnqueueLoadData(GetTask))" />
+                </RadzenStack>
+            </div>
+        }
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
                 <RadzenText Text="Load Only Unmet Competencies:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
@@ -31,33 +34,35 @@
         </div>
     </div>
     <hr />
-    <RadzenCard>
-        <RadzenStack Orientation="Radzen.Orientation.Vertical">
-            <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
-                <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-                <RadzenButton Icon="@(exportRunning ? "hourglass_empty" : "download")"
-                              Click="@ExportData"
-                              Disabled="@(Loading || exportRunning)" />
-            </RadzenStack>
-            <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
-            
-            @if (Loading)
-            {
-                <LoadingComponent />
-            }
-            else
-            {
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
-                    @foreach (var comp in competencyGroups)
-                    {
-                        <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
-                                               TotalNumberOfCompetenciesInGrade="@comp.Total"
-                                               Title="@comp.Description" />
-                    }
-                </RadzenStack>
-            }
+    <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Vertical">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
+            <RadzenButton Text="Download Data"
+                            Icon="@(exportRunning ? "hourglass_empty" : "download")"
+                            Click="@ExportData"
+                            Disabled="@(Loading || exportRunning)" />
         </RadzenStack>
-    </RadzenCard>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" Style="margin-top: -0.3rem; width: 100%">
+            <RadzenIcon Icon="person" IconStyle="IconStyle.Dark" />
+            <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
+        </RadzenStack>
+            
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
+                @foreach (var comp in competencyGroups)
+                {
+                    <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
+                                            TotalNumberOfCompetenciesInGrade="@comp.Total"
+                                            Title="@comp.Description" />
+                }
+            </RadzenStack>
+        }
+    </RadzenStack>
     <br />
     <div class="row">
         <div class="col">
@@ -67,6 +72,12 @@
             <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
         </div>
     </div>
+    <div class="row">
+        <div class="col">
+            <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search or just the unmet ones with the switches." TextStyle="TextStyle.Body2" />
+        </div>
+    </div>
+    <hr />
     <div class="row">
         <div class="col">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
@@ -83,7 +94,7 @@
             </RadzenStack>
         </div>
     </div>
-    <hr />
+    <br />
     @if (Loading)
     {
         <LoadingComponent />
