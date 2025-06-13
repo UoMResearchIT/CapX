@@ -35,8 +35,12 @@
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Wrap="FlexWrap.Wrap">
                 <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
+                <RadzenButton Icon="@(exportRunning ? "hourglass_empty" : "download")"
+                              Click="@ExportData"
+                              Disabled="@(Loading || exportRunning)" />
             </RadzenStack>
+            <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelected" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
+            
             @if (Loading)
             {
                 <LoadingComponent />

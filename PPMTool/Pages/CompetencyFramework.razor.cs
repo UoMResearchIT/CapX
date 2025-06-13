@@ -214,6 +214,15 @@ namespace PPMTool.Pages
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
         private bool showUnMetOnly;
         private bool showAllStaff = true;
+        private bool exportRunning;
+
+        /// <summary>
+        /// Method to export an Excel file with the information in it from the currently displayed journey
+        /// </summary>
+        private void ExportData()
+        {
+            // TODO
+        }
 
         /// <summary>
         /// Method to update the met count of each available competency group
@@ -226,6 +235,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method to create a background task for loading the available people dropdown
+        /// </summary>
+        /// <returns></returns>
         private Task GetAvailablePeople()
         {
             return Task.Run(() =>
