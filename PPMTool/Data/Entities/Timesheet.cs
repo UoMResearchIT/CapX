@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using PPMTool.Enums;
+using static PPMTool.Pages.Timesheets;
 
 namespace PPMTool.Data.Entities
 {
@@ -131,6 +133,55 @@ namespace PPMTool.Data.Entities
         public bool IsPermittedToViewOnly(Person user)
         {
             return !IsSelfApprover(user) && ((IsOwner(user) && !IsPermittedToEditEntriesAndSubmit(user)) || (IsLineManager(user) && !IsPermittedToApproveOrReject(user)));
+        }
+
+        /// <summary>
+        /// Returns all the relevant timesheet data packaged into Dto classes which
+        /// total the hourse for each day and exclude specific Innate codes (Holidays etc.)
+        /// </summary>
+        /// <param name="excludedTaskCodes"></param>
+        /// <returns></returns>
+        public List<TimesheetDataDownloadDto> GetDailySummaries(HashSet<int> excludedTaskCodes)
+        {
+            if (TimesheetEntries.Count > 0)
+            {
+                var dayOffsets = new Dictionary<string, int>
+                {
+                    ["MondayHours"] = 0,
+                    ["TuesdayHours"] = 1,
+                    ["WednesdayHours"] = 2,
+                    ["ThursdayHours"] = 3,
+                    ["FridayHours"] = 4,
+                    ["SaturdayHours"] = 5,
+                    ["SundayHours"] = 6
+                };
+
+                var dailySummaries = new List<TimesheetDataDownloadDto>();
+
+                foreach (var kv in dayOffsets)
+                {
+                    // Sum only the hours worked on the current day (kv.Key)
+                    double totalHours = TimesheetEntries
+                        .Where(entry => entry.InnateCodeTask != null && !excludedTaskCodes.Contains(entry.InnateCodeTask.InnateCodeTaskId)) // Ignore excluded tasks codes (Annual Leave / Closures etc.)
+                        .Sum(entry => (double?)entry.GetType().GetProperty(kv.Key)?.GetValue(entry) ?? 0); // Only sum the current day's hours
+
+                    if (totalHours > 0)
+                    {
+                        dailySummaries.Add(new TimesheetDataDownloadDto
+                        {
+                            PersonName = Owner.Name,
+                            Date = StartDate.AddDays(kv.Value), // Correctly offset date
+                            HoursWorked = totalHours
+                        });
+                    }
+                }
+
+                return dailySummaries;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }
