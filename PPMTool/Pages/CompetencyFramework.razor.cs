@@ -259,9 +259,9 @@ namespace PPMTool.Pages
                 Id = competency.GetHierarchyId();
                 Category = competency.Category.GetDescription();
                 Description = HtmlHelper.ConvertToPlainText(competency.Description);
-                LatestAssessmentDate = DateTime.Parse(latestAssessment.DateCreated);
-                AssessmentStatus = latestAssessment.Status.ToNiceString();
-                Evidence = HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
+                LatestAssessmentDate = latestAssessment == null ? new DateTime() : DateTime.Parse(latestAssessment.DateCreated);
+                AssessmentStatus = latestAssessment == null ? Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
+                Evidence = latestAssessment == null ? "Never assessed!" : HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
             }
         }
 
