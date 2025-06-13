@@ -296,7 +296,10 @@ namespace PPMTool.Pages
                     {
                         foreach (var competency in category.Where(x => x.IsActive))
                         {
-                            var latestAssessment = competency.Assessments.OrderByDescending(x => x.DateCreated).FirstOrDefault();
+                            var latestAssessment = competency.Assessments
+                                .Where(x => x.Person.PersonId == SelectedPerson.PersonId)
+                                .OrderByDescending(x => x.DateCreated)
+                                .FirstOrDefault();
                             assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
                         }
                     }
