@@ -226,6 +226,31 @@ namespace PPMTool.Pages
             }
         }
 
+        private Task GetAvailablePeople()
+        {
+            return Task.Run(() =>
+            {
+                Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
+
+                var context = ContextFactory.CreateDbContext();
+
+                // Get starting lists from the DB
+                availablePeople = PersonService.GetAllShallow(context).OrderBy(x => x.Name);
+                if (!showAllStaff)
+                {
+                    availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
+                }
+                if (!userIsSuperuser)
+                {
+                    // Self plus direct reports
+                    availablePeople = availablePeople
+                        .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
+                        .OrderBy(x => x.Name);
+                }
+            });
+        }
+
+
         /// <summary>
         /// Generates a background task for loading the competency data
         /// </summary>
@@ -238,24 +263,14 @@ namespace PPMTool.Pages
                 StateHasChanged();
             });
 
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
 
-                // Get starting lists from the DB
-                availablePeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
-                if (!showAllStaff)
-                {
-                    availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
-                }
-                if (!userIsSuperuser)
-                {
-                    // Self plus direct reports
-                    availablePeople = availablePeople
-                        .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
-                        .OrderBy(x => x.Name);
-                }
-                competencies = CompetencyService.GetAllActive(Context);
+                await GetAvailablePeople();
+
+                var context = ContextFactory.CreateDbContext();
+                competencies = CompetencyService.GetAllActive(context);
 
                 // Filter the competencies by those with only unmet or no assessments
                 if (showUnMetOnly)
