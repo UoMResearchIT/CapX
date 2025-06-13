@@ -213,6 +213,7 @@ namespace PPMTool.Pages
         private string competencySearchTerms;
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
         private bool showUnMetOnly;
+        private bool showAllStaff = true;
 
         /// <summary>
         /// Method to update the met count of each available competency group
@@ -242,12 +243,16 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
 
                 // Get starting lists from the DB
-                availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
+                availablePeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
+                if (!showAllStaff)
+                {
+                    availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
+                }
                 if (!userIsSuperuser)
                 {
-                    // Self plus direct reports who are current
+                    // Self plus direct reports
                     availablePeople = availablePeople
-                        .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
+                        .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
                         .OrderBy(x => x.Name);
                 }
                 competencies = CompetencyService.GetAllActive(Context);

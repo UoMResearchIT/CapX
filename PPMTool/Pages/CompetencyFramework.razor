@@ -14,6 +14,12 @@
         </div>
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+                <RadzenText Text="Show All Staff:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(() => EnqueueLoadData(GetTask))" />
+            </RadzenStack>
+        </div>
+        <div class="col-auto">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
                 <RadzenText Text="Load Only Unmet Competencies:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                 <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(() => EnqueueLoadData(GetTask))" />
             </RadzenStack>
