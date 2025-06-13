@@ -68,18 +68,6 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Get all the people with their timesheets
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<Person> GetPeopleWithTimesheetData(PPMToolContext context)
-        {
-            return context.People
-                .Include(p => p.Timesheets)
-                .ThenInclude (p => p.TimesheetEntries)
-                .OrderBy(p => p.ShortName);
-        }
-
-        /// <summary>
         /// Gets people table entities without any includes
         /// </summary>
         /// <param name="context"></param>
