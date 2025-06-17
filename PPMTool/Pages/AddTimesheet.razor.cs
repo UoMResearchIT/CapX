@@ -307,7 +307,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// 
+        /// Method called to create the timesheet image to download
         /// </summary>
         /// <returns></returns>
         private async Task DownloadTimesheetImage()
