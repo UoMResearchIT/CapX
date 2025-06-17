@@ -1,4 +1,4 @@
-﻿function captureTimesheetAsImage() {
+﻿function captureTimesheetAsImage(fileName) {
     // Hide some elements
     document.getElementById("timesheetButtons").style.display = "none";
     document.getElementById("downloadScreenshotButton").style.display = "none";
@@ -14,7 +14,7 @@
 
         let link = document.createElement("a");
         link.href = canvas.toDataURL("image/png");
-        link.download = "Timesheet.png";
+        link.download = fileName + ".png";
         link.click();
     });
 }

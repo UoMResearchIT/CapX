@@ -29,7 +29,14 @@
                 }
                 else
                 {
-                    <h1>Edit Timesheet</h1>
+                    if (timesheet.Status == TimesheetStatus.Approved)
+                    {
+                        <h1>View Timesheet</h1>
+                    }
+                    else
+                    {
+                        <h1>Edit Timesheet</h1>
+                    }
                 }
                 @if (timesheet?.IsLineManager(ActiveUser) ?? false)
                 {

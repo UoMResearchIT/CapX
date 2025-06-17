@@ -312,7 +312,8 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task DownloadTimesheetImage()
         {
-            await JS.InvokeVoidAsync("captureTimesheetAsImage");
+            string fileName = $"{timesheet.Owner.ShortName}_TimesheetWeekStart_{timesheet.StartDate.ToString("yyyyMMdd")}";
+            await JS.InvokeVoidAsync("captureTimesheetAsImage", fileName);
         }
 
 
