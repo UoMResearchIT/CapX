@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
@@ -321,6 +320,12 @@ namespace PPMTool.Pages
                 var threadContext = ContextFactory.CreateDbContext();
                 var timesheets = TimesheetService.GetAll(threadContext);
                 var excludedTaskCodes = new HashSet<int> { 1, 2, 3 };  // Excluded codes
+                List<string> excludedTaskCodeDetails = Context.InnateCodeTasks
+                    .Where(c => excludedTaskCodes.Contains(c.InnateCodeTaskId))
+                    .Select(c => c.TaskName)
+                    .ToList();
+
+                excludedTaskCodeDetails.Insert(0, "Excluded codes");
 
                 List<TimesheetDataDownloadDto> dailyEntries = new List<TimesheetDataDownloadDto>();
                 foreach (Timesheet t in timesheets)
@@ -396,7 +401,23 @@ namespace PPMTool.Pages
                                 row++;
                             }
 
-                            worksheet.SheetView.FreezeRows(1); // Freezes the first rown
+                            // Insert details of which Tasks have been excluded
+                            int rowCount = excludedTaskCodeDetails.Count;
+                            worksheet.Row(1).InsertRowsAbove(rowCount);
+
+                            for (int i = 0; i < rowCount; i++)
+                            {
+                                worksheet.Cell(i + 1, 1).Value = excludedTaskCodeDetails[i];
+                            }
+
+                            // Insert a blank row after task details
+                            worksheet.Row(rowCount + 1).InsertRowsAbove(1);
+
+                            // Calculate freeze row position (new rows + header row)
+                            int freezeRow = rowCount + 2;
+                            worksheet.SheetView.FreezeRows(freezeRow);
+
+                            worksheet.Row(1).Style.Font.Bold = true; // Apply bold formatting to row 1
                             worksheet.Columns().AdjustToContents(); // Autofit columns
 
                             // Save the workbook
