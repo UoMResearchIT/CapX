@@ -34,7 +34,7 @@ namespace PPMTool.Pages
         [Inject]
         public EmailService EmailService { get; set; }
 
-        [Inject] 
+        [Inject]
         public IJSRuntime JS { get; set; }
 
 
