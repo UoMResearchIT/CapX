@@ -166,7 +166,7 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
-        /// Allows more human-freindly names to beused in the timesheet download feature
+        /// Allows more human-friendly names to be used in the timesheet download feature
         /// </summary>
         [AttributeUsage(AttributeTargets.Property)]
         public class ExcelHeaderAttribute : Attribute
