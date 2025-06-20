@@ -1,5 +1,4 @@
-﻿using System;
-using PPMTool.Enums;
+﻿using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
@@ -46,6 +45,49 @@ namespace PPMTool.Data
             this.isHatched = isHatched;
             TooltipMessages = tooltipMessages;
             this.isFake = isFake;
+        }
+
+        /// <summary>
+        /// Standard colour palette
+        /// </summary>
+        private static string[] standardColours =
+        [
+            "#0072B2",
+            "#E69F00",
+            "#009E73",
+            "#AA4499",
+            "#56B4E9",
+            "#D55E00",
+            "#88CCEE",
+            "#117733",
+            "#CCCCCC",
+            "#332288",
+            "#F0E442",
+            "#DDCC77",
+            "#882255",
+            "#6699CC",
+            "#CC6677",
+            "#44AA99",
+            "#CC79A7",
+            "#999999"
+        ];
+
+        /// <summary>
+        /// Returns a hex string from the standard colour palette
+        /// </summary>
+        /// <param name="arrayIndex"></param>
+        /// <returns></returns>
+        public static string GetColourString(int arrayIndex)
+        {
+            if (arrayIndex < 0)
+            {
+                arrayIndex = 0;
+            }
+            else if (arrayIndex >= standardColours.Length)
+            {
+                arrayIndex = arrayIndex - standardColours.Length;
+            }
+            return standardColours[arrayIndex];
         }
 
         /// <summary>

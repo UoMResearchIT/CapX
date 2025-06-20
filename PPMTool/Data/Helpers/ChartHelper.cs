@@ -226,26 +226,218 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Represents the effort data for a given resource on a given task
+        /// </summary>
+        public class ResourceEffort
+        {
+            /// <summary>
+            /// ID of the person associated with the resource
+            /// </summary>
+            public int PersonId { get; }
+
+            /// <summary>
+            /// The planned work hours
+            /// </summary>
+            public double PlannedWorkHours { get; private set; }
+
+            /// <summary>
+            /// The actual number of hours worked
+            /// </summary>
+            public double ActualHours { get; private set; }
+
+            /// <summary>
+            /// Ctor simply assigns the properties
+            /// </summary>
+            /// <param name="personId"></param>
+            /// <param name="plannedWorkHours"></param>
+            /// <param name="actualHours"></param>
+            public ResourceEffort(int personId, double plannedWorkHours, double actualHours)
+            {
+                PersonId = personId;
+                PlannedWorkHours = plannedWorkHours;
+                ActualHours = actualHours;
+            }
+
+            /// <summary>
+            /// Update the values for this resource by adding new values to existing
+            /// </summary>
+            /// <param name="plannedWorkHoursForResource"></param>
+            /// <param name="actualWorkHoursForResource"></param>
+            internal void UpdateValues(double plannedWorkHoursForResource, double actualWorkHoursForResource)
+            {
+                PlannedWorkHours += plannedWorkHoursForResource;
+                ActualHours += actualWorkHoursForResource;
+            }
+        }
+
+        /// <summary>
+        /// Represents the effort for tasks and assignments for a given week
+        /// </summary>
+        public class WeeklyTaskEffort
+        {
+            /// <summary>
+            /// The date of the week beginning
+            /// </summary>
+            public DateTime WeekDate { get; }
+
+            /// <summary>
+            /// Sum of the planned work across all tasks assuming all demand is met
+            /// </summary>
+            public double PlannedWorkHoursDemandMet { get; }
+
+            /// <summary>
+            /// Sum of the planned work across all tasks based on assignments
+            /// </summary>
+            public double AssignedPlannedWorkHours { get; }
+
+            /// <summary>
+            /// The actual work hours done by all resources across all tasks in this week
+            /// </summary>
+            public double ActualWorkHours { get; }
+
+            /// <summary>
+            /// Details of every assignment. The sum of the planned work hours will be lower than the 
+            /// <see cref="PlannedWorkHoursDemandMet"/> value if there is unmet demand.
+            /// </summary>
+            public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
+
+            /// <summary>
+            /// Ctor takes the tasks running and the current week to generate resource breakdown
+            /// </summary>
+            /// <param name="currentWeek"></param>
+            /// <param name="tasksRunningInWeek"></param>
+            public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek, IEnumerable<Resource> allResourcesOnProject)
+            {
+                WeekDate = currentWeek;
+
+                // For every resource on every task build a representation of the information
+                foreach (var subTask in tasksRunningInWeek)
+                {
+                    // Get the length of the task in days
+                    var taskLengthInDays = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1;
+
+                    // Get the planned hours per day
+                    var plannedHoursPerDay = taskLengthInDays > 0 ? subTask.PlannedWorkHours / taskLengthInDays : 0;
+
+                    // How many days does task run this week
+                    var taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
+
+                    // How many days has the task run so far (for actuals)
+                    var endDate = subTask.EndDate < DateTime.Today ? subTask.EndDate : DateTime.Today;
+                    var daysRunSoFar = endDate.Subtract(subTask.StartDate).TotalDays + 1;
+
+                    // Find the total FTE across all resources
+                    var totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                    // Find total actuals across all resources
+                    var totalActuals = subTask.AssignedResources.Sum(x => x.ActualWorkHours);
+
+                    // How many hours are planned this week based on assgined resources
+                    var plannedHoursForTaskThisWeek = plannedHoursPerDay * taskDaysThisWeek;
+
+                    // How many hours are planned this week if demand is met
+                    var plannedHoursForTaskThisWeekDemandMet = subTask.Demand * (220 * 7 / 365d) * taskDaysThisWeek;
+
+                    // If distributed evenly across the days this task has run, how many actuals per day
+                    var actualsPerDay = daysRunSoFar > 0 ? totalActuals / daysRunSoFar : 0;
+
+                    // Actuals this week (zero if a week in the future)
+                    var actualsThisWeek = endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
+
+                    // Add to the demand for the week across all tasks
+                    PlannedWorkHoursDemandMet += plannedHoursForTaskThisWeekDemandMet;
+
+                    // Add to the planned hours based on assigned resources
+                    AssignedPlannedWorkHours += plannedHoursForTaskThisWeek;
+
+                    // Add to the actual work hours based on the resources
+                    ActualWorkHours += actualsThisWeek;
+
+                    // For each resource on the task, calculate their contribution to the planned work
+                    foreach (var res in subTask.AssignedResources)
+                    {
+                        // Work out the contribution of this resource to planned work and actuals
+                        var plannedWorkHoursForResource = (res.AssignmentFTE / totalFTE) * plannedHoursForTaskThisWeek;
+                        var actualWorkHoursForResource = totalActuals > 0 ? (res.ActualWorkHours / totalActuals) * actualsThisWeek : 0;
+
+                        // Add a resource effort object if required or update existing
+                        var existingResource = ResourceEffort.FirstOrDefault(x => x.PersonId == res.Person.PersonId);
+                        if (existingResource == null)
+                        {
+                            ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, actualWorkHoursForResource));
+                        }
+                        else
+                        {
+                            existingResource.UpdateValues(plannedWorkHoursForResource, actualWorkHoursForResource);
+                        }
+                    }
+                }
+
+                // Check that there are entries for all resources who worked on the project even if not assigned during that week
+                foreach (var personId in allResourcesOnProject.Select(x => x.Person.PersonId))
+                {
+                    if (!ResourceEffort.Any(x => x.PersonId == personId))
+                    {
+                        ResourceEffort.Add(new ResourceEffort(personId, 0, 0));
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Special cosntructor to allow aggregation of the values by adding the values to the previous week values
+            /// </summary>
+            /// <param name="currentWeek"></param>
+            /// <param name="previousWeek"></param>
+            public WeeklyTaskEffort(WeeklyTaskEffort currentWeek, WeeklyTaskEffort previousWeek)
+            {
+                WeekDate = currentWeek.WeekDate;
+                PlannedWorkHoursDemandMet = (previousWeek?.PlannedWorkHoursDemandMet ?? 0) + currentWeek.PlannedWorkHoursDemandMet;
+                AssignedPlannedWorkHours = (previousWeek?.AssignedPlannedWorkHours ?? 0) + currentWeek.AssignedPlannedWorkHours;
+                ActualWorkHours = (previousWeek?.ActualWorkHours ?? 0) + currentWeek.ActualWorkHours;
+
+                foreach (var res in currentWeek.ResourceEffort)
+                {
+                    double lastWeekPlanned = 0;
+                    double lastWeekActual = 0;
+
+                    // Find the existing resource effort for this person from previous week
+                    var existingResource = previousWeek?.ResourceEffort?.FirstOrDefault(x => x.PersonId == res.PersonId);
+
+                    // Update the planned and actuals based on this
+                    if (existingResource != null)
+                    {
+                        // If exists, add the values to the existing one
+                        lastWeekPlanned = existingResource.PlannedWorkHours;
+                        lastWeekActual = existingResource.ActualHours;
+                    }
+
+                    // Now add the current week's values to the previous week values
+                    ResourceEffort.Add(
+                        new ResourceEffort(
+                            res.PersonId,
+                            lastWeekPlanned + res.PlannedWorkHours,
+                            lastWeekActual + res.ActualHours
+                        )
+                    );
+                }
+
+            }
+        }
+
+        /// <summary>
         /// Time-marching method for summing up the contribution week-by-week based on the value functions provided.
         /// The results are arranged into blocks exactly one week in length.
         /// </summary>
-        /// <param name="label"></param>
-        /// <param name="subTasks"></param>
-        /// <param name="value1Function">Function to determine a value for subtasks in the current week</param>
-        /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
-        /// <param name="hatchedFunction">Function to determine hatched status for subtasks in the current week</param>
+        /// <param name="subTasks">All subtasks associated with a project</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
-            string label,
-            IEnumerable<SubTask> subTasks,
-            Func<IEnumerable<SubTask>, DateTime, double> value1Function,
-            Func<IEnumerable<SubTask>, DateTime, double> value2Function = null,
-            Func<IEnumerable<SubTask>, bool> hatchedFunction = null
-        )
+        public static IEnumerable<WeeklyTaskEffort> GetWeeklyTaskEffortItems(IEnumerable<SubTask> subTasks)
         {
             // Initialise
-            var temp = new List<ChartItem>();
+            var temp = new List<WeeklyTaskEffort>();
             if (subTasks.Count() < 1) return temp;
+
+            // Get all the unique resources
+            var resources = subTasks.SelectMany(x => x.AssignedResources).DistinctBy(x => x.Person.PersonId);
 
             // Get earliest assignment to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
@@ -253,7 +445,7 @@ namespace PPMTool.Data.Helpers
             // Move to a Monday
             start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
-            // Get latest assignment finish, adding a day so it is the first day when no work will be done.
+            // Get latest assignment finish, adding a day so the marching stops when there is no work to be done.
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
 
             // Move to the next Sunday if not already a Sunday
@@ -271,17 +463,7 @@ namespace PPMTool.Data.Helpers
                 var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
-                temp.Add(
-                    new ChartItem(
-                        null,
-                        label,
-                        startOfWeek,
-                        endOfWeek,
-                        value1Function(within, startOfWeek),
-                        value2Function != null ? value2Function(within, startOfWeek) : 0,
-                        hatchedFunction != null ? hatchedFunction(within) : false
-                    )
-                );
+                temp.Add(new WeeklyTaskEffort(startOfWeek, within, resources));
 
                 // Increment by 1 week
                 startOfWeek = startOfWeek.AddDays(7);
