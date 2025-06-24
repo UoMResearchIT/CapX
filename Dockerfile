@@ -2,13 +2,12 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY nuget.config nuget.config
 
+COPY PPMTool.Api/PPMTool.API.csproj PPMTool.API/PPMTool.API.csproj
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
 
@@ -19,6 +18,7 @@ RUN --mount=type=secret,id=github_token \
 COPY .config .config
 RUN dotnet tool restore
 
+COPY PPMTool.Api PPMTool.API
 COPY PPMTool PPMTool
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
@@ -26,10 +26,12 @@ FROM build AS publish
 RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool/PPMTool.sln"
 RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
-VOLUME /app/publish/state
 RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+EXPOSE 8080
+
 ENTRYPOINT ["dotnet", "PPMTool.dll"]
