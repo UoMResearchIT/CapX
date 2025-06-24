@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.Globalization;
 using FluentDateTime;
 using Microsoft.EntityFrameworkCore.Migrations;
 using PPMTool.Enums;
@@ -68,8 +65,8 @@ namespace PPMTool.Migrations
                     if (Clean(values[0]) == "Resource")
                     {
                         for (var i = 3; i < values.Length; i++)
-                        {
-                            dates.Add(DateTime.Parse(Clean(values[i])));
+                        {   
+                            dates.Add(DateTime.ParseExact(Clean(values[i]), "dd/MM/yyyy", CultureInfo.InvariantCulture));
                         }
                         continue;
                     }
