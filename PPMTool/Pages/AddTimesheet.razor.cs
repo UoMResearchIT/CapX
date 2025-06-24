@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -32,6 +33,10 @@ namespace PPMTool.Pages
 
         [Inject]
         public EmailService EmailService { get; set; }
+
+        [Inject]
+        public IJSRuntime JS { get; set; }
+
 
         private Timesheet timesheet;
         private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
@@ -300,6 +305,17 @@ namespace PPMTool.Pages
                 }
             }
         }
+
+        /// <summary>
+        /// Method called to create the timesheet image to download
+        /// </summary>
+        /// <returns></returns>
+        private async Task DownloadTimesheetImage()
+        {
+            string fileName = $"{timesheet.Owner.ShortName}_TimesheetWeekStart_{timesheet.StartDate.ToString("yyyyMMdd")}";
+            await JS.InvokeVoidAsync("captureTimesheetAsImage", fileName);
+        }
+
 
         /// <summary>
         /// Method fired when the timesheet note is changed

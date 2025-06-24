@@ -7,9 +7,10 @@
 @using PPMTool.Pages.Components
 @using PPMTool.Services
 @using Radzen.Blazor
+
 <PageTitle>Add Timesheet - CapX</PageTitle>
 
-<div class="container">
+<div class="container" id="timesheetContainer">
     @if (Loading)
     {
         <LoadingComponent />
@@ -28,7 +29,14 @@
                 }
                 else
                 {
-                    <h1>Edit Timesheet</h1>
+                    if (timesheet.Status == TimesheetStatus.Approved)
+                    {
+                        <h1>View Timesheet</h1>
+                    }
+                    else
+                    {
+                        <h1>Edit Timesheet</h1>
+                    }
                 }
                 @if (timesheet?.IsLineManager(ActiveUser) ?? false)
                 {
@@ -43,6 +51,12 @@
             {
                 <div class="col-auto" style="align-content: center">
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+                </div>
+            }
+            @if (timesheet!.IsOwner(ActiveUser))
+            {
+                <div class="col-auto" style="align-content: center;" id="downloadScreenshotButton">
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" ButtonType="ButtonType.Button" Click="@DownloadTimesheetImage" Text="Download Screenshot" Icon="image" Disabled="@(timesheet.Status != TimesheetStatus.Approved)" />
                 </div>
             }
         </div>
@@ -238,113 +252,29 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-                <!-- Don't show if viewing a direct report's timesheet -->
-                @if (!timesheet?.IsLineManager(ActiveUser) ?? false)
-                {
-                    <div class="timesheet-note">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                            <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
-                            If you don't want/need to use one or more of your 'default' options then leave the item(s) empty. If you remove a row from this timesheet it will not show (when creating a new instance) on future timesheets.
-                        </RadzenStack>
-                    </div>
-                }
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
-                            <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
-                        </RadzenStack>
+                <div id="timesheetNoteAndComments">
+                    <!-- Don't show if viewing a direct report's timesheet -->
+                    @if (!timesheet?.IsLineManager(ActiveUser) ?? false)
+                    {
+                        <div class="timesheet-note">
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="info" IconStyle="IconStyle.Dark" />
+                                If you don't want/need to use one or more of your 'default' options then leave the item(s) empty. If you remove a row from this timesheet it will not show (when creating a new instance) on future timesheets.
+                            </RadzenStack>
+                        </div>
+                    }
+                    <hr />
+                    <div class="row">
+                        <div class="col">
+                            <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
+                                <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                            </RadzenStack>
+                        </div>
                     </div>
                 </div>
             </div>
 
-@*             @if (timesheet?.IsLineManager(ActiveUser) ?? false)
-            {
-                <div class="card" style="margin-top: 0.5rem;">
-                    <div class="row">
-                        <div class="col-2"><RadzenText Text="WLM Target:" TextStyle="TextStyle.Subtitle1" /></div>
-                        <div class="col-10">
-                            <div>
-                                @{
-                                    <div style="width: 100%; overflow: auto; border: 1px solid #aaa;">
-                                        @foreach (var item in currentWLM.GetDutyMapping())
-                                        {
-                                            Duty duty = item.Key;
-                                            double value = item.Value;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
-                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
-                                            string wlmTextColour = duty.GetTextColourCode();
-
-                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
-                                            var percent = value * 100;
-                                            if (totalFTEForTimesheet > 1)
-                                            {
-                                                percent = percent * (1 / totalFTEForTimesheet);
-                                            }
-
-                                            if (value != 0)
-                                            {
-                                                <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({value.ToString("F2")})")">@(value.ToString("F2"))</div>
-                                            }
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row" style="margin-top: 0.25rem;">
-                        <div class="col-2"><RadzenText Text="This Timesheet:" TextStyle="TextStyle.Subtitle1" /></div>
-                        <div class="col-10">
-                            @{
-                                <div style="width: 100%; overflow: hidden; border: 1px solid #aaa;">
-                                    @{
-                                        // Compute percentages of each bar section
-                                        var items = wlmChartItem.WeeklyValuesByDuty.Where(x => x.Value > 0);
-                                        var totalPercent = 0d;
-                                        foreach (var item in items)
-                                        {
-                                            Duty duty = item.Key;
-                                            double value = item.Value;
-                                            string dutyDescription = DotNetExtensions.Extensions.GetDescription(duty) ?? "NOT SET";
-                                            string wlmBackgroundColour = duty.GetBackgroundColourCode();
-                                            string wlmTextColour = duty.GetTextColourCode();
-
-                                            // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
-                                            var percent = value * 100;
-                                            if (totalFTEForTimesheet > 1)
-                                            {
-                                                percent = percent * (1 / totalFTEForTimesheet);
-                                                totalPercent += percent;
-                                            }
-
-                                            // If the last item then just make it add up to total percent if 1 FTE or greater
-                                            if (totalFTEForTimesheet >= 1 && item.Key == items.Last().Key)
-                                            {
-                                                percent = 100 - (totalPercent - percent);
-                                                if (percent < 0)
-                                                {
-                                                    percent = 0;
-                                                }
-                                            }
-
-                                            // Hack to avoid adding text in a bar that is likely too small to support it
-                                            string text = (percent >= 3 ? item.Value.ToString("F2") : "");
-
-                                            // Draw the bar
-                                            <div class="timesheet-wlm-slice" style="width: @percent%; background-color: @wlmBackgroundColour; color: @wlmTextColour;" title="@($"{dutyDescription} ({item.Value.ToString("F2")})")">
-                                                @text &nbsp;
-                                            </div>
-                                        }
-                                    }
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            } *@
-
-            <div class="row" style="margin-top: 1rem;">
+            <div class="row" style="margin-top: 1rem;" id="timesheetButtons">
                 <div class="col">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">
                         <div>
