@@ -1,16 +1,23 @@
 services:
   capx:
+    env_file: .env
+    container_name: capx-frontend
     build:
       context: .
+      dockerfile: Dockerfile
       secrets:
         - github_token
     ports:
-      - ${CAPX_PORT:3000}:80
+      - ${CAPX_HTTP_PORT}:${CAPX_HTTP_PORT}
+    
     volumes:
-      - state:/app/state
+      - db_data:/app/state
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:${CAPX_HTTP_PORT}
 
 volumes:
-  state:
+  db_data:
 
 secrets:
   github_token:
