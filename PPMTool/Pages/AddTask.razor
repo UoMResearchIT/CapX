@@ -428,7 +428,8 @@
                                 <EditTemplate Context="res">
                                     <RadzenDropDown @bind-Value="res.FundedFrom"
                                                     Data="@availableSources"
-                                                    Style="width:100%; display: block;">
+                                                    Style="width:100%; display: block;"
+                                                    AllowClear="true">
                                         <Template Context="source">
                                             <RadzenText Text="@source.GetSensibleObjectName()" />
                                         </Template>
