@@ -164,5 +164,19 @@ namespace PPMTool.Enums
         {
             return status.GetAttribute<BadgeStyleAttribute>()?.Style ?? BadgeStyle.Light;
         }
+
+        /// <summary>
+        /// Allows more human-friendly names to be used in the timesheet download feature
+        /// </summary>
+        [AttributeUsage(AttributeTargets.Property)]
+        public class ExcelHeaderAttribute : Attribute
+        {
+            public string HeaderName { get; }
+
+            public ExcelHeaderAttribute(string headerName)
+            {
+                HeaderName = headerName;
+            }
+        }
     }
 }

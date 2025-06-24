@@ -78,11 +78,10 @@
     </div>
 
     <div style="padding-top: 3rem" hidden="@hideStaffResults">
-        <div class="row">
-            <div class="col-auto mr-auto">
-                <h1>My Staff Timesheets</h1>
-            </div>
-        </div>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <h1>My Staff Timesheets</h1>
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Download ALL Timesheet Data" Click="@DownloadData" Disabled="@(exportRunning || !(ActiveUserRoleType == RoleType.Superuser))" Icon="@(exportRunning ? "hourglass_empty" : "download")" />
+        </RadzenStack>
         <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> {new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions)})" />
 
         <hr />

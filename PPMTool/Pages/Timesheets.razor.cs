@@ -1,14 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Enums.Extensions;
 
 namespace PPMTool.Pages
 {
@@ -24,6 +32,9 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; } = null!;
+
         private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
         private DateTime dateNextTimesheet;
@@ -35,6 +46,7 @@ namespace PPMTool.Pages
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private bool initialLoadComplete;
+        private bool exportRunning = false;
 
         public bool ShowAllMyTimesheets
         {
@@ -294,5 +306,147 @@ namespace PPMTool.Pages
             }
             return paddedList;
         }
+
+
+        /// <summary>
+        /// A task to download the data for all contractors.
+        /// </summary>
+        private void DownloadData()
+        {
+            exportRunning = true;
+            Task.Run(async () =>
+            {
+                // Create a context to be accessed on this thread
+                var threadContext = ContextFactory.CreateDbContext();
+                var timesheets = TimesheetService.GetAll(threadContext);
+                var excludedTaskCodes = new HashSet<int> { 1, 2, 3 };  // Excluded codes
+                List<string> excludedTaskCodeDetails = Context.InnateCodeTasks
+                    .Where(c => excludedTaskCodes.Contains(c.InnateCodeTaskId))
+                    .Select(c => c.TaskName)
+                    .ToList();
+
+                excludedTaskCodeDetails.Insert(0, "Excluded codes");
+
+                List<TimesheetDataDownloadDto> dailyEntries = new List<TimesheetDataDownloadDto>();
+                foreach (Timesheet t in timesheets)
+                {
+                    var dailySummaries = t.GetDailySummaries(excludedTaskCodes);
+                    if (dailySummaries != null)
+                    {
+                        dailyEntries.AddRange(dailySummaries);
+                    }
+                }
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Create file path
+                        var filename = $"TimesheetData__{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")}.xlsx";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimesheetDataExport");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(folder, filename);
+
+                        // Create workbook
+                        using (var workbook = new XLWorkbook())
+                        {
+                            // Create a tab
+                            var worksheet = workbook.Worksheets.Add("Timesheet Data");
+
+                            // Extract headers dynamically
+                            var properties = typeof(TimesheetDataDownloadDto).GetProperties();
+
+                            // Get human-friendly column headers if they exist
+                            var headers = properties.Select(p =>
+                            {
+                                var attr = p.GetCustomAttribute<ExcelHeaderAttribute>();
+                                return attr?.HeaderName ?? p.Name; // Use attribute value if available, otherwise default to property name
+                            }).ToList();
+
+
+                            // Apply headers and formatting
+                            for (int i = 0; i < headers.Count; i++)
+                            {
+                                worksheet.Cell(1, i + 1).Value = headers[i];
+                                worksheet.Cell(1, i + 1).Style.Font.Bold = true;  // Add bold headers
+
+                                // Centralise the "hours" column
+                                if (headers[i].Contains("Hours", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    worksheet.Column(i + 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                                }
+                            }
+                            int row = 2;
+
+                            // Write the data rows
+                            foreach (var entry in dailyEntries)
+                            {
+                                for (int col = 0; col < headers.Count; col++)
+                                {
+                                    bool isDateTime = properties[col].PropertyType == typeof(DateTime);
+                                    var value = properties[col].GetValue(entry);
+
+                                    var cell = worksheet.Cell(row, col + 1);
+                                    if (value is DateTime dateValue)
+                                    {
+                                        cell.Value = dateValue.ToString("dd/MM/yy");
+                                        cell.Style.DateFormat.Format = "dd/MM/yy"; // Apply formatting in the spreadsheet
+                                    }
+                                    else
+                                    {
+                                        cell.Value = value.ToString() ?? "";
+                                    }
+                                }
+                                row++;
+                            }
+
+                            // Insert details of which Tasks have been excluded
+                            int rowCount = excludedTaskCodeDetails.Count;
+                            worksheet.Row(1).InsertRowsAbove(rowCount);
+
+                            for (int i = 0; i < rowCount; i++)
+                            {
+                                worksheet.Cell(i + 1, 1).Value = excludedTaskCodeDetails[i];
+                            }
+
+                            // Insert a blank row after task details
+                            worksheet.Row(rowCount + 1).InsertRowsAbove(1);
+
+                            // Calculate freeze row position (new rows + header row)
+                            int freezeRow = rowCount + 2;
+                            worksheet.SheetView.FreezeRows(freezeRow);
+
+                            worksheet.Row(1).Style.Font.Bold = true; // Apply bold formatting to row 1
+                            worksheet.Columns().AdjustToContents(); // Autofit columns
+
+                            // Save the workbook
+                            workbook.SaveAs(path);
+                        }
+
+                        Debug.WriteLine($"** Exported to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError($"Could not download file: {ex}");
+                    }
+                });
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
+            StateHasChanged();
+        }
+
     }
 }
