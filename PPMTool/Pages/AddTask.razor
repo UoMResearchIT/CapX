@@ -325,8 +325,13 @@
                                     <RadzenText Style="margin-bottom: 0rem;" Text="@res.Person.Name" />
                                 </Template>
                                 <EditTemplate Context="res">
-                                    <RadzenDropDown @bind-Value="res.Person" Data="@filteredPeople" Style="width:100%; display: block;" Change="@OnResourcePersonChange"
-                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                    <RadzenDropDown @bind-Value="res.Person"
+                                                    Data="@filteredPeople"
+                                                    Style="width:100%; display: block;"
+                                                    Change="@OnResourcePersonChange"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    FilterOperator="StringFilterOperator.Contains"
+                                                    AllowFiltering="true"
                                                     LoadData="@UpdatePeopleDropdownSource">
                                         <Template Context="person">
                                             <RadzenText Style="margin-bottom: 0rem;"  Text="@person.Name" />
