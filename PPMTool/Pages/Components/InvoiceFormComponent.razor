@@ -17,7 +17,7 @@
                 </RadzenStack>
                 <RadzenStack Orientation="Radzen.Orientation.Vertical">
                     <RadzenLabel Component="Amount" Text="Amount" class="font-weight-bold" />
-                    <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:100%;" Format="@("£0.00")" />
+                    <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Step="0.01" Placeholder="0.00" Style="width:100%;" Format="@("£0.00")" />
                 </RadzenStack>
             </RadzenStack>
             <RadzenLabel Component="Notes" Text="Notes" class="font-weight-bold" />
