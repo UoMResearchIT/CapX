@@ -5,7 +5,7 @@ services:
       secrets:
         - github_token
     ports:
-      - ${CAPX_PORT:3000}:80
+      - ${CAPX_PORT:-3000}:80
     volumes:
       - state:/app/state
 
