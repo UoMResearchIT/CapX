@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v4
           
       - name: Build images
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_TOKEN }}
         run: |
           docker compose build
           
