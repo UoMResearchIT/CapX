@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY nuget.config nuget.config
 
-COPY PPMTool.Api/PPMTool.API.csproj PPMTool.API/PPMTool.API.csproj
+COPY PPMTool.API/PPMTool.API.csproj PPMTool.API/PPMTool.API.csproj
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
 
@@ -18,7 +18,7 @@ RUN --mount=type=secret,id=github_token \
 COPY .config .config
 RUN dotnet tool restore
 
-COPY PPMTool.Api PPMTool.API
+COPY PPMTool.API PPMTool.API
 COPY PPMTool PPMTool
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
