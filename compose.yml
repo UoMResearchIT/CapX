@@ -23,12 +23,15 @@ services:
       - blazor-server
     image: capx:latest  # Reuse the same image
     container_name: capx-api
+    volumes:
+      - db_data:/app/state
     ports:
       - ${CAPX_API_PORT}:${CAPX_API_PORT}
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://0.0.0.0:${CAPX_API_PORT}
       - API_KEY_SECRET=${API_KEY_SECRET}
+      - USE_DOCKER_CONNECTION_STRING=${USE_DOCKER_CONNECTION_STRING}
     
     command: ["dotnet", "PPMTool.API.dll"]
 
