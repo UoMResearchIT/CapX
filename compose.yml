@@ -1,13 +1,36 @@
 services:
   capx:
+    image: capx:latest
+    container_name: capx-blazor-server
     build:
       context: .
+      target: final
+      dockerfile: Dockerfile
       secrets:
         - github_token
-    ports:
-      - ${CAPX_PORT:-3000}:80
     volumes:
       - state:/app/state
+    env_file: .env
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:${CAPX_HTTP_PORT}    
+    ports:
+      - ${CAPX_HTTP_PORT}:${CAPX_HTTP_PORT}
+    command: ["dotnet", "PPMTool.dll"]
+
+  api:
+    depends_on:
+      - capx
+    image: capx:latest
+    container_name: capx-api
+    volumes:
+      - state:/app/state
+    env_file: .env
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:${CAPX_API_PORT}
+      - USE_DOCKER_CONNECTION_STRING=true
+    ports:
+      - ${CAPX_API_PORT}:${CAPX_API_PORT}
+    command: ["dotnet", "PPMTool.API.dll"]
 
 volumes:
   state:
