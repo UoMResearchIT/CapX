@@ -24,11 +24,11 @@ The software can be cloned with the usual `git clone` command. However, dependin
 
 ## Running with Docker Compose
 
-1. make sure you are at root of the repo i.e. same directory with [`compose.yml`](./compose.yml)
+1. Make sure you are at root of the repo i.e. same directory with [`compose.yml`](./compose.yml)
 2. Copy [`env.dev`](.env.dev), rename it as `.env`
 3. In `.env`, Provide your GitHub token as an environment variable as `GITHUB_TOKEN=<your_github_token>`
-   1. to obtain the token, click generate new token at https://github.com/settings/tokens, gen new token
-4.  run: `docker compose up`
+   1. To obtain the token, click generate new token button at https://github.com/settings/tokens.
+4.  Run: `docker compose up`
 
 You can then access the app via a web browser at `http://localhost:3000`. You can change the port by setting the environment variable `CAPX_HTTP_PORT` in the `.env` file
 
