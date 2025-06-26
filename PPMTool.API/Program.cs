@@ -49,13 +49,30 @@ builder.Host.UseSerilog();
 #endif
 
 // Use a different connection string in production
-var connectionString = configuration.GetConnectionString(
+string? connectionString = null;
+bool useDockerConnectionString = Environment.GetEnvironmentVariable("USE_DOCKER_CONNECTION_STRING") == "true";
+
+if (useDockerConnectionString)
+{
+    // Use the Docker connection string if specified
+    connectionString = configuration.GetConnectionString("PPMToolContextConnectionDocker");
+}
+else
+{
+    // Use the default connection string based on the environment
+    connectionString = configuration.GetConnectionString(
 #if RELEASE
-    "PPMToolContextConnectionProduction"
+        "PPMToolContextConnectionProduction"
 #else
-    "PPMToolContextConnection"
+        "PPMToolContextConnection"
 #endif
-) ?? throw new Exception("Invalid connection string!");
+    );
+}
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("Invalid connection string!");
+}
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
     options.UseSqlite(connectionString)
