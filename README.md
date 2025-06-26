@@ -43,7 +43,7 @@ Since the image is being built each time you run "docker compose up --build", an
 
 ## VScode Debugging with Docker Compose
 
-If you are using VScode, after you `docker compose up`, simply <kbd>F5</kbd>, you can attach a debugger to containers. you may select which containner to attach by selecting from the dropdown list in Run and Debug (<kbd>Ctrl + Shift + D</kbd>).
+If you are using VScode, after you `docker compose up`, simply <kbd>F5</kbd>, you can attach a debugger to containers. You may select which containner to attach by selecting from the dropdown list in Run and Debug (<kbd>Ctrl + Shift + D</kbd>). As soon as, the debugger is attached succeessfully, you can set breakpoint and jump in and out of the code like normal.
 
 ### Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
