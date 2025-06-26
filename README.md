@@ -24,7 +24,6 @@ The software can be cloned with the usual `git clone` command. However, dependin
 
 ## Running with Docker Compose
 
-
 1. make sure you are at root of the repo i.e. same directory with [`compose.yml`](./compose.yml)
 2. Copy [`env.dev`](.env.dev), rename it as `.env`
 3. In `.env`, Provide your GitHub token as an environment variable as `GITHUB_TOKEN=<your_github_token>`
@@ -41,6 +40,10 @@ docker volume rm capx_db_data
 once the container has been brought down.
 
 Since the image is being built each time you run "docker compose up --build", any changes to source files will be picked up and included.
+
+## VScode Debugging with Docker Compose
+
+If you are using VScode, after you `docker compose up`, simply <kbd>F5</kbd>, you can attach a debugger to containers. you may select which containner to attach by selecting from the dropdown list in Run and Debug (<kbd>Ctrl + Shift + D</kbd>).
 
 ### Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
