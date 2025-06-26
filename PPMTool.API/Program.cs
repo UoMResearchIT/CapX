@@ -143,13 +143,7 @@ builder.Services.AddSwaggerGen(
 var app = builder.Build();
 
 app.UseSwagger();
-app.UseSwaggerUI(
-    options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "CapX API V1");
-        options.RoutePrefix = "api-docs"; // Serve Swagger at the app's root
-    }
-);
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 // API key authentication middleware -- maybe replace with endpoint filter after .NET 8.0 upgrade?
