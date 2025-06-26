@@ -1,8 +1,10 @@
 services:
   blazor-server:
+    container_name: capx-blazor-server
     image: capx:latest  # Use a named image
     build:
       context: .
+      target: debug
       dockerfile: Dockerfile
       secrets:
         - github_token
@@ -11,6 +13,7 @@ services:
     
     volumes:
       - db_data:/app/state
+      - ./PPMTool/:/src/PPMTool/
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://0.0.0.0:${CAPX_HTTP_PORT}
@@ -25,6 +28,7 @@ services:
     container_name: capx-api
     volumes:
       - db_data:/app/state
+      - ./PPMTool.API/:/src/PPMTool.API/
     ports:
       - ${CAPX_API_PORT}:${CAPX_API_PORT}
     environment:

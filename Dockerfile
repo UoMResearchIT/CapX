@@ -33,3 +33,10 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 EXPOSE 8080
+
+FROM publish AS debug
+
+RUN apt-get update
+RUN apt-get install -y unzip
+RUN curl -sSL https://aka.ms/getvsdbgsh | /bin/sh /dev/stdin -v latest -l ~/vsdbg
+WORKDIR /app/publish

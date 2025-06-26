@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debugger: capx-blazor-server ",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickRemoteProcess}",
+            "pipeTransport": {
+                "pipeProgram": "docker",
+                "pipeArgs": [ "exec", "-i", "capx-blazor-server" ],
+                "debuggerPath": "/root/vsdbg/vsdbg",
+                "pipeCwd": "${workspaceRoot}",
+                "quoteArgs": false
+            },
+            "sourceFileMap": {
+                "/src/PPMTool/": "${workspaceRoot}/PPMTool/"
+            }
+        },
+        {
+            "name": "Debugger: capx-api ",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickRemoteProcess}",
+            "pipeTransport": {
+                "pipeProgram": "docker",
+                "pipeArgs": [ "exec", "-i", "capx-api" ],
+                "debuggerPath": "/root/vsdbg/vsdbg",
+                "pipeCwd": "${workspaceRoot}",
+                "quoteArgs": false
+            },
+            "sourceFileMap": {
+                "/src/PPMTool/": "${workspaceRoot}/PPMTool/"
+            }
+        }
+    ]
+}
