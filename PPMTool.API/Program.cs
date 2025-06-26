@@ -49,12 +49,11 @@ builder.Host.UseSerilog();
 #endif
 
 // Use a different connection string in production
-var connectionString = Environment.GetEnvironmentVariable("USE_DOCKER_CONNECTION_STRING");
-if (connectionString?.ToLower() == "true")
+string? connectionString = null;
+bool useDockerConnectionString = Environment.GetEnvironmentVariable("USE_DOCKER_CONNECTION_STRING") == "true";
+if (useDockerConnectionString)
 {
-    connectionString = configuration.GetConnectionString(
-        "PPMToolContextConnectionDocker"
-    ) ?? throw new Exception("Invalid connection string for Docker!");
+    connectionString = configuration.GetConnectionString("PPMToolContextConnectionDocker");
 }
 else
 {
@@ -64,7 +63,12 @@ else
 #else
     "PPMToolContextConnection"
 #endif
-) ?? throw new Exception("Invalid connection string!");
+);
+}
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("Invalid connection string!");
 }
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
