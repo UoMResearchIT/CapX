@@ -1,0 +1,100 @@
+name: Docker Images Build and Health Check
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Docker Compose Build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> .env  # Optional: if you want to pass via .env
+          docker compose --env-file .env -f compose.yml build
+      
+      - name: Start containers
+        run: |
+          docker compose --env-file .env -f compose.yml up -d
+
+      - name: Check health of containers with published ports
+        run: |
+          echo "🔎 Checking health for containers with published ports..."
+
+          # Get list of running containers with their ID, name, and exposed ports
+          docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' | while read -r cid name ports; do
+            echo ""
+            echo "📦 Container: $name (ID: $cid)"
+
+            # Extract published ports (host-side) from the ports string
+            echo "$ports" | grep -oP '0\.0\.0\.0:\K[0-9]+' | while read -r port; do
+              echo "➡️  Port: $port"
+
+              success=0
+              fail=0
+
+              for i in {1..10}; do
+                status=$(docker inspect --format='{{.State.Health.Status}}' "$cid" 2>/dev/null || echo "no-health")
+
+                echo "  Attempt $i: Health status = $status"
+
+                if [ "$status" = "healthy" ]; then
+                  success=$((success+1))
+                  fail=0
+                elif [ "$status" = "starting" ]; then
+                  echo "  ⚠️  No health check defined. Skipping container $name."
+                else
+                  fail=$((fail+1))
+                  success=0
+                fi
+
+                if [ "$fail" -ge 3 ]; then
+                  echo "  ❌ Container $name (port $port) failed health check 3 times in a row."
+                  exit 1
+                fi
+
+                if [ "$success" -ge 3 ]; then
+                  echo "  ✅ Container $name (port $port) is healthy 3 times in a row."
+                  break
+                fi
+
+                sleep 3
+              done
+
+              if [ "$success" -lt 3 ] && [ "$status" != "no-health" ]; then
+                echo "  ❌ Container $name (port $port) did not become healthy. Exiting."
+                exit 1
+              fi
+            done
+          done
+
+          echo ""
+          echo "✅ All containers with published ports passed health checks."
+
+      - name: Show container logs (on failure)
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down containers
+        if: always()
+        run: docker compose down
+
