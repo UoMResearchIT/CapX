@@ -61,9 +61,7 @@ else if (useDockerConnectionString != "true" || useDockerConnectionString != "fa
     // Use the Docker connection string
     throw new Exception("Invalid value for USE_DOCKER_CONNECTION_STRING environment variable!");
 }
-
-
-if (useDockerConnectionString == "true")
+else if (useDockerConnectionString == "true")
 {
     // Use the Docker connection string if specified
     connectionString = configuration.GetConnectionString("PPMToolContextConnectionDocker");
