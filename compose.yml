@@ -20,6 +20,13 @@ services:
     ports:
       - ${CAPX_HTTP_PORT:-3000}:${CAPX_HTTP_PORT:-3000}
     command: ["dotnet", "PPMTool.dll"]
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${CAPX_HTTP_PORT:-3000}"]
+      interval: 5s
+      timeout: 5s
+      start_period: 1s
+      retries: 5
 
   api:
     depends_on:
@@ -37,6 +44,13 @@ services:
     ports:
       - ${CAPX_API_PORT:-8080}:${CAPX_API_PORT:-8080}
     command: ["dotnet", "PPMTool.API.dll"]
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${CAPX_API_PORT:-8080}/swagger/index.html"]
+      interval: 5s
+      timeout: 5s
+      start_period: 1s
+      retries: 5
 
 volumes:
   state:
