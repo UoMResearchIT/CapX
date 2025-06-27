@@ -12,6 +12,10 @@ cp "$SRC_DIR/PPMTool.db"* "$DEST_DIR/"
 
 # Vacuum the database to flush WAL and SHM
 sqlite3 "$DEST_DIR/PPMTool.db" "VACUUM;"
+if [ $? -ne 0 ]; then
+    echo "VACUUM failed. Aborting backup." >&2
+    exit 1
+fi
 
 # Generate timestamped filename
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
