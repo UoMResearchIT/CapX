@@ -28,7 +28,7 @@ namespace PPMTool.Services
             }
 
             // Default the Timesheet Template items to be ALL codes
-            if(personModel.TimesheetTemplateData is null || string.IsNullOrEmpty(personModel.TimesheetTemplateData.ToString()))
+            if (personModel.TimesheetTemplateData is null || string.IsNullOrEmpty(personModel.TimesheetTemplateData.ToString()))
             {
                 List<int> AllTasks = new List<int>();
                 AllTasks = context.InnateCodeTasks.Select(x => x.InnateCodeTaskId).ToList();
