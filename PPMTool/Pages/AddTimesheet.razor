@@ -38,7 +38,7 @@
                         <h1>Edit Timesheet</h1>
                     }
                 }
-                @if (timesheet?.IsLineManager(ActiveUser) ?? false)
+                @if ((timesheet?.IsLineManager(ActiveUser) ?? false) || activeUserRole.RoleType == RoleType.Superuser)
                 {
                     <RadzenText Text="@timesheet?.Owner.Name" TextStyle="TextStyle.DisplayH5" />
                 }
@@ -53,7 +53,7 @@
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
                 </div>
             }
-            @if (timesheet!.IsOwner(ActiveUser))
+            @if (timesheet!.IsOwner(ActiveUser) || activeUserRole.RoleType == RoleType.Superuser)
             {
                 <div class="col-auto" style="align-content: center;" id="downloadScreenshotButton">
                     <RadzenButton ButtonStyle="ButtonStyle.Success" ButtonType="ButtonType.Button" Click="@DownloadTimesheetImage" Text="Download Screenshot" Icon="image" Disabled="@(timesheet.Status != TimesheetStatus.Approved)" />
