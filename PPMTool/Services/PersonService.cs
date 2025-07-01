@@ -27,7 +27,16 @@ namespace PPMTool.Services
                 return -2;
             }
 
+            // Default the Timesheet Template items to be ALL codes
+            if (personModel.TimesheetTemplateData is null || string.IsNullOrEmpty(personModel.TimesheetTemplateData.ToString()))
+            {
+                List<int> AllTasks = new List<int>();
+                AllTasks = context.InnateCodeTasks.Select(x => x.InnateCodeTaskId).ToList();
+                personModel.TimesheetTemplateData = string.Join("|", AllTasks);
+            }
+
             context.People.Add(personModel);
+
             if (commitChanges) context.SaveChanges();
             return personModel.PersonId;
         }

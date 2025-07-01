@@ -71,7 +71,7 @@
                         <h2>Timesheet Entries</h2>
                     </div>
                     <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
+                        <RadzenButton Text="Add" Icon="add" Visible="@isAddButtonVisible" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) />
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"

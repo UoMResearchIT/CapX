@@ -67,6 +67,7 @@ namespace PPMTool.Pages
         private WLMWeeklyDataChartItem wlmChartItem;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private double totalFTEForTimesheet;
+        private bool isAddButtonVisible;
 
         protected override async Task OnParametersSetAsync()
         {
@@ -203,6 +204,9 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadInnateCodes()
         {
+            // Reset the first dropdown
+            innateCodeDropdownSource = new List<InnateCode>();
+
             Debug.WriteLine("** Loading innate codes...");
 
             // Get all active from the DB
@@ -222,6 +226,7 @@ namespace PPMTool.Pages
             var codesInUse = dataGridEntities.Select(x => x.InnateCodeTask).GroupBy(x => x.InnateCode);
             foreach (var code in codesInUse.Select(x => x.Key))
             {
+                Debug.WriteLine($"** Checking Innatecode [{code.ActivityName}]");
                 // Match code in use to active code in initial source
                 var match = temp.FirstOrDefault(x => x.InnateCodeId == code.InnateCodeId);
                 if (match != null)
@@ -229,6 +234,7 @@ namespace PPMTool.Pages
                     // If all tasks for this code are in use then remove the code from the dropdown source
                     if (match.Tasks.Count == codesInUse.FirstOrDefault(x => x.Key == code)?.Count())
                     {
+                        Debug.WriteLine($"** MATCHED : Removing {match.ActivityName}");
                         temp.Remove(match);
                     }
                 }
@@ -236,6 +242,7 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Populate code dropdown with {temp.Count} tasks");
             innateCodeDropdownSource = temp;
+            isAddButtonVisible = innateCodeDropdownSource.Count > 0;
             OnInnateCodeChanged(null);
         }
 
