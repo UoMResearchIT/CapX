@@ -7,10 +7,14 @@ DEST_DIR="$HOME/Database_Hourlies"
 # Create destination directory if it doesn't exist
 mkdir -p "$DEST_DIR"
 
-# Copy the SQLite database and associated WAL and SHM files
-cp "$SRC_DIR/PPMTool.db"* "$DEST_DIR/"
+# Backup the SQLite DB
+sqlite3 "$SRC_DIR/PPMTool.db" ".backup '$DEST_DIR/PPMTool.db'"
+if [ $? -ne 0 ]; then
+    echo "BACKUP failed. Aborting backup." >&2
+    exit 1
+fi
 
-# Vacuum the database to flush WAL and SHM
+# Vacuum the database to flush WAL and SHM and shrink
 sqlite3 "$DEST_DIR/PPMTool.db" "VACUUM;"
 if [ $? -ne 0 ]; then
     echo "VACUUM failed. Aborting backup." >&2
