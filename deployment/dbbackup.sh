@@ -24,10 +24,10 @@ FINAL_DB="$DEST_DIR/PPMTool-$TIMESTAMP.db"
 # Move the vacuumed database to the final backup file
 mv "$DEST_DIR/PPMTool.db" "$FINAL_DB"
 
-# Remove older backups if more than 48 exist
+# Remove older backups if more than 72 exist
 cd "$DEST_DIR"
 BACKUP_COUNT=$(ls -1 PPMTool-*.db 2>/dev/null | wc -l)
-if [ "$BACKUP_COUNT" -gt 48 ]; then
-    REMOVE_COUNT=$((BACKUP_COUNT - 48))
+if [ "$BACKUP_COUNT" -gt 72 ]; then
+    REMOVE_COUNT=$((BACKUP_COUNT - 72))
     ls -1t PPMTool-*.db | tail -n "$REMOVE_COUNT" | xargs rm -f
 fi
