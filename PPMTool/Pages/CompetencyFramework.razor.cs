@@ -447,11 +447,8 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private Task GetTask()
         {
-            InvokeAsync(() =>
-            {
-                Loading = true;
-                StateHasChanged();
-            });
+            Loading = true;
+            StateHasChanged();
 
             return Task.Run(async () =>
             {
