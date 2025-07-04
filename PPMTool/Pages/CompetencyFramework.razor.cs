@@ -185,7 +185,7 @@ namespace PPMTool.Pages
                         CompetencyMetValues[group.Key] = group
                             .SelectMany(x => x.Assessments)
                             .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
-                            .DistinctBy(x => x.AssociatedCompetency.CompetencyId)
+                            .DistinctBy(x => x.CompetencyId)
                             .Count();
                         Met += CompetencyMetValues[group.Key];
                     }
@@ -467,7 +467,7 @@ namespace PPMTool.Pages
                             .SelectMany(x => x.Assessments)
                             .Where(x => x.Person.PersonId == selectedPerson.PersonId)
                             .OrderByDescending(x => x.DateCreated)
-                            .GroupBy(x => x.AssociatedCompetency.CompetencyId);
+                            .GroupBy(x => x.CompetencyId);
 
                     // Get a list of competency IDs for those where the latest assessment is fully met
                     var exceptionList = new List<int>();
@@ -603,7 +603,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void AddAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
+            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.AddAssessment(Context, assessment);
@@ -622,7 +622,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
+            LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.UpdateAssessment(Context, assessment);

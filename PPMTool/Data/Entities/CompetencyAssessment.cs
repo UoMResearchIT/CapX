@@ -1,9 +1,11 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
+    /// <summary>
+    /// Represents an assessment against a competency
+    /// </summary>
     public class CompetencyAssessment : ILoggableClass
     {
         public int CompetencyAssessmentId { get; set; }
@@ -44,18 +46,23 @@ namespace PPMTool.Data.Entities
         public string CompetencyObjective { get; set; }
 
         /// <summary>
-        /// A reference to the competency this assessment relates to
+        /// ID of the competency this assessment relates to
         /// </summary>
-        public Competency AssociatedCompetency { get; set; }
+        [Required]
+        public int CompetencyId { get; set; }
 
         /// <summary>
         /// A reference to the person who is authoring this assessment
         /// </summary>
         public Person Person { get; set; }
 
+        /// <summary>
+        /// A sensible object name for logging purposes
+        /// </summary>
+        /// <returns></returns>
         public string GetSensibleObjectName()
         {
-            return $"{Evidence} | {Person?.Name} | {AssociatedCompetency?.GetSensibleObjectName()} | Rev {CompetencyRevision}";
+            return $"{Person?.Name} | {Evidence} | Competency Id {CompetencyId} | Rev {CompetencyRevision}";
         }
     }
 }
