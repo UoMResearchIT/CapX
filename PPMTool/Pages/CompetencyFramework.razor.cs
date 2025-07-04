@@ -560,6 +560,9 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Run when the component is first created
+        /// </summary>
         protected override void OnInitialized()
         {
             base.OnInitialized();
