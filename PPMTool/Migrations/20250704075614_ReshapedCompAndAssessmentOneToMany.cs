@@ -35,12 +35,12 @@ namespace PPMTool.Migrations
                 SET CompetencyId = (
                     SELECT AssociatedCompetencyCompetencyId
                     FROM CompetencyAssessments_Backup
-                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.CompetencyAssessmentId
+                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.AssessmentId
                 )
                 WHERE EXISTS (
                     SELECT 1
                     FROM CompetencyAssessments_Backup
-                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.CompetencyAssessmentId
+                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.AssessmentId
                 );
             ");
 
@@ -85,12 +85,12 @@ namespace PPMTool.Migrations
                 SET AssociatedCompetencyCompetencyId = (
                     SELECT AssociatedCompetencyCompetencyId
                     FROM CompetencyAssessments_Backup
-                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.CompetencyAssessmentId
+                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.AssessmentId
                 )
                 WHERE EXISTS (
                     SELECT 1
                     FROM CompetencyAssessments_Backup
-                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.CompetencyAssessmentId
+                    WHERE CompetencyAssessments.CompetencyAssessmentId = CompetencyAssessments_Backup.AssessmentId
                 );
             ");
 
