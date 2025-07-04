@@ -655,13 +655,11 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            if (assessment.Status != AssessmentStatus.Unmet)
+            // Need to have evidence but only if assessment status is partially met or met
+            if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
-                if (string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
-                {
-                    message = "Evidence is required!";
-                    return false;
-                }
+                message = "Evidence is required!";
+                return false;
             }
             else if (string.IsNullOrWhiteSpace(assessment.CompetencyDescription) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.CompetencyDescription)))
             {
