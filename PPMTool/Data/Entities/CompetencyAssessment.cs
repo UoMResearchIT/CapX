@@ -13,7 +13,6 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// HTML string detailing the evidence supporting the assessment.
         /// </summary>
-        [Required]
         public string Evidence { get; set; }
 
         /// <summary>
