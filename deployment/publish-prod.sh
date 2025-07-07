@@ -8,9 +8,10 @@ sudo systemctl stop kestrel-capx-api.service
 
 # Backup the DB file after flushing the WAL journal
 mkdir -p ~/backup
+mkdir -p ~/CapX_Data_Backup
 sudo cp /var/www/capx/PPMTool.db* ~/backup
 sudo chown mbgm6ah3:users ~/backup/PPMTool.db*
-sudo sqlite3 PPMTool.db VACUUM;
+sudo sqlite3 ~/backup/PPMTool.db VACUUM;
 filename=PPMTool-$(date +"%Y%m%d-%H%M%S").db
 sudo cp -a ~/backup/PPMTool.db ~/CapX_Data_Backup/$filename
 
