@@ -17,16 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
           
+      - name: Set API secret key
+        run: |
+          echo 'API_KEY_SECRET=5d1f13745067375307498b78994ee638' >> .env
+          
       - name: Build images
         env:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_TOKEN }}
         run: |
           docker compose build
 
-      - name: Set API secret key
-        run: |
-          echo 'API_KEY_SECRET=5d1f13745067375307498b78994ee638' >> .env
-          
       - name: Test container can start and is healthy
         run: |
           if ! docker compose -f docker-compose.dev.yml up --wait --wait-timeout 120; then
