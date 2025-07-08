@@ -29,7 +29,7 @@ jobs:
 
       - name: Test container can start and is healthy
         run: |
-          if ! docker compose -f docker-compose.dev.yml up --wait --wait-timeout 120; then
+          if ! docker compose up --wait --wait-timeout 120; then
 
             echo "Logs:"
             docker compose logs
