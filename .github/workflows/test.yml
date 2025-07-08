@@ -25,7 +25,6 @@ jobs:
           EOF
 
       - name: Build images
-        env:
         run: |
           docker compose build
 
