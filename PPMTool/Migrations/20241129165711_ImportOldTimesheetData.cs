@@ -70,7 +70,7 @@ namespace PPMTool.Migrations
                     {
                         for (var i = 3; i < values.Length; i++)
                         {
-                            dates.Add(DateTime.ParseExact(Clean(values[i]), "dd/MM/yyyy", CultureInfo.InvariantCulture));
+                            dates.Add(DateTime.Parse(Clean(values[i])));
                         }
                         continue;
                     }
