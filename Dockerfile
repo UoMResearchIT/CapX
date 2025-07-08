@@ -34,4 +34,3 @@ RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-CMD ["dotnet", "PPMTool.dll"]
