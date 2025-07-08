@@ -19,11 +19,13 @@ jobs:
           
       - name: Set API secret key
         run: |
-          echo 'API_KEY_SECRET=5d1f13745067375307498b78994ee638' >> .env
-          
+          cat >.env <<EOF
+          GITHUB_TOKEN=${{ secrets.ACTIONS_REPO_TOKEN }}
+          API_KEY_SECRET=5d1f13745067375307498b78994ee638
+          EOF
+
       - name: Build images
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_TOKEN }}
         run: |
           docker compose build
 
