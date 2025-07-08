@@ -70,9 +70,11 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<Person> GetAllShallow(PPMToolContext context)
+        public async Task<IEnumerable<Person>> GetAllShallowAsync(PPMToolContext context)
         {
-            return context.People;
+            return await context.People
+                .OrderBy(x => x.Name)
+                .ToListAsync();
         }
 
         /// <summary>

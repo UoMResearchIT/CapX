@@ -498,16 +498,16 @@ namespace PPMTool.Pages
             }
         }
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
             Loading = true;
 
             // Get all projects not finished or cancelled
             cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
 
             // Cache all the people
-            cachedPeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
+            cachedPeople = await PersonService.GetAllShallowAsync(Context);
 
             // Load dropdown sources
             ReloadDropDownSources();

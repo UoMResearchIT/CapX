@@ -404,7 +404,7 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
 
             // Get starting lists from the DB
-            availablePeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
+            availablePeople = await PersonService.GetAllShallowAsync(Context);
             if (!showAllStaff)
             {
                 availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
@@ -429,7 +429,9 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
 
-            GetAvailablePeopleAsync();
+            await GetAvailablePeopleAsync();
+
+            // TODO: Refactor this method as these should use competency service calls to structure the data and make use of ToListAsync for better performance
 
             competencies = CompetencyService.GetAllActive(Context);
 

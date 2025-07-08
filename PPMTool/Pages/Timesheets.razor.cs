@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Blazored.SessionStorage;
+﻿using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -136,9 +132,10 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private Task GenerateTask()
         {
-            return Task.Run(() =>
+            // TODO: Do away with this and just use the async/await on the main thread
+            return Task.Run(async () =>
             {
-                LoadData();
+                await LoadDataAsync();
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>
@@ -157,7 +154,7 @@ namespace PPMTool.Pages
         /// Load in the timesheet data from the service
         /// </summary>
         /// <param name="showAll"></param>
-        private void LoadData()
+        private async Task LoadDataAsync()
         {
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
             myTimesheets = new List<Timesheet>(); // Initialise the list
@@ -179,7 +176,7 @@ namespace PPMTool.Pages
             if ((ActiveUserRoleType == RoleType.Superuser) && SuperuserShowSynopsisForAllStaff)
             {
                 // Get all staff if switch is selected
-                managedPeople = PersonService.GetAllShallow(Context);
+                managedPeople = await PersonService.GetAllShallowAsync(Context);
             }
 
             if (managedPeople.Count() > 0)  // Is a manager
