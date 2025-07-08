@@ -49,11 +49,11 @@ jobs:
 
       - name: Get homepage
         run: |
-          curl -L -o index.html http://localhost:3000
+          curl --fail --silent --show-error -L -o index.html http://localhost:3000
 
       - name: Test homepage
         run: |
-          grep 'todo: some text to find' index.html
+          grep '<!DOCTYPE html>' index.html
       
       # - uses: actions/upload-artifact@v3
       #   with:
