@@ -49,7 +49,7 @@ builder.Host.UseSerilog();
 #endif
 
 // Use a different connection string in production
-string? connectionString = Environment.GetEnvironmentVariable("DOCKER_CONNECTION_STRING");
+string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 if (string.IsNullOrEmpty(connectionString))
 {
     // Use the default connection string based on the environment

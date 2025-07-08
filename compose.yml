@@ -27,7 +27,7 @@ services:
       - state:/app/state
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - DOCKER_CONNECTION_STRING="Data Source=PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;"
+      - DB_CONNECTION_STRING="Data Source=PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;"
     ports:
       - ${CAPX_API_PORT:-8080}:8080
     command: ["dotnet", "PPMTool.API.dll"]
