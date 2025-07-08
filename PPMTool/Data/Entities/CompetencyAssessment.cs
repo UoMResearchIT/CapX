@@ -51,9 +51,10 @@ namespace PPMTool.Data.Entities
         public int CompetencyId { get; set; }
 
         /// <summary>
-        /// A reference to the person who is authoring this assessment
+        /// ID of the person who is authoring this assessment
         /// </summary>
-        public Person Person { get; set; }
+        [Required]
+        public int PersonId { get; set; }
 
         /// <summary>
         /// A sensible object name for logging purposes
@@ -61,7 +62,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public string GetSensibleObjectName()
         {
-            return $"{Person?.Name} | {Evidence} | Competency Id {CompetencyId} | Rev {CompetencyRevision}";
+            return $"Person Id: {PersonId} | Evidence: {Evidence} | Competency Id: {CompetencyId} | Rev: {CompetencyRevision}";
         }
     }
 }

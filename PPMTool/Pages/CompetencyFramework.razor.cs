@@ -184,7 +184,7 @@ namespace PPMTool.Pages
                         // Get one "fully met" assessment per competency for the given person and count them
                         CompetencyMetValues[group.Key] = group
                             .SelectMany(x => x.Assessments)
-                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
+                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.PersonId == selectedPerson.PersonId)
                             .DistinctBy(x => x.CompetencyId)
                             .Count();
                         Met += CompetencyMetValues[group.Key];
@@ -297,7 +297,7 @@ namespace PPMTool.Pages
                         foreach (var competency in category.Where(x => x.IsActive))
                         {
                             var latestAssessment = competency.Assessments
-                                .Where(x => x.Person.PersonId == SelectedPerson.PersonId)
+                                .Where(x => x.PersonId == SelectedPerson.PersonId)
                                 .OrderByDescending(x => x.DateCreated)
                                 .FirstOrDefault();
                             assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
@@ -465,7 +465,7 @@ namespace PPMTool.Pages
                     // Get assessments grouped by competency ID
                     var latestAssessments = competencies
                             .SelectMany(x => x.Assessments)
-                            .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                            .Where(x => x.PersonId == selectedPerson.PersonId)
                             .OrderByDescending(x => x.DateCreated)
                             .GroupBy(x => x.CompetencyId);
 
@@ -497,7 +497,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -513,7 +513,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -529,7 +529,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -622,7 +622,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
+            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.UpdateAssessment(Context, assessment);

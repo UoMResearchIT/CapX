@@ -41,8 +41,7 @@ namespace PPMTool.Services
         public override IEnumerable<Competency> GetAll(PPMToolContext context)
         {
             return context.Competencies
-                .Include(x => x.Assessments)
-                .ThenInclude(x => x.Person);
+                .Include(x => x.Assessments);
         }
 
         /// <summary>
