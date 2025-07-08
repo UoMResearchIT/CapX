@@ -268,137 +268,120 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to export an Excel file with the information in it from the currently displayed journey
         /// </summary>
-        private void ExportData()
+        private async Task ExportDataAsync()
         {
             LogInformation($"Exporting development journey for {SelectedPerson?.Name}...");
-
             exportRunning = true;
+            StateHasChanged();
 
-            Task.Run(async () =>
+            // Create blank list of data
+            var assessments = new List<CompetencyAssessmentExportLine>();
+
+            // Get the assessment info
+            if (SelectedPerson == null)
             {
-                // Create a context to be accesed on this thread
-                var threadContext = ContextFactory.CreateDbContext();
+                LogWarning("Tried to export data without selecting a person!");
+                return;
+            }
 
-                // Create blank list of data
-                var assessments = new List<CompetencyAssessmentExportLine>();
-
-                // Get the assessment info
-                if (SelectedPerson == null)
+            // Go through the groups and extract the info
+            foreach (var group in competencyGroups)
+            {
+                foreach (var category in group.CompetenciesGroupedByCategory)
                 {
-                    LogWarning("Tried to export data without selecting a person!");
-                    return;
-                }
-
-                // Go through the groups and extract the info
-                foreach (var group in competencyGroups)
-                {
-                    foreach (var category in group.CompetenciesGroupedByCategory)
+                    foreach (var competency in category.Where(x => x.IsActive))
                     {
-                        foreach (var competency in category.Where(x => x.IsActive))
-                        {
-                            var latestAssessment = competency.Assessments
-                                .Where(x => x.PersonId == SelectedPerson.PersonId)
-                                .OrderByDescending(x => x.DateCreated)
-                                .FirstOrDefault();
-                            assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
-                        }
+                        var latestAssessment = competency.Assessments
+                            .Where(x => x.PersonId == SelectedPerson.PersonId)
+                            .OrderByDescending(x => x.DateCreated)
+                            .FirstOrDefault();
+                        assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
                     }
                 }
+            }
+            try
+            {
+                // Create file path
+                var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
+                var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                Directory.CreateDirectory(folder);
+                var path = Path.Combine(folder, filename);
 
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
+                // Create workbook and worksheet
+                using (var workbook = new XLWorkbook())
                 {
-                    try
+                    var worksheet = workbook.Worksheets.Add("Data");
+
+                    // Write header row
+                    var props = typeof(CompetencyAssessmentExportLine).GetProperties();
+                    var propNames = props.Select(x => x.Name).ToList();
+                    for (int i = 0; i < propNames.Count; i++)
                     {
-                        // Create file path
-                        var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
+                        var cell = worksheet.Cell(1, i + 1);
+                        cell.Value = propNames[i];
+                        cell.Style.Font.Bold = true;
+                    }
 
-                        // Create workbook and worksheet
-                        using (var workbook = new XLWorkbook())
+                    // Write data rows
+                    for (int row = 0; row < assessments.Count; row++)
+                    {
+                        var record = assessments[row];
+                        for (int col = 0; col < propNames.Count; col++)
                         {
-                            var worksheet = workbook.Worksheets.Add("Data");
+                            var property = record.GetType().GetProperty(propNames[col]);
+                            var rawValue = property?.GetValue(record);
+                            var cell = worksheet.Cell(row + 2, col + 1);
 
-                            // Write header row
-                            var props = typeof(CompetencyAssessmentExportLine).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
-                            for (int i = 0; i < propNames.Count; i++)
+                            // Format and assign
+                            if (propNames[col] == "LatestAssessmentDate")
                             {
-                                var cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
-                                cell.Style.Font.Bold = true;
-                            }
-
-                            // Write data rows
-                            for (int row = 0; row < assessments.Count; row++)
-                            {
-                                var record = assessments[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                if (rawValue is DateTime dt)
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
-                                    var rawValue = property?.GetValue(record);
-                                    var cell = worksheet.Cell(row + 2, col + 1);
-
-                                    // Format and assign
-                                    if (propNames[col] == "LatestAssessmentDate")
-                                    {
-                                        if (rawValue is DateTime dt)
-                                        {
-                                            cell.Value = dt;
-                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (rawValue is int)
-                                        {
-                                            cell.Value = (int)rawValue;
-                                        }
-                                        else if (rawValue is double)
-                                        {
-                                            cell.Value = (double)rawValue;
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
-                                    }
+                                    cell.Value = dt;
+                                    cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                }
+                                else
+                                {
+                                    cell.Value = rawValue?.ToString() ?? string.Empty;
                                 }
                             }
-
-                            // Save the workbook
-                            workbook.SaveAs(path);
+                            else
+                            {
+                                if (rawValue is int)
+                                {
+                                    cell.Value = (int)rawValue;
+                                }
+                                else if (rawValue is double)
+                                {
+                                    cell.Value = (double)rawValue;
+                                }
+                                else
+                                {
+                                    cell.Value = rawValue?.ToString() ?? string.Empty;
+                                }
+                            }
                         }
-
-                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
-
-                        // Get file stream
-                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
-
-                        // Invoke JS on the client to download the file
-                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
                     }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
 
-            }).ContinueWith(t =>
+                    // Save the workbook
+                    workbook.SaveAs(path);
+                }
+
+                Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+
+                // Get file stream
+                using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                // Invoke JS on the client to download the file
+                await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
+            catch (Exception ex)
             {
-                InvokeAsync(() =>
-                {
-                    LogInformation($"Export task finished {t.Status}");
-                    exportRunning = false;
-                    StateHasChanged();
-                });
-            });
+                LogError($"Could not download file: {ex}");
+            }
+
+            exportRunning = false;
+            StateHasChanged();
         }
 
         /// <summary>
@@ -416,137 +399,119 @@ namespace PPMTool.Pages
         /// Method to create a background task for loading the available people dropdown
         /// </summary>
         /// <returns></returns>
-        private Task GetAvailablePeople()
+        private async Task GetAvailablePeopleAsync()
         {
-            return Task.Run(() =>
+            Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
+
+            // Get starting lists from the DB
+            availablePeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
+            if (!showAllStaff)
             {
-                Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
-
-                var context = ContextFactory.CreateDbContext();
-
-                // Get starting lists from the DB
-                availablePeople = PersonService.GetAllShallow(context).OrderBy(x => x.Name);
-                if (!showAllStaff)
-                {
-                    availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
-                }
-                if (!userIsSuperuser)
-                {
-                    // Self plus direct reports
-                    availablePeople = availablePeople
-                        .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
-                        .OrderBy(x => x.Name);
-                }
-            });
+                availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
+            }
+            if (!userIsSuperuser)
+            {
+                // Self plus direct reports
+                availablePeople = availablePeople
+                    .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
+                    .OrderBy(x => x.Name);
+            }
         }
-
 
         /// <summary>
         /// Generates a background task for loading the competency data
         /// </summary>
         /// <returns></returns>
-        private Task GetTask()
+        private async Task LoadDataAsync()
         {
             Loading = true;
             StateHasChanged();
 
-            return Task.Run(async () =>
+            Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
+
+            GetAvailablePeopleAsync();
+
+            competencies = CompetencyService.GetAllActive(Context);
+
+            // Filter the competencies by those with only unmet or no assessments
+            if (showUnMetOnly)
             {
-                Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
+                // Get assessments grouped by competency ID
+                var latestAssessments = competencies
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .OrderByDescending(x => x.DateCreated)
+                        .GroupBy(x => x.CompetencyId);
 
-                await GetAvailablePeople();
-
-                var context = ContextFactory.CreateDbContext();
-                competencies = CompetencyService.GetAllActive(context);
-
-                // Filter the competencies by those with only unmet or no assessments
-                if (showUnMetOnly)
+                // Get a list of competency IDs for those where the latest assessment is fully met
+                var exceptionList = new List<int>();
+                foreach (var group in latestAssessments)
                 {
-                    // Get assessments grouped by competency ID
-                    var latestAssessments = competencies
-                            .SelectMany(x => x.Assessments)
-                            .Where(x => x.PersonId == selectedPerson.PersonId)
-                            .OrderByDescending(x => x.DateCreated)
-                            .GroupBy(x => x.CompetencyId);
-
-                    // Get a list of competency IDs for those where the latest assessment is fully met
-                    var exceptionList = new List<int>();
-                    foreach (var group in latestAssessments)
+                    var assessment = group.First();
+                    if (assessment.Status == AssessmentStatus.FullyMet)
                     {
-                        var assessment = group.First();
-                        if (assessment.Status == AssessmentStatus.FullyMet)
-                        {
-                            exceptionList.Add(group.Key);
-                        }
+                        exceptionList.Add(group.Key);
                     }
-
-                    // Remove from the competencies all those within the exception list
-                    competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
                 }
 
-                // Setup the accordion data
-                var groups = new List<CompetencyGroup>();
-                var newGroup = new CompetencyGroup(
-                    5,
-                    "Foundation Level (Grade 5)",
-                    "counter_1",
-                    competencies
-                        .Where(x => x.Grade == 5)
-                        .GroupBy(x => x.Category)
-                        .OrderBy(x => x.Key),
-                    competencies
-                        .Where(x => x.Grade == 5)
-                        .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
-                );
-                newGroup.OnAccordionToggled += OnAccordionToggled;
-                groups.Add(newGroup);
+                // Remove from the competencies all those within the exception list
+                competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
+            }
 
-                newGroup = new CompetencyGroup(
-                    6,
-                    "Advanced Level (Grade 6)",
-                    "counter_2",
-                    competencies
-                        .Where(x => x.Grade == 6)
-                        .GroupBy(x => x.Category)
-                        .OrderBy(x => x.Key),
-                    competencies
-                        .Where(x => x.Grade == 6)
-                        .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
-                );
-                newGroup.OnAccordionToggled += OnAccordionToggled;
-                groups.Add(newGroup);
+            // Setup the accordion data
+            var groups = new List<CompetencyGroup>();
+            var newGroup = new CompetencyGroup(
+                5,
+                "Foundation Level (Grade 5)",
+                "counter_1",
+                competencies
+                    .Where(x => x.Grade == 5)
+                    .GroupBy(x => x.Category)
+                    .OrderBy(x => x.Key),
+                competencies
+                    .Where(x => x.Grade == 5)
+                    .SelectMany(x => x.Assessments)
+                    .Where(x => x.PersonId == selectedPerson.PersonId)
+            );
+            newGroup.OnAccordionToggled += OnAccordionToggled;
+            groups.Add(newGroup);
 
-                newGroup = new CompetencyGroup(
-                    7,
-                    "Leadership Level (Grade 7)",
-                    "counter_3",
-                    competencies
-                        .Where(x => x.Grade == 7)
-                        .GroupBy(x => x.Category)
-                        .OrderBy(x => x.Key),
-                    competencies
-                        .Where(x => x.Grade == 7)
-                        .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
-                );
-                newGroup.OnAccordionToggled += OnAccordionToggled;
-                groups.Add(newGroup);
+            newGroup = new CompetencyGroup(
+                6,
+                "Advanced Level (Grade 6)",
+                "counter_2",
+                competencies
+                    .Where(x => x.Grade == 6)
+                    .GroupBy(x => x.Category)
+                    .OrderBy(x => x.Key),
+                competencies
+                    .Where(x => x.Grade == 6)
+                    .SelectMany(x => x.Assessments)
+                    .Where(x => x.PersonId == selectedPerson.PersonId)
+            );
+            newGroup.OnAccordionToggled += OnAccordionToggled;
+            groups.Add(newGroup);
 
-                competencyGroups = groups;
-                UpdateMet();
+            newGroup = new CompetencyGroup(
+                7,
+                "Leadership Level (Grade 7)",
+                "counter_3",
+                competencies
+                    .Where(x => x.Grade == 7)
+                    .GroupBy(x => x.Category)
+                    .OrderBy(x => x.Key),
+                competencies
+                    .Where(x => x.Grade == 7)
+                    .SelectMany(x => x.Assessments)
+                    .Where(x => x.PersonId == selectedPerson.PersonId)
+            );
+            newGroup.OnAccordionToggled += OnAccordionToggled;
+            groups.Add(newGroup);
 
-            }).ContinueWith(t =>
-            {
-                Debug.WriteLine($"** ...Competency load task complete: {t.Status}");
-
-                InvokeAsync(() =>
-                {
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
+            competencyGroups = groups;
+            UpdateMet();
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>
@@ -563,9 +528,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Run when the component is first created
         /// </summary>
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             // Check user permissions
             userIsSuperuser = ActiveUser?.RoleType == RoleType.Superuser;
@@ -575,7 +540,7 @@ namespace PPMTool.Pages
             SelectedPerson = ActiveUser?.Person;
 
             // Kick off a DB task to get the data
-            EnqueueLoadData(GetTask);
+            await LoadDataAsync();
 
             LogInformation("Viewing competencies framework");
         }
@@ -678,9 +643,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Callback for when a person is selected from the dropdown
         /// </summary>
-        private void PersonSelected()
+        private async Task PersonSelectedAsync()
         {
-            EnqueueLoadData(GetTask);
+            await LoadDataAsync();
         }
 
         /// <summary>
