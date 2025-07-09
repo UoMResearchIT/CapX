@@ -1,0 +1,64 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          
+      - name: Build images
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_TOKEN }}
+        run: |
+          docker compose build
+          
+      - name: Test container can start and is healthy
+        run: |
+          if ! docker compose up --wait --wait-timeout 120; then
+
+            echo "Logs:"
+            docker compose logs
+
+            # echo "Health checks:"
+            # for container_name in $(docker compose ps --format '{{ .Name }}'); do
+            #   echo
+            #   echo "$container_name"
+            #   docker inspect --format='{{json .State.Health}}' "${container_name}" | jq
+            # done
+            exit 1
+          fi
+          
+      - name: Get logs
+        run: |
+          docker compose logs
+
+      - name: Get homepage
+        run: |
+          curl -L -o index.html http://localhost:3000
+
+      - name: Test homepage
+        run: |
+          grep 'todo: some text to find' index.html
+      
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: homepage
+      #     path: ${{ github.workspace }}/index.html
+
+      - name: Shut down site
+        run: |
+          echo "Shutting down:"
+          docker compose down
