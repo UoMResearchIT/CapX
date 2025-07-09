@@ -49,25 +49,20 @@ builder.Host.UseSerilog();
 #endif
 
 // Use a different connection string in production
-string? connectionString = null;
-bool useDockerConnectionString = Environment.GetEnvironmentVariable("USE_DOCKER_CONNECTION_STRING") == "true";
-
-if (useDockerConnectionString)
-{
-    // Use the Docker connection string if specified
-    connectionString = configuration.GetConnectionString("PPMToolContextConnectionDocker");
-}
-else
+string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+if (string.IsNullOrEmpty(connectionString))
 {
     // Use the default connection string based on the environment
     connectionString = configuration.GetConnectionString(
-#if RELEASE
-        "PPMToolContextConnectionProduction"
-#else
-        "PPMToolContextConnection"
-#endif
-    );
+    #if RELEASE
+            "PPMToolContextConnectionProduction"
+    #else
+            "PPMToolContextConnection"
+    #endif
+        );
 }
+
+
 
 if (string.IsNullOrEmpty(connectionString))
 {

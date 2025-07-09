@@ -37,6 +37,8 @@ docker compose up --build
 ```
 You can then access the app via a web browser at `http://localhost:3000`. You can change the port by setting the environment variable CAPX_PORT, either in a .env file or in the environment.
 
+You will need to set an environment variable called `API_KEY_SECRET`, either in a .env file or directly in your environment. It must be at least 16 characters long. For security, it is recommended to use the output of `openssl rand -hex 16` to generate a strong key.
+
 Use Ctrl-C to bring the container down. The database state will be maintained in a docker volume. To wipe the volume and start from the initial state, use
 ```bash
 docker volume rm capx_state
