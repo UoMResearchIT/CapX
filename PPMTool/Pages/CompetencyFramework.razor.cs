@@ -429,91 +429,100 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
 
+            // Populate the drop down
             await GetAvailablePeopleAsync();
 
-            // TODO: Refactor this method as these should use competency service calls to structure the data and make use of ToListAsync for better performance
+            // Get all active competencies from DB
+            competencies = await CompetencyService.GetAllActiveAsync(Context);
 
-            competencies = CompetencyService.GetAllActive(Context);
-
-            // Filter the competencies by those with only unmet or no assessments
-            if (showUnMetOnly)
+            // Run a background task to do the processing
+            await Task.Run(() =>
             {
-                // Get assessments grouped by competency ID
-                var latestAssessments = competencies
-                        .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
-                        .OrderByDescending(x => x.DateCreated)
-                        .GroupBy(x => x.CompetencyId);
-
-                // Get a list of competency IDs for those where the latest assessment is fully met
-                var exceptionList = new List<int>();
-                foreach (var group in latestAssessments)
+                // Filter the competencies by those with only unmet or no assessments
+                if (showUnMetOnly)
                 {
-                    var assessment = group.First();
-                    if (assessment.Status == AssessmentStatus.FullyMet)
+                    // Get assessments grouped by competency ID
+                    var latestAssessments = competencies
+                            .SelectMany(x => x.Assessments)
+                            .Where(x => x.PersonId == selectedPerson.PersonId)
+                            .OrderByDescending(x => x.DateCreated)
+                            .GroupBy(x => x.CompetencyId);
+
+                    // Get a list of competency IDs for those where the latest assessment is fully met
+                    var exceptionList = new List<int>();
+                    foreach (var group in latestAssessments)
                     {
-                        exceptionList.Add(group.Key);
+                        var assessment = group.First();
+                        if (assessment.Status == AssessmentStatus.FullyMet)
+                        {
+                            exceptionList.Add(group.Key);
+                        }
                     }
+
+                    // Remove from the competencies all those within the exception list
+                    competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
                 }
 
-                // Remove from the competencies all those within the exception list
-                competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
-            }
+                // Setup the accordion data
+                var groups = new List<CompetencyGroup>();
+                var newGroup = new CompetencyGroup(
+                    5,
+                    "Foundation Level (Grade 5)",
+                    "counter_1",
+                    competencies
+                        .Where(x => x.Grade == 5)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 5)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                );
+                newGroup.OnAccordionToggled += OnAccordionToggled;
+                groups.Add(newGroup);
 
-            // Setup the accordion data
-            var groups = new List<CompetencyGroup>();
-            var newGroup = new CompetencyGroup(
-                5,
-                "Foundation Level (Grade 5)",
-                "counter_1",
-                competencies
-                    .Where(x => x.Grade == 5)
-                    .GroupBy(x => x.Category)
-                    .OrderBy(x => x.Key),
-                competencies
-                    .Where(x => x.Grade == 5)
-                    .SelectMany(x => x.Assessments)
-                    .Where(x => x.PersonId == selectedPerson.PersonId)
-            );
-            newGroup.OnAccordionToggled += OnAccordionToggled;
-            groups.Add(newGroup);
+                newGroup = new CompetencyGroup(
+                    6,
+                    "Advanced Level (Grade 6)",
+                    "counter_2",
+                    competencies
+                        .Where(x => x.Grade == 6)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 6)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                );
+                newGroup.OnAccordionToggled += OnAccordionToggled;
+                groups.Add(newGroup);
 
-            newGroup = new CompetencyGroup(
-                6,
-                "Advanced Level (Grade 6)",
-                "counter_2",
-                competencies
-                    .Where(x => x.Grade == 6)
-                    .GroupBy(x => x.Category)
-                    .OrderBy(x => x.Key),
-                competencies
-                    .Where(x => x.Grade == 6)
-                    .SelectMany(x => x.Assessments)
-                    .Where(x => x.PersonId == selectedPerson.PersonId)
-            );
-            newGroup.OnAccordionToggled += OnAccordionToggled;
-            groups.Add(newGroup);
+                newGroup = new CompetencyGroup(
+                    7,
+                    "Leadership Level (Grade 7)",
+                    "counter_3",
+                    competencies
+                        .Where(x => x.Grade == 7)
+                        .GroupBy(x => x.Category)
+                        .OrderBy(x => x.Key),
+                    competencies
+                        .Where(x => x.Grade == 7)
+                        .SelectMany(x => x.Assessments)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                );
+                newGroup.OnAccordionToggled += OnAccordionToggled;
+                groups.Add(newGroup);
 
-            newGroup = new CompetencyGroup(
-                7,
-                "Leadership Level (Grade 7)",
-                "counter_3",
-                competencies
-                    .Where(x => x.Grade == 7)
-                    .GroupBy(x => x.Category)
-                    .OrderBy(x => x.Key),
-                competencies
-                    .Where(x => x.Grade == 7)
-                    .SelectMany(x => x.Assessments)
-                    .Where(x => x.PersonId == selectedPerson.PersonId)
-            );
-            newGroup.OnAccordionToggled += OnAccordionToggled;
-            groups.Add(newGroup);
-
-            competencyGroups = groups;
-            UpdateMet();
-            Loading = false;
-            StateHasChanged();
+                competencyGroups = groups;
+                UpdateMet();
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    Loading = false;
+                    StateHasChanged();
+                });
+            });
         }
 
         /// <summary>

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -25,10 +22,10 @@ namespace PPMTool.Pages
         private int? originalGrade = null;
         private IEnumerable<Competency> competencies;
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
-            competencies = CompetencyService.GetAll(Context);
+            await base.OnInitializedAsync();
+            competencies = await CompetencyService.GetAllAsync(Context);
 
             if (CompetencyId > 0)
             {
