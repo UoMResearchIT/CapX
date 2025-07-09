@@ -49,25 +49,13 @@ builder.Host.UseSerilog();
 #endif
 
 // Use a different connection string in production
-string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-if (string.IsNullOrEmpty(connectionString))
-{
-    // Use the default connection string based on the environment
-    connectionString = configuration.GetConnectionString(
-    #if RELEASE
-            "PPMToolContextConnectionProduction"
-    #else
-            "PPMToolContextConnection"
-    #endif
-        );
-}
-
-
-
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("Invalid connection string!");
-}
+var connectionString = configuration.GetConnectionString(
+#if RELEASE
+    "PPMToolContextConnectionProduction"
+#else
+    "PPMToolContextConnection"
+#endif
+) ?? throw new Exception("Invalid connection string!");
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
     options.UseSqlite(connectionString)

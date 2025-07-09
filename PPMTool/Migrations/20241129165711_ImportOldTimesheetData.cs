@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using FluentDateTime;
@@ -70,7 +69,7 @@ namespace PPMTool.Migrations
                     {
                         for (var i = 3; i < values.Length; i++)
                         {
-                            dates.Add(DateTime.ParseExact(Clean(values[i]), "dd/MM/yyyy", CultureInfo.InvariantCulture));
+                            dates.Add(DateTime.Parse(Clean(values[i])));
                         }
                         continue;
                     }
