@@ -37,10 +37,10 @@
                 <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add some evidence here to support your assessment" />
             </RadzenStack>
         }
-        @if (Competency?.Assessments != null && Competency.Assessments.Where(x => x.Person.PersonId == SelectedPerson.PersonId).Count() > 0)
+        @if (Competency?.Assessments != null && Competency.Assessments.Where(x => x.PersonId == SelectedPerson.PersonId).Count() > 0)
         {
             <RadzenText Text="Assessments" TextStyle="TextStyle.Subtitle1" />
-            foreach (var assessment in Competency.Assessments.Where(x => x.Person.PersonId == SelectedPerson.PersonId).OrderBy(x => DateTime.Parse(x.DateCreated)))
+            foreach (var assessment in Competency.Assessments.Where(x => x.PersonId == SelectedPerson.PersonId).OrderBy(x => DateTime.Parse(x.DateCreated)))
             {
                 <RadzenStack class="radzen-group radzen-shaded" Style="@(assessment.Status.GetBackgroundCss())" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem">
@@ -97,11 +97,11 @@
     {
         assessmentToEdit = new CompetencyAssessment
         {
-            AssociatedCompetency = Competency,
+            CompetencyId = Competency.CompetencyId,
             CompetencyDescription = Competency.Description,
             CompetencyObjective = Competency.Objective,
             CompetencyRevision = Competency.Revision,
-            Person = SelectedPerson
+            PersonId = SelectedPerson.PersonId
         };
     }
 

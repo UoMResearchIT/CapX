@@ -89,7 +89,7 @@
     {
         // Get the latest status of each distinct competency with assessments
         latestAssessmentsByCompetencyId = new List<CompetencyAssessment>();
-        var temp = AssessmentsForGradeAndPerson.GroupBy(x => x.AssociatedCompetency.CompetencyId);
+        var temp = AssessmentsForGradeAndPerson.GroupBy(x => x.CompetencyId);
         foreach (var group in temp)
         {
             var latest = group.OrderBy(x => x.DateCreated).Last();

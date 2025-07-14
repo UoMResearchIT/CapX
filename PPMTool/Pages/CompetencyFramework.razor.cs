@@ -184,8 +184,8 @@ namespace PPMTool.Pages
                         // Get one "fully met" assessment per competency for the given person and count them
                         CompetencyMetValues[group.Key] = group
                             .SelectMany(x => x.Assessments)
-                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
-                            .DistinctBy(x => x.AssociatedCompetency.CompetencyId)
+                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.PersonId == selectedPerson.PersonId)
+                            .DistinctBy(x => x.CompetencyId)
                             .Count();
                         Met += CompetencyMetValues[group.Key];
                     }
@@ -268,17 +268,14 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to export an Excel file with the information in it from the currently displayed journey
         /// </summary>
-        private void ExportData()
+        private async Task ExportDataAsync()
         {
             LogInformation($"Exporting development journey for {SelectedPerson?.Name}...");
 
             exportRunning = true;
 
-            Task.Run(async () =>
+            await Task.Run(async () =>
             {
-                // Create a context to be accesed on this thread
-                var threadContext = ContextFactory.CreateDbContext();
-
                 // Create blank list of data
                 var assessments = new List<CompetencyAssessmentExportLine>();
 
@@ -297,7 +294,7 @@ namespace PPMTool.Pages
                         foreach (var competency in category.Where(x => x.IsActive))
                         {
                             var latestAssessment = competency.Assessments
-                                .Where(x => x.Person.PersonId == SelectedPerson.PersonId)
+                                .Where(x => x.PersonId == SelectedPerson.PersonId)
                                 .OrderByDescending(x => x.DateCreated)
                                 .FirstOrDefault();
                             assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
@@ -416,61 +413,54 @@ namespace PPMTool.Pages
         /// Method to create a background task for loading the available people dropdown
         /// </summary>
         /// <returns></returns>
-        private Task GetAvailablePeople()
+        private async Task GetAvailablePeopleAsync()
         {
-            return Task.Run(() =>
+            Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
+
+            // Get starting lists from the DB
+            availablePeople = await PersonService.GetAllShallowAsync(Context);
+            if (!showAllStaff)
             {
-                Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
-
-                var context = ContextFactory.CreateDbContext();
-
-                // Get starting lists from the DB
-                availablePeople = PersonService.GetAllShallow(context).OrderBy(x => x.Name);
-                if (!showAllStaff)
-                {
-                    availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
-                }
-                if (!userIsSuperuser)
-                {
-                    // Self plus direct reports
-                    availablePeople = availablePeople
-                        .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
-                        .OrderBy(x => x.Name);
-                }
-            });
+                availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
+            }
+            if (!userIsSuperuser)
+            {
+                // Self plus direct reports
+                availablePeople = availablePeople
+                    .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
+                    .OrderBy(x => x.Name);
+            }
         }
-
 
         /// <summary>
         /// Generates a background task for loading the competency data
         /// </summary>
         /// <returns></returns>
-        private Task GetTask()
+        private async Task LoadDataAsync()
         {
-            InvokeAsync(() =>
+            Loading = true;
+            StateHasChanged();
+
+            Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
+
+            // Populate the drop down
+            await GetAvailablePeopleAsync();
+
+            // Get all active competencies from DB
+            competencies = await CompetencyService.GetAllActiveAsync(Context);
+
+            // Run a background task to do the processing
+            await Task.Run(() =>
             {
-                Loading = true;
-                StateHasChanged();
-            });
-
-            return Task.Run(async () =>
-            {
-                Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
-
-                await GetAvailablePeople();
-
-                var context = ContextFactory.CreateDbContext();
-                competencies = CompetencyService.GetAllActive(context);
-
                 // Filter the competencies by those with only unmet or no assessments
                 if (showUnMetOnly)
                 {
                     // Get assessments grouped by competency ID
                     var latestAssessments = competencies
                             .SelectMany(x => x.Assessments)
-                            .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                            .Where(x => x.PersonId == selectedPerson.PersonId)
                             .OrderByDescending(x => x.DateCreated)
-                            .GroupBy(x => x.AssociatedCompetency.CompetencyId);
+                            .GroupBy(x => x.CompetencyId);
 
                     // Get a list of competency IDs for those where the latest assessment is fully met
                     var exceptionList = new List<int>();
@@ -500,7 +490,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -516,7 +506,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -532,18 +522,15 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
 
                 competencyGroups = groups;
                 UpdateMet();
-
             }).ContinueWith(t =>
             {
-                Debug.WriteLine($"** ...Competency load task complete: {t.Status}");
-
                 InvokeAsync(() =>
                 {
                     Loading = false;
@@ -563,9 +550,12 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-        protected override void OnInitialized()
+        /// <summary>
+        /// Run when the component is first created
+        /// </summary>
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             // Check user permissions
             userIsSuperuser = ActiveUser?.RoleType == RoleType.Superuser;
@@ -575,7 +565,7 @@ namespace PPMTool.Pages
             SelectedPerson = ActiveUser?.Person;
 
             // Kick off a DB task to get the data
-            EnqueueLoadData(GetTask);
+            await LoadDataAsync();
 
             LogInformation("Viewing competencies framework");
         }
@@ -603,7 +593,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void AddAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
+            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.AddAssessment(Context, assessment);
@@ -622,7 +612,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
+            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.UpdateAssessment(Context, assessment);
@@ -655,7 +645,8 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            if (string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
+            // Need to have evidence but only if assessment status is partially met or met
+            if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
                 message = "Evidence is required!";
                 return false;
@@ -677,9 +668,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Callback for when a person is selected from the dropdown
         /// </summary>
-        private void PersonSelected()
+        private async Task PersonSelectedAsync()
         {
-            EnqueueLoadData(GetTask);
+            await LoadDataAsync();
         }
 
         /// <summary>

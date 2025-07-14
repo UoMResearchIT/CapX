@@ -6,6 +6,7 @@ namespace PPMTool.Services
 {
     public class CompetencyService : BaseEntityService<Competency>
     {
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -38,11 +39,23 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
+        [Obsolete("This method has been replaced with its async alterantive and that should be used instead.")]
         public override IEnumerable<Competency> GetAll(PPMToolContext context)
         {
             return context.Competencies
+                .Include(x => x.Assessments);
+        }
+
+        /// <summary>
+        /// Return all the competencies in the DB
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<Competency>> GetAllAsync(PPMToolContext context)
+        {
+            return await context.Competencies
                 .Include(x => x.Assessments)
-                .ThenInclude(x => x.Person);
+                .ToListAsync();
         }
 
         /// <summary>
@@ -50,12 +63,14 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<Competency> GetAllActive(PPMToolContext context)
+        public async Task<IEnumerable<Competency>> GetAllActiveAsync(PPMToolContext context)
         {
-            return GetAll(context)
+            var allCompetencies = await GetAllAsync(context);
+            return allCompetencies
                 .Where(x => x.IsActive);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -76,7 +91,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="competencyId"></param>
         /// <returns></returns>
-        internal Competency GetById(PPMToolContext context, int competencyId)
+        public Competency GetById(PPMToolContext context, int competencyId)
         {
             return context.Competencies.FirstOrDefault(x => x.CompetencyId == competencyId);
         }
