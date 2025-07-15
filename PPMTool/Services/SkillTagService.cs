@@ -269,5 +269,15 @@ namespace PPMTool.Services
             }
             return results;
         }
+
+        /// <summary>
+        /// Get the tags that have a pending status
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal async Task<List<SkillTag>> GetAllPendingAsync(PPMToolContext context)
+        {
+            return await context.SkillTags.Where(x => x.HasValidWikiLink == Enums.LinkCheckState.Pending).ToListAsync();
+        }
     }
 }
