@@ -90,7 +90,7 @@
                                                  Items="burnUpChartSource"
                                                  SeriesType="@SeriesType.Line"
                                                  Stroke="@(new SeriesStroke { DashSpace = 5, Width = 4, Color = ChartItem.GetColourString(0) })"
-                                                 Name="Demand"
+                                                 Name="Demand (Dashed)"
                                                  XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                                  YValue="@(e => Convert.ToDecimal(Math.Round(e.PlannedWorkHoursDemandMet)))" />
 
@@ -98,7 +98,7 @@
                                                  Items="burnUpChartSource"
                                                  SeriesType="@SeriesType.Line"
                                                  Stroke="@(new SeriesStroke { DashSpace = 5, Width = 4 , Color = ChartItem.GetColourString(1) })"
-                                                 Name="Planned Work"
+                                                 Name="Planned Work (Dashed)"
                                                  XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                                  YValue="@(e => Convert.ToDecimal(Math.Round(e.AssignedPlannedWorkHours)))" />
 
@@ -117,7 +117,7 @@
                                                      Items="burnUpChartSource"
                                                      SeriesType="@SeriesType.Line"
                                                      Stroke="@(new SeriesStroke { DashSpace = 5, Width = 4, Color = ChartItem.GetColourString(i + 2) })"
-                                                     Name="@($"Planned Work ({person.ShortName})")"
+                                                     Name="@($"Planned Work ({person.ShortName}) (Dashed)")"
                                                      XValue="@(e => e.WeekDate.ToUnixTimeMilliseconds())"
                                                      YValue="@(e => Convert.ToDecimal(Math.Round(e.ResourceEffort.FirstOrDefault(x => x.PersonId == person.PersonId)?.PlannedWorkHours ?? 0)))" />
 

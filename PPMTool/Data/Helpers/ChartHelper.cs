@@ -313,44 +313,45 @@ namespace PPMTool.Data.Helpers
                 // For every resource on every task build a representation of the information
                 foreach (var subTask in tasksRunningInWeek)
                 {
-                    // Get the length of the task in days
-                    var taskLengthInDays = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1;
+                    // Duration of the task
+                    int durationOfTask = subTask.DurationDays + 1;
 
-                    // Get the planned hours per day
-                    var plannedHoursPerDay = taskLengthInDays > 0 ? subTask.PlannedWorkHours / taskLengthInDays : 0;
+                    // Total effort demand met, planned and actuals
+                    double billableDays = SubTask.GetNumberOfBillableDays(subTask.StartDate, durationOfTask - 1);
+                    double effortDemandMet = Math.Floor(billableDays * 7 * subTask.Demand);
+                    if (subTask.UnmetDemand == 0)
+                    {
+                        // Just set to same as planned as close enough
+                        effortDemandMet = subTask.PlannedWorkHours;
+                    }
+                    double effortPlanned = subTask.PlannedWorkHours;
+                    double effortActual = subTask.ActualWorkHours;
 
-                    // How many days does task run this week
-                    var taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
+                    // Find the total FTE across all resources to later work out proportions
+                    double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                    // How many whole days does task run this week
+                    int taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
+
+                    // Proportion of the task that runs this week
+                    double proportionOfTaskThisWeek = taskDaysThisWeek / (double)durationOfTask;
 
                     // How many days has the task run so far (for actuals)
-                    var endDate = subTask.EndDate < DateTime.Today ? subTask.EndDate : DateTime.Today;
-                    var daysRunSoFar = endDate.Subtract(subTask.StartDate).TotalDays + 1;
+                    DateTime endDateActuals = subTask.EndDate < DateTime.Today ? subTask.EndDate : DateTime.Today;
+                    int daysRunSoFar = (int)(endDateActuals.Subtract(subTask.StartDate).TotalDays) + 1;
 
-                    // Find the total FTE across all resources
-                    var totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
-
-                    // Find total actuals across all resources
-                    var totalActuals = subTask.AssignedResources.Sum(x => x.ActualWorkHours);
-
-                    // How many hours are planned this week based on assgined resources
-                    var plannedHoursForTaskThisWeek = plannedHoursPerDay * taskDaysThisWeek;
-
-                    // How many hours are planned this week if demand is met
-                    var plannedHoursForTaskThisWeekDemandMet = subTask.Demand * (220 * 7 / 365d) * taskDaysThisWeek;
-
-                    // If distributed evenly across the days this task has run, how many actuals per day
-                    var actualsPerDay = daysRunSoFar > 0 ? totalActuals / daysRunSoFar : 0;
-
-                    // Actuals this week (zero if a week in the future)
-                    var actualsThisWeek = endDate > DateTime.Today ? 0 : taskDaysThisWeek * actualsPerDay;
+                    // Proportion of the actuals this week
+                    double proportionOfActualsThisWeek = endDateActuals > DateTime.Today ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
 
                     // Add to the demand for the week across all tasks
-                    PlannedWorkHoursDemandMet += plannedHoursForTaskThisWeekDemandMet;
+                    PlannedWorkHoursDemandMet += effortDemandMet * proportionOfTaskThisWeek;
 
                     // Add to the planned hours based on assigned resources
+                    var plannedHoursForTaskThisWeek = effortPlanned * proportionOfTaskThisWeek;
                     AssignedPlannedWorkHours += plannedHoursForTaskThisWeek;
 
                     // Add to the actual work hours based on the resources
+                    var actualsThisWeek = effortActual * proportionOfActualsThisWeek;
                     ActualWorkHours += actualsThisWeek;
 
                     // For each resource on the task, calculate their contribution to the planned work
@@ -358,7 +359,7 @@ namespace PPMTool.Data.Helpers
                     {
                         // Work out the contribution of this resource to planned work and actuals
                         var plannedWorkHoursForResource = (res.AssignmentFTE / totalFTE) * plannedHoursForTaskThisWeek;
-                        var actualWorkHoursForResource = totalActuals > 0 ? (res.ActualWorkHours / totalActuals) * actualsThisWeek : 0;
+                        var actualWorkHoursForResource = effortActual > 0 ? (res.ActualWorkHours / effortActual) * actualsThisWeek : 0;
 
                         // Add a resource effort object if required or update existing
                         var existingResource = ResourceEffort.FirstOrDefault(x => x.PersonId == res.Person.PersonId);

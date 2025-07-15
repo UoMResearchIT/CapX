@@ -38,7 +38,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="currentWeekStart"></param>
         /// <returns></returns>
-        public virtual double GetTaskDaysInWeek(DateTime currentWeekStart)
+        public virtual int GetTaskDaysInWeek(DateTime currentWeekStart)
         {
             DateTime weekStart = currentWeekStart.Date;
             DateTime weekEnd = weekStart.AddDays(6);
@@ -52,7 +52,7 @@ namespace PPMTool.Data.Entities
                 return 0;
 
             // Calculate the number of overlapping days (inclusive)
-            return overlapEnd.Date.Subtract(overlapStart.Date).TotalDays + 1;
+            return (int)(overlapEnd.Date.Subtract(overlapStart.Date).TotalDays) + 1;
         }
     }
 }
