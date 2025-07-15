@@ -33,6 +33,16 @@ namespace PPMTool.Pages
             await base.SaveRow(entity);
         }
 
+        protected override void OnCreateRow(SkillTag entity)
+        {
+            // Override as need to set the value of rareness and rareness count
+            entity.Rareness = SkillRareness.Epic;
+            entity.RarenessCount = 0;
+
+            // Now call the base method which adds it to the DB
+            base.OnCreateRow(entity);
+        }
+
         protected override async Task DeleteRow(SkillTag entity)
         {
             if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
