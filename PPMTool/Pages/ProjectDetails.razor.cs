@@ -183,94 +183,95 @@ namespace PPMTool.Pages
             return Task.Run(async () =>
             {
                 // Create a thread-local context
-                var context = ContextFactory.CreateDbContext();
-
-                // Reset the search box
-                noteSearchTerms = string.Empty;
-
-                // Filter the mentions reset
-                cachedMentionables = UserService
-                    .GetAll(Context)
-                    .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
-                    .DistinctBy(x => x.Person)
-                    .Select(x => x.Person)
-                    .ToList();
-                FilterMentionables();
-
-                // Query string only consulted when Project ID is not specified in URL
-                if (ProjectId == null && RTP != null)
+                using (var context = ContextFactory.CreateDbContext())
                 {
-                    // Try get the project
-                    ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
-                }
 
-                // Carry on and load the project details
-                if (ProjectId != null)
-                {
-                    project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
-                    var sources = FundingSourceService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId);
+                    // Reset the search box
+                    noteSearchTerms = string.Empty;
 
-                    // Generate the list of skills
-                    skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
+                    // Filter the mentions reset
+                    cachedMentionables = UserService
+                        .GetAll(Context)
+                        .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                        .DistinctBy(x => x.Person)
+                        .Select(x => x.Person)
+                        .ToList();
+                    FilterMentionables();
 
-                    // Generate the funds requested and received
-                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                        context,
-                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                        project.PlannedLeadershipCosts,
-                        project.SubTasks.SelectMany(x => x.AssignedResources),
-                        sources,
-                        InvoiceService.GetFundsRequested(context, project.ProjectId),
-                        PaymentService.GetFundsReceived(context, project.ProjectId)
-                    );
-
-                    // Generate the finance item
-                    financeSummaryItem = new FinanceSummaryItem(
-                        project,
-                        project.ProjectManager,
-                        project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
-                        transactions
-                    );
-
-                    // Generate the blocks for the schedule chart
-                    allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
-                    var allBlocks = new List<GanttBlock>();
-                    foreach (var t in allTasks)
+                    // Query string only consulted when Project ID is not specified in URL
+                    if (ProjectId == null && RTP != null)
                     {
-                        // Initialise as the task name
-                        var groupName = t.Name;
-
-                        if (t.Predecessor != null)
-                        {
-                            // Find predecessor in the existing list
-                            var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
-                            if (match != null)
-                            {
-                                groupName = match.PredecessorGroupName;
-                            }
-                            else
-                            {
-                                Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
-                                LogError("Cannot find predecessor task in temporary list!");
-                            }
-                        }
-
-                        // Add to the list of blocks
-                        allBlocks.Add(new GanttBlock(t, groupName));
+                        // Try get the project
+                        ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
                     }
 
-                    // Add a gantt block representing the management task
-                    var managementTasks = project.GetLeadershipTaskRanges();
-                    foreach (var dateRange in managementTasks)
+                    // Carry on and load the project details
+                    if (ProjectId != null)
                     {
-                        var leadershipName = "(Leadership)";
-                        allBlocks.Insert(0, new GanttBlock(new SubTask
+                        project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+                        var sources = FundingSourceService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId);
+
+                        // Generate the list of skills
+                        skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
+
+                        // Generate the funds requested and received
+                        var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                            context,
+                            project.LeadershipFundingSource?.FundingSourceId ?? 0,
+                            project.PlannedLeadershipCosts,
+                            project.SubTasks.SelectMany(x => x.AssignedResources),
+                            sources,
+                            InvoiceService.GetFundsRequested(context, project.ProjectId),
+                            PaymentService.GetFundsReceived(context, project.ProjectId)
+                        );
+
+                        // Generate the finance item
+                        financeSummaryItem = new FinanceSummaryItem(
+                            project,
+                            project.ProjectManager,
+                            project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
+                            transactions
+                        );
+
+                        // Generate the blocks for the schedule chart
+                        allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                        var allBlocks = new List<GanttBlock>();
+                        foreach (var t in allTasks)
                         {
-                            Name = leadershipName,
-                            StartDate = dateRange.StartDate,
-                            EndDate = dateRange.EndDate,
-                            OwningProject = project,
-                            AssignedResources = new List<Resource>
+                            // Initialise as the task name
+                            var groupName = t.Name;
+
+                            if (t.Predecessor != null)
+                            {
+                                // Find predecessor in the existing list
+                                var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
+                                if (match != null)
+                                {
+                                    groupName = match.PredecessorGroupName;
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
+                                    LogError("Cannot find predecessor task in temporary list!");
+                                }
+                            }
+
+                            // Add to the list of blocks
+                            allBlocks.Add(new GanttBlock(t, groupName));
+                        }
+
+                        // Add a gantt block representing the management task
+                        var managementTasks = project.GetLeadershipTaskRanges();
+                        foreach (var dateRange in managementTasks)
+                        {
+                            var leadershipName = "(Leadership)";
+                            allBlocks.Insert(0, new GanttBlock(new SubTask
+                            {
+                                Name = leadershipName,
+                                StartDate = dateRange.StartDate,
+                                EndDate = dateRange.EndDate,
+                                OwningProject = project,
+                                AssignedResources = new List<Resource>
                             {
                                 new Resource
                                 {
@@ -279,56 +280,56 @@ namespace PPMTool.Pages
                                 }
                             }
 
-                        }, leadershipName, isLeadershipTask: true));
-                    }
+                            }, leadershipName, isLeadershipTask: true));
+                        }
 
-                    // Fill in the data
-                    ChartHelper.CompleteChartSeries(
-                        allBlocks,
-                        c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
-                        out confirmedBlocks,
-                        out provisionalBlocks
-                    );
+                        // Fill in the data
+                        ChartHelper.CompleteChartSeries(
+                            allBlocks,
+                            c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
+                            out confirmedBlocks,
+                            out provisionalBlocks
+                        );
 
-                    // Update the UI                    
-                    count = allTasks.Count;
-                    isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
-                        project.ProjectManager?.Name == ActiveUser?.Name;
-                    isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
+                        // Update the UI                    
+                        count = allTasks.Count;
+                        isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
+                            project.ProjectManager?.Name == ActiveUser?.Name;
+                        isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
 
-                    ganttChartOptions = new ApexChartOptions<GanttBlock>
-                    {
-                        Chart = new Chart
+                        ganttChartOptions = new ApexChartOptions<GanttBlock>
                         {
-                            Zoom = new Zoom
+                            Chart = new Chart
                             {
-                                AllowMouseWheelZoom = false
-                            }
-                        },
-                        PlotOptions = new PlotOptions
-                        {
-                            Bar = new PlotOptionsBar
+                                Zoom = new Zoom
+                                {
+                                    AllowMouseWheelZoom = false
+                                }
+                            },
+                            PlotOptions = new PlotOptions
                             {
-                                Horizontal = true,
-                                RangeBarGroupRows = true
-                            }
-                        },
-                        Fill = new Fill
-                        {
-                            Opacity = 1,
-                            Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
-                            Pattern = new FillPattern
+                                Bar = new PlotOptionsBar
+                                {
+                                    Horizontal = true,
+                                    RangeBarGroupRows = true
+                                }
+                            },
+                            Fill = new Fill
                             {
-                                Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
-                            }
-                        },
-                        Legend = new ApexCharts.Legend
-                        {
-                            Show = false
-                        },
-                        Annotations = new Annotations
-                        {
-                            Xaxis = new List<AnnotationsXAxis>
+                                Opacity = 1,
+                                Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                                Pattern = new FillPattern
+                                {
+                                    Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                                }
+                            },
+                            Legend = new ApexCharts.Legend
+                            {
+                                Show = false
+                            },
+                            Annotations = new Annotations
+                            {
+                                Xaxis = new List<AnnotationsXAxis>
                             {
                                 new AnnotationsXAxis()
                                 {
@@ -343,16 +344,17 @@ namespace PPMTool.Pages
                                     }
                                 }
                             }
-                        }
-                    };
+                            }
+                        };
 
-                    // Update the Gantt chart axis limits
-                    UpdateScheduleChartAxisLimits();
+                        // Update the Gantt chart axis limits
+                        UpdateScheduleChartAxisLimits();
+                    }
+
+                    await LoadBurnUpChart();
+
+                    LogInformation($"Viewing project details for RTP-{project?.RTP}");
                 }
-
-                await LoadBurnUpChart();
-
-                LogInformation($"Viewing project details for RTP-{project?.RTP}");
 
             }).ContinueWith(t =>
             {
