@@ -104,6 +104,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Competency entity)
         {
+            if (string.IsNullOrEmpty(entity?.LegacyId))
+            {
+                return false;
+            }
             var legacyId = entity?.LegacyId.Trim().ToLower();
             return context.Competencies.Any(x => x.CompetencyId != entity.CompetencyId && x.LegacyId.Trim().ToLower() == legacyId);
         }
