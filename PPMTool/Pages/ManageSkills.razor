@@ -62,7 +62,7 @@
                                 <RadzenIcon Icon="@(tag.HasValidWikiLink == LinkCheckState.Fail ? "cancel" : "do_not_disturb")"
                                             Style="@($"color: {(tag.HasValidWikiLink == LinkCheckState.Fail ? "var(--rz-danger)" : "var(--rz-warning)")}")"
                                             title="@($"{(tag.HasValidWikiLink == LinkCheckState.Fail ? "Controlled name verification failed!" : "Verification of controlled name pending")}")" />
-                                <RadzenText Text="@tag.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                <RadzenText Text="@tag.ControlledName" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
                             </RadzenStack>
                         }
                     </Template>
