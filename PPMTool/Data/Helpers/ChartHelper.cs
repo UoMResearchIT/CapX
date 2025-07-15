@@ -313,11 +313,8 @@ namespace PPMTool.Data.Helpers
                 // For every resource on every task build a representation of the information
                 foreach (var subTask in tasksRunningInWeek)
                 {
-                    // Get the length of the task in days
-                    var taskLengthInDays = subTask.EndDate.Date.Subtract(subTask.StartDate.Date).TotalDays + 1;
-
                     // Get the planned hours per day
-                    var plannedHoursPerDay = taskLengthInDays > 0 ? subTask.PlannedWorkHours / taskLengthInDays : 0;
+                    var plannedHoursPerDay = subTask.DurationDays > 0 ? subTask.PlannedWorkHours / subTask.DurationDays : 0;
 
                     // How many days does task run this week
                     var taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
@@ -332,7 +329,7 @@ namespace PPMTool.Data.Helpers
                     // Find total actuals across all resources
                     var totalActuals = subTask.AssignedResources.Sum(x => x.ActualWorkHours);
 
-                    // How many hours are planned this week based on assgined resources
+                    // How many hours are planned this week based on assigned resources
                     var plannedHoursForTaskThisWeek = plannedHoursPerDay * taskDaysThisWeek;
 
                     // How many hours are planned this week if demand is met
