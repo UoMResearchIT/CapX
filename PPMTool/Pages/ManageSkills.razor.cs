@@ -149,15 +149,18 @@ namespace PPMTool.Pages
             Loading = true;
             Task.Run(async () =>
             {
-                var toVerify = dataGridEntities.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToList();
+                var toVerify = await TagService.GetAllPendingAsync(Context);
+                Debug.WriteLine($"** {toVerify.Count} tags to verify...");
                 foreach (var tag in toVerify)
                 {
                     var res = await tag.UpdateValidLink();
                     if (res != LinkCheckState.Pending)
                     {
+                        Logger.LogInformation($"Updating the wiki link status for {tag.ControlledName}");
                         TagService.Update(Context, tag);
                     }
                 }
+                LoadDataGrid(new LoadDataArgs());
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>
