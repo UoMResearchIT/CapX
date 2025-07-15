@@ -55,6 +55,7 @@ namespace PPMTool.Pages
                 // Remove from data grid
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
+                await dataGrid.Reload();
             }
         }
 
