@@ -147,16 +147,19 @@ namespace PPMTool.Data.Helpers
                         // Define a new task chunk for before period if necessary
                         if (wlmBefore.Grade != change.Grade)
                         {
-                            var previousChunk = tempChunks.Count > 0 ?
-                                tempChunks.Last() :
-                                initialChunk;
                             var startDateOfNewChunk = tempChunks.Count > 0 ?
-                                new DateTime(previousChunk.EndDate.AddDays(1).Ticks) :
+                                new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) :
                                 new DateTime(initialChunk.StartDate.Ticks);
+
                             var endDateOfNewChunk = change.ChangeDate.AddDays(-1);
 
                             var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
                             var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
+                            if (proportionOfInitialChunk > 1)
+                            {
+                                proportionOfInitialChunk = 1;
+                            }
+
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
                                 StartDate = startDateOfNewChunk,
@@ -196,17 +199,38 @@ namespace PPMTool.Data.Helpers
                         var fyStart = FinancialReference.GetFinancialYear(chunk.StartDate);
                         var fyEnd = FinancialReference.GetFinancialYear(chunk.EndDate);
 
+                        // If the task crosses financial years then we need to split it
                         if (fyStart != fyEnd)
                         {
+                            var lengthOfInitialChunk = chunk.EndDate.Subtract(chunk.StartDate).TotalDays + 1;
+
                             // For each financial year falling within the task, add chunks
                             for (var i = fyStart; i <= fyEnd; i++)
                             {
+                                // Get start and end dates of the chunk
+                                var startDateOfNewChunk =
+                                    fyStart == i ?
+                                    new DateTime(chunk.StartDate.Ticks) :
+                                    new DateTime(i, 8, 1);
+
+                                var endDateOfNewChunk =
+                                    fyEnd == i ?
+                                    new DateTime(chunk.EndDate.Ticks) :
+                                    new DateTime(i + 1, 7, 31);
+
+                                var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
+                                var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
+                                if (proportionOfInitialChunk > 1)
+                                {
+                                    proportionOfInitialChunk = 1;
+                                }
+
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
-                                    StartDate = fyStart == i ? new DateTime(chunk.StartDate.Ticks) : new DateTime(i, 8, 1),
-                                    EndDate = fyEnd == i ? new DateTime(chunk.EndDate.Ticks) : new DateTime(i + 1, 7, 31),
+                                    StartDate = startDateOfNewChunk,
+                                    EndDate = endDateOfNewChunk,
                                     FinancialYear = i,
-                                    PlannedCost =
+                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk
                                 });
                             }
                         }
