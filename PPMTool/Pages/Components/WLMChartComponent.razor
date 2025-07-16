@@ -236,8 +236,8 @@
         }
         else
         {
-            Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
-            Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
+            Min = (float)Math.Floor(Convert.ToDecimal(ChartItems.Min(x => x.MinNet) * 100)) / 100f;
+            Max = (float)Math.Ceiling(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet) * 100)) / 100f;
         }
 
         Debug.WriteLine($"** Setting Max = {Max}; Min = {Min}");
