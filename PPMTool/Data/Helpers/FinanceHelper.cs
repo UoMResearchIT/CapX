@@ -39,14 +39,11 @@ namespace PPMTool.Data.Helpers
                 .Where(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI)
                 .RoundedSum(x => x.PlannedCost, 2);
 
-            // Add to these totals the leadership costs if relevant
+            // Add to these totals the leadership costs if DI
             var leadershipSource = fundingSources.FirstOrDefault(x => x.FundingSourceId == leadershipSourceId);
-            if (leadershipSource != null)
+            if (leadershipSource != null && leadershipSource.FundingSourceType == FundingSourceType.DI)
             {
-                if (leadershipSource.FundingSourceType == FundingSourceType.DI)
-                {
-                    di += leadershipCosts;
-                }
+                di += leadershipCosts;
             }
 
             // Create the item adding in the invoiced amounts and the direct payments
