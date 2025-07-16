@@ -64,13 +64,10 @@ namespace PPMTool.Data.Helpers
             {
                 // Find leadership tasks and convert to task
                 var dateRanges = project.GetLeadershipTaskRanges();
-                var totalDaysOfLeadership = dateRanges.Sum(x => (x.EndDate - x.StartDate).TotalDays + 1);
                 foreach (var dateRange in dateRanges)
                 {
                     // Add leadership subtask based on the date range
                     var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
-
-                    // Add new chunk
                     var leadershipTask = new SubTask
                     {
                         AssignedResources = new List<Resource>
@@ -140,6 +137,7 @@ namespace PPMTool.Data.Helpers
 
                     // Find changes that are within the chunk
                     var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate).OrderBy(x => x.ChangeDate);
+                    var lengthOfInitialChunk = initialChunk.EndDate.Subtract(initialChunk.StartDate).TotalDays + 1;
 
                     foreach (var change in changes)
                     {
@@ -149,21 +147,34 @@ namespace PPMTool.Data.Helpers
                         // Define a new task chunk for before period if necessary
                         if (wlmBefore.Grade != change.Grade)
                         {
+                            var previousChunk = tempChunks.Count > 0 ?
+                                tempChunks.Last() :
+                                initialChunk;
+                            var startDateOfNewChunk = tempChunks.Count > 0 ?
+                                new DateTime(previousChunk.EndDate.AddDays(1).Ticks) :
+                                new DateTime(initialChunk.StartDate.Ticks);
+                            var endDateOfNewChunk = change.ChangeDate.AddDays(-1);
+
+                            var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
+                            var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
-                                StartDate = tempChunks.Count > 0 ? new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) : new DateTime(initialChunk.StartDate.Ticks),
-                                EndDate = change.ChangeDate.AddDays(-1)
+                                StartDate = startDateOfNewChunk,
+                                EndDate = endDateOfNewChunk,
+                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk
                             });
                         }
                     }
 
                     // If we did a split then need to add the final task chunk
+                    var remainingCosts = initialChunk.PlannedCost - tempChunks.Sum(x => x.PlannedCost);
                     if (tempChunks.Count > 0)
                     {
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
                             StartDate = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks),
-                            EndDate = new DateTime(initialChunk.EndDate.Ticks)
+                            EndDate = new DateTime(initialChunk.EndDate.Ticks),
+                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0
                         });
                     }
 
@@ -194,7 +205,8 @@ namespace PPMTool.Data.Helpers
                                 {
                                     StartDate = fyStart == i ? new DateTime(chunk.StartDate.Ticks) : new DateTime(i, 8, 1),
                                     EndDate = fyEnd == i ? new DateTime(chunk.EndDate.Ticks) : new DateTime(i + 1, 7, 31),
-                                    FinancialYear = i
+                                    FinancialYear = i,
+                                    PlannedCost =
                                 });
                             }
                         }
