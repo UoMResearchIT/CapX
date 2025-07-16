@@ -32,7 +32,7 @@ namespace PPMTool.Data.Helpers
                 .SelectMany(x => x.SubTasks)
                 .Where(x => x.AssignedResources
                     .Any(x => x.Person.PersonId == person.PersonId)
-                );
+                ).ToList();
             Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
 
             // Get WLM changes for this person that take place during the window
@@ -58,40 +58,42 @@ namespace PPMTool.Data.Helpers
             var endFY = FinancialReference.GetFinancialYear(endDate);
             var changesInFinancialYear = startFY != endFY;
 
-            // Insert leadership assignments
+            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later
             foreach (var project in projectsInWindow
                 .Where(x => x.CostModel == CostModel.TechAndLeadership && x.ProjectManager?.PersonId == person.PersonId))
             {
-                // Find leadership tasks and convert to assignment chunk
+                // Find leadership tasks and convert to task
                 var dateRanges = project.GetLeadershipTaskRanges();
                 var totalDaysOfLeadership = dateRanges.Sum(x => (x.EndDate - x.StartDate).TotalDays + 1);
                 foreach (var dateRange in dateRanges)
                 {
+                    // Add leadership subtask based on the date range
                     var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
 
                     // Add new chunk
-                    var chunk = new AssignmentChunk
+                    var leadershipTask = new SubTask
                     {
-                        EmployeeName = person.Name,
-                        Grade = defaultWLM.Grade,
-                        FTE = Math.Round(project.LeadershipFTE, 3),
-                        Project = project.GetFullName(),
-                        LeadRSE = project.ProjectManager?.Name ?? "Unknown",
-                        Faculty = project.Faculty.GetDescription(),
-                        School = project.School.GetDescription(),
-                        PI = project.PI,
-                        Task = "Leadership",
+                        AssignedResources = new List<Resource>
+                        {
+                            new Resource
+                            {
+                                Person = person,
+                                AssignmentFTE = project.LeadershipFTE,
+                                FundedFrom = project.LeadershipFundingSource,
+                                PlannedCost = project.PlannedLeadershipCosts
+                            }
+                        },
+                        Name = "Leadership",
+                        SubTaskId = -1,
+                        OwningProject = project,
                         StartDate = dateRange.StartDate,
                         EndDate = dateRange.EndDate,
-                        FinancialYear = FinancialReference.GetFinancialYear(dateRange.StartDate),
-                        PlannedCost = totalDaysOfLeadership == 0 ? 0 : Math.Round(project.PlannedLeadershipCosts * (daysOfLeadershipForChunk / totalDaysOfLeadership), 2),
-                        AccountCode = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.AccountCode) ? "Unknown" : project.LeadershipFundingSource?.AccountCode,
-                        FundingSourceType = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : project.LeadershipFundingSource?.FundingSourceType.GetDescription(),
-                        FundingSourceDescription = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.Description) ? "None" : project.LeadershipFundingSource?.Description,
-                        FundingSourceAmount = Math.Round(project.LeadershipFundingSource?.AmountAvailable ?? 0, 2)
+                        RequiresLeadership = false,
+                        TaskType = TaskType.FixedDuration,
+                        Demand = project.LeadershipFTE,
+                        OriginalDemand = project.LeadershipFTE
                     };
-                    chunk.UpdateEstimatedSalaryCost(finrefs);
-                    data.Add(chunk);
+                    tasksInWindow.Add(leadershipTask);
                 }
             }
 
@@ -99,7 +101,7 @@ namespace PPMTool.Data.Helpers
             foreach (var task in tasksInWindow)
             {
                 // Get project
-                var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
+                var project = projects.First(x => x.ProjectId == task.OwningProject?.ProjectId);
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
 
                 // Get funding source info
@@ -131,8 +133,8 @@ namespace PPMTool.Data.Helpers
                     initialChunk
                 };
 
-                // Are there any changes to grade for this person at all
-                if (changesInGrade)
+                // Are there any changes to grade for this person at all -- ignore grade changes for leadership task resources
+                if (changesInGrade && task.SubTaskId > 0)
                 {
                     var tempChunks = new List<AssignmentChunk>();
 
