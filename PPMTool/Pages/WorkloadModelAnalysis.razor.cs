@@ -2,6 +2,7 @@
 using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Helpers;
@@ -20,6 +21,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private TimesheetService TimesheetService { get; set; }
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
 
         private Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
         private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
@@ -45,6 +49,29 @@ namespace PPMTool.Pages
             }
 
             LogInformation($"Viewing WLM analysis page");
+        }
+
+        /// <summary>
+        /// Method fired when a block is selected
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="name"
+        private async void OnDataPointSelection(SelectedData<WLMWeeklyDataChartItem> args, string name)
+        {
+            // Nvaigate to the timesheet page with the selected week and person
+            if (args.DataPoint != null && args.DataPoint.Items != null && args.DataPoint.Items.Count() > 0)
+            {
+                var item = args.DataPoint.Items.First();
+                var personId = PersonService.GetByName(Context, name)?.PersonId;
+                var timesheetId = (await TimesheetService.GetTimesheetForPersonAndWeekAsync(Context, personId, item.WeekStart))?.TimesheetId;
+
+                // Navigate to the timesheet in a new tab otherwise it will annoy people that thye lose the analysis
+                if (timesheetId != null)
+                {
+                    var url = $"/timesheets/addtimesheet/{timesheetId}";
+                    await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+                }
+            }
         }
 
         /// <summary>

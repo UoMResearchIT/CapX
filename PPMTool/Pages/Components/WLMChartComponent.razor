@@ -8,6 +8,7 @@
                    Title="@Title"
                    Options="@ChartOptions"
                    XAxisType="XAxisType.Datetime"
+                   OnDataPointSelection="@(args => OnDataPointSelected?.Invoke(args, Title))"
                    @ref="chart">
 
             @if (CompareToWorkloadModel)
@@ -140,6 +141,9 @@
 
 @code
 {
+    [Parameter]
+    public Action<SelectedData<WLMWeeklyDataChartItem>, string> OnDataPointSelected { get; set; }
+
     [Parameter]
     public ApexChartOptions<WLMWeeklyDataChartItem> ChartOptions { get; set; }
 

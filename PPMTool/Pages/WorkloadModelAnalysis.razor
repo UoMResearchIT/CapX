@@ -67,7 +67,8 @@
                                    ChartOptions="@wlmChartOptions[i]"
                                    ChartItems="@wlmChartItems.ElementAt(i).Value"
                                    CompareToWorkloadModel="@compareToWLM"
-                                   NormalisedByTotalHours="@normalisedByTotalHours" />
+                                   NormalisedByTotalHours="@normalisedByTotalHours"
+                                   OnDataPointSelected="@OnDataPointSelection" />
             }
         </RadzenRow>
     }
