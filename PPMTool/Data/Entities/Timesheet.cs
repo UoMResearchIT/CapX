@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Enums;
 
@@ -18,6 +16,12 @@ namespace PPMTool.Data.Entities
 
         /// <summary>
         /// The person associated with the timesheet
+        /// </summary>
+        [Required]
+        public int OwnerId { get; set; }
+
+        /// <summary>
+        /// The person associated with the timesheet as a navigation property
         /// </summary>
         [Required]
         [InverseProperty("Timesheets")]

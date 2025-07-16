@@ -329,5 +329,17 @@ namespace PPMTool.Services
 
             return selfNotificationsCount + staffNotificationsCount;
         }
+
+        /// <summary>
+        /// Gets a timesheet for a specific person and week start date
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <param name="weekStart"></param>
+        /// <returns></returns>
+        internal async Task<Timesheet> GetTimesheetForPersonAndWeekAsync(PPMToolContext context, int? personId, DateTime weekStart)
+        {
+            return await context.Timesheets.FirstOrDefaultAsync(x => x.OwnerId == personId && x.StartDate.Date == weekStart.Date);
+        }
     }
 }

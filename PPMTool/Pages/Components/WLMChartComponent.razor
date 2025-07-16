@@ -1,6 +1,7 @@
 @using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Enums
+@using System.Diagnostics
 
 <RadzenColumn Style="min-width: 50rem">
     <RadzenCard>
@@ -8,6 +9,7 @@
                    Title="@Title"
                    Options="@ChartOptions"
                    XAxisType="XAxisType.Datetime"
+                   OnDataPointSelection="@(args => OnDataPointSelected?.Invoke(args, Title))"
                    @ref="chart">
 
             @if (CompareToWorkloadModel)
@@ -141,6 +143,9 @@
 @code
 {
     [Parameter]
+    public Action<SelectedData<WLMWeeklyDataChartItem>, string> OnDataPointSelected { get; set; }
+
+    [Parameter]
     public ApexChartOptions<WLMWeeklyDataChartItem> ChartOptions { get; set; }
 
     [Parameter]
@@ -155,12 +160,16 @@
     [Parameter]
     public bool NormalisedByTotalHours { get; set; }
 
+    [Parameter]
+    public bool UseStackedBars { get; set; }
+
     public float? Min { get; private set; }
     public float? Max { get; private set; }
 
     private ApexChart<WLMWeeklyDataChartItem> chart;
     private bool normalisedByTotalHours;
     private bool compareToWorkloadModel;
+    private bool useStackedBars;
 
     /// <summary>
     /// In response to changes in the parameters to the component update local values and execute methods
@@ -191,11 +200,20 @@
             updateMinMax = true;
         }
 
+        if (UseStackedBars != useStackedBars)
+        {
+            useStackedBars = UseStackedBars;
+            updateMinMax = true;
+        }
+
         // Recompute min-max
         if (updateMinMax)
         {
             UpdateMinMax();
         }
+
+        // Update the chart options with the new object
+        chart?.UpdateOptionsAsync(true, false, false);
     }
 
     /// <summary>
@@ -218,13 +236,14 @@
         }
         else
         {
-            Min = (float)Math.Round(Convert.ToDecimal(ChartItems.Min(x => x.MinNet)), 1);
-            Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet)), 1);
+            Min = (float)Math.Floor(Convert.ToDecimal(ChartItems.Min(x => x.MinNet) * 100)) / 100f;
+            Max = (float)Math.Ceiling(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet) * 100)) / 100f;
         }
+
+        Debug.WriteLine($"** Setting Max = {Max}; Min = {Min}");
 
         ChartOptions.Yaxis.First().Min = Min;
         ChartOptions.Yaxis.First().Max = Max;
-        chart?.UpdateOptionsAsync(true, false, false);        
     }
 
     /// <summary>
