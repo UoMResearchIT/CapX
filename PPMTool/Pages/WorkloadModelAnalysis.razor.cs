@@ -29,6 +29,7 @@ namespace PPMTool.Pages
         private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
         private bool compareToWLM = true;
         private bool normalisedByTotalHours = false;
+        private bool useStackedBars = true;
         private DateTime? startDate = DateTime.Today.StartOfMonth().StartOfWeek();
         private DateTime? endDate = DateTime.Today.StartOfWeek().AddDays(7);
         private IEnumerable<Person> availablePeople;
@@ -83,6 +84,8 @@ namespace PPMTool.Pages
             foreach (var opt in wlmChartOptions)
             {
                 opt.Yaxis.First().Title.Text = GetYAxisTitle();
+                opt.Chart.Stacked = useStackedBars;
+                opt.Chart.StackOnlyBar = useStackedBars;
             }
             StateHasChanged();
         }
