@@ -43,11 +43,7 @@ namespace PPMTool.Data.Helpers
             var leadershipSource = fundingSources.FirstOrDefault(x => x.FundingSourceId == leadershipSourceId);
             if (leadershipSource != null)
             {
-                if (leadershipSource.FundingSourceType == FundingSourceType.DA)
-                {
-                    da += leadershipCosts;
-                }
-                else if (leadershipSource.FundingSourceType == FundingSourceType.DI)
+                if (leadershipSource.FundingSourceType == FundingSourceType.DI)
                 {
                     di += leadershipCosts;
                 }
