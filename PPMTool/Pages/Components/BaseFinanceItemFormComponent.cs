@@ -1,8 +1,6 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using DotNetExtensions;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -43,8 +41,13 @@ namespace PPMTool.Pages.Components
         protected NoteService NoteService { get; set; }
 
         protected string errorMessage;
+        private BaseFinanceItem model;
 
-        protected virtual void HandleValidSubmit()
+        /// <summary>
+        /// What to do when the form is submitted and valid. Performs an additional check to ensure the project is not null, setting an error message if it is.
+        /// </summary>
+        /// <returns>False if there is any further issue detected</returns>
+        protected virtual bool HandleValidSubmit()
         {
             errorMessage = null;
             // Check it has a project
@@ -52,12 +55,24 @@ namespace PPMTool.Pages.Components
             {
                 errorMessage = "No project associated with this form!";
                 Logger?.LogError("Project is null");
-                return;
+                return false;
             }
+            return true;
         }
 
+        /// <summary>
+        /// Method to close the form. This invokes the event to notify listeners.
+        /// </summary>
+        /// <param name="status"></param>
         protected virtual void CloseForm(bool status)
         {
+            // If cancelling then reset the model
+            if (!status)
+            {
+                ResetModel();
+            }
+
+            // Close the dialog and invoke the form closed event
             DialogService.Close(status);
             FormClosed?.Invoke();
         }
@@ -67,6 +82,33 @@ namespace PPMTool.Pages.Components
         /// </summary>
         /// <returns></returns>
         protected abstract int GetItemId();
+
+        /// <summary>
+        /// Method to set the generic model to allow resetting on close.
+        /// </summary>
+        /// <param name="item"></param>
+        protected void SetFinanceItemModel(BaseFinanceItem item)
+        {
+            model = item;
+        }
+
+        /// <summary>
+        /// Resets a model
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
+        protected void ResetModel()
+        {
+            // Reset the model to the original item
+            if (model != null)
+            {
+                // Can be called from any service which inherits from the base service class
+                InvoiceService.RestoreModel(Context, ref model);
+            }
+            else
+            {
+                throw new InvalidOperationException("Model is not set. Cannot reset.");
+            }
+        }
 
         /// <summary>
         /// The type of change we wish to post a note about

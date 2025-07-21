@@ -7,7 +7,7 @@
 @using PPMTool.Data.Entities
 @using DotNetExtensions;
 
-<RadzenTemplateForm TItem="FundingSource" Submit="@HandleValidSubmit" Data="@Source">
+<RadzenTemplateForm TItem="FundingSource" Submit="@(() => HandleValidSubmit())" Data="@Source">
     <RadzenFieldset Text="Funding Source Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
@@ -75,22 +75,27 @@
             };
         }
         sourceTypes = Enum.GetValues<FundingSourceType>();
+        SetFinanceItemModel(Source);
     }
 
-    protected override void HandleValidSubmit()
+    protected override bool HandleValidSubmit()
     {
-        base.HandleValidSubmit();
+        var error = base.HandleValidSubmit();
+        if (error)
+        {
+            return false;
+        }
 
         if (Source.FundingSourceType != FundingSourceType.Other && Source.HasAccountCode && string.IsNullOrWhiteSpace(Source.AccountCode))
         {
             errorMessage = "You must provide an account code for this funding source e.g. R123456";
-            return;
+            return false;
         }
 
         if (Source.FundingSourceType != FundingSourceType.Other && Source.AmountAvailable <= 0)
         {
             errorMessage = "There must be a non-zero amount of funds available to pay for the service in a DA/DI funding source!";
-            return;
+            return false;
         }
 
         if (Source.FundingSourceId > 0)
@@ -105,6 +110,7 @@
         }
 
         CloseForm(true);
+        return true;
     }
 
     /// <summary>

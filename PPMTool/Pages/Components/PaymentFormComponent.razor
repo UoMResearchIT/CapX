@@ -6,7 +6,7 @@
 @using Radzen
 @using PPMTool.Data.Entities
 
-<RadzenTemplateForm TItem="Payment" Submit="@HandleValidSubmit" Data="@Payment">
+<RadzenTemplateForm TItem="Payment" Submit="@(() => HandleValidSubmit())" Data="@Payment">
     <RadzenFieldset Text="Payment Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
@@ -85,10 +85,13 @@
         if (Payment == null)
         {
             Payment = new Payment
-                {
-                    Project = Project
-                };
+            {
+                Project = Project
+            };
         }
+
+        // Set base model
+        SetFinanceItemModel(Payment);
 
         // Load invoices for the dropdown
         invoices = InvoiceService
@@ -107,20 +110,24 @@
     /// <summary>
     /// Process valid edit form
     /// </summary>
-    protected override void HandleValidSubmit()
+    protected override bool HandleValidSubmit()
     {
-        base.HandleValidSubmit();
+        var error = base.HandleValidSubmit();
+        if (error)
+        {
+            return false;
+        }
 
         if (string.IsNullOrWhiteSpace(Payment.Description))
         {
             errorMessage = "You must give this item a description!";
-            return;
+            return false;
         }
 
         if (Payment.Source == null || Payment.Source.FundingSourceId == 0)
         {
             errorMessage = "You must select a valid funding source whence this payment came!";
-            return;
+            return false;
         }
 
         if (Payment.PaymentId > 0)
@@ -135,6 +142,7 @@
         }
 
         CloseForm(true);
+        return true;
     }
 
     /// <summary>

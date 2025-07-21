@@ -39,7 +39,6 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        [Obsolete("This method has been replaced with its async alterantive and that should be used instead.")]
         public override IEnumerable<Competency> GetAll(PPMToolContext context)
         {
             return context.Competencies
@@ -47,7 +46,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Return all the competencies in the DB
+        /// Return all the competencies in the DB and asynchronously copies them to memory
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
