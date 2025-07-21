@@ -1,8 +1,6 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using DotNetExtensions;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
@@ -44,7 +42,11 @@ namespace PPMTool.Pages.Components
 
         protected string errorMessage;
 
-        protected virtual void HandleValidSubmit()
+        /// <summary>
+        /// What to do when the form is submitted and valid. Performs an additional check to ensure the project is not null, setting an error message if it is.
+        /// </summary>
+        /// <returns>False if there is any further issue detected</returns>
+        protected virtual bool HandleValidSubmit()
         {
             errorMessage = null;
             // Check it has a project
@@ -52,10 +54,15 @@ namespace PPMTool.Pages.Components
             {
                 errorMessage = "No project associated with this form!";
                 Logger?.LogError("Project is null");
-                return;
+                return false;
             }
+            return true;
         }
 
+        /// <summary>
+        /// Method to close the form. This invokes the event to notify listeners.
+        /// </summary>
+        /// <param name="status"></param>
         protected virtual void CloseForm(bool status)
         {
             DialogService.Close(status);

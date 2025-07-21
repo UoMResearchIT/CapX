@@ -7,7 +7,7 @@
 @using PPMTool.Enums
 @using Radzen
 
-<RadzenTemplateForm TItem="Invoice" Submit="@HandleValidSubmit" Data="@Invoice">
+<RadzenTemplateForm TItem="Invoice" Submit="@(() => HandleValidSubmit())" Data="@Invoice">
     <RadzenFieldset Text="Invoice Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Stretch">
@@ -79,9 +79,13 @@
         statuses = Enum.GetValues(typeof(InvoiceStatus)).Cast<InvoiceStatus>();
     }
 
-    protected override void HandleValidSubmit()
+    protected override bool HandleValidSubmit()
     {
-        base.HandleValidSubmit();
+        var error = base.HandleValidSubmit();
+        if (error)
+        {
+            return false;
+        };
 
         // Validate
         if (string.IsNullOrWhiteSpace(Invoice.InvoiceReference))
@@ -91,12 +95,12 @@
         if (string.IsNullOrWhiteSpace(Invoice.Description))
         {
             errorMessage = "You must give this item a description!";
-            return;
+            return false;
         }
         if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
         {
             errorMessage = "Invoice URL is required which links to an invoice or email as a SharePoint document so there is a physical record of the payment request!";
-            return;
+            return false;
         }
 
         if (Invoice.InvoiceId > 0)
@@ -111,6 +115,7 @@
         }
 
         CloseForm(true);
+        return true;
     }
 
     /// <summary>
