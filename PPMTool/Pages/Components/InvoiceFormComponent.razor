@@ -70,13 +70,16 @@
         if (Invoice == null)
         {
             Invoice = new Invoice
-                {
-                    Project = Project
-                };
+            {
+                Project = Project
+            };
         }
 
         // Statuses for the dropdown
         statuses = Enum.GetValues(typeof(InvoiceStatus)).Cast<InvoiceStatus>();
+
+        // Set the internal reference on the base class
+        SetFinanceItemModel(Invoice);
     }
 
     protected override bool HandleValidSubmit()

@@ -85,10 +85,13 @@
         if (Payment == null)
         {
             Payment = new Payment
-                {
-                    Project = Project
-                };
+            {
+                Project = Project
+            };
         }
+
+        // Set base model
+        SetFinanceItemModel(Payment);
 
         // Load invoices for the dropdown
         invoices = InvoiceService
