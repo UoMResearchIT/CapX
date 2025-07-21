@@ -17,6 +17,12 @@ namespace PPMTool.Data.Entities
         /// Represents the timesheet which owns the timesheet entry
         /// </summary>
         [Required]
+        public int TimesheetId { get; set; }
+
+        /// <summary>
+        /// Represents the timesheet which owns the timesheet entry as a navigation property
+        /// </summary>
+        [Required]
         public Timesheet Timesheet { get; set; }
 
         /// <summary>
