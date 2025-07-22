@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Configurations>Debug;Release;Local</Configurations>
+    <UserSecretsId>dcb1caa3-64c9-40ad-bec4-b4317b27e8cb</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Local|AnyCPU'">

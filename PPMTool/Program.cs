@@ -62,7 +62,16 @@ namespace PPMTool
                         webBuilder.UseStaticWebAssets();
                         webBuilder.UseStartup<Startup>();
 #if RELEASE
-                        webBuilder.UseSentry();
+
+                        webBuilder.ConfigureAppConfiguration((context, configBuilder) =>
+                        {
+                            var config = context.Configuration;
+                            webBuilder.UseSentry(o =>
+                            {
+                                o.Dsn = config["Sentry:Dsn"];
+                                o.Release = config["VersionNumber"];
+                            });
+                        });
 #endif
                     });
             }
