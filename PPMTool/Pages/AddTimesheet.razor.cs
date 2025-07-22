@@ -314,7 +314,7 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Populate code dropdown with {temp.Count} tasks");
             innateCodeDropdownSource = temp;
-            OnInnateCodeChanged(null);
+            await OnInnateCodeChangedAsync(null);
         }
 
         /// <summary>
@@ -509,7 +509,7 @@ namespace PPMTool.Pages
         /// Handle a change in the code on the first dropdown
         /// </summary>
         /// <param name="value"></param>
-        private void OnInnateCodeChanged(object value)
+        private async Task OnInnateCodeChangedAsync(object value)
         {
             // If value is null then just clear the lists
             if (value == null)
@@ -526,7 +526,8 @@ namespace PPMTool.Pages
                 .ToList();
 
             // Find all existing entries that use this same code
-            var tasksInUse = dataGridEntities
+            var entries = await TimesheetService.GetEntriesForTimesheetAsync(Context, timesheet.TimesheetId);
+            var tasksInUse = entries
                 .Where(x => x.InnateCodeTask.InnateCode.GetCodeAsString() == (value as string))
                 .Select(x => x.InnateCodeTask)
                 .ToList();
