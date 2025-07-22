@@ -2,6 +2,7 @@
 Description=T:ITS app kestrel server
 
 [Service]
+EnvironmentFile=/var/www/tits/variables.env
 WorkingDirectory=/var/www/tits
 ExecStart=/usr/bin/dotnet /var/www/tits/PPMTool.dll
 Restart=always
@@ -10,8 +11,6 @@ RestartSec=10
 KillSignal=SIGINT
 SyslogIdentifier=tits
 User=www-data
-# Set this to "Production" on the production server and "Development" on the development server
-Environment=ASPNETCORE_ENVIRONMENT=Production
 
 [Install]
 WantedBy=multi-user.target
