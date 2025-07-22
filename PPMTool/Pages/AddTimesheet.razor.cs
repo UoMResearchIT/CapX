@@ -74,7 +74,7 @@ namespace PPMTool.Pages
         /// <exception cref="Exception"></exception>
         private Task GetTask()
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 Debug.WriteLine("** Starting initialisation task...");
 
@@ -125,7 +125,7 @@ namespace PPMTool.Pages
                     UpdateDailyTotals();
 
                     // Innate codes are limited to active ones initially
-                    LoadInnateCodes();
+                    await LoadInnateCodesAsync();
 
                     // Get WLM details of the staff member active at the time of the timesheet
                     Person personWithWLMData = PersonService.GetById(Context, timesheet.Owner.PersonId);
@@ -278,7 +278,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Load innate codes to populate the dropdown source. If there is a timesheet then remove codes that have been used and have no tasks left.
         /// </summary>
-        private void LoadInnateCodes()
+        private async Task LoadInnateCodesAsync()
         {
             Debug.WriteLine("** Loading innate codes...");
 
@@ -296,7 +296,8 @@ namespace PPMTool.Pages
             }
 
             // Remove codes that have been used on the timesheet already and have no tasks left
-            var codesInUse = dataGridEntities.Select(x => x.InnateCodeTask).GroupBy(x => x.InnateCode);
+            var entries = await TimesheetService.GetEntriesForTimesheetAsync(Context, timesheet.TimesheetId);
+            var codesInUse = entries.Select(x => x.InnateCodeTask).GroupBy(x => x.InnateCode);
             foreach (var code in codesInUse.Select(x => x.Key))
             {
                 // Match code in use to active code in initial source
@@ -313,7 +314,7 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Populate code dropdown with {temp.Count} tasks");
             innateCodeDropdownSource = temp;
-            OnInnateCodeChanged(null);
+            await OnInnateCodeChangedAsync(null);
         }
 
         /// <summary>
@@ -508,7 +509,7 @@ namespace PPMTool.Pages
         /// Handle a change in the code on the first dropdown
         /// </summary>
         /// <param name="value"></param>
-        private void OnInnateCodeChanged(object value)
+        private async Task OnInnateCodeChangedAsync(object value)
         {
             // If value is null then just clear the lists
             if (value == null)
@@ -525,7 +526,8 @@ namespace PPMTool.Pages
                 .ToList();
 
             // Find all existing entries that use this same code
-            var tasksInUse = dataGridEntities
+            var entries = await TimesheetService.GetEntriesForTimesheetAsync(Context, timesheet.TimesheetId);
+            var tasksInUse = entries
                 .Where(x => x.InnateCodeTask.InnateCode.GetCodeAsString() == (value as string))
                 .Select(x => x.InnateCodeTask)
                 .ToList();
@@ -563,7 +565,7 @@ namespace PPMTool.Pages
                 Summary = "Updated",
                 Detail = "Your timesheet template has been updated. The added task row will show when you next create a new timesheet."
             });
-            LoadInnateCodes();
+            LoadInnateCodesAsync().GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -600,7 +602,7 @@ namespace PPMTool.Pages
             entity.UpdateTotalHours();
 
             // Refresh the code and task dropdowns
-            LoadInnateCodes();
+            LoadInnateCodesAsync().GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -629,7 +631,7 @@ namespace PPMTool.Pages
                 TimesheetService.DeleteEntry(Context, entity);
                 await base.DeleteRow(entity);
                 UpdateDailyTotals();
-                LoadInnateCodes();
+                await LoadInnateCodesAsync();
 
                 ShowNotification(new CapXNotificationMessage
                 {

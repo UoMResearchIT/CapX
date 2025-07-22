@@ -341,5 +341,20 @@ namespace PPMTool.Services
         {
             return await context.Timesheets.FirstOrDefaultAsync(x => x.OwnerId == personId && x.StartDate.Date == weekStart.Date);
         }
+
+        /// <summary>
+        /// Gets the entries for a specific timesheet
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="timesheetId"></param>
+        /// <returns></returns>
+        internal async Task<List<TimesheetEntry>> GetEntriesForTimesheetAsync(PPMToolContext context, int timesheetId)
+        {
+            return await context.TimesheetEntries
+                .Where(x => x.TimesheetId == timesheetId)
+                .Include(x => x.InnateCodeTask)
+                .ThenInclude(x => x.InnateCode)
+                .ToListAsync();
+        }
     }
 }
