@@ -31,7 +31,15 @@ if (!string.IsNullOrEmpty(apiKeySecret))
 }
 else
 {
+#if !LOCAL
     throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
+#else
+    // Check that user secrets has actually set a value
+    if (string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+    {
+        throw new InvalidOperationException("API_KEY_SECRET environment variable is not set and user secrets has not been configured!");
+    }
+#endif
 }
 var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
 if (!string.IsNullOrEmpty(sentryDsn))
