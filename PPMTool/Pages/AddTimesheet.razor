@@ -98,7 +98,7 @@
                                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                     Data="@innateCodeDropdownSource.Select(x => x.GetCodeAsString())"
                                                     Style="width: 100%"
-                                                    Change="@(async args => await OnInnateCodeChanged(args))" />
+                                                    Change="@(async args => await OnInnateCodeChangedAsync(args))" />
                                 }
                                 else
                                 {
