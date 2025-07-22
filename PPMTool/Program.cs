@@ -1,8 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
-#if RELEASE
 using Microsoft.Extensions.Configuration;
-#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,9 +13,6 @@ namespace PPMTool
     {
         public static void Main(string[] args)
         {
-#if !RELEASE
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
-#endif
             var host = CreateHostBuilder(args).Build();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Host Created");
@@ -28,36 +24,51 @@ namespace PPMTool
             try
             {
                 return Host.CreateDefaultBuilder(args)
-#if RELEASE
-                .ConfigureLogging((context, logging) =>
-                {
-                    Log.Logger = new LoggerConfiguration()
-                        .WriteTo.Logger(l =>
-                        {
-                            l.WriteTo.Console();
-                            l.WriteTo.File(context.Configuration.GetValue<string>("LogPath"),
-                                rollingInterval: RollingInterval.Day,
-                                retainedFileCountLimit: null,
-                                retainedFileTimeLimit: TimeSpan.FromDays(60));
-                        })
-                        .CreateLogger();
-                    logging.AddSerilog();
-                })
-#endif
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStaticWebAssets();
-                    webBuilder.UseStartup<Startup>();
-#if RELEASE
-                    webBuilder.UseSentry();
-#endif
-                });
+                    .ConfigureAppConfiguration((hostingContext, configBuilder) =>
+                    {
+                        var env = hostingContext.HostingEnvironment;
+                        var overridingValues = new Dictionary<string, string>();
 
+                        var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
+                        if (!string.IsNullOrEmpty(sentryDsn))
+                        {
+                            overridingValues.Add("Sentry:Dsn", sentryDsn);
+                        }
+                        else if (env.IsProduction())
+                        {
+                            throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
+                        }
+
+                        configBuilder.AddInMemoryCollection(overridingValues);
+                    })
+#if RELEASE
+                    .ConfigureLogging((context, logging) =>
+                    {
+                        Log.Logger = new LoggerConfiguration()
+                            .WriteTo.Logger(l =>
+                            {
+                                l.WriteTo.Console();
+                                l.WriteTo.File(context.Configuration.GetValue<string>("LogPath"),
+                                    rollingInterval: RollingInterval.Day,
+                                    retainedFileCountLimit: null,
+                                    retainedFileTimeLimit: TimeSpan.FromDays(60));
+                            })
+                            .CreateLogger();
+                        logging.AddSerilog();
+                    })
+#endif
+                    .ConfigureWebHostDefaults(webBuilder =>
+                    {
+                        webBuilder.UseStaticWebAssets();
+                        webBuilder.UseStartup<Startup>();
+#if RELEASE
+                        webBuilder.UseSentry();
+#endif
+                    });
             }
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Host builder error");
-
                 throw;
             }
             finally
