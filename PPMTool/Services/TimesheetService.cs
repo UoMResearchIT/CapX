@@ -100,6 +100,7 @@ namespace PPMTool.Services
         {
             return context.Timesheets
                 .Include(t => t.Owner)
+                .ThenInclude(x => x.LineManager)
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode);
