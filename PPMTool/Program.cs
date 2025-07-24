@@ -17,6 +17,7 @@ using Radzen;
 using Serilog;
 #endif
 
+var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
 var builder = WebApplication.CreateBuilder(args);
 
 // Add environment variables to the configuration
@@ -31,15 +32,18 @@ if (!string.IsNullOrEmpty(apiKeySecret))
 }
 else
 {
-#if !LOCAL
-    throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
-#else
-    // Check that user secrets has actually set a value
-    if (string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+    if (!isDesignTime)
     {
-        throw new InvalidOperationException("API_KEY_SECRET environment variable is not set and user secrets has not been configured!");
-    }
+#if !LOCAL
+        throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
+#else
+        // Check that user secrets has actually set a value
+        if (string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+        {
+            throw new InvalidOperationException("API_KEY_SECRET environment variable is not set and user secrets has not been configured!");
+        }
 #endif
+    }
 }
 var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
 if (!string.IsNullOrEmpty(sentryDsn))
@@ -48,7 +52,7 @@ if (!string.IsNullOrEmpty(sentryDsn))
 }
 else
 {
-    if (builder.Environment.IsProduction())
+    if (!isDesignTime && builder.Environment.IsProduction())
     {
         throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
     }
