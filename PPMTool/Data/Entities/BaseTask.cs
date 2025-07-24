@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -32,6 +31,28 @@ namespace PPMTool.Data.Entities
         public bool IsWithin(DateTime startDate, DateTime endDate)
         {
             return DateRange.IsWithin(StartDate, EndDate, startDate, endDate);
+        }
+
+        /// <summary>
+        /// Computes how many days this task runs in the given week assuming that <see cref="currentWeekStart"/> is a Monday
+        /// </summary>
+        /// <param name="currentWeekStart"></param>
+        /// <returns></returns>
+        public virtual int GetTaskDaysInWeek(DateTime currentWeekStart)
+        {
+            DateTime weekStart = currentWeekStart.Date;
+            DateTime weekEnd = weekStart.AddDays(6);
+
+            // Find the latest start date and the earliest end date
+            DateTime overlapStart = StartDate > weekStart ? StartDate : weekStart;
+            DateTime overlapEnd = EndDate < weekEnd ? EndDate : weekEnd;
+
+            // If there's no overlap, return 0
+            if (overlapEnd < overlapStart)
+                return 0;
+
+            // Calculate the number of overlapping days (inclusive)
+            return (int)(overlapEnd.Date.Subtract(overlapStart.Date).TotalDays) + 1;
         }
     }
 }

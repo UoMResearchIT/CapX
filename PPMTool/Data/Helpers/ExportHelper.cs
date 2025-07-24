@@ -32,7 +32,7 @@ namespace PPMTool.Data.Helpers
                 .SelectMany(x => x.SubTasks)
                 .Where(x => x.AssignedResources
                     .Any(x => x.Person.PersonId == person.PersonId)
-                );
+                ).ToList();
             Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
 
             // Get WLM changes for this person that take place during the window
@@ -58,40 +58,39 @@ namespace PPMTool.Data.Helpers
             var endFY = FinancialReference.GetFinancialYear(endDate);
             var changesInFinancialYear = startFY != endFY;
 
-            // Insert leadership assignments
+            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later
             foreach (var project in projectsInWindow
                 .Where(x => x.CostModel == CostModel.TechAndLeadership && x.ProjectManager?.PersonId == person.PersonId))
             {
-                // Find leadership tasks and convert to assignment chunk
+                // Find leadership tasks and convert to task
                 var dateRanges = project.GetLeadershipTaskRanges();
-                var totalDaysOfLeadership = dateRanges.Sum(x => (x.EndDate - x.StartDate).TotalDays + 1);
                 foreach (var dateRange in dateRanges)
                 {
+                    // Add leadership subtask based on the date range
                     var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
-
-                    // Add new chunk
-                    var chunk = new AssignmentChunk
+                    var leadershipTask = new SubTask
                     {
-                        EmployeeName = person.Name,
-                        Grade = defaultWLM.Grade,
-                        FTE = Math.Round(project.LeadershipFTE, 3),
-                        Project = project.GetFullName(),
-                        LeadRSE = project.ProjectManager?.Name ?? "Unknown",
-                        Faculty = project.Faculty.GetDescription(),
-                        School = project.School.GetDescription(),
-                        PI = project.PI,
-                        Task = "Leadership",
+                        AssignedResources = new List<Resource>
+                        {
+                            new Resource
+                            {
+                                Person = person,
+                                AssignmentFTE = project.LeadershipFTE,
+                                FundedFrom = project.LeadershipFundingSource,
+                                PlannedCost = project.PlannedLeadershipCosts
+                            }
+                        },
+                        Name = "Leadership",
+                        SubTaskId = -1,
+                        OwningProject = project,
                         StartDate = dateRange.StartDate,
                         EndDate = dateRange.EndDate,
-                        FinancialYear = FinancialReference.GetFinancialYear(dateRange.StartDate),
-                        PlannedCost = totalDaysOfLeadership == 0 ? 0 : Math.Round(project.PlannedLeadershipCosts * (daysOfLeadershipForChunk / totalDaysOfLeadership), 2),
-                        AccountCode = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.AccountCode) ? "Unknown" : project.LeadershipFundingSource?.AccountCode,
-                        FundingSourceType = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : project.LeadershipFundingSource?.FundingSourceType.GetDescription(),
-                        FundingSourceDescription = string.IsNullOrWhiteSpace(project.LeadershipFundingSource?.Description) ? "None" : project.LeadershipFundingSource?.Description,
-                        FundingSourceAmount = Math.Round(project.LeadershipFundingSource?.AmountAvailable ?? 0, 2)
+                        RequiresLeadership = false,
+                        TaskType = TaskType.FixedDuration,
+                        Demand = project.LeadershipFTE,
+                        OriginalDemand = project.LeadershipFTE
                     };
-                    chunk.UpdateEstimatedSalaryCost(finrefs);
-                    data.Add(chunk);
+                    tasksInWindow.Add(leadershipTask);
                 }
             }
 
@@ -99,7 +98,7 @@ namespace PPMTool.Data.Helpers
             foreach (var task in tasksInWindow)
             {
                 // Get project
-                var project = projects.FirstOrDefault(x => x.SubTasks.Any(x => x.SubTaskId == task.SubTaskId));
+                var project = projects.First(x => x.ProjectId == task.OwningProject?.ProjectId);
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
 
                 // Get funding source info
@@ -131,13 +130,14 @@ namespace PPMTool.Data.Helpers
                     initialChunk
                 };
 
-                // Are there any changes to grade for this person at all
-                if (changesInGrade)
+                // Are there any changes to grade for this person at all -- ignore grade changes for leadership task resources
+                if (changesInGrade && task.SubTaskId > 0)
                 {
                     var tempChunks = new List<AssignmentChunk>();
 
                     // Find changes that are within the chunk
                     var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate).OrderBy(x => x.ChangeDate);
+                    var lengthOfInitialChunk = initialChunk.EndDate.Subtract(initialChunk.StartDate).TotalDays + 1;
 
                     foreach (var change in changes)
                     {
@@ -147,21 +147,37 @@ namespace PPMTool.Data.Helpers
                         // Define a new task chunk for before period if necessary
                         if (wlmBefore.Grade != change.Grade)
                         {
+                            var startDateOfNewChunk = tempChunks.Count > 0 ?
+                                new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) :
+                                new DateTime(initialChunk.StartDate.Ticks);
+
+                            var endDateOfNewChunk = change.ChangeDate.AddDays(-1);
+
+                            var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
+                            var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
+                            if (proportionOfInitialChunk > 1)
+                            {
+                                proportionOfInitialChunk = 1;
+                            }
+
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
-                                StartDate = tempChunks.Count > 0 ? new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) : new DateTime(initialChunk.StartDate.Ticks),
-                                EndDate = change.ChangeDate.AddDays(-1)
+                                StartDate = startDateOfNewChunk,
+                                EndDate = endDateOfNewChunk,
+                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk
                             });
                         }
                     }
 
                     // If we did a split then need to add the final task chunk
+                    var remainingCosts = initialChunk.PlannedCost - tempChunks.Sum(x => x.PlannedCost);
                     if (tempChunks.Count > 0)
                     {
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
                             StartDate = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks),
-                            EndDate = new DateTime(initialChunk.EndDate.Ticks)
+                            EndDate = new DateTime(initialChunk.EndDate.Ticks),
+                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0
                         });
                     }
 
@@ -183,16 +199,38 @@ namespace PPMTool.Data.Helpers
                         var fyStart = FinancialReference.GetFinancialYear(chunk.StartDate);
                         var fyEnd = FinancialReference.GetFinancialYear(chunk.EndDate);
 
+                        // If the task crosses financial years then we need to split it
                         if (fyStart != fyEnd)
                         {
+                            var lengthOfInitialChunk = chunk.EndDate.Subtract(chunk.StartDate).TotalDays + 1;
+
                             // For each financial year falling within the task, add chunks
                             for (var i = fyStart; i <= fyEnd; i++)
                             {
+                                // Get start and end dates of the chunk
+                                var startDateOfNewChunk =
+                                    fyStart == i ?
+                                    new DateTime(chunk.StartDate.Ticks) :
+                                    new DateTime(i, 8, 1);
+
+                                var endDateOfNewChunk =
+                                    fyEnd == i ?
+                                    new DateTime(chunk.EndDate.Ticks) :
+                                    new DateTime(i + 1, 7, 31);
+
+                                var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
+                                var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
+                                if (proportionOfInitialChunk > 1)
+                                {
+                                    proportionOfInitialChunk = 1;
+                                }
+
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
-                                    StartDate = fyStart == i ? new DateTime(chunk.StartDate.Ticks) : new DateTime(i, 8, 1),
-                                    EndDate = fyEnd == i ? new DateTime(chunk.EndDate.Ticks) : new DateTime(i + 1, 7, 31),
-                                    FinancialYear = i
+                                    StartDate = startDateOfNewChunk,
+                                    EndDate = endDateOfNewChunk,
+                                    FinancialYear = i,
+                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk
                                 });
                             }
                         }

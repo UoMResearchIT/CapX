@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -129,7 +125,7 @@ namespace PPMTool.Shared
             }
 
             // Pull the sources from the DB
-            var matchingPeople = PersonService.GetAllShallow(context)
+            var matchingPeople = (await PersonService.GetAllShallowAsync(context))
             .Where(x =>
                 x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
                 x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())

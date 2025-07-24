@@ -9,121 +9,13 @@ namespace PPMTool.Data.Helpers
         /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.
         /// Adds special logic to pad whitespace in the timelines and adjust for person start and end dates.
         /// </summary>
-        /// <param name="person">Person of interest</param>
         /// <param name="assignments">Set of assignments to aggregate</param>
         /// <param name="valueFunction">Function to define the primary value of a given block</param>
         /// <param name="colourFunction">Function to define the colour of a given block</param>
         /// <param name="label">Chart axis label for the data</param>
         /// <param name="startDate">Start of aggregation window</param>
         /// <param name="endDate">End of aggregation window</param>
-        /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
-        /// <param name="value2Function">Function to define the secondary value of a given block</param>
-        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
-        /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
-        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
-        /// <returns></returns>
-        public static IEnumerable<ChartItem> ConvertAssignmentsToChartItemsForPerson(
-            Person person,
-            IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
-            Func<double, double, bool, string> colourFunction,
-            string label,
-            DateTime startDate,
-            DateTime endDate,
-            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
-            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
-            bool ignoreZeroValue1Entries = false
-        )
-        {
-            // If person starts after the start date then reset the start date to that date
-            if (person.StartDate > startDate)
-            {
-                startDate = person.StartDate;
-            }
-
-            // If person leaves before the end date then reset the end date to that date
-            if (person.EndDate != null && person.EndDate < endDate)
-            {
-                endDate = person.EndDate?.AddDays(1) ?? DateTime.Today;
-            }
-
-            // Get the chart items
-            var chartItems = AggregateAssignmentsIntoBlocks(
-                assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter,
-                ignoreZeroValue1Entries
-            ).OrderBy(x => x.StartDate).ToList();
-            Debug.WriteLine($"** Generated {chartItems.Count} block(s) for {person.Name}");
-
-            if (gapFillingFunction != null)
-            {
-                // Create an empty list
-                var extraItems = new List<ChartItem>();
-
-                // If no items or if the first chart item starts after the (corrected) start date
-                // then fill in gaps
-                if (chartItems.Count() < 1 || chartItems.First().StartDate > startDate)
-                {
-                    // Define fill region end date
-                    var endFill = chartItems.Count() < 1 ? endDate : chartItems.First().StartDate;
-
-                    // Generate the items
-                    extraItems.AddRange(gapFillingFunction(person, startDate, endFill));
-                }
-
-                // If there is a gap after the last chart item and the end date then fill in
-                if (chartItems.Count() > 0 && chartItems.Last().EndDate < endDate)
-                {
-                    extraItems.AddRange(gapFillingFunction(person, chartItems.Last().EndDate, endDate));
-                }
-
-                // Add the extra items to the chart data
-                if (extraItems.Count > 0)
-                {
-                    // Add the items to the chart items list and reorder
-                    chartItems.AddRange(extraItems);
-                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
-                }
-
-                // If there are any gaps in the chart items where they are free then fill in
-                extraItems.Clear();
-                for (int i = 0; i < chartItems.Count(); ++i)
-                {
-                    // Ignore the last item in the list
-                    if (i < chartItems.Count() - 1)
-                    {
-                        // If there is a gap
-                        if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
-                        {
-                            // Generate chart items from availability to fill the gap
-                            extraItems.AddRange(gapFillingFunction(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
-                        }
-                    }
-                }
-
-                // Add the extra items to the chart data
-                if (extraItems.Count > 0)
-                {
-                    // Add the items to the chart items list and reorder
-                    chartItems.AddRange(extraItems);
-                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
-                }
-            }
-
-            return chartItems;
-        }
-
-        /// <summary>
-        /// For a given set of assignments, convert into an aggregated set of blocks for the timeline graph.
-        /// </summary>
-        /// <param name="assignments">Set of assignments to aggregate</param>
-        /// <param name="valueFunction">Function to define the primary value of a given block</param>
-        /// <param name="colourFunction">Function to define the colour of a given block</param>
-        /// <param name="label">Chart axis label for the data</param>
-        /// <param name="startDate">Start of aggregation window</param>
-        /// <param name="endDate">End of aggregation window</param>
+        /// <param name="person">Person of interest if required</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
@@ -137,6 +29,7 @@ namespace PPMTool.Data.Helpers
             string label,
             DateTime startDate,
             DateTime endDate,
+            Person person = null,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
             Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
@@ -144,11 +37,64 @@ namespace PPMTool.Data.Helpers
             bool ignoreZeroValue1Entries = false
         )
         {
-            return AggregateAssignmentsIntoBlocks(
+            if (person != null)
+            {
+                if (person.StartDate > startDate)
+                    startDate = person.StartDate;
+
+                if (person.EndDate != null && person.EndDate < endDate)
+                    endDate = person.EndDate?.AddDays(1) ?? DateTime.Today;
+            }
+
+            var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, gapFillingFunction, tooltipMessageFormatter,
+                endDate, hatchedFunction, value2Function, tooltipMessageFormatter,
                 ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
+
+            Debug.WriteLine($"** Generated {chartItems.Count} block(s) {(person == null ? "" : person.Name)}");
+
+            // Only action the gap filler if a person is provided
+            if (person != null && gapFillingFunction != null)
+            {
+#if DEBUG
+                var currentItemCount = chartItems.Count();
+#endif
+                var extraItems = new List<ChartItem>();
+
+                if (!chartItems.Any() || chartItems.First().StartDate > startDate)
+                {
+                    var endFill = chartItems.Any() ? chartItems.First().StartDate : endDate;
+                    extraItems.AddRange(gapFillingFunction(person, startDate, endFill));
+                }
+
+                if (chartItems.Any() && chartItems.Last().EndDate < endDate)
+                {
+                    extraItems.AddRange(gapFillingFunction(person, chartItems.Last().EndDate, endDate));
+                }
+
+                for (int i = 0; i < chartItems.Count - 1; ++i)
+                {
+                    if (chartItems[i].EndDate != chartItems[i + 1].StartDate)
+                    {
+                        extraItems.AddRange(gapFillingFunction(person, chartItems[i].EndDate, chartItems[i + 1].StartDate));
+                    }
+                }
+
+                if (extraItems.Any())
+                {
+                    chartItems.AddRange(extraItems);
+                    chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
+                }
+#if DEBUG
+                if (currentItemCount != chartItems.Count)
+                {
+                    Debug.WriteLine($"** {chartItems.Count} block(s) for {person.Name} after gap filling");
+                }
+#endif
+            }
+
+            return chartItems;
         }
 
         /// <summary>
@@ -163,7 +109,6 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
-        /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
@@ -176,7 +121,6 @@ namespace PPMTool.Data.Helpers
             DateTime endDate,
             Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
             Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
-            Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
@@ -282,26 +226,219 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Represents the effort data for a given resource on a given task
+        /// </summary>
+        public class ResourceEffort
+        {
+            /// <summary>
+            /// ID of the person associated with the resource
+            /// </summary>
+            public int PersonId { get; }
+
+            /// <summary>
+            /// The planned work hours
+            /// </summary>
+            public double PlannedWorkHours { get; private set; }
+
+            /// <summary>
+            /// The actual number of hours worked
+            /// </summary>
+            public double ActualHours { get; private set; }
+
+            /// <summary>
+            /// Ctor simply assigns the properties
+            /// </summary>
+            /// <param name="personId"></param>
+            /// <param name="plannedWorkHours"></param>
+            /// <param name="actualHours"></param>
+            public ResourceEffort(int personId, double plannedWorkHours, double actualHours)
+            {
+                PersonId = personId;
+                PlannedWorkHours = plannedWorkHours;
+                ActualHours = actualHours;
+            }
+
+            /// <summary>
+            /// Update the values for this resource by adding new values to existing
+            /// </summary>
+            /// <param name="plannedWorkHoursForResource"></param>
+            /// <param name="actualWorkHoursForResource"></param>
+            internal void UpdateValues(double plannedWorkHoursForResource, double actualWorkHoursForResource)
+            {
+                PlannedWorkHours += plannedWorkHoursForResource;
+                ActualHours += actualWorkHoursForResource;
+            }
+        }
+
+        /// <summary>
+        /// Represents the effort for tasks and assignments for a given week
+        /// </summary>
+        public class WeeklyTaskEffort
+        {
+            /// <summary>
+            /// The date of the week beginning
+            /// </summary>
+            public DateTime WeekDate { get; }
+
+            /// <summary>
+            /// Sum of the planned work across all tasks assuming all demand is met
+            /// </summary>
+            public double PlannedWorkHoursDemandMet { get; }
+
+            /// <summary>
+            /// Sum of the planned work across all tasks based on assignments
+            /// </summary>
+            public double AssignedPlannedWorkHours { get; }
+
+            /// <summary>
+            /// The actual work hours done by all resources across all tasks in this week
+            /// </summary>
+            public double ActualWorkHours { get; }
+
+            /// <summary>
+            /// Details of every assignment. The sum of the planned work hours will be lower than the 
+            /// <see cref="PlannedWorkHoursDemandMet"/> value if there is unmet demand.
+            /// </summary>
+            public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
+
+            /// <summary>
+            /// Ctor takes the tasks running and the current week to generate resource breakdown
+            /// </summary>
+            /// <param name="currentWeek"></param>
+            /// <param name="tasksRunningInWeek"></param>
+            public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek, IEnumerable<Resource> allResourcesOnProject)
+            {
+                WeekDate = currentWeek;
+
+                // For every resource on every task build a representation of the information
+                foreach (var subTask in tasksRunningInWeek)
+                {
+                    // Duration of the task
+                    int durationOfTask = subTask.DurationDays + 1;
+
+                    // Total effort demand met, planned and actuals
+                    double billableDays = SubTask.GetNumberOfBillableDays(subTask.StartDate, durationOfTask - 1);
+                    double effortDemandMet = Math.Floor(billableDays * 7 * subTask.Demand);
+                    if (subTask.UnmetDemand == 0)
+                    {
+                        // Just set to same as planned as close enough
+                        effortDemandMet = subTask.PlannedWorkHours;
+                    }
+                    double effortPlanned = subTask.PlannedWorkHours;
+                    double effortActual = subTask.ActualWorkHours;
+
+                    // Find the total FTE across all resources to later work out proportions
+                    double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                    // How many whole days does task run this week
+                    int taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
+
+                    // Proportion of the task that runs this week
+                    double proportionOfTaskThisWeek = taskDaysThisWeek / (double)durationOfTask;
+
+                    // How many days has the task run so far (for actuals)
+                    DateTime endDateActuals = subTask.EndDate < DateTime.Today ? subTask.EndDate : DateTime.Today;
+                    int daysRunSoFar = (int)(endDateActuals.Subtract(subTask.StartDate).TotalDays) + 1;
+
+                    // Proportion of the actuals this week
+                    double proportionOfActualsThisWeek = endDateActuals > DateTime.Today ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
+
+                    // Add to the demand for the week across all tasks
+                    PlannedWorkHoursDemandMet += effortDemandMet * proportionOfTaskThisWeek;
+
+                    // Add to the planned hours based on assigned resources
+                    var plannedHoursForTaskThisWeek = effortPlanned * proportionOfTaskThisWeek;
+                    AssignedPlannedWorkHours += plannedHoursForTaskThisWeek;
+
+                    // Add to the actual work hours based on the resources
+                    var actualsThisWeek = effortActual * proportionOfActualsThisWeek;
+                    ActualWorkHours += actualsThisWeek;
+
+                    // For each resource on the task, calculate their contribution to the planned work
+                    foreach (var res in subTask.AssignedResources)
+                    {
+                        // Work out the contribution of this resource to planned work and actuals
+                        var plannedWorkHoursForResource = (res.AssignmentFTE / totalFTE) * plannedHoursForTaskThisWeek;
+                        var actualWorkHoursForResource = effortActual > 0 ? (res.ActualWorkHours / effortActual) * actualsThisWeek : 0;
+
+                        // Add a resource effort object if required or update existing
+                        var existingResource = ResourceEffort.FirstOrDefault(x => x.PersonId == res.Person.PersonId);
+                        if (existingResource == null)
+                        {
+                            ResourceEffort.Add(new ResourceEffort(res.Person.PersonId, plannedWorkHoursForResource, actualWorkHoursForResource));
+                        }
+                        else
+                        {
+                            existingResource.UpdateValues(plannedWorkHoursForResource, actualWorkHoursForResource);
+                        }
+                    }
+                }
+
+                // Check that there are entries for all resources who worked on the project even if not assigned during that week
+                foreach (var personId in allResourcesOnProject.Select(x => x.Person.PersonId))
+                {
+                    if (!ResourceEffort.Any(x => x.PersonId == personId))
+                    {
+                        ResourceEffort.Add(new ResourceEffort(personId, 0, 0));
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Special cosntructor to allow aggregation of the values by adding the values to the previous week values
+            /// </summary>
+            /// <param name="currentWeek"></param>
+            /// <param name="previousWeek"></param>
+            public WeeklyTaskEffort(WeeklyTaskEffort currentWeek, WeeklyTaskEffort previousWeek)
+            {
+                WeekDate = currentWeek.WeekDate;
+                PlannedWorkHoursDemandMet = (previousWeek?.PlannedWorkHoursDemandMet ?? 0) + currentWeek.PlannedWorkHoursDemandMet;
+                AssignedPlannedWorkHours = (previousWeek?.AssignedPlannedWorkHours ?? 0) + currentWeek.AssignedPlannedWorkHours;
+                ActualWorkHours = (previousWeek?.ActualWorkHours ?? 0) + currentWeek.ActualWorkHours;
+
+                foreach (var res in currentWeek.ResourceEffort)
+                {
+                    double lastWeekPlanned = 0;
+                    double lastWeekActual = 0;
+
+                    // Find the existing resource effort for this person from previous week
+                    var existingResource = previousWeek?.ResourceEffort?.FirstOrDefault(x => x.PersonId == res.PersonId);
+
+                    // Update the planned and actuals based on this
+                    if (existingResource != null)
+                    {
+                        // If exists, add the values to the existing one
+                        lastWeekPlanned = existingResource.PlannedWorkHours;
+                        lastWeekActual = existingResource.ActualHours;
+                    }
+
+                    // Now add the current week's values to the previous week values
+                    ResourceEffort.Add(
+                        new ResourceEffort(
+                            res.PersonId,
+                            lastWeekPlanned + res.PlannedWorkHours,
+                            lastWeekActual + res.ActualHours
+                        )
+                    );
+                }
+
+            }
+        }
+
+        /// <summary>
         /// Time-marching method for summing up the contribution week-by-week based on the value functions provided.
         /// The results are arranged into blocks exactly one week in length.
         /// </summary>
-        /// <param name="label"></param>
-        /// <param name="subTasks"></param>
-        /// <param name="value1Function">Function to determine a value for subtasks in the current week</param>
-        /// <param name="value2Function">Function to determine a second value for subtasks in the current week></param>
-        /// <param name="hatchedFunction">Function to determine hatched status for subtasks in the current week</param>
+        /// <param name="subTasks">All subtasks associated with a project</param>
         /// <returns></returns>
-        public static IEnumerable<ChartItem> AggregateSubTasksByWeek(
-            string label,
-            IEnumerable<SubTask> subTasks,
-            Func<IEnumerable<SubTask>, DateTime, double> value1Function,
-            Func<IEnumerable<SubTask>, DateTime, double> value2Function = null,
-            Func<IEnumerable<SubTask>, bool> hatchedFunction = null
-        )
+        public static IEnumerable<WeeklyTaskEffort> GetWeeklyTaskEffortItems(IEnumerable<SubTask> subTasks)
         {
             // Initialise
-            var temp = new List<ChartItem>();
+            var temp = new List<WeeklyTaskEffort>();
             if (subTasks.Count() < 1) return temp;
+
+            // Get all the unique resources
+            var resources = subTasks.SelectMany(x => x.AssignedResources).DistinctBy(x => x.Person.PersonId);
 
             // Get earliest assignment to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
@@ -309,7 +446,7 @@ namespace PPMTool.Data.Helpers
             // Move to a Monday
             start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
-            // Get latest assignment finish, adding a day so it is the first day when no work will be done.
+            // Get latest assignment finish, adding a day so the marching stops when there is no work to be done.
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
 
             // Move to the next Sunday if not already a Sunday
@@ -327,17 +464,7 @@ namespace PPMTool.Data.Helpers
                 var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
-                temp.Add(
-                    new ChartItem(
-                        null,
-                        label,
-                        startOfWeek,
-                        endOfWeek,
-                        value1Function(within, startOfWeek),
-                        value2Function != null ? value2Function(within, startOfWeek) : 0,
-                        hatchedFunction != null ? hatchedFunction(within) : false
-                    )
-                );
+                temp.Add(new WeeklyTaskEffort(startOfWeek, within, resources));
 
                 // Increment by 1 week
                 startOfWeek = startOfWeek.AddDays(7);
@@ -379,6 +506,7 @@ namespace PPMTool.Data.Helpers
         /// functions which accept the current WLM active on the day.
         /// </summary>
         /// <param name="person"></param>
+        /// <param name="wlmChanges">All WLM changes for this person</param>
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="value1FromWLMFunction"></param>
@@ -388,6 +516,7 @@ namespace PPMTool.Data.Helpers
         /// <returns></returns>
         public static IEnumerable<ChartItem> FillGapsBetweenChartItemsFromWorkloadModels(
             Person person,
+            IEnumerable<WorkloadModelChange> wlmChanges,
             DateTime startDate,
             DateTime endDate,
             Func<WorkloadModelChange, double> value1FromWLMFunction,
@@ -399,7 +528,7 @@ namespace PPMTool.Data.Helpers
             var blocks = new List<ChartItem>();
 
             // Get any workload model changes in force at the beginning of, or during, the window
-            var changes = person.WorkloadModelChanges.Where(x => x.ChangeDate < endDate).ToList();
+            var changes = wlmChanges.Where(x => x.ChangeDate < endDate).ToList();
 
             // If person has a leaving date in the window then set zero availability after by adding a fake change
             if (person.EndDate != null)

@@ -70,9 +70,11 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<Person> GetAllShallow(PPMToolContext context)
+        public async Task<IEnumerable<Person>> GetAllShallowAsync(PPMToolContext context)
         {
-            return context.People;
+            return await context.People
+                .OrderBy(x => x.Name)
+                .ToListAsync();
         }
 
         /// <summary>
@@ -181,6 +183,19 @@ namespace PPMTool.Services
         internal IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
         {
             return context.People.Where(x => activeUser == null ? false : x.LineManager.PersonId == activeUser.PersonId);
+        }
+
+        /// <summary>
+        /// Gets all the workload model changes for the person
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        internal IEnumerable<WorkloadModelChange> GetWorkloadModelChanges(PPMToolContext context, int personId)
+        {
+            return context.WorkloadModelChanges
+                .Include(x => x.Person)
+                .Where(x => x.Person.PersonId == personId);
         }
     }
 }

@@ -7,7 +7,7 @@
 @using PPMTool.Enums
 @using Radzen
 
-<RadzenTemplateForm TItem="Invoice" Submit="@HandleValidSubmit" Data="@Invoice">
+<RadzenTemplateForm TItem="Invoice" Submit="@(() => HandleValidSubmit())" Data="@Invoice">
     <RadzenFieldset Text="Invoice Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Stretch">
@@ -17,7 +17,7 @@
                 </RadzenStack>
                 <RadzenStack Orientation="Radzen.Orientation.Vertical">
                     <RadzenLabel Component="Amount" Text="Amount" class="font-weight-bold" />
-                    <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" Style="width:100%;" Format="@("£0.00")" />
+                    <RadzenNumeric @bind-Value="Invoice.Value" Name="Amount" TValue="double" Step="0.01" Placeholder="0.00" Style="width:100%;" Format="@("£0.00")" />
                 </RadzenStack>
             </RadzenStack>
             <RadzenLabel Component="Notes" Text="Notes" class="font-weight-bold" />
@@ -70,18 +70,25 @@
         if (Invoice == null)
         {
             Invoice = new Invoice
-                {
-                    Project = Project
-                };
+            {
+                Project = Project
+            };
         }
 
         // Statuses for the dropdown
         statuses = Enum.GetValues(typeof(InvoiceStatus)).Cast<InvoiceStatus>();
+
+        // Set the internal reference on the base class
+        SetFinanceItemModel(Invoice);
     }
 
-    protected override void HandleValidSubmit()
+    protected override bool HandleValidSubmit()
     {
-        base.HandleValidSubmit();
+        var valid = base.HandleValidSubmit();
+        if (!valid)
+        {
+            return false;
+        };
 
         // Validate
         if (string.IsNullOrWhiteSpace(Invoice.InvoiceReference))
@@ -91,12 +98,12 @@
         if (string.IsNullOrWhiteSpace(Invoice.Description))
         {
             errorMessage = "You must give this item a description!";
-            return;
+            return false;
         }
         if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
         {
             errorMessage = "Invoice URL is required which links to an invoice or email as a SharePoint document so there is a physical record of the payment request!";
-            return;
+            return false;
         }
 
         if (Invoice.InvoiceId > 0)
@@ -111,6 +118,7 @@
         }
 
         CloseForm(true);
+        return true;
     }
 
     /// <summary>

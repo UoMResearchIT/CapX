@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using DotNetExtensions;
 using Radzen;
 
@@ -117,6 +115,20 @@ namespace PPMTool.Enums
                 status == ProjectStatus.NewRequest ||
                 status == ProjectStatus.AwaitingSubmission ||
                 status == ProjectStatus.AwaitingOutcome;
+        }
+
+        /// <summary>
+        /// The project ran i.e. it is in the active, paused, maintenance or finished state
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool DidRun(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.Active ||
+                status == ProjectStatus.Paused ||
+                status == ProjectStatus.Maintenance ||
+                status == ProjectStatus.Finished;
         }
 
         /// <summary>

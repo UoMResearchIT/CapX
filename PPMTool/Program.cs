@@ -17,7 +17,47 @@ using Radzen;
 using Serilog;
 #endif
 
+var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
 var builder = WebApplication.CreateBuilder(args);
+
+// Add environment variables to the configuration
+builder.Configuration.AddEnvironmentVariables();
+var overridingValues = new Dictionary<string, string>();
+
+// Get the API key from the environment
+var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
+if (!string.IsNullOrEmpty(apiKeySecret))
+{
+    overridingValues.Add("Jwt:SecretKey", apiKeySecret);
+}
+else
+{
+    if (!isDesignTime)
+    {
+#if !LOCAL
+        throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
+#else
+        // Check that user secrets has actually set a value
+        if (string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+        {
+            throw new InvalidOperationException("API_KEY_SECRET environment variable is not set and user secrets has not been configured!");
+        }
+#endif
+    }
+}
+var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
+if (!string.IsNullOrEmpty(sentryDsn))
+{
+    overridingValues.Add("Sentry:Dsn", sentryDsn);
+}
+else
+{
+    if (!isDesignTime && builder.Environment.IsProduction())
+    {
+        throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
+    }
+}
+builder.Configuration.AddInMemoryCollection(overridingValues);
 
 #if RELEASE
 // Configure logging
@@ -36,23 +76,10 @@ SentrySdk.Init(o =>
 {
     o.Dsn = builder.Configuration.GetValue<string>("Sentry:Dsn");
     o.Release = builder.Configuration.GetValue<string>("VersionNumber");
+    o.Environment = builder.Environment.EnvironmentName;
     o.Debug = true;
 });
 #endif
-
-// Add environment variables to the configuration
-builder.Configuration.AddEnvironmentVariables();
-
-// Get the API key from the environment
-var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-if (!string.IsNullOrEmpty(apiKeySecret))
-{
-    // Add or override the Jwt:SecretKey in the configuration
-    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
-        {
-            { "Jwt:SecretKey", apiKeySecret }
-        });
-}
 
 // Configure the services
 builder.Services.AddRazorPages();

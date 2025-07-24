@@ -20,25 +20,30 @@ namespace PPMTool.Migrations
         private HashSet<string> GetSkillsFromSkillGraphRepo()
         {
             using var client = new HttpClient();
-
-            var response = client.GetAsync(skillJsonEndpoint).Result.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
-
-            var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");
-
             HashSet<string> skillsToInsert = new();
-            foreach (var person in dictionary)
-            {
-                person.Value.TryGetValue("interests", out List<string> interests);
-                if (interests is not null)
-                {
-                    skillsToInsert.UnionWith(interests);
-                }
-            }
 
-            // Overwrite local file if it exists
-            File.WriteAllLines(localFilePath, skillsToInsert, Encoding.UTF8);
-            Console.WriteLine($"{skillsToInsert.Count} skills from the Skills Graph have been written to {localFilePath}");
+            try
+            {
+                var response = client.GetAsync(skillJsonEndpoint).Result.EnsureSuccessStatusCode();
+                var content = response.Content.ReadAsStringAsync().Result;
+
+                var dictionary = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(content) ?? throw new Exception("Failed to deserialize JSON");
+
+
+                foreach (var person in dictionary)
+                {
+                    person.Value.TryGetValue("interests", out List<string> interests);
+                    if (interests is not null)
+                    {
+                        skillsToInsert.UnionWith(interests);
+                    }
+                }
+
+                // Overwrite local file if it exists
+                File.WriteAllLines(localFilePath, skillsToInsert, Encoding.UTF8);
+                Console.WriteLine($"{skillsToInsert.Count} skills from the Skills Graph have been written to {localFilePath}");
+            }
+            catch { }
 
             return skillsToInsert;
 

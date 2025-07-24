@@ -236,8 +236,7 @@
                 // Generate availability profiles over the period
                 // Value 1 function produces the availability of the individual taking into account their 
                 // current assignments and WLM
-                blocksAsChartItems.AddRange(ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                    person,
+                blocksAsChartItems.AddRange(ChartHelper.ConvertAssignmentsToChartItems(
                     assignments,
                     (assignments, currentDay) =>
                     {
@@ -263,6 +262,7 @@
                     person.Name,
                     startDate,
                     endDate,
+                    person,
                     assignments =>
                     {
                         return assignments.Any(assignment =>

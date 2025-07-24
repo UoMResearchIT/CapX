@@ -6,6 +6,7 @@ namespace PPMTool.Services
 {
     public class CompetencyService : BaseEntityService<Competency>
     {
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -41,8 +42,19 @@ namespace PPMTool.Services
         public override IEnumerable<Competency> GetAll(PPMToolContext context)
         {
             return context.Competencies
+                .Include(x => x.Assessments);
+        }
+
+        /// <summary>
+        /// Return all the competencies in the DB and asynchronously copies them to memory
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<Competency>> GetAllAsync(PPMToolContext context)
+        {
+            return await context.Competencies
                 .Include(x => x.Assessments)
-                .ThenInclude(x => x.Person);
+                .ToListAsync();
         }
 
         /// <summary>
@@ -50,11 +62,14 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<Competency> GetAllActive(PPMToolContext context)
+        public async Task<IEnumerable<Competency>> GetAllActiveAsync(PPMToolContext context)
         {
-            return GetAll(context).Where(x => x.IsActive);
+            var allCompetencies = await GetAllAsync(context);
+            return allCompetencies
+                .Where(x => x.IsActive);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -75,7 +90,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="competencyId"></param>
         /// <returns></returns>
-        internal Competency GetById(PPMToolContext context, int competencyId)
+        public Competency GetById(PPMToolContext context, int competencyId)
         {
             return context.Competencies.FirstOrDefault(x => x.CompetencyId == competencyId);
         }
@@ -88,6 +103,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Competency entity)
         {
+            if (string.IsNullOrEmpty(entity?.LegacyId))
+            {
+                return false;
+            }
             var legacyId = entity?.LegacyId.Trim().ToLower();
             return context.Competencies.Any(x => x.CompetencyId != entity.CompetencyId && x.LegacyId.Trim().ToLower() == legacyId);
         }

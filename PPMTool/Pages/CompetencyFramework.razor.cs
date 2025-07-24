@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using ClosedXML.Excel;
 using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -183,8 +184,8 @@ namespace PPMTool.Pages
                         // Get one "fully met" assessment per competency for the given person and count them
                         CompetencyMetValues[group.Key] = group
                             .SelectMany(x => x.Assessments)
-                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.Person.PersonId == selectedPerson.PersonId)
-                            .DistinctBy(x => x.AssociatedCompetency.CompetencyId)
+                            .Where(x => x.Status == AssessmentStatus.FullyMet && x.PersonId == selectedPerson.PersonId)
+                            .DistinctBy(x => x.CompetencyId)
                             .Count();
                         Met += CompetencyMetValues[group.Key];
                     }
@@ -213,6 +214,189 @@ namespace PPMTool.Pages
         private string competencySearchTerms;
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
         private bool showUnMetOnly;
+        private bool showAllStaff = true;
+        private bool exportRunning;
+
+        private class CompetencyAssessmentExportLine
+        {
+            /// <summary>
+            /// Three digit ID so we can identify grade, category, number
+            /// </summary>
+            public string Id { get; }
+
+            /// <summary>
+            /// The category description
+            /// </summary>
+            public string Category { get; }
+
+            /// <summary>
+            /// Description of the competency
+            /// </summary>
+            public string Description { get; }
+
+            /// <summary>
+            /// DateTime of the latest assessment
+            /// </summary>
+            public DateTime LatestAssessmentDate { get; }
+
+            /// <summary>
+            /// Status of the latest assessment
+            /// </summary>
+            public string AssessmentStatus { get; }
+
+            /// <summary>
+            /// Evidence associated with the latest assessment
+            /// </summary>
+            public string Evidence { get; }
+
+            /// <summary>
+            /// Constructor assigns the properties from the competency and the latest assessment
+            /// </summary>
+            /// <param name="competency"></param>
+            /// <param name="latestAssessment"></param>
+            public CompetencyAssessmentExportLine(Competency competency, CompetencyAssessment latestAssessment)
+            {
+                Id = competency.GetHierarchyId();
+                Category = competency.Category.GetDescription();
+                Description = HtmlHelper.ConvertToPlainText(competency.Description);
+                LatestAssessmentDate = latestAssessment == null ? new DateTime() : DateTime.Parse(latestAssessment.DateCreated);
+                AssessmentStatus = latestAssessment == null ? Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
+                Evidence = latestAssessment == null ? "Never assessed!" : HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
+            }
+        }
+
+        /// <summary>
+        /// Method to export an Excel file with the information in it from the currently displayed journey
+        /// </summary>
+        private async Task ExportDataAsync()
+        {
+            LogInformation($"Exporting development journey for {SelectedPerson?.Name}...");
+
+            exportRunning = true;
+
+            await Task.Run(async () =>
+            {
+                // Create blank list of data
+                var assessments = new List<CompetencyAssessmentExportLine>();
+
+                // Get the assessment info
+                if (SelectedPerson == null)
+                {
+                    LogWarning("Tried to export data without selecting a person!");
+                    return;
+                }
+
+                // Go through the groups and extract the info
+                foreach (var group in competencyGroups)
+                {
+                    foreach (var category in group.CompetenciesGroupedByCategory)
+                    {
+                        foreach (var competency in category.Where(x => x.IsActive))
+                        {
+                            var latestAssessment = competency.Assessments
+                                .Where(x => x.PersonId == SelectedPerson.PersonId)
+                                .OrderByDescending(x => x.DateCreated)
+                                .FirstOrDefault();
+                            assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                        }
+                    }
+                }
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Create file path
+                        var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(folder, filename);
+
+                        // Create workbook and worksheet
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add("Data");
+
+                            // Write header row
+                            var props = typeof(CompetencyAssessmentExportLine).GetProperties();
+                            var propNames = props.Select(x => x.Name).ToList();
+                            for (int i = 0; i < propNames.Count; i++)
+                            {
+                                var cell = worksheet.Cell(1, i + 1);
+                                cell.Value = propNames[i];
+                                cell.Style.Font.Bold = true;
+                            }
+
+                            // Write data rows
+                            for (int row = 0; row < assessments.Count; row++)
+                            {
+                                var record = assessments[row];
+                                for (int col = 0; col < propNames.Count; col++)
+                                {
+                                    var property = record.GetType().GetProperty(propNames[col]);
+                                    var rawValue = property?.GetValue(record);
+                                    var cell = worksheet.Cell(row + 2, col + 1);
+
+                                    // Format and assign
+                                    if (propNames[col] == "LatestAssessmentDate")
+                                    {
+                                        if (rawValue is DateTime dt)
+                                        {
+                                            cell.Value = dt;
+                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (rawValue is int)
+                                        {
+                                            cell.Value = (int)rawValue;
+                                        }
+                                        else if (rawValue is double)
+                                        {
+                                            cell.Value = (double)rawValue;
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Save the workbook
+                            workbook.SaveAs(path);
+                        }
+
+                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
+        }
 
         /// <summary>
         /// Method to update the met count of each available competency group
@@ -226,41 +410,57 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Method to create a background task for loading the available people dropdown
+        /// </summary>
+        /// <returns></returns>
+        private async Task GetAvailablePeopleAsync()
+        {
+            Debug.WriteLine($"** Getting people for {ActiveUser?.Name}...");
+
+            // Get starting lists from the DB
+            availablePeople = await PersonService.GetAllShallowAsync(Context);
+            if (!showAllStaff)
+            {
+                availablePeople = availablePeople.Where(x => x.IsCurrentStaff());
+            }
+            if (!userIsSuperuser)
+            {
+                // Self plus direct reports
+                availablePeople = availablePeople
+                    .Where(x => x.PersonId == activeUserId || x.LineManager?.PersonId == activeUserId)
+                    .OrderBy(x => x.Name);
+            }
+        }
+
+        /// <summary>
         /// Generates a background task for loading the competency data
         /// </summary>
         /// <returns></returns>
-        private Task GetTask()
+        private async Task LoadDataAsync()
         {
-            InvokeAsync(() =>
+            Loading = true;
+            StateHasChanged();
+
+            Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
+
+            // Populate the drop down
+            await GetAvailablePeopleAsync();
+
+            // Get all active competencies from DB
+            competencies = await CompetencyService.GetAllActiveAsync(Context);
+
+            // Run a background task to do the processing
+            await Task.Run(() =>
             {
-                Loading = true;
-                StateHasChanged();
-            });
-
-            return Task.Run(() =>
-            {
-                Debug.WriteLine($"** Running competency load task for {selectedPerson?.Name}...");
-
-                // Get starting lists from the DB
-                availablePeople = PersonService.GetAll(Context).OrderBy(x => x.Name);
-                if (!userIsSuperuser)
-                {
-                    // Self plus direct reports who are current
-                    availablePeople = availablePeople
-                        .Where(x => x.PersonId == activeUserId || (x.LineManager?.PersonId == activeUserId && x.IsCurrentStaff()))
-                        .OrderBy(x => x.Name);
-                }
-                competencies = CompetencyService.GetAllActive(Context);
-
                 // Filter the competencies by those with only unmet or no assessments
                 if (showUnMetOnly)
                 {
                     // Get assessments grouped by competency ID
                     var latestAssessments = competencies
                             .SelectMany(x => x.Assessments)
-                            .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                            .Where(x => x.PersonId == selectedPerson.PersonId)
                             .OrderByDescending(x => x.DateCreated)
-                            .GroupBy(x => x.AssociatedCompetency.CompetencyId);
+                            .GroupBy(x => x.CompetencyId);
 
                     // Get a list of competency IDs for those where the latest assessment is fully met
                     var exceptionList = new List<int>();
@@ -290,7 +490,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -306,7 +506,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -322,18 +522,15 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.Person.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
 
                 competencyGroups = groups;
                 UpdateMet();
-
             }).ContinueWith(t =>
             {
-                Debug.WriteLine($"** ...Competency load task complete: {t.Status}");
-
                 InvokeAsync(() =>
                 {
                     Loading = false;
@@ -353,9 +550,12 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-        protected override void OnInitialized()
+        /// <summary>
+        /// Run when the component is first created
+        /// </summary>
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             // Check user permissions
             userIsSuperuser = ActiveUser?.RoleType == RoleType.Superuser;
@@ -365,7 +565,7 @@ namespace PPMTool.Pages
             SelectedPerson = ActiveUser?.Person;
 
             // Kick off a DB task to get the data
-            EnqueueLoadData(GetTask);
+            await LoadDataAsync();
 
             LogInformation("Viewing competencies framework");
         }
@@ -393,7 +593,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void AddAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
+            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.AddAssessment(Context, assessment);
@@ -412,7 +612,7 @@ namespace PPMTool.Pages
         /// <param name="assessment"></param>
         private void UpdateAssessment(CompetencyAssessment assessment)
         {
-            LogInformation($"Updating assessment to \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.AssociatedCompetency?.CompetencyId}");
+            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.UpdateAssessment(Context, assessment);
@@ -445,7 +645,8 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            if (string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
+            // Need to have evidence but only if assessment status is partially met or met
+            if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
                 message = "Evidence is required!";
                 return false;
@@ -467,9 +668,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Callback for when a person is selected from the dropdown
         /// </summary>
-        private void PersonSelected()
+        private async Task PersonSelectedAsync()
         {
-            EnqueueLoadData(GetTask);
+            await LoadDataAsync();
         }
 
         /// <summary>

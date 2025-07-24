@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -246,8 +242,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate)
         {
-            return ChartHelper.ConvertAssignmentsToChartItemsForPerson(
-                person,
+            return ChartHelper.ConvertAssignmentsToChartItems(
                 assignments,
                 (assignments, currentDay) =>
                 {
@@ -264,6 +259,7 @@ namespace PPMTool.Pages
                 person.Name,
                 startDate,
                 endDate,
+                person,
                 assignments =>
                 {
                     return assignments.Any(assignment =>
@@ -279,7 +275,19 @@ namespace PPMTool.Pages
                 {
                     return person.GetAvailabilityOnDate(currentDay);
                 },
-                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                (assignments, gapStart, gapEnd) =>
+                {
+                    return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                        person,
+                        PersonService.GetWorkloadModelChanges(Context, person.PersonId),
+                        gapStart,
+                        gapEnd,
+                        wlm => 0,
+                        wlm => wlm?.ProjectWorkFTE ?? 0,
+                        (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
+                    );
+                },
+                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -324,7 +332,7 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 // Hatched function
-                assignments =>
+                hatchedFunction: assignments =>
                 {
                     return assignments.Any(assignment =>
                     {
@@ -337,7 +345,7 @@ namespace PPMTool.Pages
                     });
                 },
                 // Value 2 for each block
-                (assignments, value1, currentDay) =>
+                value2Function: (assignments, value1, currentDay) =>
                 {
                     var peo = people.Where(y => y == person);
 

@@ -33,6 +33,16 @@ namespace PPMTool.Pages
             await base.SaveRow(entity);
         }
 
+        protected override void OnCreateRow(SkillTag entity)
+        {
+            // Override as need to set the value of rareness and rareness count
+            entity.Rareness = SkillRareness.Epic;
+            entity.RarenessCount = 0;
+
+            // Now call the base method which adds it to the DB
+            base.OnCreateRow(entity);
+        }
+
         protected override async Task DeleteRow(SkillTag entity)
         {
             if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
@@ -45,6 +55,7 @@ namespace PPMTool.Pages
                 // Remove from data grid
                 dataGridEntityService.Delete(Context, entity);
                 LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
+                await dataGrid.Reload();
             }
         }
 
@@ -149,15 +160,18 @@ namespace PPMTool.Pages
             Loading = true;
             Task.Run(async () =>
             {
-                var toVerify = dataGridEntities.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToList();
+                var toVerify = await TagService.GetAllPendingAsync(Context);
+                Debug.WriteLine($"** {toVerify.Count} tags to verify...");
                 foreach (var tag in toVerify)
                 {
                     var res = await tag.UpdateValidLink();
                     if (res != LinkCheckState.Pending)
                     {
+                        Logger.LogInformation($"Updating the wiki link status for {tag.ControlledName}");
                         TagService.Update(Context, tag);
                     }
                 }
+                LoadDataGrid(new LoadDataArgs());
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>

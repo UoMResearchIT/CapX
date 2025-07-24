@@ -18,9 +18,11 @@
                         <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
                         <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                         <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
+                        <RadzenText Text="Use Stacked Bars" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                        <RadzenSwitch @bind-Value="@useStackedBars" Change="@DisplayStyleChanged" />
                     </RadzenStack>
                 </RadzenStack>
-                <HintComponent Message="To view the difference between timesheets and the WLM, enable 'Compare to Workload Model' option. To scale the number of hours booked to 1.0 FTE (i.e. you are then viewing the proportion of time spent rather than the absolute amount), enable the 'Scale by Total Hours' option." />
+                <HintComponent Message="To view the difference between timesheets and the WLM, enable 'Compare to Workload Model' option. To scale the number of hours booked to 1.0 FTE (i.e. you are then viewing the proportion of time spent rather than the absolute amount), enable the 'Scale by Total Hours' option. Click on a block to navigate to the timesheet for that week." />
             </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
@@ -67,7 +69,9 @@
                                    ChartOptions="@wlmChartOptions[i]"
                                    ChartItems="@wlmChartItems.ElementAt(i).Value"
                                    CompareToWorkloadModel="@compareToWLM"
-                                   NormalisedByTotalHours="@normalisedByTotalHours" />
+                                   NormalisedByTotalHours="@normalisedByTotalHours"
+                                   OnDataPointSelected="@OnDataPointSelection"
+                                   UseStackedBars="@useStackedBars" />
             }
         </RadzenRow>
     }
