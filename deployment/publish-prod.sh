@@ -2,6 +2,8 @@
 
 ## Lives on the build/test system but executed on the production system via the deploy-prod script ##
 
+set -eu
+
 # Stop the applications
 sudo systemctl stop kestrel-capx.service
 sudo systemctl stop kestrel-capx-api.service
@@ -16,7 +18,7 @@ filename=PPMTool-$(date +"%Y%m%d-%H%M%S").db
 sudo cp -a ~/backup/PPMTool.db ~/CapX_Data_Backup/$filename
 
 # Remove WAL files
-sudo rm /var/www/capx/PPMTool.db-*
+sudo rm -f /var/www/capx/PPMTool.db-*
 
 # Publish
 sudo cp -rf ~/CapX-Prod/PPMTool/bin/Release/net8.0/publish/* /var/www/capx/
