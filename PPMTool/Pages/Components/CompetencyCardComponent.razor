@@ -59,7 +59,9 @@
                             </RadzenText>
                         </RadzenStack>
                     </RadzenStack>
-                    <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditAssessment(assessment))" Disabled="@(SelectedPerson?.PersonId != ActiveUserId || assessmentToEdit != null)" />
+                    <RadzenStack>
+                        <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@(() => EditAssessment(assessment))" Disabled="@(SelectedPerson?.PersonId != ActiveUserId || assessmentToEdit != null)" />
+                    </RadzenStack>
                 </RadzenStack>
             }
         }
