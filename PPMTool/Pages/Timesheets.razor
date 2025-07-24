@@ -22,11 +22,13 @@
         </div>
     </div>
     <hr />
-    <div class="card">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-            <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem;" />
-            <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" Disabled="@Loading" />
-        </RadzenStack>
+    <div class="row align-items-center justify-content-end">
+        <div class="col-auto" style="margin-bottom: 1rem;">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                <RadzenText TextStyle=TextStyle.Subtitle1 Text="Show All Timesheets" Style="margin-bottom: -0.2rem;" />
+                <RadzenSwitch @bind-Value="@ShowAllMyTimesheets" Disabled="@Loading" />
+            </RadzenStack>
+        </div>
     </div>
     <div class="card">
         @if (Loading)
@@ -70,25 +72,26 @@
     </div>
 
     <div style="padding-top: 3rem" hidden="@hideStaffResults">
-        <div class="row">
-            <div class="col-auto mr-auto">
+        <div class="row align-items-center">
+            <div class="col">
                 <h1>My Staff Timesheets</h1>
+            </div>
+            <div class="col-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Visible="@(ActiveUserRoleType == RoleType.Superuser)">
+                    <RadzenText TextStyle="TextStyle.Subtitle1"  Text="Show Synopsis for ALL Staff" Style="margin-bottom: -0.2rem" />
+                    <RadzenSwitch @bind-Value="@SuperuserShowSynopsisForAllStaff" Disabled="@Loading" />
+                </RadzenStack>
             </div>
         </div>
         <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> {new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions)})" />
         <hr />
-        <div class="card">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <div class="row align-items-center justify-content-end">
+            <div class="col-auto" style="margin-bottom: 1rem;">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" >
-                    <RadzenText Text="Staff Synopsis" Style="margin-bottom: 0.2rem" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="Show Staff Synopsis" Style="margin-bottom: -0.2rem" />
                     <RadzenSwitch @bind-Value="@ShowSynopsis" Disabled="@Loading" />
                 </RadzenStack>
-                    
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Visible="@(ActiveUserRoleType == RoleType.Superuser)">
-                    <RadzenText Text="Show Synopsis for ALL Staff" Style="margin-bottom: 0.2rem" />
-                    <RadzenSwitch @bind-Value="@SuperuserShowSynopsisForAllStaff" Disabled="@Loading" />
-                </RadzenStack>
-            </RadzenStack>
+            </div>
         </div>
         <div class="card" hidden="@(!ShowSynopsis)">
             @if (Loading)
@@ -160,12 +163,14 @@
                 <HintComponent Message="Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. Current calendar week is shaded in cream." />
             }
         </div>
-
-        <div class="card" style="margin-top: 1rem;">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Show All Timesheets" Style="margin-bottom: 0.2rem" />
-                <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" Disabled="@Loading" />
-            </RadzenStack>
+        <hr />
+        <div class="row align-items-center justify-content-end">
+            <div class="col-auto" style="margin-bottom: 1rem;">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle=TextStyle.Subtitle1 Text="Show All Timesheets" Style="margin-bottom: -0.2rem;" />
+                    <RadzenSwitch @bind-Value="@ShowAllMyStaffTimesheets" Disabled="@Loading" />
+                </RadzenStack>
+            </div>
         </div>
         <div class="card">
             @if (Loading)
