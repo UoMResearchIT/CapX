@@ -57,6 +57,16 @@ else
         throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
     }
 }
+// Seed dummy data if environment variable is set
+var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
+if (!string.IsNullOrEmpty(seedDummyData))
+{
+    if (!isDesignTime)
+    {
+        overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
+    }
+}
+
 builder.Configuration.AddInMemoryCollection(overridingValues);
 
 #if RELEASE
@@ -199,6 +209,17 @@ using (var connection = new SqliteConnection(connectionString))
         command.ExecuteNonQuery();
     }
     connection.Close();
+}
+
+// Seed dummy data if the database is empty
+var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
+if (shouldSeed)
+{
+    using var scope = app.Services.CreateScope();
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+    using var dbContext = dbContextFactory.CreateDbContext();
+
+    // TODO: Seed any blank tables with suitable values
 }
 
 app.Run();

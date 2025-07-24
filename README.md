@@ -25,6 +25,9 @@ Documentation of features and how to use them is available in the Wiki associate
 ## Building from Source
 The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution. There are two projects, one for the API and one for the web app but both use the same DB. There are launch configurations that allow you to run one, the other, or both. There are Debug, Release and Local build configurations. The latter is for local development as it does not integrate with UoM CAS authentication and hence can be run offline. The former two are for deployed versions only.
 
+## Seeding the Database
+The default database produced when first running EF Core's `database update` command runs the migrations available in the source code. This produces a database which contains a single user and a single person attached to that user to allow you to login. In addition, based on the migration data avaialble in the source code, the Manchester timesheet activities and tasks at the time the feature was added are also there as well as the initial competency framework. Every other table is blank. This limits the ability to test new features or to demo the softare without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (or any value in fact) to have the software populate all the empty tables with dummy data on start-up.
+
 ## Running with Docker Compose
 
 To run with Docker Compose, provide your GitHub token as an environment variable:
