@@ -1,4 +1,5 @@
 #! /bin/bash
+set -eu
 
 # Fetch from GitHub
 cd ~/CapX

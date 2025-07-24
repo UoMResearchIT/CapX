@@ -1,4 +1,5 @@
 #! /bin/bash
+set -eu
 
 # Stop the applications
 sudo systemctl stop kestrel-capx.service
