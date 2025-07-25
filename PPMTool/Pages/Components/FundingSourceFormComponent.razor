@@ -44,7 +44,7 @@
         </RadzenStack>
     }
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Source?.FundingSourceId < 1 || !EditAuthorised)" />
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteFundingSource())" Disabled="@(Source?.FundingSourceId < 1 || !EditAuthorised)" />
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
             <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" Disabled="@(!EditAuthorised)" />
             <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
@@ -114,9 +114,9 @@
     }
 
     /// <summary>
-    /// Method to delete a payment after a prompt
+    /// Method to delete a funding source after a prompt
     /// </summary>
-    private async void DeletePayment()
+    private async void DeleteFundingSource()
     {
         bool confirmed = await DialogService.Confirm($"You are about to delete funding source with ID {Source.FundingSourceId}. This cannot be undone!",
                     "Delete Funding Source") ?? false;
@@ -130,7 +130,10 @@
         }
     }
 
-    /// Return the payment ID
+    /// <summary>
+    /// Return the funding source ID
+    /// </summary>
+    /// <returns></returns>
     protected override int GetItemId()
     {
         return Source?.FundingSourceId ?? 0;
