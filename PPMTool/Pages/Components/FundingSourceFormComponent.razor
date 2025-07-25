@@ -60,6 +60,9 @@
     [Inject]
     private FundingSourceService FundingSourceService { get; set; }
 
+    [Inject]
+    private ProjectService ProjectService { get; set; }
+
     private IEnumerable<FundingSourceType> sourceTypes;
 
     protected override void OnInitialized()
@@ -108,6 +111,11 @@
             FundingSourceService.Add(Context, Source);
             PostNoteToProject(FinanceItemChangeType.Add, Source);
         }
+
+        // Update the project budget and save the project
+        var sources = FundingSourceService.GetFundingSources(Context, Project.ProjectId);
+        Project.Budget = sources.Sum(x => x.AmountAvailable);
+        ProjectService.Update(Context, Project);
 
         CloseForm(true);
         return true;
