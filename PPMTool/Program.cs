@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
+using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
 #if RELEASE
@@ -217,9 +218,10 @@ if (shouldSeed)
 {
     using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-    using var dbContext = dbContextFactory.CreateDbContext();
 
-    // TODO: Seed any blank tables with suitable values
+    // Seed tables with suitable values
+    SeedHelper.SeedPeople(scope.ServiceProvider);
+    SeedHelper.SeedAbsences(scope.ServiceProvider);
 }
 
 app.Run();
