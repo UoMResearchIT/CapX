@@ -91,7 +91,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Check whether the <see cref="controlledName"/> resolves to a proper Wikipeida link
         /// </summary>
-        public async Task<LinkCheckState> UpdateValidLink()
+        public async Task<LinkCheckState> UpdateValidLinkAsync()
         {
             HasValidWikiLink = LinkCheckState.Pending;
             var url = GetWikiLink();

@@ -164,7 +164,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** {toVerify.Count} tags to verify...");
                 foreach (var tag in toVerify)
                 {
-                    var res = await tag.UpdateValidLink();
+                    var res = await tag.UpdateValidLinkAsync();
                     if (res != LinkCheckState.Pending)
                     {
                         Logger.LogInformation($"Updating the wiki link status for {tag.ControlledName}");

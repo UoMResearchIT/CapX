@@ -328,14 +328,24 @@ namespace PPMTool.Data.Helpers
                 var random = new Random();
                 foreach (var person in context.People)
                 {
+                    var skillIdsOwned = new List<int>();
                     for (int i = 0; i < 5; ++i)
                     {
                         // Randomly choose a proficiency rating
                         var proficiencyRating = random.Next(Enum.GetValues<SkillProficiency>().Count());
+
+                        // Get random skill tag that is not already owned by this person
+                        var skillTag = context.SkillTags.ElementAt(random.Next(context.SkillTags.Count()));
+                        while (skillIdsOwned.Contains(skillTag.SkillTagId))
+                        {
+                            skillTag = context.SkillTags.ElementAt(random.Next(context.SkillTags.Count()));
+                        }
+
+                        // Add the skill tag to the list of owned skills
                         var ownedSkill = new OwnedSkill
                         {
                             Owner = person,
-                            SkillTag = context.SkillTags.ElementAt(random.Next(context.SkillTags.Count())),
+                            SkillTag = skillTag,
                             ProficiencyRating = proficiencyRating,
                             Proficiency = (SkillProficiency)proficiencyRating,
                             LastUsed = proficiencyRating > 0 ? DateTime.Today.AddDays(-random.Next(1, 365)) : default,
@@ -346,6 +356,16 @@ namespace PPMTool.Data.Helpers
                         context.OwnedSkills.Add(ownedSkill);
                     }
                     context.SaveChanges();
+                }
+
+                // Update the rareness of the owned skills
+                var totalActivePeople = context.People
+                    .Where(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today))
+                    .Count();
+                foreach (var skillTag in context.SkillTags)
+                {
+                    var totalInstances = context.OwnedSkills.Include(x => x.SkillTag).Where(x => x.SkillTag.SkillTagId == skillTag.SkillTagId).Count();
+                    skillTag.UpdateRareness(totalInstances, totalActivePeople);
                 }
             }
         }
@@ -418,6 +438,48 @@ namespace PPMTool.Data.Helpers
                 {
                     throw new InvalidOperationException("No InnateCodes left after deletion! There should be a migration that adds them!");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Seed the skills tags in the database.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedSkillTags(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Remove existing
+                context.SkillTags.ExecuteDelete();
+
+                // Add some skill tags
+                var skillTags = new List<SkillTag>
+                {
+                    new SkillTag { Name = "C#", ControlledName = "C# programming language", },
+                    new SkillTag { Name = "JavaScript", ControlledName = "JavaScript programming language" },
+                    new SkillTag { Name = "SQL", ControlledName = "SQL database management" },
+                    new SkillTag { Name = "Azure", ControlledName = "Microsoft Azure cloud services" },
+                    new SkillTag { Name = "AWS", ControlledName = "Amazon Web Services cloud services" },
+                    new SkillTag { Name = "Agile", ControlledName = "Agile project management methodology" },
+                    new SkillTag { Name = "DevOps", ControlledName = "DevOps practices and tools" },
+                    new SkillTag { Name = "Docker", ControlledName = "Docker containerization technology" },
+                    new SkillTag { Name = "Kubernetes", ControlledName = "Kubernetes container orchestration" },
+                    new SkillTag { Name = "Machine Learning", ControlledName = "Machine learning techniques and algorithms" },
+                    new SkillTag { Name = "Data Analysis", ControlledName = "Data analysis and visualization" },
+                    new SkillTag { Name = "Cybersecurity", ControlledName = "Cybersecurity practices and tools" },
+                    new SkillTag { Name = "Project Management", ControlledName = "Project management methodologies" },
+                    new SkillTag { Name = "Business Analysis", ControlledName = "Business analysis techniques" }
+                };
+
+                // Update the wiki link status
+                foreach (var skillTag in skillTags)
+                {
+                    skillTag.UpdateValidLinkAsync().GetAwaiter().GetResult();
+                }
+
+                context.SkillTags.AddRange(skillTags);
+                context.SaveChanges();
             }
         }
     }
