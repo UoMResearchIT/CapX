@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Helpers
 {
@@ -15,12 +16,11 @@ namespace PPMTool.Data.Helpers
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
             using (var context = dbContextFactory.CreateDbContext())
             {
+                // Clear existing table
+                context.People.ExecuteDelete();
+
                 // Get the default person in the DB and configure them
-                var person = context.People.FirstOrDefault();
-                if (person == null)
-                {
-                    person = new Person();
-                }
+                var person = new Person();
                 person.Name = "Mavis Ledger";
                 person.ShortName = "ML";
                 person.FTE = 1.0;
@@ -84,6 +84,9 @@ namespace PPMTool.Data.Helpers
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
             using (var context = dbContextFactory.CreateDbContext())
             {
+                // Clear existing absences
+                context.Absence.ExecuteDelete();
+
                 // Add an upcoming absence for Nigel Overfetch-Nelson
                 var person = context.People.FirstOrDefault(x => x.ShortName == "NO");
                 if (person != null)
@@ -147,19 +150,105 @@ namespace PPMTool.Data.Helpers
         public static void SeedUsers(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Super user
+                // Clear existing users
+                context.Users.ExecuteDelete();
 
-                // Manager
+                // Super user -- attached to no-one
+                var superUser = new User
+                {
+                    Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName"),
+                    CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName"),
+                    EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail"),
+                    RoleType = RoleType.Superuser,
+                    Person = null // No person associated as assumed not a team member
+                };
+                context.Users.Add(superUser);
+                context.SaveChanges();
 
-                // Developer
+                // Manager - Mavis and Nigel are managers
+                var manager = new User
+                {
+                    Name = "Mavis Ledger",
+                    CASUserName = "mledger",
+                    EmailAddress = "",
+                    RoleType = RoleType.Manager,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "ML")
+                };
+                context.Users.Add(manager);
+                context.SaveChanges();
 
-                // Reader
+                manager = new User
+                {
+                    Name = "Nigel Overfetch-Nelson",
+                    CASUserName = "noverfetchnelson",
+                    EmailAddress = "",
+                    RoleType = RoleType.Manager,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "NO")
+                };
+                context.Users.Add(manager);
+                context.SaveChanges();
 
-                // Finance
+                // Developer -- Clive and Tina are developers
+                var developer = new User
+                {
+                    Name = "Clive Bugworthy",
+                    CASUserName = "cbugworthy",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "CB")
+                };
+                context.Users.Add(developer);
+                context.SaveChanges();
 
-                // None (leaver)
+                developer = new User
+                {
+                    Name = "Tina Breakaway",
+                    CASUserName = "tbreakaway",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "TB")
+                };
+                context.Users.Add(developer);
+                context.SaveChanges();
+
+                // Reader -- Sue is an admin and not in the team
+                var reader = new User
+                {
+                    Name = "Sue Permann",
+                    CASUserName = "spermann",
+                    EmailAddress = "",
+                    RoleType = RoleType.Reader,
+                    Person = null // No person associated as assumed not a team member
+                };
+                context.Users.Add(reader);
+                context.SaveChanges();
+
+                // Finance - Penny is a finance officer and not in the team
+                var finance = new User
+                {
+                    Name = "Penny Pincher",
+                    CASUserName = "ppincher",
+                    EmailAddress = "",
+                    RoleType = RoleType.Finance,
+                    Person = null // No person associated as assumed not a team member
+                };
+                context.Users.Add(finance);
+                context.SaveChanges();
+
+                // None (leaver) -- Janet has left
+                var none = new User
+                {
+                    Name = "Janet Nullington",
+                    CASUserName = "jnullington",
+                    EmailAddress = "",
+                    RoleType = RoleType.None,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
+                };
+                context.Users.Add(none);
+                context.SaveChanges();
             }
         }
     }
