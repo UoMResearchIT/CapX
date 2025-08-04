@@ -243,10 +243,11 @@ if (shouldSeed)
     using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
-    // Seed tables with suitable values
+    // Seed tables with suitable values -- SKillTags and Competencies are already seeded
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);
+    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
 }
 
 app.Run();

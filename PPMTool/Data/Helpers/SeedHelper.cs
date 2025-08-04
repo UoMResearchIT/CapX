@@ -251,5 +251,65 @@ namespace PPMTool.Data.Helpers
                 context.SaveChanges();
             }
         }
+
+        /// <summary>
+        /// Seed some workload model changes for the people
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedWorkloadModelChanges(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Clear existing
+                context.WorkloadModelChanges.ExecuteDelete();
+
+                // Add a G7 WLM for Mavis Ledger
+                var ml = context.People.FirstOrDefault(x => x.ShortName == "ML");
+                var wlm = new WorkloadModelChange
+                {
+                    Person = ml,
+                    ChangeDate = ml.StartDate,
+                    Grade = 7,
+                    ArchitectureFTE = 0,
+                    StaffManagementFTE = 0.2,
+                    ProjectManagementFTE = 0.2,
+                    ServiceManagementFTE = 0.1,
+                    ProjectAndServiceManagementFTE = 0.3, // Total of previous two
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0,
+                    ProjectWorkFTE = 0.4,
+                    Notes = "Standard G7 WLM"
+                };
+                context.WorkloadModelChanges.Add(wlm);
+                context.SaveChanges();
+
+                // Add a G6 WLM for Nigel Overfetch-Nelson
+                var no = context.People.FirstOrDefault(x => x.ShortName == "NO");
+                wlm = new WorkloadModelChange
+                {
+                    Person = no,
+                    ChangeDate = no.StartDate,
+                    Grade = 6,
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0.1,
+                    ProjectWorkFTE = 0.8,
+                    Notes = "Standard G6 WLM"
+                };
+
+                // Promotion for Nigel Overfetch-Nelson
+                var newWlm = new WorkloadModelChange
+                {
+                    Person = no,
+                    ChangeDate = no.StartDate.AddMonths(4),
+                    Grade = 7,
+                    BusinessAsUsualFTE = 0.1,
+                    ProjectManagementFTE = 0.4,
+                    ArchitectureFTE = 0.1,
+                    ProjectWorkFTE = 0.4,
+                    Notes = "New G7 WLM"
+                };
+            }
+        }
     }
 }
