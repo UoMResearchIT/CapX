@@ -394,5 +394,31 @@ namespace PPMTool.Data.Helpers
                 }
             }
         }
+
+        /// <summary>
+        /// Cleans up the innate codes and tasks in the database.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        internal static void SeedInnateCodesAndTasks(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Remove a certain number of the existing InnateCodes
+                context.InnateCodes.Where(x =>
+                    x.ActivityName.StartsWith("P0") ||
+                    x.ActivityName.StartsWith("S-RES-RTP") ||
+                    x.ActivityName.StartsWith("S-RES-P")
+                )
+                .ExecuteDelete();
+
+                // Check there are some left
+                if (context.InnateCodes.Count() == 0)
+                {
+                    throw new InvalidOperationException("No InnateCodes left after deletion! There should be a migration that adds them!");
+                }
+            }
+        }
     }
 }

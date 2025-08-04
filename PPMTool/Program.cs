@@ -250,6 +250,7 @@ if (shouldSeed)
     SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
     SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
     SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
 }
 
 app.Run();
