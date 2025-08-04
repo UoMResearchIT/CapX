@@ -249,6 +249,7 @@ if (shouldSeed)
     SeedHelper.SeedUsers(scope.ServiceProvider);
     SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
     SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
 }
 
 app.Run();

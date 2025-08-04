@@ -312,6 +312,10 @@ namespace PPMTool.Data.Helpers
             }
         }
 
+        /// <summary>
+        /// Seed random owned skills for each person in the database.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
         internal static void SeedOwnedSkillsForPeople(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
@@ -321,25 +325,70 @@ namespace PPMTool.Data.Helpers
                 context.OwnedSkills.ExecuteDelete();
 
                 // For each person, add some random owned skills
-                var randon = new Random();
+                var random = new Random();
                 foreach (var person in context.People)
                 {
                     for (int i = 0; i < 5; ++i)
                     {
                         // Randomly choose a proficiency rating
-                        var proficiencyRating = randon.Next(Enum.GetValues<SkillProficiency>().Count());
+                        var proficiencyRating = random.Next(Enum.GetValues<SkillProficiency>().Count());
                         var ownedSkill = new OwnedSkill
                         {
                             Owner = person,
-                            SkillTag = context.SkillTags.ElementAt(randon.Next(context.SkillTags.Count())),
+                            SkillTag = context.SkillTags.ElementAt(random.Next(context.SkillTags.Count())),
                             ProficiencyRating = proficiencyRating,
                             Proficiency = (SkillProficiency)proficiencyRating,
-                            LastUsed = proficiencyRating > 0 ? DateTime.Today.AddDays(-randon.Next(1, 365)) : default,
+                            LastUsed = proficiencyRating > 0 ? DateTime.Today.AddDays(-random.Next(1, 365)) : default,
                             FavouriteSkill = proficiencyRating == 0
                         };
 
                         // Add the owned skill to the context
                         context.OwnedSkills.Add(ownedSkill);
+                    }
+                    context.SaveChanges();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Seed random competency assessments for each person in the database for half the competencies.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedCompetencyAssessments(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Clear existing
+                context.CompetencyAssessments.ExecuteDelete();
+
+                // Get the count of competencies
+                var competencyCount = context.Competencies.Count();
+
+                // For each person, add assessments for half of the competencies
+                var random = new Random();
+                foreach (var person in context.People)
+                {
+                    for (int i = 0; i < competencyCount / 2; ++i)
+                    {
+                        // Get a random competency
+                        var competency = context.Competencies.ElementAt(random.Next(competencyCount));
+
+                        // Create a new competency assessment
+                        var assessment = new CompetencyAssessment
+                        {
+                            PersonId = person.PersonId,
+                            CompetencyId = competency.CompetencyId,
+                            CompetencyDescription = competency.Description,
+                            CompetencyObjective = competency.Objective,
+                            CompetencyRevision = competency.Revision,
+                            DateCreated = DateTime.Now.AddDays(-random.Next(0, 365)).ToString("R"),
+                            Status = (AssessmentStatus)random.Next(Enum.GetValues<AssessmentStatus>().Length),
+                            Evidence = "<p>Randomly generated evidence for competency assessment.</p>"
+                        };
+
+                        // Add the assessment to the context
+                        context.CompetencyAssessments.Add(assessment);
                     }
                     context.SaveChanges();
                 }
