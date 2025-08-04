@@ -6,6 +6,10 @@ namespace PPMTool.Data.Helpers
 {
     public static class SeedHelper
     {
+        /// <summary>
+        /// Set up a minimum set of people
+        /// </summary>
+        /// <param name="serviceProvider"></param>
         public static void SeedPeople(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
@@ -70,6 +74,11 @@ namespace PPMTool.Data.Helpers
             }
         }
 
+        /// <summary>
+        /// Set up some absences for the people
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         public static void SeedAbsences(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
@@ -128,6 +137,29 @@ namespace PPMTool.Data.Helpers
                 {
                     throw new InvalidOperationException("Person with ShortName 'CB' not found.");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Add some user accounts at least one for each role
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        public static void SeedUsers(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Super user
+
+                // Manager
+
+                // Developer
+
+                // Reader
+
+                // Finance
+
+                // None (leaver)
             }
         }
     }
