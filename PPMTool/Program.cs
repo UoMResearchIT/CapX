@@ -248,6 +248,7 @@ if (shouldSeed)
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);
     SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
 }
 
 app.Run();

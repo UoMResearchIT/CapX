@@ -311,5 +311,39 @@ namespace PPMTool.Data.Helpers
                 };
             }
         }
+
+        internal static void SeedOwnedSkillsForPeople(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Clear existing
+                context.OwnedSkills.ExecuteDelete();
+
+                // For each person, add some random owned skills
+                var randon = new Random();
+                foreach (var person in context.People)
+                {
+                    for (int i = 0; i < 5; ++i)
+                    {
+                        // Randomly choose a proficiency rating
+                        var proficiencyRating = randon.Next(Enum.GetValues<SkillProficiency>().Count());
+                        var ownedSkill = new OwnedSkill
+                        {
+                            Owner = person,
+                            SkillTag = context.SkillTags.ElementAt(randon.Next(context.SkillTags.Count())),
+                            ProficiencyRating = proficiencyRating,
+                            Proficiency = (SkillProficiency)proficiencyRating,
+                            LastUsed = proficiencyRating > 0 ? DateTime.Today.AddDays(-randon.Next(1, 365)) : default,
+                            FavouriteSkill = proficiencyRating == 0
+                        };
+
+                        // Add the owned skill to the context
+                        context.OwnedSkills.Add(ownedSkill);
+                    }
+                    context.SaveChanges();
+                }
+            }
+        }
     }
 }
