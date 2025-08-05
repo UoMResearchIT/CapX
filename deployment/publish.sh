@@ -5,7 +5,8 @@ set -eu
 sudo systemctl stop kestrel-capx.service
 sudo systemctl stop kestrel-capx-api.service
 
-# Backup locally
+# Backup locally removing old files first
+sudo rm -rf ~/PPMTool.db*
 sudo cp /var/www/capx/PPMTool.db* ~/
 sudo chown mbgm6ah3:users ~/PPMTool.db*
 sudo sqlite3 ~/PPMTool.db VACUUM;
