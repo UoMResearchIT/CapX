@@ -482,5 +482,14 @@ namespace PPMTool.Data.Helpers
                 context.SaveChanges();
             }
         }
+
+        /// <summary>
+        /// Seed projects -- repurposes some projects from the live DB and changes details.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedProjects(IServiceProvider serviceProvider)
+        {
+            // TODO: Convert SQL dump script to C# code with some details changed.
+        }
     }
 }

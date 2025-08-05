@@ -252,6 +252,7 @@ if (shouldSeed)
     SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
     SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
     SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+    SeedHelper.SeedProjects(scope.ServiceProvider);
 
     // TODO: Seed projects + sub-tasks + resources, timesheets, financial items, and financial references
 }
