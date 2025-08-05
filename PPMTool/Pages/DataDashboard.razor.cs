@@ -58,6 +58,9 @@ namespace PPMTool.Pages
         [Inject]
         private PaymentService PaymentService { get; set; }
 
+        /// <summary>
+        /// Different view options on the segmented control
+        /// </summary>
         private enum ViewOption
         {
             [Description("Last FY")]
@@ -268,6 +271,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Callback on "show finished as separate" switch
+        /// </summary>
+        /// <param name="state"></param>
         private void FinishedChanged(bool state)
         {
             JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
@@ -275,6 +282,9 @@ namespace PPMTool.Pages
             GenerateCharts();
         }
 
+        /// <summary>
+        /// Method to generate the data for all the charts on the page
+        /// </summary>
         private void GenerateCharts()
         {
             Loading = true;
@@ -609,6 +619,9 @@ namespace PPMTool.Pages
             return (float)Math.Round(oldValue, 2);
         }
 
+        /// <summary>
+        /// Represents the available color sets for different types of charts.
+        /// </summary>
         private enum ChartColourSet
         {
             DutyChart,
@@ -768,6 +781,232 @@ namespace PPMTool.Pages
                         using (var workbook = new XLWorkbook())
                         {
                             var worksheet = workbook.Worksheets.Add("Capacity");
+
+                            // Write header row
+                            var props = typeof(AssignmentChunk).GetProperties();
+                            var propNames = props.Select(x => x.Name).ToList();
+                            for (int i = 0; i < propNames.Count; i++)
+                            {
+                                var cell = worksheet.Cell(1, i + 1);
+                                cell.Value = propNames[i];
+                                cell.Style.Font.Bold = true;
+                            }
+
+                            // Write data rows
+                            for (int row = 0; row < allData.Count; row++)
+                            {
+                                var record = allData[row];
+                                for (int col = 0; col < propNames.Count; col++)
+                                {
+                                    var property = record.GetType().GetProperty(propNames[col]);
+                                    var rawValue = property?.GetValue(record);
+                                    var cell = worksheet.Cell(row + 2, col + 1);
+
+                                    // Format and assign
+                                    if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
+                                    {
+                                        if (rawValue is DateTime dt)
+                                        {
+                                            cell.Value = dt;
+                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                    else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
+                                    {
+                                        if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
+                                        {
+                                            cell.Value = currencyValue;
+                                            cell.Style.NumberFormat.Format = "£#,##0.00";
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (rawValue is int)
+                                        {
+                                            cell.Value = (int)rawValue;
+                                        }
+                                        else if (rawValue is double)
+                                        {
+                                            cell.Value = (double)rawValue;
+                                        }
+                                        else
+                                        {
+                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Save the workbook
+                            workbook.SaveAs(path);
+                        }
+
+                        Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Could not download file: {ex}");
+                    }
+                });
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Export task finished {t.Status}");
+                    exportRunning = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+        private class RecoveryData
+        {
+            /// <summary>
+            /// Day of the data
+            /// </summary>
+            public DateTime Date { get; }
+
+            /// <summary>
+            /// Person-Value data based on what the time recovered should be for that day based on WLMs
+            /// </summary>
+            public IDictionary<string, float> TargetRecovery { get; } = new Dictionary<string, float>();
+
+            /// <summary>
+            /// Person-Value data based on what the sum of the person's assignments say they have on that day
+            /// </summary>
+            public IDictionary<string, float> RecoveredTime { get; } = new Dictionary<string, float>();
+
+            /// <summary>
+            /// Person-Value data which subtracts the target and recovered values and permits values over 100%
+            /// </summary>
+            public IDictionary<string, float> Net { get; } = new Dictionary<string, float>();
+
+            /// <summary>
+            /// Person-Value data which subtracts the target and recovered values but caps off values over 100%
+            /// </summary>
+            public IDictionary<string, float> NetCapped { get; } = new Dictionary<string, float>();
+
+            public RecoveryData(DateTime date)
+            {
+                Date = date;
+            }
+        }
+
+        /// <summary>
+        /// Exports an Excel spreadsheet of target and assigned recovery of staff
+        /// </summary>
+        private void ExportRecoveryReport()
+        {
+            LogInformation($"Exporting recovery report...");
+
+            exportRunning = true;
+
+            Task.Run(async () =>
+            {
+                // Set the report length
+                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1).Date;
+                var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31).Date;
+                var currentDate = startDate;
+
+                // Create a context to be accesed on this thread
+                using (var threadContext = ContextFactory.CreateDbContext())
+                {
+                    // Get data for each person active in the window
+                    var people = await PersonService.GetAllShallowAsync(threadContext);
+                    var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+
+                    // Get projects active in the window with their subtasks and resources
+                    var projectsInWindow = ProjectService.GetAll(threadContext)
+                        .Where(x => !x.ProjectStatus.IsCancelled())
+                        .Where(x => x.IsWithin(startDate, endDate));
+
+                    // Initialise the list
+                    var allData = new List<RecoveryData>();
+
+                    // Loop over the days
+                    while (currentDate <= endDate)
+                    {
+                        // Create a new item
+                        var currentDayData = new RecoveryData(currentDate);
+
+                        // Get the subtasks that are active on this day
+                        var tasksActiveOnDay = projectsInWindow
+                            .SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentDate)));
+
+                        // Loop over each person employed in the window
+                        foreach (var person in peopleActive)
+                        {
+                            // Get the project work amount on the day
+                            var projectWorkTarget = person.GetProjectWorkAvailabilityOnDate(currentDate);
+
+                            // Get resource assignments that are active on the day for this person
+                            var resourcesOnDay = tasksActiveOnDay
+                                .SelectMany(x => x.AssignedResources)
+                                .Where(x => x.Person.PersonId == person.PersonId)
+                                .ToList();
+
+                            // Get the sum of their assignments on the day
+                            var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE);
+
+                            // Net value
+                            var netValue = projectAssignments - projectWorkTarget;
+
+                            // Net value capped
+                            var netValueCapped = netValue > person.FTE ? person.FTE : netValue;
+
+                            // Add to the data dictionary
+                            currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTarget);
+                            currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignments);
+                            currentDayData.Net.Add(person.Name, (float)netValue);
+                            currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
+                        }
+
+                        // Add the current day data to the list
+                        allData.Add(currentDayData);
+
+                        // Advance the day
+                        currentDate = currentDate.AddDays(1);
+                    }
+                }
+
+                // Run the file export on the render context
+                await InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // Create file path
+                        var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
+                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                        Directory.CreateDirectory(folder);
+                        var path = Path.Combine(folder, filename);
+
+                        // Create workbook and worksheet
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add("Recovery");
+
+
+
+
+
+
+
+
 
                             // Write header row
                             var props = typeof(AssignmentChunk).GetProperties();
