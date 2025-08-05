@@ -1,4 +1,5 @@
 #! /bin/bash
+set -eu
 
 # Fetch from GitHub
 cd ~/CapX-Prod
@@ -29,7 +30,7 @@ cp PPMTool.db* ./bin/Release/net8.0/publish/
 
 # Copy publish directories over to the production system
 cd ~/
-sudo scp -r -i ~/.ssh/id_rsa ~/CapX-Prod mbgm6ah3@balex.itservices.manchester.ac.uk:~/
+rsync -av --exclude='.git' -e "ssh -i ~/.ssh/id_rsa" ~/CapX-Prod mbgm6ah3@balex.itservices.manchester.ac.uk:~/
 
 # Publish and restart the kestrel server on the production system
 ssh mbgm6ah3@balex.itservices.manchester.ac.uk 'bash -s' < "/home/mbgm6ah3/publish-prod.sh"
