@@ -273,7 +273,7 @@ namespace PPMTool.Pages
                 },
                 (assignments, value1, currentDay) =>
                 {
-                    return person.GetAvailabilityOnDate(currentDay);
+                    return person.GetProjectWorkAvailabilityOnDate(currentDay);
                 },
                 (assignments, gapStart, gapEnd) =>
                 {
@@ -350,7 +350,7 @@ namespace PPMTool.Pages
                     var peo = people.Where(y => y == person);
 
                     // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
+                    return peo.RoundedSum(y => y.GetProjectWorkAvailabilityOnDate(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>

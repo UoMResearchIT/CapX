@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace PPMTool.Data.Entities
@@ -149,9 +146,15 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal double GetAvailabilityOnDate(DateTime date)
+        internal double GetProjectWorkAvailabilityOnDate(DateTime date)
         {
-            // Set as post availability initially
+            // If person hasn't started on day then return zero
+            if (StartDate > date) return 0;
+
+            // If the person has left before this day then return zero
+            if (EndDate != null && EndDate < date) return 0;
+
+            // Set as post availability initially in case they have no workload model
             var availability = FTE;
 
             // If there are changes then check them

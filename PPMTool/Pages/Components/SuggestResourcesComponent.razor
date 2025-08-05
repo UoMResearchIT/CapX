@@ -240,7 +240,7 @@
                     assignments,
                     (assignments, currentDay) =>
                     {
-                        var available = person.GetAvailabilityOnDate(currentDay);
+                        var available = person.GetProjectWorkAvailabilityOnDate(currentDay);
                         var assignmentsOnDay = assignments.Sum(assignment =>
                         {
                             var resource = (assignment as Assignment)?.SubTask.AssignedResources
@@ -278,7 +278,7 @@
                     (assignments, value1, currentDay) =>
                     {
                         // Compute what the remaining demand would be if the person's provisional assignments were removed
-                        var available = person.GetAvailabilityOnDate(currentDay);
+                        var available = person.GetProjectWorkAvailabilityOnDate(currentDay);
                         var assignmentsOnDay = assignments.Sum(assignment =>
                             {
                                 if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
