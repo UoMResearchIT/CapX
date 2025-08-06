@@ -923,6 +923,10 @@ namespace PPMTool.Pages
 
             public float Net { get; private set; }
 
+            public float Costs { get; private set; }
+
+            public float Recharged { get; private set; }
+
             public TotalRecovered(string name)
             {
                 Name = name;
@@ -1038,6 +1042,9 @@ namespace PPMTool.Pages
                         var projectsActiveOnDay = projectsInWindow
                             .Where(x => x.SubTasks.Any(x => x.IsWithin(currentDate)));
 
+                        // TODO: Get the person day budget value?
+
+
                         // Loop over each person employed in the window
                         foreach (var person in peopleActive)
                         {
@@ -1062,6 +1069,10 @@ namespace PPMTool.Pages
                             // Get the sum of their assignments on the day including leadership
                             var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE)
                                 + leadershipAssignments;
+
+                            // TODO: Get their actual costs
+
+                            // TODO: Apportion a weighted slice of the budget for the project for their assignment
 
                             // Net value
                             var netValue = projectAssignments - projectWorkTarget;
