@@ -1043,6 +1043,7 @@ namespace PPMTool.Pages
                         {
                             // Get the project work amount on the day
                             var projectWorkTarget = person.GetProjectWorkAvailabilityOnDate(currentDate);
+                            var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
 
                             // Get resource assignments that are active on the day for this person
                             var resourcesOnDay = tasksActiveOnDay
@@ -1057,6 +1058,10 @@ namespace PPMTool.Pages
                                     x.CostModel == CostModel.TechAndLeadership
                                 );
                             var leadershipAssignments = includeLeadershipInRecovery ? projectsManagedByPerson.Sum(x => x.LeadershipFTE) : 0;
+                            if (leadershipAssignments != 0)
+                            {
+                                Debug.WriteLine($"** {person.Name} has {leadershipAssignments} in extra work!");
+                            }
 
                             // Get the sum of their assignments on the day including leadership
                             var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE)
@@ -1066,7 +1071,7 @@ namespace PPMTool.Pages
                             var netValue = projectAssignments - projectWorkTarget;
 
                             // Net value capped
-                            var maxOverAllocation = person.FTE - projectWorkTarget;
+                            var maxOverAllocation = wlmTotal - projectWorkTarget;
                             if (maxOverAllocation < 0) maxOverAllocation = 0;
                             var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
 
