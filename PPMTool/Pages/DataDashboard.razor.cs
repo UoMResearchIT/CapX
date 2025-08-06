@@ -914,13 +914,13 @@ namespace PPMTool.Pages
         {
             public string Name { get; }
 
-            public float HoursTarget { get; private set; }
+            public float Target { get; private set; }
 
-            public float HoursRecovered { get; private set; }
+            public float Recovered { get; private set; }
 
-            public float HoursNetCapped { get; private set; }
+            public float NetCapped { get; private set; }
 
-            public float HoursNet { get; private set; }
+            public float Net { get; private set; }
 
             public TotalRecovered(string name)
             {
@@ -934,12 +934,12 @@ namespace PPMTool.Pages
             /// <param name="assignedFTE"></param>
             public void Update(float targetFTE, float assignedFTE, float maxCap)
             {
-                HoursTarget += targetFTE * 35;
-                HoursRecovered += assignedFTE * 35;
-                var net = HoursRecovered - HoursTarget;
-                HoursNet += net * 35;
+                Target += targetFTE;
+                Recovered += assignedFTE;
+                var net = assignedFTE - targetFTE;
+                Net += net;
                 var netCapped = net > maxCap ? maxCap : net;
-                HoursNetCapped += netCapped * 35;
+                NetCapped += netCapped;
             }
 
             /// <summary>
@@ -949,7 +949,7 @@ namespace PPMTool.Pages
             /// <returns></returns>
             public float GetTarget(int daysInWindow)
             {
-                return HoursTarget / (daysInWindow * 7f);
+                return Target / daysInWindow;
             }
 
             /// <summary>
@@ -959,7 +959,7 @@ namespace PPMTool.Pages
             /// <returns></returns>
             public float GetRecovered(int daysInWindow)
             {
-                return HoursRecovered / (daysInWindow * 7f);
+                return Recovered / daysInWindow;
             }
 
             /// <summary>
@@ -969,7 +969,7 @@ namespace PPMTool.Pages
             /// <returns></returns>
             public float GetNet(int daysInWindow)
             {
-                return HoursNet / (daysInWindow * 7f);
+                return Net / daysInWindow;
             }
 
             /// <summary>
@@ -979,7 +979,7 @@ namespace PPMTool.Pages
             /// <returns></returns>
             public float GetNetCapped(int daysInWindow)
             {
-                return HoursNetCapped / (daysInWindow * 7f);
+                return NetCapped / daysInWindow;
             }
         }
 
@@ -1155,6 +1155,7 @@ namespace PPMTool.Pages
 
                                         // Assign the value
                                         cell.Value = cellValue;
+                                        cell.Style.NumberFormat.Format = "#0.000";
                                     }
                                 }
                             }
@@ -1184,12 +1185,16 @@ namespace PPMTool.Pages
 
                                 cellTotals = worksheetTotals.Cell(2 + i, 2);
                                 cellTotals.Value = totalItem.GetTarget(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 3);
                                 cellTotals.Value = totalItem.GetRecovered(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 4);
                                 cellTotals.Value = totalItem.GetNet(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 5);
                                 cellTotals.Value = totalItem.GetNetCapped(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
                             }
 
                             // Save the workbook
