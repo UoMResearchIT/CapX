@@ -26,6 +26,7 @@ namespace PPMTool.Pages
         private DateTime startDate = DateTime.Today;
         private int yearsAhead;
         private bool showFinishedAsSeparate = false;
+        private bool includeLeadershipInRecovery = true;
 
         private IEnumerable<Person> people;
         private IEnumerable<Project> projects;
@@ -1033,6 +1034,10 @@ namespace PPMTool.Pages
                         var tasksActiveOnDay = projectsInWindow
                             .SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentDate)));
 
+                        // Get the projects that are active on this day
+                        var projectsActiveOnDay = projectsInWindow
+                            .Where(x => x.SubTasks.Any(x => x.IsWithin(currentDate)));
+
                         // Loop over each person employed in the window
                         foreach (var person in peopleActive)
                         {
@@ -1045,8 +1050,17 @@ namespace PPMTool.Pages
                                 .Where(x => x.Person.PersonId == person.PersonId)
                                 .ToList();
 
-                            // Get the sum of their assignments on the day
-                            var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE);
+                            // Get the projects they manage which have a leadership recovery model
+                            var projectsManagedByPerson = projectsActiveOnDay
+                                .Where(x =>
+                                    x.ProjectManager.PersonId == person.PersonId &&
+                                    x.CostModel == CostModel.TechAndLeadership
+                                );
+                            var leadershipAssignments = includeLeadershipInRecovery ? projectsManagedByPerson.Sum(x => x.LeadershipFTE) : 0;
+
+                            // Get the sum of their assignments on the day including leadership
+                            var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE)
+                                + leadershipAssignments;
 
                             // Net value
                             var netValue = projectAssignments - projectWorkTarget;
@@ -1082,7 +1096,7 @@ namespace PPMTool.Pages
                     try
                     {
                         // Create file path
-                        var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
+                        var filename = $"Recovery_{(includeLeadershipInRecovery ? "IncLead_" : "")}{DateTime.Now.Ticks}.xlsx";
                         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
                         Directory.CreateDirectory(folder);
                         var path = Path.Combine(folder, filename);

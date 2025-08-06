@@ -112,6 +112,12 @@
                                           Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
                         </RadzenStack>
                     </div>
+                    <div class="col-2">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                            <RadzenLabel class="radzen-form-label" Text="Include Leadership in Recovery" />
+                            <RadzenSwitch @bind-Value="includeLeadershipInRecovery" Disabled="@(Loading || exportRunning)" />
+                        </RadzenStack>
+                    </div>
                     <div class="col-auto" style="align-content: center">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                             <RadzenLabel class="radzen-form-label" Text="Recovery Report for Period" />
