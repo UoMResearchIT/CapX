@@ -908,6 +908,82 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Represents the summary over the window of the target and recovery
+        /// </summary>
+        private class TotalRecovered
+        {
+            public string Name { get; }
+
+            public float HoursTarget { get; private set; }
+
+            public float HoursRecovered { get; private set; }
+
+            public float HoursNetCapped { get; private set; }
+
+            public float HoursNet { get; private set; }
+
+            public TotalRecovered(string name)
+            {
+                Name = name;
+            }
+
+            /// <summary>
+            /// Update the values based on the FTE for the day
+            /// </summary>
+            /// <param name="targetFTE"></param>
+            /// <param name="assignedFTE"></param>
+            public void Update(float targetFTE, float assignedFTE, float maxCap)
+            {
+                HoursTarget += targetFTE * 35;
+                HoursRecovered += assignedFTE * 35;
+                var net = HoursRecovered - HoursTarget;
+                HoursNet += net * 35;
+                var netCapped = net > maxCap ? maxCap : net;
+                HoursNetCapped += netCapped * 35;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the target for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetTarget(int daysInWindow)
+            {
+                return HoursTarget / (daysInWindow * 7f);
+            }
+
+            /// <summary>
+            /// Returns the FTE of the recovered for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetRecovered(int daysInWindow)
+            {
+                return HoursRecovered / (daysInWindow * 7f);
+            }
+
+            /// <summary>
+            /// Returns the FTE of the net for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetNet(int daysInWindow)
+            {
+                return HoursNet / (daysInWindow * 7f);
+            }
+
+            /// <summary>
+            /// Returns the FTE of the capped net for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetNetCapped(int daysInWindow)
+            {
+                return HoursNetCapped / (daysInWindow * 7f);
+            }
+        }
+
+        /// <summary>
         /// Exports an Excel spreadsheet of target and assigned recovery of staff
         /// </summary>
         private void ExportRecoveryReport()
@@ -921,9 +997,11 @@ namespace PPMTool.Pages
                 // Set the report length
                 var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1).Date;
                 var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31).Date;
+                int totalDays = (int)(endDate.Subtract(startDate).TotalDays + 1);
                 var currentDate = startDate;
                 var peopleActive = new List<Person>();
                 var allData = new List<RecoveryData>();
+                var totalData = new List<TotalRecovered>();
 
                 // Create a context to be accesed on this thread
                 using (var threadContext = ContextFactory.CreateDbContext())
@@ -938,6 +1016,12 @@ namespace PPMTool.Pages
                     var projectsInWindow = ProjectService.GetAll(threadContext)
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
+
+                    // Initialise the totals
+                    foreach (var person in peopleActive)
+                    {
+                        totalData.Add(new TotalRecovered(person.Name));
+                    }
 
                     // Loop over the days
                     while (currentDate <= endDate)
@@ -977,6 +1061,11 @@ namespace PPMTool.Pages
                             currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignments);
                             currentDayData.Net.Add(person.Name, (float)netValue);
                             currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
+
+                            // Update the totals
+                            totalData
+                                .First(x => x.Name == person.Name)
+                                .Update((float)projectWorkTarget, (float)projectAssignments, (float)maxOverAllocation);
                         }
 
                         // Add the current day data to the list
@@ -1068,6 +1157,39 @@ namespace PPMTool.Pages
                                         cell.Value = cellValue;
                                     }
                                 }
+                            }
+
+                            // Add totals tab
+                            var worksheetTotals = workbook.AddWorksheet("Totals");
+
+                            // Header row
+                            var cellTotals = worksheetTotals.Cell(1, 1);
+                            cellTotals.Value = "Name";
+                            cellTotals.Style.Font.Bold = true;
+                            for (int i = 0; i < tabTitles.Count; ++i)
+                            {
+                                cellTotals = worksheetTotals.Cell(1, 2 + i);
+                                cellTotals.Value = tabTitles[i];
+                                cellTotals.Style.Font.Bold = true;
+                            }
+
+                            // Each row
+                            for (int i = 0; i < peopleActiveNames.Count; ++i)
+                            {
+                                var totalItem = totalData.First(x => x.Name == peopleActiveNames[i]);
+
+                                cellTotals = worksheetTotals.Cell(2 + i, 1);
+                                cellTotals.Value = peopleActiveNames[i];
+                                cellTotals.Style.Font.Bold = true;
+
+                                cellTotals = worksheetTotals.Cell(2 + i, 2);
+                                cellTotals.Value = totalItem.GetTarget(totalDays);
+                                cellTotals = worksheetTotals.Cell(2 + i, 3);
+                                cellTotals.Value = totalItem.GetRecovered(totalDays);
+                                cellTotals = worksheetTotals.Cell(2 + i, 4);
+                                cellTotals.Value = totalItem.GetNet(totalDays);
+                                cellTotals = worksheetTotals.Cell(2 + i, 5);
+                                cellTotals.Value = totalItem.GetNetCapped(totalDays);
                             }
 
                             // Save the workbook
