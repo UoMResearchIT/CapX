@@ -968,7 +968,9 @@ namespace PPMTool.Pages
                             var netValue = projectAssignments - projectWorkTarget;
 
                             // Net value capped
-                            var netValueCapped = netValue > person.FTE ? person.FTE : netValue;
+                            var maxOverAllocation = person.FTE - projectWorkTarget;
+                            if (maxOverAllocation < 0) maxOverAllocation = 0;
+                            var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
 
                             // Add to the data dictionary
                             currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTarget);
@@ -1001,50 +1003,48 @@ namespace PPMTool.Pages
                         {
                             // Get a list of people active by name
                             var peopleActiveNames = peopleActive.Select(x => x.Name).ToList();
-
-                            var worksheet = workbook.Worksheets.Add("Recovery");
-
-                            // Write header row
-                            var cell = worksheet.Cell(1, 1);
-                            cell.Value = "Date";
-                            cell.Style.Font.Bold = true;
-
-                            // Write the names of the people in the header row
                             var totalPeople = peopleActiveNames.Count();
-                            var setTitles = new List<string>
+
+                            // Tab titles
+                            var tabTitles = new List<string>
                             {
                                 "Target",
                                 "Recovered",
                                 "Net (Uncapped)",
                                 "Net (Capped)"
                             };
-                            var numSets = setTitles.Count;
-                            for (int j = 0; j < numSets; j++)
+
+                            for (int j = 0; j < tabTitles.Count; ++j)
                             {
+                                var worksheet = workbook.Worksheets.Add(tabTitles[j]);
+
+                                // Write header row
+                                var cell = worksheet.Cell(1, 1);
+                                cell.Value = "Date";
+                                cell.Style.Font.Bold = true;
+
+                                // Write the names of the people in the header row
                                 for (int i = 0; i < totalPeople; i++)
                                 {
-                                    cell = worksheet.Cell(1, (j * numSets) + i + 2);
-                                    cell.Value = $"{peopleActiveNames[i]} {setTitles[j]}";
+                                    cell = worksheet.Cell(1, i + 2);
+                                    cell.Value = peopleActiveNames[i];
                                     cell.Style.Font.Bold = true;
+                                    cell.Style.Alignment.TextRotation = 90;
                                 }
-                            }
 
-                            // Write data rows
-                            for (int row = 0; row < allData.FirstOrDefault()?.TargetRecovery.Count; row++)
-                            {
-                                // Date
-                                cell = worksheet.Cell(row + 2, 1);
-                                cell.Value = allData[row].Date.ToString("dd/MM/yyyy");
-                                cell.Style.DateFormat.Format = "dd/MM/yyyy";
-
-                                // Each data type
-                                for (int j = 0; j < numSets; j++)
+                                // Write data rows
+                                for (int row = 0; row < allData.Count; row++)
                                 {
+                                    // Date
+                                    cell = worksheet.Cell(row + 2, 1);
+                                    cell.Value = allData[row].Date.ToString("dd/MM/yyyy");
+                                    cell.Style.DateFormat.Format = "dd/MM/yyyy";
+
                                     // Each person
                                     for (int i = 0; i < totalPeople; i++)
                                     {
                                         // Get the cell
-                                        cell = worksheet.Cell(row + 2, (j * numSets) + i + 2);
+                                        cell = worksheet.Cell(row + 2, i + 2);
                                         float cellValue = 0f;
 
                                         // Get the dictionary entry
@@ -1063,6 +1063,9 @@ namespace PPMTool.Pages
                                                 allData[row].NetCapped.TryGetValue(peopleActiveNames[i], out cellValue);
                                                 break;
                                         }
+
+                                        // Assign the value
+                                        cell.Value = cellValue;
                                     }
                                 }
                             }
