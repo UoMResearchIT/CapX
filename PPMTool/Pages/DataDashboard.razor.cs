@@ -922,21 +922,22 @@ namespace PPMTool.Pages
                 var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1).Date;
                 var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31).Date;
                 var currentDate = startDate;
+                var peopleActive = new List<Person>();
+                var allData = new List<RecoveryData>();
 
                 // Create a context to be accesed on this thread
                 using (var threadContext = ContextFactory.CreateDbContext())
                 {
                     // Get data for each person active in the window
                     var people = await PersonService.GetAllShallowAsync(threadContext);
-                    var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+                    peopleActive = people
+                        .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
+                        .ToList();
 
                     // Get projects active in the window with their subtasks and resources
                     var projectsInWindow = ProjectService.GetAll(threadContext)
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
-
-                    // Initialise the list
-                    var allData = new List<RecoveryData>();
 
                     // Loop over the days
                     while (currentDate <= endDate)
@@ -998,74 +999,69 @@ namespace PPMTool.Pages
                         // Create workbook and worksheet
                         using (var workbook = new XLWorkbook())
                         {
+                            // Get a list of people active by name
+                            var peopleActiveNames = peopleActive.Select(x => x.Name).ToList();
+
                             var worksheet = workbook.Worksheets.Add("Recovery");
 
-
-
-
-
-
-
-
-
                             // Write header row
-                            var props = typeof(AssignmentChunk).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
-                            for (int i = 0; i < propNames.Count; i++)
+                            var cell = worksheet.Cell(1, 1);
+                            cell.Value = "Date";
+                            cell.Style.Font.Bold = true;
+
+                            // Write the names of the people in the header row
+                            var totalPeople = peopleActiveNames.Count();
+                            var setTitles = new List<string>
                             {
-                                var cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
-                                cell.Style.Font.Bold = true;
+                                "Target",
+                                "Recovered",
+                                "Net (Uncapped)",
+                                "Net (Capped)"
+                            };
+                            var numSets = setTitles.Count;
+                            for (int j = 0; j < numSets; j++)
+                            {
+                                for (int i = 0; i < totalPeople; i++)
+                                {
+                                    cell = worksheet.Cell(1, (j * numSets) + i + 2);
+                                    cell.Value = $"{peopleActiveNames[i]} {setTitles[j]}";
+                                    cell.Style.Font.Bold = true;
+                                }
                             }
 
                             // Write data rows
-                            for (int row = 0; row < allData.Count; row++)
+                            for (int row = 0; row < allData.FirstOrDefault()?.TargetRecovery.Count; row++)
                             {
-                                var record = allData[row];
-                                for (int col = 0; col < propNames.Count; col++)
-                                {
-                                    var property = record.GetType().GetProperty(propNames[col]);
-                                    var rawValue = property?.GetValue(record);
-                                    var cell = worksheet.Cell(row + 2, col + 1);
+                                // Date
+                                cell = worksheet.Cell(row + 2, 1);
+                                cell.Value = allData[row].Date.ToString("dd/MM/yyyy");
+                                cell.Style.DateFormat.Format = "dd/MM/yyyy";
 
-                                    // Format and assign
-                                    if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
+                                // Each data type
+                                for (int j = 0; j < numSets; j++)
+                                {
+                                    // Each person
+                                    for (int i = 0; i < totalPeople; i++)
                                     {
-                                        if (rawValue is DateTime dt)
+                                        // Get the cell
+                                        cell = worksheet.Cell(row + 2, (j * numSets) + i + 2);
+                                        float cellValue = 0f;
+
+                                        // Get the dictionary entry
+                                        switch (j)
                                         {
-                                            cell.Value = dt;
-                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
-                                    }
-                                    else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
-                                    {
-                                        if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
-                                        {
-                                            cell.Value = currencyValue;
-                                            cell.Style.NumberFormat.Format = "£#,##0.00";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (rawValue is int)
-                                        {
-                                            cell.Value = (int)rawValue;
-                                        }
-                                        else if (rawValue is double)
-                                        {
-                                            cell.Value = (double)rawValue;
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                            case 0: // Target
+                                                allData[row].TargetRecovery.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
+                                            case 1: // Recovered
+                                                allData[row].RecoveredTime.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
+                                            case 2: // Net (Uncapped)
+                                                allData[row].Net.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
+                                            case 3: // Net (Capped)
+                                                allData[row].NetCapped.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
                                         }
                                     }
                                 }
