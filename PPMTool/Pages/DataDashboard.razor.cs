@@ -1058,10 +1058,6 @@ namespace PPMTool.Pages
                                     x.CostModel == CostModel.TechAndLeadership
                                 );
                             var leadershipAssignments = includeLeadershipInRecovery ? projectsManagedByPerson.Sum(x => x.LeadershipFTE) : 0;
-                            if (leadershipAssignments != 0)
-                            {
-                                Debug.WriteLine($"** {person.Name} has {leadershipAssignments} in extra work!");
-                            }
 
                             // Get the sum of their assignments on the day including leadership
                             var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE)
