@@ -1042,7 +1042,7 @@ namespace PPMTool.Pages
                         var projectsActiveOnDay = projectsInWindow
                             .Where(x => x.SubTasks.Any(x => x.IsWithin(currentDate)));
 
-                        // TODO: Get the person day budget value?
+                        // TODO: Get the person day budget value for the project
 
 
                         // Loop over each person employed in the window
@@ -1070,7 +1070,7 @@ namespace PPMTool.Pages
                             var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE)
                                 + leadershipAssignments;
 
-                            // TODO: Get their actual costs
+                            // TODO: Get their actual costs based on mid-grade
 
                             // TODO: Apportion a weighted slice of the budget for the project for their assignment
 
