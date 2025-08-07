@@ -172,6 +172,8 @@ namespace PPMTool.Pages
 
             // Fire the load task
             EnqueueLoadData(GetTask);
+
+            Debug.WriteLine($"** Initialised project details");
         }
 
         /// <summary>
@@ -180,11 +182,18 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private Task GetTask()
         {
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
                 // Create a thread-local context
                 using (var context = ContextFactory.CreateDbContext())
                 {
+                    // Load all the projects
+                    allProjects = ProjectService.GetAll(context).ToList();
+                    showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
+                    noteModel = new Note
+                    {
+                        IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+                    };
 
                     // Reset the search box
                     noteSearchTerms = string.Empty;
@@ -351,27 +360,13 @@ namespace PPMTool.Pages
                         UpdateScheduleChartAxisLimits();
                     }
 
-                    await LoadBurnUpChart();
+                    LoadBurnUpChart();
 
                     LogInformation($"Viewing project details for RTP-{project?.RTP}");
                 }
 
             }).ContinueWith(t =>
             {
-                // Populate the dropdown
-                var resourceIds = burnUpChartSource.FirstOrDefault()?.ResourceEffort.Select(x => x.PersonId) ?? new List<int>();
-                var context = ContextFactory.CreateDbContext();
-                var tempResourceNames = new List<Person>();
-                foreach (var id in resourceIds)
-                {
-                    var person = PersonService.GetById(context, id);
-                    if (person != null)
-                    {
-                        tempResourceNames.Add(person);
-                    }
-                }
-                resources = tempResourceNames;
-
                 Loading = false;
                 InvokeAsync(async () =>
                 {
@@ -381,25 +376,16 @@ namespace PPMTool.Pages
             });
         }
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-            allProjects = ProjectService.GetAll(Context).ToList();
-            showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
-            noteModel = new Note
-            {
-                IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
-            };
-
-            Debug.WriteLine($"** Initialised project details");
-        }
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectId == null) Navigation.NavigateTo("nothinghere");
+            if (ProjectId == null)
+            {
+                Navigation.NavigateTo("nothinghere");
+                return;
+            }
 
             // If the path is the legacy path then redirect
             if (!Navigation.Uri.Contains("projects/projectdetails"))
@@ -445,81 +431,92 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to kick off a background task to load the burn-up chart
         /// </summary>
-        private Task LoadBurnUpChart()
+        private void LoadBurnUpChart()
         {
-            return Task.Run(() =>
+            // Create the burn-up chart items
+            burnUpChartSource = new List<ChartHelper.WeeklyTaskEffort>();
+
+            // Get details of weekly effort
+            var temp = ChartHelper.GetWeeklyTaskEffortItems(project.SubTasks).ToList();
+            Debug.WriteLine($"** Returned {temp.Count} weeks of items; {temp.FirstOrDefault()?.ResourceEffort.Count} unqiue resources.");
+
+            // Generate burn-up series by aggregating the values
+            for (var i = 0; i < temp.Count; ++i)
             {
-                // Create the burn-up chart items
-                burnUpChartSource = new List<ChartHelper.WeeklyTaskEffort>();
+                var lastWeek = i == 0 ? null : burnUpChartSource[i - 1];
+                var thisWeek = temp[i];
+                burnUpChartSource.Add(new ChartHelper.WeeklyTaskEffort(thisWeek, lastWeek));
+            }
 
-                // Get details of weekly effort
-                var temp = ChartHelper.GetWeeklyTaskEffortItems(project.SubTasks).ToList();
-                Debug.WriteLine($"** Returned {temp.Count} weeks of items; {temp.FirstOrDefault()?.ResourceEffort.Count} unqiue resources.");
+            // Early exit if chartSource has no data
+            if (burnUpChartSource.Count < 1) return;
 
-                // Generate burn-up series by aggregating the values
-                for (var i = 0; i < temp.Count; ++i)
+            // Create a new data point to indicate progress
+            var seriesStart = burnUpChartSource.Min(x => x.WeekDate);
+            var seriesEnd = burnUpChartSource.Max(x => x.WeekDate);
+            var todayLine = DateTime.Today;
+
+            // If the task has started yet or has already finished then x coordinate is the limits of the series
+            if (DateTime.Today < seriesStart) todayLine = seriesStart;
+            else if (DateTime.Today > seriesEnd) todayLine = seriesEnd;
+
+            // Set options
+            burnUpChartOptions = new ApexChartOptions<ChartHelper.WeeklyTaskEffort>
+            {
+                Chart = new Chart
                 {
-                    var lastWeek = i == 0 ? null : burnUpChartSource[i - 1];
-                    var thisWeek = temp[i];
-                    burnUpChartSource.Add(new ChartHelper.WeeklyTaskEffort(thisWeek, lastWeek));
-                }
-
-                // Early exit if chartSource has no data
-                if (burnUpChartSource.Count < 1) return;
-
-                // Create a new data point to indicate progress
-                var seriesStart = burnUpChartSource.Min(x => x.WeekDate);
-                var seriesEnd = burnUpChartSource.Max(x => x.WeekDate);
-                var todayLine = DateTime.Today;
-
-                // If the task has started yet or has already finished then x coordinate is the limits of the series
-                if (DateTime.Today < seriesStart) todayLine = seriesStart;
-                else if (DateTime.Today > seriesEnd) todayLine = seriesEnd;
-
-                // Set options
-                burnUpChartOptions = new ApexChartOptions<ChartHelper.WeeklyTaskEffort>
+                    Zoom = new Zoom
+                    {
+                        AllowMouseWheelZoom = false,
+                        Enabled = true,
+                        Type = AxisType.Xy
+                    }
+                },
+                Stroke = new Stroke
                 {
-                    Chart = new Chart
+                    Curve = new CurveSelections([Curve.Straight])
+                },
+                Annotations = new Annotations
+                {
+                    Xaxis = new List<AnnotationsXAxis>
                     {
-                        Zoom = new Zoom
+                        new AnnotationsXAxis()
                         {
-                            AllowMouseWheelZoom = false,
-                            Enabled = true,
-                            Type = AxisType.Xy
-                        }
-                    },
-                    Stroke = new Stroke
-                    {
-                        Curve = new CurveSelections([Curve.Straight])
-                    },
-                    Annotations = new Annotations
-                    {
-                        Xaxis = new List<AnnotationsXAxis>
-                        {
-                            new AnnotationsXAxis()
+                            X = todayLine.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 3,
+                            BorderColor = "black",
+                            Label = new Label
                             {
-                                X = todayLine.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 3,
-                                BorderColor = "black",
-                                Label = new Label
-                                {
-                                    Text = "Current Week",
-                                    Position = LabelPosition.Right
-                                }
+                                Text = "Current Week",
+                                Position = LabelPosition.Right
                             }
                         }
-                    },
-                    Xaxis = new XAxis
-                    {
-                        Title = new AxisTitle { Text = "Week Beginning" }
-                    },
-                    Yaxis = new List<YAxis>
-                    {
-                        new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
                     }
-                };
-            });
+                },
+                Xaxis = new XAxis
+                {
+                    Title = new AxisTitle { Text = "Week Beginning" }
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
+                }
+            };
+
+            // Populate the resource dropdown
+            var resourceIds = burnUpChartSource.FirstOrDefault()?.ResourceEffort.Select(x => x.PersonId) ?? new List<int>();
+            var context = ContextFactory.CreateDbContext();
+            var tempResourceNames = new List<Person>();
+            foreach (var id in resourceIds)
+            {
+                var person = PersonService.GetById(context, id);
+                if (person != null)
+                {
+                    tempResourceNames.Add(person);
+                }
+            }
+            resources = tempResourceNames;
         }
 
         /// <summary>
@@ -542,7 +539,7 @@ namespace PPMTool.Pages
 
             // Reload the chart
             loadingBurnUpChart = true;
-            var task = LoadBurnUpChart();
+            var task = Task.Run(() => LoadBurnUpChart());
             task.ContinueWith(t =>
             {
                 InvokeAsync(() =>
