@@ -15,6 +15,7 @@ namespace PPMTool.Pages
         {
             await base.OnInitializedAsync();
 
+            // Update the cached people to just contain managers
             cachedPeople = GetManagers(cachedPeople);
             ReloadDropDownSources();
 

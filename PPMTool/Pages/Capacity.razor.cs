@@ -29,9 +29,9 @@ namespace PPMTool.Pages
         private IList<Person> managers;
         private IList<Person> filteredManagers;
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             LogInformation($"Viewing capacity page");
         }
