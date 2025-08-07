@@ -52,6 +52,16 @@ namespace PPMTool.Pages
             LogInformation($"Viewing WLM analysis page");
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (!firstRender) return;
+
+            Loading = false;
+            StateHasChanged();
+        }
+
         /// <summary>
         /// Method fired when a block is selected
         /// </summary>

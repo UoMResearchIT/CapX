@@ -58,9 +58,11 @@ namespace PPMTool.Pages
         private double fundsReceived;
         private IEnumerable<FundingSource> availableFundingSources = new List<FundingSource>();
 
-        protected override void OnInitialized()
+        protected override void OnAfterRender(bool firstRender)
         {
-            base.OnInitialized();
+            base.OnAfterRender(firstRender);
+
+            if (!firstRender) return;
 
             if (ProjectId > 0)
             {
@@ -106,6 +108,8 @@ namespace PPMTool.Pages
             editContext = new EditContext(projectModel);
             messageStore = new(editContext);
 
+            Loading = false;
+            StateHasChanged();
             LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
         }
 
