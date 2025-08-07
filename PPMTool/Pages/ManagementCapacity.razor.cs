@@ -11,9 +11,9 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Reader")]
     public partial class ManagementCapacity : BaseCapacityPage
     {
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             cachedPeople = GetManagers(cachedPeople);
             ReloadDropDownSources();
