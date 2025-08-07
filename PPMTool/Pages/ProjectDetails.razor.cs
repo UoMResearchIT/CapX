@@ -117,6 +117,7 @@ namespace PPMTool.Pages
         private bool loadingBurnUpChart = false;
         IEnumerable<Person> resources = new List<Person>();
         IList<Person> selectedResources = new List<Person>();
+        private bool hasInitialised = false;
 
         /// <summary>
         /// Represents a block on the schedule chart
@@ -163,6 +164,14 @@ namespace PPMTool.Pages
             }
         }
 
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+
+            // Initialisation
+            EnqueueLoadData(GetTask);
+        }
+
         protected override void OnParametersSet()
         {
             // Set the loading flag and redraw the view while the background task runs
@@ -170,8 +179,8 @@ namespace PPMTool.Pages
             Loading = true;
             StateHasChanged();
 
-            // Fire the load task
-            EnqueueLoadData(GetTask);
+            // Fire the load task if already initialised
+            if (hasInitialised) EnqueueLoadData(GetTask);
 
             Debug.WriteLine($"** Initialised project details");
         }
@@ -375,6 +384,7 @@ namespace PPMTool.Pages
 
                     LoadBurnUpChart();
 
+                    hasInitialised = true;
                     LogInformation($"Viewing project details for RTP-{project?.RTP}");
                 }
 
