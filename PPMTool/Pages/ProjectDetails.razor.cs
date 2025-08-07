@@ -358,6 +358,19 @@ namespace PPMTool.Pages
 
                         // Update the Gantt chart axis limits
                         UpdateScheduleChartAxisLimits();
+
+                        // Populate the resource dropdown
+                        var resourceIds = project.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person.PersonId)).DistinctBy(x => x) ?? new List<int>();
+                        var tempResourceNames = new List<Person>();
+                        foreach (var id in resourceIds)
+                        {
+                            var person = PersonService.GetById(Context, id);
+                            if (person != null)
+                            {
+                                tempResourceNames.Add(person);
+                            }
+                        }
+                        resources = tempResourceNames;
                     }
 
                     LoadBurnUpChart();
@@ -503,20 +516,6 @@ namespace PPMTool.Pages
                     new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
                 }
             };
-
-            // Populate the resource dropdown
-            var resourceIds = burnUpChartSource.FirstOrDefault()?.ResourceEffort.Select(x => x.PersonId) ?? new List<int>();
-            var context = ContextFactory.CreateDbContext();
-            var tempResourceNames = new List<Person>();
-            foreach (var id in resourceIds)
-            {
-                var person = PersonService.GetById(context, id);
-                if (person != null)
-                {
-                    tempResourceNames.Add(person);
-                }
-            }
-            resources = tempResourceNames;
         }
 
         /// <summary>
