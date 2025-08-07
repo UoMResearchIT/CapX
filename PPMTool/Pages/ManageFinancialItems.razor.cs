@@ -66,6 +66,13 @@ namespace PPMTool.Pages
                 ActiveUserRoleType == RoleType.Superuser ||
                 ActiveUserRoleType == RoleType.Manager ||
                 ActiveUserRoleType == RoleType.Finance;
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            if (!firstRender) return;
 
             if (RTP != null)
             {
@@ -142,6 +149,9 @@ namespace PPMTool.Pages
             }
 
             UpdateSummaryComponent();
+
+            Loading = false;
+            StateHasChanged();
 
             Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
