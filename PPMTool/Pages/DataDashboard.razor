@@ -65,7 +65,6 @@
                         <div class="col-3">
                             <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="numberOfStaffManagedByHead" Disabled="@(!EditAuthorised)" />
                         </div>
-
                         <div class="col-3">
                             <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="coachFTE" Disabled="@(!EditAuthorised)" />
                         </div>
@@ -78,25 +77,25 @@
                                      ExpandTitle="Expand" CollapseAriaLabel="Collapse the View Settings"
                                      ExpandAriaLabel="Expand the View Settings" Selected="true">
                     <div class="row align-items-center">
-                        <div class="col-2">
+                        <div class="col-3">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                                 <RadzenLabel class="radzen-form-label" Text="Start Date" />
                                 <RadzenDatePicker class="radzen-datepicker" TValue="DateTime" AllowClear="false" DateFormat="dd/MM/yyyy" ShowTime="false" @bind-Value="startDate" Change="StartDateChanged" Disabled="@Loading" />
                             </RadzenStack>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                                 <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
                                 <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" Change="YearsAheadChanged" Disabled="@Loading" />
                             </RadzenStack>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 align-self-stretch">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                                 <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
                                 <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" Disabled="@Loading" />
                             </RadzenStack>
                         </div>
-                        <div class="col-auto">
+                        <div class="col-auto align-self-stretch">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                                 <RadzenLabel class="radzen-form-label" Text="View Options" />
                                 <RadzenSelectBar TValue="ViewOption" Size="ButtonSize.Medium" @bind-Value="@viewOption" Change="() => ViewOptionChanged()" Disabled="@Loading">
@@ -109,32 +108,38 @@
                                 </RadzenSelectBar>
                             </RadzenStack>
                         </div>
-                        <div class="col-auto" style="align-content: center">
+                    </div>
+                </RadzenAccordionItem>
+                <RadzenAccordionItem Text="Export" Icon="download" CollapseTitle="Collapse"
+                                     ExpandTitle="Expand" CollapseAriaLabel="Collapse the Export Section"
+                                     ExpandAriaLabel="Expand the Export Section" Selected="true">
+                    <div class="row align-items-center">
+                        <div class="col-3" style="align-content: center">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
                                 <RadzenLabel class="radzen-form-label" Text="Finance Report for Period" />
                                 <RadzenButton ButtonType="ButtonType.Button"
                                               Click="ExportFinancialReport"
-                                              Text="@(exportRunning ? "Exporting" : "Export")"
+                                              Text="@(exportRunning ? "Please Wait..." : "Export Finance Report")"
                                               Icon="@(exportRunning ? "hourglass_empty" : "download")"
                                               Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
                             </RadzenStack>
                         </div>
-                    </div>
-                    <div class="col-2">
-                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
-                            <RadzenLabel class="radzen-form-label" Text="Include Leadership in Recovery" />
-                            <RadzenSwitch @bind-Value="includeLeadershipInRecovery" Disabled="@(Loading || exportRunning)" />
-                        </RadzenStack>
-                    </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
-                            <RadzenLabel class="radzen-form-label" Text="Recovery Report for Period" />
-                            <RadzenButton ButtonType="ButtonType.Button"
-                                          Click="ExportRecoveryReport"
-                                          Text="@(exportRunning ? "Exporting" : "Export")"
-                                          Icon="@(exportRunning ? "hourglass_empty" : "download")"
-                                          Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
-                        </RadzenStack>
+                        <div class="col-3 align-self-stretch">
+                            <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                                <RadzenLabel class="radzen-form-label" Text="Include Leadership in Recovery" />
+                                <RadzenSwitch @bind-Value="includeLeadershipInRecovery" Disabled="@(Loading || exportRunning)" />
+                            </RadzenStack>
+                        </div>
+                        <div class="col-3" style="align-content: center">
+                            <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
+                                <RadzenLabel class="radzen-form-label" Text="Recovery Report for Period" />
+                                <RadzenButton ButtonType="ButtonType.Button"
+                                              Click="ExportRecoveryReport"
+                                              Text="@(exportRunning ? "Please Wait..." : "Export Recovery Report")"
+                                              Icon="@(exportRunning ? "hourglass_empty" : "download")"
+                                              Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
+                            </RadzenStack>
+                        </div>
                     </div>
                 </RadzenAccordionItem>
             </Items>
