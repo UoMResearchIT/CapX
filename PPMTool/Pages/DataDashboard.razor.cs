@@ -982,6 +982,33 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Computes the factors for a particular financial reference used to scale the cost of FTE of an assignment
+        /// </summary>
+        /// <param name="finref"></param>
+        /// <returns></returns>
+        private Dictionary<int, float> GetFTEScalingFactors(FinancialReference finref)
+        {
+            var fteScaling = new Dictionary<int, float>();
+            fteScaling.Add(4, 1.0f);
+            fteScaling.Add(5, finref.Grade55Costs / finref.Grade41Costs);
+            fteScaling.Add(6, finref.Grade65Costs / finref.Grade41Costs);
+            fteScaling.Add(7, finref.Grade75Costs / finref.Grade41Costs);
+            return fteScaling;
+        }
+
+        /// <summary>
+        /// Get the "scaled FTE * duration = scaled effort" total for the project assuming that grade of resources at the 
+        /// start of the assignment stays the same throughout the assignment for simplicity.
+        /// </summary>
+        /// <param name="projects"></param>
+        /// <param name="fteScaling"></param>
+        /// <returns></returns>
+        private Dictionary<int, float> GetScaledEffortForProjects(IEnumerable<Project> projects, Dictionary<int, float> fteScaling)
+        {
+
+        }
+
+        /// <summary>
         /// Exports an Excel spreadsheet of target and assigned recovery of staff
         /// </summary>
         private void ExportRecoveryReport()
@@ -1015,6 +1042,14 @@ namespace PPMTool.Pages
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
 
+                    // Normalisation factors for resource FTE
+                    var currentFY = FinancialReference.GetFinancialYear(startDate);
+                    var finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, startDate);
+                    var fteScaling = GetFTEScalingFactors(finref);
+
+                    // Get scaled effort
+                    var projectBudgetPerScaledEffort = GetScaledEffortForProjects(projectsInWindow, fteScaling);
+
                     // Initialise the totals
                     foreach (var person in peopleActive)
                     {
@@ -1024,6 +1059,16 @@ namespace PPMTool.Pages
                     // Loop over the days
                     while (currentDate <= endDate)
                     {
+                        // If the FY has changed then update the fteScaling
+                        if (FinancialReference.GetFinancialYear(currentDate) != currentFY)
+                        {
+                            finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, currentDate);
+                            fteScaling = GetFTEScalingFactors(finref);
+
+                            // Update the scaled area totals for the projects in the window
+                            projectBudgetPerScaledEffort = GetScaledEffortForProjects(projectsInWindow, fteScaling);
+                        }
+
                         // Create a new item
                         var currentDayData = new RecoveryData(currentDate);
 
@@ -1034,9 +1079,6 @@ namespace PPMTool.Pages
                         // Get the projects that are active on this day
                         var projectsActiveOnDay = projectsInWindow
                             .Where(x => x.SubTasks.Any(x => x.IsWithin(currentDate)));
-
-                        // TODO: Get the person day budget value for the project
-
 
                         // Loop over each person employed in the window
                         foreach (var person in peopleActive)
