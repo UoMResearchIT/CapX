@@ -498,10 +498,11 @@ namespace PPMTool.Pages
             }
         }
 
-        protected override async Task OnInitializedAsync()
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            await base.OnInitializedAsync();
-            Loading = true;
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (!firstRender) return;
 
             // Get all projects not finished or cancelled
             cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
@@ -511,13 +512,6 @@ namespace PPMTool.Pages
 
             // Load dropdown sources
             ReloadDropDownSources();
-        }
-
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            await base.OnAfterRenderAsync(firstRender);
-
-            if (!firstRender) return;
 
             chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
             Debug.WriteLine($"** From session storage: {(chosenPeople != null ? string.Join('|', chosenPeople) : "")}");

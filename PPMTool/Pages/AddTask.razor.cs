@@ -138,12 +138,6 @@ namespace PPMTool.Pages
         private string autoCompleteText;
         private bool isInitialised;
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-            if (!isInitialised) InitialiseComponent();
-        }
-
         /// <summary>
         /// Initialises the component with the project and task models.
         /// </summary>
@@ -459,6 +453,11 @@ namespace PPMTool.Pages
         protected override void OnAfterRender(bool firstRender)
         {
             base.OnAfterRender(firstRender);
+
+            if (firstRender)
+            {
+                if (!isInitialised) InitialiseComponent();
+            }
 
             // If no project then navigate away
             if (ProjectModel == null) Navigation.NavigateTo("nothinghere");

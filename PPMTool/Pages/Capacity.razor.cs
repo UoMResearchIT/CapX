@@ -29,13 +29,6 @@ namespace PPMTool.Pages
         private IList<Person> managers;
         private IList<Person> filteredManagers;
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-
-            LogInformation($"Viewing capacity page");
-        }
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
@@ -69,6 +62,8 @@ namespace PPMTool.Pages
                 // Will automatically load the chart source
                 PeopleSelectionChanged(chosenPeople);
             }
+
+            LogInformation($"Viewing capacity page");
         }
 
         protected override string GetSessionStorageTag() => "capacity";
