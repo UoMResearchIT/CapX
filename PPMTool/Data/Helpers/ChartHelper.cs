@@ -394,8 +394,20 @@ namespace PPMTool.Data.Helpers
                 WeekDate = currentWeek.WeekDate;
                 PlannedWorkHoursDemandMet = (previousWeek?.PlannedWorkHoursDemandMet ?? 0) + currentWeek.PlannedWorkHoursDemandMet;
                 AssignedPlannedWorkHours = (previousWeek?.AssignedPlannedWorkHours ?? 0) + currentWeek.AssignedPlannedWorkHours;
-                ActualWorkHours = (previousWeek?.ActualWorkHours ?? 0) + currentWeek.ActualWorkHours;
 
+                // Get Monday of the current week
+                var mondayThisWeek = DateTime.Today;
+                if (mondayThisWeek.DayOfWeek != DayOfWeek.Monday)
+                {
+                    int daysToSubtract = ((int)mondayThisWeek.DayOfWeek + 6) % 7;
+                    mondayThisWeek = mondayThisWeek.AddDays(-daysToSubtract);
+                }
+
+                // Copy actuals value from previous week if in the future
+                var previousWeekActuals = previousWeek?.ActualWorkHours ?? 0;
+                ActualWorkHours = WeekDate.Date <= mondayThisWeek.Date ? previousWeekActuals + currentWeek.ActualWorkHours : previousWeekActuals;
+
+                // Breakout the individual resource data
                 foreach (var res in currentWeek.ResourceEffort)
                 {
                     double lastWeekPlanned = 0;
@@ -417,7 +429,7 @@ namespace PPMTool.Data.Helpers
                         new ResourceEffort(
                             res.PersonId,
                             lastWeekPlanned + res.PlannedWorkHours,
-                            lastWeekActual + res.ActualHours
+                            WeekDate.Date <= mondayThisWeek.Date ? lastWeekActual + res.ActualHours : lastWeekActual
                         )
                     );
                 }
