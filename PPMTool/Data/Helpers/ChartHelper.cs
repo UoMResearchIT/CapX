@@ -429,7 +429,7 @@ namespace PPMTool.Data.Helpers
                         new ResourceEffort(
                             res.PersonId,
                             lastWeekPlanned + res.PlannedWorkHours,
-                            lastWeekActual + res.ActualHours
+                            WeekDate.Date <= mondayThisWeek.Date ? lastWeekActual + res.ActualHours : lastWeekActual
                         )
                     );
                 }
