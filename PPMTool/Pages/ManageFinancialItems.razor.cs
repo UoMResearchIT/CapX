@@ -66,6 +66,13 @@ namespace PPMTool.Pages
                 ActiveUserRoleType == RoleType.Superuser ||
                 ActiveUserRoleType == RoleType.Manager ||
                 ActiveUserRoleType == RoleType.Finance;
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            if (!firstRender) return;
 
             if (RTP != null)
             {
@@ -142,6 +149,9 @@ namespace PPMTool.Pages
             }
 
             UpdateSummaryComponent();
+
+            Loading = false;
+            StateHasChanged();
 
             Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
@@ -246,7 +256,7 @@ namespace PPMTool.Pages
                         { nameof(FundingSourceFormComponent.Logger), Logger },
                         { nameof(FundingSourceFormComponent.Context), Context },
                         { nameof(FundingSourceFormComponent.ActiveUser), ActiveUser },
-                        { nameof(FundingSourceFormComponent.FormClosed), () => FormClosedHandler(true) },
+                        { nameof(FundingSourceFormComponent.FormClosed), () => FormClosedHandler() },
                         { nameof(FundingSourceFormComponent.EditAuthorised), EditAuthorised }
                     },
                     new DialogOptions
@@ -264,20 +274,11 @@ namespace PPMTool.Pages
         /// <summary>
         /// Callback which runs when the form closes
         /// </summary>
-        private void FormClosedHandler(bool updateBudget = false)
+        private void FormClosedHandler()
         {
             dataGridInvoices?.Reload();
             dataGridPayments?.Reload();
             dataGridSources?.Reload();
-
-            // If this is a finance source change, update the budget
-            if (updateBudget)
-            {
-                var sources = FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId);
-                selectedProject.Budget = sources.Sum(x => x.AmountAvailable);
-                LogInformation($"Updating budget to {selectedProject.Budget} from {sources.Count()} funding sources");
-                ProjectService.Update(Context, selectedProject);
-            }
 
             UpdateSummaryComponent();
             StateHasChanged();

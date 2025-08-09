@@ -69,31 +69,32 @@ namespace PPMTool.Pages
             Custom
         }
 
-        protected override void OnInitialized()
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnInitialized();
-
-            // Get starting lists from the DB
-            people = PersonService.GetAll(Context);
-            projects = ProjectService.GetAll(Context);
-
-            // Set chart options
-            ytdChartOptions = new ApexChartOptions<DemandChartItem>
+            await base.OnAfterRenderAsync(firstRender);
+            if (firstRender)
             {
-                Chart = new Chart
+                // Get starting lists from the DB
+                people = PersonService.GetAll(Context);
+                projects = ProjectService.GetAll(Context);
+
+                // Set chart options
+                ytdChartOptions = new ApexChartOptions<DemandChartItem>
                 {
-                    Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false },
-                    Zoom = new Zoom
+                    Chart = new Chart
                     {
-                        AllowMouseWheelZoom = false
-                    }
-                },
-                Xaxis = new XAxis
-                {
-                    Type = XAxisType.Datetime
-                },
-                Yaxis = new List<YAxis>
+                        Type = ChartType.Line,
+                        Animations = new Animations { Enabled = false },
+                        Zoom = new Zoom
+                        {
+                            AllowMouseWheelZoom = false
+                        }
+                    },
+                    Xaxis = new XAxis
+                    {
+                        Type = XAxisType.Datetime
+                    },
+                    Yaxis = new List<YAxis>
                 {
                     new YAxis
                     {
@@ -103,9 +104,9 @@ namespace PPMTool.Pages
                         }
                     }
                 },
-                Annotations = new Annotations
-                {
-                    Xaxis = new List<AnnotationsXAxis>
+                    Annotations = new Annotations
+                    {
+                        Xaxis = new List<AnnotationsXAxis>
                     {
                         new AnnotationsXAxis()
                         {
@@ -120,146 +121,138 @@ namespace PPMTool.Pages
                             }
                         }
                     }
-                },
-                Colors = GetColours(ChartColourSet.MoneyChart)
-            };
-
-            fteChartOptions = new ApexChartOptions<DemandChartItem>
-            {
-                Chart = new Chart
-                {
-                    Type = ChartType.Line,
-                    Animations = new Animations { Enabled = false },
-                    Zoom = new Zoom
-                    {
-                        AllowMouseWheelZoom = false
-                    }
-                },
-                Xaxis = new XAxis
-                {
-                    Type = XAxisType.Datetime
-                },
-                Yaxis = new List<YAxis>
-                {
-                    new YAxis
-                    {
-                        Labels = new YAxisLabels
-                        {
-                            Formatter = @"function (val, index) { return val.toFixed(2); }"
-                        }
-                    }
-                },
-                Annotations = new Annotations
-                {
-                    Xaxis = new List<AnnotationsXAxis>
-                    {
-                        new AnnotationsXAxis()
-                        {
-                            X = DateTime.Today.ToUnixTimeMilliseconds(),
-                            BorderWidth = 2,
-                            StrokeDashArray = 5,
-                            BorderColor = "#888",
-                            Label = new Label
-                            {
-                                Text = "Today",
-                                Position = LabelPosition.Left
-                            }
-                        }
-                    }
-                }
-            };
-
-            demandChartOptions = new ApexChartOptions<DemandChartItem>
-            {
-                Chart = new Chart
-                {
-                    Type = ChartType.Area,
-                    Animations = new Animations { Enabled = false },
-                    Zoom = new Zoom
-                    {
-                        AllowMouseWheelZoom = false
-                    }
-                },
-                Xaxis = new XAxis
-                {
-                    Type = XAxisType.Datetime
-                },
-                Yaxis = new List<YAxis>
-                {
-                    new YAxis
-                    {
-                        Labels = new YAxisLabels
-                        {
-                            Formatter = @"function (val, index) { return val.toFixed(2); }"
-                        }
-                    }
-                },
-                Fill = new Fill
-                {
-                    Type = new FillTypeSelections(Enumerable.Repeat(FillType.Solid, 8).ToArray()),
-                    Opacity = new Opacity(Enumerable.Repeat(0.7, 8).ToArray())
-                },
-                Annotations = new Annotations
-                {
-                    Xaxis = new List<AnnotationsXAxis>
-                    {
-                        new AnnotationsXAxis()
-                        {
-                            X = DateTime.Today.ToUnixTimeMilliseconds(),
-                            BorderWidth = 2,
-                            StrokeDashArray = 5,
-                            BorderColor = "#888",
-                            Label = new Label
-                            {
-                                Text = "Today",
-                                Position = LabelPosition.Left
-                            }
-                        }
-                    }
-                },
-                Markers = new Markers
-                {
-                    Size = 0
-                },
-                Tooltip = new ApexCharts.Tooltip
-                {
-                    Marker = new TooltipMarker
-                    {
-                        Show = false
                     },
-                    Custom = @"function({series, seriesIndex, dataPointIndex, w}) { return formatTooltip({series, seriesIndex, dataPointIndex, w}); }"
+                    Colors = GetColours(ChartColourSet.MoneyChart)
+                };
 
-                }
-            };
-
-            dutyChartOptions = new ApexChartOptions<DutyChartItem>
-            {
-                Chart = new Chart
+                fteChartOptions = new ApexChartOptions<DemandChartItem>
                 {
-                    Type = ChartType.Bar,
-                    Animations = new Animations { Enabled = false },
-                    Zoom = new Zoom
+                    Chart = new Chart
                     {
-                        AllowMouseWheelZoom = false
+                        Type = ChartType.Line,
+                        Animations = new Animations { Enabled = false },
+                        Zoom = new Zoom
+                        {
+                            AllowMouseWheelZoom = false
+                        }
+                    },
+                    Xaxis = new XAxis
+                    {
+                        Type = XAxisType.Datetime
+                    },
+                    Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                        }
                     }
                 },
-                PlotOptions = new PlotOptions
-                {
-                    Bar = new PlotOptionsBar
+                    Annotations = new Annotations
                     {
-                        Horizontal = false
+                        Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
                     }
-                }
-            };
+                    }
+                };
 
-            Loading = true;
-        }
+                demandChartOptions = new ApexChartOptions<DemandChartItem>
+                {
+                    Chart = new Chart
+                    {
+                        Type = ChartType.Area,
+                        Animations = new Animations { Enabled = false },
+                        Zoom = new Zoom
+                        {
+                            AllowMouseWheelZoom = false
+                        }
+                    },
+                    Xaxis = new XAxis
+                    {
+                        Type = XAxisType.Datetime
+                    },
+                    Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = @"function (val, index) { return val.toFixed(2); }"
+                        }
+                    }
+                },
+                    Fill = new Fill
+                    {
+                        Type = new FillTypeSelections(Enumerable.Repeat(FillType.Solid, 8).ToArray()),
+                        Opacity = new Opacity(Enumerable.Repeat(0.7, 8).ToArray())
+                    },
+                    Annotations = new Annotations
+                    {
+                        Xaxis = new List<AnnotationsXAxis>
+                    {
+                        new AnnotationsXAxis()
+                        {
+                            X = DateTime.Today.ToUnixTimeMilliseconds(),
+                            BorderWidth = 2,
+                            StrokeDashArray = 5,
+                            BorderColor = "#888",
+                            Label = new Label
+                            {
+                                Text = "Today",
+                                Position = LabelPosition.Left
+                            }
+                        }
+                    }
+                    },
+                    Markers = new Markers
+                    {
+                        Size = 0
+                    },
+                    Tooltip = new ApexCharts.Tooltip
+                    {
+                        Marker = new TooltipMarker
+                        {
+                            Show = false
+                        },
+                        Custom = @"function({series, seriesIndex, dataPointIndex, w}) { return formatTooltip({series, seriesIndex, dataPointIndex, w}); }"
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            await base.OnAfterRenderAsync(firstRender);
-            if (firstRender)
-            {
+                    }
+                };
+
+                dutyChartOptions = new ApexChartOptions<DutyChartItem>
+                {
+                    Chart = new Chart
+                    {
+                        Type = ChartType.Bar,
+                        Animations = new Animations { Enabled = false },
+                        Zoom = new Zoom
+                        {
+                            AllowMouseWheelZoom = false
+                        }
+                    },
+                    PlotOptions = new PlotOptions
+                    {
+                        Bar = new PlotOptionsBar
+                        {
+                            Horizontal = false
+                        }
+                    }
+                };
+
                 await JSRuntime.InvokeVoidAsync("setFinishedFlag", showFinishedAsSeparate);
 
                 // Set the initial settings and generate the charts
