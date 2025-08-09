@@ -77,7 +77,7 @@ SentrySdk.Init(o =>
     o.Dsn = builder.Configuration.GetValue<string>("Sentry:Dsn");
     o.Release = builder.Configuration.GetValue<string>("VersionNumber");
     o.Environment = builder.Environment.EnvironmentName;
-    o.Debug = true;
+    o.Debug = !builder.Environment.IsProduction();
 });
 #endif
 
