@@ -241,13 +241,13 @@ namespace PPMTool.Pages
                             EndDate = dateRange.EndDate,
                             OwningProject = project,
                             AssignedResources = new List<Resource>
-                        {
-                            new Resource
                             {
-                                Person = project.ProjectManager,
-                                AssignmentFTE = Math.Round(project.LeadershipFTE, 3)
+                                new Resource
+                                {
+                                    Person = project.ProjectManager,
+                                    AssignmentFTE = Math.Round(project.LeadershipFTE, 3)
+                                }
                             }
-                        }
 
                         }, leadershipName, isLeadershipTask: true));
                     }
@@ -298,20 +298,20 @@ namespace PPMTool.Pages
                         Annotations = new Annotations
                         {
                             Xaxis = new List<AnnotationsXAxis>
-                        {
-                            new AnnotationsXAxis()
                             {
-                                X = DateTime.Today.ToUnixTimeMilliseconds(),
-                                BorderWidth = 2,
-                                StrokeDashArray = 5,
-                                BorderColor = "red",
-                                Label = new Label
+                                new AnnotationsXAxis()
                                 {
-                                    Text = "Current Week",
-                                    Position = LabelPosition.Right
+                                    X = DateTime.Today.ToUnixTimeMilliseconds(),
+                                    BorderWidth = 2,
+                                    StrokeDashArray = 5,
+                                    BorderColor = "red",
+                                    Label = new Label
+                                    {
+                                        Text = "Current Week",
+                                        Position = LabelPosition.Right
+                                    }
                                 }
                             }
-                        }
                         }
                     };
 
