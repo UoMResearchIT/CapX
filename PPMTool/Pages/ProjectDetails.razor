@@ -268,20 +268,20 @@
             else
             {
                 <div class="card">
-                    <RadzenDataGrid AllowFiltering="@(project.SubTasks.Count > 0)"
+                    <RadzenDataGrid AllowFiltering="@(gridTasks.Count > 0)"
                                     AllowColumnResize="true"
                                     FilterMode="FilterMode.Simple"
                                     AllowSorting="true"
                                     PageSize="10"
                                     AllowPaging="true"
                                     ShowPagingSummary="true"
-                                    Data="@allTasks"
+                                    Data="@gridTasks"
                                     TItem="SubTask"
                                     ColumnWidth="6rem"
                                     SelectionMode="DataGridSelectionMode.Single"
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                     Count="@count"
-                                    LoadData="@LoadData">
+                                    LoadData="@LoadTaskData">
                         <Columns>
                             <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
                                 <Template Context="t">

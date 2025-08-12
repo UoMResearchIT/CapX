@@ -87,6 +87,7 @@ namespace PPMTool.Pages
         private List<GanttBlock> confirmedBlocks;
         private List<GanttBlock> provisionalBlocks;
         private List<SubTask> allTasks;
+        private IList<SubTask> gridTasks;
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
