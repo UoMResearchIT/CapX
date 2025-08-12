@@ -146,6 +146,7 @@ namespace PPMTool.Pages
             {
                 Loading = true;
                 StateHasChanged();
+                await Task.Yield();
 
                 // Load all the projects
                 allProjects = ProjectService.GetAll(Context).ToList();
