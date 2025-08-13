@@ -83,8 +83,8 @@
 
     protected override bool HandleValidSubmit()
     {
-        var error = base.HandleValidSubmit();
-        if (!error)
+        var valid = base.HandleValidSubmit();
+        if (!valid)
         {
             return false;
         }
