@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -40,7 +39,7 @@ namespace PPMTool.Shared
                 if (claimsPrincipal?.Identity is not null && claimsPrincipal.Identity.IsAuthenticated)
                 {
                     // Create the context on every page
-                    Context = ContextFactory.CreateDbContext();
+                    if (Context == null) Context = ContextFactory.CreateDbContext();
 
                     // Stash the user name
                     ActiveUserName = authState?.User.Identity.Name.Trim().ToLower();
