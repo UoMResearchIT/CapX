@@ -26,7 +26,6 @@ namespace PPMTool.Pages
         private DateTime startDate = DateTime.Today;
         private int yearsAhead;
         private bool showFinishedAsSeparate = false;
-        private bool includeLeadershipInRecovery = true;
 
         private IEnumerable<Person> people;
         private IEnumerable<Project> projects;
@@ -997,15 +996,53 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Get the "scaled FTE * duration = scaled effort" total for the project assuming that grade of resources at the 
-        /// start of the assignment stays the same throughout the assignment for simplicity.
+        /// Get the "scaled FTE * duration = scaled effort" total for the project across all resources assuming 
+        /// that grade of resources at the start of the assignment stays the same throughout the assignment for simplicity.
         /// </summary>
         /// <param name="projects"></param>
         /// <param name="fteScaling"></param>
         /// <returns></returns>
         private Dictionary<int, float> GetScaledEffortForProjects(IEnumerable<Project> projects, Dictionary<int, float> fteScaling)
         {
+            var scaleEffortPerProject = new Dictionary<int, float>();
+            foreach (var project in projects)
+            {
+                var scaledEffort = 0f;
+                foreach (var task in project.SubTasks)
+                {
+                    var scaledFTESum = 0f;
+                    foreach (var res in task.AssignedResources)
+                    {
+                        // Get resource grade on current date to work out which FTE scaling factor to use
+                        var wlm = res.Person.GetWorkloadModelOnDateOrDefault(DateTime.Today);
+                        var grade = wlm.Grade;
+                        var success = fteScaling.TryGetValue(grade, out var scaling);
+                        if (scaling == 0f)
+                        {
+                            throw new Exception($"No scaling factor for grade {grade}");
+                        }
 
+                        // Update the scaled FTE sum
+                        scaledFTESum += (float)(res.AssignmentFTE * scaling);
+                    }
+
+                    // Update the scaled effort
+                    scaledEffort += scaledFTESum * (task.DurationDays + 1);
+                }
+
+                // If this has leadership cost model then add in the "area" of the leadership assignment too
+                // as this shares the budget
+                if (project.CostModel == CostModel.TechAndLeadership)
+                {
+                    fteScaling.TryGetValue(7, out var leadershipScaling);
+                    scaledEffort += (float)((project.EndDate.Subtract(project.StartDate).TotalDays + 1) * leadershipScaling);
+                }
+
+                // Add the project scaled effort to the dictionary
+                scaleEffortPerProject.Add(project.ProjectId, scaledEffort);
+            }
+
+            return scaleEffortPerProject;
         }
 
         /// <summary>
@@ -1042,12 +1079,12 @@ namespace PPMTool.Pages
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
 
-                    // Normalisation factors for resource FTE
+                    // Normalisation factors for resource FTE based on grade
                     var currentFY = FinancialReference.GetFinancialYear(startDate);
                     var finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, startDate);
                     var fteScaling = GetFTEScalingFactors(finref);
 
-                    // Get scaled effort
+                    // Get scaled effort (i.e. how many units of effort should the budget be distributred over)
                     var projectBudgetPerScaledEffort = GetScaledEffortForProjects(projectsInWindow, fteScaling);
 
                     // Initialise the totals
@@ -1084,7 +1121,7 @@ namespace PPMTool.Pages
                         foreach (var person in peopleActive)
                         {
                             // Get the project work amount on the day
-                            var projectWorkTarget = person.GetProjectWorkAvailabilityOnDate(currentDate);
+                            var projectWorkTargetFTE = person.GetProjectWorkAvailabilityOnDate(currentDate);
                             var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
 
                             // Get resource assignments that are active on the day for this person
@@ -1099,34 +1136,39 @@ namespace PPMTool.Pages
                                     x.ProjectManager.PersonId == person.PersonId &&
                                     x.CostModel == CostModel.TechAndLeadership
                                 );
-                            var leadershipAssignments = includeLeadershipInRecovery ? projectsManagedByPerson.Sum(x => x.LeadershipFTE) : 0;
+                            var leadershipAssignmentFTE = projectsManagedByPerson.Sum(x => x.LeadershipFTE);
 
                             // Get the sum of their assignments on the day including leadership
-                            var projectAssignments = resourcesOnDay.Sum(x => x.AssignmentFTE)
-                                + leadershipAssignments;
+                            var projectAssignmentsFTE = resourcesOnDay.Sum(x => x.AssignmentFTE)
+                                + leadershipAssignmentFTE;
 
-                            // TODO: Get their actual costs based on mid-grade
+                            // Compute the costs on the day for the person based on grade and whether they are the PM
+                            // Base on today since that was what was used to compute the scaled FTE
+                            var grade = person.GetGradeOnDate(DateTime.Today);
+                            fteScaling.TryGetValue(grade, out var scaling);
+                            var personCosts = projectAssignmentsFTE * scaling * finref.GetMidGradeCosts(grade);
 
-                            // TODO: Apportion a weighted slice of the budget for the project for their assignment
+                            // TODO: Apportion a weighted slice of the budget for the project for their assignments based on the scaling factors computed
+
 
                             // Net value
-                            var netValue = projectAssignments - projectWorkTarget;
+                            var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
 
                             // Net value capped
-                            var maxOverAllocation = wlmTotal - projectWorkTarget;
+                            var maxOverAllocation = wlmTotal - projectWorkTargetFTE;
                             if (maxOverAllocation < 0) maxOverAllocation = 0;
                             var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
 
                             // Add to the data dictionary
-                            currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTarget);
-                            currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignments);
+                            currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTargetFTE);
+                            currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignmentsFTE);
                             currentDayData.Net.Add(person.Name, (float)netValue);
                             currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
 
                             // Update the totals
                             totalData
                                 .First(x => x.Name == person.Name)
-                                .Update((float)projectWorkTarget, (float)projectAssignments, (float)maxOverAllocation);
+                                .Update((float)projectWorkTargetFTE, (float)projectAssignmentsFTE, (float)maxOverAllocation);
                         }
 
                         // Add the current day data to the list
@@ -1143,7 +1185,7 @@ namespace PPMTool.Pages
                     try
                     {
                         // Create file path
-                        var filename = $"Recovery_{(includeLeadershipInRecovery ? "IncLead_" : "")}{DateTime.Now.Ticks}.xlsx";
+                        var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
                         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
                         Directory.CreateDirectory(folder);
                         var path = Path.Combine(folder, filename);

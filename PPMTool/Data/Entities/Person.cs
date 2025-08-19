@@ -244,5 +244,15 @@ namespace PPMTool.Data.Entities
             var wlm = GetWorkloadModelOnDateOrDefault(date);
             return wlm.Total();
         }
+
+        /// <summary>
+        /// Method to return the grade of the person on the date or the default of 6 if no WLM to consider
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal int GetGradeOnDate(DateTime date)
+        {
+            throw GetWorkloadModelOnDateOrDefault(date).Grade;
+        }
     }
 }
