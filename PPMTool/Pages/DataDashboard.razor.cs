@@ -909,6 +909,11 @@ namespace PPMTool.Pages
             /// </summary>
             public IDictionary<string, float> NetCappedIncLeadership { get; } = new Dictionary<string, float>();
 
+            /// <summary>
+            /// Person-Value data which holds the costs for a person on that day
+            /// </summary>
+            public IDictionary<string, float> PersonCosts { get; } = new Dictionary<string, float>();
+
             public RecoveryData(DateTime date)
             {
                 Date = date;
@@ -936,6 +941,8 @@ namespace PPMTool.Pages
 
             public float NetIncLead { get; private set; }
 
+            public float PersonCosts { get; private set; }
+
             public TotalRecovered(string name)
             {
                 Name = name;
@@ -944,9 +951,7 @@ namespace PPMTool.Pages
             /// <summary>
             /// Update the values based on the FTE for the day
             /// </summary>
-            /// <param name="targetFTE"></param>
-            /// <param name="assignedFTE"></param>
-            public void Update(float targetFTE, float assignedFTE, float assignedIncLeadFTE, float maxCap)
+            public void Update(float targetFTE, float assignedFTE, float assignedIncLeadFTE, float maxCap, float costs)
             {
                 Target += targetFTE;
                 Recovered += assignedFTE;
@@ -959,6 +964,7 @@ namespace PPMTool.Pages
                 NetIncLead += net;
                 netCapped = net > maxCap ? maxCap : net;
                 NetCappedIncLead += netCapped;
+                PersonCosts += costs;
             }
 
             /// <summary>
@@ -1018,7 +1024,7 @@ namespace PPMTool.Pages
             /// <returns></returns>
             public float GetNetIncLeadership(int daysInWindow)
             {
-                return Net / daysInWindow;
+                return NetIncLead / daysInWindow;
             }
 
             /// <summary>
@@ -1028,7 +1034,17 @@ namespace PPMTool.Pages
             /// <returns></returns>
             public float GetNetCappedIncLeadership(int daysInWindow)
             {
-                return NetCapped / daysInWindow;
+                return NetCappedIncLead / daysInWindow;
+            }
+
+            /// <summary>
+            /// Gets the costs over the window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetCosts(int daysInWindow)
+            {
+                return PersonCosts / daysInWindow;
             }
         }
 
@@ -1066,6 +1082,9 @@ namespace PPMTool.Pages
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
 
+                    // Normalisation factors for resource FTE based on grade
+                    var currentFY = FinancialReference.GetFinancialYear(startDate);
+                    var finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, startDate);
                     // Initialise the totals
                     foreach (var person in peopleActive)
                     {
@@ -1075,6 +1094,12 @@ namespace PPMTool.Pages
                     // Loop over the days
                     while (currentDate <= endDate)
                     {
+                        // If the FY has changed then update the finref
+                        if (FinancialReference.GetFinancialYear(currentDate) != currentFY)
+                        {
+                            finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, currentDate);
+                        }
+
                         // Create a new item
                         var currentDayData = new RecoveryData(currentDate);
 
@@ -1092,6 +1117,10 @@ namespace PPMTool.Pages
                             // Get the project work amount on the day
                             var projectWorkTargetFTE = person.GetProjectWorkAvailabilityOnDate(currentDate);
                             var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
+                            var gradeOnDay = person.GetGradeOnDate(currentDate);
+
+                            // Get day costs for person based on mid-grade
+                            var personCosts = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
 
                             // Get resource assignments that are active on the day for this person
                             var resourcesOnDay = tasksActiveOnDay
@@ -1129,6 +1158,7 @@ namespace PPMTool.Pages
                             currentDayData.RecoveredTimeIncLeadership.Add(person.Name, (float)projectAssignmentsFTEIncLeadership);
                             currentDayData.NetIncLeadership.Add(person.Name, (float)netValueIncLeadership);
                             currentDayData.NetCappedIncLeadership.Add(person.Name, (float)netValueCappedIncLeadership);
+                            currentDayData.PersonCosts.Add(person.Name, (float)personCosts);
 
                             // Update the totals
                             totalData
@@ -1137,7 +1167,8 @@ namespace PPMTool.Pages
                                     (float)projectWorkTargetFTE,
                                     (float)projectAssignmentsFTE,
                                     (float)projectAssignmentsFTEIncLeadership,
-                                    (float)maxOverAllocation
+                                    (float)maxOverAllocation,
+                                    (float)personCosts
                                 );
                         }
 
@@ -1176,7 +1207,8 @@ namespace PPMTool.Pages
                                 "Net (Capped)",
                                 "Recovered (Inc Lead)",
                                 "Net (Uncapped, Inc Lead)",
-                                "Net (Capped, Inc Lead)"
+                                "Net (Capped, Inc Lead)",
+                                "Costs"
                             };
 
                             for (int j = 0; j < tabTitles.Count; ++j)
@@ -1236,17 +1268,20 @@ namespace PPMTool.Pages
                                             case 6: // Net (Capped, Inc Lead)
                                                 allData[row].NetCappedIncLeadership.TryGetValue(peopleActiveNames[i], out cellValue);
                                                 break;
+                                            case 7: // Costs
+                                                allData[row].PersonCosts.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
                                         }
 
                                         // Assign the value
                                         cell.Value = cellValue;
-                                        cell.Style.NumberFormat.Format = "#0.000";
+                                        cell.Style.NumberFormat.Format = j == 7 ? "£0.00" : "#0.000";
                                     }
                                 }
                             }
 
                             // Add totals tab
-                            var worksheetTotals = workbook.AddWorksheet("Totals");
+                            var worksheetTotals = workbook.AddWorksheet("Totals", 0);
 
                             // Header row
                             var cellTotals = worksheetTotals.Cell(1, 1);
@@ -1258,6 +1293,14 @@ namespace PPMTool.Pages
                                 cellTotals.Value = tabTitles[i];
                                 cellTotals.Style.Font.Bold = true;
                             }
+
+                            // Add additional baseline costs columns
+                            cellTotals = worksheetTotals.Cell(1, 2 + tabTitles.Count);
+                            cellTotals.Value = "Extra Baseline";
+                            cellTotals.Style.Font.Bold = true;
+                            cellTotals = worksheetTotals.Cell(1, 3 + tabTitles.Count);
+                            cellTotals.Value = "Extra Baseline (Inc. Leadership)";
+                            cellTotals.Style.Font.Bold = true;
 
                             // Each row
                             for (int i = 0; i < peopleActiveNames.Count; ++i)
@@ -1278,7 +1321,8 @@ namespace PPMTool.Pages
                                 cellTotals.Value = totalItem.GetNet(totalDays);
                                 cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 5);
-                                cellTotals.Value = totalItem.GetNetCapped(totalDays);
+                                var netCapped = totalItem.GetNetCapped(totalDays);
+                                cellTotals.Value = netCapped;
                                 cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 6);
                                 cellTotals.Value = totalItem.GetRecoveredIncLeadership(totalDays);
@@ -1287,8 +1331,20 @@ namespace PPMTool.Pages
                                 cellTotals.Value = totalItem.GetNetIncLeadership(totalDays);
                                 cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 8);
-                                cellTotals.Value = totalItem.GetNetCappedIncLeadership(totalDays);
+                                var netCappedLeadership = totalItem.GetNetCappedIncLeadership(totalDays);
+                                cellTotals.Value = netCappedLeadership;
                                 cellTotals.Style.NumberFormat.Format = "#0.000";
+                                cellTotals = worksheetTotals.Cell(2 + i, 9);
+                                cellTotals.Value = totalItem.GetCosts(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "£0.00";
+
+                                // Extra costs
+                                cellTotals = worksheetTotals.Cell(2 + i, 10);
+                                cellTotals.Value = netCapped < 0 ? -netCapped * totalItem.GetCosts(totalDays) : 0;
+                                cellTotals.Style.NumberFormat.Format = "£0.00";
+                                cellTotals = worksheetTotals.Cell(2 + i, 11);
+                                cellTotals.Value = netCappedLeadership < 0 ? -netCappedLeadership * totalItem.GetCosts(totalDays) : 0;
+                                cellTotals.Style.NumberFormat.Format = "£0.00";
                             }
 
                             // Save the workbook

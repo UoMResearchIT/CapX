@@ -246,12 +246,19 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to return the grade of the person on the date or the default of 6 if no WLM to consider
+        /// Method to return the grade of the person on the date or the default of 6 if no WLM to consider.
+        /// Returns null if not started or left.
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal int GetGradeOnDate(DateTime date)
+        internal int? GetGradeOnDate(DateTime date)
         {
+            // If person hasn't started on day then return null
+            if (StartDate > date) return null;
+
+            // If the person has left before this day then return null
+            if (EndDate != null && EndDate < date) return null;
+
             return GetWorkloadModelOnDateOrDefault(date).Grade;
         }
     }
