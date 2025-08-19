@@ -87,6 +87,7 @@ namespace PPMTool.Pages
         private List<GanttBlock> confirmedBlocks;
         private List<GanttBlock> provisionalBlocks;
         private List<SubTask> allTasks;
+        private IList<SubTask> gridTasks;
         private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
@@ -117,70 +118,19 @@ namespace PPMTool.Pages
         private bool loadingBurnUpChart = false;
         IEnumerable<Person> resources = new List<Person>();
         IList<Person> selectedResources = new List<Person>();
-        private bool hasInitialised = false;
 
         /// <summary>
-        /// Represents a block on the schedule chart
+        /// Fired when the paramters are changed
         /// </summary>
-        internal class GanttBlock : IChartItem
-        {
-            public GanttBlock(SubTask t, string groupName, bool isFake = false, bool isLeadershipTask = false)
-            {
-                Task = t;
-                PredecessorGroupName = groupName;
-                this.isFake = isFake;
-                this.IsLeadershipTask = isLeadershipTask;
-            }
-
-            /// <summary>
-            /// The subtask which is associated with the Gantt Block
-            /// </summary>
-            public SubTask Task { get; private set; }
-
-            /// <summary>
-            /// When grouping tasks that are linked, this is the name of the group
-            /// </summary>
-            public string PredecessorGroupName { get; private set; }
-
-            /// <summary>
-            /// Whether this task is a fake task which exists in either the provisional or confirmed series so they both match in length.
-            /// This is to workaround a bug in Apex Charts where the sorting doesn't work if the series aren't all the same length
-            /// </summary>
-            private bool isFake;
-
-            /// <summary>
-            /// Whether this task is a leaderhsip task and hence doesn't have a proper subtask object associated with it in the DB.
-            /// </summary>
-            public bool IsLeadershipTask { get; private set; }
-
-            public bool IsFake()
-            {
-                return isFake;
-            }
-
-            public bool IsHatched()
-            {
-                return Task.AssignedResources.Any(x => x.IsProvisional);
-            }
-        }
-
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-
-            // Initialisation
-            EnqueueLoadData(GetTask);
-        }
-
         protected override void OnParametersSet()
         {
             // Set the loading flag and redraw the view while the background task runs
             base.OnParametersSet();
-            Loading = true;
-            StateHasChanged();
 
-            // Fire the load task if already initialised
-            if (hasInitialised) EnqueueLoadData(GetTask);
+            Debug.WriteLine("** OnParameters!!!!");
+
+            // Fire the load task
+            _ = LoadDataAsync();
 
             Debug.WriteLine($"** Initialised project details");
         }
@@ -189,107 +139,109 @@ namespace PPMTool.Pages
         /// Method to get the background task that does all the intialisation work
         /// </summary>
         /// <returns></returns>
-        private Task GetTask()
+        private async Task LoadDataAsync()
         {
-            return Task.Run(() =>
+            Debug.WriteLine("** Loading Data!!!!");
+            try
             {
-                // Create a thread-local context
-                using (var context = ContextFactory.CreateDbContext())
+                Loading = true;
+                StateHasChanged();
+                await Task.Yield();
+
+                // Load all the projects
+                allProjects = ProjectService.GetAll(Context).ToList();
+                showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
+                noteModel = new Note
                 {
-                    // Load all the projects
-                    allProjects = ProjectService.GetAll(context).ToList();
-                    showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
-                    noteModel = new Note
+                    IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
+                };
+
+                // Reset the search box
+                noteSearchTerms = string.Empty;
+
+                // Filter the mentions reset
+                cachedMentionables = UserService
+                    .GetAll(Context)
+                    .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                    .DistinctBy(x => x.Person)
+                    .Select(x => x.Person)
+                    .ToList();
+                FilterMentionables();
+
+                // Query string only consulted when Project ID is not specified in URL
+                if (ProjectId == null && RTP != null)
+                {
+                    // Try get the project
+                    ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
+                }
+
+                // Carry on and load the project details
+                if (ProjectId != null)
+                {
+                    project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+                    var sources = FundingSourceService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId);
+
+                    // Generate the list of skills
+                    skillsRequiredForProject = SkillTagService.GetSkillsForProject(Context, project.ProjectId);
+
+                    // Generate the funds requested and received
+                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                        Context,
+                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
+                        project.PlannedLeadershipCosts,
+                        project.SubTasks.SelectMany(x => x.AssignedResources),
+                        sources,
+                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
+                        PaymentService.GetFundsReceived(Context, project.ProjectId)
+                    );
+
+                    // Generate the finance item
+                    financeSummaryItem = new FinanceSummaryItem(
+                        project,
+                        project.ProjectManager,
+                        project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
+                        transactions
+                    );
+
+                    // Generate the blocks for the schedule chart
+                    allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
+                    var allBlocks = new List<GanttBlock>();
+                    foreach (var t in allTasks)
                     {
-                        IsFinanceInfo = ActiveUserRoleType == RoleType.Finance
-                    };
+                        // Initialise as the task name
+                        var groupName = t.Name;
 
-                    // Reset the search box
-                    noteSearchTerms = string.Empty;
-
-                    // Filter the mentions reset
-                    cachedMentionables = UserService
-                        .GetAll(Context)
-                        .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
-                        .DistinctBy(x => x.Person)
-                        .Select(x => x.Person)
-                        .ToList();
-                    FilterMentionables();
-
-                    // Query string only consulted when Project ID is not specified in URL
-                    if (ProjectId == null && RTP != null)
-                    {
-                        // Try get the project
-                        ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
-                    }
-
-                    // Carry on and load the project details
-                    if (ProjectId != null)
-                    {
-                        project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
-                        var sources = FundingSourceService.GetAll(context).Where(x => x.Project.ProjectId == ProjectId);
-
-                        // Generate the list of skills
-                        skillsRequiredForProject = SkillTagService.GetSkillsForProject(context, project.ProjectId);
-
-                        // Generate the funds requested and received
-                        var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                            context,
-                            project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                            project.PlannedLeadershipCosts,
-                            project.SubTasks.SelectMany(x => x.AssignedResources),
-                            sources,
-                            InvoiceService.GetFundsRequested(context, project.ProjectId),
-                            PaymentService.GetFundsReceived(context, project.ProjectId)
-                        );
-
-                        // Generate the finance item
-                        financeSummaryItem = new FinanceSummaryItem(
-                            project,
-                            project.ProjectManager,
-                            project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
-                            transactions
-                        );
-
-                        // Generate the blocks for the schedule chart
-                        allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
-                        var allBlocks = new List<GanttBlock>();
-                        foreach (var t in allTasks)
+                        if (t.Predecessor != null)
                         {
-                            // Initialise as the task name
-                            var groupName = t.Name;
-
-                            if (t.Predecessor != null)
+                            // Find predecessor in the existing list
+                            var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
+                            if (match != null)
                             {
-                                // Find predecessor in the existing list
-                                var match = allBlocks.FirstOrDefault(x => x.Task.SubTaskId == t.Predecessor.SubTaskId);
-                                if (match != null)
-                                {
-                                    groupName = match.PredecessorGroupName;
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
-                                    LogError("Cannot find predecessor task in temporary list!");
-                                }
+                                groupName = match.PredecessorGroupName;
                             }
-
-                            // Add to the list of blocks
-                            allBlocks.Add(new GanttBlock(t, groupName));
+                            else
+                            {
+                                Debug.WriteLine("** Shouldn't be here but predecessor grouping will fail!");
+                                LogError("Cannot find predecessor task in temporary list!");
+                            }
                         }
 
-                        // Add a gantt block representing the management task
-                        var managementTasks = project.GetLeadershipTaskRanges();
-                        foreach (var dateRange in managementTasks)
+                        // Add to the list of blocks
+                        allBlocks.Add(new GanttBlock(t, groupName));
+                    }
+
+                    // Add a gantt block representing the management task
+                    var managementTasks = project.GetLeadershipTaskRanges();
+                    foreach (var dateRange in managementTasks)
+                    {
+                        var leadershipName = "(Leadership)";
+                        allBlocks.Insert(0, new GanttBlock(new SubTask
                         {
-                            var leadershipName = "(Leadership)";
-                            allBlocks.Insert(0, new GanttBlock(new SubTask
-                            {
-                                Name = leadershipName,
-                                StartDate = dateRange.StartDate,
-                                EndDate = dateRange.EndDate,
-                                OwningProject = project,
-                                AssignedResources = new List<Resource>
+                            Name = leadershipName,
+                            StartDate = dateRange.StartDate,
+                            EndDate = dateRange.EndDate,
+                            OwningProject = project,
+                            AssignedResources = new List<Resource>
                             {
                                 new Resource
                                 {
@@ -298,56 +250,55 @@ namespace PPMTool.Pages
                                 }
                             }
 
-                            }, leadershipName, isLeadershipTask: true));
-                        }
+                        }, leadershipName, isLeadershipTask: true));
+                    }
 
-                        // Fill in the data
-                        ChartHelper.CompleteChartSeries(
-                            allBlocks,
-                            c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
-                            out confirmedBlocks,
-                            out provisionalBlocks
-                        );
+                    // Fill in the data
+                    ChartHelper.CompleteChartSeries(
+                        allBlocks,
+                        c => new GanttBlock(new SubTask() { Name = c.Task.Name, StartDate = DateTime.Today, EndDate = DateTime.Today }, c.PredecessorGroupName, true),
+                        out confirmedBlocks,
+                        out provisionalBlocks
+                    );
 
-                        // Update the UI                    
-                        count = allTasks.Count;
-                        isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
-                            project.ProjectManager?.Name == ActiveUser?.Name;
-                        isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
+                    // Update the UI                    
+                    isCurrentUserFollowing = project.Followers.Any(x => x.Name == ActiveUser?.Name) ||
+                        project.ProjectManager?.Name == ActiveUser?.Name;
+                    isProjectManager = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ActiveUser?.Person?.PersonId == project?.ProjectManager?.PersonId);
 
-                        ganttChartOptions = new ApexChartOptions<GanttBlock>
+                    ganttChartOptions = new ApexChartOptions<GanttBlock>
+                    {
+                        Chart = new Chart
                         {
-                            Chart = new Chart
+                            Zoom = new Zoom
                             {
-                                Zoom = new Zoom
-                                {
-                                    AllowMouseWheelZoom = false
-                                }
-                            },
-                            PlotOptions = new PlotOptions
+                                AllowMouseWheelZoom = false
+                            }
+                        },
+                        PlotOptions = new PlotOptions
+                        {
+                            Bar = new PlotOptionsBar
                             {
-                                Bar = new PlotOptionsBar
-                                {
-                                    Horizontal = true,
-                                    RangeBarGroupRows = true
-                                }
-                            },
-                            Fill = new Fill
+                                Horizontal = true,
+                                RangeBarGroupRows = true
+                            }
+                        },
+                        Fill = new Fill
+                        {
+                            Opacity = 1,
+                            Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
+                            Pattern = new FillPattern
                             {
-                                Opacity = 1,
-                                Type = new FillTypeSelections(new FillType[] { FillType.Solid, FillType.Pattern }),
-                                Pattern = new FillPattern
-                                {
-                                    Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
-                                }
-                            },
-                            Legend = new ApexCharts.Legend
-                            {
-                                Show = false
-                            },
-                            Annotations = new Annotations
-                            {
-                                Xaxis = new List<AnnotationsXAxis>
+                                Style = new FillPatternStyleSelections(new FillPatternStyle[] { FillPatternStyle.SlantedLines }),
+                            }
+                        },
+                        Legend = new ApexCharts.Legend
+                        {
+                            Show = false
+                        },
+                        Annotations = new Annotations
+                        {
+                            Xaxis = new List<AnnotationsXAxis>
                             {
                                 new AnnotationsXAxis()
                                 {
@@ -362,45 +313,47 @@ namespace PPMTool.Pages
                                     }
                                 }
                             }
-                            }
-                        };
-
-                        // Update the Gantt chart axis limits
-                        UpdateScheduleChartAxisLimits();
-
-                        // Populate the resource dropdown
-                        var resourceIds = project.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person.PersonId)).DistinctBy(x => x) ?? new List<int>();
-                        var tempResourceNames = new List<Person>();
-                        foreach (var id in resourceIds)
-                        {
-                            var person = PersonService.GetById(Context, id);
-                            if (person != null)
-                            {
-                                tempResourceNames.Add(person);
-                            }
                         }
-                        resources = tempResourceNames;
+                    };
+
+                    // Update the Gantt chart axis limits
+                    UpdateScheduleChartAxisLimits();
+
+                    // Populate the resource dropdown
+                    var resourceIds = project.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person.PersonId)).DistinctBy(x => x) ?? new List<int>();
+                    var tempResourceNames = new List<Person>();
+                    foreach (var id in resourceIds)
+                    {
+                        var person = PersonService.GetById(Context, id);
+                        if (person != null)
+                        {
+                            tempResourceNames.Add(person);
+                        }
                     }
-
-                    LoadBurnUpChart();
-
-                    hasInitialised = true;
-                    LogInformation($"Viewing project details for RTP-{project?.RTP}");
+                    resources = tempResourceNames;
                 }
 
-            }).ContinueWith(t =>
+                LoadBurnUpChart();
+                await ConfigureNotesAsync();
+                LogInformation($"Viewing project details for RTP-{project?.RTP}");
+
+            }
+            finally
             {
                 Loading = false;
-                InvokeAsync(async () =>
-                {
-                    StateHasChanged();
-                    await OnAfterRenderAsync(true);
-                });
-            });
+                StateHasChanged();
+            }
         }
 
+        /// <summary>
+        /// Fired once the page has been rendered
+        /// </summary>
+        /// <param name="firstRender"></param>
+        /// <returns></returns>
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            Debug.WriteLine("** After Render!!!!");
+
             await base.OnAfterRenderAsync(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
@@ -422,35 +375,41 @@ namespace PPMTool.Pages
                 // Create a reference to self in JS
                 await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
 
-                // After the page has finished rendering then apply the search string from the parameter
-                if (FilteredNote != null)
-                {
-                    // Set the search term
-                    noteSearchTerms = $"#id={FilteredNote}";
-                    PopulateNotes();
-                }
-                else if (FilterDueNotes)
-                {
-                    showOnlyDueItems = true;
-                    sortByDueDate = true;
-                    PopulateNotes();
-
-                    // Check whether the parameter is present to scroll to the due notes
-                    if (FilterDueNotes)
-                    {
-                        // Refresh then scroll last due note into view
-                        StateHasChanged();
-                        await Task.Delay(300);
-                        await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
-                    }
-                }
-                else
-                {
-                    PopulateNotes();
-                }
+                // Go fetch the notes (has to be after render as need to scroll to)
+                await ConfigureNotesAsync();
             }
         }
 
+        /// <summary>
+        /// Configures the note filters and then gets them from the DB applying scroll to as required
+        /// </summary>
+        /// <returns></returns>
+        private async Task ConfigureNotesAsync()
+        {
+            // After the page has finished rendering then apply the search string from the parameter
+            if (FilteredNote != null)
+            {
+                // Set the search term to filter
+                noteSearchTerms = $"#id={FilteredNote}";
+            }
+            else if (FilterDueNotes)
+            {
+                showOnlyDueItems = true;
+                sortByDueDate = true;
+            }
+
+            // Get the notes from the DB
+            PopulateNotesFromDB();
+
+            // Check whether the parameter is present to scroll to the due notes
+            if (FilterDueNotes)
+            {
+                // Refresh then scroll last due note into view
+                StateHasChanged();
+                await Task.Delay(300);
+                await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
+            }
+        }
         /// <summary>
         /// Method to kick off a background task to load the burn-up chart
         /// </summary>
@@ -741,13 +700,13 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterSwitchToggled()
         {
-            PopulateNotes();
+            PopulateNotesFromDB();
         }
 
         /// <summary>
         /// Populates the notes to be show in the list
         /// </summary>
-        private void PopulateNotes()
+        private void PopulateNotesFromDB()
         {
             Debug.WriteLine("** Populating notes...");
             allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
@@ -771,55 +730,53 @@ namespace PPMTool.Pages
                 await JSRuntime.InvokeVoidAsync("clearHighlightInNotes");
             }).ContinueWith(async t =>
             {
-                // Wait for JS to finish
-                await Task.Delay(500);
-
-                // No search terms so show all
-                if (string.IsNullOrWhiteSpace(noteSearchTerms))
+                await InvokeAsync(async () =>
                 {
-                    filteredNotes = allNotes;
-                    Debug.WriteLine($"** Notes reset");
-                    await InvokeAsync(StateHasChanged);
-                }
+                    // Wait for JS to finish
+                    await Task.Delay(500);
 
-                // Search terms are present
-                else
-                {
-                    // Search by DB ID (useful for resolving links)
-                    if (noteSearchTerms.StartsWith("#id=") && noteSearchTerms.Length > 4 && int.TryParse(noteSearchTerms.Substring(4), out int noteId))
+                    // No search terms so show all
+                    if (string.IsNullOrWhiteSpace(noteSearchTerms))
                     {
-                        filteredNotes = allNotes.Where(x => x.NoteId == noteId).ToList();
-                        Debug.WriteLine($"** Filtered based on ID {noteId} giving {filteredNotes.Count} notes.");
-                        await InvokeAsync(async () =>
+                        filteredNotes = allNotes;
+                        Debug.WriteLine($"** Notes reset");
+                        StateHasChanged();
+                    }
+
+                    // Search terms are present
+                    else
+                    {
+                        // Search by DB ID (useful for resolving links)
+                        if (noteSearchTerms.StartsWith("#id=") && noteSearchTerms.Length > 4 && int.TryParse(noteSearchTerms.Substring(4), out int noteId))
                         {
-                            // Refresh then scroll to note
+                            filteredNotes = allNotes.Where(x => x.NoteId == noteId).ToList();
+                            Debug.WriteLine($"** Filtered based on ID {noteId} giving {filteredNotes.Count} notes.");
+
+                            // Re-render then scroll to note
                             StateHasChanged();
                             await Task.Delay(300);
                             await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{noteId}");
-                        });
-                    }
-                    else
-                    {
-                        // Filter based on the search terms (plain text content)
-                        filteredNotes = allNotes.Where(x =>
+                        }
+                        else
                         {
-                            var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
-                            return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
-                        }).ToList();
-                        Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
-                        await InvokeAsync(async () =>
-                        {
-                            // Refresh
-                            StateHasChanged();
+                            // Filter based on the search terms (plain text content)
+                            filteredNotes = allNotes.Where(x =>
+                            {
+                                var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
+                                return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                            }).ToList();
 
-                            // Wait for the page to render
+                            Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
+
+                            // Re-render the view
+                            StateHasChanged();
                             await Task.Delay(500);
 
                             // Call highlighter JS function
                             await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
-                        });
+                        }
                     }
-                }
+                });
             });
         }
 
@@ -899,7 +856,7 @@ namespace PPMTool.Pages
                 NoteService.RestoreModel(Context, ref noteModel);
             }
             isEditExistingNote = false;
-            PopulateNotes();
+            PopulateNotesFromDB();
             ShowOrHideEditor(false);
         }
 
@@ -908,6 +865,8 @@ namespace PPMTool.Pages
         /// </summary>
         private void SaveNote()
         {
+            Debug.WriteLine("** SAVING NOTE!!! ");
+
             if (project == null || project.ProjectId < 0)
             {
                 ShowOrHideEditor(false);
@@ -923,7 +882,7 @@ namespace PPMTool.Pages
             NoteService.Add(Context, noteModel);
             LogInformation($"Added note for {project.GetFullName()}");
             noteSearchTerms = string.Empty;
-            PopulateNotes();
+            PopulateNotesFromDB();
             ShowOrHideEditor(false);
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
         }
@@ -941,7 +900,7 @@ namespace PPMTool.Pages
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
             NoteService.Update(Context, noteModel, true);
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
-            PopulateNotes();
+            PopulateNotesFromDB();
             ShowOrHideEditor(false);
             EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, listOfNoteChanges);
         }
@@ -973,7 +932,7 @@ namespace PPMTool.Pages
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
                 NoteService.Delete(Context, noteToDelete);
-                PopulateNotes();
+                PopulateNotesFromDB();
                 StateHasChanged();
             }
         }
@@ -1152,7 +1111,7 @@ namespace PPMTool.Pages
         /// Loads the task data grid content. Necessary to ensure that we can filter the resources on the fly.
         /// </summary>
         /// <param name="args"></param>
-        private void LoadData(LoadDataArgs args)
+        private void LoadTaskData(LoadDataArgs args)
         {
             var query = project.SubTasks.ToList().AsQueryable();
 
@@ -1183,7 +1142,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging via Skip and Take.
-            allTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            gridTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
         }
 
         /// <summary>
