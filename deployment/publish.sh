@@ -5,9 +5,16 @@ set -eu
 sudo systemctl stop kestrel-capx.service
 sudo systemctl stop kestrel-capx-api.service
 
-# Flush WAL journals and backup locally
-sudo sqlite3 /var/www/capx/PPMTool.db VACUUM;
-sudo cp /var/www/capx/PPMTool.db ~/PPMTool-old.db
+# Backup locally removing old files first
+sudo rm -rf ~/PPMTool.db*
+sudo cp /var/www/capx/PPMTool.db* ~/
+sudo chown mbgm6ah3:users ~/PPMTool.db*
+sudo sqlite3 ~/PPMTool.db VACUUM;
+filename=PPMTool-old.db
+sudo cp -a ~/PPMTool.db ~/$filename
+
+# Remove WAL files
+sudo rm -f /var/www/capx/PPMTool.db-*
 
 # Publish the built versions
 sudo cp -rf ~/CapX/PPMTool/bin/Release/net8.0/publish/* /var/www/capx/

@@ -110,18 +110,6 @@ namespace PPMTool.Data.Entities
                 // Use a financial reference and the standard or junior rate to compute the cost
                 // assuming it persists throughout the project and doesn't increment year on year
 
-                // Get WLM active at start of task
-                var startWLM = Person.WorkloadModelChanges
-                    .Where(x => x.ChangeDate <= taskStart)
-                    .OrderByDescending(x => x.ChangeDate)
-                    .FirstOrDefault();
-
-                // If they haven't got a WLM then use the G6 default
-                if (startWLM == null)
-                {
-                    startWLM = Person.GetWorkloadModelOnDateOrDefault(taskStart);
-                }
-
                 // Get the annual salary costs for resource based on rate
                 var annualCostPerBillableDay = financialReference.GetJuniorOrStandardAnnualCosts(Rate) / 220;
 
@@ -132,10 +120,21 @@ namespace PPMTool.Data.Entities
                 PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDay;
             }
 
-
             // If we wanted to include the year to year variation based on financial references then we could do it like below.
             // However, actuals would need to be recorded year on year to be able to match the planned cost algorithm
             // I guess this actually exists now but a job for another day
+
+            //// Get WLM active at start of task
+            //var startWLM = Person.WorkloadModelChanges
+            //    .Where(x => x.ChangeDate <= taskStart)
+            //    .OrderByDescending(x => x.ChangeDate)
+            //    .FirstOrDefault();
+
+            //// If they haven't got a WLM then use the G6 default
+            //if (startWLM == null)
+            //{
+            //    startWLM = Person.GetWorkloadModelOnDateOrDefault(taskStart);
+            //}
 
             //// Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
             //var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();
