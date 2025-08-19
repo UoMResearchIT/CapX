@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Pages.Components;
@@ -10,7 +8,7 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    [Authorize]
+    [Authorize(Roles = "Manager,Superuser,Developer")]
     public partial class UserProfile : BasePage
     {
         [Inject]

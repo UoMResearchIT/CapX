@@ -120,14 +120,16 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Returns the mid grade salary costs from the reference (grade 4 always bottom of grade)
+        /// Returns the mid grade salary costs from the reference.
+        /// Grade 4 always bottom of grade.
+        /// Less than Grade4 returns G4.1.
+        /// Greater than Grade 7 returns G7.1.
         /// </summary>
         /// <param name="grade"></param>
         /// <returns></returns>
-        /// <exception cref="ArgumentException">If grade is not a valid grade</exception>
         internal double GetMidGradeCosts(int grade)
         {
-            if (grade == 4)
+            if (grade <= 4)
             {
                 return Grade41Costs;
             }
@@ -139,14 +141,7 @@ namespace PPMTool.Data.Entities
             {
                 return Grade65Costs;
             }
-            else if (grade == 7)
-            {
-                return Grade75Costs;
-            }
-            else
-            {
-                throw new ArgumentException($"Grade {grade} is invalid!");
-            }
+            return Grade75Costs;
         }
     }
 }
