@@ -894,6 +894,21 @@ namespace PPMTool.Pages
             /// </summary>
             public IDictionary<string, float> NetCapped { get; } = new Dictionary<string, float>();
 
+            /// <summary>
+            /// Person-Value data based on what the sum of the person's assignments say they have on that day including leadership
+            /// </summary>
+            public IDictionary<string, float> RecoveredTimeIncLeadership { get; } = new Dictionary<string, float>();
+
+            /// <summary>
+            /// Person-Value data which subtracts the target and recovered values including leadership and permits values over 100%
+            /// </summary>
+            public IDictionary<string, float> NetIncLeadership { get; } = new Dictionary<string, float>();
+
+            /// <summary>
+            /// Person-Value data which subtracts the target and recovered values including leadership but caps off values over 100%
+            /// </summary>
+            public IDictionary<string, float> NetCappedIncLeadership { get; } = new Dictionary<string, float>();
+
             public RecoveryData(DateTime date)
             {
                 Date = date;
@@ -911,13 +926,15 @@ namespace PPMTool.Pages
 
             public float Recovered { get; private set; }
 
+            public float RecoveredIncLeadership { get; private set; }
+
             public float NetCapped { get; private set; }
 
             public float Net { get; private set; }
 
-            public float Costs { get; private set; }
+            public float NetCappedIncLead { get; private set; }
 
-            public float Recharged { get; private set; }
+            public float NetIncLead { get; private set; }
 
             public TotalRecovered(string name)
             {
@@ -929,14 +946,19 @@ namespace PPMTool.Pages
             /// </summary>
             /// <param name="targetFTE"></param>
             /// <param name="assignedFTE"></param>
-            public void Update(float targetFTE, float assignedFTE, float maxCap)
+            public void Update(float targetFTE, float assignedFTE, float assignedIncLeadFTE, float maxCap)
             {
                 Target += targetFTE;
                 Recovered += assignedFTE;
+                RecoveredIncLeadership += assignedIncLeadFTE;
                 var net = assignedFTE - targetFTE;
                 Net += net;
                 var netCapped = net > maxCap ? maxCap : net;
                 NetCapped += netCapped;
+                net = assignedIncLeadFTE - targetFTE;
+                NetIncLead += net;
+                netCapped = net > maxCap ? maxCap : net;
+                NetCappedIncLead += netCapped;
             }
 
             /// <summary>
@@ -960,6 +982,16 @@ namespace PPMTool.Pages
             }
 
             /// <summary>
+            /// Returns the FTE of the recovered including leadership for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetRecoveredIncLeadership(int daysInWindow)
+            {
+                return RecoveredIncLeadership / daysInWindow;
+            }
+
+            /// <summary>
             /// Returns the FTE of the net for the whole window
             /// </summary>
             /// <param name="daysInWindow"></param>
@@ -978,71 +1010,26 @@ namespace PPMTool.Pages
             {
                 return NetCapped / daysInWindow;
             }
-        }
 
-        /// <summary>
-        /// Computes the factors for a particular financial reference used to scale the cost of FTE of an assignment
-        /// </summary>
-        /// <param name="finref"></param>
-        /// <returns></returns>
-        private Dictionary<int, float> GetFTEScalingFactors(FinancialReference finref)
-        {
-            var fteScaling = new Dictionary<int, float>();
-            fteScaling.Add(4, 1.0f);
-            fteScaling.Add(5, finref.Grade55Costs / finref.Grade41Costs);
-            fteScaling.Add(6, finref.Grade65Costs / finref.Grade41Costs);
-            fteScaling.Add(7, finref.Grade75Costs / finref.Grade41Costs);
-            return fteScaling;
-        }
-
-        /// <summary>
-        /// Get the "scaled FTE * duration = scaled effort" total for the project across all resources assuming 
-        /// that grade of resources at the start of the assignment stays the same throughout the assignment for simplicity.
-        /// </summary>
-        /// <param name="projects"></param>
-        /// <param name="fteScaling"></param>
-        /// <returns></returns>
-        private Dictionary<int, float> GetScaledEffortForProjects(IEnumerable<Project> projects, Dictionary<int, float> fteScaling)
-        {
-            var scaleEffortPerProject = new Dictionary<int, float>();
-            foreach (var project in projects)
+            /// <summary>
+            /// Returns the FTE of the net including leadership for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetNetIncLeadership(int daysInWindow)
             {
-                var scaledEffort = 0f;
-                foreach (var task in project.SubTasks)
-                {
-                    var scaledFTESum = 0f;
-                    foreach (var res in task.AssignedResources)
-                    {
-                        // Get resource grade on current date to work out which FTE scaling factor to use
-                        var wlm = res.Person.GetWorkloadModelOnDateOrDefault(DateTime.Today);
-                        var grade = wlm.Grade;
-                        var success = fteScaling.TryGetValue(grade, out var scaling);
-                        if (scaling == 0f)
-                        {
-                            throw new Exception($"No scaling factor for grade {grade}");
-                        }
-
-                        // Update the scaled FTE sum
-                        scaledFTESum += (float)(res.AssignmentFTE * scaling);
-                    }
-
-                    // Update the scaled effort
-                    scaledEffort += scaledFTESum * (task.DurationDays + 1);
-                }
-
-                // If this has leadership cost model then add in the "area" of the leadership assignment too
-                // as this shares the budget
-                if (project.CostModel == CostModel.TechAndLeadership)
-                {
-                    fteScaling.TryGetValue(7, out var leadershipScaling);
-                    scaledEffort += (float)((project.EndDate.Subtract(project.StartDate).TotalDays + 1) * leadershipScaling);
-                }
-
-                // Add the project scaled effort to the dictionary
-                scaleEffortPerProject.Add(project.ProjectId, scaledEffort);
+                return Net / daysInWindow;
             }
 
-            return scaleEffortPerProject;
+            /// <summary>
+            /// Returns the FTE of the capped net including leadership for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetNetCappedIncLeadership(int daysInWindow)
+            {
+                return NetCapped / daysInWindow;
+            }
         }
 
         /// <summary>
@@ -1079,14 +1066,6 @@ namespace PPMTool.Pages
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
 
-                    // Normalisation factors for resource FTE based on grade
-                    var currentFY = FinancialReference.GetFinancialYear(startDate);
-                    var finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, startDate);
-                    var fteScaling = GetFTEScalingFactors(finref);
-
-                    // Get scaled effort (i.e. how many units of effort should the budget be distributred over)
-                    var projectBudgetPerScaledEffort = GetScaledEffortForProjects(projectsInWindow, fteScaling);
-
                     // Initialise the totals
                     foreach (var person in peopleActive)
                     {
@@ -1096,16 +1075,6 @@ namespace PPMTool.Pages
                     // Loop over the days
                     while (currentDate <= endDate)
                     {
-                        // If the FY has changed then update the fteScaling
-                        if (FinancialReference.GetFinancialYear(currentDate) != currentFY)
-                        {
-                            finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, currentDate);
-                            fteScaling = GetFTEScalingFactors(finref);
-
-                            // Update the scaled area totals for the projects in the window
-                            projectBudgetPerScaledEffort = GetScaledEffortForProjects(projectsInWindow, fteScaling);
-                        }
-
                         // Create a new item
                         var currentDayData = new RecoveryData(currentDate);
 
@@ -1139,36 +1108,37 @@ namespace PPMTool.Pages
                             var leadershipAssignmentFTE = projectsManagedByPerson.Sum(x => x.LeadershipFTE);
 
                             // Get the sum of their assignments on the day including leadership
-                            var projectAssignmentsFTE = resourcesOnDay.Sum(x => x.AssignmentFTE)
-                                + leadershipAssignmentFTE;
-
-                            // Compute the costs on the day for the person based on grade and whether they are the PM
-                            // Base on today since that was what was used to compute the scaled FTE
-                            var grade = person.GetGradeOnDate(DateTime.Today);
-                            fteScaling.TryGetValue(grade, out var scaling);
-                            var personCosts = projectAssignmentsFTE * scaling * finref.GetMidGradeCosts(grade);
-
-                            // TODO: Apportion a weighted slice of the budget for the project for their assignments based on the scaling factors computed
-
+                            var projectAssignmentsFTE = resourcesOnDay.Sum(x => x.AssignmentFTE);
+                            var projectAssignmentsFTEIncLeadership = projectAssignmentsFTE + leadershipAssignmentFTE;
 
                             // Net value
                             var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
+                            var netValueIncLeadership = projectAssignmentsFTEIncLeadership - projectWorkTargetFTE;
 
                             // Net value capped
                             var maxOverAllocation = wlmTotal - projectWorkTargetFTE;
                             if (maxOverAllocation < 0) maxOverAllocation = 0;
                             var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
+                            var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
 
                             // Add to the data dictionary
                             currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTargetFTE);
                             currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignmentsFTE);
                             currentDayData.Net.Add(person.Name, (float)netValue);
                             currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
+                            currentDayData.RecoveredTimeIncLeadership.Add(person.Name, (float)projectAssignmentsFTEIncLeadership);
+                            currentDayData.NetIncLeadership.Add(person.Name, (float)netValueIncLeadership);
+                            currentDayData.NetCappedIncLeadership.Add(person.Name, (float)netValueCappedIncLeadership);
 
                             // Update the totals
                             totalData
                                 .First(x => x.Name == person.Name)
-                                .Update((float)projectWorkTargetFTE, (float)projectAssignmentsFTE, (float)maxOverAllocation);
+                                .Update(
+                                    (float)projectWorkTargetFTE,
+                                    (float)projectAssignmentsFTE,
+                                    (float)projectAssignmentsFTEIncLeadership,
+                                    (float)maxOverAllocation
+                                );
                         }
 
                         // Add the current day data to the list
@@ -1203,7 +1173,10 @@ namespace PPMTool.Pages
                                 "Target",
                                 "Recovered",
                                 "Net (Uncapped)",
-                                "Net (Capped)"
+                                "Net (Capped)",
+                                "Recovered (Inc Lead)",
+                                "Net (Uncapped, Inc Lead)",
+                                "Net (Capped, Inc Lead)"
                             };
 
                             for (int j = 0; j < tabTitles.Count; ++j)
@@ -1254,6 +1227,15 @@ namespace PPMTool.Pages
                                             case 3: // Net (Capped)
                                                 allData[row].NetCapped.TryGetValue(peopleActiveNames[i], out cellValue);
                                                 break;
+                                            case 4: // Recovered Inc Lead
+                                                allData[row].RecoveredTimeIncLeadership.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
+                                            case 5: // Net (Uncapped, Inc Lead)
+                                                allData[row].NetIncLeadership.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
+                                            case 6: // Net (Capped, Inc Lead)
+                                                allData[row].NetCappedIncLeadership.TryGetValue(peopleActiveNames[i], out cellValue);
+                                                break;
                                         }
 
                                         // Assign the value
@@ -1297,6 +1279,15 @@ namespace PPMTool.Pages
                                 cellTotals.Style.NumberFormat.Format = "#0.000";
                                 cellTotals = worksheetTotals.Cell(2 + i, 5);
                                 cellTotals.Value = totalItem.GetNetCapped(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
+                                cellTotals = worksheetTotals.Cell(2 + i, 6);
+                                cellTotals.Value = totalItem.GetRecoveredIncLeadership(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
+                                cellTotals = worksheetTotals.Cell(2 + i, 7);
+                                cellTotals.Value = totalItem.GetNetIncLeadership(totalDays);
+                                cellTotals.Style.NumberFormat.Format = "#0.000";
+                                cellTotals = worksheetTotals.Cell(2 + i, 8);
+                                cellTotals.Value = totalItem.GetNetCappedIncLeadership(totalDays);
                                 cellTotals.Style.NumberFormat.Format = "#0.000";
                             }
 

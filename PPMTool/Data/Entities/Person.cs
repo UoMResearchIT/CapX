@@ -252,7 +252,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal int GetGradeOnDate(DateTime date)
         {
-            throw GetWorkloadModelOnDateOrDefault(date).Grade;
+            return GetWorkloadModelOnDateOrDefault(date).Grade;
         }
     }
 }
