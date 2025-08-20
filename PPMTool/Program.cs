@@ -252,9 +252,15 @@ if (shouldSeed)
     SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
     SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
     SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
     SeedHelper.SeedProjects(scope.ServiceProvider);
 
-    // TODO: Seed projects + sub-tasks + resources, timesheets, financial items, and financial references
+    // TODO: Fin Refs
+    // TODO: Projects
+    // TODO: Sub-tasks
+    // TODO: Resources
+    // TODO: Timesheets
+    // TODO: Financial Items (funding sources, payments and invoices)
 }
 
 app.Run();

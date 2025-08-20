@@ -484,12 +484,68 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Seed some financial references around the current date
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedFinancialReferences(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Clear existing financial references
+                context.FinancialReferences.ExecuteDelete();
+
+                // Add some financial references
+                var fy = FinancialReference.GetFinancialYear(DateTime.Today);
+                var financialReferences = new List<FinancialReference>
+                {
+                    new FinancialReference
+                    {
+                        FinancialYear = fy - 1,
+                        Grade41Costs = 33333.55f,
+                        Grade55Costs = 43172.16f,
+                        Grade65Costs = 50935.8f,
+                        Grade71Costs = 57458.16f,
+                        Grade75Costs = 64797.29f,
+                        RecoveryTarget = 1118849f,
+                        Grade51Costs = 38011.97f
+                    },
+                    new FinancialReference
+                    {
+                        FinancialYear = fy,
+                        Grade41Costs = 34510.63f,
+                        Grade55Costs = 44349.48f,
+                        Grade65Costs = 52095f,
+                        Grade71Costs = 58617.36f,
+                        Grade75Costs = 65956.38f,
+                        RecoveryTarget = 1118849f,
+                        Grade51Costs = 39799.01f
+                    },
+                    new FinancialReference
+                    {
+                        FinancialYear = fy + 1,
+                        Grade41Costs = 35740.07f,
+                        Grade55Costs = 45603.10f,
+                        Grade65Costs = 53422.28f,
+                        Grade71Costs = 60005.48f,
+                        Grade75Costs = 67585.78f,
+                        RecoveryTarget = 1518718f,
+                        Grade51Costs = 41010.82f
+                    }
+                };
+                context.FinancialReferences.AddRange(financialReferences);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
         /// </summary>
         /// <param name="serviceProvider"></param>
         internal static void SeedProjects(IServiceProvider serviceProvider)
         {
-            // TODO: Convert SQL dump script to C# code with some details changed.
+            // TODO: Convert SQL dump script to C# code with some details changed
+            // Will need to seed all the dependent items together here I think
         }
     }
 }
