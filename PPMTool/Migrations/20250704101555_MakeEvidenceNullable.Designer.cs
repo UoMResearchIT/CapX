@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,11 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20250704101555_MakeEvidenceNullable")]
+    partial class MakeEvidenceNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.15");
@@ -141,7 +144,7 @@ namespace PPMTool.Migrations
                     b.Property<string>("Evidence")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("PersonId")
+                    b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Status")
@@ -715,7 +718,7 @@ namespace PPMTool.Migrations
                     b.Property<string>("Info")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("OwnerId")
+                    b.Property<int>("OwnerPersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")
@@ -729,7 +732,7 @@ namespace PPMTool.Migrations
 
                     b.HasKey("TimesheetId");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("OwnerPersonId");
 
                     b.HasIndex("StatusChangedByPersonId");
 
@@ -918,11 +921,11 @@ namespace PPMTool.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PPMTool.Data.Entities.Person", null)
+                    b.HasOne("PPMTool.Data.Entities.Person", "Person")
                         .WithMany("Assessments")
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PersonId");
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
@@ -1104,7 +1107,7 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "Owner")
                         .WithMany("Timesheets")
-                        .HasForeignKey("OwnerId")
+                        .HasForeignKey("OwnerPersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

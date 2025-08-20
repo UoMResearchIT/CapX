@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using PPMTool.Enums;
 
@@ -109,6 +110,7 @@ namespace PPMTool.Data.Entities
                     }
                     else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
+                        Debug.WriteLine($"** Link validation failed: {url}");
                         HasValidWikiLink = LinkCheckState.Fail;
                     }
                 }

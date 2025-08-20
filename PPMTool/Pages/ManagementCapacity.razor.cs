@@ -11,23 +11,19 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Reader")]
     public partial class ManagementCapacity : BaseCapacityPage
     {
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-
-            cachedPeople = GetManagers(cachedPeople);
-            ReloadDropDownSources();
-
-            LogInformation($"Viewing management capacity page");
-        }
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
 
             if (!firstRender) return;
 
+            // Update the cached people to just contain managers
+            cachedPeople = GetManagers(cachedPeople);
+            ReloadDropDownSources();
+
             PeopleSelectionChanged(chosenPeople);
+
+            LogInformation($"Viewing management capacity page");
         }
 
         protected override string GetSessionStorageTag() => "management-capacity";

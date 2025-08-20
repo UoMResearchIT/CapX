@@ -1,14 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Shared;
 using Radzen;
-using Sentry;
 
 namespace PPMTool.Pages
 {
@@ -40,7 +36,7 @@ namespace PPMTool.Pages
         [Inject]
         protected NotificationService NotificationService { get; set; }
 
-        private bool loading;
+        private bool loading = true;
         [CascadingParameter]
         public bool Loading
         {

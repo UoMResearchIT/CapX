@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 # Define source and destination paths
 SRC_DIR="/var/www/capx"

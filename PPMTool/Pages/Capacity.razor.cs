@@ -29,13 +29,6 @@ namespace PPMTool.Pages
         private IList<Person> managers;
         private IList<Person> filteredManagers;
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-
-            LogInformation($"Viewing capacity page");
-        }
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
@@ -69,6 +62,8 @@ namespace PPMTool.Pages
                 // Will automatically load the chart source
                 PeopleSelectionChanged(chosenPeople);
             }
+
+            LogInformation($"Viewing capacity page");
         }
 
         protected override string GetSessionStorageTag() => "capacity";
@@ -273,7 +268,7 @@ namespace PPMTool.Pages
                 },
                 (assignments, value1, currentDay) =>
                 {
-                    return person.GetAvailabilityOnDate(currentDay);
+                    return person.GetProjectWorkAvailabilityOnDate(currentDay);
                 },
                 (assignments, gapStart, gapEnd) =>
                 {
@@ -350,7 +345,7 @@ namespace PPMTool.Pages
                     var peo = people.Where(y => y == person);
 
                     // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetAvailabilityOnDate(currentDay));
+                    return peo.RoundedSum(y => y.GetProjectWorkAvailabilityOnDate(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>

@@ -23,7 +23,7 @@ The databases are backed up (including flushing of the WAL journals) as part of 
 Documentation of features and how to use them is available in the Wiki associated with this repository.
 
 ## Building from Source
-The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`.
+The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution. There are two projects, one for the API and one for the web app but both use the same DB. There are launch configurations that allow you to run one, the other, or both. There are Debug, Release and Local build configurations. The latter is for local development as it does not integrate with UoM CAS authentication and hence can be run offline. The former two are for deployed versions only.
 
 ## Running with Docker Compose
 

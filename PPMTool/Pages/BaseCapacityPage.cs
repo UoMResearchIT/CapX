@@ -498,26 +498,20 @@ namespace PPMTool.Pages
             }
         }
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-            Loading = true;
-
-            // Get all projects not finished or cancelled
-            cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
-
-            // Cache all the people
-            cachedPeople = PersonService.GetAllShallow(Context).OrderBy(x => x.Name);
-
-            // Load dropdown sources
-            ReloadDropDownSources();
-        }
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
 
             if (!firstRender) return;
+
+            // Get all projects not finished or cancelled
+            cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
+
+            // Cache all the people
+            cachedPeople = await PersonService.GetAllShallowAsync(Context);
+
+            // Load dropdown sources
+            ReloadDropDownSources();
 
             chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
             Debug.WriteLine($"** From session storage: {(chosenPeople != null ? string.Join('|', chosenPeople) : "")}");

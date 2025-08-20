@@ -11,91 +11,95 @@
         </div>
     </div>
     <hr />
-    <h2>Charts</h2>
-    <div class="card">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-            <RadzenDropDown @bind-Value=@chosenPeople
-                            Data=@filteredPeople
-                            TextProperty="Name"
-                            ValueProperty="Name"
-                            Multiple=true
-                            AllowClear=true
-                            Placeholder="Filter RSE"
-                            Chips=true
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            FilterOperator="StringFilterOperator.Contains"
-                            AllowFiltering="true"
-                            Style="width: 100%; max-width: 400px;"
-                            Change="@(args => PeopleSelectionChanged(args))"
-                            LoadData="@LoadFilteredPeople"
-                            Disabled=@(IsDeveloper() || Loading) />
-            @if (HasStaffInList())
-            {
-                <RadzenButton Text="My Staff" Click="FilterToMyStaff" />
-            }
-            <RadzenDropDown @bind-Value=@chosenManager
-                            Data=@filteredManagers
-                            TextProperty="Name"
-                            Multiple=false
-                            AllowClear=true
-                            Placeholder="Filter Project Manager"
-                            Chips=true
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            FilterOperator="StringFilterOperator.Contains"
-                            AllowFiltering="true"
-                            Style="width: 100%; max-width: 400px;"
-                            Change="@(args => ManagerSelectionChanged(args))"
-                            LoadData="@LoadFilteredManagers"
-                            Disabled=@(IsDeveloper() || Loading) />
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                Include Unfunded:
-                <RadzenSwitch @bind-Value="@includeUnFunded" Disabled="@Loading" Change="@UnFundedSwitchChanged" />
-            </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                Include Leavers:
-                <RadzenSwitch @bind-Value="@includeLeavers" Disabled="@Loading" Change="@LeaversSwitchChanged" />
-            </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                Include Finished:
-                <RadzenSwitch @bind-Value="@includeFinished" Disabled="@Loading" Change="@FinishedSwitchChanged" />
-            </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />
-                <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead(6))" />
-                <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead(9))" />
-                <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead(12))" />
-            </RadzenStack>
-        </RadzenStack>
-    </div>
-
     @if (Loading)
     {
         <LoadingComponent />
     }
-    else if (chartModels == null || chartModels.Count < 1)
-    {
-        <div class="card">
-            <p class="lead">No data to show for the selected people</p>
-        </div>
-    }
     else
     {
-        <!-- Legend -->
-        <CapacityLegendComponent ShowProjectModeLegend="@(chosenPeople != null && chosenPeople.Count() > 0)" />
-
-        <!-- Chart -->
-        <div class="row">
-            @for (int i = 0; i < chartModels.Count; ++i)
-            {
-                <div class="col" style="min-width: 50rem;">
-                    <div class="card my-1">
-                        <CapacityChartComponent ChartModel=@chartModels[i]
-                                                OnDataPointSelection="@DataPointsSelected"
-                                                OnChartZoomed="@OnChartZoomed" />
-                    </div>
-                </div>
-            }
+        <h2>Charts</h2>
+        <div class="card">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                <RadzenDropDown @bind-Value=@chosenPeople
+                                Data=@filteredPeople
+                                TextProperty="Name"
+                                ValueProperty="Name"
+                                Multiple=true
+                                AllowClear=true
+                                Placeholder="Filter RSE"
+                                Chips=true
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                FilterOperator="StringFilterOperator.Contains"
+                                AllowFiltering="true"
+                                Style="width: 100%; max-width: 400px;"
+                                Change="@(args => PeopleSelectionChanged(args))"
+                                LoadData="@LoadFilteredPeople"
+                                Disabled=@(IsDeveloper() || Loading) />
+                @if (HasStaffInList())
+                {
+                    <RadzenButton Text="My Staff" Click="FilterToMyStaff" />
+                }
+                <RadzenDropDown @bind-Value=@chosenManager
+                                Data=@filteredManagers
+                                TextProperty="Name"
+                                Multiple=false
+                                AllowClear=true
+                                Placeholder="Filter Project Manager"
+                                Chips=true
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                FilterOperator="StringFilterOperator.Contains"
+                                AllowFiltering="true"
+                                Style="width: 100%; max-width: 400px;"
+                                Change="@(args => ManagerSelectionChanged(args))"
+                                LoadData="@LoadFilteredManagers"
+                                Disabled=@(IsDeveloper() || Loading) />
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                    Include Unfunded:
+                    <RadzenSwitch @bind-Value="@includeUnFunded" Disabled="@Loading" Change="@UnFundedSwitchChanged" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                    Include Leavers:
+                    <RadzenSwitch @bind-Value="@includeLeavers" Disabled="@Loading" Change="@LeaversSwitchChanged" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                    Include Finished:
+                    <RadzenSwitch @bind-Value="@includeFinished" Disabled="@Loading" Change="@FinishedSwitchChanged" />
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+                    <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />
+                    <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead(6))" />
+                    <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead(9))" />
+                    <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead(12))" />
+                </RadzenStack>
+            </RadzenStack>
         </div>
+
+    
+        @if (chartModels == null || chartModels.Count < 1)
+        {
+            <div class="card">
+                <p class="lead">No data to show for the selected people</p>
+            </div>
+        }
+        else
+        {
+            <!-- Legend -->
+            <CapacityLegendComponent ShowProjectModeLegend="@(chosenPeople != null && chosenPeople.Count() > 0)" />
+
+            <!-- Chart -->
+            <div class="row">
+                @for (int i = 0; i < chartModels.Count; ++i)
+                {
+                    <div class="col" style="min-width: 50rem;">
+                        <div class="card my-1">
+                            <CapacityChartComponent ChartModel=@chartModels[i]
+                                                    OnDataPointSelection="@DataPointsSelected"
+                                                    OnChartZoomed="@OnChartZoomed" />
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        <br />
     }
-    <br />
 </div>

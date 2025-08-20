@@ -2,6 +2,7 @@
 using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Helpers;
@@ -21,10 +22,14 @@ namespace PPMTool.Pages
         [Inject]
         private TimesheetService TimesheetService { get; set; }
 
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; }
+
         private Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
         private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
         private bool compareToWLM = true;
         private bool normalisedByTotalHours = false;
+        private bool useStackedBars = true;
         private DateTime? startDate = DateTime.Today.StartOfMonth().StartOfWeek();
         private DateTime? endDate = DateTime.Today.StartOfWeek().AddDays(7);
         private IEnumerable<Person> availablePeople;
@@ -47,6 +52,39 @@ namespace PPMTool.Pages
             LogInformation($"Viewing WLM analysis page");
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (!firstRender) return;
+
+            Loading = false;
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Method fired when a block is selected
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="name"
+        private async void OnDataPointSelection(SelectedData<WLMWeeklyDataChartItem> args, string name)
+        {
+            // Nvaigate to the timesheet page with the selected week and person
+            if (args.DataPoint != null && args.DataPoint.Items != null && args.DataPoint.Items.Count() > 0)
+            {
+                var item = args.DataPoint.Items.First();
+                var personId = PersonService.GetByName(Context, name)?.PersonId;
+                var timesheetId = (await TimesheetService.GetTimesheetForPersonAndWeekAsync(Context, personId, item.WeekStart))?.TimesheetId;
+
+                // Navigate to the timesheet in a new tab otherwise it will annoy people that thye lose the analysis
+                if (timesheetId != null)
+                {
+                    var url = $"/timesheets/addtimesheet/{timesheetId}";
+                    await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+                }
+            }
+        }
+
         /// <summary>
         /// Method to trigger state has changed after the display style settings of the charts has been updated
         /// </summary>
@@ -56,6 +94,8 @@ namespace PPMTool.Pages
             foreach (var opt in wlmChartOptions)
             {
                 opt.Yaxis.First().Title.Text = GetYAxisTitle();
+                opt.Chart.Stacked = useStackedBars;
+                opt.Chart.StackOnlyBar = useStackedBars;
             }
             StateHasChanged();
         }

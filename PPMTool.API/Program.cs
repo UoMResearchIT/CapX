@@ -54,15 +54,13 @@ if (string.IsNullOrEmpty(connectionString))
 {
     // Use the default connection string based on the environment
     connectionString = configuration.GetConnectionString(
-    #if RELEASE
+#if RELEASE
             "PPMToolContextConnectionProduction"
-    #else
+#else
             "PPMToolContextConnection"
-    #endif
+#endif
         );
 }
-
-
 
 if (string.IsNullOrEmpty(connectionString))
 {

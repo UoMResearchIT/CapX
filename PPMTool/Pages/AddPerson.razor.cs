@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.CodeAnalysis;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
@@ -74,6 +71,16 @@ namespace PPMTool.Pages
                 .ToList();
 
             LogInformation("Initialising add/edit person page");
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (!firstRender) return;
+
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>

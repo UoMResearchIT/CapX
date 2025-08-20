@@ -7,7 +7,7 @@
 @using PPMTool.Data.Entities
 @using DotNetExtensions;
 
-<RadzenTemplateForm TItem="FundingSource" Submit="@HandleValidSubmit" Data="@Source">
+<RadzenTemplateForm TItem="FundingSource" Submit="@(() => HandleValidSubmit())" Data="@Source">
     <RadzenFieldset Text="Funding Source Details">
         <RadzenStack Orientation="Radzen.Orientation.Vertical">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
@@ -44,7 +44,7 @@
         </RadzenStack>
     }
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeletePayment())" Disabled="@(Source?.FundingSourceId < 1 || !EditAuthorised)" />
+        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteFundingSource())" Disabled="@(Source?.FundingSourceId < 1 || !EditAuthorised)" />
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
             <RadzenButton Text="Save" Icon="check" ButtonType="ButtonType.Submit" Disabled="@(!EditAuthorised)" />
             <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(args => CloseForm(false))" />
@@ -59,6 +59,9 @@
 
     [Inject]
     private FundingSourceService FundingSourceService { get; set; }
+
+    [Inject]
+    private ProjectService ProjectService { get; set; }
 
     private IEnumerable<FundingSourceType> sourceTypes;
 
@@ -75,22 +78,27 @@
             };
         }
         sourceTypes = Enum.GetValues<FundingSourceType>();
+        SetFinanceItemModel(Source);
     }
 
-    protected override void HandleValidSubmit()
+    protected override bool HandleValidSubmit()
     {
-        base.HandleValidSubmit();
+        var valid = base.HandleValidSubmit();
+        if (!valid)
+        {
+            return false;
+        }
 
         if (Source.FundingSourceType != FundingSourceType.Other && Source.HasAccountCode && string.IsNullOrWhiteSpace(Source.AccountCode))
         {
             errorMessage = "You must provide an account code for this funding source e.g. R123456";
-            return;
+            return false;
         }
 
         if (Source.FundingSourceType != FundingSourceType.Other && Source.AmountAvailable <= 0)
         {
             errorMessage = "There must be a non-zero amount of funds available to pay for the service in a DA/DI funding source!";
-            return;
+            return false;
         }
 
         if (Source.FundingSourceId > 0)
@@ -104,13 +112,19 @@
             PostNoteToProject(FinanceItemChangeType.Add, Source);
         }
 
+        // Update the project budget and save the project
+        var sources = FundingSourceService.GetFundingSources(Context, Project.ProjectId);
+        Project.Budget = sources.Sum(x => x.AmountAvailable);
+        ProjectService.Update(Context, Project);
+
         CloseForm(true);
+        return true;
     }
 
     /// <summary>
-    /// Method to delete a payment after a prompt
+    /// Method to delete a funding source after a prompt
     /// </summary>
-    private async void DeletePayment()
+    private async void DeleteFundingSource()
     {
         bool confirmed = await DialogService.Confirm($"You are about to delete funding source with ID {Source.FundingSourceId}. This cannot be undone!",
                     "Delete Funding Source") ?? false;
@@ -124,7 +138,10 @@
         }
     }
 
-    /// Return the payment ID
+    /// <summary>
+    /// Return the funding source ID
+    /// </summary>
+    /// <returns></returns>
     protected override int GetItemId()
     {
         return Source?.FundingSourceId ?? 0;
