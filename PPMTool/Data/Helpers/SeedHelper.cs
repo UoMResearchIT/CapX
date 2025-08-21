@@ -537,6 +537,91 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Seed some dummy funding sources and attach to the projects in the DB already
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedFundingSourcesForProjects(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // TODO: Add projects and also set as leadership funding source where cost model requires it
+
+                // Create funding sources
+                var fundingSources = new List<FundingSource>
+                {
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DA,
+                        HasAccountCode = true,
+                        AccountCode = "R1234",
+                        Description = "Research and Teaching Project funding source",
+                        AmountAvailable = 100000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DI,
+                        HasAccountCode = true,
+                        AccountCode = "P5678",
+                        Description = "Project Code funding source",
+                        AmountAvailable = 50000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = false,
+                        AccountCode = "N/A",
+                        Description = "External Research Grant funding source",
+                        AmountAvailable = 200000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DA,
+                        HasAccountCode = true,
+                        AccountCode = "R9876",
+                        Description = "Departmental Allocation for strategic initiatives",
+                        AmountAvailable = 75000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DI,
+                        HasAccountCode = true,
+                        AccountCode = "P4321",
+                        Description = "Direct Investment for infrastructure upgrade",
+                        AmountAvailable = 120000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = false,
+                        AccountCode = "N/A",
+                        Description = "Private donation for research excellence",
+                        AmountAvailable = 250000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DA,
+                        HasAccountCode = true,
+                        AccountCode = "R2468",
+                        Description = "Annual departmental budget allocation",
+                        AmountAvailable = 95000.0
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DI,
+                        HasAccountCode = true,
+                        AccountCode = "P1357",
+                        Description = "Project-specific funding from external partner",
+                        AmountAvailable = 60000.0
+                    }
+                };
+
+                context.FundingSources.AddRange(fundingSources);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
         /// </summary>
         /// <param name="serviceProvider"></param>
@@ -610,7 +695,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2028, 06, 30),
                         Faculty = Faculty.FSE,
-                        FundingSourceId = 286.0,
                         InnateActivityInnateCodeId = 215.0,
                         LeadershipFTE = 0.05f,
                         Name = "Local Climate Zone Modelling",
@@ -630,15 +714,12 @@ namespace PPMTool.Data.Helpers
                         ActualCost = 0.0,
                         ActualLeadershipCosts = 0.0,
                         ActualWorkHours = 0.0,
-                        ActualsLastUpdated = null,
                         Budget = 7425.0,
                         CostModel = 0,
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2025, 10, 12),
                         Faculty = Faculty.FHUMS,
-                        FundingSourceId = null,
-                        InnateActivityInnateCodeId = null,
                         LeadershipFTE = 0.05f,
                         Name = "Political Research Transparency Web App",
                         PI = "Ms. Bubbles McGee",
@@ -650,7 +731,6 @@ namespace PPMTool.Data.Helpers
                         RTP = 265,
                         RequestDocLink = "https://www.google.com",
                         School = School.SSS,
-                        ScrumProjectLink = null,
                         StartDate = new DateTime(2025, 07, 01),
                     },
                     new Project
@@ -665,7 +745,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2025, 03, 20),
                         Faculty = Faculty.FBMH,
-                        FundingSourceId = 143,
                         InnateActivityInnateCodeId = 214,
                         LeadershipFTE = 0.025f,
                         Name = "BMBaseDB Update",
@@ -693,7 +772,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2028, 04, 08),
                         Faculty = Faculty.FHUMS,
-                        FundingSourceId = 261,
                         InnateActivityInnateCodeId = 219,
                         LeadershipFTE = 0.025f,
                         Name = "Sustainability Trade-off Game Website",
@@ -721,7 +799,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2026, 01, 29),
                         Faculty = Faculty.FBMH,
-                        FundingSourceId = 309,
                         InnateActivityInnateCodeId = 220,
                         LeadershipFTE = 0.05f,
                         Name = "PAPrKA",
