@@ -255,11 +255,12 @@ if (shouldSeed)
     SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
     SeedHelper.SeedProjects(scope.ServiceProvider);
 
-    // TODO: Fin Refs
     // TODO: Projects
     // TODO: Sub-tasks
     // TODO: Resources
+
     // TODO: Timesheets
+
     // TODO: Financial Items (funding sources, payments and invoices)
 }
 

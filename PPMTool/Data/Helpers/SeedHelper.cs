@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text;
+using LoremNET;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -27,7 +29,6 @@ namespace PPMTool.Data.Helpers
                 person.StartDate = DateTime.Today.AddYears(-1);
                 person.LineManager = person;
                 context.People.Add(person);
-                context.SaveChanges();
 
                 // FTC not yet with us
                 person = new Person();
@@ -38,7 +39,6 @@ namespace PPMTool.Data.Helpers
                 person.EndDate = person.StartDate.AddYears(1);
                 person.LineManager = context.People.First(x => x.ShortName == "NO");
                 context.People.Add(person);
-                context.SaveChanges();
 
                 // FTC already left
                 person = new Person();
@@ -49,7 +49,6 @@ namespace PPMTool.Data.Helpers
                 person.EndDate = DateTime.Today.AddMonths(-3);
                 person.LineManager = context.People.First(x => x.ShortName == "ML");
                 context.People.Add(person);
-                context.SaveChanges();
 
                 // Perm currently with us
                 person = new Person();
@@ -59,7 +58,6 @@ namespace PPMTool.Data.Helpers
                 person.StartDate = DateTime.Today.AddMonths(-6);
                 person.LineManager = context.People.First(x => x.ShortName == "ML");
                 context.People.Add(person);
-                context.SaveChanges();
 
                 // Currently with us but leaving soon
                 person = new Person();
@@ -98,7 +96,6 @@ namespace PPMTool.Data.Helpers
                         EndDate = DateTime.Today.AddDays(5)
                     };
                     context.Absence.Add(absence);
-                    context.SaveChanges();
                 }
                 else
                 {
@@ -116,7 +113,6 @@ namespace PPMTool.Data.Helpers
                         EndDate = DateTime.Today.AddDays(-5)
                     };
                     context.Absence.Add(pastAbsence);
-                    context.SaveChanges();
                 }
                 else
                 {
@@ -134,12 +130,13 @@ namespace PPMTool.Data.Helpers
                         EndDate = DateTime.Today.AddDays(2)
                     };
                     context.Absence.Add(currentAbsence);
-                    context.SaveChanges();
                 }
                 else
                 {
                     throw new InvalidOperationException("Person with ShortName 'CB' not found.");
                 }
+
+                context.SaveChanges();
             }
         }
 
@@ -166,7 +163,6 @@ namespace PPMTool.Data.Helpers
                     Person = null // No person associated as assumed not a team member
                 };
                 context.Users.Add(superUser);
-                context.SaveChanges();
 
                 // Manager - Mavis and Nigel are managers
                 var manager = new User
@@ -178,7 +174,6 @@ namespace PPMTool.Data.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "ML")
                 };
                 context.Users.Add(manager);
-                context.SaveChanges();
 
                 manager = new User
                 {
@@ -189,7 +184,6 @@ namespace PPMTool.Data.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "NO")
                 };
                 context.Users.Add(manager);
-                context.SaveChanges();
 
                 // Developer -- Clive and Tina are developers
                 var developer = new User
@@ -201,7 +195,6 @@ namespace PPMTool.Data.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "CB")
                 };
                 context.Users.Add(developer);
-                context.SaveChanges();
 
                 developer = new User
                 {
@@ -212,7 +205,6 @@ namespace PPMTool.Data.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "TB")
                 };
                 context.Users.Add(developer);
-                context.SaveChanges();
 
                 // Reader -- Sue is an admin and not in the team
                 var reader = new User
@@ -224,7 +216,6 @@ namespace PPMTool.Data.Helpers
                     Person = null // No person associated as assumed not a team member
                 };
                 context.Users.Add(reader);
-                context.SaveChanges();
 
                 // Finance - Penny is a finance officer and not in the team
                 var finance = new User
@@ -236,7 +227,6 @@ namespace PPMTool.Data.Helpers
                     Person = null // No person associated as assumed not a team member
                 };
                 context.Users.Add(finance);
-                context.SaveChanges();
 
                 // None (leaver) -- Janet has left
                 var none = new User
@@ -248,6 +238,7 @@ namespace PPMTool.Data.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
                 context.Users.Add(none);
+
                 context.SaveChanges();
             }
         }
@@ -282,7 +273,6 @@ namespace PPMTool.Data.Helpers
                     Notes = "Standard G7 WLM"
                 };
                 context.WorkloadModelChanges.Add(wlm);
-                context.SaveChanges();
 
                 // Add a G6 WLM for Nigel Overfetch-Nelson
                 var no = context.People.FirstOrDefault(x => x.ShortName == "NO");
@@ -296,6 +286,7 @@ namespace PPMTool.Data.Helpers
                     ProjectWorkFTE = 0.8,
                     Notes = "Standard G6 WLM"
                 };
+                context.WorkloadModelChanges.Add(wlm);
 
                 // Promotion for Nigel Overfetch-Nelson
                 var newWlm = new WorkloadModelChange
@@ -309,6 +300,9 @@ namespace PPMTool.Data.Helpers
                     ProjectWorkFTE = 0.4,
                     Notes = "New G7 WLM"
                 };
+                context.WorkloadModelChanges.Add(newWlm);
+
+                context.SaveChanges();
             }
         }
 
@@ -367,6 +361,8 @@ namespace PPMTool.Data.Helpers
                     var totalInstances = context.OwnedSkills.Include(x => x.SkillTag).Where(x => x.SkillTag.SkillTagId == skillTag.SkillTagId).Count();
                     skillTag.UpdateRareness(totalInstances, totalActivePeople);
                 }
+
+                context.SaveChanges();
             }
         }
 
@@ -438,6 +434,8 @@ namespace PPMTool.Data.Helpers
                 {
                     throw new InvalidOperationException("No InnateCodes left after deletion! There should be a migration that adds them!");
                 }
+
+                context.SaveChanges();
             }
         }
 
@@ -544,8 +542,220 @@ namespace PPMTool.Data.Helpers
         /// <param name="serviceProvider"></param>
         internal static void SeedProjects(IServiceProvider serviceProvider)
         {
-            // TODO: Convert SQL dump script to C# code with some details changed
-            // Will need to seed all the dependent items together here I think
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Create the projects
+                var projects = new List<Project>
+                {
+                    new Project
+                    {
+                        ActualCost = 0.0,
+                        ActualLeadershipCosts = 0,
+                        ActualWorkHours = 0.0,
+                        Budget = 12152.0,
+                        CostModel = CostModel.DayRate,
+                        DayRate = 250,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2025, 07, 31),
+                        Faculty = Faculty.Internal,
+                        LeadershipFTE = 0.05f,
+                        Name = "Create CoP for Research Software",
+                        PI = "Dr. Waffle McSnort",
+                        PlannedCost = 0.0,
+                        PlannedLeadershipCosts = 0.0,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 11,
+                        ProjectStatus = ProjectStatus.CancelledBidFailed,
+                        RTP = 169,
+                        RequestDocLink = "https://www.google.com",
+                        School = School.None,
+                        StartDate = new DateTime(2023, 07, 03),
+                    },
+                    new Project
+                    {
+                        ActualCost = 39120.05,
+                        ActualLeadershipCosts = 0,
+                        ActualWorkHours = 1048.5,
+                        ActualsLastUpdated = new DateTime(2025, 06, 02, 13, 12, 0).ToString("R"),
+                        Budget = 42269.0,
+                        CostModel = CostModel.TechOnly,
+                        DayRate = 262,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2025, 07, 31),
+                        Faculty = Faculty.FBMH,
+                        InnateActivityInnateCodeId = 100.0,
+                        LeadershipFTE = 0.05f,
+                        Name = "Polypharmacy KSS",
+                        PI = "Prof. Pickle Pants",
+                        PlannedCost = 42123.55,
+                        PlannedLeadershipCosts = 0.0,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 4,
+                        ProjectStatus = ProjectStatus.Active,
+                        RTP = 180,
+                        RequestDocLink = "https://www.google.com",
+                        School = School.SHS,
+                        ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/69",
+                        StartDate = new DateTime(2023, 10, 02),
+                    },
+                    new Project
+                    {
+                        ActualCost = 0.0,
+                        ActualLeadershipCosts = 0,
+                        ActualWorkHours = 0.0,
+                        Budget = 71848.9,
+                        CostModel = CostModel.TechAndLeadership,
+                        DayRate = 250,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2028, 06, 30),
+                        Faculty = Faculty.FSE,
+                        FundingSourceId = 286.0,
+                        InnateActivityInnateCodeId = 215.0,
+                        LeadershipFTE = 0.05f,
+                        Name = "Local Climate Zone Modelling",
+                        PI = "Sir Gigglesworth",
+                        PlannedCost = 64074.39,
+                        PlannedLeadershipCosts = 10140.21,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 21,
+                        ProjectStatus = ProjectStatus.Funded,
+                        RTP = 255,
+                        School = School.SBS,
+                        ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/193",
+                        StartDate = new DateTime(2025, 07, 01),
+                    },
+                    new Project
+                    {
+                        ActualCost = 0.0,
+                        ActualLeadershipCosts = 0.0,
+                        ActualWorkHours = 0.0,
+                        ActualsLastUpdated = null,
+                        Budget = 7425.0,
+                        CostModel = 0,
+                        DayRate = 297,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2025, 10, 12),
+                        Faculty = Faculty.FHUMS,
+                        FundingSourceId = null,
+                        InnateActivityInnateCodeId = null,
+                        LeadershipFTE = 0.05f,
+                        Name = "Political Research Transparency Web App",
+                        PI = "Ms. Bubbles McGee",
+                        PlannedCost = 7425.0,
+                        PlannedLeadershipCosts = 0.0,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 18,
+                        ProjectStatus = ProjectStatus.AwaitingOutcome,
+                        RTP = 265,
+                        RequestDocLink = "https://www.google.com",
+                        School = School.SSS,
+                        ScrumProjectLink = null,
+                        StartDate = new DateTime(2025, 07, 01),
+                    },
+                    new Project
+                    {
+                        ActualCost = 2202.18,
+                        ActualLeadershipCosts = 302.68,
+                        ActualWorkHours = 73.5,
+                        ActualsLastUpdated = new DateTime(2025, 04, 28, 14, 06, 0).ToString("R"),
+                        Budget = 3035.0,
+                        CostModel = CostModel.TechAndLeadership,
+                        DayRate = 262,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2025, 03, 20),
+                        Faculty = Faculty.FBMH,
+                        FundingSourceId = 143,
+                        InnateActivityInnateCodeId = 214,
+                        LeadershipFTE = 0.025f,
+                        Name = "BMBaseDB Update",
+                        PI = "Captain Quirk",
+                        PlannedCost = 3197.15,
+                        PlannedLeadershipCosts = 302.68,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 22,
+                        ProjectStatus = ProjectStatus.Finished,
+                        RTP = 311,
+                        RequestDocLink = "https://www.google.com",
+                        School = School.SBS,
+                        ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/146",
+                        StartDate = new DateTime(2025, 01, 13),
+                    },
+                    new Project
+                    {
+                        ActualCost = 3874.95,
+                        ActualLeadershipCosts = 280.09,
+                        ActualWorkHours = 114.8,
+                        ActualsLastUpdated = new DateTime(2025, 06, 11, 09, 09, 0).ToString("R"),
+                        Budget = 4963.0,
+                        CostModel = CostModel.TechAndLeadership,
+                        DayRate = 297,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2028, 04, 08),
+                        Faculty = Faculty.FHUMS,
+                        FundingSourceId = 261,
+                        InnateActivityInnateCodeId = 219,
+                        LeadershipFTE = 0.025f,
+                        Name = "Sustainability Trade-off Game Website",
+                        PI = "Major Chuckles",
+                        PlannedCost = 4633.86,
+                        PlannedLeadershipCosts = 280.09,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 22,
+                        ProjectStatus =ProjectStatus.Paused,
+                        RTP = 323,
+                        RequestDocLink = "https://www.google.com",
+                        School = School.AMBS,
+                        ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/154/views/1?custom_template=33",
+                        StartDate = new DateTime(2025, 02, 27),
+                    },
+                    new Project
+                    {
+                        ActualCost = 7532.77,
+                        ActualLeadershipCosts = 786.06,
+                        ActualWorkHours = 177.2,
+                        ActualsLastUpdated = new DateTime(2025, 06, 05, 14, 22, 0).ToString("R"),
+                        Budget = 12937.81,
+                        CostModel = CostModel.TechAndLeadership,
+                        DayRate = 297,
+                        Description = GetDummyParagraphsAsHtml(),
+                        EndDate = new DateTime(2026, 01, 29),
+                        Faculty = Faculty.FBMH,
+                        FundingSourceId = 309,
+                        InnateActivityInnateCodeId = 220,
+                        LeadershipFTE = 0.05f,
+                        Name = "PAPrKA",
+                        PI = "Lady Lollipop",
+                        PlannedCost = 12852.1,
+                        PlannedLeadershipCosts = 786.06,
+                        PlannedWorkHours = 0,
+                        ProjectManagerPersonId = 33,
+                        ProjectStatus = ProjectStatus.Maintenance,
+                        RTP = 324,
+                        RequestDocLink = "https://www.google.com",
+                        School = School.SMS,
+                        ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/158",
+                        StartDate = new DateTime(2025, 03, 05),
+                    }
+                };
+                context.Projects.AddRange(projects);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Method to return a few paragraphs of text
+        /// </summary>
+        /// <returns></returns>
+        private static string GetDummyParagraphsAsHtml()
+        {
+            var paragraphs = Lorem.Paragraphs(3, 9, 5, 8, 1);
+            var sb = new StringBuilder();
+            foreach (var paragraph in paragraphs)
+            {
+                sb.Append($"<p>{paragraph.ToString()}</p>");
+            }
+            return sb.ToString();
         }
     }
 }
