@@ -1245,8 +1245,301 @@ namespace PPMTool.Data.Helpers
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
             using (var context = dbContextFactory.CreateDbContext())
             {
+                var project = GetProjectWithSubTaskAndFundingByRTP(context, 180);
+                project.SubTasks[0].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 39120.05,
+                        ActualWorkHours = 1048.5,
+                        AssignmentFTE = 0.4,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 48,
+                        PlannedCost = 42123.54,
+                        PlannedWorkHours = 1129,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                context.SaveChanges();
 
+                project = GetProjectWithSubTaskAndFundingByRTP(context, 255);
+                project.SubTasks[0].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        AssignmentFTE = 0.3,
+                        DayRate = 250,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 25,
+                        PlannedCost = 2987.96,
+                        PlannedWorkHours = 78.5,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[1].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        AssignmentFTE = 0.3,
+                        DayRate = 250,
+                        IsProvisional = false,
+                        PersonId = 33,
+                        PlannedCost = 50946.21,
+                        PlannedWorkHours = 1307.5,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                context.SaveChanges();
+
+                project = GetProjectWithSubTaskAndFundingByRTP(context, 265);
+                project.SubTasks[0].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        AssignmentFTE = 0.4,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 55,
+                        PlannedCost = 7425,
+                        PlannedWorkHours = 175,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                context.SaveChanges();
+
+                project = GetProjectWithSubTaskAndFundingByRTP(context, 311);
+                project.SubTasks[0].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 1899.49,
+                        ActualWorkHours = 73.5,
+                        AssignmentFTE = 0.4,
+                        DayRate = 262,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 15,
+                        PlannedCost = 2894.47,
+                        PlannedWorkHours = 112,
+                        Rate = Rate.Junior,
+                        UseProjectDayRate = true
+                    }
+                };
+                context.SaveChanges();
+
+                project = GetProjectWithSubTaskAndFundingByRTP(context, 323);
+                project.SubTasks[0].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 1960.25,
+                        ActualWorkHours = 51.5,
+                        AssignmentFTE = 0.3,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 29,
+                        PlannedCost = 1960.25,
+                        PlannedWorkHours = 51.5,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[1].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        AssignmentFTE = 0.005,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.Last(),
+                        IsProvisional = false,
+                        PersonId = 29,
+                        PlannedCost = 584.46,
+                        PlannedWorkHours = 15,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[2].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 1634.60,
+                        ActualWorkHours = 63.25,
+                        AssignmentFTE = 0.8,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 15,
+                        PlannedCost = 1809.04,
+                        PlannedWorkHours = 70,
+                        Rate = 1,
+                        UseProjectDayRate = true
+                    }
+                };
+                context.SaveChanges();
+
+                project = GetProjectWithSubTaskAndFundingByRTP(context, 324);
+                project.SubTasks[0].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        AssignmentFTE = 0.1,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 56,
+                        PlannedCost = 3996.63,
+                        PlannedWorkHours = 105,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[1].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 142.73,
+                        ActualWorkHours = 3.75,
+                        AssignmentFTE = 0.3,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 18,
+                        PlannedCost = 304.50,
+                        PlannedWorkHours = 8,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[2].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 3596.97,
+                        ActualWorkHours = 94.5,
+                        AssignmentFTE = 0.4,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 56,
+                        PlannedCost = 3463.75,
+                        PlannedWorkHours = 91,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[3].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 1808.00,
+                        ActualWorkHours = 47.5,
+                        AssignmentFTE = 0.3,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 18,
+                        PlannedCost = 2550.23,
+                        PlannedWorkHours = 67,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[4].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 551.91,
+                        ActualWorkHours = 14.5,
+                        AssignmentFTE = 0.4,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 18,
+                        PlannedCost = 1065.77,
+                        PlannedWorkHours = 28,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[5].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 647.07,
+                        ActualWorkHours = 17,
+                        AssignmentFTE = 0.4,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 56,
+                        PlannedCost = 418.69,
+                        PlannedWorkHours = 11,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                project.SubTasks[6].AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        AssignmentFTE = 0.2,
+                        DayRate = 297,
+                        FundedFrom = project.FundingSources.First(),
+                        IsProvisional = false,
+                        PersonId = 18,
+                        PlannedCost = 266.44,
+                        PlannedWorkHours = 7,
+                        Rate = Rate.Standard,
+                        UseProjectDayRate = true
+                    }
+                };
+                context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Get a project with its subtasks and funding sources by RTP
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="rtp"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">There are no matching projects</exception>
+        private static Project GetProjectWithSubTaskAndFundingByRTP(PPMToolContext context, int rtp)
+        {
+            // Get a project
+            var project = context.Projects
+                .Include(x => x.SubTasks)
+                .Include(x => x.FundingSources)
+                .FirstOrDefault(x => x.RTP == rtp);
+
+            // If no projects
+            if (project == null)
+            {
+                throw new InvalidOperationException("No matching project!");
+            }
+
+            return project;
         }
 
         /// <summary>
@@ -1255,10 +1548,10 @@ namespace PPMTool.Data.Helpers
         /// <param name="context"></param>
         /// <param name="rtp"></param>
         /// <returns></returns>
-        /// <exception cref="InvalidOperationException">If there are not projects in the DB that match</exception>
+        /// <exception cref="InvalidOperationException">If there are no projects in the DB that match</exception>
         private static Project GetProjectByRTP(PPMToolContext context, int rtp)
         {
-            // Get a project with no funding sources
+            // Get a project
             var project = context.Projects
                 .FirstOrDefault(x => x.RTP == rtp);
 
