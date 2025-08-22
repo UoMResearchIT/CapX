@@ -538,6 +538,7 @@ namespace PPMTool.Data.Helpers
 
         /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
+        /// RTP number is important as it is used to construct the depdendent entities so beware of changing it!
         /// </summary>
         /// <param name="serviceProvider"></param>
         internal static void SeedProjects(IServiceProvider serviceProvider)
@@ -739,7 +740,7 @@ namespace PPMTool.Data.Helpers
         /// Seed some dummy funding sources and attach to the projects in the DB already
         /// </summary>
         /// <param name="serviceProvider"></param>
-        internal static void SeedFundingSourcesForProjects(IServiceProvider serviceProvider)
+        internal static void SeedFundingSources(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
             using (var context = dbContextFactory.CreateDbContext())
@@ -753,7 +754,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = true,
                         AccountCode = "R1234",
                         Description = "Research and Teaching Project funding source",
-                        AmountAvailable = 12152
+                        AmountAvailable = 12152,
+                        Project = GetProjectByRTP(context, 169)
                     },
                     new FundingSource
                     {
@@ -761,7 +763,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = true,
                         AccountCode = "P5678",
                         Description = "Project Code funding source",
-                        AmountAvailable = 42269
+                        AmountAvailable = 42269,
+                        Project = GetProjectByRTP(context, 180)
                     },
                     new FundingSource
                     {
@@ -769,7 +772,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = false,
                         AccountCode = "N/A",
                         Description = "External Research Grant funding source",
-                        AmountAvailable = 71848.9
+                        AmountAvailable = 71848.9,
+                        Project = GetProjectByRTP(context, 255)
                     },
                     new FundingSource
                     {
@@ -777,7 +781,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = true,
                         AccountCode = "R9876",
                         Description = "Departmental Allocation for strategic initiatives",
-                        AmountAvailable = 7425
+                        AmountAvailable = 7425,
+                        Project = GetProjectByRTP(context, 265)
                     },
                     new FundingSource
                     {
@@ -785,7 +790,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = true,
                         AccountCode = "P4321",
                         Description = "Direct Investment for infrastructure upgrade",
-                        AmountAvailable = 3035
+                        AmountAvailable = 3035,
+                        Project = GetProjectByRTP(context, 311)
                     },
                     new FundingSource
                     {
@@ -793,7 +799,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = false,
                         AccountCode = "N/A",
                         Description = "Private donation for research excellence",
-                        AmountAvailable = 966
+                        AmountAvailable = 966,
+                        Project = GetProjectByRTP(context, 323)
                     },
                     new FundingSource
                     {
@@ -801,7 +808,8 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = true,
                         AccountCode = "R2468",
                         Description = "Annual departmental budget allocation",
-                        AmountAvailable = 3997
+                        AmountAvailable = 3997,
+                        Project = GetProjectByRTP(context, 324)
                     },
                     new FundingSource
                     {
@@ -809,21 +817,18 @@ namespace PPMTool.Data.Helpers
                         HasAccountCode = true,
                         AccountCode = "P1357",
                         Description = "Project-specific funding from external partner",
-                        AmountAvailable = 12937.81
+                        AmountAvailable = 12937.81,
+                        Project = GetProjectByRTP(context, 324)
                     }
                 };
 
-                // Add projects and also set as leadership funding source where cost model requires it
+                // Set as leadership funding source where cost model requires it
                 foreach (var fs in fundingSources)
                 {
-                    // Get a random project that needs a funding source
-                    var project = GetProjectRequiringFundingSource(context);
-                    fs.Project = project;
-
                     // If requires leadership funding source and there isn't one already then assign
-                    if (project.CostModel == CostModel.TechAndLeadership && fs.ProjectLeadershipSource == null)
+                    if (fs.Project.CostModel == CostModel.TechAndLeadership && fs.ProjectLeadershipSource == null)
                     {
-                        fs.ProjectLeadershipSource = project;
+                        fs.ProjectLeadershipSource = fs.Project;
                     }
                 }
 
@@ -833,32 +838,425 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
-        /// Return the first project in DB that does not have a funding source.
-        /// If all have a funding source then just return last project in DB
+        /// Adds subtasks to the projects in the DB
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedSubTasks(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Create subtasks
+
+                var subTasks = new List<SubTask>
+                {
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = true,
+                        Demand = 0.1,
+                        DurationBillableDays = 458,
+                        DurationDays = 760,
+                        EndDate = new DateTime(2025, 07, 31),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "Run CoP",
+                        OriginalDemand = 0.1,
+                        PlannedCost = 0,
+                        PlannedWorkHours = 320.6,
+                        StartDate = new DateTime(2023, 07, 03),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0.1
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 39120.05,
+                        ActualWorkHours = 1048.5,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 404,
+                        DurationDays = 669,
+                        EndDate = new DateTime(2025, 07, 31),
+                        HasFixedEndDate = false,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 42123.54,
+                        PlannedWorkHours = 1129,
+                        StartDate = new DateTime(2023, 10, 02),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = true,
+                        Demand = 0.3,
+                        DurationBillableDays = 38,
+                        DurationDays = 63,
+                        EndDate = new DateTime(2025, 09, 01),
+                        HasFixedEndDate = false,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE Support",
+                        OriginalDemand = 0.3,
+                        PlannedCost = 2987.96,
+                        PlannedWorkHours = 78.5,
+                        StartDate = new DateTime(2025, 07, 01),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = true,
+                        Demand = 0.3,
+                        DurationBillableDays = 623,
+                        DurationDays = 1033,
+                        EndDate = new DateTime(2028, 06, 30),
+                        HasFixedEndDate = false,
+                        HasFixedStart = false,
+                        Lag = 0,
+                        Name = "RSE Support (Copy)",
+                        OriginalDemand = 0.3,
+                        PlannedCost = 50946.21,
+                        PlannedWorkHours = 1307.5,
+                        StartDate = new DateTime(2025, 09, 02),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = true,
+                        Demand = 0.38,
+                        DurationBillableDays = 63,
+                        DurationDays = 104,
+                        EndDate = new DateTime(2025, 10, 12),
+                        HasFixedEndDate = false,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE Build and Deploy Website",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 7425,
+                        PlannedWorkHours = 175,
+                        StartDate = new DateTime(2025, 07, 01),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 1899.49,
+                        ActualWorkHours = 73.5,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 40,
+                        DurationDays = 67,
+                        EndDate = new DateTime(2025, 03, 20),
+                        HasFixedEndDate = false,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 2894.47,
+                        PlannedWorkHours = 112,
+                        StartDate = new DateTime(2025, 01, 13),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 1960.25,
+                        ActualWorkHours = 51.5,
+                        RequiresLeadership = true,
+                        Demand = 0.3,
+                        DurationBillableDays = 25,
+                        DurationDays = 41,
+                        EndDate = new DateTime(2025, 04, 08),
+                        HasFixedEndDate = false,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE",
+                        OriginalDemand = 0.3,
+                        PlannedCost = 1960.25,
+                        PlannedWorkHours = 51.5,
+                        StartDate = new DateTime(2025, 02, 27),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = false,
+                        Demand = 0.005,
+                        DurationBillableDays = 441,
+                        DurationDays = 731,
+                        EndDate = new DateTime(2028, 04, 08),
+                        HasFixedEndDate = true,
+                        HasFixedStart = false,
+                        Lag = 365,
+                        Name = "Maintenance",
+                        OriginalDemand = 0.005,
+                        PlannedCost = 584.46,
+                        PlannedWorkHours = 15,
+                        StartDate = new DateTime(2026, 04, 09),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 1634.60,
+                        ActualWorkHours = 63.25,
+                        RequiresLeadership = true,
+                        Demand = 0.8,
+                        DurationBillableDays = 13,
+                        DurationDays = 21,
+                        EndDate = new DateTime(2025, 06, 08),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 30,
+                        Name = "RSE 2",
+                        OriginalDemand = 0.8,
+                        PlannedCost = 1809.04,
+                        PlannedWorkHours = 70,
+                        StartDate = new DateTime(2025, 05, 19),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = false,
+                        Demand = 0.1,
+                        DurationBillableDays = 150,
+                        DurationDays = 249,
+                        EndDate = new DateTime(2026, 01, 29),
+                        HasFixedEndDate = false,
+                        HasFixedStart = false,
+                        Lag = 0,
+                        Name = "Support",
+                        OriginalDemand = 0.1,
+                        PlannedCost = 3996.63,
+                        PlannedWorkHours = 105,
+                        StartDate = new DateTime(2025, 05, 26),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 142.73,
+                        ActualWorkHours = 3.75,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 5,
+                        DurationDays = 7,
+                        EndDate = new DateTime(2025, 05, 11),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE 2 after break for Agile training",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 304.50,
+                        PlannedWorkHours = 8,
+                        StartDate = new DateTime(2025, 05, 05),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0.1
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 3596.97,
+                        ActualWorkHours = 94.5,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 33,
+                        DurationDays = 54,
+                        EndDate = new DateTime(2025, 04, 27),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE 1",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 3463.75,
+                        PlannedWorkHours = 91,
+                        StartDate = new DateTime(2025, 03, 05),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 1808.00,
+                        ActualWorkHours = 47.5,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 32,
+                        DurationDays = 53,
+                        EndDate = new DateTime(2025, 04, 26),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE 2",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 2550.23,
+                        PlannedWorkHours = 67,
+                        StartDate = new DateTime(2025, 03, 05),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0.1
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 551.91,
+                        ActualWorkHours = 14.5,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 11,
+                        DurationDays = 17,
+                        EndDate = new DateTime(2025, 05, 31),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE 2 Overrun",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 1065.77,
+                        PlannedWorkHours = 28,
+                        StartDate = new DateTime(2025, 05, 15),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 647.07,
+                        ActualWorkHours = 17,
+                        RequiresLeadership = true,
+                        Demand = 0.4,
+                        DurationBillableDays = 5,
+                        DurationDays = 7,
+                        EndDate = new DateTime(2025, 05, 25),
+                        HasFixedEndDate = true,
+                        HasFixedStart = true,
+                        Lag = 0,
+                        Name = "RSE 1 postponed final week",
+                        OriginalDemand = 0.4,
+                        PlannedCost = 418.69,
+                        PlannedWorkHours = 11,
+                        StartDate = new DateTime(2025, 05, 19),
+                        TaskType = TaskType.FixedDuration,
+                        UnmetDemand = 0
+                    },
+                    new SubTask
+                    {
+                        ActualCost = 0,
+                        ActualWorkHours = 0,
+                        RequiresLeadership = true,
+                        Demand = 0.2,
+                        DurationBillableDays = 5,
+                        DurationDays = 9,
+                        EndDate = new DateTime(2025, 06, 09),
+                        HasFixedEndDate = false,
+                        HasFixedStart = false,
+                        Lag = 0,
+                        Name = "RSE 2 Extension 2",
+                        OriginalDemand = 0.2,
+                        PlannedCost = 266.44,
+                        PlannedWorkHours = 7,
+                        StartDate = new DateTime(2025, 06, 01),
+                        TaskType = TaskType.FixedWork,
+                        UnmetDemand = 0
+                    }
+                };
+
+                // Assign to the correct projects
+                var project = GetProjectByRTP(context, 169);
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[0]
+                };
+                context.SaveChanges();
+
+                project = GetProjectByRTP(context, 180);
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[1]
+                };
+                context.SaveChanges();
+
+                project = GetProjectByRTP(context, 255);
+                subTasks[3].Predecessor = subTasks[2];
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[2],
+                    subTasks[3]
+                };
+                context.SaveChanges();
+
+                project = GetProjectByRTP(context, 265);
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[4]
+                };
+                context.SaveChanges();
+
+                project = GetProjectByRTP(context, 311);
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[5]
+                };
+                context.SaveChanges();
+
+                project = GetProjectByRTP(context, 323);
+                subTasks[7].Predecessor = subTasks[6];
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[6],
+                    subTasks[7],
+                    subTasks[8]
+                };
+                context.SaveChanges();
+
+                project = GetProjectByRTP(context, 324);
+                subTasks[9].Predecessor = subTasks[14];
+                subTasks[15].Predecessor = subTasks[13];
+                project.SubTasks = new List<SubTask>
+                {
+                    subTasks[9],
+                    subTasks[10],
+                    subTasks[11],
+                    subTasks[12],
+                    subTasks[13],
+                    subTasks[14],
+                    subTasks[15]
+                };
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Return the first project in DB that matches the RTP given.
         /// </summary>
         /// <param name="context"></param>
+        /// <param name="rtp"></param>
         /// <returns></returns>
-        /// <exception cref="InvalidOperationException">If there are not projects in the DB</exception>
-        private static Project GetProjectRequiringFundingSource(PPMToolContext context)
+        /// <exception cref="InvalidOperationException">If there are not projects in the DB that match</exception>
+        private static Project GetProjectByRTP(PPMToolContext context, int rtp)
         {
             // Get a project with no funding sources
-            var projectsNoFundingSources = context.Projects
-                .Include(x => x.FundingSources)
-                .Where(x => x.FundingSources.Count == 0);
+            var project = context.Projects
+                .FirstOrDefault(x => x.RTP == rtp);
 
             // If no projects
-            if (context.Projects.Count() == 0)
+            if (project == null)
             {
-                throw new InvalidOperationException("No projects yet in DB so cannot add funding sources!");
+                throw new InvalidOperationException("No matching project!");
             }
 
-            // If none without funding sources then add to the last in the list
-            if (projectsNoFundingSources.Count() == 0)
-            {
-                return context.Projects.Last();
-            }
-
-            return projectsNoFundingSources.First();
+            return project;
         }
 
         /// <summary>
