@@ -537,91 +537,6 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
-        /// Seed some dummy funding sources and attach to the projects in the DB already
-        /// </summary>
-        /// <param name="serviceProvider"></param>
-        internal static void SeedFundingSourcesForProjects(IServiceProvider serviceProvider)
-        {
-            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-            using (var context = dbContextFactory.CreateDbContext())
-            {
-                // TODO: Add projects and also set as leadership funding source where cost model requires it
-
-                // Create funding sources
-                var fundingSources = new List<FundingSource>
-                {
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.DA,
-                        HasAccountCode = true,
-                        AccountCode = "R1234",
-                        Description = "Research and Teaching Project funding source",
-                        AmountAvailable = 100000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.DI,
-                        HasAccountCode = true,
-                        AccountCode = "P5678",
-                        Description = "Project Code funding source",
-                        AmountAvailable = 50000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.Other,
-                        HasAccountCode = false,
-                        AccountCode = "N/A",
-                        Description = "External Research Grant funding source",
-                        AmountAvailable = 200000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.DA,
-                        HasAccountCode = true,
-                        AccountCode = "R9876",
-                        Description = "Departmental Allocation for strategic initiatives",
-                        AmountAvailable = 75000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.DI,
-                        HasAccountCode = true,
-                        AccountCode = "P4321",
-                        Description = "Direct Investment for infrastructure upgrade",
-                        AmountAvailable = 120000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.Other,
-                        HasAccountCode = false,
-                        AccountCode = "N/A",
-                        Description = "Private donation for research excellence",
-                        AmountAvailable = 250000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.DA,
-                        HasAccountCode = true,
-                        AccountCode = "R2468",
-                        Description = "Annual departmental budget allocation",
-                        AmountAvailable = 95000.0
-                    },
-                    new FundingSource
-                    {
-                        FundingSourceType = FundingSourceType.DI,
-                        HasAccountCode = true,
-                        AccountCode = "P1357",
-                        Description = "Project-specific funding from external partner",
-                        AmountAvailable = 60000.0
-                    }
-                };
-
-                context.FundingSources.AddRange(fundingSources);
-                context.SaveChanges();
-            }
-        }
-
-        /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
         /// </summary>
         /// <param name="serviceProvider"></param>
@@ -650,7 +565,7 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 0.0,
                         PlannedLeadershipCosts = 0.0,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 11,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2023, 07, 03), new DateTime(2025, 07, 31)),
                         ProjectStatus = ProjectStatus.CancelledBidFailed,
                         RTP = 169,
                         RequestDocLink = "https://www.google.com",
@@ -669,14 +584,14 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2025, 07, 31),
                         Faculty = Faculty.FBMH,
-                        InnateActivityInnateCodeId = 100.0,
+                        InnateActivity = GetInnateActivityForRTP(context, 180),
                         LeadershipFTE = 0.05f,
                         Name = "Polypharmacy KSS",
                         PI = "Prof. Pickle Pants",
                         PlannedCost = 42123.55,
                         PlannedLeadershipCosts = 0.0,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 4,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2023, 10, 02), new DateTime(2025, 07, 31)),
                         ProjectStatus = ProjectStatus.Active,
                         RTP = 180,
                         RequestDocLink = "https://www.google.com",
@@ -695,14 +610,14 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2028, 06, 30),
                         Faculty = Faculty.FSE,
-                        InnateActivityInnateCodeId = 215.0,
+                        InnateActivity = GetInnateActivityForRTP(context, 255),
                         LeadershipFTE = 0.05f,
                         Name = "Local Climate Zone Modelling",
                         PI = "Sir Gigglesworth",
                         PlannedCost = 64074.39,
                         PlannedLeadershipCosts = 10140.21,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 21,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 07, 01), new DateTime(2028, 06, 30)),
                         ProjectStatus = ProjectStatus.Funded,
                         RTP = 255,
                         School = School.SBS,
@@ -726,7 +641,7 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 7425.0,
                         PlannedLeadershipCosts = 0.0,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 18,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 10, 12), new DateTime(2025, 07, 01)),
                         ProjectStatus = ProjectStatus.AwaitingOutcome,
                         RTP = 265,
                         RequestDocLink = "https://www.google.com",
@@ -745,14 +660,14 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2025, 03, 20),
                         Faculty = Faculty.FBMH,
-                        InnateActivityInnateCodeId = 214,
+                        InnateActivity = GetInnateActivityForRTP(context, 311),
                         LeadershipFTE = 0.025f,
                         Name = "BMBaseDB Update",
                         PI = "Captain Quirk",
                         PlannedCost = 3197.15,
                         PlannedLeadershipCosts = 302.68,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 22,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 03, 20), new DateTime(2025, 01, 13)),
                         ProjectStatus = ProjectStatus.Finished,
                         RTP = 311,
                         RequestDocLink = "https://www.google.com",
@@ -772,14 +687,14 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2028, 04, 08),
                         Faculty = Faculty.FHUMS,
-                        InnateActivityInnateCodeId = 219,
+                        InnateActivity = GetInnateActivityForRTP(context, 323),
                         LeadershipFTE = 0.025f,
                         Name = "Sustainability Trade-off Game Website",
                         PI = "Major Chuckles",
                         PlannedCost = 4633.86,
                         PlannedLeadershipCosts = 280.09,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 22,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2028, 04, 08), new DateTime(2025, 02, 27)),
                         ProjectStatus =ProjectStatus.Paused,
                         RTP = 323,
                         RequestDocLink = "https://www.google.com",
@@ -799,14 +714,14 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = new DateTime(2026, 01, 29),
                         Faculty = Faculty.FBMH,
-                        InnateActivityInnateCodeId = 220,
+                        InnateActivity = GetInnateActivityForRTP(context, 324),
                         LeadershipFTE = 0.05f,
                         Name = "PAPrKA",
                         PI = "Lady Lollipop",
                         PlannedCost = 12852.1,
                         PlannedLeadershipCosts = 786.06,
                         PlannedWorkHours = 0,
-                        ProjectManagerPersonId = 33,
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2026, 01, 29), new DateTime(2025, 03, 05)),
                         ProjectStatus = ProjectStatus.Maintenance,
                         RTP = 324,
                         RequestDocLink = "https://www.google.com",
@@ -818,6 +733,172 @@ namespace PPMTool.Data.Helpers
                 context.Projects.AddRange(projects);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Seed some dummy funding sources and attach to the projects in the DB already
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedFundingSourcesForProjects(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Create funding sources
+                var fundingSources = new List<FundingSource>
+                {
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DA,
+                        HasAccountCode = true,
+                        AccountCode = "R1234",
+                        Description = "Research and Teaching Project funding source",
+                        AmountAvailable = 12152
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DI,
+                        HasAccountCode = true,
+                        AccountCode = "P5678",
+                        Description = "Project Code funding source",
+                        AmountAvailable = 42269
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = false,
+                        AccountCode = "N/A",
+                        Description = "External Research Grant funding source",
+                        AmountAvailable = 71848.9
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = true,
+                        AccountCode = "R9876",
+                        Description = "Departmental Allocation for strategic initiatives",
+                        AmountAvailable = 7425
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = true,
+                        AccountCode = "P4321",
+                        Description = "Direct Investment for infrastructure upgrade",
+                        AmountAvailable = 3035
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = false,
+                        AccountCode = "N/A",
+                        Description = "Private donation for research excellence",
+                        AmountAvailable = 966
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.Other,
+                        HasAccountCode = true,
+                        AccountCode = "R2468",
+                        Description = "Annual departmental budget allocation",
+                        AmountAvailable = 3997
+                    },
+                    new FundingSource
+                    {
+                        FundingSourceType = FundingSourceType.DI,
+                        HasAccountCode = true,
+                        AccountCode = "P1357",
+                        Description = "Project-specific funding from external partner",
+                        AmountAvailable = 12937.81
+                    }
+                };
+
+                // Add projects and also set as leadership funding source where cost model requires it
+                foreach (var fs in fundingSources)
+                {
+                    // Get a random project that needs a funding source
+                    var project = GetProjectRequiringFundingSource(context);
+                    fs.Project = project;
+
+                    // If requires leadership funding source and there isn't one already then assign
+                    if (project.CostModel == CostModel.TechAndLeadership && fs.ProjectLeadershipSource == null)
+                    {
+                        fs.ProjectLeadershipSource = project;
+                    }
+                }
+
+                context.FundingSources.AddRange(fundingSources);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Return the first project in DB that does not have a funding source.
+        /// If all have a funding source then just return last project in DB
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">If there are not projects in the DB</exception>
+        private static Project GetProjectRequiringFundingSource(PPMToolContext context)
+        {
+            // Get a project with no funding sources
+            var projectsNoFundingSources = context.Projects
+                .Include(x => x.FundingSources)
+                .Where(x => x.FundingSources.Count == 0);
+
+            // If no projects
+            if (context.Projects.Count() == 0)
+            {
+                throw new InvalidOperationException("No projects yet in DB so cannot add funding sources!");
+            }
+
+            // If none without funding sources then add to the last in the list
+            if (projectsNoFundingSources.Count() == 0)
+            {
+                return context.Projects.Last();
+            }
+
+            return projectsNoFundingSources.First();
+        }
+
+        /// <summary>
+        /// Returns the InnateActivity which matches the RTP code. If it doesn't exist, it returns null.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="rtp"></param>
+        /// <returns></returns>
+        private static InnateCode GetInnateActivityForRTP(PPMToolContext context, int rtp)
+        {
+            return context.InnateCodes.FirstOrDefault(x => x.ActivityCode.EndsWith($"RTP-{rtp}"));
+        }
+
+        /// <summary>
+        /// Get a random manager from the available people who is employed during the whole of the window given
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="rangeStart"></param>
+        /// <param name="rangeEnd"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">No eligible managers</exception>
+        private static Person GetRandomManagerActiveDuringDateRange(PPMToolContext context, DateTime rangeStart, DateTime rangeEnd)
+        {
+            // Get selection of managers who are active during the window given
+            var managers = context.Users
+                .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                .Include(x => x.Person)
+                .Select(x => x.Person)
+                .Where(x => x.StartDate <= rangeStart && (x.EndDate == null || x.EndDate >= rangeEnd))
+                .ToList();
+
+            // Bail if no-one eligible
+            if (managers.Count == 0)
+            {
+                throw new InvalidOperationException("Cannot find a manager who is active during the project period! Modify the seeding code.");
+            }
+
+            // Return a random one from the list
+            var rnd = new Random();
+            return managers[rnd.Next(managers.Count - 1)];
         }
 
         /// <summary>

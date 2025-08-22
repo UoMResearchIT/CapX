@@ -19,6 +19,7 @@
     <PackageReference Include="FluentDateTime" Version="3.0.0" />
     <PackageReference Include="GSS.Authentication.CAS.AspNetCore" Version="5.6.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
+    <PackageReference Include="Lorem.Universal.NET" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.15">
