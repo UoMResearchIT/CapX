@@ -243,7 +243,7 @@ if (shouldSeed)
     using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
-    // Seed tables with suitable values -- Competencies are already seeded
+    // Seed tables with suitable values -- Note that competencies are already seeded
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);
@@ -256,8 +256,8 @@ if (shouldSeed)
     SeedHelper.SeedProjects(scope.ServiceProvider);
     SeedHelper.SeedFundingSources(scope.ServiceProvider);
     SeedHelper.SeedSubTasks(scope.ServiceProvider);
+    SeedHelper.SeedResources(scope.ServiceProvider);
 
-    // TODO: Sub-tasks
     // TODO: Resources
 
     // TODO: Timesheets

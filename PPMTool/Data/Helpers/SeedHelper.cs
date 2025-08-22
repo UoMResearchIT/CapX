@@ -847,7 +847,6 @@ namespace PPMTool.Data.Helpers
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Create subtasks
-
                 var subTasks = new List<SubTask>
                 {
                     new SubTask
@@ -1234,6 +1233,19 @@ namespace PPMTool.Data.Helpers
                     subTasks[15]
                 };
                 context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Adds resources to the subtasks in the DB
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedResources(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+
             }
         }
 
