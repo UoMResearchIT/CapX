@@ -48,21 +48,21 @@ if (!string.IsNullOrWhiteSpace(seedDummyData))
 
 // Get superuser name from the environment
 var suName = Environment.GetEnvironmentVariable("SUPERUSER_NAME");
-if (string.IsNullOrWhiteSpace(suName))
+if (!string.IsNullOrWhiteSpace(suName))
 {
     overridingValues.Add("DeveloperSettings:DefaultSuperUserName", suName);
 }
 
 // Get superuser username from the environment
 var suUserName = Environment.GetEnvironmentVariable("SUPERUSER_USERNAME");
-if (string.IsNullOrWhiteSpace(suUserName))
+if (!string.IsNullOrWhiteSpace(suUserName))
 {
     overridingValues.Add("DeveloperSettings:DefaultSuperUserUserName", suUserName);
 }
 
 // Get superuser email from the environment
 var suEmail = Environment.GetEnvironmentVariable("SUPERUSER_EMAIL");
-if (string.IsNullOrWhiteSpace(suEmail))
+if (!string.IsNullOrWhiteSpace(suEmail))
 {
     overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
 }
@@ -258,7 +258,7 @@ if (shouldSeed)
     SeedHelper.SeedSubTasks(scope.ServiceProvider);
     SeedHelper.SeedResources(scope.ServiceProvider);
 
-    // TODO: Resources
+    // TODO: Notes
 
     // TODO: Timesheets
 

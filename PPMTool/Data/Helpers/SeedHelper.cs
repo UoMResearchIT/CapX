@@ -23,17 +23,23 @@ namespace PPMTool.Data.Helpers
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Clear existing table
-                context.People.ExecuteDelete();
-
-                // Get the default person in the DB and configure them
-                var person = new Person();
+                // Update superuser to anonymous
+                var person = context.People.First();
                 person.Name = "Mavis Ledger";
                 person.ShortName = "ML";
                 person.FTE = 1.0;
-                person.StartDate = DateTime.Today.AddYears(-1);
-                person.LineManager = person;
+                person.StartDate = new DateTime(2023, 7, 1);    // Date required by first project
+                context.SaveChanges();
+
+                // Perm currently with us
+                person = new Person();
+                person.Name = "Nigel Overfetch-Nelson";
+                person.ShortName = "NO";
+                person.FTE = 1.0;
+                person.StartDate = DateTime.Today.AddMonths(-12);
+                person.LineManager = context.People.First(x => x.ShortName == "ML");
                 context.People.Add(person);
+                context.SaveChanges();
 
                 // FTC not yet with us
                 person = new Person();
@@ -55,15 +61,6 @@ namespace PPMTool.Data.Helpers
                 person.LineManager = context.People.First(x => x.ShortName == "ML");
                 context.People.Add(person);
 
-                // Perm currently with us
-                person = new Person();
-                person.Name = "Nigel Overfetch-Nelson";
-                person.ShortName = "NO";
-                person.FTE = 1.0;
-                person.StartDate = DateTime.Today.AddMonths(-6);
-                person.LineManager = context.People.First(x => x.ShortName == "ML");
-                context.People.Add(person);
-
                 // Currently with us but leaving soon
                 person = new Person();
                 person.Name = "Tina Breakaway";
@@ -73,6 +70,85 @@ namespace PPMTool.Data.Helpers
                 person.EndDate = DateTime.Today.AddMonths(3);
                 person.LineManager = context.People.First(x => x.ShortName == "NO");
                 context.People.Add(person);
+                context.SaveChanges();
+
+                // Ones needed for project import
+                var others = new List<Person>
+                {
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Bingo McTrousers",
+                        ShortName = "BM",
+                        StartDate = new DateTime(2022, 07, 04)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Ankle Goblin",
+                        ShortName = "AG",
+                        StartDate = new DateTime(2019, 01, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Gravy Commander",
+                        ShortName = "GC",
+                        StartDate = new DateTime(2019, 01, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Lemon Lasso",
+                        ShortName = "LL",
+                        StartDate = new DateTime(2019, 01, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Soggy Apple Nibbler",
+                        ShortName = "SAN",
+                        StartDate = new DateTime(2022, 05, 02)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        Name = "Eggplant Acrobat",
+                        ShortName = "EA",
+                        StartDate = new DateTime(2023, 09, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        Name = "Cheddar Swoosh",
+                        ShortName = "CS",
+                        StartDate = new DateTime(2024, 08, 20)
+                    },
+                    new Person
+                    {
+                        EndDate = new DateTime(2025, 09, 17),
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        Name = "Lumpy Sprinkles",
+                        ShortName = "LS",
+                        StartDate = new DateTime(2024, 09, 18)
+                    }
+                };
+                context.People.AddRange(others);
                 context.SaveChanges();
             }
         }
@@ -155,21 +231,15 @@ namespace PPMTool.Data.Helpers
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Clear existing users
-                context.Users.ExecuteDelete();
+                // Update super user
+                var superUser = context.Users.Include(x => x.Person).First(x => x.RoleType == RoleType.Superuser);
+                superUser.Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName");
+                superUser.CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName");
+                superUser.EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail");
+                superUser.Person = null;
+                context.SaveChanges();
 
-                // Super user -- attached to no-one
-                var superUser = new User
-                {
-                    Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName"),
-                    CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName"),
-                    EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail"),
-                    RoleType = RoleType.Superuser,
-                    Person = null // No person associated as assumed not a team member
-                };
-                context.Users.Add(superUser);
-
-                // Manager - Mavis and Nigel are managers
+                // Manager -- Mavis and Clive are managers
                 var manager = new User
                 {
                     Name = "Mavis Ledger",
@@ -243,84 +313,6 @@ namespace PPMTool.Data.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
                 context.Users.Add(none);
-
-                // Ones needed for project import
-                var others = new List<Person>
-                {
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
-                        Name = "Bingo McTrousers",
-                        ShortName = "BM",
-                        StartDate = new DateTime(2022, 07, 04)
-                    },
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
-                        Name = "Ankle Goblin",
-                        ShortName = "AG",
-                        StartDate = new DateTime(2019, 01, 01)
-                    },
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
-                        Name = "Gravy Commander",
-                        ShortName = "GC",
-                        StartDate = new DateTime(2019, 01, 01)
-                    },
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
-                        Name = "Lemon Lasso",
-                        ShortName = "LL",
-                        StartDate = new DateTime(2019, 01, 01)
-                    },
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
-                        Name = "Soggy Apple Nibbler",
-                        ShortName = "SAN",
-                        StartDate = new DateTime(2022, 05, 02)
-                    },
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
-                        Name = "Eggplant Acrobat",
-                        ShortName = "EA",
-                        StartDate = new DateTime(2023, 09, 01)
-                    },
-                    new Person
-                    {
-                        EndDate = null,
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
-                        Name = "Cheddar Swoosh",
-                        ShortName = "CS",
-                        StartDate = new DateTime(2024, 08, 20)
-                    },
-                    new Person
-                    {
-                        EndDate = new DateTime(2025, 09, 17),
-                        FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
-                        Name = "Lumpy Sprinkles",
-                        ShortName = "LS",
-                        StartDate = new DateTime(2024, 09, 18)
-                    }
-                };
-                context.People.AddRange(others);
                 context.SaveChanges();
             }
         }
@@ -703,6 +695,7 @@ namespace PPMTool.Data.Helpers
                         ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 07, 01), new DateTime(2028, 06, 30)),
                         ProjectStatus = ProjectStatus.Funded,
                         RTP = 255,
+                        RequestDocLink = "https://",
                         School = School.SBS,
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/193",
                         StartDate = new DateTime(2025, 07, 01),

@@ -64,7 +64,7 @@ namespace PPMTool.Pages
 
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
-                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person.PersonId != personModel.PersonId)
+                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person != null && x.Person?.PersonId != personModel.PersonId)
                 .Select(x => x.Person)
                 .DistinctBy(x => x.PersonId)
                 .OrderBy(x => x.Name)
