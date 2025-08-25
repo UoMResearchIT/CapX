@@ -10,6 +10,11 @@ namespace PPMTool.Data.Helpers
     public static class SeedHelper
     {
         /// <summary>
+        /// This is the date that was assumed when the data was created and hence is used to offset the dates
+        /// </summary>
+        private static readonly DateTime dateAnchor = new DateTime(2025, 8, 25);
+
+        /// <summary>
         /// Set up a minimum set of people
         /// </summary>
         /// <param name="serviceProvider"></param>
@@ -239,6 +244,83 @@ namespace PPMTool.Data.Helpers
                 };
                 context.Users.Add(none);
 
+                // Ones needed for project import
+                var others = new List<Person>
+                {
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Bingo McTrousers",
+                        ShortName = "BM",
+                        StartDate = new DateTime(2022, 07, 04)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Ankle Goblin",
+                        ShortName = "AG",
+                        StartDate = new DateTime(2019, 01, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Gravy Commander",
+                        ShortName = "GC",
+                        StartDate = new DateTime(2019, 01, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Lemon Lasso",
+                        ShortName = "LL",
+                        StartDate = new DateTime(2019, 01, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
+                        Name = "Soggy Apple Nibbler",
+                        ShortName = "SAN",
+                        StartDate = new DateTime(2022, 05, 02)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        Name = "Eggplant Acrobat",
+                        ShortName = "EA",
+                        StartDate = new DateTime(2023, 09, 01)
+                    },
+                    new Person
+                    {
+                        EndDate = null,
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        Name = "Cheddar Swoosh",
+                        ShortName = "CS",
+                        StartDate = new DateTime(2024, 08, 20)
+                    },
+                    new Person
+                    {
+                        EndDate = new DateTime(2025, 09, 17),
+                        FTE = 1.0,
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        Name = "Lumpy Sprinkles",
+                        ShortName = "LS",
+                        StartDate = new DateTime(2024, 09, 18)
+                    }
+                };
+                context.People.AddRange(others);
                 context.SaveChanges();
             }
         }
@@ -1255,7 +1337,7 @@ namespace PPMTool.Data.Helpers
                         AssignmentFTE = 0.4,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 48,
+                        Person = context.People.First(x => x.ShortName == "EA"),
                         PlannedCost = 42123.54,
                         PlannedWorkHours = 1129,
                         Rate = Rate.Standard,
@@ -1275,7 +1357,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 25,
+                        Person = context.People.First(x => x.ShortName == "GC"),
                         PlannedCost = 2987.96,
                         PlannedWorkHours = 78.5,
                         Rate = Rate.Standard,
@@ -1291,7 +1373,7 @@ namespace PPMTool.Data.Helpers
                         AssignmentFTE = 0.3,
                         DayRate = 250,
                         IsProvisional = false,
-                        PersonId = 33,
+                        Person = context.People.First(x => x.ShortName == "SAN"),
                         PlannedCost = 50946.21,
                         PlannedWorkHours = 1307.5,
                         Rate = Rate.Standard,
@@ -1311,7 +1393,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 55,
+                        Person = context.People.First(x => x.ShortName == "CS"),
                         PlannedCost = 7425,
                         PlannedWorkHours = 175,
                         Rate = Rate.Standard,
@@ -1331,7 +1413,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 262,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 15,
+                        Person = context.People.First(x => x.ShortName == "BM"),
                         PlannedCost = 2894.47,
                         PlannedWorkHours = 112,
                         Rate = Rate.Junior,
@@ -1351,7 +1433,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 29,
+                        Person = context.People.First(x => x.ShortName == "LL"),
                         PlannedCost = 1960.25,
                         PlannedWorkHours = 51.5,
                         Rate = Rate.Standard,
@@ -1368,7 +1450,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.Last(),
                         IsProvisional = false,
-                        PersonId = 29,
+                        Person = context.People.First(x => x.ShortName == "LL"),
                         PlannedCost = 584.46,
                         PlannedWorkHours = 15,
                         Rate = Rate.Standard,
@@ -1385,10 +1467,10 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 15,
+                        Person = context.People.First(x => x.ShortName == "BM"),
                         PlannedCost = 1809.04,
                         PlannedWorkHours = 70,
-                        Rate = 1,
+                        Rate = Rate.Junior,
                         UseProjectDayRate = true
                     }
                 };
@@ -1405,7 +1487,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 56,
+                        Person = context.People.First(x => x.ShortName == "LS"),
                         PlannedCost = 3996.63,
                         PlannedWorkHours = 105,
                         Rate = Rate.Standard,
@@ -1422,7 +1504,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 18,
+                        Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 304.50,
                         PlannedWorkHours = 8,
                         Rate = Rate.Standard,
@@ -1439,7 +1521,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 56,
+                        Person = context.People.First(x => x.ShortName == "LS"),
                         PlannedCost = 3463.75,
                         PlannedWorkHours = 91,
                         Rate = Rate.Standard,
@@ -1456,7 +1538,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 18,
+                        Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 2550.23,
                         PlannedWorkHours = 67,
                         Rate = Rate.Standard,
@@ -1473,7 +1555,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 18,
+                        Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 1065.77,
                         PlannedWorkHours = 28,
                         Rate = Rate.Standard,
@@ -1490,7 +1572,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 56,
+                        Person = context.People.First(x => x.ShortName == "LS"),
                         PlannedCost = 418.69,
                         PlannedWorkHours = 11,
                         Rate = Rate.Standard,
@@ -1507,7 +1589,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         FundedFrom = project.FundingSources.First(),
                         IsProvisional = false,
-                        PersonId = 18,
+                        Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 266.44,
                         PlannedWorkHours = 7,
                         Rate = Rate.Standard,
