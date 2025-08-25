@@ -257,12 +257,13 @@ if (shouldSeed)
     SeedHelper.SeedFundingSources(scope.ServiceProvider);
     SeedHelper.SeedSubTasks(scope.ServiceProvider);
     SeedHelper.SeedResources(scope.ServiceProvider);
+    SeedHelper.SeedNotes(scope.ServiceProvider);
+    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
 
-    // TODO: Notes
+    // TODO: Financial Items (payments and invoices)
 
     // TODO: Timesheets
 
-    // TODO: Financial Items (payments and invoices)
 }
 
 app.Run();

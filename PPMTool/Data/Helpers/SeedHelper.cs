@@ -82,7 +82,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Bingo McTrousers",
                         ShortName = "BM",
-                        StartDate = new DateTime(2022, 07, 04)
+                        StartDate = new DateTime(2023, 07, 01)
                     },
                     new Person
                     {
@@ -91,7 +91,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Ankle Goblin",
                         ShortName = "AG",
-                        StartDate = new DateTime(2019, 01, 01)
+                        StartDate = new DateTime(2023, 07, 01)
                     },
                     new Person
                     {
@@ -100,7 +100,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Gravy Commander",
                         ShortName = "GC",
-                        StartDate = new DateTime(2019, 01, 01)
+                        StartDate = new DateTime(2023, 07, 01)
                     },
                     new Person
                     {
@@ -109,7 +109,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Lemon Lasso",
                         ShortName = "LL",
-                        StartDate = new DateTime(2019, 01, 01)
+                        StartDate = new DateTime(2023, 07, 01)
                     },
                     new Person
                     {
@@ -118,7 +118,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Soggy Apple Nibbler",
                         ShortName = "SAN",
-                        StartDate = new DateTime(2022, 05, 02)
+                        StartDate = new DateTime(2023, 07, 01)
                     },
                     new Person
                     {
@@ -376,6 +376,340 @@ namespace PPMTool.Data.Helpers
                 };
                 context.WorkloadModelChanges.Add(newWlm);
 
+                var otherWLMs = new List<WorkloadModelChange>
+                {
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Non-billable BAU & Personal Dev",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2023, 10, 1),
+                        Person = context.People.First(x => x.ShortName == "EA"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.8,
+                        StaffManagementFTE = 0.0,
+                        Grade = 6,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Part-time 0.8; 0.1 PD",
+                        BusinessAsUsualFTE = 0.0,
+                        ChangeDate = new DateTime(2023, 10, 1),
+                        Person = context.People.First(x => x.ShortName == "SAN"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.7,
+                        StaffManagementFTE = 0.0,
+                        Grade = 6,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "PSM 0.3 FTE & Staff 0.4 FTE",
+                        BusinessAsUsualFTE = 0.0,
+                        ChangeDate = new DateTime(2023, 10, 1),
+                        Person = context.People.First(x => x.ShortName == "AG"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.3,
+                        ProjectWorkFTE = 0.3,
+                        StaffManagementFTE = 0.4,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.3,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.4,
+                        Notes = "PSM 0.3 FTE, Staff 0.2 FTE & RSA (Web) 0.4 FTE",
+                        BusinessAsUsualFTE = 0.0,
+                        ChangeDate = new DateTime(2023, 10, 1),
+                        Person = context.People.First(x => x.ShortName == "LL"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.3,
+                        ProjectWorkFTE = 0.1,
+                        StaffManagementFTE = 0.2,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.1,
+                        ServiceManagementFTE = 0.2
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Part-time 0.8; Personal Dev 0.1 & Training 0.1",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2023, 10, 1),
+                        Person = context.People.First(x => x.ShortName == "GC"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.6,
+                        StaffManagementFTE = 0.0,
+                        Grade = 6,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "PSM 0.2 FTE & Staff 0.3 FTE, BAU 0.1 FTE",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2023, 10, 24),
+                        Person = context.People.First(x => x.ShortName == "AG"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.4,
+                        StaffManagementFTE = 0.3,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.4,
+                        Notes = "PSM 0.2 FTE & RSA (Web) 0.4 FTE, BAU 0.1 FTE",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 1, 15),
+                        Person = context.People.First(x => x.ShortName == "LL"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.3,
+                        StaffManagementFTE = 0.0,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.1,
+                        ServiceManagementFTE = 0.1
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "0.1 FTE BAU & 0.1 PD",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 9, 2),
+                        Person = context.People.First(x => x.ShortName == "BM"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.8,
+                        StaffManagementFTE = 0.0,
+                        Grade = 5,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Part-time 0.8; 0.3 PSM, 0.1 Staff, 0.1 BAU",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 4, 1),
+                        Person = context.People.First(x => x.ShortName == "SAN"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.3,
+                        ProjectWorkFTE = 0.3,
+                        StaffManagementFTE = 0.1,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.1
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.4,
+                        Notes = "BAU 0.1, RSA 0.4 (Django-Wagtail)",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 3, 18),
+                        Person = context.People.First(x => x.ShortName == "LL"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.5,
+                        StaffManagementFTE = 0.0,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.1,
+                        Notes = "Part-time 0.8; 0.1 PSM, 0.2 Staff, 0.1 RSA (R Shiny Service), 0.1 BAU",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 5, 13),
+                        Person = context.People.First(x => x.ShortName == "SAN"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.1,
+                        ProjectWorkFTE = 0.3,
+                        StaffManagementFTE = 0.2,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.1,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Standard G6 WLM",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 8, 20),
+                        Person = context.People.First(x => x.ShortName == "CS"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.8,
+                        StaffManagementFTE = 0.0,
+                        Grade = 6,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Standard G6 WLM",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2024, 9, 18),
+                        Person = context.People.First(x => x.ShortName == "LS"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.8,
+                        StaffManagementFTE = 0.0,
+                        Grade = 6,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Extra BAU time for work on DjW stack upgrading",
+                        BusinessAsUsualFTE = 0.5,
+                        ChangeDate = new DateTime(2024, 12, 9),
+                        Person = context.People.First(x => x.ShortName == "BM"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.4,
+                        StaffManagementFTE = 0.0,
+                        Grade = 5,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Back to normal G5 WLM, for RTP-311",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2025, 1, 13),
+                        Person = context.People.First(x => x.ShortName == "BM"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.8,
+                        StaffManagementFTE = 0.0,
+                        Grade = 5,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Part-time 0.8; 0.1 PSM, 0.2 Staff, 0.1 BAU",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2025, 1, 20),
+                        Person = context.People.First(x => x.ShortName == "SAN"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.3,
+                        StaffManagementFTE = 0.2,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Extra BAU time for work on DjW stack upgrading",
+                        BusinessAsUsualFTE = 0.5,
+                        ChangeDate = new DateTime(2025, 3, 21),
+                        Person = context.People.First(x => x.ShortName == "BM"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.4,
+                        StaffManagementFTE = 0.0,
+                        Grade = 5,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Back to normal G5",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2025, 5, 7),
+                        Person = context.People.First(x => x.ShortName == "BM"),
+                        PersonalDevelopmentFTE = 0.1,
+                        ProjectAndServiceManagementFTE = 0.0,
+                        ProjectWorkFTE = 0.8,
+                        StaffManagementFTE = 0.0,
+                        Grade = 5,
+                        ProjectManagementFTE = 0.0,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Part time 0.9 (for 3 months at present); 0.2 PSM, 0.2 Staff, 0.1 BAU",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2025, 6, 1),
+                        Person = context.People.First(x => x.ShortName == "SAN"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.4,
+                        StaffManagementFTE = 0.2,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Part-time 0.8; 0.2 PSM, 0.2 Staff, 0.1 BAU",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2025, 9, 1),
+                        Person = context.People.First(x => x.ShortName == "SAN"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.3,
+                        StaffManagementFTE = 0.2,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "Agile course - 0.5 BAU, 0.2 PSM, 0.3 Staff",
+                        BusinessAsUsualFTE = 0.5,
+                        ChangeDate = new DateTime(2025, 4, 26),
+                        Person = context.People.First(x => x.ShortName == "AG"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.0,
+                        StaffManagementFTE = 0.3,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.0
+                    },
+                    new WorkloadModelChange
+                    {
+                        ArchitectureFTE = 0.0,
+                        Notes = "PSM 0.2 FTE & Staff 0.3 FTE, BAU 0.1 FTE",
+                        BusinessAsUsualFTE = 0.1,
+                        ChangeDate = new DateTime(2025, 5, 3),
+                        Person = context.People.First(x => x.ShortName == "AG"),
+                        PersonalDevelopmentFTE = 0.0,
+                        ProjectAndServiceManagementFTE = 0.2,
+                        ProjectWorkFTE = 0.4,
+                        StaffManagementFTE = 0.3,
+                        Grade = 7,
+                        ProjectManagementFTE = 0.2,
+                        ServiceManagementFTE = 0.0
+                    }
+                };
+                context.WorkloadModelChanges.AddRange(otherWLMs);
                 context.SaveChanges();
             }
         }
@@ -1589,6 +1923,84 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Seeds some simple, random notes against each project in the DB
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedNotes(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Add a note to each project
+                var projects = context.Projects.ToList();
+                var users = context.Users.ToList();
+                Random rnd = new Random();
+                foreach (var project in projects)
+                {
+                    for (int i = 0; i < rnd.Next(1, 5); ++i)
+                    {
+                        context.Notes.Add(new Note
+                        {
+                            HtmlContent = GetDummyParagraphsAsHtml(),
+                            Author = users[rnd.Next(0, context.Users.Count())],
+                            CreatedDate = DateTime.Now.AddDays(-rnd.Next(1, 100)),
+                            Project = project
+                        });
+                    }
+                }
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Seed some dummy invoices and payments against projects with other funding sources
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedInvoicesAndPayments(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Add a payment and invoice to each project with other funding sources
+                var projects = context.Projects
+                    .Include(x => x.FundingSources)
+                    .Where(x => x.FundingSources
+                        .Any(x => x.FundingSourceType == FundingSourceType.Other)
+                    )
+                    .ToList();
+                var users = context.Users.ToList();
+                foreach (var project in projects)
+                {
+                    var funding = project.FundingSources.First(x => x.FundingSourceType == FundingSourceType.Other);
+                    var invoice = new Invoice
+                    {
+                        Value = funding.AmountAvailable,
+                        InvoiceUrl = "https://example.com/invoice.pdf",
+                        KeyDate = DateTime.Now.AddDays(-15),
+                        InvoiceReference = $"INV-{project.RTP}-{DateTime.Now.Year}-{funding.FundingSourceId}",
+                        Description = "This is a dummy invoice created as part of database seeding.",
+                        Project = project,
+                        Status = InvoiceStatus.Paid
+                    };
+                    context.Invoices.Add(invoice);
+                    context.SaveChanges();
+
+                    var payment = new Payment
+                    {
+                        Source = funding,
+                        KeyDate = invoice.KeyDate.AddDays(10),
+                        Invoice = invoice,
+                        Value = invoice.Value,
+                        Description = "This is a dummy payment created as part of database seeding.",
+                        Project = project,
+                    };
+                    context.Payments.Add(payment);
+                }
                 context.SaveChanges();
             }
         }
