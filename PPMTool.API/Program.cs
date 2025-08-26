@@ -151,7 +151,7 @@ app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
 app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 app.MapGet($"/timesheets/{{name}}/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-app.MapGet($"/timesheets/me/entries",     Timesheets.GetMyTimesheetEntriesForDateRange);
+app.MapGet($"/timesheets/me/entries", Timesheets.GetMyTimesheetEntriesForDateRange);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>
