@@ -2006,6 +2006,21 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Generate some dummy timesheets for people in the DB
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedTimesheets(IServiceProvider serviceProvider)
+        {
+            // TODO: For each person in the DB, generate timesheets for every week that they have been employed up to the current week
+
+            // Status of the timesheets in the last couple of weeks should be random
+
+            // Status last changed by can be dictated by the timesheet status
+
+            // Generate the timesheet entries -- keep simple based on average G6 and G7 WLMs with randomisation of values
+        }
+
+        /// <summary>
         /// Get a project with its subtasks and funding sources by RTP
         /// </summary>
         /// <param name="context"></param>
