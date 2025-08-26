@@ -4,7 +4,6 @@ using PPMTool.API.Services;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-// alias
 using TSDTO = PPMTool.API.DTOs.Timesheets;
 
 namespace PPMTool.API.Endpoints;
@@ -37,44 +36,44 @@ public static class Timesheets
         try
         {
             // Make this cleverer??
-            
+
             // Check API Key.
             if (!http.Request.Headers.TryGetValue("x-api-key", out var apiKey))
                 return Results.Unauthorized();
-            
+
             // Make this cleverer??
-            
+
             // Resolve caller from API key
             var caller = authService.GetUserIfApiKeyActive(db, apiKey);
             if (caller == null)
                 return Results.Unauthorized();
-            
+
             // Need to check the database. Do we have _? I assume we do. Erdem_Atbas? Taken from PersonSkillsDTO.cs
             var person = await db.People
                 .Include(p => p.LineManager)
                 .FirstOrDefaultAsync(p => p.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
-            
+
             // Not found
             if (person == null)
                 return Results.NotFound();
             // Authorisation checks
             var callerPersonId = caller.Person?.PersonId ?? 0;
             // Self?
-            var isSelf        = callerPersonId != 0 && callerPersonId == person.PersonId;
+            var isSelf = callerPersonId != 0 && callerPersonId == person.PersonId;
             //LM?
             var isLineManager = person.LineManager?.PersonId == callerPersonId;
             // SU?
-            var isSuper       = IsSuperUser(caller);
+            var isSuper = IsSuperUser(caller);
 
             // If none of the above, forbid
             if (!(isSuper || isSelf || isLineManager))
                 return Results.Forbid();
-            
+
             // Normalise date range to full days
             // Start inclusive, end inclusive (implemented as end exclusive)
-            var startDate   = start.Date;
+            var startDate = start.Date;
             var endExclusive = end.Date.AddDays(1);
-            
+
             // Query weekly timesheets that overlap the window
             // Read only, include owner and entries with innate info
             var timesheets = await db.Timesheets
