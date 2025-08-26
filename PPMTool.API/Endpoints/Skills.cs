@@ -28,7 +28,9 @@ public static class Skills
     {
         try
         {
-            var tags = await context.SkillTags.ToListAsync();
+            var tags = await context.SkillTags
+                .AsNoTracking()
+                .ToListAsync();
 
             if (tags == null || tags.Count == 0)
             {
