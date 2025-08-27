@@ -243,6 +243,13 @@ if (shouldSeed)
     using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
+    // Clear the existing DB and recreate a vanilla file
+    using (var context = dbContextFactory.CreateDbContext())
+    {
+        context.Database.EnsureDeleted();
+        context.Database.Migrate();
+    }
+
     // Seed tables with suitable values -- Note that competencies are already seeded
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
