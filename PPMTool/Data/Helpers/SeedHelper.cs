@@ -2058,15 +2058,6 @@ namespace PPMTool.Data.Helpers
                     context.SaveChanges();
                 }
             }
-
-
-            // TODO: For each person in the DB, generate timesheets for every week that they have been employed up to the current week
-
-            // Status of the timesheets in the last couple of weeks should be random
-
-            // Status last changed by can be dictated by the timesheet status
-
-            // Generate the timesheet entries -- keep simple based on average G6 and G7 WLMs with randomisation of values
         }
 
         /// <summary>
@@ -2126,16 +2117,149 @@ namespace PPMTool.Data.Helpers
             var projectFte = wlm.Total() - (psmFte + bauFte + staffFte + rsaFte + pdFte);
             if (projectFte < 0) projectFte = 0;
 
+            // Get all active tasks
+            var activeTasks = context.InnateCodeTasks
+                .Include(x => x.InnateCode)
+                .Where(x => x.InnateCode.IsActive);
+
             // For each area, add in a sutiable timesheet entry if non-zero
+            if (psmFte > 0)
+            {
+                var value = psmFte * wlm.Total() * 35 / 5f;
+                var entry = new TimesheetEntry
+                {
+                    InnateCodeTask = activeTasks.GetRandomTask(Duty.ProjectAndServiceMgmt),
+                    MondayHours = value,
+                    TuesdayHours = value,
+                    WednesdayHours = value,
+                    ThursdayHours = value,
+                    FridayHours = value
+                };
+                entry.UpdateTotalHours();
+                list.Add(entry);
+            }
 
+            if (bauFte > 0)
+            {
+                var value = bauFte * wlm.Total() * 35 / 5f;
+                var entry = new TimesheetEntry
+                {
+                    InnateCodeTask = activeTasks.GetRandomTask(Duty.BAU),
+                    MondayHours = value,
+                    TuesdayHours = value,
+                    WednesdayHours = value,
+                    ThursdayHours = value,
+                    FridayHours = value
+                };
+                entry.UpdateTotalHours();
+                list.Add(entry);
+            }
 
+            if (staffFte > 0)
+            {
+                var value = staffFte * wlm.Total() * 35 / 5f;
+                var entry = new TimesheetEntry
+                {
+                    InnateCodeTask = activeTasks.GetRandomTask(Duty.StaffMgmt),
+                    MondayHours = value,
+                    TuesdayHours = value,
+                    WednesdayHours = value,
+                    ThursdayHours = value,
+                    FridayHours = value
+                };
+                entry.UpdateTotalHours();
+                list.Add(entry);
+            }
 
+            if (rsaFte > 0)
+            {
+                var value = rsaFte * wlm.Total() * 35 / 5f;
+                var entry = new TimesheetEntry
+                {
+                    InnateCodeTask = activeTasks.GetRandomTask(Duty.RSA),
+                    MondayHours = value,
+                    TuesdayHours = value,
+                    WednesdayHours = value,
+                    ThursdayHours = value,
+                    FridayHours = value
+                };
+                entry.UpdateTotalHours();
+                list.Add(entry);
+            }
+
+            if (pdFte > 0)
+            {
+                var value = pdFte * wlm.Total() * 35 / 5f;
+                var entry = new TimesheetEntry
+                {
+                    InnateCodeTask = activeTasks.GetRandomTask(Duty.ProjectAndServiceMgmt),
+                    MondayHours = value,
+                    TuesdayHours = value,
+                    WednesdayHours = value,
+                    ThursdayHours = value,
+                    FridayHours = value
+                };
+                entry.UpdateTotalHours();
+                list.Add(entry);
+            }
 
             // Project work codes selected from the projects they are working on
+            if (projectFte > 0)
+            {
+                // Extract development tasks for the projects assigned to this week and store the assignment FTE
+                IDictionary<InnateCodeTask, double> projectTasks = new Dictionary<InnateCodeTask, double>();
+                foreach (var project in projects)
+                {
+                    // Get the innate activity for the project
+                    var innateActivity = project.InnateActivity;
+                    if (innateActivity == null) continue;
 
+                    // Get the tasks for the innate activity
+                    var task = innateActivity.Tasks.First(x => x.Duty == Duty.ProjectWork);
 
+                    // For each resource assigned to the project this week that is this person, get their assignment FTE
+                    var assignmentFte = project.SubTasks
+                        .Where(x => x.IsWithin(currentDate))
+                        .SelectMany(x => x.AssignedResources)
+                        .Where(x => x.Person.PersonId == person.PersonId)
+                        .Sum(x => x.AssignmentFTE);
 
+                    // Add to dictionary
+                    if (assignmentFte > 0)
+                    {
+                        projectTasks[task] = assignmentFte;
+                    }
+                }
+
+                // Create timesheet entries for each project task with hours based on the assignment FTE
+                var totalAssignmentFte = projectTasks.Values.Sum();
+                foreach (var kvp in projectTasks)
+                {
+                    var task = kvp.Key;
+                    var assignmentFte = kvp.Value;
+                    var value = (assignmentFte / totalAssignmentFte) * projectFte * wlm.Total() * 35 / 5f;
+                    var entry = new TimesheetEntry
+                    {
+                        InnateCodeTask = task,
+                        MondayHours = value,
+                        TuesdayHours = value,
+                        WednesdayHours = value,
+                        ThursdayHours = value,
+                        FridayHours = value
+                    };
+                    entry.UpdateTotalHours();
+                    list.Add(entry);
+                }
+            }
             return list;
+        }
+
+        private static InnateCodeTask GetRandomTask(this IQueryable<InnateCodeTask> allTasks, Duty duty)
+        {
+            var rnd = new Random();
+            var tasks = allTasks.Where(x => x.Duty == duty).ToList();
+            if (tasks.Count == 0) throw new InvalidOperationException($"No innate tasks for duty {duty}");
+            return tasks[rnd.Next(tasks.Count)];
         }
 
         /// <summary>
