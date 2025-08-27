@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PPMTool.API.Attributes;
-using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
-using PPMTool.Services;
+using SkillsDTO = PPMTool.API.DTOs.Skills;
 
 namespace PPMTool.API.Endpoints;
 
@@ -16,15 +13,10 @@ public static class Skills
     /// <summary>
     /// Get all skills tags from DB
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="logger"></param>
-    /// <param name="tagService"></param>
-    /// <returns></returns> 
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillsDTO.SkillTagDTO>))] // <-- UPDATED
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [SkillTagShallowSchema]
-    public static async Task<IResult> GetAllSkillTagsAsync(PPMToolContext context, ILogger logger, SkillTagService tagService)
+    public static async Task<IResult> GetAllSkillTagsAsync(PPMToolContext context, ILogger logger)
     {
         try
         {
@@ -32,61 +24,66 @@ public static class Skills
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (tags == null || tags.Count == 0)
+            if (tags == null || !tags.Any())
             {
-                logger.LogWarning($"API: GetAllSkillsTags: No tags found!");
+                logger.LogWarning("API: GetAllSkillsTags: No tags found!");
                 return Results.NotFound();
             }
 
-            logger.LogInformation($"API: GetAllSkillsTags: Count = {tags?.Count}");
-            return Results.Json(tags);
+            // Map the database entities to our new DTOs
+            var tagDtos = tags.Select(t => new SkillsDTO.SkillTagDTO(
+                SkillTagId: t.SkillTagId,
+                Name: t.Name
+            ));
+
+            logger.LogInformation("API: GetAllSkillsTags: Count = {Count}", tagDtos.Count());
+            return Results.Json(tagDtos);
         }
         catch (Exception ex)
         {
-            logger.LogError($"API: GetAllSkillsTags: {ex}");
+            logger.LogError(ex, "API: GetAllSkillsTags error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
     /// <summary>
-    /// Get all skills tags for a person based on their name with spaces between their names replaced with underscores
+    /// Get all skills tags for a person
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="logger"></param>
-    /// <param name="tagService"></param>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTag>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillsDTO.SkillTagDTO>))] // <-- UPDATED
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [SkillTagShallowSchema]
-    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, SkillTagService tagService, string name)
+    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string name)
     {
         try
         {
-            // Try to retrieve the person
-            var person = context.People
-            .FirstOrDefault(x => x.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
+            var person = await context.People
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
+
             if (person == null)
             {
-                logger.LogWarning($"API: GetAllSkillsTagsForPerson: Person = {name} not found in the DB!");
+                logger.LogWarning("API: GetAllSkillsTagsForPerson: Person = {Name} not found!", name);
                 return Results.NotFound();
             }
 
-            // Get the tags for this person
             var tags = await context.OwnedSkills
-                .Include(x => x.SkillTag)
-                .Include(x => x.Owner)
+                .AsNoTracking()
                 .Where(x => x.Owner.PersonId == person.PersonId)
-                .Select(x => x.SkillTag)
+                .Select(x => x.SkillTag) // The query already selects the SkillTag entity
                 .ToListAsync();
 
-            logger.LogInformation($"API: GetAllSkillsTagsForPerson: Person = {person.Name}, Count = {tags.Count}");
-            return Results.Json(tags);
+            // Map the SkillTag entities to our SkillTagDTOs
+            var tagDtos = tags.Select(t => new SkillsDTO.SkillTagDTO(
+                SkillTagId: t.SkillTagId,
+                Name: t.Name
+            ));
+
+            logger.LogInformation("API: GetAllSkillsTagsForPerson: Person = {Name}, Count = {Count}", person.Name, tagDtos.Count());
+            return Results.Json(tagDtos);
         }
         catch (Exception ex)
         {
-            logger.LogError($"API: GetAllSkillsTagsForPerson: {ex}");
+            logger.LogError(ex, "API: GetAllSkillsTagsForPerson error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -94,44 +91,43 @@ public static class Skills
     /// <summary>
     /// Get all skills tags grouped by person
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="logger"></param>
-    /// <param name="tagService"></param>
-    /// <returns></returns> 
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<PersonSkills>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillsDTO.PersonSkillsDTO>))] // <-- UPDATED
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [SkillTagShallowSchema]
-    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger, SkillTagService tagService)
+    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger)
     {
         try
         {
             var ownedSkills = await context.OwnedSkills
+                .AsNoTracking()
                 .Include(x => x.Owner)
                 .Include(x => x.SkillTag)
                 .ToListAsync();
 
-            if (ownedSkills == null || ownedSkills.Count == 0)
+            if (ownedSkills == null || !ownedSkills.Any())
             {
-                logger.LogWarning($"API: GetAllPeopleWithSkillTags: No owned skills found!");
+                logger.LogWarning("API: GetAllPeopleWithSkillTags: No owned skills found!");
                 return Results.NotFound();
             }
 
-            // Assemble into correct form
-            var results = new List<PersonSkills>();
-            var people = ownedSkills.Select(x => x.Owner).Distinct();
-            foreach (var person in people)
-            {
-                var skillTags = ownedSkills.Where(x => x.Owner.PersonId == person.PersonId).Select(x => x.SkillTag);
-                results.Add(new PersonSkills(person.Name, skillTags));
-            }
+            // Use LINQ to group and map directly to the new DTO structure
+            var results = ownedSkills
+                .GroupBy(os => os.Owner)
+                .Select(group => new SkillsDTO.PersonSkillsDTO(
+                    Name: group.Key.Name,
+                    Skills: group.Select(os => new SkillsDTO.SkillTagDTO(
+                        SkillTagId: os.SkillTag.SkillTagId,
+                        Name: os.SkillTag.Name
+                    ))
+                ))
+                .ToList();
 
-            logger.LogInformation($"API: GetAllPeopleWithSkillTags: Count = {ownedSkills.Count}");
+            logger.LogInformation("API: GetAllPeopleWithSkillTags: People Count = {Count}", results.Count);
             return Results.Json(results);
         }
         catch (Exception ex)
         {
-            logger.LogError($"API: GetAllPeopleWithSkillTags: {ex}");
+            logger.LogError(ex, "API: GetAllPeopleWithSkillTags error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
