@@ -69,6 +69,7 @@ if (string.IsNullOrEmpty(connectionString))
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
     options.UseSqlite(connectionString)
+    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
 );
 builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddSingleton<APIAuthService>();
