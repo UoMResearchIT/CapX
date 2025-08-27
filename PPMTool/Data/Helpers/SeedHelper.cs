@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Linq.Dynamic.Core;
+using System.Text;
 using LoremNET;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -2011,6 +2012,54 @@ namespace PPMTool.Data.Helpers
         /// <param name="serviceProvider"></param>
         internal static void SeedTimesheets(IServiceProvider serviceProvider)
         {
+
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                foreach (var person in context.People.Include(x => x.WorkloadModelChanges))
+                {
+                    // Set start and end dates to the nearest Monday
+                    var startDate = person.StartDate;
+                    if (startDate.DayOfWeek != DayOfWeek.Monday)
+                    {
+                        // Change to next Monday
+                        startDate = startDate.AddDays(7 - (int)startDate.DayOfWeek + (int)DayOfWeek.Monday);
+                    }
+
+                    var endDate = person.EndDate ?? DateTime.Today;
+                    if (endDate.DayOfWeek != DayOfWeek.Monday)
+                    {
+                        // Change to nearest previous Monday
+                        endDate = endDate.AddDays(-(int)endDate.DayOfWeek + (int)DayOfWeek.Monday);
+                    }
+
+                    // Add timesheets for each week in the range
+                    var currentDate = startDate;
+                    while (currentDate <= endDate)
+                    {
+                        var timesheet = new Timesheet
+                        {
+                            Owner = person,
+                            StartDate = currentDate,
+                            CreatedDate = startDate,
+                            DateStatusChanged = startDate,
+                            StatusChangedBy = person,
+                            Info = Lorem.Paragraph(5, 2),
+                            Status = GenerateDummyTimesheetStatus(currentDate),
+                            TimesheetEntries = GenerateDummyTimesheetEntries(context, person, currentDate)
+                        };
+
+                        // Add timesheet
+                        context.Timesheets.Add(timesheet);
+
+                        // Advance to the next week
+                        currentDate.AddDays(7);
+                    }
+                    context.SaveChanges();
+                }
+            }
+
+
             // TODO: For each person in the DB, generate timesheets for every week that they have been employed up to the current week
 
             // Status of the timesheets in the last couple of weeks should be random
@@ -2018,6 +2067,86 @@ namespace PPMTool.Data.Helpers
             // Status last changed by can be dictated by the timesheet status
 
             // Generate the timesheet entries -- keep simple based on average G6 and G7 WLMs with randomisation of values
+        }
+
+        /// <summary>
+        /// Returns a random but logic list of timesheet entries for a person based on standard WLMs and variability in of 0.05 increments
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="person"></param>
+        /// <param name="currentDate"></param>
+        /// <returns></returns>
+        private static IList<TimesheetEntry> GenerateDummyTimesheetEntries(PPMToolContext context, Person person, DateTime currentDate)
+        {
+            var list = new List<TimesheetEntry>();
+            var rnd = new Random();
+
+            // Get WLM of the person at the start of the week
+            var wlm = person.GetWorkloadModelOnDateOrDefault(currentDate);
+
+            // Project work structure where they are resource and project is running on this week
+            var projects = context.Projects
+                .Where(x => x.IsWithin(currentDate))
+                .Include(x => x.InnateActivity)
+                    .ThenInclude(x => x.Tasks)
+                .Include(x => x.SubTasks)
+                    .ThenInclude(x => x.AssignedResources)
+                        .ThenInclude(x => x.Person)
+                .Where(x => x.SubTasks
+                    .Any(x => x.AssignedResources
+                        .Any(x => x.Person.PersonId == person.PersonId)
+                    )
+                );
+
+            // Assume 5% chance of them being on leave that week
+            var onLeave = rnd.Next(100) < 20;
+            if (onLeave)
+            {
+                var value = wlm.Total() / 5f;
+                var entry = new TimesheetEntry
+                {
+                    InnateCodeTask = context.InnateCodeTasks.First(x => x.TaskName == "Annual Leave (Holidays)"),
+                    MondayHours = value,
+                    TuesdayHours = value,
+                    WednesdayHours = value,
+                    ThursdayHours = value,
+                    FridayHours = value
+                };
+                entry.UpdateTotalHours();
+                list.Add(entry);
+                return list;
+            }
+
+
+
+            // Assume 0.01 steps of time spent on duties based on WLM
+
+            // Variability by 20% of the total time for that duty
+
+            // Project work makes up the WLM total
+
+            // Project work codes selected from the projects they are working on
+
+
+
+            return list;
+        }
+
+        /// <summary>
+        /// Generate a timesheet status that is random in the last couple of weeks
+        /// </summary>
+        /// <param name="currentDate"></param>
+        /// <returns></returns>
+        private static TimesheetStatus GenerateDummyTimesheetStatus(DateTime currentDate)
+        {
+            // If within the last couple of weeks then random status
+            if (currentDate >= DateTime.Today.AddDays(-14))
+            {
+                var rnd = new Random();
+                var values = Enum.GetValues<TimesheetStatus>();
+                return values[rnd.Next(values.Length)];
+            }
+            return TimesheetStatus.Approved;
         }
 
         /// <summary>

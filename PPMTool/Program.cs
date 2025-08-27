@@ -266,11 +266,7 @@ if (shouldSeed)
     SeedHelper.SeedResources(scope.ServiceProvider);
     SeedHelper.SeedNotes(scope.ServiceProvider);
     SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
-
-    // TODO: Financial Items (payments and invoices)
-
-    // TODO: Timesheets
-
+    SeedHelper.SeedTimesheets(scope.ServiceProvider);
 }
 
 app.Run();
