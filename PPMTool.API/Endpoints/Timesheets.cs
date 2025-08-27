@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.Services;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using TSDTO = PPMTool.API.DTOs.Timesheets;
 
@@ -35,21 +34,14 @@ public static class Timesheets
     {
         try
         {
-            // Make this cleverer??
-
-            // Check API Key.
-            if (!http.Request.Headers.TryGetValue("x-api-key", out var apiKey))
-                return Results.Unauthorized();
-
-            // Make this cleverer??
-
             // Resolve caller from API key
-            var caller = authService.GetUserIfApiKeyActive(db, apiKey);
+            var caller = ApiHelper.GetCurrentUser(http);
             if (caller == null)
                 return Results.Unauthorized();
 
-            // Need to check the database. Do we have _? I assume we do. Erdem_Atbas? Taken from PersonSkillsDTO.cs
+            // Need to Check
             var person = await db.People
+                .AsNoTracking()
                 .Include(p => p.LineManager)
                 .FirstOrDefaultAsync(p => p.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
 
@@ -60,10 +52,10 @@ public static class Timesheets
             var callerPersonId = caller.Person?.PersonId ?? 0;
             // Self?
             var isSelf = callerPersonId != 0 && callerPersonId == person.PersonId;
-            //LM?
+            // LM?
             var isLineManager = person.LineManager?.PersonId == callerPersonId;
             // SU?
-            var isSuper = IsSuperUser(caller);
+            var isSuper = ApiHelper.IsSuperUser(caller);
 
             // If none of the above, forbid
             if (!(isSuper || isSelf || isLineManager))
@@ -130,6 +122,11 @@ public static class Timesheets
     /// Convenience route for the caller's own timesheets
     /// Uses the caller's Person name to generate the route parameter
     /// </summary>
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TSDTO.TimesheetsDTO>))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static async Task<IResult> GetMyTimesheetEntriesForDateRange(
         PPMToolContext db,
         ILogger logger,
@@ -138,8 +135,7 @@ public static class Timesheets
         DateTime start,
         DateTime end)
     {
-        if (!http.Request.Headers.TryGetValue("x-api-key", out var apiKey))
-            return Results.Unauthorized();
+        http.Request.Headers.TryGetValue("x-api-key", out var apiKey);
 
         var caller = authService.GetUserIfApiKeyActive(db, apiKey);
         if (caller == null || caller.Person == null)
@@ -148,6 +144,4 @@ public static class Timesheets
         var underscored = caller.Person.Name.Replace(' ', '_');
         return await GetTimesheetEntriesForPersonForDateRange(db, logger, http, authService, underscored, start, end);
     }
-
-    private static bool IsSuperUser(User user) => user.RoleType == RoleType.Superuser;
 }
