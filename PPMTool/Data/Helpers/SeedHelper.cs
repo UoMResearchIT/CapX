@@ -2117,19 +2117,51 @@ namespace PPMTool.Data.Helpers
                 return list;
             }
 
+            // Get random targets for this timesheet
+            var psmFte = RandomlyVaryPositiveDouble(wlm.ProjectAndServiceManagementFTE);
+            var bauFte = RandomlyVaryPositiveDouble(wlm.BusinessAsUsualFTE);
+            var staffFte = RandomlyVaryPositiveDouble(wlm.StaffManagementFTE);
+            var rsaFte = RandomlyVaryPositiveDouble(wlm.ArchitectureFTE);
+            var pdFte = RandomlyVaryPositiveDouble(wlm.PersonalDevelopmentFTE);
+            var projectFte = wlm.Total() - (psmFte + bauFte + staffFte + rsaFte + pdFte);
+            if (projectFte < 0) projectFte = 0;
+
+            // For each area, add in a sutiable timesheet entry if non-zero
 
 
-            // Assume 0.01 steps of time spent on duties based on WLM
 
-            // Variability by 20% of the total time for that duty
-
-            // Project work makes up the WLM total
 
             // Project work codes selected from the projects they are working on
 
 
 
             return list;
+        }
+
+        /// <summary>
+        /// Vary a double value by a random percentage between -20% and +20% in steps of 0.01
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private static double RandomlyVaryPositiveDouble(double value)
+        {
+            var rnd = new Random();
+
+            // Do nothing to it if not positive
+            if (value <= 0) return value;
+
+            // Generate a random percentage between -20% and +20% in steps of 0.01
+            int percent = rnd.Next(-20, 21);
+            double variation = percent * value;
+            var newValue = value + variation;
+
+            // Ensure to nearest 0.01
+            newValue = (int)Math.Round(newValue * 100) / 100d;
+
+            // Check always positive
+            if (newValue < 0) newValue = 0;
+
+            return newValue;
         }
 
         /// <summary>
