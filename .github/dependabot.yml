@@ -11,5 +11,5 @@ updates:
     registries: "*"
     schedule:
       interval: "weekly"      
-      ignore:
-        - dependency-name: "DotNetExtensions"  
+    ignore:
+      - dependency-name: "DotNetExtensions"  
