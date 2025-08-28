@@ -22,6 +22,8 @@ namespace PPMTool.Data.Helpers
         public static void SeedPeople(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding people...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Update superuser to anonymous
@@ -162,6 +164,8 @@ namespace PPMTool.Data.Helpers
         public static void SeedAbsences(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding absences...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Clear existing absences
@@ -229,6 +233,8 @@ namespace PPMTool.Data.Helpers
         public static void SeedUsers(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding users...");
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
@@ -325,6 +331,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedWorkloadModelChanges(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding WLMs...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Clear existing
@@ -722,6 +730,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedOwnedSkillsForPeople(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding owned skills...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Clear existing
@@ -782,6 +792,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedCompetencyAssessments(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding competency assessments...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Clear existing
@@ -828,6 +840,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedInnateCodesAndTasks(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding timesheet codes...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Remove a certain number of the existing InnateCodes
@@ -855,6 +869,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedSkillTags(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding skills...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Remove existing
@@ -897,6 +913,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedFinancialReferences(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding financial refs...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Clear existing financial references
@@ -953,6 +971,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedProjects(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding projects...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Create the projects
@@ -1153,6 +1173,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedFundingSources(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding funding sources...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Create funding sources
@@ -1254,6 +1276,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedSubTasks(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding subtasks...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Create subtasks
@@ -1653,6 +1677,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedResources(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding resources...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 var project = GetProjectWithSubTaskAndFundingByRTP(context, 180);
@@ -1935,6 +1961,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedNotes(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding notes...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Add a note to each project
@@ -1965,6 +1993,8 @@ namespace PPMTool.Data.Helpers
         internal static void SeedInvoicesAndPayments(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding invoices and payments...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Add a payment and invoice to each project with other funding sources
@@ -2014,6 +2044,8 @@ namespace PPMTool.Data.Helpers
         {
 
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding timesheets...");
             using (var context = dbContextFactory.CreateDbContext())
             {
                 foreach (var person in context.People.Include(x => x.WorkloadModelChanges))
@@ -2037,6 +2069,7 @@ namespace PPMTool.Data.Helpers
                     var currentDate = startDate;
                     while (currentDate <= endDate)
                     {
+                        logger.LogInformation($"Seeding timesheet for {person.ShortName} for week starting {currentDate.ToShortDateString()}");
                         var timesheet = new Timesheet
                         {
                             Owner = person,
@@ -2077,7 +2110,6 @@ namespace PPMTool.Data.Helpers
 
             // Project work structure where they are resource and project is running on this week
             var projects = context.Projects
-                .Where(x => x.IsWithin(currentDate))
                 .Include(x => x.InnateActivity)
                     .ThenInclude(x => x.Tasks)
                 .Include(x => x.SubTasks)
@@ -2087,7 +2119,9 @@ namespace PPMTool.Data.Helpers
                     .Any(x => x.AssignedResources
                         .Any(x => x.Person.PersonId == person.PersonId)
                     )
-                );
+                )
+                .ToList()
+                .Where(x => x.IsWithin(currentDate));
 
             // Assume 5% chance of them being on leave that week
             var onLeave = rnd.Next(100) < 20;
@@ -2231,16 +2265,13 @@ namespace PPMTool.Data.Helpers
                     }
                 }
 
-                // Create timesheet entries for each project task with hours based on the assignment FTE
-                var totalAssignmentFte = projectTasks.Values.Sum();
-                foreach (var kvp in projectTasks)
+                // If not assignments than assign a BAU activity
+                if (projectTasks.Count == 0)
                 {
-                    var task = kvp.Key;
-                    var assignmentFte = kvp.Value;
-                    var value = (assignmentFte / totalAssignmentFte) * projectFte * wlm.Total() * 35 / 5f;
+                    var value = projectFte * wlm.Total() * 35 / 5f;
                     var entry = new TimesheetEntry
                     {
-                        InnateCodeTask = task,
+                        InnateCodeTask = activeTasks.GetRandomTask(Duty.BAU),
                         MondayHours = value,
                         TuesdayHours = value,
                         WednesdayHours = value,
@@ -2249,6 +2280,28 @@ namespace PPMTool.Data.Helpers
                     };
                     entry.UpdateTotalHours();
                     list.Add(entry);
+                }
+                else
+                {
+                    // Create timesheet entries for each project task with hours based on the assignment FTE
+                    var totalAssignmentFte = projectTasks.Values.Sum();
+                    foreach (var kvp in projectTasks)
+                    {
+                        var task = kvp.Key;
+                        var assignmentFte = kvp.Value;
+                        var value = (assignmentFte / totalAssignmentFte) * projectFte * wlm.Total() * 35 / 5f;
+                        var entry = new TimesheetEntry
+                        {
+                            InnateCodeTask = task,
+                            MondayHours = value,
+                            TuesdayHours = value,
+                            WednesdayHours = value,
+                            ThursdayHours = value,
+                            FridayHours = value
+                        };
+                        entry.UpdateTotalHours();
+                        list.Add(entry);
+                    }
                 }
             }
             return list;
