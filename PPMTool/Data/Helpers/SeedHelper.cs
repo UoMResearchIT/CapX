@@ -2086,7 +2086,7 @@ namespace PPMTool.Data.Helpers
                         context.Timesheets.Add(timesheet);
 
                         // Advance to the next week
-                        currentDate.AddDays(7);
+                        currentDate = currentDate.AddDays(7);
                     }
                     context.SaveChanges();
                 }
@@ -2127,7 +2127,7 @@ namespace PPMTool.Data.Helpers
             var onLeave = rnd.Next(100) < 20;
             if (onLeave)
             {
-                var value = wlm.Total() / 5f;
+                var value = wlm.Total() * 35 / 5f;
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = context.InnateCodeTasks.First(x => x.TaskName == "Annual Leave (Holidays)"),
@@ -2329,7 +2329,7 @@ namespace PPMTool.Data.Helpers
 
             // Generate a random percentage between -20% and +20% in steps of 0.01
             int percent = rnd.Next(-20, 21);
-            double variation = percent * value;
+            double variation = percent * value / 100d;
             var newValue = value + variation;
 
             // Ensure to nearest 0.01
