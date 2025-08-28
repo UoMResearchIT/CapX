@@ -3,13 +3,13 @@ registries:
   private-nuget:
     type: nuget-feed
     url: https://nuget.pkg.github.com/UoMResearchIT/index.json
-    #username: "${{secrets.ACTIONS_NUGET_USER}}"
-    #password: "${{secrets.ACTIONS_REPO_TOKEN}}"
-    token: "${{secrets.ACTIONS_REPO_TOKEN}}"
+    username: "${{secrets.ACTIONS_NUGET_USER}}"
+    password: "${{secrets.ACTIONS_REPO_TOKEN}}"
 updates:
   - package-ecosystem: "nuget"
     directory: "/PPMTool"
     registries: "*"
     schedule:
-      interval: "weekly"
-    
+      interval: "weekly"      
+      ignore:
+        - dependency-name: "DotNetExtensions"  
