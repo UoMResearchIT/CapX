@@ -10,6 +10,4 @@ updates:
     directory: "/PPMTool"
     registries: "*"
     schedule:
-      interval: "weekly"      
-    ignore:
-      - dependency-name: "DotNetExtensions"  
+      interval: "weekly"
