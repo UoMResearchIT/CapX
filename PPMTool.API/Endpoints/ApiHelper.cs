@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -72,5 +73,20 @@ public static class APIHelper
         var isSuper = IsSuperUser(caller);
 
         return isSelf || isLineManager || isSuper;
+    }
+
+    /// <summary>
+    /// Try parse a date from a string to a DateTime object
+    /// </summary>
+    /// <param name="dateAsString"></param>
+    /// <param name="dateAsDateTime"></param>
+    /// <returns></returns>
+    internal static bool ParseDateTime(string dateAsString, out DateTime dateAsDateTime)
+    {
+        if (!DateTime.TryParseExact(dateAsString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateAsDateTime))
+        {
+            return false;
+        }
+        return true;
     }
 }

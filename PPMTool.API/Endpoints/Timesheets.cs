@@ -17,7 +17,7 @@ public static class Timesheets
     /// Route uses underscore name, same pattern as skills endpoints
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static async Task<IResult> GetTimesheetEntriesForPersonForDateRange(
@@ -25,11 +25,25 @@ public static class Timesheets
         ILogger logger,
         HttpContext http,
         string name,
-        DateTime start,
-        DateTime end)
+        string startDate,
+        string endDate)
     {
         try
         {
+            // Try parse the datetimes
+            var success = APIHelper.ParseDateTime(startDate, out DateTime start);
+            if (!success)
+            {
+                logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid start date {startDate}");
+                return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
+            }
+            success = APIHelper.ParseDateTime(endDate, out DateTime end);
+            if (!success)
+            {
+                logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid end date {endDate}");
+                return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+            }
+
             // Get the person from the request arguments
             var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
@@ -43,12 +57,12 @@ public static class Timesheets
             if (!canAccess)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Caller does not have permission to access the data!");
-                return Results.Forbid();
+                return Results.Unauthorized();
             }
 
             // Normalise date range to full days
             // Start inclusive, end inclusive (implemented as end exclusive)
-            var startDate = start.Date;
+            start = start.Date;
             var endDateExclusive = end.Date.AddDays(1);
 
             // Query weekly timesheets that overlap the window
@@ -61,7 +75,7 @@ public static class Timesheets
                 .Where(t =>
                     t.OwnerId == person.PersonId &&
                     t.StartDate < endDateExclusive &&
-                    t.StartDate.AddDays(7) > startDate)
+                    t.StartDate.AddDays(7) > start)
                 .OrderBy(t => t.StartDate)
                 .ToListAsync();
 
@@ -92,8 +106,8 @@ public static class Timesheets
                 )).ToList()
             )).ToList();
 
-            logger.LogInformation($"Timesheets: Returned {timesheets.Count} timesheets for {person.Name}");
-            return Results.Json(timesheets);
+            logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name}");
+            return Results.Json(timesheetsAsDTOs);
         }
         catch (Exception ex)
         {
@@ -107,15 +121,15 @@ public static class Timesheets
     /// API key used to determine the user name argument
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static async Task<IResult> GetMyTimesheetEntriesForDateRange(
          PPMToolContext context,
          ILogger logger,
          HttpContext http,
-         DateTime start,
-         DateTime end)
+         string startDate,
+         string endDate)
     {
         try
         {
@@ -124,7 +138,7 @@ public static class Timesheets
 
             // Person entity might be null if the user is not linked to a person
             var name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
-            return await GetTimesheetEntriesForPersonForDateRange(context, logger, http, name, start, end);
+            return await GetTimesheetEntriesForPersonForDateRange(context, logger, http, name, startDate, endDate);
         }
         catch (Exception ex)
         {
