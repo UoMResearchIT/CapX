@@ -21,7 +21,6 @@ public static class Skills
         try
         {
             var tags = await context.SkillTags
-                .AsNoTracking()
                 .ToListAsync();
 
             if (tags == null || !tags.Any())
@@ -66,7 +65,6 @@ public static class Skills
 
             // Get all SkillTags associated with the person via OwnedSkills
             var tags = await context.OwnedSkills
-                .AsNoTracking()
                 .Where(x => x.Owner.PersonId == person.PersonId)
                 .Select(x => x.SkillTag)
                 .ToListAsync();
@@ -99,7 +97,6 @@ public static class Skills
         {
             // Load all OwnedSkills with related Owner and SkillTag in one query
             var ownedSkills = await context.OwnedSkills
-                .AsNoTracking()
                 .Include(x => x.Owner)
                 .Include(x => x.SkillTag)
                 .ToListAsync();

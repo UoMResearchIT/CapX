@@ -54,7 +54,6 @@ public static class Timesheets
             // Query weekly timesheets that overlap the window
             // Read only, include owner and entries with innate info
             var timesheets = await context.Timesheets
-                .AsNoTracking()
                 .Include(t => t.Owner)
                 .Include(t => t.TimesheetEntries)
                     .ThenInclude(e => e.InnateCodeTask)

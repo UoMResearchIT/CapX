@@ -46,7 +46,6 @@ public static class APIHelper
     internal static async Task<Person?> FindPersonWithLineManagerByNameAsync(PPMToolContext context, string name)
     {
         return await context.People
-                .AsNoTracking()
                 .Include(x => x.LineManager)
                 .FirstOrDefaultAsync(x => x.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
     }
