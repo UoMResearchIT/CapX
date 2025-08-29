@@ -49,8 +49,8 @@ namespace PPMTool.API.Authentication
                 return;
             }
 
-            // Add the user as well.
-            context.Items["User"] = matchingUser;
+            // Add the user as well
+            context.Items.Add("User", matchingUser);
 
             await next(context);
         }
