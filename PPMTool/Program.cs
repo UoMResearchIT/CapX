@@ -39,9 +39,9 @@ if (!string.IsNullOrEmpty(sentryDsn))
     overridingValues.Add("Sentry:Dsn", sentryDsn);
 }
 
-// Seed dummy data if environment variable is set
+// Seed dummy data if environment variable is set to true (case insensitive)
 var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
-if (!string.IsNullOrWhiteSpace(seedDummyData))
+if (seedDummyData.ToLowerInvariant() == true.ToString().ToLowerInvariant())
 {
     overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
 }
