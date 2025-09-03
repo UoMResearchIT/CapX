@@ -352,8 +352,6 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            Debug.WriteLine("** After Render!!!!");
-
             await base.OnAfterRenderAsync(firstRender);
 
             // If no project ID set by the time the page is renderered then navigate away
@@ -372,6 +370,8 @@ namespace PPMTool.Pages
 
             if (firstRender)
             {
+                Debug.WriteLine("** After Render - first render!");
+
                 // Create a reference to self in JS
                 await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
 
@@ -401,11 +401,14 @@ namespace PPMTool.Pages
             // Get the notes from the DB
             PopulateNotesFromDB();
 
+            // Refresh
+            StateHasChanged();
+            await Task.Yield();
+
             // Check whether the parameter is present to scroll to the due notes
             if (FilterDueNotes)
             {
                 // Refresh then scroll last due note into view
-                StateHasChanged();
                 await Task.Delay(300);
                 await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
             }
