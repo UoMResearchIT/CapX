@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
+using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
 #if RELEASE
@@ -30,33 +31,43 @@ if (!string.IsNullOrEmpty(apiKeySecret))
 {
     overridingValues.Add("Jwt:SecretKey", apiKeySecret);
 }
-else
-{
-    if (!isDesignTime)
-    {
-#if !LOCAL
-        throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
-#else
-        // Check that user secrets has actually set a value
-        if (string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
-        {
-            throw new InvalidOperationException("API_KEY_SECRET environment variable is not set and user secrets has not been configured!");
-        }
-#endif
-    }
-}
+
+// Get Sentry DSN from the environment
 var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
 if (!string.IsNullOrEmpty(sentryDsn))
 {
     overridingValues.Add("Sentry:Dsn", sentryDsn);
 }
-else
+
+// Seed dummy data if environment variable is set to true (case insensitive)
+var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
+if (seedDummyData?.ToLowerInvariant() == true.ToString().ToLowerInvariant())
 {
-    if (!isDesignTime && builder.Environment.IsProduction())
-    {
-        throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
-    }
+    overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
 }
+
+// Get superuser name from the environment
+var suName = Environment.GetEnvironmentVariable("SUPERUSER_NAME");
+if (!string.IsNullOrWhiteSpace(suName))
+{
+    overridingValues.Add("DeveloperSettings:DefaultSuperUserName", suName);
+}
+
+// Get superuser username from the environment
+var suUserName = Environment.GetEnvironmentVariable("SUPERUSER_USERNAME");
+if (!string.IsNullOrWhiteSpace(suUserName))
+{
+    overridingValues.Add("DeveloperSettings:DefaultSuperUserUserName", suUserName);
+}
+
+// Get superuser email from the environment
+var suEmail = Environment.GetEnvironmentVariable("SUPERUSER_EMAIL");
+if (!string.IsNullOrWhiteSpace(suEmail))
+{
+    overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
+}
+
+// Override the configuration values with the environment variables
 builder.Configuration.AddInMemoryCollection(overridingValues);
 
 #if RELEASE
@@ -162,6 +173,16 @@ builder.Services.AddAuthorization();
 // Build the application from the configuration
 var app = builder.Build();
 
+// Check configuration is correct
+if (!isDesignTime && string.IsNullOrWhiteSpace(builder.Configuration["Jwt:SecretKey"]))
+{
+    throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
+}
+if (!isDesignTime && builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]))
+{
+    throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
+}
+
 // Set up middleware
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
@@ -199,6 +220,53 @@ using (var connection = new SqliteConnection(connectionString))
         command.ExecuteNonQuery();
     }
     connection.Close();
+}
+
+// Seed dummy data if the database is empty
+var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
+if (shouldSeed)
+{
+    // Throw exceptions if variables are not set
+    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserUserName"]))
+    {
+        throw new InvalidOperationException("Superuser user name not set!");
+    }
+    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserName"]))
+    {
+        throw new InvalidOperationException("Superuser name not set!");
+    }
+    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserEmail"]))
+    {
+        throw new InvalidOperationException("Superuser email not set!");
+    }
+
+    using var scope = app.Services.CreateScope();
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+
+    // Clear the existing DB and recreate a vanilla file
+    using (var context = dbContextFactory.CreateDbContext())
+    {
+        context.Database.EnsureDeleted();
+        context.Database.Migrate();
+    }
+
+    // Seed tables with suitable values -- Note that competencies are already seeded
+    SeedHelper.SeedPeople(scope.ServiceProvider);
+    SeedHelper.SeedAbsences(scope.ServiceProvider);
+    SeedHelper.SeedUsers(scope.ServiceProvider);
+    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+    SeedHelper.SeedSkillTags(scope.ServiceProvider);
+    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+    SeedHelper.SeedProjects(scope.ServiceProvider);
+    SeedHelper.SeedFundingSources(scope.ServiceProvider);
+    SeedHelper.SeedSubTasks(scope.ServiceProvider);
+    SeedHelper.SeedResources(scope.ServiceProvider);
+    SeedHelper.SeedNotes(scope.ServiceProvider);
+    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
+    SeedHelper.SeedTimesheets(scope.ServiceProvider);
 }
 
 app.Run();
