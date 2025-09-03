@@ -442,7 +442,7 @@
                             <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
                             <RadzenTextBox @bind-Value=@noteSearchTerms
                                             Placeholder="Search Notes"
-                                            Change=@FilterNotes
+                                            Change=@FilterAndHighlightNotes
                                             Style="width:100%" />
                             <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                         </RadzenStack>
