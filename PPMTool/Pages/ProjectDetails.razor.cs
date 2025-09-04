@@ -88,7 +88,6 @@ namespace PPMTool.Pages
         private List<GanttBlock> provisionalBlocks;
         private List<SubTask> allTasks;
         private IList<SubTask> gridTasks;
-        private List<Project> allProjects;
         private List<Note> allNotes;
         private Project project;
         private FinanceSummaryItem financeSummaryItem;
@@ -148,8 +147,7 @@ namespace PPMTool.Pages
                 StateHasChanged();
                 await Task.Yield();
 
-                // Load all the projects
-                allProjects = ProjectService.GetAll(Context).ToList();
+                // Setup initial state
                 showOnlyFinanceNotes = ActiveUserRoleType == RoleType.Finance;
                 noteModel = new Note
                 {
@@ -166,19 +164,18 @@ namespace PPMTool.Pages
                     .DistinctBy(x => x.Person)
                     .Select(x => x.Person)
                     .ToList();
-                FilterMentionables();
 
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)
                 {
                     // Try get the project
-                    ProjectId = allProjects.FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
+                    ProjectId = ProjectService.GetAll(Context).FirstOrDefault(x => x.RTP == RTP)?.ProjectId;
                 }
 
-                // Carry on and load the project details
+                // Load the project details if an ID was resolved
                 if (ProjectId != null)
                 {
-                    project = allProjects.FirstOrDefault(x => x.ProjectId == ProjectId);
+                    project = ProjectService.GetAll(Context).FirstOrDefault(x => x.ProjectId == ProjectId);
                     var sources = FundingSourceService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId);
 
                     // Generate the list of skills
@@ -211,7 +208,9 @@ namespace PPMTool.Pages
                     LoadGanttChart();
 
                     // Populate the resource dropdown
-                    var resourceIds = project.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person.PersonId)).DistinctBy(x => x) ?? new List<int>();
+                    var resourceIds = project.SubTasks
+                        .SelectMany(x => x.AssignedResources.Select(x => x.Person.PersonId))
+                        .DistinctBy(x => x) ?? new List<int>();
                     var tempResourceNames = new List<Person>();
                     foreach (var id in resourceIds)
                     {
@@ -222,10 +221,11 @@ namespace PPMTool.Pages
                         }
                     }
                     resources = tempResourceNames;
+
+                    LoadBurnUpChart();
+                    await ConfigureNotesAsync();
                 }
 
-                LoadBurnUpChart();
-                await ConfigureNotesAsync();
                 LogInformation($"Viewing project details for RTP-{project?.RTP}");
 
             }
@@ -1041,7 +1041,8 @@ namespace PPMTool.Pages
             foreach (var r in newRtpRefs)
             {
                 var trimmedMatch = TrimMatch(r, '#');
-                var match = allProjects.FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
+                var match = ProjectService.GetAllShallow(Context)
+                    .FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
                     noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
