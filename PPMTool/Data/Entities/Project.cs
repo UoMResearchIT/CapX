@@ -42,12 +42,12 @@ namespace PPMTool.Data.Entities
         /// The project manager of this project
         /// </summary>
         [InverseProperty("ManagedProjects")]
-        public Person ProjectManager { get; set; }
+        public virtual Person ProjectManager { get; set; }
 
         /// <summary>
         /// The tasks that make up this project
         /// </summary>
-        public IList<SubTask> SubTasks { get; set; }
+        public virtual IList<SubTask> SubTasks { get; set; }
 
         /// <summary>
         /// This is the amount of money the PI has requested from the funder
@@ -76,7 +76,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The Innate Activity Code to which this work is booked on the timesheeting system
         /// </summary>
-        public InnateCode InnateActivity { get; set; }
+        public virtual InnateCode InnateActivity { get; set; }
 
         /// <summary>
         /// HTML formatted text representing the description of the project
@@ -101,7 +101,7 @@ namespace PPMTool.Data.Entities
         /// List of people who follow the project updates
         /// </summary>
         [InverseProperty("FollowedProjects")]
-        public ICollection<Person> Followers { get; set; } = new List<Person>();
+        public virtual ICollection<Person> Followers { get; set; } = new List<Person>();
 
         /// <summary>
         /// If using a cost model that has leadership costs calculated, then the planned cost based on the expected duration of the project is available here
@@ -126,23 +126,23 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
-        public ICollection<Invoice> Invoices { get; set; }
+        public virtual ICollection<Invoice> Invoices { get; set; }
 
         /// <summary>
         /// List of payments associate with this project
         /// </summary>
-        public ICollection<Payment> Payments { get; set; }
+        public virtual ICollection<Payment> Payments { get; set; }
 
         /// <summary>
         /// List of funding sources for this project
         /// </summary>
-        public ICollection<FundingSource> FundingSources { get; set; }
+        public virtual ICollection<FundingSource> FundingSources { get; set; }
 
         /// <summary>
         /// A specific funding source that is used to fund the leadership costs of this project
         /// </summary>
         public int? FundingSourceId { get; set; }
-        public FundingSource LeadershipFundingSource { get; set; }
+        public virtual FundingSource LeadershipFundingSource { get; set; }
 
         /// <summary>
         /// Constructor also adds default status messages

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -37,7 +36,7 @@ namespace PPMTool.Data.Entities
         /// An optional list of payments that pay all or part of this invoice
         /// </summary>
         [Required]
-        public ICollection<Payment> Payments { get; set; }
+        public virtual ICollection<Payment> Payments { get; set; }
 
         /// <summary>
         /// To identify the Invoice in the logs and on exports

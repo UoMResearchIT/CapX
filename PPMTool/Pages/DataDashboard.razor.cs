@@ -732,129 +732,131 @@ namespace PPMTool.Pages
             Task.Run(async () =>
             {
                 // Create a context to be accesed on this thread
-                var threadContext = ContextFactory.CreateDbContext();
-                var allProjects = ProjectService.GetAll(threadContext);
-                var allFinRefs = FinancialReferenceService.GetAll(threadContext);
-
-                // Create blank list of data
-                var allData = new List<AssignmentChunk>();
-
-                // Set the report length
-                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1);
-                var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
-
-                // Get data for each person active in the window
-                var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
-                foreach (var person in peopleActive)
+                using (var context = ContextFactory.CreateDbContext())
                 {
-                    // Get the row data
-                    var data = ExportHelper.GetExportDataForPerson(
-                        person,
-                        allProjects,
-                        startDate,
-                        endDate,
-                        allFinRefs
-                    );
-                    allData.AddRange(data);
-                }
-                allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+                    var allProjects = ProjectService.GetAll(context);
+                    var allFinRefs = FinancialReferenceService.GetAll(context);
 
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
-                {
-                    try
+                    // Create blank list of data
+                    var allData = new List<AssignmentChunk>();
+
+                    // Set the report length
+                    var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1);
+                    var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
+
+                    // Get data for each person active in the window
+                    var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+                    foreach (var person in peopleActive)
                     {
-                        // Create file path
-                        var filename = $"Capacity_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
+                        // Get the row data
+                        var data = ExportHelper.GetExportDataForPerson(
+                            person,
+                            allProjects,
+                            startDate,
+                            endDate,
+                            allFinRefs
+                        );
+                        allData.AddRange(data);
+                    }
+                    allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
 
-                        // Create workbook and worksheet
-                        using (var workbook = new XLWorkbook())
+                    // Run the file export on the render context
+                    await InvokeAsync(async () =>
+                    {
+                        try
                         {
-                            var worksheet = workbook.Worksheets.Add("Capacity");
+                            // Create file path
+                            var filename = $"Capacity_{DateTime.Now.Ticks}.xlsx";
+                            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                            Directory.CreateDirectory(folder);
+                            var path = Path.Combine(folder, filename);
 
-                            // Write header row
-                            var props = typeof(AssignmentChunk).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
-                            for (int i = 0; i < propNames.Count; i++)
+                            // Create workbook and worksheet
+                            using (var workbook = new XLWorkbook())
                             {
-                                var cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
-                                cell.Style.Font.Bold = true;
-                            }
+                                var worksheet = workbook.Worksheets.Add("Capacity");
 
-                            // Write data rows
-                            for (int row = 0; row < allData.Count; row++)
-                            {
-                                var record = allData[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                // Write header row
+                                var props = typeof(AssignmentChunk).GetProperties();
+                                var propNames = props.Select(x => x.Name).ToList();
+                                for (int i = 0; i < propNames.Count; i++)
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
-                                    var rawValue = property?.GetValue(record);
-                                    var cell = worksheet.Cell(row + 2, col + 1);
+                                    var cell = worksheet.Cell(1, i + 1);
+                                    cell.Value = propNames[i];
+                                    cell.Style.Font.Bold = true;
+                                }
 
-                                    // Format and assign
-                                    if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
+                                // Write data rows
+                                for (int row = 0; row < allData.Count; row++)
+                                {
+                                    var record = allData[row];
+                                    for (int col = 0; col < propNames.Count; col++)
                                     {
-                                        if (rawValue is DateTime dt)
+                                        var property = record.GetType().GetProperty(propNames[col]);
+                                        var rawValue = property?.GetValue(record);
+                                        var cell = worksheet.Cell(row + 2, col + 1);
+
+                                        // Format and assign
+                                        if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
                                         {
-                                            cell.Value = dt;
-                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                            if (rawValue is DateTime dt)
+                                            {
+                                                cell.Value = dt;
+                                                cell.Style.DateFormat.Format = "dd/MM/yyyy";
+                                            }
+                                            else
+                                            {
+                                                cell.Value = rawValue?.ToString() ?? string.Empty;
+                                            }
+                                        }
+                                        else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
+                                        {
+                                            if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
+                                            {
+                                                cell.Value = currencyValue;
+                                                cell.Style.NumberFormat.Format = "£#,##0.00";
+                                            }
+                                            else
+                                            {
+                                                cell.Value = rawValue?.ToString() ?? string.Empty;
+                                            }
                                         }
                                         else
                                         {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
-                                    }
-                                    else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
-                                    {
-                                        if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
-                                        {
-                                            cell.Value = currencyValue;
-                                            cell.Style.NumberFormat.Format = "£#,##0.00";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (rawValue is int)
-                                        {
-                                            cell.Value = (int)rawValue;
-                                        }
-                                        else if (rawValue is double)
-                                        {
-                                            cell.Value = (double)rawValue;
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
+                                            if (rawValue is int)
+                                            {
+                                                cell.Value = (int)rawValue;
+                                            }
+                                            else if (rawValue is double)
+                                            {
+                                                cell.Value = (double)rawValue;
+                                            }
+                                            else
+                                            {
+                                                cell.Value = rawValue?.ToString() ?? string.Empty;
+                                            }
                                         }
                                     }
                                 }
+
+                                // Save the workbook
+                                workbook.SaveAs(path);
                             }
 
-                            // Save the workbook
-                            workbook.SaveAs(path);
+                            Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+
+                            // Get file stream
+                            using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                            // Invoke JS on the client to download the file
+                            await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
                         }
-
-                        Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
-
-                        // Get file stream
-                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
-
-                        // Invoke JS on the client to download the file
-                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
+                        catch (Exception ex)
+                        {
+                            LogError($"Could not download file: {ex}");
+                        }
+                    });
+                }
 
             }).ContinueWith(t =>
             {
@@ -1069,22 +1071,22 @@ namespace PPMTool.Pages
                 var totalData = new List<TotalRecovered>();
 
                 // Create a context to be accesed on this thread
-                using (var threadContext = ContextFactory.CreateDbContext())
+                using (var context = ContextFactory.CreateDbContext())
                 {
                     // Get data for each person active in the window
-                    var people = await PersonService.GetAllShallowAsync(threadContext);
+                    var people = await PersonService.GetAllShallowAsync(context);
                     peopleActive = people
                         .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
                         .ToList();
 
                     // Get projects active in the window with their subtasks and resources
-                    var projectsInWindow = ProjectService.GetAll(threadContext)
+                    var projectsInWindow = ProjectService.GetAll(context)
                         .Where(x => !x.ProjectStatus.IsCancelled())
                         .Where(x => x.IsWithin(startDate, endDate));
 
                     // Normalisation factors for resource FTE based on grade
                     var currentFY = FinancialReference.GetFinancialYear(startDate);
-                    var finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, startDate);
+                    var finref = FinancialReferenceService.GetFinancialReferenceForDate(context, startDate);
                     // Initialise the totals
                     foreach (var person in peopleActive)
                     {
@@ -1097,7 +1099,7 @@ namespace PPMTool.Pages
                         // If the FY has changed then update the finref
                         if (FinancialReference.GetFinancialYear(currentDate) != currentFY)
                         {
-                            finref = FinancialReferenceService.GetFinancialReferenceForDate(threadContext, currentDate);
+                            finref = FinancialReferenceService.GetFinancialReferenceForDate(context, currentDate);
                         }
 
                         // Create a new item
