@@ -115,6 +115,7 @@ namespace PPMTool.Pages
         private ApexChart<GanttBlock> scheduleChart;
         private IEnumerable<SkillTag> skillsRequiredForProject;
         private bool loadingBurnUpChart = false;
+        private bool loadingGanttChart = false;
         IEnumerable<Person> resources = new List<Person>();
         IList<Person> selectedResources = new List<Person>();
 
@@ -140,7 +141,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task LoadDataAsync()
         {
-            Debug.WriteLine("** Loading Data!!!!");
+            Debug.WriteLine("** Loading Data...");
             try
             {
                 Loading = true;
@@ -204,9 +205,6 @@ namespace PPMTool.Pages
                     allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
                     LoadTaskData(new LoadDataArgs());
 
-                    // Load the schedule chart
-                    LoadGanttChart();
-
                     // Populate the resource dropdown
                     var resourceIds = project.SubTasks
                         .SelectMany(x => x.AssignedResources.Select(x => x.Person.PersonId))
@@ -222,7 +220,9 @@ namespace PPMTool.Pages
                     }
                     resources = tempResourceNames;
 
-                    LoadBurnUpChart();
+                    // Load other parts of the page
+                    await LoadGanttChartAsync();
+                    await LoadBurnUpChartAsync();
                     await ConfigureNotesAsync();
                 }
 
@@ -231,16 +231,93 @@ namespace PPMTool.Pages
             }
             finally
             {
+                Debug.WriteLine("** ...Finished Loading Data!");
                 Loading = false;
                 StateHasChanged();
             }
         }
 
         /// <summary>
+        /// Fired once the page has been rendered
+        /// </summary>
+        /// <param name="firstRender"></param>
+        /// <returns></returns>
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            // If no project ID set by the time the page is renderered then navigate away
+            if (ProjectId == null)
+            {
+                Navigation.NavigateTo("nothinghere");
+                return;
+            }
+
+            // If the path is the legacy path then redirect
+            if (!Navigation.Uri.Contains("projects/projectdetails"))
+            {
+                Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
+                return;
+            }
+
+            if (firstRender)
+            {
+                Debug.WriteLine("** After Render - first render!");
+
+                // Create a reference to self in JS
+                await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
+
+                // Go fetch the notes (has to be after render as need to scroll to)
+                await ConfigureNotesAsync();
+            }
+        }
+
+        /// <summary>
+        /// Configures the note filters and then gets them from the DB applying scroll to as required
+        /// </summary>
+        /// <returns></returns>
+        private async Task ConfigureNotesAsync()
+        {
+            // After the page has finished rendering then apply the search string from the parameter
+            if (FilteredNote != null)
+            {
+                // Set the search term to filter
+                noteSearchTerms = $"#id={FilteredNote}";
+            }
+            else if (FilterDueNotes)
+            {
+                showOnlyDueItems = true;
+                sortByDueDate = true;
+            }
+
+            // Get the notes from the DB
+            LoadNotesFromDB();
+
+            // Filter and Highlight
+            FilterAndHighlightNotes();
+
+            // Refresh
+            StateHasChanged();
+            await Task.Yield();
+
+            // Check whether the parameter is present to scroll to the due notes
+            if (FilterDueNotes)
+            {
+                // Refresh then scroll last due note into view
+                await Task.Delay(300);
+                await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
+            }
+        }
+
+        /// <summary>
         /// Method to load the data for the schedule chart
         /// </summary>
-        private void LoadGanttChart()
+        private async Task LoadGanttChartAsync()
         {
+            Debug.WriteLine("** Loading Gantt...");
+            loadingGanttChart = true;
+            await InvokeAsync(StateHasChanged);
+
             // Generate the blocks for the schedule chart
             var allBlocks = new List<GanttBlock>();
             foreach (var t in allTasks)
@@ -355,85 +432,22 @@ namespace PPMTool.Pages
 
             // Update the Gantt chart axis limits
             UpdateScheduleChartAxisLimits();
+
+            // Reset the flag
+            loadingGanttChart = false;
+            await InvokeAsync(StateHasChanged);
+            Debug.WriteLine("** ...Finished Loading Gantt!");
         }
 
-
-        /// <summary>
-        /// Fired once the page has been rendered
-        /// </summary>
-        /// <param name="firstRender"></param>
-        /// <returns></returns>
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            await base.OnAfterRenderAsync(firstRender);
-
-            // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectId == null)
-            {
-                Navigation.NavigateTo("nothinghere");
-                return;
-            }
-
-            // If the path is the legacy path then redirect
-            if (!Navigation.Uri.Contains("projects/projectdetails"))
-            {
-                Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
-                return;
-            }
-
-            if (firstRender)
-            {
-                Debug.WriteLine("** After Render - first render!");
-
-                // Create a reference to self in JS
-                await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
-
-                // Go fetch the notes (has to be after render as need to scroll to)
-                await ConfigureNotesAsync();
-            }
-        }
-
-        /// <summary>
-        /// Configures the note filters and then gets them from the DB applying scroll to as required
-        /// </summary>
-        /// <returns></returns>
-        private async Task ConfigureNotesAsync()
-        {
-            // After the page has finished rendering then apply the search string from the parameter
-            if (FilteredNote != null)
-            {
-                // Set the search term to filter
-                noteSearchTerms = $"#id={FilteredNote}";
-            }
-            else if (FilterDueNotes)
-            {
-                showOnlyDueItems = true;
-                sortByDueDate = true;
-            }
-
-            // Get the notes from the DB
-            LoadNotesFromDB();
-
-            // Filter and Highlight
-            FilterAndHighlightNotes();
-
-            // Refresh
-            StateHasChanged();
-            await Task.Yield();
-
-            // Check whether the parameter is present to scroll to the due notes
-            if (FilterDueNotes)
-            {
-                // Refresh then scroll last due note into view
-                await Task.Delay(300);
-                await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
-            }
-        }
         /// <summary>
         /// Method to load the burn-up chart -- can be called from a background thread
         /// </summary>
-        private void LoadBurnUpChart()
+        private async Task LoadBurnUpChartAsync()
         {
+            Debug.WriteLine("** Loading Burn-Up...");
+            loadingBurnUpChart = true;
+            await InvokeAsync(StateHasChanged);
+
             // Create the burn-up chart items
             burnUpChartSource = new List<ChartHelper.WeeklyTaskEffort>();
 
@@ -504,6 +518,10 @@ namespace PPMTool.Pages
                     new YAxis { Title = new AxisTitle { Text = "Work (Hours)" } }
                 }
             };
+
+            loadingBurnUpChart = false;
+            await InvokeAsync(StateHasChanged);
+            Debug.WriteLine("** ...Finished Loading Burn-Up!");
         }
 
         /// <summary>
@@ -525,17 +543,7 @@ namespace PPMTool.Pages
             }
 
             // Reload the chart
-            loadingBurnUpChart = true;
-            var task = Task.Run(() => LoadBurnUpChart());
-            task.ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    loadingBurnUpChart = false;
-                    StateHasChanged();
-                });
-            });
-            StateHasChanged();
+            Task.Run(LoadBurnUpChartAsync);
         }
 
         /// <summary>
