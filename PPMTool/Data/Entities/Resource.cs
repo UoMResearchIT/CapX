@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
         /// The person associated with this resource
         /// </summary>
         [Required]
-        public Person Person { get; set; }
+        public virtual Person Person { get; set; }
 
         /// <summary>
         /// This is the day rate associated with this resource assignment.
@@ -67,13 +67,13 @@ namespace PPMTool.Data.Entities
         /// This represents where the resource is funded from in terms of known funding sources for the project.
         /// It is optional since it needs to be possible to associated resources with tasks before the funding sources are known.
         /// </summary>
-        public FundingSource FundedFrom { get; set; }
+        public virtual FundingSource FundedFrom { get; set; }
 
         /// <summary>
         /// The task on the project this resource is assigned to
         /// </summary>
         [Required]
-        public SubTask SubTask { get; set; }
+        public virtual SubTask SubTask { get; set; }
 
         /// <inheritdoc/>
         public string GetSensibleObjectName()

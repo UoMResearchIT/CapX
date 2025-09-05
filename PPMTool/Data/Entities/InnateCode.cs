@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -27,7 +26,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The collection of innate code tasks that belong to this code
         /// </summary>
-        public ICollection<InnateCodeTask> Tasks { get; set; } = new List<InnateCodeTask>();
+        public virtual ICollection<InnateCodeTask> Tasks { get; set; } = new List<InnateCodeTask>();
 
 
         /// <summary>

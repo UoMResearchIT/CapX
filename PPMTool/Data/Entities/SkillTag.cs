@@ -43,7 +43,7 @@ namespace PPMTool.Data.Entities
         /// Instances of this skill tag owned by people (not serialisable to avoid circular references)
         /// </summary>
         [JsonIgnore]
-        public ICollection<OwnedSkill> OwnedSkills { get; set; }
+        public virtual ICollection<OwnedSkill> OwnedSkills { get; set; }
 
         /// <summary>
         /// Rareness of the skill based on how many people have an owned instance of it
@@ -58,7 +58,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The tasks that require this skill
         /// </summary>
-        public ICollection<SubTask> TasksNeedingThisSkill { get; set; }
+        public virtual ICollection<SubTask> TasksNeedingThisSkill { get; set; }
 
         /// <summary>
         /// Required override for logging identification

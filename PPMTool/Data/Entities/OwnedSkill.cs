@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Enums;
 
@@ -19,13 +18,13 @@ namespace PPMTool.Data.Entities
         /// The owner of the skill tag instance
         /// </summary>
         [Required]
-        public Person Owner { get; set; }
+        public virtual Person Owner { get; set; }
 
         /// <summary>
         /// Which skill tag this instance refers to
         /// </summary>
         [Required]
-        public SkillTag SkillTag { get; set; }
+        public virtual SkillTag SkillTag { get; set; }
 
         /// <summary>
         /// The last time this skill was used "in anger"
