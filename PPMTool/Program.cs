@@ -299,6 +299,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         // Lookup the username in the DB and add role claim
         // Has to be done manually since service provider not built yet?
         var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
         using (var dbContext = dbContextFactory.CreateDbContext())
         {
             var user = dbContext.Users
@@ -313,7 +314,6 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
             await context.HttpContext.SignInAsync(context.Principal);
 
             // Update last logged in and log
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
             var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
             if (userService != null)
             {
