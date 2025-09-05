@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Web;
@@ -268,6 +269,11 @@ if (shouldSeed)
     SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
     SeedHelper.SeedTimesheets(scope.ServiceProvider);
 }
+
+// Set default culture
+var cultureInfo = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 app.Run();
 
