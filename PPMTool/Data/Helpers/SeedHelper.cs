@@ -16,13 +16,29 @@ namespace PPMTool.Data.Helpers
         private static readonly DateTime dateAnchor = new DateTime(2025, 4, 1);
 
         /// <summary>
+        /// Rounds up a timesheet value to the nearest quarter of an hour
+        /// </summary>
+        /// <param name="hours"></param>
+        /// <returns></returns>
+        public static double RoundUpToQuarterHour(double hours)
+        {
+            return Math.Ceiling(hours * 4) / 4.0;
+        }
+
+        /// <summary>
         /// Creates the dummy data based on the anchor date being used to "shift" the hardcoded dates in each method
         /// </summary>
         /// <param name="y">Year value</param>
         /// <param name="m">Month value</param>
         /// <param name="d">Day value</param>
-        /// <returns DateTime></returns>
-        private static DateTime ApplyDateOffset(int y, int m, int d, int hours = 0, int minutes = 00, int seconds = 0)
+        /// <param name="hours">Hours value</param>
+        /// <param name="minutes">Minutes value</param>
+        /// <param name="seconds">Seconds value</param>
+        /// <returns>
+        /// A DateTime object adjusted to keep its value with respect to
+        /// the anchor date the same but with respect to today's date instead
+        /// </returns>
+        private static DateTime ApplyDateOffset(int y, int m, int d, int hours = 0, int minutes = 0, int seconds = 0)
         {
             var differenceToAnchor = DateTime.Today - dateAnchor;
             return new DateTime(y, m, d, hours, minutes, seconds).Add(differenceToAnchor);
@@ -978,7 +994,7 @@ namespace PPMTool.Data.Helpers
 
         /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
-        /// RTP number is important as it is used to construct the depdendent entities so beware of changing it!
+        /// RTP number is important as it is used to construct the dependent entities so beware of changing it!
         /// </summary>
         /// <param name="serviceProvider"></param>
         internal static void SeedProjects(IServiceProvider serviceProvider)
@@ -2173,6 +2189,8 @@ namespace PPMTool.Data.Helpers
             if (psmFte > 0)
             {
                 var value = psmFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.ProjectAndServiceMgmt),
@@ -2189,6 +2207,8 @@ namespace PPMTool.Data.Helpers
             if (bauFte > 0)
             {
                 var value = bauFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.BAU),
@@ -2205,6 +2225,8 @@ namespace PPMTool.Data.Helpers
             if (staffFte > 0)
             {
                 var value = staffFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.StaffMgmt),
@@ -2221,6 +2243,8 @@ namespace PPMTool.Data.Helpers
             if (rsaFte > 0)
             {
                 var value = rsaFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.RSA),
@@ -2237,6 +2261,8 @@ namespace PPMTool.Data.Helpers
             if (pdFte > 0)
             {
                 var value = pdFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.ProjectAndServiceMgmt),
@@ -2282,6 +2308,8 @@ namespace PPMTool.Data.Helpers
                 if (projectTasks.Count == 0)
                 {
                     var value = projectFte * wlm.Total() * 35 / 5f;
+                    value = RoundUpToQuarterHour(value); // Round up the value.
+
                     var entry = new TimesheetEntry
                     {
                         InnateCodeTask = activeTasks.GetRandomTask(Duty.BAU),
@@ -2303,6 +2331,8 @@ namespace PPMTool.Data.Helpers
                         var task = kvp.Key;
                         var assignmentFte = kvp.Value;
                         var value = (assignmentFte / totalAssignmentFte) * projectFte * wlm.Total() * 35 / 5f;
+                        value = RoundUpToQuarterHour(value); // Round up the value.
+
                         var entry = new TimesheetEntry
                         {
                             InnateCodeTask = task,
