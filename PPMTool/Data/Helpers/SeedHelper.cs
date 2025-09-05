@@ -140,7 +140,7 @@ namespace PPMTool.Data.Helpers
                     {
                         EndDate = null,
                         FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "NO"),
                         Name = "Eggplant Acrobat",
                         ShortName = "EA",
                         StartDate = ApplyDateOffset(2023, 09, 01)
@@ -149,7 +149,7 @@ namespace PPMTool.Data.Helpers
                     {
                         EndDate = null,
                         FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "NO"),
                         Name = "Cheddar Swoosh",
                         ShortName = "CS",
                         StartDate = ApplyDateOffset(2024, 08, 20)
@@ -158,7 +158,7 @@ namespace PPMTool.Data.Helpers
                     {
                         EndDate = ApplyDateOffset(2025, 09, 17),
                         FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "NO"),
                         Name = "Lumpy Sprinkles",
                         ShortName = "LS",
                         StartDate = ApplyDateOffset(2024, 09, 18)
@@ -218,8 +218,8 @@ namespace PPMTool.Data.Helpers
                     throw new InvalidOperationException("Person with ShortName 'ML' not found.");
                 }
 
-                // Add an current absene for Clive Bugworthy
-                person = context.People.FirstOrDefault(x => x.ShortName == "CB");
+                // Add a current absence for Tina Breakaway
+                person = context.People.FirstOrDefault(x => x.ShortName == "TB");
                 if (person != null)
                 {
                     var currentAbsence = new Absence
@@ -259,7 +259,7 @@ namespace PPMTool.Data.Helpers
                 superUser.Person = null;
                 context.SaveChanges();
 
-                // Manager -- Mavis and Clive are managers
+                // Manager -- Mavis and Nigel are managers
                 var manager = new User
                 {
                     Name = "Mavis Ledger",
