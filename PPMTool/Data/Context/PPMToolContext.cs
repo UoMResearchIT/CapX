@@ -53,6 +53,7 @@ namespace PPMTool.Data.Context
         /// <param name="optionsBuilder"></param>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            optionsBuilder.UseLazyLoadingProxies();
         }
 
         /// <summary>
