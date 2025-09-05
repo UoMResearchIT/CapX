@@ -21,11 +21,11 @@
         </div>
     </div>
     <hr />
-    @if (ownedProjectsAndDueNotes == null)
+    @if (Loading)
     {
         <LoadingComponent />            
     }
-    else if (ownedProjectsAndDueNotes.Count() == 0)
+    else if (ownedProjectsAndDueNotes == null || ownedProjectsAndDueNotes.Count() == 0)
     {
         <RadzenText Text="You don't have any projects to manage!" />
     }

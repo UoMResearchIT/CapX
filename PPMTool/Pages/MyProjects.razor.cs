@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
@@ -28,7 +25,7 @@ namespace PPMTool.Pages
                 {
                     includeFinished = value;
                     SessionStorage.SetItemAsync("my-project-show-active", includeFinished);
-                    LoadProjectData(false);
+                    Task.Run(() => LoadProjectDataAsync(false));
                 }
             }
         }
@@ -42,7 +39,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            Loading = true;
 
             LogInformation("Viewing my projects");
         }
@@ -75,17 +71,21 @@ namespace PPMTool.Pages
                 includeFinished = await SessionStorage.GetItemAsync<bool>("my-project-show-active");
 
                 // Load data
-                LoadProjectData(true);
+                await LoadProjectDataAsync(true);
             }
         }
 
-        private void LoadProjectData(bool initial)
+        private async Task LoadProjectDataAsync(bool initial)
         {
-            // Initialise the project list
-            List<Project> proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
+            Loading = true;
+            await InvokeAsync(StateHasChanged);
+            await Task.Yield();
 
-            // Remove the ones that are not active if necessary
-            if (!includeFinished) proj = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled()).ToList();
+            // Initialise the project list
+            var proj = ProjectService
+                .GetAll(Context)
+                .OrderBy(x => x.RTP)
+                .Where(x => includeFinished ? true : !x.ProjectStatus.IsFinishedOrCancelled());
 
             // Extract the owned projects and their due notes
             if (ProjectManagerShortName != null)
@@ -129,7 +129,7 @@ namespace PPMTool.Pages
 
             // Disable spinner now load complete
             Loading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
 
             Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
         }
