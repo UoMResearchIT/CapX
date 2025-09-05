@@ -13,7 +13,20 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// This is the date that was assumed when the data was created and hence is used to offset the dates
         /// </summary>
-        private static readonly DateTime dateAnchor = new DateTime(2025, 8, 25);
+        private static readonly DateTime dateAnchor = new DateTime(2025, 4, 1);
+
+        /// <summary>
+        /// Creates the dummy data based on the anchor date being used to "shift" the hardcoded dates in each method
+        /// </summary>
+        /// <param name="y">Year value</param>
+        /// <param name="m">Month value</param>
+        /// <param name="d">Day value</param>
+        /// <returns DateTime></returns>
+        private static DateTime ApplyDateOffset(int y, int m, int d, int hours = 0, int minutes = 00, int seconds = 0)
+        {
+            var differenceToAnchor = DateTime.Today - dateAnchor;
+            return new DateTime(y, m, d, hours, minutes, seconds).Add(differenceToAnchor);
+        }
 
         /// <summary>
         /// Set up a minimum set of people
@@ -31,7 +44,7 @@ namespace PPMTool.Data.Helpers
                 person.Name = "Mavis Ledger";
                 person.ShortName = "ML";
                 person.FTE = 1.0;
-                person.StartDate = new DateTime(2023, 7, 1);    // Date required by first project
+                person.StartDate = ApplyDateOffset(2023, 7, 1);    // Date required by first project
                 context.SaveChanges();
 
                 // Perm currently with us
@@ -85,7 +98,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Bingo McTrousers",
                         ShortName = "BM",
-                        StartDate = new DateTime(2023, 07, 01)
+                        StartDate = ApplyDateOffset(2023, 07, 01)
                     },
                     new Person
                     {
@@ -94,7 +107,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Ankle Goblin",
                         ShortName = "AG",
-                        StartDate = new DateTime(2023, 07, 01)
+                        StartDate = ApplyDateOffset(2023, 07, 01)
                     },
                     new Person
                     {
@@ -103,7 +116,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Gravy Commander",
                         ShortName = "GC",
-                        StartDate = new DateTime(2023, 07, 01)
+                        StartDate = ApplyDateOffset(2023, 07, 01)
                     },
                     new Person
                     {
@@ -112,7 +125,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Lemon Lasso",
                         ShortName = "LL",
-                        StartDate = new DateTime(2023, 07, 01)
+                        StartDate = ApplyDateOffset(2023, 07, 01)
                     },
                     new Person
                     {
@@ -121,7 +134,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "ML"),
                         Name = "Soggy Apple Nibbler",
                         ShortName = "SAN",
-                        StartDate = new DateTime(2023, 07, 01)
+                        StartDate = ApplyDateOffset(2023, 07, 01)
                     },
                     new Person
                     {
@@ -130,7 +143,7 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
                         Name = "Eggplant Acrobat",
                         ShortName = "EA",
-                        StartDate = new DateTime(2023, 09, 01)
+                        StartDate = ApplyDateOffset(2023, 09, 01)
                     },
                     new Person
                     {
@@ -139,16 +152,16 @@ namespace PPMTool.Data.Helpers
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
                         Name = "Cheddar Swoosh",
                         ShortName = "CS",
-                        StartDate = new DateTime(2024, 08, 20)
+                        StartDate = ApplyDateOffset(2024, 08, 20)
                     },
                     new Person
                     {
-                        EndDate = new DateTime(2025, 09, 17),
+                        EndDate = ApplyDateOffset(2025, 09, 17),
                         FTE = 1.0,
                         LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
                         Name = "Lumpy Sprinkles",
                         ShortName = "LS",
-                        StartDate = new DateTime(2024, 09, 18)
+                        StartDate = ApplyDateOffset(2024, 09, 18)
                     }
                 };
                 context.People.AddRange(others);
@@ -392,7 +405,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Non-billable BAU & Personal Dev",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2023, 10, 1),
+                        ChangeDate = ApplyDateOffset(2023, 10, 1),
                         Person = context.People.First(x => x.ShortName == "EA"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -407,7 +420,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Part-time 0.8; 0.1 PD",
                         BusinessAsUsualFTE = 0.0,
-                        ChangeDate = new DateTime(2023, 10, 1),
+                        ChangeDate = ApplyDateOffset(2023, 10, 1),
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -422,7 +435,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "PSM 0.3 FTE & Staff 0.4 FTE",
                         BusinessAsUsualFTE = 0.0,
-                        ChangeDate = new DateTime(2023, 10, 1),
+                        ChangeDate = ApplyDateOffset(2023, 10, 1),
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.3,
@@ -437,7 +450,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.4,
                         Notes = "PSM 0.3 FTE, Staff 0.2 FTE & RSA (Web) 0.4 FTE",
                         BusinessAsUsualFTE = 0.0,
-                        ChangeDate = new DateTime(2023, 10, 1),
+                        ChangeDate = ApplyDateOffset(2023, 10, 1),
                         Person = context.People.First(x => x.ShortName == "LL"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.3,
@@ -452,7 +465,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Part-time 0.8; Personal Dev 0.1 & Training 0.1",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2023, 10, 1),
+                        ChangeDate = ApplyDateOffset(2023, 10, 1),
                         Person = context.People.First(x => x.ShortName == "GC"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -467,7 +480,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "PSM 0.2 FTE & Staff 0.3 FTE, BAU 0.1 FTE",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2023, 10, 24),
+                        ChangeDate = ApplyDateOffset(2023, 10, 24),
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -482,7 +495,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.4,
                         Notes = "PSM 0.2 FTE & RSA (Web) 0.4 FTE, BAU 0.1 FTE",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 1, 15),
+                        ChangeDate = ApplyDateOffset(2024, 1, 15),
                         Person = context.People.First(x => x.ShortName == "LL"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -497,7 +510,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "0.1 FTE BAU & 0.1 PD",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 9, 2),
+                        ChangeDate = ApplyDateOffset(2024, 9, 2),
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -512,7 +525,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Part-time 0.8; 0.3 PSM, 0.1 Staff, 0.1 BAU",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 4, 1),
+                        ChangeDate = ApplyDateOffset(2024, 4, 1),
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.3,
@@ -527,7 +540,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.4,
                         Notes = "BAU 0.1, RSA 0.4 (Django-Wagtail)",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 3, 18),
+                        ChangeDate = ApplyDateOffset(2024, 3, 18),
                         Person = context.People.First(x => x.ShortName == "LL"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -542,7 +555,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.1,
                         Notes = "Part-time 0.8; 0.1 PSM, 0.2 Staff, 0.1 RSA (R Shiny Service), 0.1 BAU",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 5, 13),
+                        ChangeDate = ApplyDateOffset(2024, 5, 13),
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.1,
@@ -557,7 +570,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Standard G6 WLM",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 8, 20),
+                        ChangeDate = ApplyDateOffset(2024, 8, 20),
                         Person = context.People.First(x => x.ShortName == "CS"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -572,7 +585,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Standard G6 WLM",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2024, 9, 18),
+                        ChangeDate = ApplyDateOffset(2024, 9, 18),
                         Person = context.People.First(x => x.ShortName == "LS"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -587,7 +600,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Extra BAU time for work on DjW stack upgrading",
                         BusinessAsUsualFTE = 0.5,
-                        ChangeDate = new DateTime(2024, 12, 9),
+                        ChangeDate = ApplyDateOffset(2024, 12, 9),
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -602,7 +615,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Back to normal G5 WLM, for RTP-311",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2025, 1, 13),
+                        ChangeDate = ApplyDateOffset(2025, 1, 13),
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -617,7 +630,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Part-time 0.8; 0.1 PSM, 0.2 Staff, 0.1 BAU",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2025, 1, 20),
+                        ChangeDate = ApplyDateOffset(2025, 1, 20),
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -632,7 +645,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Extra BAU time for work on DjW stack upgrading",
                         BusinessAsUsualFTE = 0.5,
-                        ChangeDate = new DateTime(2025, 3, 21),
+                        ChangeDate = ApplyDateOffset(2025, 3, 21),
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -647,7 +660,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Back to normal G5",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2025, 5, 7),
+                        ChangeDate = ApplyDateOffset(2025, 5, 7),
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PersonalDevelopmentFTE = 0.1,
                         ProjectAndServiceManagementFTE = 0.0,
@@ -662,7 +675,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Part time 0.9 (for 3 months at present); 0.2 PSM, 0.2 Staff, 0.1 BAU",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2025, 6, 1),
+                        ChangeDate = ApplyDateOffset(2025, 6, 1),
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -677,7 +690,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Part-time 0.8; 0.2 PSM, 0.2 Staff, 0.1 BAU",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2025, 9, 1),
+                        ChangeDate = ApplyDateOffset(2025, 9, 1),
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -692,7 +705,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "Agile course - 0.5 BAU, 0.2 PSM, 0.3 Staff",
                         BusinessAsUsualFTE = 0.5,
-                        ChangeDate = new DateTime(2025, 4, 26),
+                        ChangeDate = ApplyDateOffset(2025, 4, 26),
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -707,7 +720,7 @@ namespace PPMTool.Data.Helpers
                         ArchitectureFTE = 0.0,
                         Notes = "PSM 0.2 FTE & Staff 0.3 FTE, BAU 0.1 FTE",
                         BusinessAsUsualFTE = 0.1,
-                        ChangeDate = new DateTime(2025, 5, 3),
+                        ChangeDate = ApplyDateOffset(2025, 5, 3),
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PersonalDevelopmentFTE = 0.0,
                         ProjectAndServiceManagementFTE = 0.2,
@@ -987,7 +1000,7 @@ namespace PPMTool.Data.Helpers
                         CostModel = CostModel.DayRate,
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2025, 07, 31),
+                        EndDate = ApplyDateOffset(2025, 07, 31),
                         Faculty = Faculty.Internal,
                         LeadershipFTE = 0.05f,
                         Name = "Create CoP for Research Software",
@@ -995,24 +1008,24 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 0.0,
                         PlannedLeadershipCosts = 0.0,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2023, 07, 03), new DateTime(2025, 07, 31)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2023, 07, 03), ApplyDateOffset(2025, 07, 31)),
                         ProjectStatus = ProjectStatus.CancelledBidFailed,
                         RTP = 169,
                         RequestDocLink = "https://www.google.com",
                         School = School.None,
-                        StartDate = new DateTime(2023, 07, 03),
+                        StartDate = ApplyDateOffset(2023, 07, 03),
                     },
                     new Project
                     {
                         ActualCost = 39120.05,
                         ActualLeadershipCosts = 0,
                         ActualWorkHours = 1048.5,
-                        ActualsLastUpdated = new DateTime(2025, 06, 02, 13, 12, 0).ToString("R"),
+                        ActualsLastUpdated = ApplyDateOffset(2025, 06, 02, 13, 12, 0).ToString("R"),
                         Budget = 42269.0,
                         CostModel = CostModel.TechOnly,
                         DayRate = 262,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2025, 07, 31),
+                        EndDate = ApplyDateOffset(2025, 07, 31),
                         Faculty = Faculty.FBMH,
                         InnateActivity = GetInnateActivityForRTP(context, 180),
                         LeadershipFTE = 0.05f,
@@ -1021,13 +1034,13 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 42123.55,
                         PlannedLeadershipCosts = 0.0,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2023, 10, 02), new DateTime(2025, 07, 31)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2023, 10, 02), ApplyDateOffset(2025, 07, 31)),
                         ProjectStatus = ProjectStatus.Active,
                         RTP = 180,
                         RequestDocLink = "https://www.google.com",
                         School = School.SHS,
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/69",
-                        StartDate = new DateTime(2023, 10, 02),
+                        StartDate = ApplyDateOffset(2023, 10, 02),
                     },
                     new Project
                     {
@@ -1038,7 +1051,7 @@ namespace PPMTool.Data.Helpers
                         CostModel = CostModel.TechAndLeadership,
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2028, 06, 30),
+                        EndDate = ApplyDateOffset(2028, 06, 30),
                         Faculty = Faculty.FSE,
                         InnateActivity = GetInnateActivityForRTP(context, 255),
                         LeadershipFTE = 0.05f,
@@ -1047,13 +1060,13 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 64074.39,
                         PlannedLeadershipCosts = 10140.21,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 07, 01), new DateTime(2028, 06, 30)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2025, 07, 01), ApplyDateOffset(2028, 06, 30)),
                         ProjectStatus = ProjectStatus.Funded,
                         RTP = 255,
                         RequestDocLink = "https://",
                         School = School.SBS,
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/193",
-                        StartDate = new DateTime(2025, 07, 01),
+                        StartDate = ApplyDateOffset(2025, 07, 01),
                     },
                     new Project
                     {
@@ -1064,7 +1077,7 @@ namespace PPMTool.Data.Helpers
                         CostModel = 0,
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2025, 10, 12),
+                        EndDate = ApplyDateOffset(2025, 10, 12),
                         Faculty = Faculty.FHUMS,
                         LeadershipFTE = 0.05f,
                         Name = "Political Research Transparency Web App",
@@ -1072,24 +1085,24 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 7425.0,
                         PlannedLeadershipCosts = 0.0,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 10, 12), new DateTime(2025, 07, 01)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2025, 10, 12), ApplyDateOffset(2025, 07, 01)),
                         ProjectStatus = ProjectStatus.AwaitingOutcome,
                         RTP = 265,
                         RequestDocLink = "https://www.google.com",
                         School = School.SSS,
-                        StartDate = new DateTime(2025, 07, 01),
+                        StartDate = ApplyDateOffset(2025, 07, 01),
                     },
                     new Project
                     {
                         ActualCost = 2202.18,
                         ActualLeadershipCosts = 302.68,
                         ActualWorkHours = 73.5,
-                        ActualsLastUpdated = new DateTime(2025, 04, 28, 14, 06, 0).ToString("R"),
+                        ActualsLastUpdated = ApplyDateOffset(2025, 04, 28, 14, 06, 0).ToString("R"),
                         Budget = 3035.0,
                         CostModel = CostModel.TechAndLeadership,
                         DayRate = 262,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2025, 03, 20),
+                        EndDate = ApplyDateOffset(2025, 03, 20),
                         Faculty = Faculty.FBMH,
                         InnateActivity = GetInnateActivityForRTP(context, 311),
                         LeadershipFTE = 0.025f,
@@ -1098,25 +1111,25 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 3197.15,
                         PlannedLeadershipCosts = 302.68,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2025, 03, 20), new DateTime(2025, 01, 13)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2025, 03, 20), ApplyDateOffset(2025, 01, 13)),
                         ProjectStatus = ProjectStatus.Finished,
                         RTP = 311,
                         RequestDocLink = "https://www.google.com",
                         School = School.SBS,
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/146",
-                        StartDate = new DateTime(2025, 01, 13),
+                        StartDate = ApplyDateOffset(2025, 01, 13),
                     },
                     new Project
                     {
                         ActualCost = 3874.95,
                         ActualLeadershipCosts = 280.09,
                         ActualWorkHours = 114.8,
-                        ActualsLastUpdated = new DateTime(2025, 06, 11, 09, 09, 0).ToString("R"),
+                        ActualsLastUpdated = ApplyDateOffset(2025, 06, 11, 09, 09, 0).ToString("R"),
                         Budget = 4963.0,
                         CostModel = CostModel.TechAndLeadership,
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2028, 04, 08),
+                        EndDate = ApplyDateOffset(2028, 04, 08),
                         Faculty = Faculty.FHUMS,
                         InnateActivity = GetInnateActivityForRTP(context, 323),
                         LeadershipFTE = 0.025f,
@@ -1125,25 +1138,25 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 4633.86,
                         PlannedLeadershipCosts = 280.09,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2028, 04, 08), new DateTime(2025, 02, 27)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2028, 04, 08), ApplyDateOffset(2025, 02, 27)),
                         ProjectStatus =ProjectStatus.Paused,
                         RTP = 323,
                         RequestDocLink = "https://www.google.com",
                         School = School.AMBS,
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/154/views/1?custom_template=33",
-                        StartDate = new DateTime(2025, 02, 27),
+                        StartDate = ApplyDateOffset(2025, 02, 27),
                     },
                     new Project
                     {
                         ActualCost = 7532.77,
                         ActualLeadershipCosts = 786.06,
                         ActualWorkHours = 177.2,
-                        ActualsLastUpdated = new DateTime(2025, 06, 05, 14, 22, 0).ToString("R"),
+                        ActualsLastUpdated = ApplyDateOffset(2025, 06, 05, 14, 22, 0).ToString("R"),
                         Budget = 12937.81,
                         CostModel = CostModel.TechAndLeadership,
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
-                        EndDate = new DateTime(2026, 01, 29),
+                        EndDate = ApplyDateOffset(2026, 01, 29),
                         Faculty = Faculty.FBMH,
                         InnateActivity = GetInnateActivityForRTP(context, 324),
                         LeadershipFTE = 0.05f,
@@ -1152,13 +1165,13 @@ namespace PPMTool.Data.Helpers
                         PlannedCost = 12852.1,
                         PlannedLeadershipCosts = 786.06,
                         PlannedWorkHours = 0,
-                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, new DateTime(2026, 01, 29), new DateTime(2025, 03, 05)),
+                        ProjectManager = GetRandomManagerActiveDuringDateRange(context, ApplyDateOffset(2026, 01, 29), ApplyDateOffset(2025, 03, 05)),
                         ProjectStatus = ProjectStatus.Maintenance,
                         RTP = 324,
                         RequestDocLink = "https://www.google.com",
                         School = School.SMS,
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/158",
-                        StartDate = new DateTime(2025, 03, 05),
+                        StartDate = ApplyDateOffset(2025, 03, 05),
                     }
                 };
                 context.Projects.AddRange(projects);
@@ -1291,7 +1304,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.1,
                         DurationBillableDays = 458,
                         DurationDays = 760,
-                        EndDate = new DateTime(2025, 07, 31),
+                        EndDate = ApplyDateOffset(2025, 07, 31),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1299,7 +1312,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.1,
                         PlannedCost = 0,
                         PlannedWorkHours = 320.6,
-                        StartDate = new DateTime(2023, 07, 03),
+                        StartDate = ApplyDateOffset(2023, 07, 03),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0.1
                     },
@@ -1311,7 +1324,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 404,
                         DurationDays = 669,
-                        EndDate = new DateTime(2025, 07, 31),
+                        EndDate = ApplyDateOffset(2025, 07, 31),
                         HasFixedEndDate = false,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1319,7 +1332,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 42123.54,
                         PlannedWorkHours = 1129,
-                        StartDate = new DateTime(2023, 10, 02),
+                        StartDate = ApplyDateOffset(2023, 10, 02),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0
                     },
@@ -1331,7 +1344,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.3,
                         DurationBillableDays = 38,
                         DurationDays = 63,
-                        EndDate = new DateTime(2025, 09, 01),
+                        EndDate = ApplyDateOffset(2025, 09, 01),
                         HasFixedEndDate = false,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1339,7 +1352,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.3,
                         PlannedCost = 2987.96,
                         PlannedWorkHours = 78.5,
-                        StartDate = new DateTime(2025, 07, 01),
+                        StartDate = ApplyDateOffset(2025, 07, 01),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     },
@@ -1351,7 +1364,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.3,
                         DurationBillableDays = 623,
                         DurationDays = 1033,
-                        EndDate = new DateTime(2028, 06, 30),
+                        EndDate = ApplyDateOffset(2028, 06, 30),
                         HasFixedEndDate = false,
                         HasFixedStart = false,
                         Lag = 0,
@@ -1359,7 +1372,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.3,
                         PlannedCost = 50946.21,
                         PlannedWorkHours = 1307.5,
-                        StartDate = new DateTime(2025, 09, 02),
+                        StartDate = ApplyDateOffset(2025, 09, 02),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     },
@@ -1371,7 +1384,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.38,
                         DurationBillableDays = 63,
                         DurationDays = 104,
-                        EndDate = new DateTime(2025, 10, 12),
+                        EndDate = ApplyDateOffset(2025, 10, 12),
                         HasFixedEndDate = false,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1379,7 +1392,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 7425,
                         PlannedWorkHours = 175,
-                        StartDate = new DateTime(2025, 07, 01),
+                        StartDate = ApplyDateOffset(2025, 07, 01),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     },
@@ -1391,7 +1404,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 40,
                         DurationDays = 67,
-                        EndDate = new DateTime(2025, 03, 20),
+                        EndDate = ApplyDateOffset(2025, 03, 20),
                         HasFixedEndDate = false,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1399,7 +1412,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 2894.47,
                         PlannedWorkHours = 112,
-                        StartDate = new DateTime(2025, 01, 13),
+                        StartDate = ApplyDateOffset(2025, 01, 13),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     },
@@ -1411,7 +1424,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.3,
                         DurationBillableDays = 25,
                         DurationDays = 41,
-                        EndDate = new DateTime(2025, 04, 08),
+                        EndDate = ApplyDateOffset(2025, 04, 08),
                         HasFixedEndDate = false,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1419,7 +1432,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.3,
                         PlannedCost = 1960.25,
                         PlannedWorkHours = 51.5,
-                        StartDate = new DateTime(2025, 02, 27),
+                        StartDate = ApplyDateOffset(2025, 02, 27),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     },
@@ -1431,7 +1444,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.005,
                         DurationBillableDays = 441,
                         DurationDays = 731,
-                        EndDate = new DateTime(2028, 04, 08),
+                        EndDate = ApplyDateOffset(2028, 04, 08),
                         HasFixedEndDate = true,
                         HasFixedStart = false,
                         Lag = 365,
@@ -1439,7 +1452,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.005,
                         PlannedCost = 584.46,
                         PlannedWorkHours = 15,
-                        StartDate = new DateTime(2026, 04, 09),
+                        StartDate = ApplyDateOffset(2026, 04, 09),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0
                     },
@@ -1451,7 +1464,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.8,
                         DurationBillableDays = 13,
                         DurationDays = 21,
-                        EndDate = new DateTime(2025, 06, 08),
+                        EndDate = ApplyDateOffset(2025, 06, 08),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 30,
@@ -1459,7 +1472,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.8,
                         PlannedCost = 1809.04,
                         PlannedWorkHours = 70,
-                        StartDate = new DateTime(2025, 05, 19),
+                        StartDate = ApplyDateOffset(2025, 05, 19),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0
                     },
@@ -1471,7 +1484,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.1,
                         DurationBillableDays = 150,
                         DurationDays = 249,
-                        EndDate = new DateTime(2026, 01, 29),
+                        EndDate = ApplyDateOffset(2026, 01, 29),
                         HasFixedEndDate = false,
                         HasFixedStart = false,
                         Lag = 0,
@@ -1479,7 +1492,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.1,
                         PlannedCost = 3996.63,
                         PlannedWorkHours = 105,
-                        StartDate = new DateTime(2025, 05, 26),
+                        StartDate = ApplyDateOffset(2025, 05, 26),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     },
@@ -1491,7 +1504,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
-                        EndDate = new DateTime(2025, 05, 11),
+                        EndDate = ApplyDateOffset(2025, 05, 11),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1499,7 +1512,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 304.50,
                         PlannedWorkHours = 8,
-                        StartDate = new DateTime(2025, 05, 05),
+                        StartDate = ApplyDateOffset(2025, 05, 05),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0.1
                     },
@@ -1511,7 +1524,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 33,
                         DurationDays = 54,
-                        EndDate = new DateTime(2025, 04, 27),
+                        EndDate = ApplyDateOffset(2025, 04, 27),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1519,7 +1532,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 3463.75,
                         PlannedWorkHours = 91,
-                        StartDate = new DateTime(2025, 03, 05),
+                        StartDate = ApplyDateOffset(2025, 03, 05),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0
                     },
@@ -1531,7 +1544,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 32,
                         DurationDays = 53,
-                        EndDate = new DateTime(2025, 04, 26),
+                        EndDate = ApplyDateOffset(2025, 04, 26),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1539,7 +1552,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 2550.23,
                         PlannedWorkHours = 67,
-                        StartDate = new DateTime(2025, 03, 05),
+                        StartDate = ApplyDateOffset(2025, 03, 05),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0.1
                     },
@@ -1551,7 +1564,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 11,
                         DurationDays = 17,
-                        EndDate = new DateTime(2025, 05, 31),
+                        EndDate = ApplyDateOffset(2025, 05, 31),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1559,7 +1572,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 1065.77,
                         PlannedWorkHours = 28,
-                        StartDate = new DateTime(2025, 05, 15),
+                        StartDate = ApplyDateOffset(2025, 05, 15),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0
                     },
@@ -1571,7 +1584,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
-                        EndDate = new DateTime(2025, 05, 25),
+                        EndDate = ApplyDateOffset(2025, 05, 25),
                         HasFixedEndDate = true,
                         HasFixedStart = true,
                         Lag = 0,
@@ -1579,7 +1592,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.4,
                         PlannedCost = 418.69,
                         PlannedWorkHours = 11,
-                        StartDate = new DateTime(2025, 05, 19),
+                        StartDate = ApplyDateOffset(2025, 05, 19),
                         TaskType = TaskType.FixedDuration,
                         UnmetDemand = 0
                     },
@@ -1591,7 +1604,7 @@ namespace PPMTool.Data.Helpers
                         Demand = 0.2,
                         DurationBillableDays = 5,
                         DurationDays = 9,
-                        EndDate = new DateTime(2025, 06, 09),
+                        EndDate = ApplyDateOffset(2025, 06, 09),
                         HasFixedEndDate = false,
                         HasFixedStart = false,
                         Lag = 0,
@@ -1599,7 +1612,7 @@ namespace PPMTool.Data.Helpers
                         OriginalDemand = 0.2,
                         PlannedCost = 266.44,
                         PlannedWorkHours = 7,
-                        StartDate = new DateTime(2025, 06, 01),
+                        StartDate = ApplyDateOffset(2025, 06, 01),
                         TaskType = TaskType.FixedWork,
                         UnmetDemand = 0
                     }
