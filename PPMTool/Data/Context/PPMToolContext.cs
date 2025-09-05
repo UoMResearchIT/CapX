@@ -53,7 +53,8 @@ namespace PPMTool.Data.Context
         /// <param name="optionsBuilder"></param>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseLazyLoadingProxies();
+            // Need to add explicit FKs for all navigation properties to avoid shadw properties being created for this to work
+            //optionsBuilder.UseLazyLoadingProxies();
         }
 
         /// <summary>
