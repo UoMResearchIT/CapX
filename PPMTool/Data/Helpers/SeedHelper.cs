@@ -317,6 +317,86 @@ namespace PPMTool.Data.Helpers
                 };
                 context.Users.Add(developer);
 
+                developer = new User
+                {
+                    Name = "Ankle Goblin",
+                    CASUserName = "agoblin",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "AG")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Bingo McTrousers",
+                    CASUserName = "bmctrou",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "BM")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Cheddar Swoosh",
+                    CASUserName = "cswoosh",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "CS")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Eggplant Acrobat",
+                    CASUserName = "eacrobat",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "EA")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Gravy Commander",
+                    CASUserName = "gcomm",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "GC")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Lumpy Sprinkles",
+                    CASUserName = "lspring",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "LS")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Lemon Lasso",
+                    CASUserName = "llasso",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "LL")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Soggy Apple Nibbler",
+                    CASUserName = "sanibb",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "SAN")
+                };
+                context.Users.Add(developer);
+
                 // Reader -- Sue is an admin and not in the team
                 var reader = new User
                 {
@@ -2087,11 +2167,13 @@ namespace PPMTool.Data.Helpers
                         startDate = startDate.AddDays(7 - (int)startDate.DayOfWeek + (int)DayOfWeek.Monday);
                     }
 
-                    var endDate = person.EndDate ?? DateTime.Today;
-                    if (endDate.DayOfWeek != DayOfWeek.Monday)
+                    // Use the person's end date (if they have one and it's not in the future) or use today by default
+                    var endDate = person.EndDate is null || person.EndDate > DateTime.Today ? DateTime.Today : person.EndDate;
+
+                    if (endDate?.DayOfWeek != DayOfWeek.Monday)
                     {
                         // Change to nearest previous Monday
-                        endDate = endDate.AddDays(-(int)endDate.DayOfWeek + (int)DayOfWeek.Monday);
+                        endDate = endDate?.AddDays(-(int)endDate?.DayOfWeek + (int)DayOfWeek.Monday);
                     }
 
                     // Add timesheets for each week in the range
