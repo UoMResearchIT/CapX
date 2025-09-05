@@ -446,7 +446,7 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine($"** Task {TaskModel.SubTaskId}: Setting selected predecessor ID to {TaskModel.Predecessor.SubTaskId}");
                 selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
-                StateHasChanged();
+                InvokeAsync(StateHasChanged);
             }
         }
 

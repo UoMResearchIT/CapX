@@ -38,56 +38,97 @@ namespace PPMTool.Pages
         private double origProportion = 0;
         private DateTime originalStartDate;
         private DateTime originalEndDate;
-        private bool splitLogicInitialised;
+        private bool showTaskComponents;
         private bool showTaskInvalidError;
+        private bool splitPending = false;
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
-            Loading = false;
+            await base.OnInitializedAsync();
 
-            // Initialise the original task and project for the meta data
-            originalTask = SubTaskService.GetShallowById(Context, SubTaskId);
-            owningProject = ProjectService.GetById(Context, ProjectId);
-
-            statusMessages.Add(new StatusMessage("Set your parameters and click Split Task to configure the two halves of the tasks automatically!", StatusMessage.MessageType.Warning, () => !splitLogicInitialised));
+            // Load the data
+            await LoadData();
         }
 
         protected override void OnAfterRender(bool firstRender)
         {
             base.OnAfterRender(firstRender);
-            if (firstRender)
-            {
-                LogInformation($"Splitting task {originalTask?.Name} on {owningProject?.GetFullName()}");
-                originalStartDate = originalTask?.StartDate ?? DateTime.Today;
-                originalEndDate = originalTask?.EndDate ?? DateTime.Today;
-
-                // Only allow the project manager to save the split or a superuser
-                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || owningProject?.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
-
-                StateHasChanged();
-            }
 
             Debug.WriteLine($"** SplitTask Page Rendered! Split pending = {Loading} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskModel?.SubTaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskModel?.SubTaskId}");
-            SplitTasks();
         }
 
-        private void InitialiseTaskComponents()
+        /// <summary>
+        /// Loads the initial page data from the parameters
+        /// </summary>
+        /// <returns></returns>
+        private async Task LoadData()
         {
-            // Set the flag to render the components
-            splitLogicInitialised = true;
+            Debug.WriteLine("** Loading data...");
             Loading = true;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
+            await Task.Yield();
+
+            // Initialise the original task and project for the meta data
+            originalTask = SubTaskService.GetShallowById(Context, SubTaskId);
+            owningProject = ProjectService.GetById(Context, ProjectId);
+            originalStartDate = originalTask?.StartDate ?? DateTime.Today;
+            originalEndDate = originalTask?.EndDate ?? DateTime.Today;
+            LogInformation($"Splitting task {originalTask?.Name} on {owningProject?.GetFullName()}");
+
+            // Only allow the project manager to save the split or a superuser
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser || owningProject?.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
+
+            // Add status message
+            statusMessages.Add(new StatusMessage("Set your parameters and click Split Task to configure the two halves of the tasks automatically!", StatusMessage.MessageType.Warning, () => !showTaskComponents));
+
+            // Finish loading
+            Loading = false;
+            await InvokeAsync(StateHasChanged);
+            Debug.WriteLine("** ...Finished loading data.");
         }
 
-        private void SplitTasks()
+        /// <summary>
+        /// Button callback when options chosen and user wants to initialise the components
+        /// </summary>
+        private void InitialiseTaskComponentsClicked()
         {
-            if (originalAddTaskComponent == null || newAddTaskComponent == null || !Loading)
+            // Show the hidden tasks to get the references to bind
+            showTaskComponents = true;
+            StateHasChanged();
+            Task.Run(SplitTasksAsync);
+        }
+
+        /// <summary>
+        /// Determines whether the user has provided the input required to split the task
+        /// </summary>
+        /// <returns></returns>
+        private bool UserInputProvided()
+        {
+            return (splitOnDate && splitDate != null) || (!splitOnDate && splitValue != null);
+        }
+
+        /// <summary>
+        /// Splits the tasks by initialising the components and following through the logic
+        /// </summary>
+        private async Task SplitTasksAsync()
+        {
+            if (splitPending)
             {
                 return;
             }
 
+            // Wait for the binding of the components
+            while (originalAddTaskComponent == null || newAddTaskComponent == null)
+            {
+                await Task.Delay(100);
+                Debug.WriteLine("** Waiting for components to bind...");
+            }
+
+            // Set the loading spinners
             Debug.WriteLine($"** Running split logic...");
+            splitPending = true;
+            await InvokeAsync(StateHasChanged);
+            await Task.Yield();
 
             // Clear the error messages
             statusMessages.Clear();
@@ -125,11 +166,15 @@ namespace PPMTool.Pages
                 task.Predecessor = newAddTaskComponent.TaskModel;
             }
 
-            Loading = false;
-            StateHasChanged();
+            splitPending = false;
+            showTaskComponents = true;
+            await InvokeAsync(StateHasChanged);
             Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
         }
 
+        /// <summary>
+        /// Method to check whether there are fixed work warnings required and adds a status message
+        /// </summary>
         private void CheckForFixedWorkWarnings()
         {
             // Check for error on fixed work scheduling
@@ -148,6 +193,9 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Updates the components to reflect the split processing
+        /// </summary>
         private void ApplySplitLogic()
         {
             // Store some original values before modification
@@ -235,6 +283,11 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Add a status message for bad duration settings
+        /// </summary>
+        /// <param name="origDuration"></param>
+        /// <param name="newDuration"></param>
         private void AddBadDurationStatusMessage(double origDuration, double newDuration)
         {
             statusMessages.Add(new StatusMessage($"The original and new task must both have a non-zero duration! Remember the dates are inclusive. " +
@@ -242,6 +295,9 @@ namespace PPMTool.Pages
                         StatusMessage.MessageType.Error, () => true));
         }
 
+        /// <summary>
+        /// Updates the components with apporpritae actuals
+        /// </summary>
         private void UpdateActuals()
         {
             // Update the actuals
@@ -272,6 +328,9 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Calls the update subtasks methods on the components
+        /// </summary>
         private void UpdateSubTasks()
         {
             // Call update subtasks on both panes to validate
@@ -279,12 +338,18 @@ namespace PPMTool.Pages
             newAddTaskComponent.UpdateSubTaskModelFromResourceDataGrid();
         }
 
+        /// <summary>
+        /// Discards changes and leaves the page
+        /// </summary>
         private void DiscardChanges()
         {
             LogInformation($"Discarding splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent.ProjectModel.GetFullName()}!");
             Navigation.NavigateTo($"projects/projectdetails/{originalAddTaskComponent?.ProjectId}");
         }
 
+        /// <summary>
+        /// Validates the components and saves to DB
+        /// </summary>
         private void UpdateAndSave()
         {
             showTaskInvalidError = false;
