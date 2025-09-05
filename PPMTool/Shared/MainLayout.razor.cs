@@ -49,6 +49,7 @@ namespace PPMTool.Shared
         private int totalTimesheetCodesToDeactivate;
         private int totalIncompleteSkills;
         private bool adminMenuItemExpanded = false;
+        private User activeUser;
         private int? activeUserId;
         private RoleType activeUserRoleType;
 
@@ -69,6 +70,7 @@ namespace PPMTool.Shared
                 var context = ContextFactory.CreateDbContext();
 
                 // Store the active user ID
+                activeUser = loginView.ActiveUser;
                 activeUserId = loginView.ActiveUser?.Person?.PersonId ?? 0;
                 activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
 
