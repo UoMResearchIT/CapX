@@ -221,14 +221,15 @@ namespace PPMTool.Pages
                     }
                     resources = tempResourceNames;
 
-                    // Load other parts of the page
-                    await LoadGanttChartAsync();
-                    await LoadBurnUpChartAsync();
-                    await ConfigureNotesAsync();
+                    // Load other parts of the page concurrently
+                    await Task.WhenAll(
+                        LoadGanttChartAsync(),
+                        LoadBurnUpChartAsync(),
+                        ConfigureNotesAsync()
+                    );
                 }
 
                 LogInformation($"Viewing project details for RTP-{project?.RTP}");
-
             }
             finally
             {
