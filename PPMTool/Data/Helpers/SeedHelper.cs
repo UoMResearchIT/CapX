@@ -1,5 +1,7 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Text;
+using DocumentFormat.OpenXml.Presentation;
+using System.Text.RegularExpressions;
 using LoremNET;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -23,6 +25,11 @@ namespace PPMTool.Data.Helpers
         public static double RoundUpToQuarterHour(double hours)
         {
             return Math.Ceiling(hours * 4) / 4.0;
+        }
+
+        public static string CleanInnateCode(string innateCode)
+        {
+            return Regex.Replace(innateCode, @"\s*\(.*?\)\s*", "");
         }
 
         /// <summary>
@@ -965,6 +972,14 @@ namespace PPMTool.Data.Helpers
                 if (context.InnateCodes.Count() == 0)
                 {
                     throw new InvalidOperationException("No InnateCodes left after deletion! There should be a migration that adds them!");
+                }
+
+                context.SaveChanges();
+
+                // Remove any brackets which may have Researcher names in them
+                foreach (InnateCode code in context.InnateCodes)
+                {
+                    code.ActivityName = CleanInnateCode(code.ActivityName);
                 }
 
                 context.SaveChanges();
