@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -46,11 +42,14 @@ namespace PPMTool.Shared
 
                 if (user?.Identity is null || !user.Identity.IsAuthenticated)
                 {
-                    users = UserService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
-                    filteredUsers = users.Select(x => UserToString(x));
-                    selectedUser = filteredUsers.FirstOrDefault();
-                    OnChange();
-                    notLoggedIn = true;
+                    using (var context = ContextFactory.CreateDbContext())
+                    {
+                        users = UserService.GetAll(context).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
+                        filteredUsers = users.Select(x => UserToString(x));
+                        selectedUser = filteredUsers.FirstOrDefault();
+                        OnChange();
+                        notLoggedIn = true;
+                    }
                 }
             }
 

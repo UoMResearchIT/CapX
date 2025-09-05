@@ -299,31 +299,33 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         // Lookup the username in the DB and add role claim
         // Has to be done manually since service provider not built yet?
         var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-        var dbContext = dbContextFactory.CreateDbContext();
-        var user = dbContext.Users
-            .Include(x => x.Person)
-            .ToList()
-            .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
-        if (user != null)
+        using (var dbContext = dbContextFactory.CreateDbContext())
         {
-            identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
-        }
-
-        await context.HttpContext.SignInAsync(context.Principal);
-
-        // Update last logged in and log
-        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
-        var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
-        if (userService != null)
-        {
+            var user = dbContext.Users
+                .Include(x => x.Person)
+                .ToList()
+                .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
             if (user != null)
             {
-                userService.UpdateLastLoggedIn(dbContext, user);
+                identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
             }
-        }
-        else
-        {
-            logger?.LogError("User Service not found! Cannot update last logged in!");
+
+            await context.HttpContext.SignInAsync(context.Principal);
+
+            // Update last logged in and log
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
+            var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
+            if (userService != null)
+            {
+                if (user != null)
+                {
+                    userService.UpdateLastLoggedIn(dbContext, user);
+                }
+            }
+            else
+            {
+                logger?.LogError("User Service not found! Cannot update last logged in!");
+            }
         }
 
         logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
