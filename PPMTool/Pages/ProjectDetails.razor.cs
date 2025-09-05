@@ -95,6 +95,7 @@ namespace PPMTool.Pages
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartHelper.WeeklyTaskEffort> burnUpChartOptions;
         private int count;
+        private readonly int gridPageSize = 10;
         private bool isEditExistingNote;
         private bool editorVisible;
         private Note noteModel;
@@ -1146,7 +1147,7 @@ namespace PPMTool.Pages
         /// <param name="args"></param>
         private void LoadTaskData(LoadDataArgs args)
         {
-            Debug.WriteLine("Loading the tasks in the grid...");
+            Debug.WriteLine("** Loading the tasks in the grid...");
 
             var query = project.SubTasks.ToList().AsQueryable();
 
@@ -1176,8 +1177,9 @@ namespace PPMTool.Pages
             // Important!!! Make sure the Count property of RadzenDataGrid is set.
             count = query.Count();
 
-            // Perform paging via Skip and Take.
-            gridTasks = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+            // Perform paging
+            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? gridPageSize).ToList();
+
         }
 
         /// <summary>
