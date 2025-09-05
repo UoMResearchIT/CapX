@@ -13,7 +13,7 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// This is the date that was assumed when the data was created and hence is used to offset the dates
         /// </summary>
-        private static readonly DateTime dateAnchor = new DateTime(2025, 8, 25);
+        private static readonly DateTime dateAnchor = new DateTime(2025, 4, 1);
 
         /// <summary>
         /// Creates the dummy data based on the anchor date being used to "shift" the hardcoded dates in each method
