@@ -75,37 +75,40 @@
                         <RadzenPanelMenuItem Path="people" Text="@(activeUserRoleType == RoleType.Developer ? "My Details" : "Manage People")" Icon="manage_accounts" />
                         @if(activeUser?.Person != null)
                         {
-                        <RadzenPanelMenuItem Path="skills" Icon="military_tech">
-                            <Template>
-                                <div style="flex: 1;">
-                                    @if (sidebarExpanded)
-                                    {
-                                        <span>My Skills</span>
-                                    }
-                                    @if (totalIncompleteSkills > 0)
-                                    {
-                                        <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalIncompleteSkills</span>
-                                    }
-                                </div>
-                            </Template>
-                        </RadzenPanelMenuItem>
+                            <RadzenPanelMenuItem Path="skills" Icon="military_tech">
+                                <Template>
+                                    <div style="flex: 1;">
+                                        @if (sidebarExpanded)
+                                        {
+                                            <span>My Skills</span>
+                                        }
+                                        @if (totalIncompleteSkills > 0)
+                                        {
+                                            <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalIncompleteSkills</span>
+                                        }
+                                    </div>
+                                </Template>
+                            </RadzenPanelMenuItem>
                         }
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
-                        <RadzenPanelMenuItem Path="timesheets" Icon="timer">
-                            <Template>
-                                <div style="flex: 1;">
-                                    @if (sidebarExpanded)
-                                    {
-                                        <span>Timesheets</span>
-                                    }
-                                    @if (totalTimesheetIssues > 0)
-                                    {
-                                        <span class="rz-badge rz-badge-danger notification-badge" style="margin-left: 0.25rem;">@totalTimesheetIssues</span>
-                                    }
-                                </div>
-                            </Template>
-                        </RadzenPanelMenuItem>
+                        @if(activeUser?.Person != null)
+                        {
+                            <RadzenPanelMenuItem Path="timesheets" Icon="timer">
+                                <Template>
+                                    <div style="flex: 1;">
+                                        @if (sidebarExpanded)
+                                        {
+                                            <span>Timesheets</span>
+                                        }
+                                        @if (totalTimesheetIssues > 0)
+                                        {
+                                            <span class="rz-badge rz-badge-danger notification-badge" style="margin-left: 0.25rem;">@totalTimesheetIssues</span>
+                                        }
+                                    </div>
+                                </Template>
+                            </RadzenPanelMenuItem>
+                        }
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
