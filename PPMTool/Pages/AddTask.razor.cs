@@ -150,6 +150,8 @@ namespace PPMTool.Pages
         {
             base.OnAfterRender(firstRender);
 
+            Debug.WriteLine("** AddTask component rendering...");
+
             // If no project then navigate away
             if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
@@ -164,6 +166,7 @@ namespace PPMTool.Pages
 
             Loading = true;
             await InvokeAsync(StateHasChanged);
+            await Task.Yield();
 
             // Overwrite the context
             if (referenceContext != null && referenceContext != Context)
@@ -174,9 +177,7 @@ namespace PPMTool.Pages
             // Get project model from DB and manually restore it in case it has been modified elsewhere
             ProjectModel = ProjectService.GetById(Context, ProjectId);
             ProjectService.RestoreModel(Context, ref projectModel);
-
-            // Yield to allow UI to update
-            await Task.Yield();
+            Debug.WriteLine("** ProjectModel loaded!");
 
             // Initialise the lists
             people = PersonService.GetAll(Context)
