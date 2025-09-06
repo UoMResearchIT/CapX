@@ -121,19 +121,20 @@ namespace PPMTool.Pages
                 Debug.WriteLine("** Waiting for components to bind...");
             }
 
-            // Set the loading spinners
-            Debug.WriteLine($"** Running split logic...");
+            // Set the loading spinners on the components
             splitPending = true;
             await InvokeAsync(StateHasChanged);
             await Task.Yield();
+
+            Debug.WriteLine($"** Running split logic...");
 
             // Clear the error messages
             statusMessages.Clear();
             showTaskInvalidError = false;
 
             // Reinitialise the components from the DB
-            originalAddTaskComponent.InitialiseComponentAsync();
-            newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
+            await originalAddTaskComponent.InitialiseComponentAsync();
+            await newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
 
             // Apply the logic to split the task and actuals
             ApplySplitLogic();

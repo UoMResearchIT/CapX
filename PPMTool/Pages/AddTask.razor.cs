@@ -171,6 +171,7 @@ namespace PPMTool.Pages
             // Overwrite the context
             if (referenceContext != null && referenceContext != Context)
             {
+                Context.Dispose();
                 Context = referenceContext;
             }
 
