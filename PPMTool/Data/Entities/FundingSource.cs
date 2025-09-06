@@ -40,17 +40,17 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Set of payments attached to this funding source
         /// </summary>
-        public ICollection<Payment> PaymentsFromSource { get; set; }
+        public virtual ICollection<Payment> PaymentsFromSource { get; set; }
 
         /// <summary>
         /// Set of resources funded from this source
         /// </summary>
-        public ICollection<Resource> ResourcesFunded { get; set; }
+        public virtual ICollection<Resource> ResourcesFunded { get; set; }
 
         /// <summary>
         /// Project for which this funding source is being used as a leadership funding source
         /// </summary>
-        public Project ProjectLeadershipSource { get; set; }
+        public virtual Project ProjectLeadershipSource { get; set; }
 
         /// <summary>
         /// Details about the funding source to be posted to a note

@@ -49,7 +49,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         [JsonIgnore]
-        public Person LineManager { get; set; }
+        public virtual Person LineManager { get; set; }
 
         /// <summary>
         /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
@@ -59,53 +59,53 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Any changes to their WLMs
         /// </summary>
-        public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
+        public virtual ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
 
         /// <summary>
         /// Collection of skill tag instances owned by this person
         /// </summary>
         [JsonIgnore]
-        public ICollection<OwnedSkill> OwnedSkills { get; set; } = new List<OwnedSkill>();
+        public virtual ICollection<OwnedSkill> OwnedSkills { get; set; } = new List<OwnedSkill>();
 
         /// <summary>
         /// Collection of absences
         /// </summary>
-        public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+        public virtual ICollection<Absence> Absences { get; set; } = new List<Absence>();
 
         /// <summary>
         /// List of projects this person is following
         /// </summary>
         [InverseProperty("Followers")]
-        public ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
+        public virtual ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
 
         /// <summary>
         /// List of projects this person manages
         /// </summary>
         [InverseProperty("ProjectManager")]
-        public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
+        public virtual ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
 
         /// <summary>
         /// List of the competency assessments this person has performed
         /// </summary>
-        public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
+        public virtual ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
         /// <summary>
         /// The collection of Timesheets this person owns
         /// </summary>
         [InverseProperty("Owner")]
-        public ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
+        public virtual ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
 
         /// <summary>
         /// The collection of Timesheets this person was last to change the status of
         /// </summary>
         [InverseProperty("StatusChangedBy")]
-        public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
+        public virtual ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
 
         /// <summary>
         /// List of people that this person manages as their line manager
         /// </summary>
         [JsonIgnore]
-        public ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
+        public virtual ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
 
         public Person()
         {

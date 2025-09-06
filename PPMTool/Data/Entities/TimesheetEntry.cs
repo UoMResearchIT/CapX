@@ -23,13 +23,13 @@ namespace PPMTool.Data.Entities
         /// Represents the timesheet which owns the timesheet entry as a navigation property
         /// </summary>
         [Required]
-        public Timesheet Timesheet { get; set; }
+        public virtual Timesheet Timesheet { get; set; }
 
         /// <summary>
         /// Represents the innate code task associated with the timesheet entry.
         /// </summary>
         [Required]
-        public InnateCodeTask InnateCodeTask { get; set; }
+        public virtual InnateCodeTask InnateCodeTask { get; set; }
 
         /// <summary>
         /// Represents the number of hours spent on the task on Monday.

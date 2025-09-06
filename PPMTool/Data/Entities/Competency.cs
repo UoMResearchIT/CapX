@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -70,7 +68,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// List of assessments that relate to this competency
         /// </summary>
-        public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
+        public virtual ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
         public string GetSensibleObjectName()
         {

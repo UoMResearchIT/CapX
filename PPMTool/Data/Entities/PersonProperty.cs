@@ -2,7 +2,7 @@
 {
     public abstract class PersonProperty : ILoggableClass
     {
-        public Person Person { get; set; }
+        public virtual Person Person { get; set; }
 
         public abstract string GetSensibleObjectName();
     }

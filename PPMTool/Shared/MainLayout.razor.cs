@@ -66,34 +66,35 @@ namespace PPMTool.Shared
             // Update the badges in the sidebar if necessary
             if (loginView != null && loginView.ActiveUser != null)
             {
-                var context = ContextFactory.CreateDbContext();
-
-                // Store the active user ID
-                activeUserId = loginView.ActiveUser?.Person?.PersonId ?? 0;
-                activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
-
-                // Update timesheet badge
-                var oldTimesheetIssuesValue = totalTimesheetIssues;
-                totalTimesheetIssues = TimesheetService.GetIssueCount(context, activeUserId ?? 0);
-
-                // Update timesheet code badge
-                var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
-                totalTimesheetCodesToDeactivate = InnateCodeService.GetCodesToDeactivate(context).Count();
-
-                // Update skills badge
-                var oldIncompleteSkillsValue = totalIncompleteSkills;
-                totalIncompleteSkills = SkillTagService.GetIncompleteRecordCount(context, activeUserId ?? 0);
-
-                // Only call state has changed when something has changed
-                if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||
-                    oldTimesheetIssuesValue != totalTimesheetIssues ||
-                    oldIncompleteSkillsValue != totalIncompleteSkills)
+                using (var context = ContextFactory.CreateDbContext())
                 {
-                    // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
-                    adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
+                    // Store the active user ID
+                    activeUserId = loginView.ActiveUser?.Person?.PersonId ?? 0;
+                    activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
 
-                    // Now force a re-draw
-                    StateHasChanged();
+                    // Update timesheet badge
+                    var oldTimesheetIssuesValue = totalTimesheetIssues;
+                    totalTimesheetIssues = TimesheetService.GetIssueCount(context, activeUserId ?? 0);
+
+                    // Update timesheet code badge
+                    var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
+                    totalTimesheetCodesToDeactivate = InnateCodeService.GetCodesToDeactivate(context).Count();
+
+                    // Update skills badge
+                    var oldIncompleteSkillsValue = totalIncompleteSkills;
+                    totalIncompleteSkills = SkillTagService.GetIncompleteRecordCount(context, activeUserId ?? 0);
+
+                    // Only call state has changed when something has changed
+                    if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||
+                        oldTimesheetIssuesValue != totalTimesheetIssues ||
+                        oldIncompleteSkillsValue != totalIncompleteSkills)
+                    {
+                        // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
+                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
+
+                        // Now force a re-draw
+                        StateHasChanged();
+                    }
                 }
             }
         }
@@ -113,46 +114,47 @@ namespace PPMTool.Shared
         /// </summary>
         private async void OnSearchTermEntered()
         {
-            var context = ContextFactory.CreateDbContext();
-
-            // If nothing being typed
-            if (string.IsNullOrWhiteSpace(searchTerm.Trim()))
+            using (var context = ContextFactory.CreateDbContext())
             {
-                // Hide the popup if it is visible
-                Logger?.LogInformation("Hiding magic bar popup...");
-                await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", false, null, razorComponentReference);
-                return;
+                // If nothing being typed
+                if (string.IsNullOrWhiteSpace(searchTerm.Trim()))
+                {
+                    // Hide the popup if it is visible
+                    Logger?.LogInformation("Hiding magic bar popup...");
+                    await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", false, null, razorComponentReference);
+                    return;
+                }
+
+                // Pull the sources from the DB
+                var matchingPeople = (await PersonService.GetAllShallowAsync(context))
+                .Where(x =>
+                    x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
+                    x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())
+                );
+                var matchingProjects = ProjectService.GetAllShallow(context)
+                .Where(x =>
+                    x.GetFullName().ToLower().Contains(searchTerm.Trim().ToLower()) ||
+                    x.PI.ToLower().Contains(searchTerm.Trim().ToLower())
+                );
+
+                // Add to source
+                sourceData.Clear();
+                foreach (var person in matchingPeople)
+                {
+                    sourceData.Add(new MagicBarItem(person));
+                }
+                foreach (var project in matchingProjects)
+                {
+                    sourceData.Add(new MagicBarItem(project));
+                }
+                sourceData.OrderBy(x => x.DisplayName);
+
+                Debug.WriteLine($"** Source data contains {sourceData.Count} items!");
+
+                // Send the source data to JS to have it display it in a popup
+                Logger?.LogInformation("Updating magic bar popup...");
+                await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName), razorComponentReference);
             }
-
-            // Pull the sources from the DB
-            var matchingPeople = (await PersonService.GetAllShallowAsync(context))
-            .Where(x =>
-                x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())
-            );
-            var matchingProjects = ProjectService.GetAllShallow(context)
-            .Where(x =>
-                x.GetFullName().ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                x.PI.ToLower().Contains(searchTerm.Trim().ToLower())
-            );
-
-            // Add to source
-            sourceData.Clear();
-            foreach (var person in matchingPeople)
-            {
-                sourceData.Add(new MagicBarItem(person));
-            }
-            foreach (var project in matchingProjects)
-            {
-                sourceData.Add(new MagicBarItem(project));
-            }
-            sourceData.OrderBy(x => x.DisplayName);
-
-            Debug.WriteLine($"** Source data contains {sourceData.Count} items!");
-
-            // Send the source data to JS to have it display it in a popup
-            Logger?.LogInformation("Updating magic bar popup...");
-            await JSRuntime.InvokeVoidAsync("toggleAutocompletePopup", sourceData.Count > 0, sourceData.Select(x => x.DisplayName), razorComponentReference);
         }
 
         /// <summary>
