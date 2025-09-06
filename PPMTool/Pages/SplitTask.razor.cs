@@ -48,7 +48,7 @@ namespace PPMTool.Pages
 
             if (firstRender)
             {
-                Task.Run(async () => await LoadDataAsync());
+                Task.Run(LoadDataAsync);
             }
 
             Debug.WriteLine($"** SplitTask Page Rendered! Split pending = {Loading} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskModel?.SubTaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskModel?.SubTaskId}");
@@ -92,7 +92,7 @@ namespace PPMTool.Pages
             // Show the hidden tasks to get the references to bind
             showTaskComponents = true;
             StateHasChanged();
-            Task.Run(async () => await SplitTasksAsync());
+            Task.Run(SplitTasksAsync);
         }
 
         /// <summary>
