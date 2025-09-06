@@ -42,17 +42,14 @@ namespace PPMTool.Pages
         private bool showTaskInvalidError;
         private bool splitPending = false;
 
-        protected override async Task OnInitializedAsync()
-        {
-            await base.OnInitializedAsync();
-
-            // Load the data
-            await LoadData();
-        }
-
         protected override void OnAfterRender(bool firstRender)
         {
             base.OnAfterRender(firstRender);
+
+            if (firstRender)
+            {
+                Task.Run(async () => await LoadDataAsync());
+            }
 
             Debug.WriteLine($"** SplitTask Page Rendered! Split pending = {Loading} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskModel?.SubTaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskModel?.SubTaskId}");
         }
@@ -61,7 +58,7 @@ namespace PPMTool.Pages
         /// Loads the initial page data from the parameters
         /// </summary>
         /// <returns></returns>
-        private async Task LoadData()
+        private async Task LoadDataAsync()
         {
             Debug.WriteLine("** Loading data...");
             Loading = true;
@@ -95,7 +92,7 @@ namespace PPMTool.Pages
             // Show the hidden tasks to get the references to bind
             showTaskComponents = true;
             StateHasChanged();
-            Task.Run(SplitTasksAsync);
+            Task.Run(async () => await SplitTasksAsync());
         }
 
         /// <summary>
@@ -135,8 +132,8 @@ namespace PPMTool.Pages
             showTaskInvalidError = false;
 
             // Reinitialise the components from the DB
-            originalAddTaskComponent.InitialiseComponent();
-            newAddTaskComponent.InitialiseComponent(originalAddTaskComponent.GetContext());
+            originalAddTaskComponent.InitialiseComponentAsync();
+            newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
 
             // Apply the logic to split the task and actuals
             ApplySplitLogic();

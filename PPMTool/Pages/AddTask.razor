@@ -209,11 +209,11 @@ else
                                 <RadzenLabel class="radzen-form-label" Text="Actuals Report" />
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                                     <RadzenLabel Text="Date Range" class="rz-ms-2" />
-                                    <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => KickOffActualsReportTask())" />
+                                    <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => Task.Run(LoadActualsAsync))" Disabled="actualsLoading" />
                                     <RadzenLabel Text="to" class="rz-ms-2" />
-                                    <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => KickOffActualsReportTask())" />
+                                    <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => Task.Run(LoadActualsAsync))" Disabled="actualsLoading" />
                                     <RadzenLabel Text="Hide Empty Weeks" Component="CheckBox1" class="rz-ms-2" />
-                                    <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; KickOffActualsReportTask(); }) />
+                                    <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; Task.Run(LoadActualsAsync); }) Disabled="actualsLoading" />
                                 </RadzenStack>
                             </RadzenStack>
                         </div>
@@ -221,7 +221,11 @@ else
 
                     <div class="row">
                         <div class="col">
-                            @if (actualsReportRows == null || actualsReportRows?.Count == 0)
+                            @if (actualsLoading)
+                            {
+                                <LoadingComponent />
+                            }
+                            else if (actualsReportRows == null || actualsReportRows?.Count == 0)
                             {
                                 <RadzenText Text="@($"No actuals to show for the timesheet activity code {projectModel?.InnateActivity?.GetCodeAsString()}")" />
                             }

@@ -136,16 +136,34 @@ namespace PPMTool.Pages
         private bool hideEmptyWeeks = false;
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
-        private bool isInitialised;
+        private bool actualsLoading = false;
+
+        protected override async Task OnInitializedAsync()
+        {
+            await base.OnInitializedAsync();
+
+            // Initialise the component
+            await InitialiseComponentAsync();
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            base.OnAfterRender(firstRender);
+
+            // If no project then navigate away
+            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
+        }
 
         /// <summary>
         /// Initialises the component with the project and task models.
         /// </summary>
         /// <param name="referenceContext">Overwrite the current context with a new context of your choice (erase tracking information)</param>
-        /// <param name="restoreModels">Restore the model based on its current context object</param>
-        public void InitialiseComponent(PPMToolContext referenceContext = null, bool restoreModels = true)
+        public async Task InitialiseComponentAsync(PPMToolContext referenceContext = null)
         {
-            Debug.WriteLine("** Initialise component...");
+            Debug.WriteLine("** Initialising AddTask component...");
+
+            Loading = true;
+            await InvokeAsync(StateHasChanged);
 
             // Overwrite the context
             if (referenceContext != null && referenceContext != Context)
@@ -155,10 +173,10 @@ namespace PPMTool.Pages
 
             // Get project model from DB and manually restore it in case it has been modified elsewhere
             ProjectModel = ProjectService.GetById(Context, ProjectId);
-            if (restoreModels)
-            {
-                ProjectService.RestoreModel(Context, ref projectModel);
-            }
+            ProjectService.RestoreModel(Context, ref projectModel);
+
+            // Yield to allow UI to update
+            await Task.Yield();
 
             // Initialise the lists
             people = PersonService.GetAll(Context)
@@ -191,7 +209,7 @@ namespace PPMTool.Pages
             {
                 // Get task and restore it in case it has been modified elsewhere
                 var referenceTask = ProjectModel.SubTasks.FirstOrDefault(x => x.SubTaskId == TaskId) ?? new SubTask();
-                if (restoreModels) SubTaskService.RestoreModel(Context, ref referenceTask);
+                SubTaskService.RestoreModel(Context, ref referenceTask);
 
                 Debug.WriteLine($"** Reference Task: Start: {referenceTask.StartDate.ToShortDateString()} | End: {referenceTask.EndDate.ToShortDateString()} | Work: {referenceTask.PlannedWorkHours} | Duration: {referenceTask.DurationDays}");
 
@@ -233,67 +251,39 @@ namespace PPMTool.Pages
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
 
+            // Finished
+            Loading = false;
+            await InvokeAsync(StateHasChanged);
+
             // Run actuals report if not copying or splitting
             if (!IsCopy && !IsSplit)
             {
-                KickOffActualsReportTask();
+                await LoadActualsAsync();
             }
-
-            // Finished
-            isInitialised = true;
-        }
-
-        /// <summary>
-        /// Method to first set the UI state, then queue a LoadActuals task then update the UI again
-        /// </summary>
-        private void KickOffActualsReportTask()
-        {
-            // Set state change
-            Loading = true;
-            var tempActuals = new List<ActualsReportRow>();
-
-            // Queue background task
-            EnqueueLoadData(async () =>
-            {
-                await Task.Run(() =>
-                {
-                    LoadActuals(out tempActuals);
-
-                }).ContinueWith(t =>
-                {
-                    // Run back on the main thread
-                    InvokeAsync(() =>
-                    {
-                        UpdateActualsColumnSums(tempActuals);
-                        Loading = false;
-                        try
-                        {
-                            StateHasChanged();
-                        }
-                        catch { }
-                    });
-                });
-            });
         }
 
         /// <summary>
         /// Method to generate the actuals report and populate the data grid
         /// </summary>
-        /// <param name="tempActuals"></param>
         /// <exception cref="Exception">Throw if there are multiple task/resource/week entries in the timesheet data</exception>
-        private void LoadActuals(out List<ActualsReportRow> tempActuals)
+        private async Task<IList<ActualsReportRow>> LoadActualsAsync()
         {
             // Initialise
-            tempActuals = new List<ActualsReportRow>();
+            var tempActuals = new List<ActualsReportRow>();
+
+            // Update UI
+            actualsLoading = true;
+            await InvokeAsync(StateHasChanged);
+            await Task.Yield();
 
             try
             {
                 Debug.WriteLine("** Running actuals report...");
 
                 // Get all the timesheet entries associated with the activity code for this project
-                if (projectModel?.InnateActivity == null) return;
+                if (projectModel?.InnateActivity == null) return tempActuals;
                 var timesheets = TimesheetService.GetAllForInnateCode(Context, projectModel.InnateActivity).Where(x => x.Status == TimesheetStatus.Approved);
-                if (timesheets.Count() == 0) return;
+                if (timesheets.Count() == 0) return tempActuals;
 
                 // Find the earliest and latest timesheet weeks if no date set
                 var startWeek = actualsStartDate ?? timesheets.Min(x => x.StartDate);
@@ -384,8 +374,12 @@ namespace PPMTool.Pages
             }
             finally
             {
+                actualsLoading = false;
+                await InvokeAsync(StateHasChanged);
                 Debug.WriteLine($"** ...finished updating actuals.");
             }
+
+            return tempActuals;
         }
 
         /// <summary>
@@ -448,19 +442,6 @@ namespace PPMTool.Pages
                 selectedPredecessorId = TaskModel.Predecessor.SubTaskId;
                 InvokeAsync(StateHasChanged);
             }
-        }
-
-        protected override void OnAfterRender(bool firstRender)
-        {
-            base.OnAfterRender(firstRender);
-
-            if (firstRender)
-            {
-                if (!isInitialised) InitialiseComponent();
-            }
-
-            // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
 
         private string GetNiceString(Enum x)
