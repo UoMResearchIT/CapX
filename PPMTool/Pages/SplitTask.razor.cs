@@ -141,14 +141,14 @@ namespace PPMTool.Pages
                 // Apply the logic to split the task and actuals
                 ApplySplitLogic();
 
-                // Update and schedule the sub tasks
-                UpdateSubTasks();
+                // Update and schedule the sub tasks (needs to be on UI thread for edit context validation)
+                await InvokeAsync(UpdateSubTasks);
 
                 // Update the actuals
                 UpdateActuals();
 
                 // Call update subtasks again to update the actuals cost
-                UpdateSubTasks();
+                await InvokeAsync(UpdateSubTasks);
 
                 // Check for fixed work warnings
                 CheckForFixedWorkWarnings();
