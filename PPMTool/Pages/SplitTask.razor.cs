@@ -128,46 +128,53 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Running split logic...");
 
-            // Clear the error messages
-            statusMessages.Clear();
-            showTaskInvalidError = false;
-
-            // Reinitialise the components from the DB
-            await originalAddTaskComponent.InitialiseComponentAsync();
-            await newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
-
-            // Apply the logic to split the task and actuals
-            ApplySplitLogic();
-
-            // Update and schedule the sub tasks
-            UpdateSubTasks();
-
-            // Update the actuals
-            UpdateActuals();
-
-            // Call update subtasks again to update the actuals cost
-            UpdateSubTasks();
-
-            // Check for fixed work warnings
-            CheckForFixedWorkWarnings();
-
-            // Set the original task as the predecessor of the new task
-            newAddTaskComponent.TaskModel.HasFixedStart = false;
-            Debug.WriteLine($"** Setting original task as predecessor to new task...");
-            newAddTaskComponent.TaskModel.Predecessor = originalAddTaskComponent.TaskModel;
-            newAddTaskComponent.InitialisePredecessorBinding();
-
-            // Find the tasks for which the original task was the predecessor and update them to have the new task as its predecessor
-            Debug.WriteLine($"** Successors on original task = {originalAddTaskComponent.TaskModel.Successors.Count}");
-            foreach (var task in originalAddTaskComponent.TaskModel.Successors)
+            try
             {
-                task.Predecessor = newAddTaskComponent.TaskModel;
-            }
+                // Clear the error messages
+                statusMessages.Clear();
+                showTaskInvalidError = false;
 
-            splitPending = false;
-            showTaskComponents = true;
-            await InvokeAsync(StateHasChanged);
-            Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
+                // Initialise the components from the DB
+                await originalAddTaskComponent.InitialiseComponentAsync();
+                await newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
+
+                // Apply the logic to split the task and actuals
+                ApplySplitLogic();
+
+                // Update and schedule the sub tasks
+                UpdateSubTasks();
+
+                // Update the actuals
+                UpdateActuals();
+
+                // Call update subtasks again to update the actuals cost
+                UpdateSubTasks();
+
+                // Check for fixed work warnings
+                CheckForFixedWorkWarnings();
+
+                // Set the original task as the predecessor of the new task
+                newAddTaskComponent.TaskModel.HasFixedStart = false;
+                Debug.WriteLine($"** Setting original task as predecessor to new task...");
+                newAddTaskComponent.TaskModel.Predecessor = originalAddTaskComponent.TaskModel;
+                newAddTaskComponent.InitialisePredecessorBinding();
+
+                // Find the tasks for which the original task was the predecessor and update them to have the new task as its predecessor
+                Debug.WriteLine($"** Successors on original task = {originalAddTaskComponent.TaskModel.Successors.Count}");
+                foreach (var task in originalAddTaskComponent.TaskModel.Successors)
+                {
+                    task.Predecessor = newAddTaskComponent.TaskModel;
+                }
+
+                splitPending = false;
+                showTaskComponents = true;
+                await InvokeAsync(StateHasChanged);
+                Debug.WriteLine($"** Split complete. {statusMessages.Count} status message(s).");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"Exception when splitting tasks! {e}");
+            }
         }
 
         /// <summary>

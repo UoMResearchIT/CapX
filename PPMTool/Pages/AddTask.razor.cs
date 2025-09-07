@@ -142,8 +142,11 @@ namespace PPMTool.Pages
         {
             await base.OnInitializedAsync();
 
-            // Initialise the component
-            await InitialiseComponentAsync();
+            // Initialise the component if not expecting manual initialisation
+            if (!IsSplit)
+            {
+                await InitialiseComponentAsync();
+            }
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -152,8 +155,8 @@ namespace PPMTool.Pages
 
             Debug.WriteLine("** AddTask component rendering...");
 
-            // If no project then navigate away
-            if (ProjectModel == null) Navigation.NavigateTo("nothinghere");
+            // If no project then navigate away if not being initialised manually
+            if (!IsSplit && ProjectModel == null) Navigation.NavigateTo("nothinghere");
         }
 
         /// <summary>
