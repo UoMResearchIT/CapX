@@ -49,7 +49,6 @@ namespace PPMTool.Shared
         private int totalTimesheetCodesToDeactivate;
         private int totalIncompleteSkills;
         private bool adminMenuItemExpanded = false;
-        private User activeUser;
         private int? activeUserId;
         private RoleType activeUserRoleType;
 
@@ -70,7 +69,7 @@ namespace PPMTool.Shared
                 using (var context = ContextFactory.CreateDbContext())
                 {
                     // Store the active user ID
-                    activeUserId = loginView.ActiveUser?.Person?.PersonId ?? 0;
+                    activeUserId = loginView.ActiveUser?.Person?.PersonId;
                     activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
 
                     // Update timesheet badge
