@@ -17,21 +17,6 @@ namespace PPMTool.Data.Helpers
         private static readonly DateTime dateAnchor = new DateTime(2025, 4, 1);
 
         /// <summary>
-        /// Rounds up a timesheet value to the nearest quarter of an hour
-        /// </summary>
-        /// <param name="hours"></param>
-        /// <returns></returns>
-        public static double RoundUpToQuarterHour(double hours)
-        {
-            return Math.Ceiling(hours * 4) / 4.0;
-        }
-
-        public static string CleanInnateCode(string innateCode)
-        {
-            return Regex.Replace(innateCode, @"\s*\(.*?\)\s*", "");
-        }
-
-        /// <summary>
         /// Creates the dummy data based on the anchor date being used to "shift" the hardcoded dates in each method
         /// </summary>
         /// <param name="y">Year value</param>
@@ -286,7 +271,6 @@ namespace PPMTool.Data.Helpers
                 {
                     Name = "Mavis Ledger",
                     CASUserName = "mledger",
-                    EmailAddress = "",
                     RoleType = RoleType.Manager,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "ML")
                 };
@@ -978,7 +962,7 @@ namespace PPMTool.Data.Helpers
                 // Remove any brackets which may have Researcher names in them
                 foreach (InnateCode code in context.InnateCodes)
                 {
-                    code.ActivityName = CleanInnateCode(code.ActivityName);
+                    code.ActivityName = RemoveParenthesesText(code.ActivityName);
                 }
 
                 context.SaveChanges();
@@ -2596,6 +2580,26 @@ namespace PPMTool.Data.Helpers
                 sb.Append($"<p>{paragraph.ToString()}</p>");
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Rounds up a timesheet value to the nearest quarter of an hour
+        /// </summary>
+        /// <param name="hours"></param>
+        /// <returns></returns>
+        public static double RoundUpToQuarterHour(double hours)
+        {
+            return Math.Ceiling(hours * 4) / 4.0;
+        }
+
+        /// <summary>
+        /// Replace all the text in the parentheses and the parentheses themselves with nothing
+        /// </summary>
+        /// <param name="stringWithParentheses"></param>
+        /// <returns></returns>
+        public static string RemoveParenthesesText(string stringWithParentheses)
+        {
+            return Regex.Replace(stringWithParentheses, @"\s*\(.*?\)\s*", "");
         }
     }
 }
