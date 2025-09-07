@@ -1,16 +1,13 @@
 #if LOCAL
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using PPMTool.Enums;
 #endif
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using PPMTool.Data.Context;
 using PPMTool.Services;
 
@@ -51,23 +48,26 @@ namespace PPMTool.Pages.Account
             identity.AddClaim(new Claim(ClaimTypes.Name, Username));
 
             // Add roles from DB for this user
-            var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";
-            var user = userService.GetByUsername(contextFactory.CreateDbContext(), username.Trim().ToLower());
-            var role = string.IsNullOrWhiteSpace(username) || user == null ? RoleType.None : user.RoleType;
-            identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity),
-                new AuthenticationProperties { RedirectUri = $"{(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl)}" }
-            );
-
-            // Update last logged in and log
-            if (user != null)
+            using (var context = contextFactory.CreateDbContext())
             {
-                userService.UpdateLastLoggedIn(contextFactory.CreateDbContext(), user);
+                var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";
+                var user = userService.GetByUsername(context, username.Trim().ToLower());
+                var role = string.IsNullOrWhiteSpace(username) || user == null ? RoleType.None : user.RoleType;
+                identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(identity),
+                    new AuthenticationProperties { RedirectUri = $"{(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl)}" }
+                );
+
+                // Update last logged in and log
+                if (user != null)
+                {
+                    userService.UpdateLastLoggedIn(context, user);
+                }
+                logger?.LogInformation($"{identity.Name}: Logged In");
             }
-            logger?.LogInformation($"{identity.Name}: Logged In");
         }
 #endif
     }

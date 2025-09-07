@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.Extensions.Logging;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -27,6 +24,7 @@ namespace PPMTool.Shared
         private User loginAs;
         private string loginLink = string.Empty;
         private bool notLoggedIn = false;
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
@@ -46,7 +44,11 @@ namespace PPMTool.Shared
 
                 if (user?.Identity is null || !user.Identity.IsAuthenticated)
                 {
-                    users = UserService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
+                    if (context == null)
+                    {
+                        context = ContextFactory.CreateDbContext();
+                    }
+                    users = UserService.GetAll(context).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
                     filteredUsers = users.Select(x => UserToString(x));
                     selectedUser = filteredUsers.FirstOrDefault();
                     OnChange();
@@ -111,6 +113,9 @@ namespace PPMTool.Shared
         {
             // Unsubscribe
             Navigation.LocationChanged -= HandleLocationChanged;
+
+            // Dispose the context
+            context?.Dispose();
         }
 
         private void HandleLocationChanged(object sender, LocationChangedEventArgs e)

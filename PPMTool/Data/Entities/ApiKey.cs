@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -14,7 +13,7 @@ namespace PPMTool.Data.Entities
         /// The user who owns this API key
         /// </summary>
         [Required]
-        public User Owner { get; set; }
+        public virtual User Owner { get; set; }
 
         /// <summary>
         /// The key itself
