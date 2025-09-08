@@ -130,7 +130,7 @@ builder.Services.AddSwaggerGen(
         };
         opt.AddSecurityRequirement(requirement);
 
-#if RELEASE
+#if !LOCAL
         // Add the custom DocumentFilter for production
         opt.DocumentFilter<BasePathDocumentFilter>("/api");
 #endif
