@@ -8,7 +8,6 @@ using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data.Context;
 using PPMTool.Services;
-
 #if RELEASE
 using Serilog;
 #endif
@@ -54,10 +53,10 @@ if (string.IsNullOrEmpty(connectionString))
 {
     // Use the default connection string based on the environment
     connectionString = configuration.GetConnectionString(
-#if RELEASE
-            "PPMToolContextConnectionProduction"
-#else
+#if LOCAL
             "PPMToolContextConnection"
+#else
+            "PPMToolContextConnectionProduction"
 #endif
         );
 }
