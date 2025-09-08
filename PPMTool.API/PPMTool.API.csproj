@@ -7,6 +7,7 @@
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<DocumentationFile></DocumentationFile>
 	<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+	<Configurations>Debug;Release;Local</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
