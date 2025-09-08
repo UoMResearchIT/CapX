@@ -1,5 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Text;
+using System.Text.RegularExpressions;
 using LoremNET;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
@@ -21,8 +22,14 @@ namespace PPMTool.Data.Helpers
         /// <param name="y">Year value</param>
         /// <param name="m">Month value</param>
         /// <param name="d">Day value</param>
-        /// <returns DateTime></returns>
-        private static DateTime ApplyDateOffset(int y, int m, int d, int hours = 0, int minutes = 00, int seconds = 0)
+        /// <param name="hours">Hours value</param>
+        /// <param name="minutes">Minutes value</param>
+        /// <param name="seconds">Seconds value</param>
+        /// <returns>
+        /// A DateTime object adjusted to keep its value with respect to
+        /// the anchor date the same but with respect to today's date instead
+        /// </returns>
+        private static DateTime ApplyDateOffset(int y, int m, int d, int hours = 0, int minutes = 0, int seconds = 0)
         {
             var differenceToAnchor = DateTime.Today - dateAnchor;
             return new DateTime(y, m, d, hours, minutes, seconds).Add(differenceToAnchor);
@@ -140,7 +147,7 @@ namespace PPMTool.Data.Helpers
                     {
                         EndDate = null,
                         FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "NO"),
                         Name = "Eggplant Acrobat",
                         ShortName = "EA",
                         StartDate = ApplyDateOffset(2023, 09, 01)
@@ -149,7 +156,7 @@ namespace PPMTool.Data.Helpers
                     {
                         EndDate = null,
                         FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "NO"),
                         Name = "Cheddar Swoosh",
                         ShortName = "CS",
                         StartDate = ApplyDateOffset(2024, 08, 20)
@@ -158,7 +165,7 @@ namespace PPMTool.Data.Helpers
                     {
                         EndDate = ApplyDateOffset(2025, 09, 17),
                         FTE = 1.0,
-                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "CB"),
+                        LineManager = context.People.FirstOrDefault(x => x.ShortName == "NO"),
                         Name = "Lumpy Sprinkles",
                         ShortName = "LS",
                         StartDate = ApplyDateOffset(2024, 09, 18)
@@ -218,8 +225,8 @@ namespace PPMTool.Data.Helpers
                     throw new InvalidOperationException("Person with ShortName 'ML' not found.");
                 }
 
-                // Add an current absene for Clive Bugworthy
-                person = context.People.FirstOrDefault(x => x.ShortName == "CB");
+                // Add a current absence for Tina Breakaway
+                person = context.People.FirstOrDefault(x => x.ShortName == "TB");
                 if (person != null)
                 {
                     var currentAbsence = new Absence
@@ -259,12 +266,11 @@ namespace PPMTool.Data.Helpers
                 superUser.Person = null;
                 context.SaveChanges();
 
-                // Manager -- Mavis and Clive are managers
+                // Manager -- Mavis and Nigel are managers
                 var manager = new User
                 {
                     Name = "Mavis Ledger",
                     CASUserName = "mledger",
-                    EmailAddress = "",
                     RoleType = RoleType.Manager,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "ML")
                 };
@@ -298,6 +304,86 @@ namespace PPMTool.Data.Helpers
                     EmailAddress = "",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "TB")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Ankle Goblin",
+                    CASUserName = "agoblin",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "AG")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Bingo McTrousers",
+                    CASUserName = "bmctrou",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "BM")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Cheddar Swoosh",
+                    CASUserName = "cswoosh",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "CS")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Eggplant Acrobat",
+                    CASUserName = "eacrobat",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "EA")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Gravy Commander",
+                    CASUserName = "gcomm",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "GC")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Lumpy Sprinkles",
+                    CASUserName = "lspring",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "LS")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Lemon Lasso",
+                    CASUserName = "llasso",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "LL")
+                };
+                context.Users.Add(developer);
+
+                developer = new User
+                {
+                    Name = "Soggy Apple Nibbler",
+                    CASUserName = "sanibb",
+                    EmailAddress = "",
+                    RoleType = RoleType.Developer,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "SAN")
                 };
                 context.Users.Add(developer);
 
@@ -872,6 +958,14 @@ namespace PPMTool.Data.Helpers
                 }
 
                 context.SaveChanges();
+
+                // Remove any brackets which may have Researcher names in them
+                foreach (InnateCode code in context.InnateCodes)
+                {
+                    code.ActivityName = RemoveParenthesesText(code.ActivityName);
+                }
+
+                context.SaveChanges();
             }
         }
 
@@ -978,7 +1072,7 @@ namespace PPMTool.Data.Helpers
 
         /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
-        /// RTP number is important as it is used to construct the depdendent entities so beware of changing it!
+        /// RTP number is important as it is used to construct the dependent entities so beware of changing it!
         /// </summary>
         /// <param name="serviceProvider"></param>
         internal static void SeedProjects(IServiceProvider serviceProvider)
@@ -2071,11 +2165,13 @@ namespace PPMTool.Data.Helpers
                         startDate = startDate.AddDays(7 - (int)startDate.DayOfWeek + (int)DayOfWeek.Monday);
                     }
 
-                    var endDate = person.EndDate ?? DateTime.Today;
-                    if (endDate.DayOfWeek != DayOfWeek.Monday)
+                    // Use the person's end date (if they have one and it's not in the future) or use today by default
+                    var endDate = person.EndDate is null || person.EndDate > DateTime.Today ? DateTime.Today : person.EndDate;
+
+                    if (endDate?.DayOfWeek != DayOfWeek.Monday)
                     {
                         // Change to nearest previous Monday
-                        endDate = endDate.AddDays(-(int)endDate.DayOfWeek + (int)DayOfWeek.Monday);
+                        endDate = endDate?.AddDays(-(int)endDate?.DayOfWeek + (int)DayOfWeek.Monday);
                     }
 
                     // Add timesheets for each week in the range
@@ -2173,6 +2269,8 @@ namespace PPMTool.Data.Helpers
             if (psmFte > 0)
             {
                 var value = psmFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.ProjectAndServiceMgmt),
@@ -2189,6 +2287,8 @@ namespace PPMTool.Data.Helpers
             if (bauFte > 0)
             {
                 var value = bauFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.BAU),
@@ -2205,6 +2305,8 @@ namespace PPMTool.Data.Helpers
             if (staffFte > 0)
             {
                 var value = staffFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.StaffMgmt),
@@ -2221,6 +2323,8 @@ namespace PPMTool.Data.Helpers
             if (rsaFte > 0)
             {
                 var value = rsaFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.RSA),
@@ -2237,6 +2341,8 @@ namespace PPMTool.Data.Helpers
             if (pdFte > 0)
             {
                 var value = pdFte * wlm.Total() * 35 / 5f;
+                value = RoundUpToQuarterHour(value); // Round up the value.
+
                 var entry = new TimesheetEntry
                 {
                     InnateCodeTask = activeTasks.GetRandomTask(Duty.ProjectAndServiceMgmt),
@@ -2282,6 +2388,8 @@ namespace PPMTool.Data.Helpers
                 if (projectTasks.Count == 0)
                 {
                     var value = projectFte * wlm.Total() * 35 / 5f;
+                    value = RoundUpToQuarterHour(value); // Round up the value.
+
                     var entry = new TimesheetEntry
                     {
                         InnateCodeTask = activeTasks.GetRandomTask(Duty.BAU),
@@ -2303,6 +2411,8 @@ namespace PPMTool.Data.Helpers
                         var task = kvp.Key;
                         var assignmentFte = kvp.Value;
                         var value = (assignmentFte / totalAssignmentFte) * projectFte * wlm.Total() * 35 / 5f;
+                        value = RoundUpToQuarterHour(value); // Round up the value.
+
                         var entry = new TimesheetEntry
                         {
                             InnateCodeTask = task,
@@ -2470,6 +2580,26 @@ namespace PPMTool.Data.Helpers
                 sb.Append($"<p>{paragraph.ToString()}</p>");
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Rounds up a timesheet value to the nearest quarter of an hour
+        /// </summary>
+        /// <param name="hours"></param>
+        /// <returns></returns>
+        public static double RoundUpToQuarterHour(double hours)
+        {
+            return Math.Ceiling(hours * 4) / 4.0;
+        }
+
+        /// <summary>
+        /// Replace all the text in the parentheses and the parentheses themselves with nothing
+        /// </summary>
+        /// <param name="stringWithParentheses"></param>
+        /// <returns></returns>
+        public static string RemoveParenthesesText(string stringWithParentheses)
+        {
+            return Regex.Replace(stringWithParentheses, @"\s*\(.*?\)\s*", "");
         }
     }
 }
