@@ -946,7 +946,6 @@ namespace PPMTool.Data.Helpers
                 // Remove a certain number of the existing InnateCodes
                 context.InnateCodes.Where(x =>
                     x.ActivityName.StartsWith("P0") ||
-                    x.ActivityName.StartsWith("S-RES-RTP") ||
                     x.ActivityName.StartsWith("S-RES-P")
                 )
                 .ExecuteDelete();
@@ -965,8 +964,59 @@ namespace PPMTool.Data.Helpers
                     code.ActivityName = RemoveParenthesesText(code.ActivityName);
                 }
 
+                // Add in missing codes
+                context.InnateCodes.AddRange(new List<InnateCode>
+                {
+                    new InnateCode
+                    {
+                        ActivityCode = "S-RES-RTP-255",
+                        ActivityName = "Local Climate",
+                        IsActive = true,
+                        Tasks = GetDefaultInnateCodeTasks()
+                    },
+                    new InnateCode
+                    {
+                        ActivityCode = "S-RES-RTP-323",
+                        ActivityName = "Trade-Off Grade",
+                        IsActive = true,
+                        Tasks = GetDefaultInnateCodeTasks()
+                    },
+                    new InnateCode
+                    {
+                        ActivityCode = "S-RES-RTP-324",
+                        ActivityName = "PaPrKA",
+                        IsActive = true,
+                        Tasks = GetDefaultInnateCodeTasks()
+                    }
+                });
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Generate the default tasks for the Innate codes
+        /// </summary>
+        /// <returns></returns>
+        private static IList<InnateCodeTask> GetDefaultInnateCodeTasks()
+        {
+            return new List<InnateCodeTask>
+                {
+                    new InnateCodeTask
+                    {
+                        TaskName = "Development",
+                        Duty = Duty.ProjectWork
+                    },
+                    new InnateCodeTask
+                    {
+                        TaskName = "Management",
+                        Duty = Duty.ProjectAndServiceMgmt
+                    },
+                    new InnateCodeTask
+                    {
+                        TaskName = "Maintenance",
+                        Duty = Duty.ProjectWork
+                    }
+                };
         }
 
         /// <summary>
