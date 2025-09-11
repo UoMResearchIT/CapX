@@ -1,9 +1,9 @@
 version: 2
 registries:
-  my-nuget-feed:
+  UoMResearchITGitHub:
     type: nuget-feed
     url: https://nuget.pkg.github.com/UoMResearchIT/index.json
-    token: ${{secrets.ACTIONS_LOCAL_TOKEN}}
+    token: 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
 
 updates:
   - package-ecosystem: "nuget"
