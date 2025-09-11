@@ -8,6 +8,7 @@ on:
 
 jobs:
   check-repo-name-conventions:
+    if: github.actor != 'dependabot[bot]
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +22,7 @@ jobs:
           fi
           
   check-branch-name-conventions:
-    if: github.event_name == 'pull_request's
+    if: github.event_name == 'pull_request's && github.actor != 'dependabot[bot]
     runs-on: ubuntu-latest
 
     steps:
