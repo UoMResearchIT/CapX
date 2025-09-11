@@ -21,12 +21,12 @@ jobs:
           fi
           
   check-branch-name-conventions:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request's
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check branch name
         run: |
