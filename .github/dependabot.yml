@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/PPMTool/"  # Adjust if your .csproj or packages.config is in a subfolder
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
