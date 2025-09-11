@@ -1,6 +1,6 @@
 version: 2
 registries:
-  UoMResearchITGitHub:
+  private-github:
     type: nuget-feed
     url: https://nuget.pkg.github.com/UoMResearchIT/index.json
     token: ${{secrets.ACTIONS_REPO_TOKEN}}
@@ -10,4 +10,4 @@ updates:
     directory: "/PPMTool/"  # Adjust if your .csproj is in a subfolder
     schedule:
       interval: "weekly"
-    registries: "UoMResearchITGitHub"
+    registries: private-github
