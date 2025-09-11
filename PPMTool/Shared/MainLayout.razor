@@ -12,10 +12,11 @@
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
+<PageTitle>CapX - Log In</PageTitle>
 
 <RadzenComponents />
 <RadzenLayout>
-    <RadzenHeader Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
+    <RadzenHeader Style="@($"background-color: {(Environment.IsDevelopment() ? "#ae1409" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
                 <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
@@ -153,7 +154,7 @@
             @Body
         </div>
     </RadzenBody>
-    <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
+    <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "#ae1409" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="3rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0; color: white" Text="@versionString" />
             <AuthorizeView>
@@ -162,7 +163,8 @@
                         <div id="magic-bar" style="width: 100%">
                             <RadzenTextBox @bind-Value=@searchTerm
                                            Placeholder="Navigate to a Project or Person..."
-                                           Change=@OnSearchTermEntered />
+                                           Change=@OnSearchTermEntered
+                                           aria-label="Search bar to navigate to project or person" />
                         </div>
                         <RadzenButton ButtonStyle="ButtonStyle.Light" ButtonType="ButtonType.Button" Click="ClearMagicBar" Icon="close" />
                     </RadzenStack>
