@@ -6,7 +6,6 @@ updates:
       interval: "weekly"
     groups:
       security-updates:
+      applies-to: security-updates
         patterns:
           - "*"
-        update-types:
-          - "security"
