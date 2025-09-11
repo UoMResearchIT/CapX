@@ -1,6 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/PPMTool/"  # Adjust if your .csproj is in a subfolder
+    directory: "/PPMTool/"
     schedule:
       interval: "weekly"
+    groups:
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "security"
