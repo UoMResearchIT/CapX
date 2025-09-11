@@ -2,7 +2,7 @@ version: 2
 registries:
   uomresearchitgithub:
     type: nuget-feed
-    url: https://nuget.pkg.github.com/UoMResearchIT/index.json
+    url: https://nuget.pkg.github.com/UoMResearchITTest/index.json
     username: ${{secrets.ACTIONS_NUGET_USER}}
     password: ${{secrets.ACTIONS_LOCAL_TOKEN}}
 
