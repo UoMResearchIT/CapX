@@ -3,11 +3,11 @@ registries:
   UoMResearchITGitHub:
     type: nuget-feed
     url: https://nuget.pkg.github.com/UoMResearchIT/index.json
-    token: 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
+    token: ${{secrets.ACTIONS_REPO_TOKEN}}
 
 updates:
   - package-ecosystem: "nuget"
     directory: "/PPMTool/"  # Adjust if your .csproj is in a subfolder
     schedule:
       interval: "weekly"
-    registries: "*"
+    registries: "UoMResearchITGitHub"
