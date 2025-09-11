@@ -2,13 +2,13 @@ version: 2
 registries:
   uomresearchitgithub:
     type: nuget-feed
-    url: https://nuget.pkg.github.com/UoMResearchITTest/index.json
+    url: https://nuget.pkg.github.com/UoMResearchIT/index.json
     token: ${{secrets.DEPENDABOT_PACKAGE_TOKEN}}
 
-updates:
-  - package-ecosystem: "nuget"
-    directory: "/PPMTool/"  # Adjust if your .csproj is in a subfolder
-    schedule:
-      interval: "weekly"
-    registries:
-      - uomresearchitgithub
+# updates:
+  # - package-ecosystem: "nuget"
+    # directory: "/PPMTool/"  # Adjust if your .csproj is in a subfolder
+    # schedule:
+      # interval: "weekly"
+    # registries:
+      # - uomresearchitgithub
