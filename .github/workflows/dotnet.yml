@@ -11,7 +11,7 @@ on:
 
 jobs:
   format_check:
-
+    if: github.actor != 'dependabot[bot]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,7 +29,7 @@ jobs:
       run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
       
   build:
-  
+    if: github.actor != 'dependabot[bot]
     runs-on: ubuntu-latest
     defaults:
       run:
