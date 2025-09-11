@@ -10,4 +10,5 @@ updates:
     directory: "/PPMTool/"  # Adjust if your .csproj is in a subfolder
     schedule:
       interval: "weekly"
-    registries: "*"
+    registries:
+      - uomresearchitgithub
