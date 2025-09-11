@@ -5,8 +5,6 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      security-updates:
+      all-updates:
         patterns:
           - "*"
-        update-types:
-          - "security"
