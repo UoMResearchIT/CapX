@@ -1,5 +1,4 @@
 ﻿using ApexCharts;
-using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
