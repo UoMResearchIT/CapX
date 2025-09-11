@@ -43,12 +43,6 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
-    - name: Ensure GitHub NuGet Source
-      run: |
-        dotnet nuget update source UoMResearchITGitHub \
-        -u ${{ secrets.ACTIONS_NUGET_USER }} \
-        -p ${{ secrets.ACTIONS_REPO_TOKEN }} \
-        --store-password-in-clear-text
     - name: Restore dependencies
       run: dotnet restore --verbosity detailed
     - name: Build
