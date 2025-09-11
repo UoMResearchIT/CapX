@@ -3,7 +3,7 @@ registries:
   my-nuget-feed:
     type: nuget-feed
     url: https://nuget.pkg.github.com/UoMResearchIT/index.json
-    token: ${{secrets.ACTIONS_REPO_TOKEN}}
+    token: ${{secrets.ACTIONS_LOCAL_TOKEN}}
 
 updates:
   - package-ecosystem: "nuget"
