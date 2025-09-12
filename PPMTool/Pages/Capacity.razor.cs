@@ -45,11 +45,11 @@ namespace PPMTool.Pages
                 // Reload the dropdown sources if a manager has been chosen
                 if (ChosenManager != null)
                 {
-                    ReloadDropDownSources();
+                    await ReloadDropDownSourcesAsync();
                 }
 
                 // Load the chart source based on the current configuration
-                ConfigureChartSource();
+                await ConfigureChartSource();
             }
             else
             {
@@ -60,7 +60,7 @@ namespace PPMTool.Pages
                 };
 
                 // Will automatically load the chart source
-                PeopleSelectionChanged(chosenPeople);
+                await PeopleSelectionChangedAsync(chosenPeople);
             }
 
             LogInformation($"Viewing capacity page");
@@ -73,7 +73,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to setup the dropdown sources
         /// </summary>
-        protected override void ReloadDropDownSources()
+        protected override async Task ReloadDropDownSourcesAsync()
         {
             Debug.WriteLine("** Reloading dropdown sources...");
             people = cachedPeople.ToList();
@@ -125,7 +125,7 @@ namespace PPMTool.Pages
                 chosenPeople = temp;
 
                 // Update the session storage
-                SavePeopleState();
+                await SavePeopleStateAsync();
             }
         }
 
@@ -159,7 +159,7 @@ namespace PPMTool.Pages
         /// Manager selected from the dropdown
         /// </summary>
         /// <param name="selectedOptions"></param>
-        private void ManagerSelectionChanged(object selectedOptions)
+        private async Task ManagerSelectionChangedAsync(object selectedOptions)
         {
             var item = selectedOptions as Person;
             Debug.WriteLine($"** Selected Manager: {item?.Name}");
@@ -168,10 +168,10 @@ namespace PPMTool.Pages
             SaveManagerState();
 
             // Reload the people to include just those working on projects that PM manages
-            ReloadDropDownSources();
+            await ReloadDropDownSourcesAsync();
 
             // Reconfigure the chart
-            ConfigureChartSource();
+            await ConfigureChartSource();
 
             LogInformation($"Selected manager: {item?.Name}");
         }
@@ -179,10 +179,10 @@ namespace PPMTool.Pages
         /// <summary>
         /// Quickly select those people in the available list that the active user manages
         /// </summary>
-        private void FilterToMyStaff()
+        private async Task FilterToMyStaffAsync()
         {
             chosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.Person?.PersonId).Select(x => x.Name);
-            PeopleSelectionChanged(chosenPeople);
+            await PeopleSelectionChangedAsync(chosenPeople);
         }
 
         /// <summary>
@@ -197,9 +197,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Wrapper for the chart configuration event that sets the optional paramters relevant for this page
         /// </summary>
-        private void ConfigureChartSource()
+        private async Task ConfigureChartSource()
         {
-            ConfigureChartSource(
+            await ConfigureChartSource(
                 customChartTitleGenerator: (name) => $"Load for {(!string.IsNullOrEmpty(name) ? name : "All")} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
                 projectModeCondition: () => ManagerChosen()
             );

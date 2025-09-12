@@ -1,14 +1,17 @@
-﻿<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+﻿@using System.Diagnostics
+@using Blazored.SessionStorage
+
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenLabel Text="Include Unfunded:" Component="IncludeUnfunded" />
-    <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" Change="@(() => UnFundedSwitchChanged?.Invoke(IncludeUnFunded))" Name="IncludeUnfunded" />
+    <RadzenSwitch Value="@IncludeUnFunded" Disabled="@Loading" ValueChanged="@UnfundedChanged" Name="IncludeUnfunded" />
 </RadzenStack>
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenLabel Text="Include Leavers:" Component="Includeleavers" />
-    <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" Change="@(() => LeaversSwitchChanged?.Invoke(IncludeLeavers))" Name="IncludeLeavers" />
+    <RadzenSwitch Value="@IncludeLeavers" Disabled="@Loading" ValueChanged="@LeaversChanged" Name="IncludeLeavers" />
 </RadzenStack>
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenLabel Text="Include Finished:" Component="IncludeFinished" />
-    <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" Change="@(() => FinishedSwitchChanged?.Invoke(IncludeFinished))" Name="IncludeFinished" />
+    <RadzenSwitch Value="@IncludeFinished" Disabled="@Loading" ValueChanged="@FinishedChanged" Name="IncludeFinished" />
 </RadzenStack>
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(3))" />
@@ -31,12 +34,77 @@
     [Parameter]
     public Action<int> SetZoomToMonthsAhead { get; set; }
 
+    [Parameter]
+    public string SessionStorageTag { get; set; }
+
     public bool IncludeUnFunded { get; private set; } = true;
     public bool IncludeLeavers { get; private set; } = false;
     public bool IncludeFinished { get; private set; } = false;
 
     [CascadingParameter]
     public bool Loading { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Debug.WriteLine("** BBBBBBBBBBBBBBBBBBBBBB");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
+        var temp = await Blazored.SessionStorage.GetItemAsync<bool?>($"{SessionStorageTag}-include-leavers");
+        if (temp != null)
+        {
+            SetIncludeLeavers(temp ?? false);
+        }
+        temp = await SessionStorage.GetItemAsync<bool?>($"{SessionStorageTag}-include-unfunded");
+        if (temp != null)
+        {
+            SetIncludeUnFunded(temp ?? false);
+        }
+        temp = await SessionStorage.GetItemAsync<bool?>($"{SessionStorageTag}-include-finished");
+        if (temp != null)
+        {
+            SetIncludeFinished(temp ?? false);
+        }
+    }
+
+    /// <summary>
+    /// Internal method for setting the value and firing the callback when the unfunded switch is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private void UnfundedChanged(bool value)
+    {
+        IncludeUnFunded = value;
+        UnFundedSwitchChanged?.Invoke(value);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Internal method for setting the value and firing the callback when the finished switch is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private void LeaversChanged(bool value)
+    {
+        IncludeLeavers = value;
+        LeaversSwitchChanged?.Invoke(value);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Internal method for setting the value and firing the callback when the finished switch is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private void FinishedChanged(bool value)
+    {
+        IncludeFinished = value;
+        FinishedSwitchChanged?.Invoke(value);
+        StateHasChanged();
+    }
 
     //// <summary>
     /// Set the switch for including unfunded projects
