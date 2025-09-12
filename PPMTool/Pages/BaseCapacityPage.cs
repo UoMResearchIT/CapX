@@ -7,6 +7,7 @@ using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Helpers;
 using PPMTool.Enums;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 
@@ -50,25 +51,23 @@ namespace PPMTool.Pages
         protected List<Person> people;
         protected List<Person> filteredPeople;
         protected IEnumerable<string> chosenPeople = new List<string>();
-        protected bool includeUnFunded = true;
-        protected bool includeLeavers = false;
-        protected bool includeFinished = false;
+        protected CapacityChartControlComponent controlComponent;
 
         /// <summary>
         /// Change callback for unfunded switch
         /// </summary>
-        protected void UnFundedSwitchChanged()
+        protected void UnFundedSwitchChanged(bool value)
         {
-            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", includeUnFunded);
+            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
             ConfigureChartSource();
         }
 
         /// <summary>
         /// Change callback for leavers switch
         /// </summary>
-        protected void LeaversSwitchChanged()
+        protected void LeaversSwitchChanged(bool value)
         {
-            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", includeLeavers);
+            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
             ReloadDropDownSources();
             ConfigureChartSource();
         }
@@ -76,9 +75,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Change callback for include finished switch
         /// </summary>
-        protected void FinishedSwitchChanged()
+        protected void FinishedSwitchChanged(bool value)
         {
-            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", includeFinished);
+            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
             ConfigureChartSource();
         }
 
@@ -406,7 +405,7 @@ namespace PPMTool.Pages
                     }
                 }
 
-                Debug.WriteLine($"** Done. Unfunded = {includeUnFunded} | Leavers = {includeLeavers} | Finished = {includeFinished}.");
+                Debug.WriteLine($"** Done. Unfunded = {controlComponent?.IncludeUnFunded} | Leavers = {controlComponent?.IncludeLeavers} | Finished = {controlComponent?.IncludeFinished}.");
 
                 // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
                 var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
@@ -472,7 +471,7 @@ namespace PPMTool.Pages
             people = cachedPeople.ToList();
 
             // Filter out leavers if necessary
-            if (!includeLeavers)
+            if (!controlComponent?.IncludeLeavers ?? false)
             {
                 people = people
                     .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
@@ -531,11 +530,20 @@ namespace PPMTool.Pages
 
             // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
             var temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers");
-            if (temp != null) includeLeavers = temp ?? false;
+            if (temp != null)
+            {
+                controlComponent?.SetIncludeLeavers(temp ?? false);
+            }
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded");
-            if (temp != null) includeUnFunded = temp ?? false;
+            if (temp != null)
+            {
+                controlComponent?.SetIncludeUnFunded(temp ?? false);
+            }
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished");
-            if (temp != null) includeFinished = temp ?? false;
+            if (temp != null)
+            {
+                controlComponent?.SetIncludeFinished(temp ?? false);
+            }
 
             // Reload dropdowns sources
             ReloadDropDownSources();
@@ -623,14 +631,14 @@ namespace PPMTool.Pages
             var validProjects = cachedProjects;
 
             // Filter projects based on finished
-            if (!includeFinished)
+            if (!controlComponent?.IncludeFinished ?? false)
             {
                 Debug.WriteLine("** Removing finished projects...");
                 validProjects = validProjects.Where(p => p.ProjectStatus != ProjectStatus.Finished);
             }
 
             // Filter projects based on unfunded
-            if (!includeUnFunded)
+            if (!controlComponent?.IncludeUnFunded ?? true)
             {
                 Debug.WriteLine("** Removing unfunded projects...");
                 validProjects = validProjects.Where(p => !p.ProjectStatus.IsUnfunded());

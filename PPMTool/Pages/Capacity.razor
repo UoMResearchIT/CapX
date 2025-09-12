@@ -53,24 +53,10 @@
                                 Change="@(args => ManagerSelectionChanged(args))"
                                 LoadData="@LoadFilteredManagers"
                                 Disabled=@(IsDeveloper() || Loading) />
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    Include Unfunded:
-                    <RadzenSwitch @bind-Value="@includeUnFunded" Disabled="@Loading" Change="@UnFundedSwitchChanged" />
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    Include Leavers:
-                    <RadzenSwitch @bind-Value="@includeLeavers" Disabled="@Loading" Change="@LeaversSwitchChanged" />
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    Include Finished:
-                    <RadzenSwitch @bind-Value="@includeFinished" Disabled="@Loading" Change="@FinishedSwitchChanged" />
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />
-                    <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead(6))" />
-                    <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead(9))" />
-                    <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead(12))" />
-                </RadzenStack>
+                <CapacityChartControlComponent FinishedSwitchChanged="@FinishedSwitchChanged"
+                                               LeaversSwitchChanged="@LeaversSwitchChanged"
+                                               UnFundedSwitchChanged="@UnFundedSwitchChanged"
+                                               SetZoomToMonthsAhead="@SetZoomToMonthsAhead"/>
             </RadzenStack>
         </div>
 

@@ -1,0 +1,70 @@
+﻿<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenLabel Text="Include Unfunded:" Component="IncludeUnfunded" />
+    <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" Change="@(() => UnFundedSwitchChanged?.Invoke(IncludeUnFunded))" Name="IncludeUnfunded" />
+</RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenLabel Text="Include Leavers:" Component="Includeleavers" />
+    <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" Change="@(() => LeaversSwitchChanged?.Invoke(IncludeLeavers))" Name="IncludeLeavers" />
+</RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenLabel Text="Include Finished:" Component="IncludeFinished" />
+    <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" Change="@(() => FinishedSwitchChanged?.Invoke(IncludeFinished))" Name="IncludeFinished" />
+</RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(3))" />
+    <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(6))" />
+    <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(9))" />
+    <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(12))" />
+</RadzenStack>
+
+@code {
+
+    [Parameter]
+    public Action<bool> UnFundedSwitchChanged { get; set; }
+
+    [Parameter]
+    public Action<bool> LeaversSwitchChanged { get; set; }
+
+    [Parameter]
+    public Action<bool> FinishedSwitchChanged { get; set; }
+
+    [Parameter]
+    public Action<int> SetZoomToMonthsAhead { get; set; }
+
+    public bool IncludeUnFunded { get; private set; } = true;
+    public bool IncludeLeavers { get; private set; } = false;
+    public bool IncludeFinished { get; private set; } = false;
+
+    [CascadingParameter]
+    public bool Loading { get; set; }
+
+    //// <summary>
+    /// Set the switch for including unfunded projects
+    /// </summary>
+    /// <param name="include"></param>
+    public void SetIncludeUnFunded(bool include)
+    {
+        IncludeUnFunded = include;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Set the switch for including leavers
+    /// </summary>
+    /// <param name="include"></param>
+    public void SetIncludeLeavers(bool include)
+    {
+        IncludeLeavers = include;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Set the switch for including finished projects
+    /// </summary>
+    /// <param name="include"></param>
+    public void SetIncludeFinished(bool include)
+    {
+        IncludeFinished = include;
+        StateHasChanged();
+    }
+}
