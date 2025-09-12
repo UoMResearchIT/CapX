@@ -43,8 +43,8 @@
                 </div>
                 <div class="row">
                     <div class="col-auto">
-                        <RadzenLabel class="radzen-form-label" Text="Active" /><br />
-                        <RadzenSwitch @bind-Value="competency.IsActive" />
+                        <RadzenLabel class="radzen-form-label" Text="Active" Component="IsActive" /><br />
+                        <RadzenSwitch @bind-Value="competency.IsActive" Name="IsActive" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Description (HTML)" /><br />
