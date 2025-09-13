@@ -31,27 +31,16 @@
                                 FilterOperator="StringFilterOperator.Contains"
                                 AllowFiltering="true"
                                 Style="width: 100%; max-width: 400px;"
-                                Change="@(args => PeopleSelectionChanged(args))"
+                                Change="@(async args => await PeopleSelectionChangedAsync(args))"
                                 LoadData="@LoadFilteredPeople"
                                 Disabled="@Loading" />
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    Include Unfunded:
-                    <RadzenSwitch @bind-Value="@includeUnFunded" Disabled="@Loading" Change="@UnFundedSwitchChanged" />
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    Include Leavers:
-                    <RadzenSwitch @bind-Value="@includeLeavers" Disabled="@Loading" Change="@LeaversSwitchChanged" />
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    Include Finished:
-                    <RadzenSwitch @bind-Value="@includeFinished" Disabled="@Loading" Change="@FinishedSwitchChanged" />
-                </RadzenStack>
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-                    <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead(3))" />
-                    <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead(6))" />
-                    <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead(9))" />
-                    <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead(12))" />
-                </RadzenStack>
+                <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
+                                               LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
+                                               UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
+                                               SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
+                                               @bind-IncludeUnFunded="@includeUnFunded"
+                                               @bind-IncludeLeavers="@includeLeavers"
+                                               @bind-IncludeFinished="@includeFinished" />
             </RadzenStack>
         </div>
 
@@ -73,7 +62,7 @@
                     <div class="col" style="min-width: 50rem;">
                         <div class="card my-1">
                             <CapacityChartComponent ChartModel=@chartModels[i]
-                                                    OnDataPointSelection="@DataPointsSelected"
+                                                    OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
                                                     OnChartZoomed="@OnChartZoomed" />
                         </div>
                     </div>

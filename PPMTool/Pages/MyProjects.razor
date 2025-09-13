@@ -15,8 +15,8 @@
         </div>
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
-                <RadzenSwitch @bind-Value="@IncludeFinished" />
+                <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
+                <RadzenSwitch Name="IncludeFinished" @bind-Value="@IncludeFinished" />
             </RadzenStack>
         </div>
     </div>

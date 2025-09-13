@@ -114,20 +114,20 @@ else
 
                 <div class="row">
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Fixed Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date cannot be fixed as determined by end date of predecessor" Visible="@(selectedPredecessorId != null)" /><br />
+                        <RadzenLabel class="radzen-form-label" Component="HasFixedStart" Text="Fixed Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Start date cannot be fixed as determined by end date of predecessor" Visible="@(selectedPredecessorId != null)" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.HasFixedStart" Disabled="@(selectedPredecessorId != null)" />
+                                <RadzenSwitch @bind-value="TaskModel.HasFixedStart" Disabled="@(selectedPredecessorId != null)" Name="HasFixedStart" />
                             </div>
                         </div>
                     </div>
 
                     <!-- Choice of whether the end drive should be picked or driven -->
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Fixed End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cannot fix end date if task is not fixed duration" Visible="@(TaskModel.TaskType != TaskType.FixedDuration)" /><br />
+                        <RadzenLabel class="radzen-form-label" Component="HasFixedEnd" Text="Fixed End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Cannot fix end date if task is not fixed duration" Visible="@(TaskModel.TaskType != TaskType.FixedDuration)" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.HasFixedEndDate" Disabled="@(TaskModel.TaskType != TaskType.FixedDuration)" />
+                                <RadzenSwitch @bind-value="TaskModel.HasFixedEndDate" Disabled="@(TaskModel.TaskType != TaskType.FixedDuration)" Name="HasFixedEnd"/>
                             </div>
                         </div>
                     </div>
@@ -147,10 +147,10 @@ else
 
                 <div class="row">
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Requires Leadership" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Switch this off if the task does not require leadership (affects PM demand and leadership costs if support by the cost model)" /><br />
+                        <RadzenLabel class="radzen-form-label" Component="RequiresLeadership" Text="Requires Leadership" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Switch this off if the task does not require leadership (affects PM demand and leadership costs if support by the cost model)" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.RequiresLeadership" />
+                                <RadzenSwitch @bind-value="TaskModel.RequiresLeadership" Name="RequiresLeadership" />
                             </div>
                         </div>
                     </div>
@@ -360,12 +360,14 @@ else
                                 <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" MinWidth="10px">
                                     <Template Context="res">
                                         <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true />
+                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
+                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true Name="IsProvisional" />
                                         </RadzenStack>
                                     </Template>
                                     <EditTemplate Context="res">
                                         <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                            <RadzenSwitch @bind-Value="@res.IsProvisional" />
+                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
+                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Name="IsProvisional"/>
                                         </RadzenStack>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
@@ -388,13 +390,15 @@ else
                                     <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Width="120px" Title="Project Day Rate?" MinWidth="10px">
                                         <Template Context="res">
                                             <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                                <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true />
+                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
+                                                <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true Name="UseProjectDayRate" />
                                                 <RadzenText Style="margin-bottom: 0rem;" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
                                             </RadzenStack>
                                         </Template>
                                         <EditTemplate Context="res">
                                             <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                                <RadzenSwitch @bind-Value="@res.UseProjectDayRate" />
+                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
+                                                <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Name="UseProjectDayRate" />
                                                 <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
                                             </RadzenStack>
                                         </EditTemplate>

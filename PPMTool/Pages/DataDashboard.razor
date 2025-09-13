@@ -90,8 +90,8 @@
                         </div>
                         <div class="col-3 align-self-stretch">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
-                                <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" />
-                                <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" Disabled="@Loading" />
+                                <RadzenLabel class="radzen-form-label" Text="Show Finished Separately" Component="ShowFinishedAsSeparate" />
+                                <RadzenSwitch @bind-Value="showFinishedAsSeparate" Change="FinishedChanged" Disabled="@Loading" Name="ShowFinishedAsSeparate" />
                             </RadzenStack>
                         </div>
                         <div class="col-auto align-self-stretch">

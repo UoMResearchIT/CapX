@@ -91,7 +91,8 @@
                 <RadzenDataGridColumn TItem="InnateCode" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px">
                     <Template Context="c">
                         <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                            <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" />
+                            <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?"/>
+                            <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" Name="IsActive" />
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
