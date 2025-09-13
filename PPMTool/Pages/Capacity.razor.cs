@@ -94,7 +94,7 @@ namespace PPMTool.Pages
             managers = GetManagers(cachedPeople);
 
             // Filter out leavers if necessary
-            if (!controlComponent?.IncludeLeavers ?? false)
+            if (!includeLeavers)
             {
                 people = people
                     .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)

@@ -3,15 +3,15 @@
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenLabel Text="Include Unfunded:" Component="IncludeUnfunded" />
-    <RadzenSwitch Value="@IncludeUnFunded" Disabled="@Loading" ValueChanged="@UnfundedChanged" Name="IncludeUnfunded" />
+    <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" Change="@UnfundedChangedAsync" Name="IncludeUnfunded" />
 </RadzenStack>
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenLabel Text="Include Leavers:" Component="Includeleavers" />
-    <RadzenSwitch Value="@IncludeLeavers" Disabled="@Loading" ValueChanged="@LeaversChanged" Name="IncludeLeavers" />
+    <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" Change="@LeaversChangedAsync" Name="IncludeLeavers" />
 </RadzenStack>
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenLabel Text="Include Finished:" Component="IncludeFinished" />
-    <RadzenSwitch Value="@IncludeFinished" Disabled="@Loading" ValueChanged="@FinishedChanged" Name="IncludeFinished" />
+    <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" Change="@FinishedChangedAsync" Name="IncludeFinished" />
 </RadzenStack>
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
     <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(3))" />
@@ -32,55 +32,37 @@
     public Action<bool> FinishedSwitchChanged { get; set; }
 
     [Parameter]
-    public Action<int> SetZoomToMonthsAhead { get; set; }
+    public bool IncludeUnFunded { get; set; } = true;
 
     [Parameter]
-    public string SessionStorageTag { get; set; }
+    public EventCallback<bool> IncludeUnFundedChanged { get; set; }
 
-    public bool IncludeUnFunded { get; private set; } = true;
-    public bool IncludeLeavers { get; private set; } = false;
-    public bool IncludeFinished { get; private set; } = false;
+    [Parameter]
+    public bool IncludeLeavers { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> IncludeLeaversChanged { get; set; }
+
+    [Parameter]
+    public bool IncludeFinished { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> IncludeFinishedChanged { get; set; }
+
+    [Parameter]
+    public Action<int> SetZoomToMonthsAhead { get; set; }
 
     [CascadingParameter]
     public bool Loading { get; set; }
-
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-
-        Debug.WriteLine("** BBBBBBBBBBBBBBBBBBBBBB");
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await base.OnAfterRenderAsync(firstRender);
-
-        // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
-        var temp = await Blazored.SessionStorage.GetItemAsync<bool?>($"{SessionStorageTag}-include-leavers");
-        if (temp != null)
-        {
-            SetIncludeLeavers(temp ?? false);
-        }
-        temp = await SessionStorage.GetItemAsync<bool?>($"{SessionStorageTag}-include-unfunded");
-        if (temp != null)
-        {
-            SetIncludeUnFunded(temp ?? false);
-        }
-        temp = await SessionStorage.GetItemAsync<bool?>($"{SessionStorageTag}-include-finished");
-        if (temp != null)
-        {
-            SetIncludeFinished(temp ?? false);
-        }
-    }
 
     /// <summary>
     /// Internal method for setting the value and firing the callback when the unfunded switch is changed
     /// </summary>
     /// <param name="value"></param>
-    private void UnfundedChanged(bool value)
+    private async Task UnfundedChangedAsync(bool value)
     {
-        IncludeUnFunded = value;
-        UnFundedSwitchChanged?.Invoke(value);
+        await IncludeUnFundedChanged.InvokeAsync(value);    // Updates the bound value in the parent
+        UnFundedSwitchChanged?.Invoke(value);               // Fires the action callback so parent can do something in response
         StateHasChanged();
     }
 
@@ -88,9 +70,9 @@
     /// Internal method for setting the value and firing the callback when the finished switch is changed
     /// </summary>
     /// <param name="value"></param>
-    private void LeaversChanged(bool value)
+    private async Task LeaversChangedAsync(bool value)
     {
-        IncludeLeavers = value;
+        await IncludeLeaversChanged.InvokeAsync(value);
         LeaversSwitchChanged?.Invoke(value);
         StateHasChanged();
     }
@@ -99,40 +81,10 @@
     /// Internal method for setting the value and firing the callback when the finished switch is changed
     /// </summary>
     /// <param name="value"></param>
-    private void FinishedChanged(bool value)
+    private async Task FinishedChangedAsync(bool value)
     {
-        IncludeFinished = value;
+        await IncludeFinishedChanged.InvokeAsync(value);
         FinishedSwitchChanged?.Invoke(value);
-        StateHasChanged();
-    }
-
-    //// <summary>
-    /// Set the switch for including unfunded projects
-    /// </summary>
-    /// <param name="include"></param>
-    public void SetIncludeUnFunded(bool include)
-    {
-        IncludeUnFunded = include;
-        StateHasChanged();
-    }
-
-    /// <summary>
-    /// Set the switch for including leavers
-    /// </summary>
-    /// <param name="include"></param>
-    public void SetIncludeLeavers(bool include)
-    {
-        IncludeLeavers = include;
-        StateHasChanged();
-    }
-
-    /// <summary>
-    /// Set the switch for including finished projects
-    /// </summary>
-    /// <param name="include"></param>
-    public void SetIncludeFinished(bool include)
-    {
-        IncludeFinished = include;
         StateHasChanged();
     }
 }

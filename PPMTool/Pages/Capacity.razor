@@ -57,8 +57,9 @@
                                                LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
                                                UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
                                                SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
-                                               SessionStorageTag="@GetSessionStorageTag()"
-                                               @ref=controlComponent />
+                                               @bind-IncludeUnFunded="@includeUnFunded"
+                                               @bind-IncludeLeavers="@includeLeavers"
+                                               @bind-IncludeFinished="@includeFinished" />
             </RadzenStack>
         </div>
 
