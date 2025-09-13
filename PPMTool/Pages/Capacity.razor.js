@@ -17,5 +17,5 @@ function apexChartsUpdateAxis(id, minvalue, maxvalue) {
             min: minvalue,
             max: maxvalue
         }
-    }, true, true);
+    }, false, true);
 }
