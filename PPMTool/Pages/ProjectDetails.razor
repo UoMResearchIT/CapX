@@ -246,8 +246,8 @@
                             </RadzenStack>
 
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                <RadzenText Text="Group Linked Tasks" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                                <RadzenSwitch @bind-Value="@groupLinkedTasks" Change="@GroupTasksChanged" />
+                                <RadzenLabel Text="Group Linked Tasks" class="rz-text-subtitle1" Style="margin-bottom: -0.2rem" Component="GroupLinked" />
+                                <RadzenSwitch Name="GroupLinked" @bind-Value="@groupLinkedTasks" Change="@GroupTasksChanged" />
                             </RadzenStack>
                         </RadzenStack>
                     </div>
@@ -414,7 +414,8 @@
                                         <RadzenText Text="Tag as " TextStyle="TextStyle.Subtitle1"  Style="margin-bottom: 0.1rem" />
                                         <div class="badge badge-info">Finance Info</div>
                                         <RadzenText Text=":" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.1rem" />
-                                        <RadzenSwitch @bind-Value="@noteModel.IsFinanceInfo" Disabled="ActiveUserRoleType == RoleType.Finance" />
+                                        <RadzenLabel Text="Is Finance Info?" Style="visibility: hidden" Component="IsFinanceInfo" />
+                                        <RadzenSwitch Name="IsFinanceInfo" @bind-Value="@noteModel.IsFinanceInfo" Disabled="ActiveUserRoleType == RoleType.Finance" />
                                     </RadzenStack>
                                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                         <RadzenText Text="Due Date: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem; margin-left: 1rem" />
@@ -460,18 +461,20 @@
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                 <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem" />
                                 <div class="badge badge-info">Finance Info</div>
-                                <RadzenSwitch @bind-Value="@showOnlyFinanceNotes" Change="@FilterSwitchToggled" Disabled="ActiveUserRoleType == RoleType.Finance" />
+                                <RadzenLabel Component="ShowOnlyFinanceInfo" Text="Show Only Finance Info" Style="visibility: hidden" />
+                                <RadzenSwitch Name="ShowOnlyFinanceInfo" @bind-Value="@showOnlyFinanceNotes" Change="@FilterSwitchToggled" Disabled="ActiveUserRoleType == RoleType.Finance" />
                             </RadzenStack>
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                 <RadzenText Text="Show Only" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
                                 <div class="badge badge-danger">Note Overdue</div>
                                 <RadzenText Text="/" Style="margin-bottom: 0.1rem" />
                                 <div class="badge badge-warning">Note Due</div>
-                                <RadzenSwitch @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
+                                <RadzenLabel Component="ShowOnlyDue" Text="Show Only Due or Overdue Notes" Style="visibility: hidden" />
+                                <RadzenSwitch Name="ShowOnlyDue" @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
                             </RadzenStack>
                             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenText Text="Sort By Due Date" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
-                                <RadzenSwitch @bind-Value="@sortByDueDate" Change="@FilterSwitchToggled" />
+                                <RadzenLabel Text="Sort By Due Date" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" Component="SortByDueDate" />
+                                <RadzenSwitch Name="SortByDueDate" @bind-Value="@sortByDueDate" Change="@FilterSwitchToggled" />
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenStack>

@@ -13,12 +13,12 @@
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                     <h2>Workload Model Analysis</h2>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                        <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
-                        <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                        <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
-                        <RadzenText Text="Use Stacked Bars" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                        <RadzenSwitch @bind-Value="@useStackedBars" Change="@DisplayStyleChanged" />
+                        <RadzenLabel class="rz-text-subtitle1" Component="CompareTo" Text="Compare to Workload Model" Style="margin-bottom: -0.2rem" />
+                        <RadzenSwitch Name="CompareTo" @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
+                        <RadzenLabel class="rz-text-subtitle1" Component="ScaleTo" Text="Scale by Total Hours" Style="margin-bottom: -0.2rem" />
+                        <RadzenSwitch Name="ScaleTo" @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
+                        <RadzenLabel class="rz-text-subtitle1" Component="UseBars" Text="Use Stacked Bars" Style="margin-bottom: -0.2rem" />
+                        <RadzenSwitch Name="UseBars" @bind-Value="@useStackedBars" Change="@DisplayStyleChanged" />
                     </RadzenStack>
                 </RadzenStack>
                 <HintComponent Message="To view the difference between timesheets and the WLM, enable 'Compare to Workload Model' option. To scale the number of hours booked to 1.0 FTE (i.e. you are then viewing the proportion of time spent rather than the absolute amount), enable the 'Scale by Total Hours' option. Click on a block to navigate to the timesheet for that week." />

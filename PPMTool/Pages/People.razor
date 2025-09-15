@@ -12,8 +12,8 @@
         </div>
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Show Leavers" Style="margin-bottom: 0.1rem" />
-                <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@(Loading || ActiveUserRoleType == RoleType.Developer)" />
+                <RadzenLabel Text="Show Leavers" Style="margin-bottom: 0.1rem" Component="IncludeLeavers"/>
+                <RadzenSwitch Name="IncludeLeavers" @bind-Value="@IncludeLeavers" Disabled="@(Loading || ActiveUserRoleType == RoleType.Developer)" />
                 <RadzenButton Text="Add" Icon="add" Click="@AddPerson" Disabled="@(!EditAuthorised || Loading)" />
             </RadzenStack>
         </div>
