@@ -89,4 +89,17 @@ public static class APIHelper
         }
         return true;
     }
+
+    /// <summary>
+    /// Returns the relevant Leave Year start date for today
+    /// </summary>
+    /// <returns></returns>
+    internal static DateTime GetThisLeaveYearStartDate()
+    {
+        DateTime today = DateTime.Today;
+        int startDay = 1;
+        int startMonth = 10;
+
+        return ((today.Day >= startDay && today.Month >= startMonth) ? new DateTime(today.Year, startMonth, startDay) : new DateTime(today.Year - 1, startMonth, startDay));
+    }
 }
