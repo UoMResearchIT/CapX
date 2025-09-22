@@ -15,9 +15,9 @@
                     {
                         var returnsInDays = Absence.EndDate.Value.Subtract(DateTime.Today).TotalDays + 1;
                         string text = returnsInDays == 1 ? "tomorrow" : $"in {returnsInDays} days";
-                        if (returnsInDays > -1)
+                        if (returnsInDays > -1 || isLeaving)
                         {
-                            <div class="badge badge-info" style="margin-bottom: 0.3rem">@($"Returns {text}")</div>
+                            <div class="badge badge-info" style="margin-bottom: 0.3rem">@(isLeaving ? "Not Returning" : $"Returns {text}")</div>
                         }
                     }
                 }
@@ -40,9 +40,18 @@
     [Parameter]
     public Action<Person> EditPerson { get; set; }
 
+    private bool isLeaving = false;
+
 
     override protected void OnInitialized()
     {
         base.OnInitialized();
+
+        // If the person is leaving then we want to show that on the card
+        isLeaving =
+            Absence != null &&
+            Absence.EndDate != null &&
+            Absence.Person.EndDate != null &&
+            Absence.EndDate!.Value.Date >= Absence.Person.EndDate!.Value.Date;
     }
 }
