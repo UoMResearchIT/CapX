@@ -102,7 +102,7 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(connectionString)
+    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
 );
 
 builder.Services.AddBlazoredSessionStorage();
