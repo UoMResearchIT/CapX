@@ -6,11 +6,14 @@
     public static class EnvironmentHelper
     {
         /// <summary>
-        /// Method to load environment variables and return them as a dictionary of key-value pairs to override configuration settings.
+        /// Method to load environment variables and override configuration settings.
         /// </summary>
+        /// <param name="builder"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> LoadEnvironmentVariables()
+        public static void LoadEnvironmentVariables(WebApplicationBuilder builder)
         {
+            // Add environment variables to the configuration
+            builder.Configuration.AddEnvironmentVariables();
             var overridingValues = new Dictionary<string, string>();
 
             // Get the API key from the environment
@@ -55,7 +58,8 @@
                 overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
             }
 
-            return overridingValues;
+            // Add the overriding values to the configuration
+            builder.Configuration.AddInMemoryCollection(overridingValues);
         }
 
         /// <summary>

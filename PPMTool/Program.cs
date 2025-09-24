@@ -21,9 +21,7 @@ using Serilog;
 
 // Add environment variables to the configuration
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddEnvironmentVariables();
-var overridingValues = EnvironmentHelper.LoadEnvironmentVariables();
-builder.Configuration.AddInMemoryCollection(overridingValues);
+EnvironmentHelper.LoadEnvironmentVariables(builder);
 
 #if RELEASE
 // Configure logging
@@ -222,6 +220,7 @@ var cultureInfo = new CultureInfo("en-GB");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
+// Run the app
 app.Run();
 
 /// <summary>
