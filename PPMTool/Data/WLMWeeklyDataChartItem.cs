@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using PPMTool.Enums;
+﻿using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
@@ -41,12 +38,27 @@ namespace PPMTool.Data
         /// <summary>
         /// Method which updates the difference between the weekly values and the weekly targets based on WLM
         /// </summary>
-        public void UpdateWLMNetValues()
+        public void UpdateWLMNetValues(bool toTotalHours = false)
         {
+            // Total hours expected from targets
+            var totalExpectedFromWLM = WLMWeeklyTargetsByDuty.Sum(x => x.Key == Duty.Other ? 0 : x.Value);
+
             // Loop over all the duties but not including the other category
             foreach (var duty in WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
             {
-                WLMNetByDuty[duty] = TotalHoursForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
+
+                // TODO: Update the net values so they are either FTE or Percent based on the chosen normalisation
+
+                if (toTotalHours)
+                {
+                    // Difference between percentage of time booked against duty and the expected percentage of time based on targets
+                    WLMNetByDuty[duty] = (TotalHoursForWeek == 0 || totalExpectedFromWLM == 0) ? 0 : WeeklyValuesByDuty[duty] - (WLMWeeklyTargetsByDuty[duty] / totalExpectedFromWLM);
+                }
+                else
+                {
+                    // Difference between the FTE booked against duty and the expected FTE based on targets
+                    WLMNetByDuty[duty] = TotalHoursForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
+                }
             }
 
             // Update the min from the size of the aggregates

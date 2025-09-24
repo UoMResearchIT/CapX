@@ -57,7 +57,7 @@ namespace PPMTool.Data.Helpers
             // Only action the gap filler if a person is provided
             if (person != null && gapFillingFunction != null)
             {
-#if DEBUG
+#if LOCAL
                 var currentItemCount = chartItems.Count();
 #endif
                 var extraItems = new List<ChartItem>();
@@ -86,7 +86,7 @@ namespace PPMTool.Data.Helpers
                     chartItems.AddRange(extraItems);
                     chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
                 }
-#if DEBUG
+#if LOCAL
                 if (currentItemCount != chartItems.Count)
                 {
                     Debug.WriteLine($"** {chartItems.Count} block(s) for {person.Name} after gap filling");
