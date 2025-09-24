@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
@@ -142,6 +143,125 @@ public static class Timesheets
         catch (Exception ex)
         {
             logger.LogError(ex, "MyTimesheets: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Give timesheets for a person across a date range as a downloadable CSV file.
+    /// Access: superuser, the person, or their line manager
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileContentResult))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static async Task<IResult> GetTimesheetEntriesForPersonForDateRangeAsCsv(
+        PPMToolContext context,
+        ILogger logger,
+        HttpContext http,
+        string name,
+        string startDate,
+        string endDate)
+    {
+        try
+        {
+            // Try parse the datetimes
+            var success = APIHelper.ParseDateTime(startDate, out DateTime start);
+            if (!success)
+            {
+                logger.LogWarning(
+                    $"API: GetTimesheetEntriesForPersonForDateRangeAsCsv: Invalid start date {startDate}");
+                return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
+            }
+
+            success = APIHelper.ParseDateTime(endDate, out DateTime end);
+            if (!success)
+            {
+                logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRangeAsCsv: Invalid end date {endDate}");
+                return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+            }
+
+            // Get the person from the request arguments
+            var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
+            if (person == null)
+            {
+                logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRangeAsCsv: Person = {name} not found!");
+                return Results.NotFound();
+            }
+
+            // Authorisation check
+            var canAccess = APIHelper.IsSuperUserOrLineManagerOrSelf(context, http, person);
+            if (!canAccess)
+            {
+                logger.LogWarning(
+                    $"API: GetTimesheetEntriesForPersonForDateRangeAsCsv: Caller does not have permission to access the data!");
+                return Results.Unauthorized();
+            }
+
+            // Normalise date range
+            start = start.Date;
+            var endDateExclusive = end.Date.AddDays(1);
+
+            // Query weekly timesheets
+            var timesheets = await context.Timesheets
+                .Include(t => t.Owner)
+                .Include(t => t.TimesheetEntries)
+                .ThenInclude(e => e.InnateCodeTask)
+                .ThenInclude(tk => tk.InnateCode)
+                .Where(t =>
+                    t.OwnerId == person.PersonId &&
+                    t.StartDate < endDateExclusive &&
+                    t.StartDate.AddDays(7) > start)
+                .OrderBy(t => t.StartDate)
+                .ToListAsync();
+
+            // Generate CSV
+            var csvBuilder = new StringBuilder();
+
+            // Add Header Row
+            csvBuilder.AppendLine(
+                "PersonName,WeekStartDate,InnateCode,InnateCodeName,TaskName,Duty,MondayHours,TuesdayHours,WednesdayHours,ThursdayHours,FridayHours,SaturdayHours,SundayHours,WeeklyTotalHours");
+
+            // Add Data Rows
+            foreach (var timesheet in timesheets)
+            {
+                foreach (var entry in timesheet.TimesheetEntries)
+                {
+                    var weeklyTotal = entry.MondayHours + entry.TuesdayHours + entry.WednesdayHours +
+                                      entry.ThursdayHours + entry.FridayHours + entry.SaturdayHours + entry.SundayHours;
+
+                    // TODO: Do these have commas? Gotta check in debug!!
+                    csvBuilder.AppendLine(
+                        $"{person.Name}," +
+                        $"{timesheet.StartDate:yyyy-MM-dd}," +
+                        $"{entry.InnateCodeTask?.InnateCode?.ActivityCode}," +
+                        $"\"{entry.InnateCodeTask?.InnateCode?.ActivityName}\"," +
+                        $"\"{entry.InnateCodeTask?.TaskName}\"," +
+                        $"{entry.InnateCodeTask?.Duty.GetDescription()}," +
+                        $"{entry.MondayHours}," +
+                        $"{entry.TuesdayHours}," +
+                        $"{entry.WednesdayHours}," +
+                        $"{entry.ThursdayHours}," +
+                        $"{entry.FridayHours}," +
+                        $"{entry.SaturdayHours}," +
+                        $"{entry.SundayHours}," +
+                        $"{weeklyTotal}"
+                    );
+                }
+            }
+
+            logger.LogInformation(
+                $"Timesheets CSV: Generated CSV for {person.Name} with {timesheets.Count} weeks of data.");
+
+            // Return the CSV as a file
+            var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";
+            var fileBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+
+            return Results.File(fileBytes, "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Timesheets CSV: error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
