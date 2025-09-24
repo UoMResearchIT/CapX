@@ -214,6 +214,33 @@ public static class Timesheets
                     t.StartDate.AddDays(7) > start)
                 .OrderBy(t => t.StartDate)
                 .ToListAsync();
+            
+            // Use the DTO
+            var timesheetsAsDTOs = timesheets.Select(t => new TimesheetsDTO(
+                TimesheetId: t.TimesheetId,
+                OwnerId: t.OwnerId,
+                OwnerName: t.Owner?.Name ?? "Unknown",
+                CreatedDate: t.CreatedDate,
+                StartDate: t.StartDate,
+                Status: t.Status.GetDescription(),
+                DateStatusChanged: t.DateStatusChanged,
+                Info: t.Info,
+                Entries: t.TimesheetEntries.Select(e => new TimesheetEntryDTO(
+                    TimesheetEntryId: e.TimesheetEntryId,
+                    InnateCodeTaskId: e.InnateCodeTask?.InnateCodeTaskId ?? 0,
+                    InnateCode: e.InnateCodeTask?.InnateCode?.ActivityCode ?? string.Empty,
+                    InnateCodeName: e.InnateCodeTask?.InnateCode?.ActivityName ?? string.Empty,
+                    TaskName: e.InnateCodeTask?.TaskName ?? string.Empty,
+                    Duty: e.InnateCodeTask?.Duty.GetDescription() ?? "None",
+                    MondayHours: e.MondayHours,
+                    TuesdayHours: e.TuesdayHours,
+                    WednesdayHours: e.WednesdayHours,
+                    ThursdayHours: e.ThursdayHours,
+                    FridayHours: e.FridayHours,
+                    SaturdayHours: e.SaturdayHours,
+                    SundayHours: e.SundayHours
+                )).ToList()
+            )).ToList();
 
             // Generate CSV
             var csvBuilder = new StringBuilder();
@@ -223,35 +250,33 @@ public static class Timesheets
                 "PersonName,WeekStartDate,InnateCode,InnateCodeName,TaskName,Duty,MondayHours,TuesdayHours,WednesdayHours,ThursdayHours,FridayHours,SaturdayHours,SundayHours,WeeklyTotalHours");
 
             // Add Data Rows
-            foreach (var timesheet in timesheets)
+            foreach (var timesheetDto in timesheetsAsDTOs)
             {
-                foreach (var entry in timesheet.TimesheetEntries)
+                foreach (var entryDto in timesheetDto.Entries)
                 {
-                    var weeklyTotal = entry.MondayHours + entry.TuesdayHours + entry.WednesdayHours +
-                                      entry.ThursdayHours + entry.FridayHours + entry.SaturdayHours + entry.SundayHours;
+                    var weeklyTotal = entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
+                                      entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours;
 
-                    // TODO: Do these have commas? Gotta check in debug!!
                     csvBuilder.AppendLine(
-                        $"{person.Name}," +
-                        $"{timesheet.StartDate:yyyy-MM-dd}," +
-                        $"{entry.InnateCodeTask?.InnateCode?.ActivityCode}," +
-                        $"\"{entry.InnateCodeTask?.InnateCode?.ActivityName}\"," +
-                        $"\"{entry.InnateCodeTask?.TaskName}\"," +
-                        $"{entry.InnateCodeTask?.Duty.GetDescription()}," +
-                        $"{entry.MondayHours}," +
-                        $"{entry.TuesdayHours}," +
-                        $"{entry.WednesdayHours}," +
-                        $"{entry.ThursdayHours}," +
-                        $"{entry.FridayHours}," +
-                        $"{entry.SaturdayHours}," +
-                        $"{entry.SundayHours}," +
+                        $"{timesheetDto.OwnerName}," +
+                        $"{timesheetDto.StartDate:yyyy-MM-dd}," +
+                        $"{entryDto.InnateCode}," +
+                        $"\"{entryDto.InnateCodeName}\"," +
+                        $"\"{entryDto.TaskName}\"," +
+                        $"{entryDto.Duty}," +
+                        $"{entryDto.MondayHours}," +
+                        $"{entryDto.TuesdayHours}," +
+                        $"{entryDto.WednesdayHours}," +
+                        $"{entryDto.ThursdayHours}," +
+                        $"{entryDto.FridayHours}," +
+                        $"{entryDto.SaturdayHours}," +
+                        $"{entryDto.SundayHours}," +
                         $"{weeklyTotal}"
                     );
                 }
             }
 
-            logger.LogInformation(
-                $"Timesheets CSV: Generated CSV for {person.Name} with {timesheets.Count} weeks of data.");
+            logger.LogInformation($"Timesheets CSV: Generated CSV for {person.Name} from DTOs.");
 
             // Return the CSV as a file
             var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";
