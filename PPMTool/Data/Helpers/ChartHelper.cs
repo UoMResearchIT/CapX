@@ -316,19 +316,19 @@ namespace PPMTool.Data.Helpers
                     // Duration of the task
                     int durationOfTask = subTask.DurationDays + 1;
 
-                    // Total effort demand met, planned and actuals
+                    // Find the total FTE across all resources
+                    double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                    // Total effort assuming demand met (zero demand tasks contribute nothing in this case)
                     double billableDays = SubTask.GetNumberOfBillableDays(subTask.StartDate, durationOfTask - 1);
                     double effortDemandMet = Math.Floor(billableDays * 7 * subTask.Demand);
-                    if (subTask.UnmetDemand == 0)
-                    {
-                        // Just set to same as planned as close enough
-                        effortDemandMet = subTask.PlannedWorkHours;
-                    }
-                    double effortPlanned = subTask.PlannedWorkHours;
-                    double effortActual = subTask.ActualWorkHours;
 
-                    // Find the total FTE across all resources to later work out proportions
-                    double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+                    // Total effort planned based on assigned resources
+                    // Note that subTask.PlannedWorkHours will be non-zero if no resources as it uses the demand so can't use that
+                    double effortPlanned = Math.Floor(billableDays * 7 * totalFTE);
+
+                    // Total effort actually delivered based on assigned resources
+                    double effortActual = subTask.ActualWorkHours;
 
                     // How many whole days does task run this week
                     int taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
