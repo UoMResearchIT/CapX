@@ -449,16 +449,16 @@ namespace PPMTool.Data.Helpers
             var temp = new List<WeeklyTaskEffort>();
             if (subTasks.Count() < 1) return temp;
 
-            // Get all the unique resources
+            // Get all the unique resources on the subtasks
             var resources = subTasks.SelectMany(x => x.AssignedResources).DistinctBy(x => x.Person.PersonId);
 
-            // Get earliest assignment to get start date for marching
+            // Get earliest subtask to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
 
             // Move to a Monday
             start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
-            // Get latest assignment finish, adding a day so the marching stops when there is no work to be done.
+            // Get latest subtask finish, adding a day so the marching stops when there is no work to be done.
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
 
             // Move to the next Sunday if not already a Sunday
@@ -472,7 +472,7 @@ namespace PPMTool.Data.Helpers
             DateTime endOfWeek = start.AddDays(6);
             while (startOfWeek < end)
             {
-                // Find assignments that run within current week
+                // Find subtasks that run within current week
                 var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions
