@@ -103,7 +103,19 @@ public static class APIHelper
             return "";
         }
 
+        // Adding DateTime converter.
+        if (field is DateTime dt)
+        {
+            return dt.ToString("o");
+        }
+
+        // Make sure value is null guarded.
         var value = field.ToString();
+        if (string.IsNullOrEmpty(value))
+        { 
+            return "";
+        }
+
         if (value.Contains(","))
         {
             // Wrap fields with commas in double quotes
