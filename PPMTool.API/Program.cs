@@ -152,7 +152,6 @@ app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPerson
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 app.MapGet($"/timesheets/{{name}}/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
 app.MapGet($"/timesheets/me/entries", Timesheets.GetMyTimesheetEntriesForDateRange);
-app.MapGet("/api/timesheets/{name}/{startDate}/{endDate}/csv", Timesheets.GetTimesheetEntriesForPersonForDateRangeAsCsv);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>
