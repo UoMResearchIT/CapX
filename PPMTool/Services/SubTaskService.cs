@@ -126,8 +126,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal SubTask Clone(PPMToolContext context, SubTask taskToClone)
         {
+            // Get a copy of the task you want to clone from the DB without tracking
             var clone = context.SubTasks
                 .Include(s => s.AssignedResources)
+                .Include(s => s.SkillsRequired)
                 .AsNoTracking()
                 .FirstOrDefault(x => x.SubTaskId == taskToClone.SubTaskId);
 
@@ -146,7 +148,9 @@ namespace PPMTool.Services
                     DayRate = res.DayRate,
                     IsProvisional = res.IsProvisional,
                     Person = res.Person,
-                    UseProjectDayRate = res.UseProjectDayRate
+                    UseProjectDayRate = res.UseProjectDayRate,
+                    FundedFrom = res.FundedFrom,
+                    Rate = res.Rate
                 });
             }
 
