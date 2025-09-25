@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
+using PPMTool.Data.Entities;
 
 namespace PPMTool.API.Endpoints;
 
@@ -13,8 +14,8 @@ namespace PPMTool.API.Endpoints;
 public static class Timesheets
 {
     /// <summary>
-    /// Give timesheets for a person across a date range
-    /// Route uses underscore name, same pattern as skills endpoints
+    /// Get timesheets for a person across a date range.
+    /// If name section left empty, it defaults to the user of the API key.
     /// Supported formats are JSON and CSV. Default format is JSON.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
@@ -25,9 +26,9 @@ public static class Timesheets
         PPMToolContext context,
         ILogger logger,
         HttpContext http,
-        [FromQuery] string name,
         [FromQuery] string startDate,
         [FromQuery] string endDate,
+        [FromQuery] string? name = null,
         [FromQuery] string? format = null)
     {
         try
@@ -44,6 +45,12 @@ public static class Timesheets
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid end date {endDate}");
                 return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+            }
+
+            if ( name == null )
+            {
+                var user = APIHelper.GetCurrentUser(http);
+                name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
             }
 
             // Get the person from the request arguments
@@ -148,38 +155,6 @@ public static class Timesheets
         catch (Exception ex)
         {
             logger.LogError(ex, "Timesheets: error");
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
-    }
-
-    /// <summary>
-    /// Convenience route for the caller's own timesheets
-    /// API key used to determine the user name argument
-    /// </summary>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public static async Task<IResult> GetMyTimesheetEntriesForDateRange(
-         PPMToolContext context,
-         ILogger logger,
-         HttpContext http,
-         [FromQuery] string startDate,
-         [FromQuery] string endDate,
-         [FromQuery] string? format = null)
-    {
-        try
-        {
-            // Get the caller from the request context -- should always be not null here as middleware would have rejected otherwise
-            var user = APIHelper.GetCurrentUser(http);
-
-            // Person entity might be null if the user is not linked to a person
-            var name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
-            return await GetTimesheetEntriesForPersonForDateRange(context, logger, http, name, startDate, endDate, format);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "MyTimesheets: error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
