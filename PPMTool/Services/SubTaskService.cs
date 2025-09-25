@@ -154,6 +154,13 @@ namespace PPMTool.Services
                 });
             }
 
+            // Refresh the skill tags
+            clone.SkillsRequired.Clear();
+            foreach (var tag in taskToClone.SkillsRequired)
+            {
+                clone.SkillsRequired.Add(context.SkillTags.First(x => x.SkillTagId == tag.SkillTagId));
+            }
+
             // Change name
             clone.Name = $"{taskToClone.Name} (Copy)";
 
