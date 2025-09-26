@@ -1,9 +1,7 @@
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
-using PPMTool.Data.Entities;
 
 namespace PPMTool.API.Endpoints;
 
@@ -15,9 +13,14 @@ public static class Timesheets
 {
     /// <summary>
     /// Get timesheets for a person across a date range.
-    /// If name section left empty, it defaults to the user of the API key.
-    /// Supported formats are JSON and CSV. Default format is JSON.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="http"></param>
+    /// <param name="startDate">The start date of the query window in the format yyyy-MM-dd</param>
+    /// <param name="endDate">The end date of the query window in the format yyyy-MM-dd</param>
+    /// <param name="name">The name of the person with spaces replaced with underscores. If not present defaults to the API key owner.</param>
+    /// <param name="asCsv">Whether the retruned data should be as a CSV download. Default is JSON if not present.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -29,7 +32,7 @@ public static class Timesheets
         [FromQuery] string startDate,
         [FromQuery] string endDate,
         [FromQuery] string? name = null,
-        [FromQuery] string? format = null)
+        [FromQuery] bool? asCsv = null)
     {
         try
         {
@@ -47,7 +50,8 @@ public static class Timesheets
                 return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
             }
 
-            if ( name == null )
+            // If the name is null then assume the caller
+            if (name == null)
             {
                 var user = APIHelper.GetCurrentUser(http);
                 name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
@@ -115,20 +119,25 @@ public static class Timesheets
                 )).ToList()
             )).ToList();
 
-            if ("csv".Equals(format, StringComparison.OrdinalIgnoreCase))
+            // Check to see if we need to return a CSV file
+            if (asCsv != null && asCsv == true)
             {
                 logger.LogInformation($"Timesheets: Generating CSV for {person.Name}.");
 
                 // Flatten the data for a simple CSV structure
                 var csvData = timesheetsAsDTOs.SelectMany(timesheetDto =>
+
+                    // Map to an anonymous DTO for the CSV file
                     timesheetDto.Entries.Select(entryDto => new
                     {
                         PersonName = timesheetDto.OwnerName,
-                        WeekStartDate = timesheetDto.StartDate.ToString("yyyy-MM-dd"),
-                        InnateCode = entryDto.InnateCode,
-                        InnateCodeName = entryDto.InnateCodeName,
-                        TaskName = entryDto.TaskName,
-                        Duty = entryDto.Duty,
+                        TimesheetWeekStart = timesheetDto.StartDate.ToString("yyyy-MM-dd"),
+                        TimesheetStatus = timesheetDto.Status,
+                        TimesheetInfo = timesheetDto.Info,
+                        entryDto.InnateCode,
+                        entryDto.InnateCodeName,
+                        entryDto.TaskName,
+                        entryDto.Duty,
                         entryDto.MondayHours,
                         entryDto.TuesdayHours,
                         entryDto.WednesdayHours,
@@ -136,8 +145,8 @@ public static class Timesheets
                         entryDto.FridayHours,
                         entryDto.SaturdayHours,
                         entryDto.SundayHours,
-                        WeeklyTotalHours = entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
-                                           entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
+                        TotalHoursForWeek = entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
+                            entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
                     }));
 
                 var fileBytes = APIHelper.GenerateCsv(csvData);
@@ -148,7 +157,7 @@ public static class Timesheets
             else
             {
                 // Default to JSON
-                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as JSON."); 
+                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as JSON.");
                 return Results.Json(timesheetsAsDTOs);
             }
         }
