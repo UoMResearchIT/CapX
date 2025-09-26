@@ -77,7 +77,7 @@ public static class APIHelper
     }
 
     /// <summary>
-    /// Try parse a date from a string to a DateTime object
+    /// Try parse a date from a string to a DateTime object.
     /// </summary>
     /// <param name="dateAsString"></param>
     /// <param name="dateAsDateTime"></param>
@@ -94,7 +94,6 @@ public static class APIHelper
     /// <summary>
     /// Formats a single object value for inclusion in a CSV field.
     /// It handles nulls and wraps strings containing commas in double quotes.
-    /// For SUPERIOR formatting.
     /// </summary>
     private static string FormatCsvField(object? field)
     {
@@ -103,16 +102,16 @@ public static class APIHelper
             return "";
         }
 
-        // Adding DateTime converter.
+        // Adding DateTime converter
         if (field is DateTime dt)
         {
             return dt.ToString("o");
         }
 
-        // Make sure value is null guarded.
+        // Make sure value is null guarded
         var value = field.ToString();
         if (string.IsNullOrEmpty(value))
-        { 
+        {
             return "";
         }
 
@@ -125,7 +124,7 @@ public static class APIHelper
     }
 
     /// <summary>
-    /// Generates a CSV file as a byte array from a list of objects (uses *SUPERIOR* reflection).
+    /// Generates a CSV file as a byte array from a list of objects.
     /// </summary>
     /// <typeparam name="T">The type of the objects in the list.</typeparam>
     /// <param name="items">The collection of items to include in the CSV.</param>
