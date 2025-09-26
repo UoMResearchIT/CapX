@@ -90,7 +90,7 @@ builder.Services.AddSwaggerGen(
         opt.OperationFilter<SkillTagShallowOperationFilter>();
 
         string? docFilePath = Directory.GetFiles(
-            path: Directory.GetCurrentDirectory(),
+            path: AppContext.BaseDirectory,
             searchPattern: $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
             searchOption: SearchOption.AllDirectories)
         .FirstOrDefault();
@@ -148,10 +148,9 @@ app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints directly using top-level routing
 app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-app.MapGet($"/timesheets/{{name}}/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-app.MapGet($"/timesheets/me/entries", Timesheets.GetMyTimesheetEntriesForDateRange);
+app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>

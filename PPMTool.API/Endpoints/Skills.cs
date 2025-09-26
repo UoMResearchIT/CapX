@@ -48,10 +48,13 @@ public static class Skills
     /// <summary>
     /// Get all skills tags for a person
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="name">The name of the person to query with spaces replaced with underscores</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string name)
+    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, [FromQuery] string name)
     {
         try
         {

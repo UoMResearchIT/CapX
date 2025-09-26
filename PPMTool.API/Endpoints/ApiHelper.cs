@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -76,7 +77,7 @@ public static class APIHelper
     }
 
     /// <summary>
-    /// Try parse a date from a string to a DateTime object
+    /// Try parse a date from a string to a DateTime object.
     /// </summary>
     /// <param name="dateAsString"></param>
     /// <param name="dateAsDateTime"></param>
@@ -88,5 +89,61 @@ public static class APIHelper
             return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Formats a single object value for inclusion in a CSV field.
+    /// It handles nulls and wraps strings containing commas in double quotes.
+    /// </summary>
+    private static string FormatCsvField(object? field)
+    {
+        if (field == null)
+        {
+            return "";
+        }
+
+        // Adding DateTime converter
+        if (field is DateTime dt)
+        {
+            return dt.ToString("o");
+        }
+
+        // Make sure value is null guarded
+        var value = field.ToString();
+        if (string.IsNullOrEmpty(value))
+        {
+            return "";
+        }
+
+        if (value.Contains(","))
+        {
+            // Wrap fields with commas in double quotes
+            return $"\"{value}\"";
+        }
+        return value;
+    }
+
+    /// <summary>
+    /// Generates a CSV file as a byte array from a list of objects.
+    /// </summary>
+    /// <typeparam name="T">The type of the objects in the list.</typeparam>
+    /// <param name="items">The collection of items to include in the CSV.</param>
+    /// <returns>A byte array representing the UTF-8 encoded CSV file.</returns>
+    internal static byte[] GenerateCsv<T>(IEnumerable<T> items)
+    {
+        var csvBuilder = new StringBuilder();
+        var properties = typeof(T).GetProperties();
+
+        // Add Header Row
+        csvBuilder.AppendLine(string.Join(",", properties.Select(p => p.Name)));
+
+        // Add Data Rows
+        foreach (var item in items)
+        {
+            var line = string.Join(",", properties.Select(p => FormatCsvField(p.GetValue(item))));
+            csvBuilder.AppendLine(line);
+        }
+
+        return Encoding.UTF8.GetBytes(csvBuilder.ToString());
     }
 }
