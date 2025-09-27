@@ -82,6 +82,5 @@ namespace PPMTool.API.Tests
             client.DefaultRequestHeaders.Add("x-api-key", new List<string> { ManagerApiKey! });
             return client;
         }
-
     }
 }

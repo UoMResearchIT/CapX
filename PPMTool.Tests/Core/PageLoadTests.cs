@@ -8,7 +8,7 @@ namespace PPMTool.Tests.Core
         public async Task HomepageShouldLoadWithCorrectTitleAndNoCrashBanner()
         {
             // Navigate the browser to the homepage
-            await Page.GotoAsync("https://localhost:5001/");
+            await Page.GotoAsync($"{Setup.BaseUrl}");
 
             // Assert that the page title is correct
             await Expect(Page).ToHaveTitleAsync("CapX - Log In");
