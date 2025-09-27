@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.API", "..\PPMTool.A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Tests", "..\PPMTool.Tests\PPMTool.Tests.csproj", "{0B2DFB82-1CC9-41EC-B6EE-171F37B9E264}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.API.Tests", "..\PPMTool.API.Tests\PPMTool.API.Tests.csproj", "{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,12 @@ Global
 		{0B2DFB82-1CC9-41EC-B6EE-171F37B9E264}.Local|Any CPU.Build.0 = Debug|Any CPU
 		{0B2DFB82-1CC9-41EC-B6EE-171F37B9E264}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B2DFB82-1CC9-41EC-B6EE-171F37B9E264}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}.Local|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}.Local|Any CPU.Build.0 = Debug|Any CPU
+		{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FC282F3-5940-4099-8AE3-ACBDCE0DE020}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
