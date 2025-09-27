@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="6.0.10" />
     <Using Include="Microsoft.Playwright.NUnit" />
     <Using Include="NUnit.Framework" />
     <Using Include="System.Text.RegularExpressions" />
