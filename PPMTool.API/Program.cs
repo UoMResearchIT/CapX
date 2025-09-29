@@ -151,8 +151,9 @@ app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
 app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+app.MapGet($"/wlm/analysis", WorkloadModel.GetWorkloadAnalysisData);
 
-// Fallback for unmatched routes
+// Fallback for unmatched routes.
 app.MapFallback(async context =>
 {
     context.Response.StatusCode = 404;
