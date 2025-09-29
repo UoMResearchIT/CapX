@@ -224,9 +224,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private string GetYAxisTitle()
         {
-            var title = compareToWLM ? "Difference between Time Booked and WLM" : "Time Booked";
-            title += normalisedByTotalHours ? " (Fraction of Total Hours)" : " (FTE)";
-            return title;
+            return WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
         }
     }
 }
