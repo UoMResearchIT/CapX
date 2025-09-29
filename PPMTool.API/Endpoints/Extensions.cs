@@ -15,18 +15,5 @@ namespace PPMTool.API.Endpoints
             int diff = (7 + (dt.DayOfWeek - DayOfWeek.Monday)) % 7;
             return dt.AddDays(-1 * diff).Date;
         }
-
-        /// <summary>
-        /// Gets the string from an Enum's [Description] attribute.
-        /// </summary>
-        public static string GetDescription<T>(this T enumValue) where T : Enum
-        {
-            var field = enumValue.GetType().GetField(enumValue.ToString());
-            if (field == null) return enumValue.ToString();
-
-            var attribute = Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) as DescriptionAttribute;
-
-            return attribute == null ? enumValue.ToString() : attribute.Description;
-        }
     }
 }
