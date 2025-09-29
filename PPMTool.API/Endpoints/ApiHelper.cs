@@ -154,6 +154,13 @@ public static class APIHelper
     /// Generates WLM analysis data for a collection of people over a specified date range.
     /// This is a helper method specific to the WorkLoadModel API.
     /// </summary>
+    /// <param name="context">The database context for data retrieval.</param>
+    /// <param name="people">The collection of people for whom to generate the analysis.</param>
+    /// <param name="startDate">The start date of the analysis period.</param>
+    /// <param name="endDate">The end date of the analysis period.</param>
+    /// <param name="compareToWLM">A flag to determine if the data should be the difference against the WLM.</param>
+    /// <param name="normalisedByTotalHours">A flag to determine if the data should be normalised as a fraction of total hours.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a list of DTOs with the structured WLM analysis data.</returns>
     internal static async Task<List<WLMAnalysisPersonDataDTO>> GenerateWlmAnalysisDataAsync(
         PPMToolContext context,
         IEnumerable<Person> people,
