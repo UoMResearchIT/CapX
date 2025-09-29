@@ -6,12 +6,12 @@ using PPMTool.Data.Context;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// Skill endpoint function mapping
+/// Skill endpoint function mapping.
 /// </summary>
 public static class Skills
 {
     /// <summary>
-    /// Get all skills tags from DB
+    /// Get all skills tags from DB.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -29,7 +29,7 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Map the database entities to DTOs
+            // Map the database entities to DTOs.
             var tagDtos = tags.Select(t => new SkillTagDTO(
                 SkillTagId: t.SkillTagId,
                 Name: t.Name
@@ -46,11 +46,11 @@ public static class Skills
     }
 
     /// <summary>
-    /// Get all skills tags for a person
+    /// Get all skills tags for a person.
     /// </summary>
     /// <param name="context"></param>
     /// <param name="logger"></param>
-    /// <param name="name">The name of the person to query with spaces replaced with underscores</param>
+    /// <param name="name">The name of the person to query with spaces replaced with underscores.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -58,7 +58,7 @@ public static class Skills
     {
         try
         {
-            // Find the person by name
+            // Find the person by name.
             var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
@@ -66,13 +66,13 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Get all SkillTags associated with the person via OwnedSkills
+            // Get all SkillTags associated with the person via OwnedSkills.
             var tags = await context.OwnedSkills
                 .Where(x => x.Owner.PersonId == person.PersonId)
                 .Select(x => x.SkillTag)
                 .ToListAsync();
 
-            // Map the SkillTag entities to our SkillTagDTOs
+            // Map the SkillTag entities to our SkillTagDTOs.
             var tagDtos = tags.Select(t => new SkillTagDTO(
                 SkillTagId: t.SkillTagId,
                 Name: t.Name
@@ -89,7 +89,7 @@ public static class Skills
     }
 
     /// <summary>
-    /// Get all skills tags grouped by person
+    /// Get all skills tags grouped by person.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<PersonSkillsDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -98,7 +98,7 @@ public static class Skills
     {
         try
         {
-            // Load all OwnedSkills with related Owner and SkillTag in one query
+            // Load all OwnedSkills with related Owner and SkillTag in one query.
             var ownedSkills = await context.OwnedSkills
                 .Include(x => x.Owner)
                 .Include(x => x.SkillTag)
@@ -110,7 +110,7 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Use LINQ to group and map directly to the new DTO structure
+            // Use LINQ to group and map directly to the new DTO structure.
             var results = ownedSkills
                 .GroupBy(os => os.Owner.Name)
                 .Select(group => new PersonSkillsDTO(
