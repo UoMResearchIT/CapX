@@ -30,7 +30,7 @@ namespace PPMTool.API.Endpoints
         {
             try
             {
-                // Try parse the datetimes.
+                // Try parse the datetimes
                 var success = APIHelper.ParseDateTime(startDate, out DateTime start);
                 if (!success)
                 {
@@ -44,15 +44,15 @@ namespace PPMTool.API.Endpoints
                     return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
                 }
 
-                // Split the comma-separated names.
+                // Split the comma-separated names
                 var names = personNames.Split(',').Select(n => n.Trim()).Where(n => !string.IsNullOrEmpty(n)).ToList();
                 if (!names.Any()) return Results.BadRequest("No person names provided.");
 
-                // Same calculations as the WLM.
+                // Same calculations as the WLM
                 start = start.StartOfWeek();
                 end = end.StartOfWeek().AddDays(6);
 
-                // Validate each person and check authorisation.
+                // Validate each person and check authorisation
                 var selectedPeople = new List<Data.Entities.Person>();
                 foreach (var name in names)
                 {
@@ -64,16 +64,16 @@ namespace PPMTool.API.Endpoints
                     selectedPeople.Add(person);
                 }
 
-                // Prepare to gather the results for each person.
+                // Prepare to gather the results for each person
                 var results = new List<WLMAnalysisPersonDataDTO>();
                 string units = GetUnits(compareToWLM, normalisedByTotalHours);
 
-                // Process data for each selected person.
+                // Process data for each selected person
                 foreach (var person in selectedPeople)
                 {
                     var personWeeklyData = new List<WLMWeeklyAnalysisDTO>();
 
-                    // Fetch all timesheets for the person within the date range.
+                    // Fetch all timesheets for the person within the date range
                     var allTimesheets = await context.Timesheets
                         .Include(t => t.TimesheetEntries).ThenInclude(e => e.InnateCodeTask).ThenInclude(tk => tk.InnateCode)
                         .Where(t => t.Owner.PersonId == person.PersonId && t.StartDate >= start && t.StartDate <= end)
@@ -81,7 +81,7 @@ namespace PPMTool.API.Endpoints
 
                     var weekStart = start;
 
-                    // Same logic as WLM.
+                    // Same logic as WLM
                     while (weekStart <= end)
                     {
                         var wlmDataItem = WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets);
