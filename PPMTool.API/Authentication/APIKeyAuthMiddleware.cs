@@ -4,7 +4,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.API.Authentication
 {
     /// <summary>
-    /// Middleware to authenticate API key
+    /// Middleware to authenticate API key.
     /// </summary>
     public sealed class APIKeyAuthMiddleware
     {

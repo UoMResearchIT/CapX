@@ -6,7 +6,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace PPMTool.API.Filters
 {
     /// <summary>
-    /// Method to ensure that if SkillTag is featured in a return structure, the documentation only shows a shallow object
+    /// Method to ensure that if SkillTag is featured in a return structure, the documentation only shows a shallow object.
     /// </summary>
     internal class SkillTagShallowOperationFilter : IOperationFilter
     {
