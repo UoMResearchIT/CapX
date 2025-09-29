@@ -64,45 +64,14 @@ namespace PPMTool.API.Endpoints
                     selectedPeople.Add(person);
                 }
 
-                // Prepare to gather the results for each person
-                var results = new List<WLMAnalysisPersonDataDTO>();
-                string units = WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
-
-                // Process data for each selected person
-                foreach (var person in selectedPeople)
-                {
-                    var personWeeklyData = new List<WLMWeeklyAnalysisDTO>();
-
-                    // Fetch all timesheets for the person within the date range
-                    var allTimesheets = await context.Timesheets
-                        .Include(t => t.TimesheetEntries).ThenInclude(e => e.InnateCodeTask).ThenInclude(tk => tk.InnateCode)
-                        .Where(t => t.Owner.PersonId == person.PersonId && t.StartDate >= start && t.StartDate <= end)
-                        .ToListAsync();
-
-                    var weekStart = start;
-
-                    // Same logic as WLM
-                    while (weekStart <= end)
-                    {
-                        var wlmDataItem = WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets);
-
-                        if (normalisedByTotalHours)
-                        {
-                            wlmDataItem.SwitchNormalisation(true);
-                        }
-
-                        wlmDataItem.UpdateWLMNetValues(normalisedByTotalHours);
-
-                        var sourceData = compareToWLM ? wlmDataItem.WLMNetByDuty : wlmDataItem.WeeklyValuesByDuty;
-
-                        var dutiesDict = sourceData
-                            .ToDictionary(kvp => kvp.Key.GetDescription(), kvp => kvp.Value);
-
-                        personWeeklyData.Add(new WLMWeeklyAnalysisDTO(weekStart, units, dutiesDict));
-                        weekStart = weekStart.AddDays(7);
-                    }
-                    results.Add(new WLMAnalysisPersonDataDTO(person.Name, personWeeklyData));
-                }
+                var results = await APIHelper.GenerateWlmAnalysisDataAsync(
+                    context,
+                    selectedPeople,
+                    start,
+                    end,
+                    compareToWLM,
+                    normalisedByTotalHours
+                );
 
                 logger.LogInformation($"API: Returned WLM Analysis data as JSON for {personNames}.");
                 return Results.Json(results);
