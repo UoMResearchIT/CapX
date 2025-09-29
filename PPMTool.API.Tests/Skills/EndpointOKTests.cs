@@ -9,7 +9,7 @@ namespace PPMTool.API.Tests.Skills
             using (var client = Setup.GetClientAsManager())
             {
                 var response = await client.GetAsync("/skills/getAll");
-                Assert.IsTrue(response.IsSuccessStatusCode);
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
     }
