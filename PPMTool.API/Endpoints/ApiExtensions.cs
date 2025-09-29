@@ -5,7 +5,7 @@ namespace PPMTool.API.Endpoints
     /// <summary>
     /// Provides general extensions methods for common repeatedable actions in minimal API endpoints.
     /// </summary>
-    public static class ApiExtensions
+    public static class APIExtensions
     {
         /// <summary>
         /// Returns the date of the Monday of the week for the given date.
