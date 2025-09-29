@@ -12,7 +12,7 @@ namespace PPMTool.API.Endpoints;
 /// <summary>
 /// Provides general helper methods for common repeatedable actions in minimal API endpoints.
 /// </summary>
-public static class APIHelper
+public static class Helpers
 {
     /// <summary>
     /// Gets the authenticated user from the HttpContext. Should always be present if the authentication middleware is correctly set up.
@@ -170,7 +170,7 @@ public static class APIHelper
         bool normalisedByTotalHours)
     {
         var results = new List<WLMAnalysisPersonDataDTO>();
- 
+
         string units = WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
 
         foreach (var person in people)

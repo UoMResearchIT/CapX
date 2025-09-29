@@ -59,7 +59,7 @@ public static class Skills
         try
         {
             // Find the person by name.
-            var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
+            var person = await Helpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
                 logger.LogWarning("API: GetAllSkillsTagsForPerson: Person = {Name} not found!", name);
