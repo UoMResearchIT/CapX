@@ -40,7 +40,7 @@ public static class APIHelper
     }
 
     /// <summary>
-    /// Get a matching person if they exist by name, case insensitive, underscores treated as spaces
+    /// Get a matching person if they exist by name, case insensitive, underscores treated as spaces.
     /// </summary>
     /// <param name="context"></param>
     /// <param name="name"></param>
@@ -49,6 +49,7 @@ public static class APIHelper
     {
         return await context.People
                 .Include(x => x.LineManager)
+                .Include(x => x.WorkloadModelChanges)
                 .FirstOrDefaultAsync(x => x.Name.ToLower() == name.Trim().ToLower().Replace("_", " "));
     }
 
@@ -102,13 +103,13 @@ public static class APIHelper
             return "";
         }
 
-        // Adding DateTime converter
+        // Adding DateTime converter.
         if (field is DateTime dt)
         {
             return dt.ToString("o");
         }
 
-        // Make sure value is null guarded
+        // Make sure value is null guarded.
         var value = field.ToString();
         if (string.IsNullOrEmpty(value))
         {
@@ -117,7 +118,7 @@ public static class APIHelper
 
         if (value.Contains(","))
         {
-            // Wrap fields with commas in double quotes
+            // Wrap fields with commas in double quotes.
             return $"\"{value}\"";
         }
         return value;
@@ -134,10 +135,10 @@ public static class APIHelper
         var csvBuilder = new StringBuilder();
         var properties = typeof(T).GetProperties();
 
-        // Add Header Row
+        // Add Header Row.
         csvBuilder.AppendLine(string.Join(",", properties.Select(p => p.Name)));
 
-        // Add Data Rows
+        // Add Data Rows.
         foreach (var item in items)
         {
             var line = string.Join(",", properties.Select(p => FormatCsvField(p.GetValue(item))));
