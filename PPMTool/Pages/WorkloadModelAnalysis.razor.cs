@@ -213,7 +213,11 @@ namespace PPMTool.Pages
                 },
                 Xaxis = new XAxis
                 {
-                    Categories = Enum.GetValues<Duty>().Select(x => x.GetDescription())
+                    Type = XAxisType.Datetime,
+                    Labels = new XAxisLabels
+                    {
+                        Format = "dd MMM yyyy"
+                    }
                 }
             });
         }
