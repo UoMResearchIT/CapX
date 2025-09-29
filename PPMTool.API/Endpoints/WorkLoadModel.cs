@@ -66,7 +66,7 @@ namespace PPMTool.API.Endpoints
 
                 // Prepare to gather the results for each person
                 var results = new List<WLMAnalysisPersonDataDTO>();
-                string units = GetUnits(compareToWLM, normalisedByTotalHours);
+                string units = WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
 
                 // Process data for each selected person
                 foreach (var person in selectedPeople)
@@ -112,19 +112,6 @@ namespace PPMTool.API.Endpoints
                 logger.LogError(ex, "WorkloadModelAnalysis Endpoint Error");
                 return Results.StatusCode(StatusCodes.Status500InternalServerError);
             }
-        }
-
-        /// <summary>
-        /// Generates a descriptive string for the units based on query parameters.
-        /// </summary>
-        /// <param name="compare">Whether the data is a comparison against the WLM.</param>
-        /// <param name="normalise">Whether the data is normalised.</param>
-        /// <returns>A string describing the data units.</returns>
-        private static string GetUnits(bool compare, bool normalise)
-        {
-            var title = compare ? "Difference between Time Booked and WLM" : "Time Booked";
-            title += normalise ? " (Fraction of Total Hours)" : " (FTE)";
-            return title;
         }
     }
 }
