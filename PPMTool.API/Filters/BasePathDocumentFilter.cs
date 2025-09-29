@@ -4,7 +4,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace PPMTool.API.Filters
 {
     /// <summary>
-    /// Filter to adjust the "Try It Out" docs to add the required base path
+    /// Filter to adjust the "Try It Out" docs to add the required base path.
     /// </summary>
     public class BasePathDocumentFilter : IDocumentFilter
     {

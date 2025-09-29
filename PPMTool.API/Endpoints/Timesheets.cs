@@ -50,14 +50,14 @@ public static class Timesheets
                 return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
             }
 
-            // If the name is null then assume the caller.
+            // If the name is null then assume the caller
             if (name == null)
             {
                 var user = APIHelper.GetCurrentUser(http);
                 name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
             }
 
-            // Get the person from the request arguments.
+            // Get the person from the request arguments
             var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
@@ -65,7 +65,7 @@ public static class Timesheets
                 return Results.NotFound();
             }
 
-            // Authorisation check.
+            // Authorisation check
             var canAccess = APIHelper.IsSuperUserOrLineManagerOrSelf(context, http, person);
             if (!canAccess)
             {
@@ -73,13 +73,13 @@ public static class Timesheets
                 return Results.Unauthorized();
             }
 
-            // Normalise date range to full days.
-            // Start inclusive, end inclusive (implemented as end exclusive).
+            // Normalise date range to full days
+            // Start inclusive, end inclusive (implemented as end exclusive)
             start = start.Date;
             var endDateExclusive = end.Date.AddDays(1);
 
-            // Query weekly timesheets that overlap the window.
-            // Read only, include owner and entries with innate info.
+            // Query weekly timesheets that overlap the window
+            // Read only, include owner and entries with innate info
             var timesheets = await context.Timesheets
                 .Include(t => t.Owner)
                 .Include(t => t.TimesheetEntries)
@@ -92,7 +92,7 @@ public static class Timesheets
                 .OrderBy(t => t.StartDate)
                 .ToListAsync();
 
-            // Map to DTOs.
+            // Map to DTOs
             var timesheetsAsDTOs = timesheets.Select(t => new TimesheetsDTO(
                 TimesheetId: t.TimesheetId,
                 OwnerId: t.OwnerId,
@@ -119,7 +119,7 @@ public static class Timesheets
                 )).ToList()
             )).ToList();
 
-            // Check to see if we need to return a CSV file.
+            // Check to see if we need to return a CSV file
             if (asCsv != null && asCsv == true)
             {
                 logger.LogInformation($"Timesheets: Generating CSV for {person.Name}.");
@@ -156,7 +156,7 @@ public static class Timesheets
             }
             else
             {
-                // Default to JSON.
+                // Default to JSON
                 logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as JSON.");
                 return Results.Json(timesheetsAsDTOs);
             }

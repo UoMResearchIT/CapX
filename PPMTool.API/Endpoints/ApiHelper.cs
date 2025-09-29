@@ -15,7 +15,7 @@ public static class APIHelper
     /// <summary>
     /// Gets the authenticated user from the HttpContext. Should always be present if the authentication middleware is correctly set up.
     /// </summary>
-    /// <param name="context"></param>
+    /// <param name="context">The current HttpContext.</param>
     /// <returns>User entity if there is one in the context</returns>
     internal static User GetCurrentUser(HttpContext context)
     {
@@ -31,7 +31,7 @@ public static class APIHelper
     /// <summary>
     /// Checks if a given user has the Superuser role.
     /// </summary>
-    /// <param name="user"></param>
+    /// <param name="user">The user to check.</param>
     /// <returns>True if user is a superuser</returns>
     internal static bool IsSuperUser(User? user)
     {
@@ -42,9 +42,9 @@ public static class APIHelper
     /// <summary>
     /// Get a matching person if they exist by name, case insensitive, underscores treated as spaces.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="name"></param>
-    /// <returns></returns>
+    /// <param name="context">The database context.</param>
+    /// <param name="name">The name of the person to find.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the found Person object, or null if not found.</returns>
     internal static async Task<Person?> FindPersonWithLineManagerByNameAsync(PPMToolContext context, string name)
     {
         return await context.People
@@ -56,10 +56,10 @@ public static class APIHelper
     /// <summary>
     /// Determines if the caller is a superuser, the line manager of the specified person, or the person themselves.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="http"></param>
-    /// <param name="person"></param>
-    /// <returns></returns>
+    /// <param name="context">The database context.</param>
+    /// <param name="http">The current HttpContext, used to identify the caller.</param>
+    /// <param name="person">The person to check authorisation against.</param>
+    /// <returns>True if the caller is a superuser, the person's line manager, or the person themselves; otherwise, false.</returns>
     internal static bool IsSuperUserOrLineManagerOrSelf(PPMToolContext context, HttpContext http, Person person)
     {
         var caller = GetCurrentUser(http);
@@ -80,9 +80,9 @@ public static class APIHelper
     /// <summary>
     /// Try parse a date from a string to a DateTime object.
     /// </summary>
-    /// <param name="dateAsString"></param>
-    /// <param name="dateAsDateTime"></param>
-    /// <returns></returns>
+    /// <param name="dateAsString">The string to parse, expected format "yyyy-MM-dd".</param>
+    /// <param name="dateAsDateTime">When this method returns, contains the DateTime value equivalent to the date contained in dateAsString, if the conversion succeeded, or the default value of DateTime if the conversion failed.</param>
+    /// <returns>True if the string was converted successfully; otherwise, false.</returns>
     internal static bool ParseDateTime(string dateAsString, out DateTime dateAsDateTime)
     {
         if (!DateTime.TryParseExact(dateAsString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateAsDateTime))

@@ -29,7 +29,7 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Map the database entities to DTOs.
+            // Map the database entities to DTOs
             var tagDtos = tags.Select(t => new SkillTagDTO(
                 SkillTagId: t.SkillTagId,
                 Name: t.Name
@@ -66,13 +66,13 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Get all SkillTags associated with the person via OwnedSkills.
+            // Get all SkillTags associated with the person via OwnedSkills
             var tags = await context.OwnedSkills
                 .Where(x => x.Owner.PersonId == person.PersonId)
                 .Select(x => x.SkillTag)
                 .ToListAsync();
 
-            // Map the SkillTag entities to our SkillTagDTOs.
+            // Map the SkillTag entities to our SkillTagDTOs
             var tagDtos = tags.Select(t => new SkillTagDTO(
                 SkillTagId: t.SkillTagId,
                 Name: t.Name
@@ -98,7 +98,7 @@ public static class Skills
     {
         try
         {
-            // Load all OwnedSkills with related Owner and SkillTag in one query.
+            // Load all OwnedSkills with related Owner and SkillTag in one query
             var ownedSkills = await context.OwnedSkills
                 .Include(x => x.Owner)
                 .Include(x => x.SkillTag)
@@ -110,7 +110,7 @@ public static class Skills
                 return Results.NotFound();
             }
 
-            // Use LINQ to group and map directly to the new DTO structure.
+            // Use LINQ to group and map directly to the new DTO structure
             var results = ownedSkills
                 .GroupBy(os => os.Owner.Name)
                 .Select(group => new PersonSkillsDTO(
