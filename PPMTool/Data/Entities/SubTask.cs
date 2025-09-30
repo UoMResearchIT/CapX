@@ -50,12 +50,12 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// For now, restricted to a single predecessor task and an "finish-to-start" contraint
         /// </summary>
-        public SubTask Predecessor { get; set; }
+        public virtual SubTask Predecessor { get; set; }
 
         /// <summary>
         /// Represents the list of tasks for which this task is a predecessor
         /// </summary>
-        public ICollection<SubTask> Successors { get; set; } = new List<SubTask>();
+        public virtual ICollection<SubTask> Successors { get; set; } = new List<SubTask>();
 
         private bool hasFixedStart;
         /// <summary>
@@ -150,12 +150,12 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Project which owns the subtask
         /// </summary>
-        public Project OwningProject { get; set; }
+        public virtual Project OwningProject { get; set; }
 
         /// <summary>
         /// Skills that this task requires
         /// </summary>
-        public IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
+        public virtual IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task

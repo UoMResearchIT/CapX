@@ -17,7 +17,7 @@ namespace PPMTool.Data.Entities
         /// The person associated with this resource
         /// </summary>
         [Required]
-        public Person Person { get; set; }
+        public virtual Person Person { get; set; }
 
         /// <summary>
         /// This is the day rate associated with this resource assignment.
@@ -67,13 +67,13 @@ namespace PPMTool.Data.Entities
         /// This represents where the resource is funded from in terms of known funding sources for the project.
         /// It is optional since it needs to be possible to associated resources with tasks before the funding sources are known.
         /// </summary>
-        public FundingSource FundedFrom { get; set; }
+        public virtual FundingSource FundedFrom { get; set; }
 
         /// <summary>
         /// The task on the project this resource is assigned to
         /// </summary>
         [Required]
-        public SubTask SubTask { get; set; }
+        public virtual SubTask SubTask { get; set; }
 
         /// <inheritdoc/>
         public string GetSensibleObjectName()
@@ -110,18 +110,6 @@ namespace PPMTool.Data.Entities
                 // Use a financial reference and the standard or junior rate to compute the cost
                 // assuming it persists throughout the project and doesn't increment year on year
 
-                // Get WLM active at start of task
-                var startWLM = Person.WorkloadModelChanges
-                    .Where(x => x.ChangeDate <= taskStart)
-                    .OrderByDescending(x => x.ChangeDate)
-                    .FirstOrDefault();
-
-                // If they haven't got a WLM then use the G6 default
-                if (startWLM == null)
-                {
-                    startWLM = Person.GetWorkloadModelOnDateOrDefault(taskStart);
-                }
-
                 // Get the annual salary costs for resource based on rate
                 var annualCostPerBillableDay = financialReference.GetJuniorOrStandardAnnualCosts(Rate) / 220;
 
@@ -132,10 +120,21 @@ namespace PPMTool.Data.Entities
                 PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDay;
             }
 
-
             // If we wanted to include the year to year variation based on financial references then we could do it like below.
             // However, actuals would need to be recorded year on year to be able to match the planned cost algorithm
             // I guess this actually exists now but a job for another day
+
+            //// Get WLM active at start of task
+            //var startWLM = Person.WorkloadModelChanges
+            //    .Where(x => x.ChangeDate <= taskStart)
+            //    .OrderByDescending(x => x.ChangeDate)
+            //    .FirstOrDefault();
+
+            //// If they haven't got a WLM then use the G6 default
+            //if (startWLM == null)
+            //{
+            //    startWLM = Person.GetWorkloadModelOnDateOrDefault(taskStart);
+            //}
 
             //// Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
             //var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();

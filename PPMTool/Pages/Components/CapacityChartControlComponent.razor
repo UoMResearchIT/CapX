@@ -1,0 +1,90 @@
+﻿@using System.Diagnostics
+@using Blazored.SessionStorage
+
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenLabel Text="Include Unfunded:" Component="IncludeUnfunded" />
+    <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" Change="@UnfundedChangedAsync" Name="IncludeUnfunded" />
+</RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenLabel Text="Include Leavers:" Component="Includeleavers" />
+    <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" Change="@LeaversChangedAsync" Name="IncludeLeavers" />
+</RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenLabel Text="Include Finished:" Component="IncludeFinished" />
+    <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" Change="@FinishedChangedAsync" Name="IncludeFinished" />
+</RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+    <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(3))" />
+    <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(6))" />
+    <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(9))" />
+    <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(12))" />
+</RadzenStack>
+
+@code {
+
+    [Parameter]
+    public Action<bool> UnFundedSwitchChanged { get; set; }
+
+    [Parameter]
+    public Action<bool> LeaversSwitchChanged { get; set; }
+
+    [Parameter]
+    public Action<bool> FinishedSwitchChanged { get; set; }
+
+    [Parameter]
+    public bool IncludeUnFunded { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<bool> IncludeUnFundedChanged { get; set; }
+
+    [Parameter]
+    public bool IncludeLeavers { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> IncludeLeaversChanged { get; set; }
+
+    [Parameter]
+    public bool IncludeFinished { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> IncludeFinishedChanged { get; set; }
+
+    [Parameter]
+    public Action<int> SetZoomToMonthsAhead { get; set; }
+
+    [CascadingParameter]
+    public bool Loading { get; set; }
+
+    /// <summary>
+    /// Internal method for setting the value and firing the callback when the unfunded switch is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private async Task UnfundedChangedAsync(bool value)
+    {
+        await IncludeUnFundedChanged.InvokeAsync(value);    // Updates the bound value in the parent
+        UnFundedSwitchChanged?.Invoke(value);               // Fires the action callback so parent can do something in response
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Internal method for setting the value and firing the callback when the finished switch is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private async Task LeaversChangedAsync(bool value)
+    {
+        await IncludeLeaversChanged.InvokeAsync(value);
+        LeaversSwitchChanged?.Invoke(value);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Internal method for setting the value and firing the callback when the finished switch is changed
+    /// </summary>
+    /// <param name="value"></param>
+    private async Task FinishedChangedAsync(bool value)
+    {
+        await IncludeFinishedChanged.InvokeAsync(value);
+        FinishedSwitchChanged?.Invoke(value);
+        StateHasChanged();
+    }
+}

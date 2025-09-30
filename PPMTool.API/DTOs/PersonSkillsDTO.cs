@@ -1,31 +1,19 @@
-﻿using PPMTool.Data.Entities;
-
+﻿
 namespace PPMTool.API.DTOs
 {
     /// <summary>
-    /// DTO grouping person and their skills
+    /// DTO simplifying the representation of a skill tag.
     /// </summary>
-    public class PersonSkills
-    {
-        /// <summary>
-        /// Name of the person
-        /// </summary>
-        public string Name { get; }
+    public sealed record SkillTagDTO(
+        int SkillTagId,
+        string Name
+    );
 
-        /// <summary>
-        /// Skills owned by the person
-        /// </summary>
-        public IEnumerable<SkillTag> Skills { get; }
-
-        /// <summary>
-        /// Ctor
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="skills"></param>
-        public PersonSkills(string name, IEnumerable<SkillTag> skills)
-        {
-            Name = name;
-            Skills = skills;
-        }
-    }
+    /// <summary>
+    /// DTO grouping a person's name with their owned skills.
+    /// </summary>
+    public sealed record PersonSkillsDTO(
+        string Name,
+        IEnumerable<SkillTagDTO> Skills
+    );
 }

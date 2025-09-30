@@ -8,7 +8,6 @@ using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data.Context;
 using PPMTool.Services;
-
 #if RELEASE
 using Serilog;
 #endif
@@ -54,15 +53,13 @@ if (string.IsNullOrEmpty(connectionString))
 {
     // Use the default connection string based on the environment
     connectionString = configuration.GetConnectionString(
-    #if RELEASE
-            "PPMToolContextConnectionProduction"
-    #else
+#if LOCAL
             "PPMToolContextConnection"
-    #endif
+#else
+            "PPMToolContextConnectionProduction"
+#endif
         );
 }
-
-
 
 if (string.IsNullOrEmpty(connectionString))
 {
@@ -70,7 +67,8 @@ if (string.IsNullOrEmpty(connectionString))
 }
 
 builder.Services.AddDbContext<PPMToolContext>(options =>
-    options.UseSqlite(connectionString)
+    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
 );
 builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddSingleton<APIAuthService>();
@@ -92,7 +90,7 @@ builder.Services.AddSwaggerGen(
         opt.OperationFilter<SkillTagShallowOperationFilter>();
 
         string? docFilePath = Directory.GetFiles(
-            path: Directory.GetCurrentDirectory(),
+            path: AppContext.BaseDirectory,
             searchPattern: $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
             searchOption: SearchOption.AllDirectories)
         .FirstOrDefault();
@@ -131,7 +129,7 @@ builder.Services.AddSwaggerGen(
         };
         opt.AddSecurityRequirement(requirement);
 
-#if RELEASE
+#if !LOCAL
         // Add the custom DocumentFilter for production
         opt.DocumentFilter<BasePathDocumentFilter>("/api");
 #endif
@@ -150,8 +148,9 @@ app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints directly using top-level routing
 app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>

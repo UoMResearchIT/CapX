@@ -11,44 +11,38 @@ on:
 
 jobs:
   format_check:
-
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./PPMTool
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: 'true'
         token: ${{ secrets.ACTIONS_REPO_TOKEN }}
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
     - name: Format
       run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
       
   build:
-  
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./PPMTool
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: 'true'
         token: ${{ secrets.ACTIONS_REPO_TOKEN }}
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
-    - name: Ensure GitHub NuGet Source
-      run: |
-        dotnet nuget update source UoMResearchITGitHub \
-        -u ${{ secrets.ACTIONS_NUGET_USER }} \
-        -p ${{ secrets.ACTIONS_REPO_TOKEN }} \
-        --store-password-in-clear-text
     - name: Restore dependencies
       run: dotnet restore --verbosity detailed
     - name: Build

@@ -1,15 +1,19 @@
 # CapX
-This is a PPM tool written in .NET Blazor Server. This is being used as a stop-gap solution for the capacity planning system the ITS Governance and Delivery management Office (GaDMO) currently use which is of limited use to us day to day. Instead, CapX has an export facility which allows its data to be output in a format GaDMO can read into their system.
+This is a tool written in .NET Blazor (Server) for managing many aspects of the service delivery of the RSE department and the development of its staff.
 
-The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](https://balex.itservices.manchester.ac.uk). This is a 10.99 private IP so users will need to be on the VPN to access.
-There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and show cases new features but might not be entirely stable.
+The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](https://balex.itservices.manchester.ac.uk) built from the `release` branch in the repo. This is a 10.99 private IP so users will need to be on the VPN to access.
+
+There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and show cases new features but might not be entirely stable. This is also on the private network.
+
+CapX also offers an API alongside the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively.
 
 ## User Accounts and Access
-As of v1.6, the app is integrated with UoM CAS with local access to restricted parts of the app managed within the app using a Role-Based Access Control database table. Super-users are able to manage user roles via the "Manage Access" page.
+The app is integrated with UoM CAS with access to restricted parts of the app managed within the app using a Role-Based Access Control database table. Super-users are able to manage user roles via the "Manage Access" page.
+
 The production version of CapX uses the DS CAS and users with a standard UoM user account can authenticate. The development version of CapX authenticates using the PPAD CAS instance; users will need a UoM PPAD account to use the development version.
 
 ## API Access
-Any user of the web application can gain access to the API endpoints. Note that their success in using the endpoints is dictated by their role in the web app as both the web application and the API application share the same database. To access the API, users need to generate an API key from the "Developer Settings" in the web app menu. If running from source, the successful generation of an API key depends on a suitable secret (minimum 32 characters) being injected into the `Jwt:SecretKey` configuration parameter for the web application. If using Visual Studio, this can be done by simply browsing to "User Secrets" for the project and adding `"Jwt:SecretKey" : "some-32-char-long-value"` to the .NET secrets manager.
+Any user of the web application can gain access to the API endpoints. Note that their success in using the endpoints is dictated by their role in the web app as both the web application and the API application share the same database. To access the API, users need to generate an API key from the "Developer Settings" in the web app menu. If running from source, the successful generation of an API key depends on a suitable secret (minimum 32 characters) being injected into the `Jwt:SecretKey` configuration parameter for the web application. If using Visual Studio, this can be done by simply browsing to "User Secrets" for the project and adding `"Jwt:SecretKey" : "some-32-char-long-value"` to the .NET secrets manager. Otherwise, the parameter can be injected via an environment variable named `API_KEY_SECRET`.
 
 ## Automated Deployment
 CapX makes use of automated deployment. As the VMs are on the University private network, they are not visible to GitHub so we cannot simply use a GitHub action to auto-deploy. Instead, the build/test VM runs cron jobs which long-poll the repository every 10 minutes, using `git fetch` and `git status` to determine programmtically whether the source code on the VM is behind the remote on the `dev` and `release` branches. If it is, it will pull the latest source code for the branch, authenticating with GitHub using an SSH key, and then build the software, apply database migrations and restart the web services. The development build script additionally copies the database from the production VM prior to applying migrations to ensure the development version is tested on real data. The production database is also backed-up as part of the deployment process in case of failure. Any time a DB file is to be copied, all the `PPMTool.db*` files are copied since WAL is enabled. `sqlite3 PPMTool.db VACUUM;` is used to flush the WAL journals before any manipulation of the DB takes place. All the scripts live on the build/test machine with the production VM just acting as a deployment target.
@@ -20,12 +24,26 @@ Deployment scripts can be found in the `deployment` folder in the repo. Document
 The databases are backed up (including flushing of the WAL journals) as part of the deployment automation pipeline. However, there is also an hourly cronjob that flushes and backs up the DB to a different directory. This mechanism stores 72 backups, deleting the oldest when this file count is exceeded.
 
 ## Documentation and User Guides
-Documentation of features and how to use them is available in the Wiki associated with this repository.
+Documentation of features and how to use them is available in the Wiki associated with this repository. This is admittedly not kept up-to-date.
 
-## Building from Source
-The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution. There are two projects, one for the API and one for the web app but both use the same DB. There are launch configurations that allow you to run one, the other, or both. There are Debug, Release and Local build configurations. The latter is for local development as it does not integrate with UoM CAS authentication and hence can be run offline. The former two are for deployed versions only.
+## Building and Running from Source
+The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution.
 
-## Running with Docker Compose
+### Seeding the Database
+The default database produced when first running EF Core's `database update` command runs the migrations available in the source code. This produces a database which contains a single user and a single person attached to that user to allow you to login. In addition, based on the migration data available in the source code, the timesheet activities and tasks in use at UoM at the time the feature was added are also there as well as the initial version of the RSE competency framework. Every other table is blank. This limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
+
+> [!WARNING] 
+> This feature overwrites all data in the tables as soon as the app starts!
+
+> [!INFO] 
+> When seeding dummy data, developers are required to set the name, username and email of a superuser since one is always required to allow administration of the application and database. If the developer does not set these via user secrets (development) or environment variables (production) - see the `deployment/variables.env` file - then the app will throw an exception.
+
+### Solution/Build and Launch Configurations
+The Visual Studio has been set up with _launch_ configurations that allow the user to start the API, the web app or both. When using Visual Studio, developers can select their preference from the usual drop down at the top before clicking "play" to run the selected launch config.
+
+Furthermore, there are three _solution_ configurations: `Local`, `Debug` and `Release` that combine project-level _build_ configurations of the same name. `Local` is to be used for development on your own machine as it bypasses third-party CAS authentication integrations and instead allows the developer to "sign-in" with any user in the database for testing purposes. `Release` is designed to be used on test and production servers and integrates with third party CAS authentication providers. They also include additional logging and crash reporting integration with Sentry that are not included in the `Local` configuration. The `Debug` solution configuration is somewhere inbetween, building the `Local` version of the app and a special `Debug` version of the API where the base path has been specifically corrected to allow a `Local` version of the software to be deployed to a server. This version is currently used for a demo version of CapX deployed to Google Cloud Platform at [https://capx-demo.duckdns.org/](https://capx-demo.duckdns.org/).
+
+### Running with Docker Compose
 
 To run with Docker Compose, provide your GitHub token as an environment variable:
 
@@ -50,7 +68,19 @@ once the container has been brought down.
 
 Since the image is being built each time you run "docker compose up --build", any changes to source files will be picked up and included.
 
-### Known Issues
+## Tests
+There are two test projects in the solution for testing the web app and the API. To run the tests, both the web application and the API application need to be running on the expected ports and the database needs to be accessible to the API test project so it can pull out an API key to use for authentication. As such, there needs to be a valid API key in the database for it to use otherwise the setup fixture will complain that it cannot run the tests.
+
+### Running Locally with Visual Studio
+If running locally in Visual Studio, select the "Web App + API" launch configuration, the "Local" build configuration and then "Run without Debugging". Open the Test Explorer feature of Visual Studio and click "Run Tests" and the current set of tests will run against the two applications that are currently running on localhost ports 5001 and 6001 and HTTPS.
+
+### Running from CLI with Docker
+TBC
+
+### Running with GitHub Actions
+TBC
+
+## Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
 2. Use of the Bitwarden browser plugin has been know to slow down the response of the interactive graphs. See [Issue 302](https://github.com/UoMResearchIT/CapX/issues/302) for details.
 3. CapX does not work properly in Safari on macOS when run from Docker.

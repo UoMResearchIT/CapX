@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace PPMTool.Data.Entities
@@ -52,7 +49,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         [JsonIgnore]
-        public Person LineManager { get; set; }
+        public virtual Person LineManager { get; set; }
 
         /// <summary>
         /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
@@ -62,53 +59,53 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Any changes to their WLMs
         /// </summary>
-        public ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
+        public virtual ICollection<WorkloadModelChange> WorkloadModelChanges { get; set; } = new List<WorkloadModelChange>();
 
         /// <summary>
         /// Collection of skill tag instances owned by this person
         /// </summary>
         [JsonIgnore]
-        public ICollection<OwnedSkill> OwnedSkills { get; set; } = new List<OwnedSkill>();
+        public virtual ICollection<OwnedSkill> OwnedSkills { get; set; } = new List<OwnedSkill>();
 
         /// <summary>
         /// Collection of absences
         /// </summary>
-        public ICollection<Absence> Absences { get; set; } = new List<Absence>();
+        public virtual ICollection<Absence> Absences { get; set; } = new List<Absence>();
 
         /// <summary>
         /// List of projects this person is following
         /// </summary>
         [InverseProperty("Followers")]
-        public ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
+        public virtual ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
 
         /// <summary>
         /// List of projects this person manages
         /// </summary>
         [InverseProperty("ProjectManager")]
-        public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
+        public virtual ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
 
         /// <summary>
         /// List of the competency assessments this person has performed
         /// </summary>
-        public ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
+        public virtual ICollection<CompetencyAssessment> Assessments { get; set; } = new List<CompetencyAssessment>();
 
         /// <summary>
         /// The collection of Timesheets this person owns
         /// </summary>
         [InverseProperty("Owner")]
-        public ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
+        public virtual ICollection<Timesheet> Timesheets { get; set; } = new List<Timesheet>();
 
         /// <summary>
         /// The collection of Timesheets this person was last to change the status of
         /// </summary>
         [InverseProperty("StatusChangedBy")]
-        public ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
+        public virtual ICollection<Timesheet> TimesheetsChanged { get; set; } = new List<Timesheet>();
 
         /// <summary>
         /// List of people that this person manages as their line manager
         /// </summary>
         [JsonIgnore]
-        public ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
+        public virtual ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
 
         public Person()
         {
@@ -149,20 +146,17 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal double GetAvailabilityOnDate(DateTime date)
+        internal double GetProjectWorkAvailabilityOnDate(DateTime date)
         {
-            // Set as post availability initially
-            var availability = FTE;
+            // If person hasn't started on day then return zero
+            if (StartDate > date) return 0;
 
-            // If there are changes then check them
-            if (WorkloadModelChanges.Count > 0)
-            {
-                // Get availability based on the most recent change before the date provided
-                var latestChange = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (latestChange != null) availability = latestChange.ProjectWorkFTE;
-            }
+            // If the person has left before this day then return zero
+            if (EndDate != null && EndDate < date) return 0;
 
-            return availability;
+            // If the person has no workload model changes then assume default G6 model
+            var wlm = GetWorkloadModelOnDateOrDefault(date);
+            return wlm.ProjectWorkFTE;
         }
 
         /// <summary>
@@ -173,7 +167,10 @@ namespace PPMTool.Data.Entities
         internal WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
         {
             // Get the workload model that is active at the beginning of the week
-            var activeModel = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderBy(x => x.ChangeDate).LastOrDefault();
+            var activeModel = WorkloadModelChanges
+                .Where(x => x.ChangeDate <= date)
+                .OrderBy(x => x.ChangeDate)
+                .LastOrDefault();
 
             // If no workload model active then default to the standard 100% project work model
             if (activeModel == null)
@@ -219,15 +216,50 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal double GetProjectManagementCapacityOnDate(DateTime date)
         {
-            // If there are changes then check them
-            var pmCapacity = 0d;
-            if (WorkloadModelChanges.Count > 0)
-            {
-                var latestChange = WorkloadModelChanges.Where(x => x.ChangeDate <= date).OrderByDescending(x => x.ChangeDate).FirstOrDefault();
-                if (latestChange != null) pmCapacity = latestChange.ProjectManagementFTE;
-            }
+            // If person hasn't started on day then return zero
+            if (StartDate > date) return 0;
 
-            return pmCapacity;
+            // If the person has left before this day then return zero
+            if (EndDate != null && EndDate < date) return 0;
+
+            // Get WLM in play on date
+            var wlm = GetWorkloadModelOnDateOrDefault(date);
+            return wlm.ProjectManagementFTE;
+        }
+
+        /// <summary>
+        /// Method to return the total workload model FTE for a person on the provided date
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal double GetWorkloadModelTotalOnDate(DateTime date)
+        {
+            // If person hasn't started on day then return zero
+            if (StartDate > date) return 0;
+
+            // If the person has left before this day then return zero
+            if (EndDate != null && EndDate < date) return 0;
+
+            // Get WLM in play on date
+            var wlm = GetWorkloadModelOnDateOrDefault(date);
+            return wlm.Total();
+        }
+
+        /// <summary>
+        /// Method to return the grade of the person on the date or the default of 6 if no WLM to consider.
+        /// Returns null if not started or left.
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal int? GetGradeOnDate(DateTime date)
+        {
+            // If person hasn't started on day then return null
+            if (StartDate > date) return null;
+
+            // If the person has left before this day then return null
+            if (EndDate != null && EndDate < date) return null;
+
+            return GetWorkloadModelOnDateOrDefault(date).Grade;
         }
     }
 }

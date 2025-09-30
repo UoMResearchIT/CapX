@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Web;
@@ -11,53 +12,16 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
+using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
 #if RELEASE
 using Serilog;
 #endif
 
-var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
-var builder = WebApplication.CreateBuilder(args);
-
 // Add environment variables to the configuration
-builder.Configuration.AddEnvironmentVariables();
-var overridingValues = new Dictionary<string, string>();
-
-// Get the API key from the environment
-var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-if (!string.IsNullOrEmpty(apiKeySecret))
-{
-    overridingValues.Add("Jwt:SecretKey", apiKeySecret);
-}
-else
-{
-    if (!isDesignTime)
-    {
-#if !LOCAL
-        throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
-#else
-        // Check that user secrets has actually set a value
-        if (string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
-        {
-            throw new InvalidOperationException("API_KEY_SECRET environment variable is not set and user secrets has not been configured!");
-        }
-#endif
-    }
-}
-var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
-if (!string.IsNullOrEmpty(sentryDsn))
-{
-    overridingValues.Add("Sentry:Dsn", sentryDsn);
-}
-else
-{
-    if (!isDesignTime && builder.Environment.IsProduction())
-    {
-        throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
-    }
-}
-builder.Configuration.AddInMemoryCollection(overridingValues);
+var builder = WebApplication.CreateBuilder(args);
+EnvironmentHelper.LoadEnvironmentVariables(builder);
 
 #if RELEASE
 // Configure logging
@@ -90,7 +54,7 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(connectionString)
+    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
 );
 
 builder.Services.AddBlazoredSessionStorage();
@@ -162,6 +126,9 @@ builder.Services.AddAuthorization();
 // Build the application from the configuration
 var app = builder.Build();
 
+// Check configuration is correct
+EnvironmentHelper.ValidateConfiguration(builder);
+
 // Set up middleware
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
@@ -201,6 +168,59 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Close();
 }
 
+// Seed dummy data if the database is empty
+var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
+if (shouldSeed)
+{
+    // Throw exceptions if variables are not set
+    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserUserName"]))
+    {
+        throw new InvalidOperationException("Superuser user name not set!");
+    }
+    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserName"]))
+    {
+        throw new InvalidOperationException("Superuser name not set!");
+    }
+    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserEmail"]))
+    {
+        throw new InvalidOperationException("Superuser email not set!");
+    }
+
+    using var scope = app.Services.CreateScope();
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+
+    // Clear the existing DB and recreate a vanilla file
+    using (var context = dbContextFactory.CreateDbContext())
+    {
+        context.Database.EnsureDeleted();
+        context.Database.Migrate();
+    }
+
+    // Seed tables with suitable values -- Note that competencies are already seeded
+    SeedHelper.SeedPeople(scope.ServiceProvider);
+    SeedHelper.SeedAbsences(scope.ServiceProvider);
+    SeedHelper.SeedUsers(scope.ServiceProvider);
+    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+    SeedHelper.SeedSkillTags(scope.ServiceProvider);
+    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+    SeedHelper.SeedProjects(scope.ServiceProvider);
+    SeedHelper.SeedFundingSources(scope.ServiceProvider);
+    SeedHelper.SeedSubTasks(scope.ServiceProvider);
+    SeedHelper.SeedResources(scope.ServiceProvider);
+    SeedHelper.SeedNotes(scope.ServiceProvider);
+    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
+    SeedHelper.SeedTimesheets(scope.ServiceProvider);
+}
+
+// Set default culture
+var cultureInfo = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+// Run the app
 app.Run();
 
 /// <summary>
@@ -225,31 +245,33 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         // Lookup the username in the DB and add role claim
         // Has to be done manually since service provider not built yet?
         var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-        var dbContext = dbContextFactory.CreateDbContext();
-        var user = dbContext.Users
-            .Include(x => x.Person)
-            .ToList()
-            .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
-        if (user != null)
-        {
-            identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
-        }
-
-        await context.HttpContext.SignInAsync(context.Principal);
-
-        // Update last logged in and log
         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
-        var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
-        if (userService != null)
+        using (var dbContext = dbContextFactory.CreateDbContext())
         {
+            var user = dbContext.Users
+                .Include(x => x.Person)
+                .ToList()
+                .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
             if (user != null)
             {
-                userService.UpdateLastLoggedIn(dbContext, user);
+                identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
             }
-        }
-        else
-        {
-            logger?.LogError("User Service not found! Cannot update last logged in!");
+
+            await context.HttpContext.SignInAsync(context.Principal);
+
+            // Update last logged in and log
+            var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
+            if (userService != null)
+            {
+                if (user != null)
+                {
+                    userService.UpdateLastLoggedIn(dbContext, user);
+                }
+            }
+            else
+            {
+                logger?.LogError("User Service not found! Cannot update last logged in!");
+            }
         }
 
         logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");

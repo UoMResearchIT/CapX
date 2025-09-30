@@ -3,7 +3,6 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using PPMTool.Enums
-@using DotNetExtensions
 <PageTitle>Add Timesheet Code - CapX</PageTitle>
 
 <div class="container">
@@ -34,8 +33,8 @@
                         <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityName" />
                     </div>
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Active" /><br />
-                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem"/>
+                        <RadzenLabel class="radzen-form-label" Text="Active" Component="IsActive" /><br />
+                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem" Name="IsActive" />
                     </div>
                 </div>
 

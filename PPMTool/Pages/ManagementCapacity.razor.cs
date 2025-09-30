@@ -19,9 +19,9 @@ namespace PPMTool.Pages
 
             // Update the cached people to just contain managers
             cachedPeople = GetManagers(cachedPeople);
-            ReloadDropDownSources();
+            await ReloadDropDownSourcesAsync();
 
-            PeopleSelectionChanged(chosenPeople);
+            await PeopleSelectionChangedAsync(chosenPeople);
 
             LogInformation($"Viewing management capacity page");
         }

@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using ClosedXML.Excel;
-using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -490,7 +489,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson?.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -506,7 +505,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson?.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -522,7 +521,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson?.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);

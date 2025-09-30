@@ -8,7 +8,7 @@ namespace PPMTool.Data.Entities
         /// Project associated with this item
         /// </summary>
         [Required]
-        public Project Project { get; set; }
+        public virtual Project Project { get; set; }
 
         /// <summary>
         /// Method to get a suitable description of the item for posting to a note

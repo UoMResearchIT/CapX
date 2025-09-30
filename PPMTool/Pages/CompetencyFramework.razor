@@ -1,5 +1,4 @@
 ﻿@page "/competencies"
-@using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
@@ -16,15 +15,15 @@
         {
             <div class="col-auto">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Show All Staff:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                    <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" />
+                    <RadzenLabel class="rz-text-subtitle1" Text="Show All Staff:" Style="margin-bottom: -0.2rem" Component="ShowAllStaff"/>
+                    <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" Name="ShowAllStaff"/>
                 </RadzenStack>
             </div>
         }
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
-                <RadzenText Text="Load Only Unmet Competencies:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
-                <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" />
+                <RadzenLabel class="rz-text-subtitle1" Text="Load Only Unmet Competencies:" Style="margin-bottom: -0.2rem" Component="ShowUnMetOnly" />
+                <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" Name="ShowUnMetOnly" />
             </RadzenStack>
         </div>
     </div>
@@ -38,9 +37,9 @@
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
             <RadzenButton Text="Download Data"
-                            Icon="@(exportRunning ? "hourglass_empty" : "download")"
-                            Click="@ExportDataAsync"
-                            Disabled="@(Loading || exportRunning)" />
+                          Icon="@(exportRunning ? "hourglass_empty" : "download")"
+                          Click="@ExportDataAsync"
+                          Disabled="@(Loading || exportRunning)" />
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" Style="margin-top: -0.3rem; width: 100%">
             <RadzenIcon Icon="person" IconStyle="IconStyle.Dark" />
@@ -57,8 +56,8 @@
                 @foreach (var comp in competencyGroups)
                 {
                     <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
-                                            TotalNumberOfCompetenciesInGrade="@comp.Total"
-                                            Title="@comp.Description" />
+                                           TotalNumberOfCompetenciesInGrade="@comp.Total"
+                                           Title="@comp.Description" />
                 }
             </RadzenStack>
         }
@@ -74,7 +73,8 @@
     </div>
     <div class="row">
         <div class="col">
-            <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search or just the unmet ones with the switches." TextStyle="TextStyle.Body2" />
+            <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search or just the unmet ones with the switches."        
+                        TextStyle="TextStyle.Body2" />
         </div>
     </div>
     <hr />

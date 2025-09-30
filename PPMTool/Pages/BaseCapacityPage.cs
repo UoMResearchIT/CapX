@@ -57,50 +57,53 @@ namespace PPMTool.Pages
         /// <summary>
         /// Change callback for unfunded switch
         /// </summary>
-        protected void UnFundedSwitchChanged()
+        protected async Task UnFundedSwitchChangedAsync(bool value)
         {
-            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", includeUnFunded);
-            ConfigureChartSource();
+            includeUnFunded = value;
+            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
+            await ConfigureChartSource();
         }
 
         /// <summary>
         /// Change callback for leavers switch
         /// </summary>
-        protected void LeaversSwitchChanged()
+        protected async Task LeaversSwitchChangedAsync(bool value)
         {
-            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", includeLeavers);
-            ReloadDropDownSources();
-            ConfigureChartSource();
+            includeLeavers = value;
+            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
+            await ReloadDropDownSourcesAsync();
+            await ConfigureChartSource();
         }
 
         /// <summary>
         /// Change callback for include finished switch
         /// </summary>
-        protected void FinishedSwitchChanged()
+        protected async Task FinishedSwitchChangedAsync(bool value)
         {
-            SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", includeFinished);
-            ConfigureChartSource();
+            includeFinished = value;
+            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
+            await ConfigureChartSource();
         }
 
         /// <summary>
         /// Save the chosen people to session storage
         /// </summary>
-        protected void SavePeopleState() => SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
+        protected async Task SavePeopleStateAsync() => await SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
 
         /// <summary>
         /// Fire and forget when selection of the multi-select people down changes
         /// </summary>
         /// <param name="selectedOptions"></param>
-        protected void PeopleSelectionChanged(object selectedOptions)
+        protected async Task PeopleSelectionChangedAsync(object selectedOptions)
         {
             var items = selectedOptions as IEnumerable<string>;
             Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
 
             // Save the new state
-            SavePeopleState();
+            await SavePeopleStateAsync();
 
             // Regenerate the chart data
-            ConfigureChartSource();
+            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -141,7 +144,7 @@ namespace PPMTool.Pages
         /// Method to handle when a series element on the chart is selected
         /// </summary>
         /// <param name="dataPoint"></param>
-        protected virtual void DataPointsSelected(SelectedData<ChartItem> dataPoint)
+        protected virtual async Task DataPointsSelectedAsync(SelectedData<ChartItem> dataPoint)
         {
             // When in project mode, navigate
             if (dataPoint.IsSelected && PeopleChosen())
@@ -168,7 +171,7 @@ namespace PPMTool.Pages
                     var temp = PeopleChosen() ? new List<string>(chosenPeople) : new List<string>();
                     temp.Add(personName);
                     chosenPeople = temp;
-                    PeopleSelectionChanged(chosenPeople);
+                    await PeopleSelectionChangedAsync(chosenPeople);
                 }
             }
         }
@@ -262,12 +265,15 @@ namespace PPMTool.Pages
         /// <param name="manualEndDate">Overrides the end window for things like axis limits</param>
         /// <param name="customChartTitleGenerator">Generates the title for the charts - takes the name of the person if in project mode</param>
         /// <param name="projectModeCondition">Optional OR condition for deciding whether in project mode</param>
-        protected void ConfigureChartSource(Action AfterConfigureTask = null, DateTime? manualStartDate = null, DateTime? manualEndDate = null, Func<string, string> customChartTitleGenerator = null, Func<bool> projectModeCondition = null)
+        protected async Task ConfigureChartSource(Action AfterConfigureTask = null, DateTime? manualStartDate = null, DateTime? manualEndDate = null, Func<string, string> customChartTitleGenerator = null, Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
             StateHasChanged();
-            EnqueueLoadData(async () => await Task.Run(new Func<Task>(() =>
+            await Task.Yield();
+
+            // Run the data loading
+            await Task.Run(() =>
             {
                 Debug.WriteLine("** Running new configure task...");
 
@@ -280,7 +286,6 @@ namespace PPMTool.Pages
                 {
                     LogError("People database is empty!");
                     Debug.WriteLine("** No people registered in the database!");
-                    Loading = false;
                     return Task.CompletedTask;
                 }
 
@@ -293,7 +298,6 @@ namespace PPMTool.Pages
                 if (validProjects.Count() == 0)
                 {
                     Debug.WriteLine("** No projects found that match the chosen options!");
-                    Loading = false;
                     return Task.CompletedTask;
                 }
                 var startDate = validProjects.Min(x => x.StartDate);
@@ -420,7 +424,7 @@ namespace PPMTool.Pages
 
                 return Task.CompletedTask;
 
-            }))
+            })
             .ContinueWith(task =>
             {
                 Debug.WriteLine($"** ...task complete. Status = {task.Status}");
@@ -437,7 +441,7 @@ namespace PPMTool.Pages
                 });
 
                 Debug.WriteLine($"** There are {chartModels.Count} chart(s)!");
-            }));
+            });
         }
 
         /// <summary>
@@ -464,7 +468,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to reload the dropdown sources on the page
         /// </summary>
-        protected virtual void ReloadDropDownSources()
+        protected virtual Task ReloadDropDownSourcesAsync()
         {
             Debug.WriteLine("** Reloading dropdown sources...");
 
@@ -496,6 +500,8 @@ namespace PPMTool.Pages
                 }
                 chosenPeople = temp;
             }
+
+            return Task.CompletedTask;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -511,7 +517,7 @@ namespace PPMTool.Pages
             cachedPeople = await PersonService.GetAllShallowAsync(Context);
 
             // Load dropdown sources
-            ReloadDropDownSources();
+            await ReloadDropDownSourcesAsync();
 
             chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
             Debug.WriteLine($"** From session storage: {(chosenPeople != null ? string.Join('|', chosenPeople) : "")}");
@@ -531,14 +537,23 @@ namespace PPMTool.Pages
 
             // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
             var temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers");
-            if (temp != null) includeLeavers = temp ?? false;
+            if (temp != null)
+            {
+                includeLeavers = temp ?? false;
+            }
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded");
-            if (temp != null) includeUnFunded = temp ?? false;
+            if (temp != null)
+            {
+                includeUnFunded = temp ?? false;
+            }
             temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished");
-            if (temp != null) includeFinished = temp ?? false;
+            if (temp != null)
+            {
+                includeFinished = temp ?? false;
+            }
 
             // Reload dropdowns sources
-            ReloadDropDownSources();
+            await ReloadDropDownSourcesAsync();
         }
 
         /// <summary>
@@ -583,6 +598,9 @@ namespace PPMTool.Pages
                     JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, min, max);
                 }
             }
+
+            // Fire a background task to wait for the JS to run then trigger a redraw
+            Task.Run(async () => await Task.Delay(300)).ContinueWith(async t => await InvokeAsync(StateHasChanged));
         }
 
         /// <summary>
@@ -640,7 +658,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Creates a standard chart object to be pass to all chart instances -- they cannot share the same object
+        /// Creates a standard chart options object to be pass to all chart instances -- they cannot share the same object
         /// </summary>
         /// <returns></returns>
         protected virtual ApexChartOptions<ChartItem> BuildNewChartOptionsObject()
