@@ -1,5 +1,4 @@
-﻿
-namespace PPMTool.API.DTOs
+﻿namespace PPMTool.API.DTOs
 {
     /// <summary>
     /// DTO simplifying the representation of a skill tag.

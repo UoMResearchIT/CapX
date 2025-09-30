@@ -74,7 +74,7 @@ builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 
-// Add services to the container.
+// Add services to the container
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(
@@ -151,6 +151,7 @@ app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
 app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+app.MapGet($"/wlm/analysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>
