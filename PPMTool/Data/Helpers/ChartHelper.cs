@@ -341,7 +341,7 @@ namespace PPMTool.Data.Helpers
                     int daysRunSoFar = (int)(endDateActuals.Subtract(subTask.StartDate).TotalDays) + 1;
 
                     // Proportion of the actuals this week
-                    double proportionOfActualsThisWeek = endDateActuals > DateTime.Today ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
+                    double proportionOfActualsThisWeek = (endDateActuals > DateTime.Today || daysRunSoFar <= 0) ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
 
                     // Add to the demand for the week across all tasks
                     PlannedWorkHoursDemandMet += effortDemandMet * proportionOfTaskThisWeek;
