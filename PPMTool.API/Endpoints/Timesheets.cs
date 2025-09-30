@@ -7,7 +7,7 @@ namespace PPMTool.API.Endpoints;
 
 /// <summary>
 /// Read only transfer of weekly timesheets and nested entries.
-/// Access: superuser, the person, or their line manager
+/// Access: superuser, the person, or their line manager.
 /// </summary>
 public static class Timesheets
 {
@@ -37,13 +37,13 @@ public static class Timesheets
         try
         {
             // Try parse the datetimes
-            var success = APIHelper.ParseDateTime(startDate, out DateTime start);
+            var success = Helpers.ParseDateTime(startDate, out DateTime start);
             if (!success)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid start date {startDate}");
                 return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
             }
-            success = APIHelper.ParseDateTime(endDate, out DateTime end);
+            success = Helpers.ParseDateTime(endDate, out DateTime end);
             if (!success)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid end date {endDate}");
@@ -53,12 +53,12 @@ public static class Timesheets
             // If the name is null then assume the caller
             if (name == null)
             {
-                var user = APIHelper.GetCurrentUser(http);
+                var user = Helpers.GetCurrentUser(http);
                 name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
             }
 
             // Get the person from the request arguments
-            var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
+            var person = await Helpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Person = {name} not found!");
@@ -66,7 +66,7 @@ public static class Timesheets
             }
 
             // Authorisation check
-            var canAccess = APIHelper.IsSuperUserOrLineManagerOrSelf(context, http, person);
+            var canAccess = Helpers.IsSuperUserOrLineManagerOrSelf(context, http, person);
             if (!canAccess)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Caller does not have permission to access the data!");
@@ -149,7 +149,7 @@ public static class Timesheets
                             entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
                     }));
 
-                var fileBytes = APIHelper.GenerateCsv(csvData);
+                var fileBytes = Helpers.GenerateCsv(csvData);
                 var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";
                 logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as CSV.");
                 return Results.File(fileBytes, "text/csv", fileName);

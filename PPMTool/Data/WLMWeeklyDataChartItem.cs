@@ -73,7 +73,7 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="toTotalHours">Assumes data is already normalised to standard 35 and converts to normalising by total hours and vice versa</param>
         /// <exception cref="Exception"></exception>
-        internal void SwitchNormalisation(bool toTotalHours)
+        public void SwitchNormalisation(bool toTotalHours)
         {
             if (TotalHoursForWeek == null)
             {
