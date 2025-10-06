@@ -84,8 +84,8 @@
                         </div>
                         <div class="col-3">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
-                                <RadzenLabel class="radzen-form-label" Text="Years Ahead" />
-                                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="yearsAhead" Change="YearsAheadChanged" Disabled="@Loading" />
+                                <RadzenLabel class="radzen-form-label" Text="Months Ahead" />
+                                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Placeholder="0" @bind-Value="monthsAhead" Change="MonthsAheadChanged" Disabled="@Loading" />
                             </RadzenStack>
                         </div>
                         <div class="col-3 align-self-stretch">
@@ -291,7 +291,7 @@
                                              Items="dutyChartItems"
                                              SeriesType="@SeriesType.Bar"
                                              Name="@Duty.StaffMgmt.GetDescription()"
-                                             XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(1))"
+                                             XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                              YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))"
                                              Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
 
@@ -299,7 +299,7 @@
                                              Items="dutyChartItems"
                                              SeriesType="@SeriesType.Bar"
                                              Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
-                                             XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(2))"
+                                             XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                              YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))"
                                              Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
 
@@ -307,7 +307,7 @@
                                              Items="dutyChartItems"
                                              SeriesType="@SeriesType.Bar"
                                              Name="@Duty.ProjectWork.GetDescription()"
-                                             XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(3))"
+                                             XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                              YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))"
                                              Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
 

@@ -24,7 +24,7 @@ namespace PPMTool.Pages
 
         private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
-        private int yearsAhead;
+        private int monthsAhead;
         private bool showFinishedAsSeparate = false;
 
         private IEnumerable<Person> people;
@@ -299,7 +299,7 @@ namespace PPMTool.Pages
                 // Tracked values
                 var currentWeekStart = startDate.Date;
                 var currentFY = 0;
-                var endDate = startDate.AddYears(yearsAhead);
+                var endDate = startDate.Date.AddMonths(monthsAhead);
                 var startFY = FinancialReference.GetFinancialYear(startDate);
                 var endFY = FinancialReference.GetFinancialYear(endDate);
                 int numberOfWeeks = 0;
@@ -681,17 +681,17 @@ namespace PPMTool.Pages
             {
                 case ViewOption.LastFY:
                     startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) - 1, 8, 1);
-                    yearsAhead = 1;
+                    monthsAhead = 12;
                     break;
 
                 case ViewOption.CurrentFY:
                     startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today), 8, 1);
-                    yearsAhead = 1;
+                    monthsAhead = 12;
                     break;
 
                 case ViewOption.NextFY:
                     startDate = new DateTime(FinancialReference.GetFinancialYear(DateTime.Today) + 1, 8, 1);
-                    yearsAhead = 1;
+                    monthsAhead = 12;
                     break;
 
                 case ViewOption.Custom:
@@ -711,11 +711,11 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Callback when the years ahead is changed through the UI
+        /// Callback when the months ahead is changed through the UI
         /// </summary>
-        private void YearsAheadChanged()
+        private void MonthsAheadChanged()
         {
-            Debug.WriteLine("** Years Ahead Changed -- changing to Custom view option");
+            Debug.WriteLine("** Months Ahead Changed -- changing to Custom view option");
             viewOption = ViewOption.Custom;
             GenerateCharts();
         }
@@ -741,8 +741,8 @@ namespace PPMTool.Pages
                     var allData = new List<AssignmentChunk>();
 
                     // Set the report length
-                    var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1);
-                    var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31);
+                    var startDate = this.startDate.Date;
+                    var endDate = this.startDate.Date.AddMonths(monthsAhead);
 
                     // Get data for each person active in the window
                     var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
@@ -1062,8 +1062,8 @@ namespace PPMTool.Pages
             Task.Run(async () =>
             {
                 // Set the report length
-                var startDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate), 8, 1).Date;
-                var endDate = new DateTime(FinancialReference.GetFinancialYear(this.startDate) + yearsAhead, 7, 31).Date;
+                var startDate = this.startDate.Date;
+                var endDate = startDate.AddMonths(monthsAhead);
                 int totalDays = (int)(endDate.Subtract(startDate).TotalDays + 1);
                 var currentDate = startDate;
                 var peopleActive = new List<Person>();
