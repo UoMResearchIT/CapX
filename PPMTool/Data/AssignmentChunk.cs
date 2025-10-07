@@ -106,7 +106,7 @@ namespace PPMTool.Data
             {
                 var annualCosts = finrefs.GetSuitableFinancialReference(FinancialYear).GetMidGradeCosts(Grade);
                 var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
-                SalaryCostEstimate = Math.Round(annualCosts * FTE * fractionOfYear, 0);
+                SalaryCostEstimate = annualCosts * FTE * fractionOfYear;
             }
             catch (Exception ex)
             {

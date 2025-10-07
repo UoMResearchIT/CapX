@@ -115,6 +115,13 @@ namespace PPMTool.Data.Helpers
                 // Get funding source info
                 var fundingSource = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).FundedFrom;
 
+                // Proportion the data for the task based on the window
+                var taskStart = task.StartDate.Date < startDate ? startDate : task.StartDate;
+                var taskEnd = task.EndDate.Date > endDate ? endDate : task.EndDate;
+                var daysOfTaskForChunk = taskEnd.Subtract(taskStart).TotalDays + 1;
+                var fullTaskDuration = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
+                var proportionOfTask = fullTaskDuration <= 0 ? 0 : daysOfTaskForChunk / fullTaskDuration;
+
                 // Create a line
                 var initialChunk = new AssignmentChunk
                 {
@@ -128,21 +135,22 @@ namespace PPMTool.Data.Helpers
                     School = project.School.GetDescription(),
                     PI = project.PI,
                     Task = task.Name,
-                    StartDate = task.StartDate,
-                    EndDate = task.EndDate,
-                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate),
-                    PlannedCost = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost, 2),
+                    StartDate = taskStart,
+                    EndDate = taskEnd,
+                    FinancialYear = FinancialReference.GetFinancialYear(taskStart),
+                    PlannedCost = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost * proportionOfTask,
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    FundingSourceAmount = Math.Round(fundingSource?.AmountAvailable ?? 0, 2)
+                    FundingSourceAmount = fundingSource?.AmountAvailable ?? 0
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {
                     initialChunk
                 };
 
-                // Are there any changes to grade for this person at all -- ignore grade changes for leadership task resources
+                // Are there any changes to grade for this person
+                // Ignore grade changes for leadership task resources
                 if (changesInGrade && task.SubTaskId > 0)
                 {
                     var tempChunks = new List<AssignmentChunk>();
@@ -266,16 +274,6 @@ namespace PPMTool.Data.Helpers
                 // Update the data for the filtered chunks
                 foreach (var chunk in taskChunks)
                 {
-                    // Truncate dates if extends beyond window
-                    if (chunk.StartDate < startDate)
-                    {
-                        chunk.StartDate = startDate;
-                    }
-                    if (chunk.EndDate > endDate)
-                    {
-                        chunk.EndDate = endDate;
-                    }
-
                     // Cost estimate based on mid-grade salaries
                     chunk.UpdateEstimatedSalaryCost(finrefs);
                 }
