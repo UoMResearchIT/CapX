@@ -8,6 +8,8 @@ namespace PPMTool.Data
     /// </summary>
     public class AssignmentChunk
     {
+        public string PostNumber { get; set; }
+
         public string EmployeeName { get; set; }
 
         public int Grade { get; set; }
@@ -73,6 +75,7 @@ namespace PPMTool.Data
         /// <param name="taskToCopy"></param>
         public AssignmentChunk(AssignmentChunk taskToCopy)
         {
+            PostNumber = taskToCopy.PostNumber;
             EmployeeName = taskToCopy.EmployeeName;
             Grade = taskToCopy.Grade;
             FTE = taskToCopy.FTE;
