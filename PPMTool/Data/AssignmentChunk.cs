@@ -64,6 +64,8 @@ namespace PPMTool.Data
 
         public string FundingSourceDescription { get; set; }
 
+        public bool IsLeadershipAssignment { get; set; }
+
         public AssignmentChunk()
         {
 
@@ -94,6 +96,7 @@ namespace PPMTool.Data
             FundingSourceAmount = taskToCopy.FundingSourceAmount;
             SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
             PlannedCost = taskToCopy.PlannedCost;
+            IsLeadershipAssignment = taskToCopy.IsLeadershipAssignment;
         }
 
         /// <summary>

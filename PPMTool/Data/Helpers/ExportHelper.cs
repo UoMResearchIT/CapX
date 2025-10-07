@@ -142,7 +142,8 @@ namespace PPMTool.Data.Helpers
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    FundingSourceAmount = fundingSource?.AmountAvailable ?? 0
+                    FundingSourceAmount = fundingSource?.AmountAvailable ?? 0,
+                    IsLeadershipAssignment = task.SubTaskId < 0
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {
@@ -289,7 +290,7 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Represents a collection of data related to the recovery report
         /// </summary>
-        internal class RecoveryData
+        internal class RecoveryDataForDay
         {
             /// <summary>
             /// Day of the data
@@ -336,7 +337,7 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             public IDictionary<string, float> PersonCosts { get; } = new Dictionary<string, float>();
 
-            public RecoveryData(DateTime date)
+            public RecoveryDataForDay(DateTime date)
             {
                 Date = date;
             }
@@ -345,7 +346,7 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Represents the summary over the window of the target and recovery for a person
         /// </summary>
-        internal class TotalRecovered
+        internal class RecoveryDataOverWindow
         {
             public string Name { get; }
 
@@ -361,7 +362,7 @@ namespace PPMTool.Data.Helpers
 
             public float PersonCosts { get; private set; }
 
-            public TotalRecovered(string name)
+            public RecoveryDataOverWindow(string name)
             {
                 Name = name;
             }
@@ -449,33 +450,29 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Method to generate the recovery information for the report
         /// </summary>
+        /// <param name="assignmentChunks">Set of assignment chunks for active people split by WLM change and FY change</param>
         /// <param name="contextFactory"></param>
         /// <param name="personService"></param>
         /// <param name="projectService"></param>
         /// <param name="financialReferenceService"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
         /// <returns></returns>
-        internal static async Task<IEnumerable<TotalRecovered>> GetRecoveryData(
+        internal static async Task<IEnumerable<RecoveryDataOverWindow>> GetRecoveryDataAsync(
+            IList<AssignmentChunk> assignmentChunks,
             IDbContextFactory<PPMToolContext> contextFactory,
             PersonService personService,
             ProjectService projectService,
-            FinancialReferenceService financialReferenceService,
-            DateTime startDate,
-            DateTime endDate)
+            FinancialReferenceService financialReferenceService)
         {
             // Set the report length
+            var startDate = assignmentChunks.Min(x => x.StartDate.Date).Date;
+            var endDate = assignmentChunks.Max(x => x.EndDate.Date).Date;
             var currentDate = startDate;
-            var peopleActive = new List<Person>();
-            var allData = new List<RecoveryData>();
-            var totalData = new List<TotalRecovered>();
+            var windowRecoveryData = new List<RecoveryDataOverWindow>();
 
             // Create a context to be accesed on this thread
             using (var context = contextFactory.CreateDbContext())
             {
                 // Get data for each person active in the window
-                peopleActive = (await personService.GetEmployedPeopleShallowAsync(context, startDate, endDate)).ToList();
-
                 // Get projects active in the window with their subtasks and resources
                 var projectsInWindow = projectService.GetAll(context)
                     .Where(x => !x.ProjectStatus.IsCancelled())
@@ -486,9 +483,10 @@ namespace PPMTool.Data.Helpers
                 var finref = financialReferenceService.GetFinancialReferenceForDate(context, startDate);
 
                 // Initialise the totals
+                var peopleActive = await personService.GetEmployedPeopleShallowAsync(context, startDate, endDate);
                 foreach (var person in peopleActive)
                 {
-                    totalData.Add(new TotalRecovered(person.Name));
+                    windowRecoveryData.Add(new RecoveryDataOverWindow(person.Name));
                 }
 
                 // Loop over the days
@@ -501,7 +499,7 @@ namespace PPMTool.Data.Helpers
                     }
 
                     // Create a new item
-                    var currentDayData = new RecoveryData(currentDate);
+                    var currentDayData = new RecoveryDataForDay(currentDate);
 
                     // Get the subtasks that are active on this day
                     var tasksActiveOnDay = projectsInWindow
@@ -514,6 +512,10 @@ namespace PPMTool.Data.Helpers
                     // Loop over each person employed in the window
                     foreach (var person in peopleActive)
                     {
+                        // Get chunks belonging to this person and running on the day
+                        var chunks = assignmentChunks
+                            .Where(x => x.EmployeeName == person.Name && DateRange.IsWithin(currentDate, x.StartDate, x.EndDate));
+
                         // Get the project work amount on the day
                         var projectWorkTargetFTE = person.GetProjectWorkAvailabilityOnDate(currentDate);
                         var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
@@ -523,23 +525,12 @@ namespace PPMTool.Data.Helpers
                         var personCosts = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
                         personCosts /= 365.0;
 
-                        // Get resource assignments that are active on the day for this person
-                        var resourcesOnDay = tasksActiveOnDay
-                            .SelectMany(x => x.AssignedResources)
-                            .Where(x => x.Person.PersonId == person.PersonId)
-                            .ToList();
-
-                        // Get the projects they manage which have a leadership recovery model
-                        var projectsManagedByPerson = projectsActiveOnDay
-                            .Where(x =>
-                                x.ProjectManager.PersonId == person.PersonId &&
-                                x.CostModel == CostModel.TechAndLeadership
-                            );
-                        var leadershipAssignmentFTE = projectsManagedByPerson.Sum(x => x.LeadershipFTE);
-
-                        // Get the sum of their assignments on the day including leadership
-                        var projectAssignmentsFTE = resourcesOnDay.Sum(x => x.AssignmentFTE);
-                        var projectAssignmentsFTEIncLeadership = projectAssignmentsFTE + leadershipAssignmentFTE;
+                        // Get the sum of their assignments on the day with and without leadership
+                        var projectAssignmentsFTE = chunks
+                            .Where(x => !x.IsLeadershipAssignment)
+                            .Sum(x => x.FTE);
+                        var projectAssignmentsFTEIncLeadership = chunks
+                            .Sum(x => x.FTE);
 
                         // Net value
                         var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
@@ -559,8 +550,8 @@ namespace PPMTool.Data.Helpers
                         currentDayData.NetCappedIncLeadership.Add(person.Name, (float)netValueCappedIncLeadership);
                         currentDayData.PersonCosts.Add(person.Name, (float)personCosts);
 
-                        // Update the totals
-                        totalData
+                        // Update the totals based on this day
+                        windowRecoveryData
                             .First(x => x.Name == person.Name)
                             .Update(
                                 (float)projectWorkTargetFTE,
@@ -571,15 +562,12 @@ namespace PPMTool.Data.Helpers
                             );
                     }
 
-                    // Add the current day data to the list
-                    allData.Add(currentDayData);
-
                     // Advance the day
                     currentDate = currentDate.AddDays(1);
                 }
             }
 
-            return totalData;
+            return windowRecoveryData;
         }
     }
 }
