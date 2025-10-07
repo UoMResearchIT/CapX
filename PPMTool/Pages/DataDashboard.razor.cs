@@ -851,8 +851,7 @@ namespace PPMTool.Pages
                             }
 
                             // Get a list of people active by name
-                            var peopleActiveNames = peopleActive.Select(x => x.Name).ToList();
-                            var totalPeople = peopleActiveNames.Count();
+                            var totalPeople = peopleActive.Count;
                             var columnTitles = new List<string>
                             {
                                 "Estimated Costs",
@@ -887,29 +886,33 @@ namespace PPMTool.Pages
                             string numberFormat = "0.000_ ;[Red]-0.000";
 
                             // Each row
-                            for (int i = 0; i < peopleActiveNames.Count; ++i)
+                            for (int i = 0; i < peopleActive.Count; ++i)
                             {
-                                var totalItem = totalData.First(x => x.Name == peopleActiveNames[i]);
+                                var person = peopleActive[i];
+                                var totalItem = totalData.First(x => x.Name == person.Name);
+                                int averagePeriod = person.EndDate != null && person.EndDate < endDate ?
+                                    (int)(person.EndDate!.Value.Subtract(person.StartDate).TotalDays) + 1 :
+                                    totalDays;
 
                                 // Name
                                 cell = worksheetTotals.Cell(2 + i, 1);
-                                cell.Value = peopleActiveNames[i];
+                                cell.Value = person.Name;
                                 cell.Style.Font.Bold = true;
 
                                 // Costs of person over window
-                                var windowCosts = totalItem.GetTotalCosts();
+                                var windowCosts = totalItem.GetEstimatedCosts();
                                 cell = worksheetTotals.Cell(2 + i, 2);
                                 cell.Value = windowCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Target FTE
                                 cell = worksheetTotals.Cell(2 + i, 3);
-                                cell.Value = totalItem.GetAverageTarget(totalDays);
+                                cell.Value = totalItem.GetAverageTarget(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Target Costs
                                 cell = worksheetTotals.Cell(2 + i, 4);
-                                var targetCosts = totalItem.GetAverageTarget(totalDays) * windowCosts;
+                                var targetCosts = totalItem.GetAverageTargetCosts(averagePeriod);
                                 cell.Value = targetCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
@@ -920,52 +923,52 @@ namespace PPMTool.Pages
 
                                 // Recovered FTE
                                 cell = worksheetTotals.Cell(2 + i, 6);
-                                cell.Value = totalItem.GetAverageRecovered(totalDays);
+                                cell.Value = totalItem.GetAverageRecovered(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Recovered Costs
                                 cell = worksheetTotals.Cell(2 + i, 7);
-                                cell.Value = totalItem.GetAverageRecovered(totalDays) * windowCosts;
+                                cell.Value = totalItem.GetAverageRecoveredCosts(averagePeriod);
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Net Capped
                                 cell = worksheetTotals.Cell(2 + i, 8);
-                                cell.Value = totalItem.GetAverageNetCapped(totalDays);
+                                cell.Value = totalItem.GetAverageNetCapped(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Net Capped Costs
                                 cell = worksheetTotals.Cell(2 + i, 9);
-                                cell.Value = totalItem.GetAverageNetCapped(totalDays) * windowCosts;
+                                cell.Value = totalItem.GetAverageNetCappedCosts(averagePeriod);
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered Inc Lead
                                 cell = worksheetTotals.Cell(2 + i, 10);
-                                cell.Value = totalItem.GetAverageRecoveredIncLeadership(totalDays);
+                                cell.Value = totalItem.GetAverageRecoveredIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Recovered Inc Lead Costs
                                 cell = worksheetTotals.Cell(2 + i, 11);
-                                cell.Value = totalItem.GetAverageRecoveredIncLeadership(totalDays) * windowCosts;
+                                cell.Value = totalItem.GetAverageRecoveredIncLeadershipCosts(averagePeriod);
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Net Capped Inc Lead
+                                // Net Capped Inc Leads
                                 cell = worksheetTotals.Cell(2 + i, 12);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadership(totalDays);
+                                cell.Value = totalItem.GetAverageNetCappedIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Net Capped Inc Lead Costs
                                 cell = worksheetTotals.Cell(2 + i, 13);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadership(totalDays) * windowCosts;
+                                cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts(averagePeriod);
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
                             // Add total row
                             for (var col = 0; col < columnTitles.Count; ++col)
                             {
-                                cell = worksheetTotals.Cell(peopleActiveNames.Count + 2, col + 2);
-                                cell.FormulaR1C1 = $"=SUM(R2C{col + 2}:R{peopleActiveNames.Count + 1}C{col + 2})";
+                                cell = worksheetTotals.Cell(peopleActive.Count + 2, col + 2);
+                                cell.FormulaR1C1 = $"=SUM(R2C{col + 2}:R{peopleActive.Count + 1}C{col + 2})";
 
-                                var cellAbove = worksheetTotals.Cell(peopleActiveNames.Count + 1, col + 2);
+                                var cellAbove = worksheetTotals.Cell(peopleActive.Count + 1, col + 2);
                                 cell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
                                 cell.Style.Font.Bold = true;
                             }

@@ -261,5 +261,31 @@ namespace PPMTool.Data.Entities
 
             return GetWorkloadModelOnDateOrDefault(date).Grade;
         }
+
+        /// <summary>
+        /// Gets the first workload model change on or after the date given
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetFirstWorkloadModelAfter(DateTime date)
+        {
+            return WorkloadModelChanges
+                .Where(x => x.ChangeDate >= date)
+                .OrderBy(x => x.ChangeDate)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Gets the most recent workload model change on or before the date given
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetLastWorkloadModelBefore(DateTime date)
+        {
+            return WorkloadModelChanges
+                .Where(x => x.ChangeDate <= date)
+                .OrderBy(x => x.ChangeDate)
+                .LastOrDefault();
+        }
     }
 }

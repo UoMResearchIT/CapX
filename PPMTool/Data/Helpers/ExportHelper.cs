@@ -364,13 +364,23 @@ namespace PPMTool.Data.Helpers
 
             public float Target { get; private set; }
 
+            public float TargetCosts { get; private set; }
+
             public float Recovered { get; private set; }
+
+            public float RecoveredCosts { get; private set; }
 
             public float RecoveredIncLeadership { get; private set; }
 
+            public float RecoveredIncLeadershipCosts { get; private set; }
+
             public float NetCapped { get; private set; }
 
+            public float NetCappedCosts { get; private set; }
+
             public float NetCappedIncLead { get; private set; }
+
+            public float NetCappedIncLeadCosts { get; private set; }
 
             public float PersonCosts { get; private set; }
 
@@ -382,20 +392,38 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Update the values based on the FTE for the day
             /// </summary>
-            public void Update(float targetFTE, float assignedFTE, float assignedIncLeadFTE, float maxCap, float costs)
+            /// <param name="targetFTE"></param>
+            /// <param name="assignedFTE"></param>
+            /// <param name="assignedIncLeadFTE"></param>
+            /// <param name="maxCap"></param>
+            /// <param name="actualCosts">Costs of the person on the day (zero if left or not start)</param>
+            /// <param name="costs">Annual cost / 365 (non-zero even if left or not started)</param>
+            public void Update(
+                float targetFTE,
+                float assignedFTE,
+                float assignedIncLeadFTE,
+                float maxCap,
+                float actualCosts,
+                float costs)
             {
                 Target += targetFTE;
+                TargetCosts += targetFTE * costs;
                 Recovered += assignedFTE;
+                RecoveredCosts += assignedFTE * costs;
                 RecoveredIncLeadership += assignedIncLeadFTE;
-                PersonCosts += costs;
+                RecoveredIncLeadershipCosts += assignedIncLeadFTE * costs;
 
                 var net = assignedFTE - targetFTE;
                 var netCapped = net > maxCap ? maxCap : net;
                 NetCapped += netCapped;
+                NetCappedCosts += netCapped * costs;
 
                 net = assignedIncLeadFTE - targetFTE;
                 netCapped = net > maxCap ? maxCap : net;
                 NetCappedIncLead += netCapped;
+                NetCappedIncLeadCosts += netCapped * costs;
+
+                PersonCosts += actualCosts;
             }
 
             /// <summary>
@@ -409,6 +437,16 @@ namespace PPMTool.Data.Helpers
             }
 
             /// <summary>
+            /// Returns the average costs of the target FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageTargetCosts(int daysInWindow)
+            {
+                return TargetCosts / daysInWindow;
+            }
+
+            /// <summary>
             /// Returns the FTE of the recovered for the whole window
             /// </summary>
             /// <param name="daysInWindow"></param>
@@ -416,6 +454,16 @@ namespace PPMTool.Data.Helpers
             public float GetAverageRecovered(int daysInWindow)
             {
                 return Recovered / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the recovered FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageRecoveredCosts(int daysInWindow)
+            {
+                return RecoveredCosts / daysInWindow;
             }
 
             /// <summary>
@@ -429,6 +477,16 @@ namespace PPMTool.Data.Helpers
             }
 
             /// <summary>
+            /// Returns the average costs of the recovered including leadership FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageRecoveredIncLeadershipCosts(int daysInWindow)
+            {
+                return RecoveredIncLeadershipCosts / daysInWindow;
+            }
+
+            /// <summary>
             /// Returns the FTE of the capped net for the whole window
             /// </summary>
             /// <param name="daysInWindow"></param>
@@ -436,6 +494,16 @@ namespace PPMTool.Data.Helpers
             public float GetAverageNetCapped(int daysInWindow)
             {
                 return NetCapped / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the capped net FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageNetCappedCosts(int daysInWindow)
+            {
+                return NetCappedCosts / daysInWindow;
             }
 
             /// <summary>
@@ -449,11 +517,21 @@ namespace PPMTool.Data.Helpers
             }
 
             /// <summary>
+            /// Returns the average costs of the capped net including leadership FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageNetCappedIncLeadershipCosts(int daysInWindow)
+            {
+                return NetCappedIncLeadCosts / daysInWindow;
+            }
+
+            /// <summary>
             /// Gets the costs over the window
             /// </summary>
             /// <param name="daysInWindow"></param>
             /// <returns></returns>
-            public float GetTotalCosts()
+            public float GetEstimatedCosts()
             {
                 return PersonCosts;
             }
@@ -534,8 +612,28 @@ namespace PPMTool.Data.Helpers
                         var gradeOnDay = person.GetGradeOnDate(currentDate);
 
                         // Get day costs for person based on mid-grade
-                        var personCosts = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
-                        personCosts /= 365.0;
+                        var actualCostsOnDay = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
+                        actualCostsOnDay /= 365.0;
+
+                        // If we don't have any costs for the day then need to compute them from first or last grade we know about
+                        var costsForDay = actualCostsOnDay;
+                        if (actualCostsOnDay == 0)
+                        {
+                            WorkloadModelChange wlm = null;
+                            // If the grade is null then find the last WLM before the date
+                            if (person.StartDate > currentDate)
+                            {
+                                // Get first WLM after the date
+                                wlm = person.GetFirstWorkloadModelAfter(currentDate);
+
+                            }
+                            else if (person.EndDate != null && person.EndDate < currentDate)
+                            {
+                                // Get last WLM before the date
+                                wlm = person.GetLastWorkloadModelBefore(currentDate);
+                            }
+                            costsForDay = finref.GetMidGradeCosts(wlm?.Grade ?? 6) / 365.0;
+                        }
 
                         // Get the sum of their assignments on the day with and without leadership
                         var projectAssignmentsFTE = chunks
@@ -560,7 +658,7 @@ namespace PPMTool.Data.Helpers
                         currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
                         currentDayData.RecoveredTimeIncLeadership.Add(person.Name, (float)projectAssignmentsFTEIncLeadership);
                         currentDayData.NetCappedIncLeadership.Add(person.Name, (float)netValueCappedIncLeadership);
-                        currentDayData.PersonCosts.Add(person.Name, (float)personCosts);
+                        currentDayData.PersonCosts.Add(person.Name, (float)actualCostsOnDay);
 
                         // Update the totals based on this day
                         windowRecoveryData
@@ -570,7 +668,8 @@ namespace PPMTool.Data.Helpers
                                 (float)projectAssignmentsFTE,
                                 (float)projectAssignmentsFTEIncLeadership,
                                 (float)maxOverAllocation,
-                                (float)personCosts
+                                (float)actualCostsOnDay,
+                                (float)costsForDay
                             );
                     }
 
