@@ -8,6 +8,8 @@ namespace PPMTool.Data
     /// </summary>
     public class AssignmentChunk
     {
+        public string PostNumber { get; set; }
+
         public string EmployeeName { get; set; }
 
         public int Grade { get; set; }
@@ -62,6 +64,8 @@ namespace PPMTool.Data
 
         public string FundingSourceDescription { get; set; }
 
+        public bool IsLeadershipAssignment { get; set; }
+
         public AssignmentChunk()
         {
 
@@ -73,6 +77,7 @@ namespace PPMTool.Data
         /// <param name="taskToCopy"></param>
         public AssignmentChunk(AssignmentChunk taskToCopy)
         {
+            PostNumber = taskToCopy.PostNumber;
             EmployeeName = taskToCopy.EmployeeName;
             Grade = taskToCopy.Grade;
             FTE = taskToCopy.FTE;
@@ -91,6 +96,7 @@ namespace PPMTool.Data
             FundingSourceAmount = taskToCopy.FundingSourceAmount;
             SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
             PlannedCost = taskToCopy.PlannedCost;
+            IsLeadershipAssignment = taskToCopy.IsLeadershipAssignment;
         }
 
         /// <summary>
@@ -103,7 +109,7 @@ namespace PPMTool.Data
             {
                 var annualCosts = finrefs.GetSuitableFinancialReference(FinancialYear).GetMidGradeCosts(Grade);
                 var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
-                SalaryCostEstimate = Math.Round(annualCosts * FTE * fractionOfYear, 0);
+                SalaryCostEstimate = annualCosts * FTE * fractionOfYear;
             }
             catch (Exception ex)
             {

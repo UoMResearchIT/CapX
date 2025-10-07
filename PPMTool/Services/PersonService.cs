@@ -197,5 +197,20 @@ namespace PPMTool.Services
                 .Include(x => x.Person)
                 .Where(x => x.Person.PersonId == personId);
         }
+
+        /// <summary>
+        /// Get the people who are actively employed during the window given (inclusive dates)
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        internal async Task<IList<Person>> GetEmployedPeopleShallowAsync(PPMToolContext context, DateTime startDate, DateTime endDate)
+        {
+            var people = await GetAllShallowAsync(context);
+            return people
+                .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
+                .ToList();
+        }
     }
 }

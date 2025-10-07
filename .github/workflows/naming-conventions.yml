@@ -22,7 +22,7 @@ jobs:
           fi
           
   check-branch-name-conventions:
-    if: github.event_name == 'pull_request's && github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
