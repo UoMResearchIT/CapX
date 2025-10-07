@@ -869,163 +869,6 @@ namespace PPMTool.Pages
             });
         }
 
-        private class RecoveryData
-        {
-            /// <summary>
-            /// Day of the data
-            /// </summary>
-            public DateTime Date { get; }
-
-            /// <summary>
-            /// Person-Value data based on what the time recovered should be for that day based on WLMs
-            /// </summary>
-            public IDictionary<string, float> TargetRecovery { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data based on what the sum of the person's assignments say they have on that day
-            /// </summary>
-            public IDictionary<string, float> RecoveredTime { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values and permits values over 100%
-            /// </summary>
-            public IDictionary<string, float> Net { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values but caps off values over 100%
-            /// </summary>
-            public IDictionary<string, float> NetCapped { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data based on what the sum of the person's assignments say they have on that day including leadership
-            /// </summary>
-            public IDictionary<string, float> RecoveredTimeIncLeadership { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values including leadership and permits values over 100%
-            /// </summary>
-            public IDictionary<string, float> NetIncLeadership { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values including leadership but caps off values over 100%
-            /// </summary>
-            public IDictionary<string, float> NetCappedIncLeadership { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which holds the costs for a person on that day
-            /// </summary>
-            public IDictionary<string, float> PersonCosts { get; } = new Dictionary<string, float>();
-
-            public RecoveryData(DateTime date)
-            {
-                Date = date;
-            }
-        }
-
-        /// <summary>
-        /// Represents the summary over the window of the target and recovery
-        /// </summary>
-        private class TotalRecovered
-        {
-            public string Name { get; }
-
-            public float Target { get; private set; }
-
-            public float Recovered { get; private set; }
-
-            public float RecoveredIncLeadership { get; private set; }
-
-            public float NetCapped { get; private set; }
-
-            public float NetCappedIncLead { get; private set; }
-
-            public float PersonCosts { get; private set; }
-
-            public TotalRecovered(string name)
-            {
-                Name = name;
-            }
-
-            /// <summary>
-            /// Update the values based on the FTE for the day
-            /// </summary>
-            public void Update(float targetFTE, float assignedFTE, float assignedIncLeadFTE, float maxCap, float costs)
-            {
-                Target += targetFTE;
-                Recovered += assignedFTE;
-                RecoveredIncLeadership += assignedIncLeadFTE;
-                PersonCosts += costs;
-
-                var net = assignedFTE - targetFTE;
-                var netCapped = net > maxCap ? maxCap : net;
-                NetCapped += netCapped;
-
-                net = assignedIncLeadFTE - targetFTE;
-                netCapped = net > maxCap ? maxCap : net;
-                NetCappedIncLead += netCapped;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the target for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageTarget(int daysInWindow)
-            {
-                return Target / daysInWindow;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the recovered for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageRecovered(int daysInWindow)
-            {
-                return Recovered / daysInWindow;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the recovered including leadership for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageRecoveredIncLeadership(int daysInWindow)
-            {
-                return RecoveredIncLeadership / daysInWindow;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the capped net for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageNetCapped(int daysInWindow)
-            {
-                return NetCapped / daysInWindow;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the capped net including leadership for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageNetCappedIncLeadership(int daysInWindow)
-            {
-                return NetCappedIncLead / daysInWindow;
-            }
-
-            /// <summary>
-            /// Gets the costs over the window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetTotalCosts()
-            {
-                return PersonCosts;
-            }
-        }
-
         /// <summary>
         /// Exports an Excel spreadsheet of target and assigned recovery of staff
         /// </summary>
@@ -1037,126 +880,18 @@ namespace PPMTool.Pages
 
             Task.Run(async () =>
             {
-                // Set the report length
+                // Get recovery data
                 var startDate = this.startDate.Date;
                 var endDate = startDate.AddMonths(monthsAhead);
-                int totalDays = (int)(endDate.Subtract(startDate).TotalDays + 1);
-                var currentDate = startDate;
-                var peopleActive = new List<Person>();
-                var allData = new List<RecoveryData>();
-                var totalData = new List<TotalRecovered>();
-
-                // Create a context to be accesed on this thread
-                using (var context = ContextFactory.CreateDbContext())
-                {
-                    // Get data for each person active in the window
-                    var people = await PersonService.GetAllShallowAsync(context);
-                    peopleActive = people
-                        .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
-                        .ToList();
-
-                    // Get projects active in the window with their subtasks and resources
-                    var projectsInWindow = ProjectService.GetAll(context)
-                        .Where(x => !x.ProjectStatus.IsCancelled())
-                        .Where(x => x.IsWithin(startDate, endDate));
-
-                    // Get fin refs
-                    var currentFY = FinancialReference.GetFinancialYear(startDate);
-                    var finref = FinancialReferenceService.GetFinancialReferenceForDate(context, startDate);
-
-                    // Initialise the totals
-                    foreach (var person in peopleActive)
-                    {
-                        totalData.Add(new TotalRecovered(person.Name));
-                    }
-
-                    // Loop over the days
-                    while (currentDate <= endDate)
-                    {
-                        // If the FY has changed then update the finref
-                        if (FinancialReference.GetFinancialYear(currentDate) != currentFY)
-                        {
-                            finref = FinancialReferenceService.GetFinancialReferenceForDate(context, currentDate);
-                        }
-
-                        // Create a new item
-                        var currentDayData = new RecoveryData(currentDate);
-
-                        // Get the subtasks that are active on this day
-                        var tasksActiveOnDay = projectsInWindow
-                            .SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentDate)));
-
-                        // Get the projects that are active on this day
-                        var projectsActiveOnDay = projectsInWindow
-                            .Where(x => x.SubTasks.Any(x => x.IsWithin(currentDate)));
-
-                        // Loop over each person employed in the window
-                        foreach (var person in peopleActive)
-                        {
-                            // Get the project work amount on the day
-                            var projectWorkTargetFTE = person.GetProjectWorkAvailabilityOnDate(currentDate);
-                            var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
-                            var gradeOnDay = person.GetGradeOnDate(currentDate);
-
-                            // Get day costs for person based on mid-grade
-                            var personCosts = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
-                            personCosts /= 365.0;
-
-                            // Get resource assignments that are active on the day for this person
-                            var resourcesOnDay = tasksActiveOnDay
-                                .SelectMany(x => x.AssignedResources)
-                                .Where(x => x.Person.PersonId == person.PersonId)
-                                .ToList();
-
-                            // Get the projects they manage which have a leadership recovery model
-                            var projectsManagedByPerson = projectsActiveOnDay
-                                .Where(x =>
-                                    x.ProjectManager.PersonId == person.PersonId &&
-                                    x.CostModel == CostModel.TechAndLeadership
-                                );
-                            var leadershipAssignmentFTE = projectsManagedByPerson.Sum(x => x.LeadershipFTE);
-
-                            // Get the sum of their assignments on the day including leadership
-                            var projectAssignmentsFTE = resourcesOnDay.Sum(x => x.AssignmentFTE);
-                            var projectAssignmentsFTEIncLeadership = projectAssignmentsFTE + leadershipAssignmentFTE;
-
-                            // Net value
-                            var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
-                            var netValueIncLeadership = projectAssignmentsFTEIncLeadership - projectWorkTargetFTE;
-
-                            // Net value capped
-                            var maxOverAllocation = wlmTotal - projectWorkTargetFTE;
-                            if (maxOverAllocation < 0) maxOverAllocation = 0;
-                            var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
-                            var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
-
-                            // Add to the data dictionary
-                            currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTargetFTE);
-                            currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignmentsFTE);
-                            currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
-                            currentDayData.RecoveredTimeIncLeadership.Add(person.Name, (float)projectAssignmentsFTEIncLeadership);
-                            currentDayData.NetCappedIncLeadership.Add(person.Name, (float)netValueCappedIncLeadership);
-                            currentDayData.PersonCosts.Add(person.Name, (float)personCosts);
-
-                            // Update the totals
-                            totalData
-                                .First(x => x.Name == person.Name)
-                                .Update(
-                                    (float)projectWorkTargetFTE,
-                                    (float)projectAssignmentsFTE,
-                                    (float)projectAssignmentsFTEIncLeadership,
-                                    (float)maxOverAllocation,
-                                    (float)personCosts
-                                );
-                        }
-
-                        // Add the current day data to the list
-                        allData.Add(currentDayData);
-
-                        // Advance the day
-                        currentDate = currentDate.AddDays(1);
-                    }
-                }
+                int totalDays = (int)(endDate.Subtract(startDate).TotalDays) + 1;
+                var totalData = await ExportHelper.GetRecoveryData(
+                    ContextFactory,
+                    PersonService,
+                    ProjectService,
+                    FinancialReferenceService,
+                    startDate,
+                    endDate
+                );
 
                 // Run the file export on the render context
                 await InvokeAsync(async () =>
@@ -1173,6 +908,7 @@ namespace PPMTool.Pages
                         using (var workbook = new XLWorkbook())
                         {
                             // Get a list of people active by name
+                            var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                             var peopleActiveNames = peopleActive.Select(x => x.Name).ToList();
                             var totalPeople = peopleActiveNames.Count();
 
@@ -1297,7 +1033,7 @@ namespace PPMTool.Pages
                             workbook.SaveAs(path);
                         }
 
-                        Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+                        Debug.WriteLine($"** Exported to {path}");
 
                         // Get file stream
                         using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
