@@ -745,10 +745,10 @@ namespace PPMTool.Pages
                     var endDate = this.startDate.Date.AddMonths(monthsAhead);
 
                     // Get data for each person active in the window
-                    var peopleActive = people.Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate));
+                    var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                     foreach (var person in peopleActive)
                     {
-                        // Get the row data
+                        // Get the assignment data a row a person at a time
                         var data = ExportHelper.GetExportDataForPerson(
                             person,
                             allProjects,
@@ -760,13 +760,24 @@ namespace PPMTool.Pages
                     }
                     allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
 
+                    // Get recovery data
+                    int totalDays = (int)(endDate.Subtract(startDate).TotalDays) + 1;
+                    var totalData = await ExportHelper.GetRecoveryData(
+                        ContextFactory,
+                        PersonService,
+                        ProjectService,
+                        FinancialReferenceService,
+                        startDate,
+                        endDate
+                    );
+
                     // Run the file export on the render context
                     await InvokeAsync(async () =>
                     {
                         try
                         {
                             // Create file path
-                            var filename = $"Capacity_{DateTime.Now.Ticks}.xlsx";
+                            var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
                             var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
                             Directory.CreateDirectory(folder);
                             var path = Path.Combine(folder, filename);
@@ -774,14 +785,16 @@ namespace PPMTool.Pages
                             // Create workbook and worksheet
                             using (var workbook = new XLWorkbook())
                             {
-                                var worksheet = workbook.Worksheets.Add("Capacity");
+                                // Assignments worksheet first
+                                var worksheet = workbook.Worksheets.Add("Assignments");
 
                                 // Write header row
                                 var props = typeof(AssignmentChunk).GetProperties();
                                 var propNames = props.Select(x => x.Name).ToList();
+                                IXLCell cell = default;
                                 for (int i = 0; i < propNames.Count; i++)
                                 {
-                                    var cell = worksheet.Cell(1, i + 1);
+                                    cell = worksheet.Cell(1, i + 1);
                                     cell.Value = propNames[i];
                                     cell.Style.Font.Bold = true;
                                 }
@@ -794,7 +807,7 @@ namespace PPMTool.Pages
                                     {
                                         var property = record.GetType().GetProperty(propNames[col]);
                                         var rawValue = property?.GetValue(record);
-                                        var cell = worksheet.Cell(row + 2, col + 1);
+                                        cell = worksheet.Cell(row + 2, col + 1);
 
                                         // Format and assign
                                         if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
@@ -839,11 +852,131 @@ namespace PPMTool.Pages
                                     }
                                 }
 
+                                // Get a list of people active by name
+                                var peopleActiveNames = peopleActive.Select(x => x.Name).ToList();
+                                var totalPeople = peopleActiveNames.Count();
+                                var columnTitles = new List<string>
+                                {
+                                    "Estimated Costs",
+                                    "Target",
+                                    "Target Costs",
+                                    "Baseline Budget",
+                                    "Recovered",
+                                    "Recovered Costs",
+                                    "Net (Capped)",
+                                    "Net Costs",
+                                    "Recovered (Inc Lead)",
+                                    "Recovered Costs (Inc Lead)",
+                                    "Net (Capped, Inc Lead)",
+                                    "Net Costs (Inc Lead)"
+                                };
+
+                                // Add tab
+                                var worksheetTotals = workbook.AddWorksheet("Costs", 0);
+
+                                // Header row
+                                cell = worksheetTotals.Cell(1, 1);
+                                cell.Value = "Name";
+                                cell.Style.Font.Bold = true;
+                                for (int i = 0; i < columnTitles.Count; ++i)
+                                {
+                                    cell = worksheetTotals.Cell(1, 2 + i);
+                                    cell.Value = columnTitles[i];
+                                    cell.Style.Font.Bold = true;
+                                }
+
+                                string moneyFormat = "_-£* #,##0.00_-;[Red]-£* #,##0.00_-;_-£* \"-\"??_-;_-@_-";
+                                string numberFormat = "0.000_ ;[Red]-0.000";
+
+                                // Each row
+                                for (int i = 0; i < peopleActiveNames.Count; ++i)
+                                {
+                                    var totalItem = totalData.First(x => x.Name == peopleActiveNames[i]);
+
+                                    // Name
+                                    cell = worksheetTotals.Cell(2 + i, 1);
+                                    cell.Value = peopleActiveNames[i];
+                                    cell.Style.Font.Bold = true;
+
+                                    // Costs of person over window
+                                    var windowCosts = totalItem.GetTotalCosts();
+                                    cell = worksheetTotals.Cell(2 + i, 2);
+                                    cell.Value = windowCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+
+                                    // Target FTE
+                                    cell = worksheetTotals.Cell(2 + i, 3);
+                                    cell.Value = totalItem.GetAverageTarget(totalDays);
+                                    cell.Style.NumberFormat.Format = numberFormat;
+
+                                    // Target Costs
+                                    cell = worksheetTotals.Cell(2 + i, 4);
+                                    var targetCosts = totalItem.GetAverageTarget(totalDays) * windowCosts;
+                                    cell.Value = targetCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+
+                                    // Baseline Budget
+                                    cell = worksheetTotals.Cell(2 + i, 5);
+                                    cell.Value = windowCosts - targetCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+
+                                    // Recovered FTE
+                                    cell = worksheetTotals.Cell(2 + i, 6);
+                                    cell.Value = totalItem.GetAverageRecovered(totalDays);
+                                    cell.Style.NumberFormat.Format = numberFormat;
+
+                                    // Recovered Costs
+                                    cell = worksheetTotals.Cell(2 + i, 7);
+                                    cell.Value = totalItem.GetAverageRecovered(totalDays) * windowCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+
+                                    // Net Capped
+                                    cell = worksheetTotals.Cell(2 + i, 8);
+                                    cell.Value = totalItem.GetAverageNetCapped(totalDays);
+                                    cell.Style.NumberFormat.Format = numberFormat;
+
+                                    // Net Capped Costs
+                                    cell = worksheetTotals.Cell(2 + i, 9);
+                                    cell.Value = totalItem.GetAverageNetCapped(totalDays) * windowCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+
+                                    // Recovered Inc Lead
+                                    cell = worksheetTotals.Cell(2 + i, 10);
+                                    cell.Value = totalItem.GetAverageRecoveredIncLeadership(totalDays);
+                                    cell.Style.NumberFormat.Format = numberFormat;
+
+                                    // Recovered Inc Lead Costs
+                                    cell = worksheetTotals.Cell(2 + i, 11);
+                                    cell.Value = totalItem.GetAverageRecoveredIncLeadership(totalDays) * windowCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+
+                                    // Net Capped Inc Lead
+                                    cell = worksheetTotals.Cell(2 + i, 12);
+                                    cell.Value = totalItem.GetAverageNetCappedIncLeadership(totalDays);
+                                    cell.Style.NumberFormat.Format = numberFormat;
+
+                                    // Net Capped Inc Lead Costs
+                                    cell = worksheetTotals.Cell(2 + i, 13);
+                                    cell.Value = totalItem.GetAverageNetCappedIncLeadership(totalDays) * windowCosts;
+                                    cell.Style.NumberFormat.Format = moneyFormat;
+                                }
+
+                                // Add total row
+                                for (var col = 0; col < columnTitles.Count; ++col)
+                                {
+                                    cell = worksheetTotals.Cell(peopleActiveNames.Count + 2, col + 2);
+                                    cell.FormulaR1C1 = $"=SUM(R2C{col + 2}:R{peopleActiveNames.Count + 1}C{col + 2})";
+
+                                    var cellAbove = worksheetTotals.Cell(peopleActiveNames.Count + 1, col + 2);
+                                    cell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
+                                    cell.Style.Font.Bold = true;
+                                }
+
                                 // Save the workbook
                                 workbook.SaveAs(path);
                             }
 
-                            Debug.WriteLine($"** Exported {allData.Count} rows to {path}");
+                            Debug.WriteLine($"** Exported report to {path}");
 
                             // Get file stream
                             using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
@@ -857,195 +990,6 @@ namespace PPMTool.Pages
                         }
                     });
                 }
-
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    LogInformation($"Export task finished {t.Status}");
-                    exportRunning = false;
-                    StateHasChanged();
-                });
-            });
-        }
-
-        /// <summary>
-        /// Exports an Excel spreadsheet of target and assigned recovery of staff
-        /// </summary>
-        private void ExportRecoveryReport()
-        {
-            LogInformation($"Exporting recovery report...");
-
-            exportRunning = true;
-
-            Task.Run(async () =>
-            {
-                // Get recovery data
-                var startDate = this.startDate.Date;
-                var endDate = startDate.AddMonths(monthsAhead);
-                int totalDays = (int)(endDate.Subtract(startDate).TotalDays) + 1;
-                var totalData = await ExportHelper.GetRecoveryData(
-                    ContextFactory,
-                    PersonService,
-                    ProjectService,
-                    FinancialReferenceService,
-                    startDate,
-                    endDate
-                );
-
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
-                {
-                    try
-                    {
-                        // Create file path
-                        var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
-
-                        // Create workbook and worksheet
-                        using (var workbook = new XLWorkbook())
-                        {
-                            // Get a list of people active by name
-                            var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
-                            var peopleActiveNames = peopleActive.Select(x => x.Name).ToList();
-                            var totalPeople = peopleActiveNames.Count();
-
-                            var columnTitles = new List<string>
-                            {
-                                "Estimated Costs",
-                                "Target",
-                                "Target Costs",
-                                "Baseline Budget",
-                                "Recovered",
-                                "Recovered Costs",
-                                "Net (Capped)",
-                                "Net Costs",
-                                "Recovered (Inc Lead)",
-                                "Recovered Costs (Inc Lead)",
-                                "Net (Capped, Inc Lead)",
-                                "Net Costs (Inc Lead)"
-                            };
-
-                            // Add tab
-                            var worksheetTotals = workbook.AddWorksheet("Costs", 0);
-
-                            // Header row
-                            var cell = worksheetTotals.Cell(1, 1);
-                            cell.Value = "Name";
-                            cell.Style.Font.Bold = true;
-                            for (int i = 0; i < columnTitles.Count; ++i)
-                            {
-                                cell = worksheetTotals.Cell(1, 2 + i);
-                                cell.Value = columnTitles[i];
-                                cell.Style.Font.Bold = true;
-                            }
-
-                            string moneyFormat = "_-£* #,##0.00_-;[Red]-£* #,##0.00_-;_-£* \"-\"??_-;_-@_-";
-                            string numberFormat = "0.000_ ;[Red]-0.000";
-
-                            // Each row
-                            for (int i = 0; i < peopleActiveNames.Count; ++i)
-                            {
-                                var totalItem = totalData.First(x => x.Name == peopleActiveNames[i]);
-
-                                // Name
-                                cell = worksheetTotals.Cell(2 + i, 1);
-                                cell.Value = peopleActiveNames[i];
-                                cell.Style.Font.Bold = true;
-
-                                // Costs of person over window
-                                var windowCosts = totalItem.GetTotalCosts();
-                                cell = worksheetTotals.Cell(2 + i, 2);
-                                cell.Value = windowCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Target FTE
-                                cell = worksheetTotals.Cell(2 + i, 3);
-                                cell.Value = totalItem.GetAverageTarget(totalDays);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Target Costs
-                                cell = worksheetTotals.Cell(2 + i, 4);
-                                var targetCosts = totalItem.GetAverageTarget(totalDays) * windowCosts;
-                                cell.Value = targetCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Baseline Budget
-                                cell = worksheetTotals.Cell(2 + i, 5);
-                                cell.Value = windowCosts - targetCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Recovered FTE
-                                cell = worksheetTotals.Cell(2 + i, 6);
-                                cell.Value = totalItem.GetAverageRecovered(totalDays);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Recovered Costs
-                                cell = worksheetTotals.Cell(2 + i, 7);
-                                cell.Value = totalItem.GetAverageRecovered(totalDays) * windowCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Net Capped
-                                cell = worksheetTotals.Cell(2 + i, 8);
-                                cell.Value = totalItem.GetAverageNetCapped(totalDays);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Net Capped Costs
-                                cell = worksheetTotals.Cell(2 + i, 9);
-                                cell.Value = totalItem.GetAverageNetCapped(totalDays) * windowCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Recovered Inc Lead
-                                cell = worksheetTotals.Cell(2 + i, 10);
-                                cell.Value = totalItem.GetAverageRecoveredIncLeadership(totalDays);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Recovered Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 11);
-                                cell.Value = totalItem.GetAverageRecoveredIncLeadership(totalDays) * windowCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Net Capped Inc Lead
-                                cell = worksheetTotals.Cell(2 + i, 12);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadership(totalDays);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Net Capped Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 13);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadership(totalDays) * windowCosts;
-                                cell.Style.NumberFormat.Format = moneyFormat;
-                            }
-
-                            // Add total row
-                            for (var col = 0; col < columnTitles.Count; ++col)
-                            {
-                                cell = worksheetTotals.Cell(peopleActiveNames.Count + 2, col + 2);
-                                cell.FormulaR1C1 = $"=SUM(R2C{col + 2}:R{peopleActiveNames.Count + 1}C{col + 2})";
-
-                                var cellAbove = worksheetTotals.Cell(peopleActiveNames.Count + 1, col + 2);
-                                cell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
-                                cell.Style.Font.Bold = true;
-                            }
-
-                            // Save the workbook
-                            workbook.SaveAs(path);
-                        }
-
-                        Debug.WriteLine($"** Exported to {path}");
-
-                        // Get file stream
-                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
-
-                        // Invoke JS on the client to download the file
-                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
 
             }).ContinueWith(t =>
             {

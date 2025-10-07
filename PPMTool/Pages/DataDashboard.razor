@@ -123,16 +123,6 @@
                                               Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
                             </RadzenStack>
                         </div>
-                        <div class="col-3" style="align-content: center">
-                            <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
-                                <RadzenLabel class="radzen-form-label" Text="Recovery Report for Period" />
-                                <RadzenButton ButtonType="ButtonType.Button"
-                                              Click="ExportRecoveryReport"
-                                              Text="@(exportRunning ? "Please Wait..." : "Export Recovery Report")"
-                                              Icon="@(exportRunning ? "hourglass_empty" : "download")"
-                                              Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
-                            </RadzenStack>
-                        </div>
                     </div>
                 </RadzenAccordionItem>
             </Items>
