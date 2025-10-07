@@ -79,6 +79,18 @@ namespace PPMTool.Data.Helpers
                     var daysOfLeadershipForChunk = leadershipEnd.Subtract(leadershipStart).TotalDays + 1;
                     var fullDateRangeDuration = (dateRange.EndDate.Subtract(dateRange.StartDate).TotalDays + 1);
                     var proportionOfTask = fullDateRangeDuration <= 0 ? 0 : daysOfLeadershipForChunk / fullDateRangeDuration;
+
+                    // Adjust leadership task start and end dates based on the person starting or leaving
+                    if (leadershipStart < person.StartDate)
+                    {
+                        leadershipStart = person.StartDate;
+                    }
+                    if (person.EndDate != null && leadershipEnd > person.EndDate)
+                    {
+                        leadershipEnd = person.EndDate!.Value;
+                    }
+
+                    // Now create the leadership task
                     var leadershipTask = new SubTask
                     {
                         AssignedResources = new List<Resource>
