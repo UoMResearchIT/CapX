@@ -441,9 +441,9 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="daysInWindow"></param>
             /// <returns></returns>
-            public float GetAverageTargetCosts(int daysInWindow)
+            public float GetAverageTargetCosts()
             {
-                return TargetCosts / daysInWindow;
+                return TargetCosts;
             }
 
             /// <summary>
@@ -461,9 +461,9 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="daysInWindow"></param>
             /// <returns></returns>
-            public float GetAverageRecoveredCosts(int daysInWindow)
+            public float GetAverageRecoveredCosts()
             {
-                return RecoveredCosts / daysInWindow;
+                return RecoveredCosts;
             }
 
             /// <summary>
@@ -481,9 +481,9 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="daysInWindow"></param>
             /// <returns></returns>
-            public float GetAverageRecoveredIncLeadershipCosts(int daysInWindow)
+            public float GetAverageRecoveredIncLeadershipCosts()
             {
-                return RecoveredIncLeadershipCosts / daysInWindow;
+                return RecoveredIncLeadershipCosts;
             }
 
             /// <summary>
@@ -501,9 +501,9 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="daysInWindow"></param>
             /// <returns></returns>
-            public float GetAverageNetCappedCosts(int daysInWindow)
+            public float GetAverageNetCappedCosts()
             {
-                return NetCappedCosts / daysInWindow;
+                return NetCappedCosts;
             }
 
             /// <summary>
@@ -521,9 +521,9 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="daysInWindow"></param>
             /// <returns></returns>
-            public float GetAverageNetCappedIncLeadershipCosts(int daysInWindow)
+            public float GetAverageNetCappedIncLeadershipCosts()
             {
-                return NetCappedIncLeadCosts / daysInWindow;
+                return NetCappedIncLeadCosts;
             }
 
             /// <summary>
@@ -652,7 +652,7 @@ namespace PPMTool.Data.Helpers
                         var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
                         var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
 
-                        // Add to the data dictionary
+                        // Add to the data dictionary (this is mainly for troubleshooting)
                         currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTargetFTE);
                         currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignmentsFTE);
                         currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);

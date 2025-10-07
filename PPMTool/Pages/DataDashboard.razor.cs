@@ -912,7 +912,7 @@ namespace PPMTool.Pages
 
                                 // Target Costs
                                 cell = worksheetTotals.Cell(2 + i, 4);
-                                var targetCosts = totalItem.GetAverageTargetCosts(averagePeriod);
+                                var targetCosts = totalItem.GetAverageTargetCosts();
                                 cell.Value = targetCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
@@ -928,7 +928,7 @@ namespace PPMTool.Pages
 
                                 // Recovered Costs
                                 cell = worksheetTotals.Cell(2 + i, 7);
-                                cell.Value = totalItem.GetAverageRecoveredCosts(averagePeriod);
+                                cell.Value = totalItem.GetAverageRecoveredCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Net Capped
@@ -938,7 +938,7 @@ namespace PPMTool.Pages
 
                                 // Net Capped Costs
                                 cell = worksheetTotals.Cell(2 + i, 9);
-                                cell.Value = totalItem.GetAverageNetCappedCosts(averagePeriod);
+                                cell.Value = totalItem.GetAverageNetCappedCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered Inc Lead
@@ -948,7 +948,7 @@ namespace PPMTool.Pages
 
                                 // Recovered Inc Lead Costs
                                 cell = worksheetTotals.Cell(2 + i, 11);
-                                cell.Value = totalItem.GetAverageRecoveredIncLeadershipCosts(averagePeriod);
+                                cell.Value = totalItem.GetAverageRecoveredIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Net Capped Inc Leads
@@ -958,7 +958,7 @@ namespace PPMTool.Pages
 
                                 // Net Capped Inc Lead Costs
                                 cell = worksheetTotals.Cell(2 + i, 13);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts(averagePeriod);
+                                cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
