@@ -26,15 +26,20 @@ namespace PPMTool.Data.Helpers
 
             Debug.WriteLine($"** Building data for {person.Name}...");
 
-            // Filter list of tasks to those running during the window
+            // Filter list of projects to those running during the window
             var projectsInWindow = projects
                 .Where(x => !x.ProjectStatus.IsCancelled())
                 .Where(x => x.IsWithin(startDate, endDate));
+
+            // Filter list of tasks for those projects that just run during the window and are assigned to this person
             var tasksInWindow = projectsInWindow
                 .SelectMany(x => x.SubTasks)
                 .Where(x => x.AssignedResources
                     .Any(x => x.Person.PersonId == person.PersonId)
-                ).ToList();
+                )
+                .Where(x => x.IsWithin(startDate, endDate))
+                .ToList();
+
             Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
 
             // Get WLM changes for this person that take place during the window
@@ -45,7 +50,7 @@ namespace PPMTool.Data.Helpers
             // Get WLM in force on the first day of the window or set to default G6
             WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate);
 
-            // If there isn't a WLM change on the first day of the window then add the default
+            // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
             {
                 // Add the start WLM to the list of WLMs active in the window
@@ -64,12 +69,16 @@ namespace PPMTool.Data.Helpers
             foreach (var project in projectsInWindow
                 .Where(x => x.CostModel == CostModel.TechAndLeadership && x.ProjectManager?.PersonId == person.PersonId))
             {
-                // Find leadership tasks and convert to task
+                // Find leadership tasks within the window and convert to actual tasks
                 var dateRanges = project.GetLeadershipTaskRanges();
-                foreach (var dateRange in dateRanges)
+                foreach (var dateRange in dateRanges.Where(x => x.IsWithin(startDate, endDate)))
                 {
                     // Add leadership subtask based on the date range
-                    var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
+                    var leadershipStart = dateRange.StartDate.Date < startDate ? startDate : dateRange.StartDate.Date;
+                    var leadershipEnd = dateRange.EndDate.Date > endDate ? endDate : dateRange.EndDate.Date;
+                    var daysOfLeadershipForChunk = leadershipEnd.Subtract(leadershipStart).TotalDays + 1;
+                    var fullDateRangeDuration = (dateRange.EndDate.Subtract(dateRange.StartDate).TotalDays + 1);
+                    var proportionOfTask = fullDateRangeDuration <= 0 ? 0 : daysOfLeadershipForChunk / fullDateRangeDuration;
                     var leadershipTask = new SubTask
                     {
                         AssignedResources = new List<Resource>
@@ -79,14 +88,14 @@ namespace PPMTool.Data.Helpers
                                 Person = person,
                                 AssignmentFTE = project.LeadershipFTE,
                                 FundedFrom = project.LeadershipFundingSource,
-                                PlannedCost = project.PlannedLeadershipCosts
+                                PlannedCost = project.PlannedLeadershipCosts * proportionOfTask
                             }
                         },
                         Name = "Leadership",
                         SubTaskId = -1,
                         OwningProject = project,
-                        StartDate = dateRange.StartDate,
-                        EndDate = dateRange.EndDate,
+                        StartDate = leadershipStart,
+                        EndDate = leadershipEnd,
                         RequiresLeadership = false,
                         TaskType = TaskType.FixedDuration,
                         Demand = project.LeadershipFTE,
@@ -109,6 +118,7 @@ namespace PPMTool.Data.Helpers
                 // Create a line
                 var initialChunk = new AssignmentChunk
                 {
+                    PostNumber = string.Empty,
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
                     FTE = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE, 3),
