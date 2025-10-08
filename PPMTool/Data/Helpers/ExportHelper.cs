@@ -540,13 +540,15 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Method to generate the recovery information for the report
         /// </summary>
+        /// <param name="peopleActive">List of people to be considered</param>
         /// <param name="assignmentChunks">Set of assignment chunks for active people split by WLM change and FY change</param>
         /// <param name="contextFactory"></param>
         /// <param name="personService"></param>
         /// <param name="projectService"></param>
         /// <param name="financialReferenceService"></param>
         /// <returns></returns>
-        internal static async Task<IEnumerable<RecoveryDataOverWindow>> GetRecoveryDataAsync(
+        internal static IEnumerable<RecoveryDataOverWindow> GetRecoveryData(
+            IEnumerable<Person> peopleActive,
             IList<AssignmentChunk> assignmentChunks,
             IDbContextFactory<PPMToolContext> contextFactory,
             PersonService personService,
@@ -573,7 +575,6 @@ namespace PPMTool.Data.Helpers
                 var finref = financialReferenceService.GetFinancialReferenceForDate(context, startDate);
 
                 // Initialise the totals
-                var peopleActive = await personService.GetEmployedPeopleShallowAsync(context, startDate, endDate);
                 foreach (var person in peopleActive)
                 {
                     windowRecoveryData.Add(new RecoveryDataOverWindow(person.Name));
@@ -611,12 +612,13 @@ namespace PPMTool.Data.Helpers
                         var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
                         var gradeOnDay = person.GetGradeOnDate(currentDate);
 
-                        // Get day costs for person based on mid-grade
+                        // Get day costs for person based on mid-grade and scaled by any part-time arrangement
                         var actualCostsOnDay = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
                         actualCostsOnDay /= 365.0;
+                        actualCostsOnDay *= wlmTotal;
 
                         // If we don't have any costs for the day then need to compute them from first or last grade we know about
-                        var costsForDay = actualCostsOnDay;
+                        var referenceCostsForADay = actualCostsOnDay;
                         if (actualCostsOnDay == 0)
                         {
                             WorkloadModelChange wlm = null;
@@ -632,7 +634,7 @@ namespace PPMTool.Data.Helpers
                                 // Get last WLM before the date
                                 wlm = person.GetLastWorkloadModelBefore(currentDate);
                             }
-                            costsForDay = finref.GetMidGradeCosts(wlm?.Grade ?? 6) / 365.0;
+                            referenceCostsForADay = finref.GetMidGradeCosts(wlm?.Grade ?? 6) / 365.0;
                         }
 
                         // Get the sum of their assignments on the day with and without leadership
@@ -669,7 +671,7 @@ namespace PPMTool.Data.Helpers
                                 (float)projectAssignmentsFTEIncLeadership,
                                 (float)maxOverAllocation,
                                 (float)actualCostsOnDay,
-                                (float)costsForDay
+                                (float)referenceCostsForADay
                             );
                     }
 

@@ -746,7 +746,7 @@ namespace PPMTool.Pages
                         var startDate = this.startDate.Date;
                         var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
 
-                        // Get data for each person active in the window
+                        // Get data for each person active in the window -- exclude Head of RSE
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
@@ -765,7 +765,8 @@ namespace PPMTool.Pages
 
                         // Get recovery data
                         int totalDays = (int)(endDate.Subtract(startDate).TotalDays) + 1;
-                        var totalData = await ExportHelper.GetRecoveryDataAsync(
+                        var totalData = ExportHelper.GetRecoveryData(
+                            peopleActive,
                             allData,
                             ContextFactory,
                             PersonService,
@@ -804,7 +805,6 @@ namespace PPMTool.Pages
                                     var comment = cell.CreateComment();
                                     comment.AddText(description);
                                 }
-
                             }
 
                             // Write data rows
