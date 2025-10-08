@@ -275,116 +275,115 @@ namespace PPMTool.Pages
 
             await Task.Run(async () =>
             {
-                // Create blank list of data
-                var assessments = new List<CompetencyAssessmentExportLine>();
-
-                // Get the assessment info
-                if (SelectedPerson == null)
+                try
                 {
-                    LogWarning("Tried to export data without selecting a person!");
-                    return;
-                }
+                    // Create blank list of data
+                    var assessments = new List<CompetencyAssessmentExportLine>();
 
-                // Go through the groups and extract the info
-                foreach (var group in competencyGroups)
-                {
-                    foreach (var category in group.CompetenciesGroupedByCategory)
+                    // Get the assessment info
+                    if (SelectedPerson == null)
                     {
-                        foreach (var competency in category.Where(x => x.IsActive))
+                        LogWarning("Tried to export data without selecting a person!");
+                        return;
+                    }
+
+                    // Go through the groups and extract the info
+                    foreach (var group in competencyGroups)
+                    {
+                        foreach (var category in group.CompetenciesGroupedByCategory)
                         {
-                            var latestAssessment = competency.Assessments
-                                .Where(x => x.PersonId == SelectedPerson.PersonId)
-                                .OrderByDescending(x => x.DateCreated)
-                                .FirstOrDefault();
-                            assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                            foreach (var competency in category.Where(x => x.IsActive))
+                            {
+                                var latestAssessment = competency.Assessments
+                                    .Where(x => x.PersonId == SelectedPerson.PersonId)
+                                    .OrderByDescending(x => x.DateCreated)
+                                    .FirstOrDefault();
+                                assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                            }
                         }
                     }
-                }
 
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
-                {
-                    try
+                    // Create file path
+                    var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
+                    var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
+                    Directory.CreateDirectory(folder);
+                    var path = Path.Combine(folder, filename);
+
+                    // Create workbook and worksheet
+                    using (var workbook = new XLWorkbook())
                     {
-                        // Create file path
-                        var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
+                        var worksheet = workbook.Worksheets.Add("Data");
 
-                        // Create workbook and worksheet
-                        using (var workbook = new XLWorkbook())
+                        // Write header row
+                        var props = typeof(CompetencyAssessmentExportLine).GetProperties();
+                        var propNames = props.Select(x => x.Name).ToList();
+                        for (int i = 0; i < propNames.Count; i++)
                         {
-                            var worksheet = workbook.Worksheets.Add("Data");
+                            var cell = worksheet.Cell(1, i + 1);
+                            cell.Value = propNames[i];
+                            cell.Style.Font.Bold = true;
+                        }
 
-                            // Write header row
-                            var props = typeof(CompetencyAssessmentExportLine).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
-                            for (int i = 0; i < propNames.Count; i++)
+                        // Write data rows
+                        for (int row = 0; row < assessments.Count; row++)
+                        {
+                            var record = assessments[row];
+                            for (int col = 0; col < propNames.Count; col++)
                             {
-                                var cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
-                                cell.Style.Font.Bold = true;
-                            }
+                                var property = record.GetType().GetProperty(propNames[col]);
+                                var rawValue = property?.GetValue(record);
+                                var cell = worksheet.Cell(row + 2, col + 1);
 
-                            // Write data rows
-                            for (int row = 0; row < assessments.Count; row++)
-                            {
-                                var record = assessments[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                // Format and assign
+                                if (propNames[col] == "LatestAssessmentDate")
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
-                                    var rawValue = property?.GetValue(record);
-                                    var cell = worksheet.Cell(row + 2, col + 1);
-
-                                    // Format and assign
-                                    if (propNames[col] == "LatestAssessmentDate")
+                                    if (rawValue is DateTime dt)
                                     {
-                                        if (rawValue is DateTime dt)
-                                        {
-                                            cell.Value = dt;
-                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
+                                        cell.Value = dt;
+                                        cell.Style.DateFormat.Format = "dd/MM/yyyy";
                                     }
                                     else
                                     {
-                                        if (rawValue is int)
-                                        {
-                                            cell.Value = (int)rawValue;
-                                        }
-                                        else if (rawValue is double)
-                                        {
-                                            cell.Value = (double)rawValue;
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
+                                        cell.Value = rawValue?.ToString() ?? string.Empty;
+                                    }
+                                }
+                                else
+                                {
+                                    if (rawValue is int)
+                                    {
+                                        cell.Value = (int)rawValue;
+                                    }
+                                    else if (rawValue is double)
+                                    {
+                                        cell.Value = (double)rawValue;
+                                    }
+                                    else
+                                    {
+                                        cell.Value = rawValue?.ToString() ?? string.Empty;
                                     }
                                 }
                             }
-
-                            // Save the workbook
-                            workbook.SaveAs(path);
                         }
 
-                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+                        // Save the workbook
+                        workbook.SaveAs(path);
 
+                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+                    }
+
+                    await InvokeAsync(async () =>
+                    {
                         // Get file stream
                         using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
 
                         // Invoke JS on the client to download the file
                         await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
+                    });
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exporting development journey failed: {e}");
+                }
 
             }).ContinueWith(t =>
             {
