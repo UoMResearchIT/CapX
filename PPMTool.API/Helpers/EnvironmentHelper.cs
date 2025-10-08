@@ -35,7 +35,7 @@
         internal static void ValidateConfiguration(WebApplicationBuilder builder)
         {
             var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
-            if (string.IsNullOrWhiteSpace(builder.Configuration[""]))
+            if (string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:PPMToolContextConnection"]))
             {
                 throw new InvalidOperationException("CONNECTION_STRING environment variable is not set!");
             }
