@@ -788,27 +788,38 @@ namespace PPMTool.Pages
 
                             // Write header row
                             var props = typeof(AssignmentChunk).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
                             IXLCell cell = default;
-                            for (int i = 0; i < propNames.Count; i++)
+                            for (int i = 0; i < props.Count(); i++)
                             {
+                                var prop = props[i];
                                 cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
+                                cell.Value = prop.Name;
                                 cell.Style.Font.Bold = true;
+
+                                var attributes = prop.GetCustomAttributes(false);
+                                var descriptionAttr = attributes.FirstOrDefault(x => x.GetType() == typeof(DescriptionAttribute));
+                                if (descriptionAttr != null)
+                                {
+                                    var description = (descriptionAttr as DescriptionAttribute).Description;
+                                    var comment = cell.CreateComment();
+                                    comment.AddText(description);
+                                }
+
                             }
 
                             // Write data rows
                             for (int row = 0; row < allData.Count; row++)
                             {
                                 var record = allData[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                for (int col = 0; col < props.Count(); col++)
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
+                                    var propName = props[col].Name;
+                                    var property = record.GetType().GetProperty(propName);
                                     var rawValue = property?.GetValue(record);
                                     cell = worksheet.Cell(row + 2, col + 1);
 
                                     // Format and assign
-                                    if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
+                                    if (propName == nameof(AssignmentChunk.StartDate) || propName == nameof(AssignmentChunk.EndDate))
                                     {
                                         if (rawValue is DateTime dt)
                                         {
@@ -820,7 +831,9 @@ namespace PPMTool.Pages
                                             cell.Value = rawValue?.ToString() ?? string.Empty;
                                         }
                                     }
-                                    else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
+                                    else if (propName == nameof(AssignmentChunk.FundingSourceAmount) ||
+                                        propName == nameof(AssignmentChunk.SalaryCostEstimate) ||
+                                        propName == nameof(AssignmentChunk.PlannedCost))
                                     {
                                         if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
                                         {
@@ -850,11 +863,16 @@ namespace PPMTool.Pages
                                 }
                             }
 
+                            // Adjust the column widths
+                            worksheet.Columns().AdjustToContents();
+
                             // Get a list of people active by name
                             var totalPeople = peopleActive.Count;
                             var columnTitles = new List<string>
                             {
                                 "Estimated Costs",
+                                "Actual Costs",
+                                "Estimate Variance",
                                 "Target",
                                 "Target Costs",
                                 "Baseline Budget",
@@ -868,18 +886,42 @@ namespace PPMTool.Pages
                                 "Net Costs (Inc Lead)"
                             };
 
+                            var columnComnnets = new List<string>
+                            {
+                                "These are the costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the actual costs of the person over the reporting period based on finance tracker data.",
+                                "This is the variance between estimated and actual costs.",
+                                "This is the average target FTE for the person over the reporting period based on their workload model.",
+                                "These are the target costs of the person over the reporting period based on mid-grade estimates.",
+                                "This is the baseline budget for the person over the reporting period (estimated costs - target costs).",
+                                "This is the average recovered FTE for the person over the reporting period based on their assignments.",
+                                "These are the recovered costs of the person over the reporting period based on mid-grade estimates.",
+                                "This is the average net (capped to their full-time FTE) for the person over the reporting period (target - recovered).",
+                                "These are the net (capped) costs of the person over the reporting period based on mid-grade estimates.",
+                                "This is the average recovered FTE including leadership assignments (assuming we can recharge these) for the person over the reporting period based on their assignments",
+                                "These are the recovered costs of the person including leaership assignments over the reporting period based on mid-grade estimates.",
+                                "This is the average net (capped to their full-time FTE) and including leadership assignments for the person over the reporting period (target - recovered inc lead).",
+                                "These are the net (capped) costs of the person including leadership assignments over the reporting period based on mid-grade estimates."
+                            };
+
                             // Add tab
                             var worksheetTotals = workbook.AddWorksheet("Costs", 0);
 
                             // Header row
                             cell = worksheetTotals.Cell(1, 1);
+                            cell.Value = "Post Number";
+                            cell.Style.Font.Bold = true;
+                            cell = worksheetTotals.Cell(1, 2);
                             cell.Value = "Name";
                             cell.Style.Font.Bold = true;
                             for (int i = 0; i < columnTitles.Count; ++i)
                             {
-                                cell = worksheetTotals.Cell(1, 2 + i);
+                                cell = worksheetTotals.Cell(1, 3 + i);
                                 cell.Value = columnTitles[i];
                                 cell.Style.Font.Bold = true;
+                                var comment = cell.CreateComment();
+                                comment.Author = "CapX Exporter";
+                                comment.AddText(columnComnnets[i]);
                             }
 
                             string moneyFormat = "_-£* #,##0.00_-;[Red]-£* #,##0.00_-;_-£* \"-\"??_-;_-@_-";
@@ -894,70 +936,83 @@ namespace PPMTool.Pages
                                     (int)(person.EndDate!.Value.Subtract(person.StartDate).TotalDays) + 1 :
                                     totalDays;
 
-                                // Name
+                                // Post Number
                                 cell = worksheetTotals.Cell(2 + i, 1);
+                                //cell.Value = person.PostNumber;
+                                cell.Style.Font.Bold = true;
+
+                                // Name
+                                cell = worksheetTotals.Cell(2 + i, 2);
                                 cell.Value = person.Name;
                                 cell.Style.Font.Bold = true;
 
                                 // Costs of person over window
                                 var windowCosts = totalItem.GetEstimatedCosts();
-                                cell = worksheetTotals.Cell(2 + i, 2);
+                                cell = worksheetTotals.Cell(2 + i, 3);
                                 cell.Value = windowCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
+                                // Leave next column blank
+                                // Actual costs filled in manually from finance tracker
+
+                                // Variance is formula
+                                cell = worksheetTotals.Cell(2 + i, 5);
+                                cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C4";
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
                                 // Target FTE
-                                cell = worksheetTotals.Cell(2 + i, 3);
+                                cell = worksheetTotals.Cell(2 + i, 6);
                                 cell.Value = totalItem.GetAverageTarget(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Target Costs
-                                cell = worksheetTotals.Cell(2 + i, 4);
+                                cell = worksheetTotals.Cell(2 + i, 7);
                                 var targetCosts = totalItem.GetAverageTargetCosts();
                                 cell.Value = targetCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Baseline Budget
-                                cell = worksheetTotals.Cell(2 + i, 5);
+                                cell = worksheetTotals.Cell(2 + i, 8);
                                 cell.Value = windowCosts - targetCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered FTE
-                                cell = worksheetTotals.Cell(2 + i, 6);
+                                cell = worksheetTotals.Cell(2 + i, 9);
                                 cell.Value = totalItem.GetAverageRecovered(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Recovered Costs
-                                cell = worksheetTotals.Cell(2 + i, 7);
+                                cell = worksheetTotals.Cell(2 + i, 10);
                                 cell.Value = totalItem.GetAverageRecoveredCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Net Capped
-                                cell = worksheetTotals.Cell(2 + i, 8);
+                                cell = worksheetTotals.Cell(2 + i, 11);
                                 cell.Value = totalItem.GetAverageNetCapped(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Net Capped Costs
-                                cell = worksheetTotals.Cell(2 + i, 9);
+                                cell = worksheetTotals.Cell(2 + i, 12);
                                 cell.Value = totalItem.GetAverageNetCappedCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered Inc Lead
-                                cell = worksheetTotals.Cell(2 + i, 10);
+                                cell = worksheetTotals.Cell(2 + i, 13);
                                 cell.Value = totalItem.GetAverageRecoveredIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Recovered Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 11);
+                                cell = worksheetTotals.Cell(2 + i, 14);
                                 cell.Value = totalItem.GetAverageRecoveredIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Net Capped Inc Leads
-                                cell = worksheetTotals.Cell(2 + i, 12);
+                                cell = worksheetTotals.Cell(2 + i, 15);
                                 cell.Value = totalItem.GetAverageNetCappedIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Net Capped Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 13);
+                                cell = worksheetTotals.Cell(2 + i, 16);
                                 cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
@@ -965,13 +1020,16 @@ namespace PPMTool.Pages
                             // Add total row
                             for (var col = 0; col < columnTitles.Count; ++col)
                             {
-                                cell = worksheetTotals.Cell(peopleActive.Count + 2, col + 2);
-                                cell.FormulaR1C1 = $"=SUM(R2C{col + 2}:R{peopleActive.Count + 1}C{col + 2})";
+                                cell = worksheetTotals.Cell(peopleActive.Count + 2, col + 3);
+                                cell.FormulaR1C1 = $"=SUM(R2C{col + 3}:R{peopleActive.Count + 1}C{col + 3})";
 
-                                var cellAbove = worksheetTotals.Cell(peopleActive.Count + 1, col + 2);
+                                var cellAbove = worksheetTotals.Cell(peopleActive.Count + 1, col + 3);
                                 cell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
                                 cell.Style.Font.Bold = true;
                             }
+
+                            // Adjust the column widths
+                            worksheet.Columns().AdjustToContents();
 
                             // Save the workbook
                             workbook.SaveAs(path);
