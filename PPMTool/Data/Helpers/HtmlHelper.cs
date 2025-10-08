@@ -14,6 +14,11 @@ namespace PPMTool.Data.Helpers
         /// <returns></returns>
         public static string ConvertToPlainText(string html)
         {
+            if (string.IsNullOrWhiteSpace(html))
+            {
+                return string.Empty;
+            }
+
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
 
