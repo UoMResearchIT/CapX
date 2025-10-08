@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
@@ -29,13 +30,15 @@ namespace PPMTool.Data
         public string School { get; set; }
 
         /// <summary>
-        /// This is the estiamted salary cost of the individual resource based on their grade and FTE
+        /// This is the estimated salary cost of the individual resource based on their grade and FTE
         /// </summary>
+        [Description("Estimated salary cost based on mid-grade")]
         public double SalaryCostEstimate { get; set; }
 
         /// <summary>
         /// This is the planned cost of the resource for the assignment chunk as lifted from the task itself -- doesn't take into account grade changes or increments?
         /// </summary>
+        [Description("Estimated cost of assignment based on rate system")]
         public double PlannedCost { get; set; }
 
         private DateTime startDate;
@@ -58,12 +61,15 @@ namespace PPMTool.Data
 
         public string AccountCode { get; set; }
 
+        [Description("Based on how the costing was done - DI/DA or something else")]
         public string FundingSourceType { get; set; }
 
+        [Description("Amount we have been told exists in the account to pay for RSE time")]
         public double FundingSourceAmount { get; set; }
 
         public string FundingSourceDescription { get; set; }
 
+        [Description("Whether the assignment is a leadership assignment which are not always rechargeable")]
         public bool IsLeadershipAssignment { get; set; }
 
         public AssignmentChunk()
