@@ -29,13 +29,16 @@ Documentation of features and how to use them is available in the Wiki associate
 ## Building and Running from Source
 The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution.
 
+## Database Connection
+The database connection string needs to be specified in the `CONNECTION_STRING` environment variable. During development in Visual Studio, User Secrets can be used to override the blank value in the `appsettings.json`. See the `deployment/variables.env` file for example connection strings.
+
 ### Seeding the Database
 The default database produced when first running EF Core's `database update` command runs the migrations available in the source code. This produces a database which contains a single user and a single person attached to that user to allow you to login. In addition, based on the migration data available in the source code, the timesheet activities and tasks in use at UoM at the time the feature was added are also there as well as the initial version of the RSE competency framework. Every other table is blank. This limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
 
 > [!WARNING] 
 > This feature overwrites all data in the tables as soon as the app starts!
 
-> [!INFO] 
+> [!WARNING] 
 > When seeding dummy data, developers are required to set the name, username and email of a superuser since one is always required to allow administration of the application and database. If the developer does not set these via user secrets (development) or environment variables (production) - see the `deployment/variables.env` file - then the app will throw an exception.
 
 ### Solution/Build and Launch Configurations
