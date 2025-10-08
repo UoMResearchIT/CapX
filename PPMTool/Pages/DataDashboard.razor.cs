@@ -747,7 +747,7 @@ namespace PPMTool.Pages
                         var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
 
                         // Get data for each person active in the window -- exclude Head of RSE
-                        var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate)
+                        var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
                             // Get the assignment data a row a person at a time
