@@ -804,7 +804,6 @@ namespace PPMTool.Pages
                                     var comment = cell.CreateComment();
                                     comment.AddText(description);
                                 }
-
                             }
 
                             // Write data rows
