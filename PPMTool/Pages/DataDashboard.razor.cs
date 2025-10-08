@@ -788,27 +788,38 @@ namespace PPMTool.Pages
 
                             // Write header row
                             var props = typeof(AssignmentChunk).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
                             IXLCell cell = default;
-                            for (int i = 0; i < propNames.Count; i++)
+                            for (int i = 0; i < props.Count(); i++)
                             {
+                                var prop = props[i];
                                 cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
+                                cell.Value = prop.Name;
                                 cell.Style.Font.Bold = true;
+
+                                var attributes = prop.GetCustomAttributes(false);
+                                var descriptionAttr = attributes.FirstOrDefault(x => x.GetType() == typeof(DescriptionAttribute));
+                                if (descriptionAttr != null)
+                                {
+                                    var description = (descriptionAttr as DescriptionAttribute).Description;
+                                    var comment = cell.CreateComment();
+                                    comment.AddText(description);
+                                }
+
                             }
 
                             // Write data rows
                             for (int row = 0; row < allData.Count; row++)
                             {
                                 var record = allData[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                for (int col = 0; col < props.Count(); col++)
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
+                                    var propName = props[col].Name;
+                                    var property = record.GetType().GetProperty(propName);
                                     var rawValue = property?.GetValue(record);
                                     cell = worksheet.Cell(row + 2, col + 1);
 
                                     // Format and assign
-                                    if (propNames[col] == nameof(AssignmentChunk.StartDate) || propNames[col] == nameof(AssignmentChunk.EndDate))
+                                    if (propName == nameof(AssignmentChunk.StartDate) || propName == nameof(AssignmentChunk.EndDate))
                                     {
                                         if (rawValue is DateTime dt)
                                         {
@@ -820,9 +831,9 @@ namespace PPMTool.Pages
                                             cell.Value = rawValue?.ToString() ?? string.Empty;
                                         }
                                     }
-                                    else if (propNames[col] == nameof(AssignmentChunk.FundingSourceAmount) ||
-                                        propNames[col] == nameof(AssignmentChunk.SalaryCostEstimate) ||
-                                        propNames[col] == nameof(AssignmentChunk.PlannedCost))
+                                    else if (propName == nameof(AssignmentChunk.FundingSourceAmount) ||
+                                        propName == nameof(AssignmentChunk.SalaryCostEstimate) ||
+                                        propName == nameof(AssignmentChunk.PlannedCost))
                                     {
                                         if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
                                         {
