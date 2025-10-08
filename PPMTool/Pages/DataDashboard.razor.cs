@@ -808,7 +808,7 @@ namespace PPMTool.Pages
                                     cell = worksheet.Cell(row + 2, col + 1);
 
                                     // Format and assign
-                                    if (propNames[col] == "StartDate" || propNames[col] == "EndDate")
+                                    if (propNames[col] == nameof(AssignmentChunk.StartDate) || propNames[col] == nameof(AssignmentChunk.EndDate))
                                     {
                                         if (rawValue is DateTime dt)
                                         {
@@ -820,7 +820,9 @@ namespace PPMTool.Pages
                                             cell.Value = rawValue?.ToString() ?? string.Empty;
                                         }
                                     }
-                                    else if (propNames[col] == "FundingSourceAmount" || propNames[col] == "SalaryCostEstimate" || propNames[col] == "PlannedCost")
+                                    else if (propNames[col] == nameof(AssignmentChunk.FundingSourceAmount) ||
+                                        propNames[col] == nameof(AssignmentChunk.SalaryCostEstimate) ||
+                                        propNames[col] == nameof(AssignmentChunk.PlannedCost))
                                     {
                                         if (decimal.TryParse(rawValue?.ToString(), out var currencyValue))
                                         {
