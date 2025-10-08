@@ -7,6 +7,7 @@ using PPMTool.API.Endpoints;
 using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data.Context;
+using PPMTool.API.Helpers;
 using PPMTool.Services;
 #if RELEASE
 using Serilog;
@@ -21,8 +22,8 @@ builder.Configuration
     .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
-// Access the configuration to get the connection string
-var configuration = builder.Configuration;
+// Add environment variables to the configuration
+EnvironmentHelper.LoadEnvironmentVariables(builder);
 
 #if RELEASE
 // Get the log path from the configuration file
@@ -47,27 +48,9 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 #endif
 
-// Use a different connection string in production
-string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-if (string.IsNullOrEmpty(connectionString))
-{
-    // Use the default connection string based on the environment
-    connectionString = configuration.GetConnectionString(
-#if LOCAL
-            "PPMToolContextConnection"
-#else
-            "PPMToolContextConnectionProduction"
-#endif
-        );
-}
-
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("Invalid connection string!");
-}
-
 builder.Services.AddDbContext<PPMToolContext>(options =>
-    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+    options.UseSqlite(builder.Configuration.GetConnectionString("PPMToolContextConnection"),
+        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
 );
 builder.Services.AddScoped<SkillTagService>();
@@ -137,6 +120,9 @@ builder.Services.AddSwaggerGen(
 );
 
 var app = builder.Build();
+
+// Check the environment variables are configured correctly
+EnvironmentHelper.ValidateConfiguration(builder);
 
 app.UseSwagger();
 app.UseSwaggerUI();
