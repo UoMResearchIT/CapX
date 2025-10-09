@@ -17,10 +17,21 @@
         /// <summary>
         /// Cleans the monitored area of the file system so it doesn't explode the disk usage
         /// </summary>
-        public static void CleanLocalApplicationFilePath()
+        public static void CleanLocalApplicationFilePath(ILogger logger)
         {
             var localFilePath = GetLocalApplicationFilePath("");
+            var files = Directory.GetFiles(localFilePath);
 
+            logger.LogInformation($"Found {files.Count()} files in the local application filepath. Cleaning the oldest...");
+
+            foreach (var file in files)
+            {
+                if (File.GetLastWriteTime(file) < DateTime.Now.AddDays(-7))
+                {
+                    logger.LogInformation($"Deleting {file}...");
+                    File.Delete(file);
+                }
+            }
         }
     }
 }
