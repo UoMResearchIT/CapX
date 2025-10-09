@@ -22,7 +22,7 @@
             var localFilePath = GetLocalApplicationFilePath("");
             var files = Directory.GetFiles(localFilePath);
 
-            logger.LogInformation($"Found {files.Count()} files in the local application filepath. Cleaning the oldest...");
+            logger.LogInformation($"Found {files.Count()} files in the local application filepath. Cleaning those over 7 days old if necessary...");
 
             foreach (var file in files)
             {
