@@ -215,6 +215,7 @@ namespace PPMTool.Pages
         private bool showUnMetOnly;
         private bool showAllStaff = true;
         private bool exportRunning;
+        private bool downloadFrameworkRunning;
 
         private class CompetencyAssessmentExportLine
         {
