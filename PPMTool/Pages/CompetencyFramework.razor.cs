@@ -308,7 +308,7 @@ namespace PPMTool.Pages
                                 HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.GetSensibleObjectName(), "Normal");
 
                                 // Write Competency Objective
-                                doc.InsertParagraph("\n");
+                                doc.InsertParagraph("");
                                 text = doc.InsertParagraph("Objective");
                                 text.StyleId = "Normal";
                                 text.Bold();
