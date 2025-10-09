@@ -8,6 +8,7 @@ using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Xceed.Words.NET;
 
 namespace PPMTool.Pages
 {
@@ -280,10 +281,44 @@ namespace PPMTool.Pages
                 try
                 {
                     // Create file path
-                    var filename = $"CompetencyFramework_{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+                    var filename = $"CompetencyFramework_{DateTime.Now.ToString("yyyyMMddHHmmss")}.docx";
                     var path = FileHelper.GetLocalApplicationFilePath(filename);
 
-                    // TODO: Create Word Doc
+                    // Create Word Doc
+                    var doc = DocX.Create(path);
+                    foreach (var group in competencyGroups)
+                    {
+                        // Write Heading 1
+                        var text = doc.InsertParagraph(group.Description);
+                        text.StyleId = "Heading1";
+
+                        foreach (var category in group.CompetenciesGroupedByCategory)
+                        {
+                            // Write Heading 2
+                            text = doc.InsertParagraph(category.Key.GetDescription());
+                            text.StyleId = "Heading2";
+
+                            foreach (var competency in category.Where(x => x.IsActive))
+                            {
+                                // Write Heading 3
+                                text = doc.InsertParagraph(competency.GetHierarchyId());
+                                text.StyleId = "Heading3";
+
+                                // Write Competency Description
+                                HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.GetSensibleObjectName(), "Normal");
+
+                                // Write Competency Objective
+                                doc.InsertParagraph("\n");
+                                text = doc.InsertParagraph("Objective");
+                                text.StyleId = "Normal";
+                                text.Bold();
+                                HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.Objective, "Normal");
+                            }
+                        }
+                    }
+
+                    // Save the document
+                    doc.Save();
 
                     await InvokeAsync(async () =>
                     {
