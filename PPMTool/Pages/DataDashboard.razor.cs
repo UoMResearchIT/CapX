@@ -777,9 +777,7 @@ namespace PPMTool.Pages
 
                         // Create file path
                         var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
+                        var path = FileHelper.GetLocalApplicationFilePath(filename);
 
                         // Create workbook and worksheet
                         using (var workbook = new XLWorkbook())

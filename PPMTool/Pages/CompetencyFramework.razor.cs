@@ -266,6 +266,51 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Method to export the competency framework to a Word doc to make it easier to update as a group
+        /// </summary>
+        /// <returns></returns>
+        private async Task ExportFrameworkAsync()
+        {
+            LogInformation($"Exporting competency framework to Word...");
+
+            downloadFrameworkRunning = true;
+
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    // Create file path
+                    var filename = $"CompetencyFramework_{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
+
+                    // TODO: Create Word Doc
+
+                    await InvokeAsync(async () =>
+                    {
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    });
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exporting framework failed: {e}");
+                }
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Framework export task finished {t.Status}");
+                    downloadFrameworkRunning = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+        /// <summary>
         /// Method to export an Excel file with the information in it from the currently displayed journey
         /// </summary>
         private async Task ExportDataAsync()
@@ -305,10 +350,8 @@ namespace PPMTool.Pages
                     }
 
                     // Create file path
-                    var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
-                    var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                    Directory.CreateDirectory(folder);
-                    var path = Path.Combine(folder, filename);
+                    var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
 
                     // Create workbook and worksheet
                     using (var workbook = new XLWorkbook())
