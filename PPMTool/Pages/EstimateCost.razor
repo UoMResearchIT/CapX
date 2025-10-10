@@ -1,0 +1,55 @@
+﻿@page "/projects/estimatecost"
+@inherits BasePage
+@using PPMTool.Data
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using System.Diagnostics
+@using System.ComponentModel.DataAnnotations
+@using static PPMTool.Data.Entities.Project
+<PageTitle>Estimate Cost - CapX</PageTitle>
+
+@if (Loading)
+{
+    <LoadingComponent />
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-auto">
+                <h1>Estimate Project Cost</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Tool for estimating the cost of a project based on the established costing approach.</p>
+            </div>
+        </div>
+        <hr />
+        <div class="card">
+            <h2>Details</h2>
+            <div class="col-6">
+                <RadzenLabel class="radzen-form-label"
+                             Text="Cost Model"
+                             Component="CostModel" /><br />
+                <RadzenDropDown class="radzen-dropdown"
+                                @bind-Value="costModel"
+                                Data="@(Enum.GetValues(typeof(CostModel)))"
+                                Name="CostModel">
+                    <Template Context="cost">
+                        @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
+                    </Template>
+                </RadzenDropDown>
+            </div>
+            <TaskConfigurationComponent ReadOnly="true" />
+            <h2>Resources</h2>
+            @if (costModel == CostModel.TechAndLeadership)
+            {
+                <TaskConfigurationComponent Title="Leadership" />
+            }
+            <TaskConfigurationComponent Title="Technical Effort 1" />
+            <TaskConfigurationComponent Title="Technical Effort 2" />
+        </div>
+    </div>
+}

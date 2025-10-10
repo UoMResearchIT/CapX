@@ -1,0 +1,145 @@
+﻿<RadzenText Text="@Title"
+            TextStyle="TextStyle.Subtitle1" />
+<div class="row">
+    <div class="col-2">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Demand (FTE)"
+                     Component="Demand" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="@Convert.ToDecimal(0.001)"
+                       Step="0.001" Placeholder="0.00"
+                       @bind-Value="Demand"
+                       Name="Demand" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Start Date" />
+        <RadzenDatePicker class="radzen-datepicker"
+                          @bind-Value="StartDate"
+                          ShowTime="false"
+                          DateFormat="dd/MM/yyyy" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Start Date" />
+        <RadzenDatePicker class="radzen-datepicker"
+                          @bind-Value="StartDate"
+                          ShowTime="false"
+                          DateFormat="dd/MM/yyyy" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Day Rate"
+                     Component="DayRate" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       Step="0.01"
+                       Placeholder="0"
+                       @bind-Value="DayRate"
+                       Name="DayRate"
+                       Format="C2"/>
+    </div>
+</div>
+<div class="row">
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Work (Hours)"
+                     Component="WorkHours" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       Step="0.5"
+                       Placeholder="0"
+                       @bind-Value="Work"
+                       Name="WorkHours" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Duration (Days)"
+                     Component="Duration" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       @bind-Value="Duration"
+                       Name="Duration" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Duration (Billable Days)"
+                     Component="DurationBillable" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       @bind-Value="BillableDays"
+                       Name="DurationBillable" />
+    </div>
+</div>
+<div class="row">
+    <div class="col-2">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Cost" />
+        <RadzenText Text="@Cost.ToString("C2")"
+                    Style="margin-bottom: 0;" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Work (Hours)"
+                     Component="WorkHours" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       Step="0.5"
+                       Placeholder="0"
+                       @bind-Value="Work"
+                       Name="WorkHours" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Duration (Days)"
+                     Component="Duration" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       @bind-Value="Duration"
+                       Name="Duration" />
+    </div>
+    <div class="col-4">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Duration (Billable Days)"
+                     Component="DurationBillable" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       @bind-Value="BillableDays"
+                       Name="DurationBillable" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool ReadOnly { get; set; } = false;
+
+    [Parameter]
+    public string Title {get; set;}
+
+    // Model properties //
+
+    public double Demand { get; set; }
+    public double DayRate { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public double Work { get; set; }
+    public double Duration { get; set; }
+    public double BillableDays { get; set; }
+    public double Cost { get; set; }
+
+
+    public void UpdateComponentValues()
+    {
+        // TODO: Take in the component values and update them
+
+    }
+
+}
