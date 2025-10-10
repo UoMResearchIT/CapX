@@ -7,7 +7,7 @@ namespace PPMTool.Data
     /// <summary>
     /// Represents a chunk of an assignemnt with a constant grade and financial year
     /// </summary>
-    public class AssignmentChunk
+    public class AssignmentChunk : DateRange
     {
         public string PostNumber { get; set; }
 
@@ -42,7 +42,7 @@ namespace PPMTool.Data
         public double PlannedCost { get; set; }
 
         private DateTime startDate;
-        public DateTime StartDate
+        public new DateTime StartDate
         {
             get => startDate;
             set
@@ -54,8 +54,6 @@ namespace PPMTool.Data
                 }
             }
         }
-
-        public DateTime EndDate { get; set; }
 
         public int FinancialYear { get; set; }
 
@@ -109,13 +107,17 @@ namespace PPMTool.Data
         /// Based on available financial references, updates the estimated salary cost of the assignment based on the mid-grade costs of the assignee
         /// </summary>
         /// <param name="finrefs"></param>
-        internal void UpdateEstimatedSalaryCost(IEnumerable<FinancialReference> finrefs)
+        /// <param name="shouldUpdatePlanned"></param>
+        internal void UpdateEstimatedSalaryCost(IEnumerable<FinancialReference> finrefs, bool shouldUpdatePlanned)
         {
             try
             {
                 var annualCosts = finrefs.GetSuitableFinancialReference(FinancialYear).GetMidGradeCosts(Grade);
                 var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
                 SalaryCostEstimate = annualCosts * FTE * fractionOfYear;
+
+                // If the planned cost figures should be updated then they will match the salary cost estimate
+                if (shouldUpdatePlanned) PlannedCost = SalaryCostEstimate;
             }
             catch (Exception ex)
             {

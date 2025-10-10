@@ -97,7 +97,7 @@ namespace PPMTool.Data.Entities
             // or the duration worked indicated by the number of hours booked (actual cost)
             IEnumerable<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
-            // Get durations in days
+            // Get durations in days over which the work is spread
             var durationDaysPlanned = PlannedWorkHours / 7f;
             var durationDaysActual = ActualWorkHours / 7f;
 
@@ -114,43 +114,19 @@ namespace PPMTool.Data.Entities
             // If using the grade-based models
             else
             {
-                // Use a financial reference and the standard or junior rate to compute the cost
-                // assuming it persists throughout the project and doesn't increment year on year
-
-
                 // Convert to assignment chunks
-                chunks = ExportHelper.GetAssignmentChunks(Person, new List<Project> { project }, finrefs, subTask.StartDate, subTask.EndDate, new List<SubTask> { subTask });
+                chunks = ExportHelper.GetAssignmentChunks(Person, new List<Project> { project }, finrefs, subTask.StartDate, subTask.EndDate, new List<SubTask> { subTask }, true);
 
-                // TODO: Use chunks to work out proportion of costs excluding any leadership assignments
+                // Filter out leadership assignments since this is just technical costs
+                var relevantChunks = chunks.Where(c => !c.IsLeadershipAssignment).ToList();
 
+                // Planned costs
+                PlannedCost = relevantChunks.Sum(x => x.PlannedCost);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                // Get the annual salary costs for resource based on rate
-                var annualCostPerBillableDay = 0;
-
-                // Update the actuals
-                ActualCost = (ActualWorkHours / 7f) * annualCostPerBillableDay;
-
-                // Update the planned
-                PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDay;
+                // Actual costs are a proportion of the planned
+                ActualCost = 0d;
+                var proportion = durationDaysActual / durationDaysPlanned;
+                ActualCost = PlannedCost * proportion;
             }
 
             return chunks;

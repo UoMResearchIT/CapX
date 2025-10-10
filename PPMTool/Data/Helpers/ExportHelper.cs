@@ -54,6 +54,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="startDate">Window start date. If not provided, uses earliest project start.</param>
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
+        /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
         /// <returns></returns>
         internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
@@ -61,7 +62,8 @@ namespace PPMTool.Data.Helpers
             IEnumerable<FinancialReference> finrefs,
             DateTime? startDate = null,
             DateTime? endDate = null,
-            IEnumerable<SubTask> tasksInWindow = null)
+            IEnumerable<SubTask> tasksInWindow = null,
+            bool shouldCalculateCosts = false)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -331,16 +333,17 @@ namespace PPMTool.Data.Helpers
 
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks run during the window");
 
-                // Update the data for the filtered chunks
-                foreach (var chunk in taskChunks)
-                {
-                    // Cost estimate based on mid-grade salaries
-                    chunk.UpdateEstimatedSalaryCost(finrefs);
-                }
-
                 // Add task to master list
                 data.AddRange(taskChunks);
             }
+
+            // Add the mid-grade salary estimates and ovewrite the planned costs if necessary
+            foreach (var chunk in data)
+            {
+                // Cost estimate based on mid-grade salaries
+                chunk.UpdateEstimatedSalaryCost(finrefs, shouldCalculateCosts);
+            }
+
             return data;
         }
 
