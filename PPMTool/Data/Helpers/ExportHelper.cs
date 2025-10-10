@@ -314,7 +314,7 @@ namespace PPMTool.Data.Helpers
                     windowRecoveryData.Add(new RecoveryDataOverWindow(person.Name));
                 }
 
-                // Loop over the days
+                // Loop over the days to get day by day data
                 while (currentDate <= endDate)
                 {
                     // If the FY has changed then update the finref
@@ -325,14 +325,6 @@ namespace PPMTool.Data.Helpers
 
                     // Create a new item
                     var currentDayData = new RecoveryDataForDay(currentDate);
-
-                    // Get the subtasks that are active on this day
-                    var tasksActiveOnDay = projectsInWindow
-                        .SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentDate)));
-
-                    // Get the projects that are active on this day
-                    var projectsActiveOnDay = projectsInWindow
-                        .Where(x => x.SubTasks.Any(x => x.IsWithin(currentDate)));
 
                     // Loop over each person employed in the window
                     foreach (var person in peopleActive)
