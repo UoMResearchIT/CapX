@@ -75,11 +75,11 @@ namespace PPMTool.Data.Helpers
             }
             if (endDate == null)
             {
-                endDate = projectsInWindow.Max(x => x.StartDate);
+                endDate = projectsInWindow.Max(x => x.EndDate);
             }
 
             // Check tasks and infer from projects if not specified
-            List<SubTask> tempTasksInWindow = tasksInWindow.ToList();
+            List<SubTask> tempTasksInWindow = null;
             if (tasksInWindow == null)
             {
                 tempTasksInWindow = projectsInWindow
@@ -89,6 +89,10 @@ namespace PPMTool.Data.Helpers
                 )
                 .Where(x => x.IsWithin(startDate ?? default, endDate ?? default))
                 .ToList();
+            }
+            else
+            {
+                tempTasksInWindow = tasksInWindow.ToList();
             }
 
             // Get WLM changes for this person that take place during the window

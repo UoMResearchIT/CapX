@@ -357,11 +357,14 @@ namespace PPMTool.Data.Entities
             EndDate = endDate;
 
             // Add the leadership costs
-
-            // TODO: It would be better to use the leadership assignment you get from the Export Helper to determine these so it is consistent
-
-            ActualLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(true, financialReferences)) / 100;
-            PlannedLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(false, financialReferences)) / 100;
+            var leadershipChunks = ExportHelper.GetAssignmentChunks(
+                ProjectManager,
+                new List<Project> { this },
+                financialReferences,
+                shouldCalculateCosts: true)
+                .Where(c => c.IsLeadershipAssignment);
+            ActualLeadershipCosts = Math.Round(100 * CalculateActualLeadershipCosts(leadershipChunks)) / 100;
+            PlannedLeadershipCosts = Math.Round(100 * leadershipChunks.Sum(x => x.PlannedCost)) / 100;
 
             // Truncate to 1 DP
             var newValue = Math.Round(10 * actualHours) / 10;
@@ -404,10 +407,9 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Method to run the calculation of leadership costs planned or actual
         /// </summary>
-        /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
-        /// <param name="financialReferences"></param>
+        /// <param name="leadershipChunks"></param>
         /// <returns></returns>
-        private double CalculateLeadershipCosts(bool actualCosts, IEnumerable<FinancialReference> financialReferences)
+        private double CalculateActualLeadershipCosts(IEnumerable<AssignmentChunk> leadershipChunks)
         {
             // If not using the leadership cost model then this is zero
             if (CostModel != CostModel.TechAndLeadership)
@@ -415,83 +417,30 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
-            // What to use for end date -- just the end date of the project for the planned costs
-            var endDateOfCalculation = EndDate;
-
-            // For actuals, it depends on what the current date is
-            if (actualCosts)
+            // Zero for actuals if project hasn't started yet
+            if (DateTime.Today < StartDate)
             {
-                // Use current date if looking for actuals and currently in the middle of the project
-                // Works out actual costs up to the current day from project start
-                if (IsWithin(DateTime.Today))
-                {
-                    endDateOfCalculation = DateTime.Today;
-                }
-
-                // If the today is before the project starts then costs are just zero for actuals
-                else if (DateTime.Today < StartDate)
-                {
-                    return 0d;
-                }
+                return 0d;
             }
 
-            // For each financial year
-            var totalCost = 0d;
-            for (var finYear = FinancialReference.GetFinancialYear(StartDate); finYear <= FinancialReference.GetFinancialYear(endDateOfCalculation); finYear++)
+            // Find leadership task running today
+            var currentChunk = leadershipChunks.FirstOrDefault(x => x.IsWithin(DateTime.Today));
+
+            // All tasks before today count toward the actuals and are the same as the planned
+            var costs = leadershipChunks
+                .Where(x => x.EndDate < DateTime.Today)
+                .Sum(x => x.PlannedCost);
+
+            // If we have a current chunk work out the proportion through the chunk
+            if (currentChunk != null)
             {
-                // Get a suitable financial reference
-                var reference = financialReferences.GetSuitableFinancialReference(finYear);
-                var yearCost = 0d;
-                var yearFraction = 0d;
-
-                // Compute the fraction of a financial the project runs //
-                // and correct for time tasks run within that period    //
-
-                // Starts this financial year
-                if (FinancialReference.GetFinancialYear(StartDate) == finYear)
-                {
-                    // Starts and ends in the same financial year
-                    if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
-                    {
-                        yearFraction = (endDateOfCalculation.Subtract(StartDate).TotalDays + 1) / 365f;
-                        yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, endDateOfCalculation);
-                    }
-
-                    // Starts this financial year but goes past the end
-                    else
-                    {
-                        var tempEndDate = new DateTime(finYear + 1, 7, 31);
-                        yearFraction = (tempEndDate.Subtract(StartDate).TotalDays + 1) / 365f;
-                        yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, tempEndDate);
-                    }
-                }
-
-                // Ends this financial year and starts in an earlier year
-                else if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
-                {
-                    var tempStartDate = new DateTime(finYear, 8, 1);
-                    yearFraction = (endDateOfCalculation.Subtract(tempStartDate).TotalDays + 1) / 365f;
-                    yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, endDateOfCalculation);
-                }
-
-                // Starts and ends in different financial years
-                else
-                {
-                    yearFraction = 1d;
-                    var tempStartDate = new DateTime(finYear, 8, 1);
-                    var tempEndDate = new DateTime(finYear + 1, 7, 31);
-                    yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, tempEndDate);
-                }
-
-                // Compute cost (0.05 FTE per project)
-                yearCost = yearFraction * reference.Grade75Costs * LeadershipFTE;
-
-                // Accumulate
-                totalCost += yearCost;
+                var daysInChunk = DateTime.Today.Subtract(currentChunk.StartDate).TotalDays + 1;
+                var chunkLength = currentChunk.EndDate.Subtract(currentChunk.StartDate).TotalDays + 1;
+                var proportion = daysInChunk / chunkLength;
+                costs += proportion * currentChunk.PlannedCost;
             }
 
-            // Return the total cost
-            return totalCost < 0 ? 0 : totalCost;
+            return costs;
         }
 
         /// <summary>
