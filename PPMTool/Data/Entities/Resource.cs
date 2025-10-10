@@ -59,12 +59,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// The cost rate of this person based on RSE costing model
-        /// </summary>
-        [Required]
-        public Rate Rate { get; set; }
-
-        /// <summary>
         /// This represents where the resource is funded from in terms of known funding sources for the project.
         /// It is optional since it needs to be possible to associated resources with tasks before the funding sources are known.
         /// </summary>

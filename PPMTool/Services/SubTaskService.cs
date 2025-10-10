@@ -149,8 +149,7 @@ namespace PPMTool.Services
                     IsProvisional = res.IsProvisional,
                     Person = res.Person,
                     UseProjectDayRate = res.UseProjectDayRate,
-                    FundedFrom = res.FundedFrom,
-                    Rate = res.Rate
+                    FundedFrom = res.FundedFrom
                 });
             }
 

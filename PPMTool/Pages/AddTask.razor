@@ -412,23 +412,6 @@ else
                                         </EditTemplate>
                                     </RadzenDataGridColumn>
                                 }
-                                else
-                                {
-                                    <RadzenDataGridColumn TItem="Resource" Property="Rate" Width="120px" Title="Rate" MinWidth="10px">
-                                        <Template Context="res">
-                                            <RadzenText Style="margin-bottom: 0rem;" Text="@res.Rate.ToString()" />
-                                        </Template>
-                                        <EditTemplate Context="res">
-                                            <RadzenDropDown @bind-Value="res.Rate"
-                                                            Data="@availableRates"
-                                                            Style="width:100%; display: block;">
-                                                <Template Context="rate">
-                                                    <RadzenText Style="margin-bottom: 0rem;" Text="@rate.ToString()" />
-                                                </Template>
-                                            </RadzenDropDown>
-                                        </EditTemplate>
-                                    </RadzenDataGridColumn>
-                                }
                                 <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="180px" Title="Funding Source" MinWidth="10px">
                                     <Template Context="res">
                                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
