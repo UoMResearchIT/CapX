@@ -31,7 +31,7 @@
         <div class="card">
             <h2>Project Details</h2>
             <div class="row">
-                <div class="col-6">
+                <div class="col">
                     <RadzenLabel class="radzen-form-label"
                                  Text="Cost Model"
                                  Component="CostModel" /><br />
@@ -45,7 +45,8 @@
                     </RadzenDropDown>
                 </div>
             </div>
-            <TaskConfigurationComponent ReadOnly="true" />
+            <TaskConfigurationComponent ReadOnly="true"
+                                        ShowRates="@(costModel == CostModel.DayRate)" />
             <hr />
             <h2>Resources</h2>
             @if (costModel == CostModel.TechAndLeadership)

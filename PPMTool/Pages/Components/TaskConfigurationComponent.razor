@@ -32,32 +32,39 @@
                           Disabled="@ReadOnly" />
     </div>
     <div class="col-3">
-        @if (CostModel == CostModel.DayRate)
+        @if (ShowRates)
         {
-            <RadzenLabel class="radzen-form-label"
-                         Text="Day Rate"
-                         Component="DayRate" />
-            <RadzenNumeric class="radzen-numeric"
-                           TValue="double"
-                           Min="0"
-                           Step="0.01"
-                           Placeholder="0"
-                           @bind-Value="model.DayRate"
-                           Name="DayRate"
-                           Format="C2"
-                           Disabled="@(ReadOnly || CostModel != CostModel.DayRate)" />
-        }
-        else
-        {
-            <RadzenLabel class="radzen-form-label"
-                         Text="Resource Rate"
-                         Component="Rate" />
+            if (CostModel == CostModel.DayRate)
+            {
+                <RadzenLabel class="radzen-form-label"
+                             Text="Day Rate"
+                             Component="DayRate" />
+                <RadzenNumeric class="radzen-numeric"
+                               TValue="double"
+                               Min="0"
+                               Step="0.01"
+                               Placeholder="0"
+                               @bind-Value="model.DayRate"
+                               Name="DayRate"
+                               Format="C2"
+                               Disabled="@(ReadOnly || CostModel != CostModel.DayRate)" />
+            }
+            else
+            {
+                <RadzenLabel class="radzen-form-label"
+                             Text="Resource Rate"
+                             Component="Rate" />
         
-            <br />
-            <RadzenDropDown class="radzen-dropdown"
-                            @bind-Value="model.ResourceRate"
-                            Data="@(Enum.GetValues(typeof(Rate)))"
-                            Name="Rate" />
+                <br />
+                <RadzenDropDown class="radzen-dropdown"
+                                @bind-Value="model.ResourceRate"
+                                Data="@(Enum.GetValues(typeof(Rate)))"
+                                Name="Rate">
+                    <Template Context="rate">
+                        @($"{rate} ({((Rate)rate).GetDescription()})")
+                    </Template>
+                </RadzenDropDown>
+            }
         }
     </div>
 </div>
@@ -111,6 +118,9 @@
 
     [Parameter]
     public CostModel CostModel { get; set; }
+
+    [Parameter]
+    public bool ShowRates { get; set; } = true;
 
     public class TaskConfigModel
     {
