@@ -1,4 +1,5 @@
 ﻿@using PPMTool.Enums
+@using System.ComponentModel.DataAnnotations
 <div class="row">
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
@@ -8,7 +9,7 @@
                        TValue="double"
                        Min="@Convert.ToDecimal(0.001)"
                        Step="0.001" Placeholder="0.00"
-                       @bind-Value="Demand"
+                       @bind-Value="model.Demand"
                        Name="Demand"
                        Disabled="@ReadOnly" />
     </div>
@@ -16,7 +17,7 @@
         <RadzenLabel class="radzen-form-label"
                      Text="Start Date" />
         <RadzenDatePicker class="radzen-datepicker"
-                          @bind-Value="StartDate"
+                          @bind-Value="model.StartDate"
                           ShowTime="false"
                           DateFormat="dd/MM/yyyy"
                           Disabled="@ReadOnly" />
@@ -25,24 +26,39 @@
         <RadzenLabel class="radzen-form-label"
                      Text="End Date" />
         <RadzenDatePicker class="radzen-datepicker"
-                          @bind-Value="EndDate"
+                          @bind-Value="model.EndDate"
                           ShowTime="false"
                           DateFormat="dd/MM/yyyy"
                           Disabled="@ReadOnly" />
     </div>
     <div class="col-3">
-        <RadzenLabel class="radzen-form-label"
-                     Text="Day Rate"
-                     Component="DayRate" />
-        <RadzenNumeric class="radzen-numeric"
-                       TValue="double"
-                       Min="0"
-                       Step="0.01"
-                       Placeholder="0"
-                       @bind-Value="DayRate"
-                       Name="DayRate"
-                       Format="C2"
-                       Disabled="@(ReadOnly || CostModel != CostModel.DayRate)" />
+        @if (CostModel == CostModel.DayRate)
+        {
+            <RadzenLabel class="radzen-form-label"
+                         Text="Day Rate"
+                         Component="DayRate" />
+            <RadzenNumeric class="radzen-numeric"
+                           TValue="double"
+                           Min="0"
+                           Step="0.01"
+                           Placeholder="0"
+                           @bind-Value="model.DayRate"
+                           Name="DayRate"
+                           Format="C2"
+                           Disabled="@(ReadOnly || CostModel != CostModel.DayRate)" />
+        }
+        else
+        {
+            <RadzenLabel class="radzen-form-label"
+                         Text="Resource Rate"
+                         Component="Rate" />
+        
+            <br />
+            <RadzenDropDown class="radzen-dropdown"
+                            @bind-Value="model.ResourceRate"
+                            Data="@(Enum.GetValues(typeof(Rate)))"
+                            Name="Rate" />
+        }
     </div>
 </div>
 <div class="row">
@@ -55,7 +71,7 @@
                        Min="0"
                        Step="0.5"
                        Placeholder="0"
-                       @bind-Value="Work"
+                       @bind-Value="model.Work"
                        Name="WorkHours"
                        Disabled="@ReadOnly" />
     </div>
@@ -66,7 +82,7 @@
         <RadzenNumeric class="radzen-numeric"
                        TValue="double"
                        Min="0"
-                       @bind-Value="Duration"
+                       @bind-Value="model.Duration"
                        Name="Duration"
                        Disabled="@ReadOnly" />
     </div>
@@ -77,14 +93,14 @@
         <RadzenNumeric class="radzen-numeric"
                        TValue="double"
                        Min="0"
-                       @bind-Value="BillableDays"
+                       @bind-Value="model.BillableDays"
                        Name="DurationBillable"
                        Disabled="@ReadOnly" />
     </div>
     <div class="col-3" style="justify-items: end">
         <RadzenLabel class="radzen-form-label"
                      Text="Cost" />
-        <RadzenText Text="@Cost.ToString("C2")"
+        <RadzenText Text="@model.Cost.ToString("C2")"
                     Style="margin-bottom: 0; margin-top: 0.5rem; font-size: x-large;" />
     </div>
 </div>
@@ -96,22 +112,38 @@
     [Parameter]
     public CostModel CostModel { get; set; }
 
-    // Model properties //
-
-    public double Demand { get; set; }
-    public double DayRate { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public double Work { get; set; }
-    public double Duration { get; set; }
-    public double BillableDays { get; set; }
-    public double Cost { get; set; }
-
-
-    public void UpdateComponentValues()
+    public class TaskConfigModel
     {
-        // TODO: Take in the component values and update them
+        public double Demand { get; set; }
+        public double DayRate { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public double Work { get; set; }
+        public double Duration { get; set; }
+        public double BillableDays { get; set; }
+        public double Cost { get; set; }
+        public Rate ResourceRate { get; set; }
 
+        private void ComputeCosts(CostModel costModel)
+        {
+            // TODO: Execute the costing approach
+        }
+
+        private void Schedule()
+        {
+            // TODO: Respond the the changes in the dependent parameters
+        }
     }
 
+    private TaskConfigModel model = new TaskConfigModel();
+
+    /// <summary>
+    /// Update the model maintained by this component with a new model
+    /// </summary>
+    /// <param name="model"></param>
+    public void UpdateTaskConfigModel(TaskConfigModel model)
+    {
+        this.model = model;
+        InvokeAsync(StateHasChanged);
+    }
 }

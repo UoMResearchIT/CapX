@@ -51,14 +51,14 @@
             @if (costModel == CostModel.TechAndLeadership)
             {
                 <h3>Leadership</h3>
-                <TaskConfigurationComponent />
+                <TaskConfigurationComponent CostModel="@costModel" />
                 <hr />
             }
             <h3>Tech Effort 1</h3>
-            <TaskConfigurationComponent />
+            <TaskConfigurationComponent CostModel="@costModel" />
             <hr />
             <h3>Tech Effort 2</h3>
-            <TaskConfigurationComponent />
+            <TaskConfigurationComponent CostModel="@costModel" />
         </div>
     }
 </div>
