@@ -84,8 +84,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Updates the planned and actual cost of the resource given either a day rate a financial reference
         /// Assumptions:
-        /// 1. Ignores grade-changes mid-task
-        /// 2. Ignores financial reference changes year on year
+        /// 1. Ignores annual increments for people as we don't have the data
         /// </summary>
         /// <param name="costModel"></param>
         /// <param name="taskStart"></param>
@@ -94,14 +93,22 @@ namespace PPMTool.Data.Entities
         /// <param name="projectDayRate"></param>
         internal void UpdateResourceCosts(CostModel costModel, DateTime taskStart, DateTime taskEnd, double? projectDayRate, FinancialReference financialReference)
         {
+            // Costs to the department are always salary-based regardless of the recharge cost model (day-rate or salary based)
+            // Therefore this computes the actual cost of the resource chosen over the full task (planned cost)
+            // or the duration worked indicated by the number of hours booked (actual cost)
+
+            // Get durations in days
+            var durationDaysPlanned = PlannedWorkHours / 7f;
+            var durationDaysActual = ActualWorkHours / 7f;
+
             // If using the day rate model then calculation is simple
             if (costModel == CostModel.DayRate)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
-                ActualCost = (ActualWorkHours / 7f) * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
+                ActualCost = durationDaysActual * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
 
                 // Planned cost is the hours work of the assignment converted to billable days and multiplied by the day rate
-                PlannedCost = (PlannedWorkHours / 7f) * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
+                PlannedCost = durationDaysPlanned * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
             }
 
             // If using the grade-based models
@@ -109,6 +116,28 @@ namespace PPMTool.Data.Entities
             {
                 // Use a financial reference and the standard or junior rate to compute the cost
                 // assuming it persists throughout the project and doesn't increment year on year
+
+
+                // TODO: Convert to assignment chunks then work out the proportion of the costs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 // Get the annual salary costs for resource based on rate
                 var annualCostPerBillableDay = financialReference.GetJuniorOrStandardAnnualCosts(Rate) / 220;

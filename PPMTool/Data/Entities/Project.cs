@@ -321,6 +321,8 @@ namespace PPMTool.Data.Entities
                 throw new Exception("Cannot compute leadership costs for the project as at least one financial reference is required based on the model chosen!");
             }
 
+            // TODO: Work out how much of the subtask costs are in budget
+
             // Set initial values
             DateTime startDate = DateTime.MaxValue;
             DateTime endDate = DateTime.MinValue;
