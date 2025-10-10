@@ -21,9 +21,6 @@ namespace PPMTool.Data.Helpers
         /// <returns>List of data items</returns>
         public static IEnumerable<AssignmentChunk> GetExportDataForPerson(Person person, IEnumerable<Project> projects, DateTime startDate, DateTime endDate, IEnumerable<FinancialReference> finrefs)
         {
-            // New list
-            var data = new List<AssignmentChunk>();
-
             Debug.WriteLine($"** Building data for {person.Name}...");
 
             // Filter list of projects to those running during the window
@@ -37,10 +34,44 @@ namespace PPMTool.Data.Helpers
                 .Where(x => x.AssignedResources
                     .Any(x => x.Person.PersonId == person.PersonId)
                 )
-                .Where(x => x.IsWithin(startDate, endDate))
-                .ToList();
+                .Where(x => x.IsWithin(startDate, endDate));
 
             Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
+
+            // Represent the assignments in the window as chunks
+            var data = GetAssignmentChunks(person, projectsInWindow, finrefs, startDate, endDate, tasksInWindow);
+            Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
+
+            return data;
+        }
+
+        internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(Person person, IEnumerable<Project> projectsInWindow, IEnumerable<FinancialReference> finrefs, DateTime? startDate = null, DateTime? endDate = null, IEnumerable<SubTask> tasksInWindow = null)
+        {
+            // New list
+            var data = new List<AssignmentChunk>();
+
+            // Check dates and infer from projects if not specified
+            if (startDate == null)
+            {
+                startDate = projectsInWindow.Min(x => x.StartDate);
+            }
+            if (endDate == null)
+            {
+                endDate = projectsInWindow.Max(x => x.StartDate);
+            }
+
+            // Check tasks and infer from projects if not specified
+            List<SubTask> tempTasksInWindow = tasksInWindow.ToList();
+            if (tasksInWindow == null)
+            {
+                tempTasksInWindow = projectsInWindow
+                .SelectMany(x => x.SubTasks)
+                .Where(x => x.AssignedResources
+                    .Any(x => x.Person.PersonId == person.PersonId)
+                )
+                .Where(x => x.IsWithin(startDate ?? default, endDate ?? default))
+                .ToList();
+            }
 
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges
@@ -48,7 +79,7 @@ namespace PPMTool.Data.Helpers
                 .OrderByDescending(x => x.ChangeDate).ToList();
 
             // Get WLM in force on the first day of the window or set to default G6
-            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate);
+            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate ?? default);
 
             // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
@@ -61,8 +92,8 @@ namespace PPMTool.Data.Helpers
             var changesInGrade = wlms.DistinctBy(x => x.Grade).Count() > 1;
 
             // Are there any changes in financial year in the window?
-            var startFY = FinancialReference.GetFinancialYear(startDate);
-            var endFY = FinancialReference.GetFinancialYear(endDate);
+            var startFY = FinancialReference.GetFinancialYear(startDate ?? default);
+            var endFY = FinancialReference.GetFinancialYear(endDate ?? default);
             var changesInFinancialYear = startFY != endFY;
 
             // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later
@@ -71,11 +102,11 @@ namespace PPMTool.Data.Helpers
             {
                 // Find leadership tasks within the window and convert to actual tasks
                 var dateRanges = project.GetLeadershipTaskRanges();
-                foreach (var dateRange in dateRanges.Where(x => x.IsWithin(startDate, endDate)))
+                foreach (var dateRange in dateRanges.Where(x => x.IsWithin(startDate ?? default, endDate ?? default)))
                 {
                     // Add leadership subtask based on the date range
-                    var leadershipStart = dateRange.StartDate.Date < startDate ? startDate : dateRange.StartDate.Date;
-                    var leadershipEnd = dateRange.EndDate.Date > endDate ? endDate : dateRange.EndDate.Date;
+                    var leadershipStart = dateRange.StartDate.Date < startDate ? startDate ?? default : dateRange.StartDate.Date;
+                    var leadershipEnd = dateRange.EndDate.Date > endDate ? endDate ?? default : dateRange.EndDate.Date;
                     var daysOfLeadershipForChunk = leadershipEnd.Subtract(leadershipStart).TotalDays + 1;
                     var fullDateRangeDuration = (dateRange.EndDate.Subtract(dateRange.StartDate).TotalDays + 1);
                     var proportionOfTask = fullDateRangeDuration <= 0 ? 0 : daysOfLeadershipForChunk / fullDateRangeDuration;
@@ -113,23 +144,23 @@ namespace PPMTool.Data.Helpers
                         Demand = project.LeadershipFTE,
                         OriginalDemand = project.LeadershipFTE
                     };
-                    tasksInWindow.Add(leadershipTask);
+                    tempTasksInWindow.Add(leadershipTask);
                 }
             }
 
             // Each assignment is at least one row of the report
-            foreach (var task in tasksInWindow)
+            foreach (var task in tempTasksInWindow)
             {
                 // Get project
-                var project = projects.First(x => x.ProjectId == task.OwningProject?.ProjectId);
+                var project = projectsInWindow.First(x => x.ProjectId == task.OwningProject?.ProjectId);
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
 
                 // Get funding source info
                 var fundingSource = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).FundedFrom;
 
                 // Proportion the data for the task based on the window
-                var taskStart = task.StartDate.Date < startDate ? startDate : task.StartDate;
-                var taskEnd = task.EndDate.Date > endDate ? endDate : task.EndDate;
+                var taskStart = task.StartDate.Date < startDate ? startDate ?? default : task.StartDate;
+                var taskEnd = task.EndDate.Date > endDate ? endDate ?? default : task.EndDate;
                 var daysOfTaskForChunk = taskEnd.Subtract(taskStart).TotalDays + 1;
                 var fullTaskDuration = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
                 var proportionOfTask = fullTaskDuration <= 0 ? 0 : daysOfTaskForChunk / fullTaskDuration;
@@ -294,8 +325,6 @@ namespace PPMTool.Data.Helpers
                 // Add task to master list
                 data.AddRange(taskChunks);
             }
-
-            Debug.WriteLine($"** Built {data.Count} rows for {person.Name}");
             return data;
         }
 
