@@ -45,7 +45,23 @@ namespace PPMTool.Data.Helpers
             return data;
         }
 
-        internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(Person person, IEnumerable<Project> projectsInWindow, IEnumerable<FinancialReference> finrefs, DateTime? startDate = null, DateTime? endDate = null, IEnumerable<SubTask> tasksInWindow = null)
+        /// <summary>
+        /// Converts the subtasks of the projects provided, or the subtasks provided, into assingment chunk representation.
+        /// </summary>
+        /// <param name="person">The person whose assignments should be considered</param>
+        /// <param name="projectsInWindow">The projects in the window to be considered</param>
+        /// <param name="finrefs">Financial references to use</param>
+        /// <param name="startDate">Window start date. If not provided, uses earliest project start.</param>
+        /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
+        /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
+        /// <returns></returns>
+        internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
+            Person person,
+            IEnumerable<Project> projectsInWindow,
+            IEnumerable<FinancialReference> finrefs,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            IEnumerable<SubTask> tasksInWindow = null)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -125,15 +141,15 @@ namespace PPMTool.Data.Helpers
                     var leadershipTask = new SubTask
                     {
                         AssignedResources = new List<Resource>
+                    {
+                        new Resource
                         {
-                            new Resource
-                            {
-                                Person = person,
-                                AssignmentFTE = project.LeadershipFTE,
-                                FundedFrom = project.LeadershipFundingSource,
-                                PlannedCost = project.PlannedLeadershipCosts * proportionOfTask
-                            }
-                        },
+                            Person = person,
+                            AssignmentFTE = project.LeadershipFTE,
+                            FundedFrom = project.LeadershipFundingSource,
+                            PlannedCost = project.PlannedLeadershipCosts * proportionOfTask
+                        }
+                    },
                         Name = "Leadership",
                         SubTaskId = -1,
                         OwningProject = project,

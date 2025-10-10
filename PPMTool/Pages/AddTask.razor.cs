@@ -660,8 +660,8 @@ namespace PPMTool.Pages
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
-            var finref = FinancialReferenceService.GetFinancialReferenceForDate(Context, TaskModel.StartDate);
-            TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, finref);
+            var finrefs = FinancialReferenceService.GetAll(Context);
+            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs);
 
             // Set validity based on scheduler result
             IsValid = error == null;

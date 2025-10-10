@@ -321,14 +321,13 @@ namespace PPMTool.Data.Entities
                 throw new Exception("Cannot compute leadership costs for the project as at least one financial reference is required based on the model chosen!");
             }
 
-            // TODO: Work out how much of the subtask costs are in budget
-
             // Set initial values
             DateTime startDate = DateTime.MaxValue;
             DateTime endDate = DateTime.MinValue;
             double actualCost = 0d;
             double actualHours = 0d;
             double plannedCost = 0d;
+            List<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
             // Loop over all the subtasks
             if (SubTasks != null)
@@ -342,11 +341,8 @@ namespace PPMTool.Data.Entities
                     // Sum technical costs and hours
                     if (updateSubTaskCosts)
                     {
-                        // Pick a suitable financial reference for this task
-                        var finref = financialReferences.GetSuitableFinancialReference(task.StartDate);
-
                         // Update the cost of the tasks (and resources)
-                        task.UpdateSubTaskCosts(CostModel, DayRate, finref);
+                        chunks.AddRange(task.UpdateSubTaskCosts(this, financialReferences));
                     }
 
                     // Read subtask costs and hours and accumulate
@@ -361,6 +357,9 @@ namespace PPMTool.Data.Entities
             EndDate = endDate;
 
             // Add the leadership costs
+
+            // TODO: It would be better to use the leadership assignment you get from the Export Helper to determine these so it is consistent
+
             ActualLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(true, financialReferences)) / 100;
             PlannedLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(false, financialReferences)) / 100;
 
@@ -376,6 +375,9 @@ namespace PPMTool.Data.Entities
             // Truncate the cost to 2 DP as it is currency and add on leadership costs
             ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
             PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts;
+
+
+            // TODO: Work out how much of the subtask costs are in budget
         }
 
         /// <summary>
