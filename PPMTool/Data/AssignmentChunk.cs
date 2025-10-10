@@ -30,15 +30,15 @@ namespace PPMTool.Data
         public string School { get; set; }
 
         /// <summary>
-        /// This is the estimated salary cost of the individual resource based on their grade and FTE
+        /// This is the estimated salary cost of the individual resource based on their grade and FTE -- essentially the cost to the department
         /// </summary>
-        [Description("Estimated salary cost based on mid-grade")]
+        [Description("Estimated salary cost based on mid-grade -- i.e. cost to the department for employing the person")]
         public double SalaryCostEstimate { get; set; }
 
         /// <summary>
-        /// This is the planned cost of the resource for the assignment chunk as lifted from the task itself -- doesn't take into account grade changes or increments?
+        /// This is the planned cost of the resource for the assignment chunk as lifted from the task itself. If not using the day-rate model for costing, this will be the same as the salary cost estimate.
         /// </summary>
-        [Description("Estimated cost of assignment based on rate system")]
+        [Description("Estimated cost of assignment based on what was used to cost the project")]
         public double PlannedCost { get; set; }
 
         private DateTime startDate;
