@@ -9,47 +9,56 @@
 @using static PPMTool.Data.Entities.Project
 <PageTitle>Estimate Cost - CapX</PageTitle>
 
-@if (Loading)
-{
-    <LoadingComponent />
-}
-else
-{
-    <div class="container">
-        <div class="row">
-            <div class="col-auto">
-                <h1>Estimate Project Cost</h1>
-            </div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-auto">
+            <h1>Estimate Project Cost</h1>
         </div>
-        <div class="row">
-            <div class="col">
-                <p>Tool for estimating the cost of a project based on the established costing approach.</p>
-            </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <p>Tool for estimating the cost of a project based on the established costing approach.</p>
         </div>
-        <hr />
+    </div>
+    <hr />
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
         <div class="card">
-            <h2>Details</h2>
-            <div class="col-6">
-                <RadzenLabel class="radzen-form-label"
-                             Text="Cost Model"
-                             Component="CostModel" /><br />
-                <RadzenDropDown class="radzen-dropdown"
-                                @bind-Value="costModel"
-                                Data="@(Enum.GetValues(typeof(CostModel)))"
-                                Name="CostModel">
-                    <Template Context="cost">
-                        @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
-                    </Template>
-                </RadzenDropDown>
+            <h2>Project Details</h2>
+            <div class="row">
+                <div class="col-6">
+                    <RadzenLabel class="radzen-form-label"
+                                 Text="Cost Model"
+                                 Component="CostModel" /><br />
+                    <RadzenDropDown class="radzen-dropdown"
+                                    @bind-Value="costModel"
+                                    Data="@(Enum.GetValues(typeof(CostModel)))"
+                                    Name="CostModel">
+                        <Template Context="cost">
+                            @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
+                        </Template>
+                    </RadzenDropDown>
+                </div>
             </div>
             <TaskConfigurationComponent ReadOnly="true" />
+            <hr />
             <h2>Resources</h2>
             @if (costModel == CostModel.TechAndLeadership)
             {
-                <TaskConfigurationComponent Title="Leadership" />
+                <h3>Leadership</h3>
+                <TaskConfigurationComponent />
+                <hr />
             }
-            <TaskConfigurationComponent Title="Technical Effort 1" />
-            <TaskConfigurationComponent Title="Technical Effort 2" />
+            <h3>Tech Effort 1</h3>
+            <TaskConfigurationComponent />
+            <hr />
+            <h3>Tech Effort 2</h3>
+            <TaskConfigurationComponent />
         </div>
-    </div>
-}
+    }
+</div>

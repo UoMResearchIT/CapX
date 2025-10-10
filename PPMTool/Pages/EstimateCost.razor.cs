@@ -7,5 +7,11 @@ namespace PPMTool.Pages
     public partial class EstimateCost : BasePage
     {
         private CostModel costModel;
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            Loading = false;
+        }
     }
 }

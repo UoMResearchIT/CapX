@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -152,6 +149,14 @@ namespace PPMTool.Pages
         private void AddProject()
         {
             Navigation.NavigateTo($"projects/addproject/-1");
+        }
+
+        /// <summary>
+        /// Navigate to the estimate cost page
+        /// </summary>
+        private void EstimateCost()
+        {
+            Navigation.NavigateTo($"projects/estimatecost");
         }
     }
 }
