@@ -13,10 +13,14 @@ public static class Skills
     /// <summary>
     /// Get all skills tags from DB.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllSkillTagsAsync(PPMToolContext context, ILogger logger)
+    public static async Task<IResult> GetAllSkillTagsAsync(
+        PPMToolContext context,
+        ILogger logger)
     {
         try
         {
@@ -54,7 +58,10 @@ public static class Skills
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, [FromQuery] string name)
+    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(
+        PPMToolContext context,
+        ILogger logger,
+        [FromQuery] string name)
     {
         try
         {
@@ -91,10 +98,16 @@ public static class Skills
     /// <summary>
     /// Get all skills tags grouped by person.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="includeLeavers">Whether to include former staff in the data</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<PersonSkillsDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger)
+    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(
+        PPMToolContext context,
+        ILogger logger,
+        [FromQuery] bool includeLeavers = false)
     {
         try
         {
@@ -103,6 +116,14 @@ public static class Skills
                 .Include(x => x.Owner)
                 .Include(x => x.SkillTag)
                 .ToListAsync();
+
+            // Check for filter flag
+            if (!includeLeavers)
+            {
+                ownedSkills = ownedSkills
+                    .Where(x => x.Owner.IsCurrentStaff())
+                    .ToList();
+            }
 
             if (ownedSkills == null || !ownedSkills.Any())
             {
