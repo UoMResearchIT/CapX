@@ -127,27 +127,29 @@ public static class Timesheets
                 // Flatten the data for a simple CSV structure
                 var csvData = timesheetsAsDTOs.SelectMany(timesheetDto =>
 
-                    // Map to an anonymous DTO for the CSV file
-                    timesheetDto.Entries.Select(entryDto => new
-                    {
-                        PersonName = timesheetDto.OwnerName,
-                        TimesheetWeekStart = timesheetDto.StartDate.ToString("yyyy-MM-dd"),
-                        TimesheetStatus = timesheetDto.Status,
-                        TimesheetInfo = timesheetDto.Info,
-                        entryDto.InnateCode,
-                        entryDto.InnateCodeName,
-                        entryDto.TaskName,
-                        entryDto.Duty,
-                        entryDto.MondayHours,
-                        entryDto.TuesdayHours,
-                        entryDto.WednesdayHours,
-                        entryDto.ThursdayHours,
-                        entryDto.FridayHours,
-                        entryDto.SaturdayHours,
-                        entryDto.SundayHours,
-                        TotalHoursForWeek = entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
-                            entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
-                    }));
+                    // Map to a DTO for the CSV file
+                    timesheetDto.Entries.Select(entryDto =>
+                        new TimesheetCSVDTO(
+                            timesheetDto.OwnerName,
+                            timesheetDto.StartDate.ToString("yyyy-MM-dd"),
+                            timesheetDto.Status,
+                            timesheetDto.Info ?? "",
+                            entryDto.InnateCode,
+                            entryDto.InnateCodeName,
+                            entryDto.TaskName,
+                            entryDto.Duty,
+                            entryDto.MondayHours,
+                            entryDto.TuesdayHours,
+                            entryDto.WednesdayHours,
+                            entryDto.ThursdayHours,
+                            entryDto.FridayHours,
+                            entryDto.SaturdayHours,
+                            entryDto.SundayHours,
+                            entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
+                                entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
+                        )
+                    )
+                );
 
                 var fileBytes = Helpers.GenerateCsv(csvData);
                 var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";

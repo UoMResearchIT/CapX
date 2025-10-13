@@ -194,7 +194,7 @@ namespace PPMTool.Data.Entities
         /// Is the current staff member a current staff member at the moment
         /// </summary>
         /// <returns></returns>
-        internal bool IsCurrentStaff()
+        public bool IsCurrentStaff()
         {
             return StartDate <= DateTime.Today && (EndDate == null || EndDate > DateTime.Today);
         }
