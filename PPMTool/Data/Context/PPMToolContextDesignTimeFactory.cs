@@ -45,27 +45,18 @@ namespace PPMTool.Data.Context
         {
             // Create a new config builder
             var builder = new ConfigurationBuilder();
+            Console.WriteLine("** Using Environment Variables for CLI");
+            builder.AddEnvironmentVariables();
+            builder.AddUserSecrets<PPMToolContextDesignTimeFactory>();
 
-            // Detect if running in Visual Studio Package Manager Console
-            if (args == null || args.Length == 0)
+            // Configuration overrides from the environment variables
+            var overridingValues = new Dictionary<string, string>();
+            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            if (!string.IsNullOrWhiteSpace(connectionString))
             {
-                Console.WriteLine("** Using UserSecrets for Visual Studio");
-                builder.AddUserSecrets<PPMToolContextDesignTimeFactory>();
+                overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
             }
-            else
-            {
-                Console.WriteLine("** Using Environment Variables for CLI");
-                builder.AddEnvironmentVariables();
-
-                // Configuration overrides from the environment variables
-                var overridingValues = new Dictionary<string, string>();
-                var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-                if (!string.IsNullOrWhiteSpace(connectionString))
-                {
-                    overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
-                }
-                builder.AddInMemoryCollection(overridingValues);
-            }
+            builder.AddInMemoryCollection(overridingValues);
 
             return builder.Build();
         }
