@@ -94,9 +94,10 @@ namespace PPMTool.Data.Entities
             // Get durations in days over which the work is spread
             var durationDaysPlanned = PlannedWorkHours / 7f;
             var durationDaysActual = ActualWorkHours / 7f;
+            var fundingSourceType = FundedFrom?.FundingSourceType;
 
-            // If using the day rate model then calculation is simple
-            if (project.CostModel == CostModel.DayRate)
+            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funidng sources which have to be salary costs
+            if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
                 ActualCost = durationDaysActual * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
@@ -105,7 +106,7 @@ namespace PPMTool.Data.Entities
                 PlannedCost = durationDaysPlanned * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
             }
 
-            // If using the grade-based models
+            // If using the grade-based models or day rate but DI funding source
             else
             {
                 // Convert to assignment chunks
