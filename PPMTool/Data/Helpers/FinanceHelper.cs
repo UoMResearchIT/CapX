@@ -1,4 +1,5 @@
-﻿using PPMTool.Data.Context;
+﻿using System.Diagnostics;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
@@ -48,6 +49,129 @@ namespace PPMTool.Data.Helpers
 
             // Create the item adding in the invoiced amounts and the direct payments
             return new TransactionBreakdown(da, di, requestedFromInvoices, receivedFromPayments, fundingSources);
+        }
+
+        /// <summary>
+        /// Generates a series of project budget detail objects, one for each project supplied.
+        /// Resources with no funding source will be ignored and can be assumed to be not in budget.
+        /// </summary>
+        /// <param name="projects"></param>
+        /// <returns></returns>
+        internal static IEnumerable<AssignmentBudgetDetail> GetProjectBudgetDetail(IEnumerable<Project> projects)
+        {
+            var budgets = new List<AssignmentBudgetDetail>();
+
+            foreach (var project in projects)
+            {
+                // Get all the resource assignments with funding sources
+                var assignments = project.SubTasks
+                    .SelectMany(x => x.AssignedResources)
+                    .Where(x => x.FundedFrom != null)
+                    .ToList();
+
+                // Get the start and end dates of the marching window
+                var currentDate = project.StartDate.Date;
+                var endDate = project.EndDate.Date;
+
+                // Map funding sources to temporary counter
+                var fundingPots = new Dictionary<int, double>();
+                foreach (var fs in project.FundingSources)
+                {
+                    // Add to existing or create new as required
+                    if (fundingPots.TryGetValue(fs.FundingSourceId, out var existingAmount))
+                    {
+                        fundingPots[fs.FundingSourceId] = existingAmount + fs.AmountAvailable;
+                    }
+                    else
+                    {
+                        fundingPots[fs.FundingSourceId] = fs.AmountAvailable;
+                    }
+                }
+
+                Debug.WriteLine($"{fundingPots.Count} funding pots. Total of {fundingPots.Sum(x => x.Value):C0}");
+
+                // If no funding pots then move to next project
+                if (fundingPots.Count == 0)
+                {
+                    continue;
+                }
+
+                // Initialise the budget details using a dictionary for lookup
+                var budgetMap = assignments.ToDictionary(
+                    x => x.ResourceId,
+                    x => new AssignmentBudgetDetail
+                    {
+                        Resource = x,
+                        InBudget = 0,
+                        DailyCost = x.PlannedCost / x.SubTask.DurationDays,
+                        Status = BudgetStatus.FullyInBudget
+                    });
+
+                budgets.AddRange(budgetMap.Values);
+
+                // March through the project
+                while (currentDate <= endDate)
+                {
+                    // Get all assignments on current day
+                    foreach (var assignment in assignments)
+                    {
+                        // If no assignments running on the day then move to next day
+                        if (!assignment.SubTask.IsWithin(currentDate))
+                            continue;
+
+                        // Get budget detail of the assignment
+                        var budgetDetail = budgetMap[assignment.ResourceId];
+
+                        // Skip if already marked as out of budget as nothing to do
+                        if (budgetDetail.Status == BudgetStatus.NotInBudget)
+                            continue;
+
+                        // Is first day of the assignment
+                        var isFirstDayOfAssignment = currentDate.Date == assignment.SubTask.StartDate.Date;
+
+                        // Log current funding pot status and get pot value for update
+                        var fsId = assignment.FundedFrom.FundingSourceId;
+                        if (!fundingPots.TryGetValue(fsId, out var potValue))
+                            continue;
+                        var potHasMoneyBeforeUpdate = potValue > 0;
+
+                        // Update the funding pot information by deducting the costs
+                        potValue -= budgetDetail.DailyCost;
+                        fundingPots[fsId] = potValue;
+
+                        // Check funding pot status after
+                        var potEmptyAfterUpdate = potValue <= 0;
+
+                        // If the assignment has just started and the funding pot was already negative then mark as out of budget
+                        if (isFirstDayOfAssignment && !potHasMoneyBeforeUpdate)
+                        {
+                            // Task never had budget on day one so fully out of budget
+                            budgetDetail.Status = BudgetStatus.NotInBudget;
+                        }
+                        // If something was positive and has now gone negative then flag the status as partially in budget
+                        else if (budgetDetail.Status == BudgetStatus.FullyInBudget &&
+                                 potHasMoneyBeforeUpdate && potEmptyAfterUpdate)
+                        {
+                            // Downgrade to partial
+                            budgetDetail.Status = BudgetStatus.PartiallyInBudget;
+
+                            // Update the in budget amount by the remainder
+                            budgetDetail.InBudget += -potValue;
+                        }
+
+                        // If still in budget then update the amount on the budget detail
+                        if (budgetDetail.Status == BudgetStatus.FullyInBudget)
+                        {
+                            budgetDetail.InBudget += budgetDetail.DailyCost;
+                        }
+                    }
+
+                    // Advance to next day
+                    currentDate = currentDate.AddDays(1);
+                }
+            }
+
+            return budgets;
         }
     }
 }

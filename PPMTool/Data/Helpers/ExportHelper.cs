@@ -28,6 +28,9 @@ namespace PPMTool.Data.Helpers
                 .Where(x => !x.ProjectStatus.IsCancelled())
                 .Where(x => x.IsWithin(startDate, endDate));
 
+            // Get the breakdown of budget details for the tasks in the projects
+            var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projectsInWindow);
+
             // Filter list of tasks for those projects that just run during the window and are assigned to this person
             var tasksInWindow = projectsInWindow
                 .SelectMany(x => x.SubTasks)
