@@ -45,7 +45,6 @@ namespace PPMTool.Data.Context
         {
             // Create a new config builder
             var builder = new ConfigurationBuilder();
-            Console.WriteLine("** Using Environment Variables for CLI");
             builder.AddEnvironmentVariables();
             builder.AddUserSecrets<PPMToolContextDesignTimeFactory>();
 
