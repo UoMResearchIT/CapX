@@ -112,9 +112,14 @@
                                 <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
                             </Authorized>
                         </AuthorizeView>
+                        <AuthorizeView Roles="Manager">
+                            <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="leavebookings" Text="Leave Bookings" Icon="travel" />
+                            </Authorized>
+                        </AuthorizeView>
                     </RadzenPanelMenuItem>
                 </Authorized>
-            </AuthorizeView>            
+            </AuthorizeView>
             <AuthorizeView Roles="Superuser,Manager">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
