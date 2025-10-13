@@ -3,14 +3,14 @@
     /// <summary>
     /// Helper class to manage environment variables for configuration overrides.
     /// </summary>
-    public static class EnvironmentHelper
+    internal static class EnvironmentHelper
     {
         /// <summary>
         /// Method to load environment variables and override configuration settings.
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
-        public static void LoadEnvironmentVariables(WebApplicationBuilder builder)
+        internal static void LoadEnvironmentVariables(WebApplicationBuilder builder)
         {
             // Add environment variables to the configuration
             builder.Configuration.AddEnvironmentVariables();
@@ -58,6 +58,13 @@
                 overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
             }
 
+            // Get connection string from the environment
+            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            if (!string.IsNullOrWhiteSpace(connectionString))
+            {
+                overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
+            }
+
             // Add the overriding values to the configuration
             builder.Configuration.AddInMemoryCollection(overridingValues);
         }
@@ -77,6 +84,10 @@
             if (!isDesignTime && builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]))
             {
                 throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
+            }
+            if (string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:PPMToolContextConnection"]))
+            {
+                throw new InvalidOperationException("CONNECTION_STRING environment variable is not set!");
             }
         }
     }
