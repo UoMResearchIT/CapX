@@ -19,17 +19,20 @@ namespace PPMTool.Data.Context
         /// <exception cref="InvalidOperationException">If env variable not set</exception>
         public PPMToolContext CreateDbContext(string[] args)
         {
-            Console.WriteLine("** Building design time context...");
-            var configuration = LoadEnvironmentConfiguration();
+            var configuration = BuildConfiguration(args);
             var connectionString = configuration.GetConnectionString("PPMToolContextConnection");
 
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new InvalidOperationException("DesignTimeDbContextFactory: CONNECTION_STRING environment variable is not set!");
             }
+            else
+            {
+                Console.WriteLine($"** Using design-time connection string {connectionString}");
+            }
 
             var optionsBuilder = new DbContextOptionsBuilder<PPMToolContext>();
-            optionsBuilder.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            optionsBuilder.UseSqlite(connectionString);
 
             return new PPMToolContext(optionsBuilder.Options);
         }
@@ -38,20 +41,32 @@ namespace PPMTool.Data.Context
         /// Method to build a configuration object injecting the connection string from the environment
         /// </summary>
         /// <returns></returns>
-        private IConfiguration LoadEnvironmentConfiguration()
+        private IConfiguration BuildConfiguration(string[] args)
         {
             // Create a new config builder
-            var builder = new ConfigurationBuilder()
-                        .AddEnvironmentVariables();
+            var builder = new ConfigurationBuilder();
 
-            // Configuration overrides from the environment variables
-            var overridingValues = new Dictionary<string, string>();
-            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-            if (!string.IsNullOrWhiteSpace(connectionString))
+            // Detect if running in Visual Studio Package Manager Console
+            if (args == null || args.Length == 0)
             {
-                overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
+                Console.WriteLine("** Using UserSecrets for Visual Studio");
+                builder.AddUserSecrets<PPMToolContextDesignTimeFactory>();
             }
-            builder.AddInMemoryCollection(overridingValues);
+            else
+            {
+                Console.WriteLine("** Using Environment Variables for CLI");
+                builder.AddEnvironmentVariables();
+
+                // Configuration overrides from the environment variables
+                var overridingValues = new Dictionary<string, string>();
+                var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+                if (!string.IsNullOrWhiteSpace(connectionString))
+                {
+                    overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
+                }
+                builder.AddInMemoryCollection(overridingValues);
+            }
+
             return builder.Build();
         }
     }
