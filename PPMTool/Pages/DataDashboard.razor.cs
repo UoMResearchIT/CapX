@@ -737,37 +737,39 @@ namespace PPMTool.Pages
                     try
                     {
                         var allProjects = ProjectService.GetAll(context);
+                        var realProjects = allProjects
+                            .Where(x => !x.ProjectStatus.IsCancelled());
                         var allFinRefs = FinancialReferenceService.GetAll(context);
 
                         // Create blank list of data
-                        var allData = new List<AssignmentChunk>();
+                        var assignmentChunks = new List<AssignmentChunk>();
 
                         // Set the report length
                         var startDate = this.startDate.Date;
                         var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
 
-                        // Get data for each person active in the window -- exclude Head of RSE
+                        // Get data for each person active in the window
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
-                            // Get the assignment data a row a person at a time
+                            // Get the assignment data a person at a time in the window
                             var data = ExportHelper.GetExportDataForPerson(
                                 person,
-                                allProjects,
+                                realProjects,
                                 startDate,
                                 endDate,
                                 allFinRefs
                             );
-                            allData.AddRange(data);
+                            assignmentChunks.AddRange(data);
                         }
-                        allData.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
-                        Debug.WriteLine($"** {allData.Count()} assignment entries generated!");
+                        assignmentChunks.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+                        Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
-                        // Get recovery data
+                        // Get recovery data for assignment chunks
                         int totalDays = (int)(endDate.Subtract(startDate).TotalDays) + 1;
                         var totalData = ExportHelper.GetRecoveryData(
                             peopleActive,
-                            allData,
+                            assignmentChunks,
                             ContextFactory,
                             PersonService,
                             ProjectService,
@@ -806,9 +808,9 @@ namespace PPMTool.Pages
                             }
 
                             // Write data rows
-                            for (int row = 0; row < allData.Count; row++)
+                            for (int row = 0; row < assignmentChunks.Count; row++)
                             {
-                                var record = allData[row];
+                                var record = assignmentChunks[row];
                                 for (int col = 0; col < props.Count(); col++)
                                 {
                                     var propName = props[col].Name;

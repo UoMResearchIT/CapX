@@ -356,12 +356,13 @@ namespace PPMTool.Data.Entities
             StartDate = startDate;
             EndDate = endDate;
 
-            // Add the leadership costs
+            // Add the leadership costs, generating chunks if the model requires it
             var leadershipChunks = ExportHelper.GetAssignmentChunks(
                 ProjectManager,
                 new List<Project> { this },
                 financialReferences,
-                shouldCalculateCosts: true)
+                shouldCalculateCosts: true,
+                generateLeadershipTasks: CostModel == CostModel.TechAndLeadership)
                 .Where(c => c.IsLeadershipAssignment);
             ActualLeadershipCosts = Math.Round(100 * CalculateActualLeadershipCosts(leadershipChunks)) / 100;
             PlannedLeadershipCosts = Math.Round(100 * leadershipChunks.Sum(x => x.PlannedCost)) / 100;
@@ -483,6 +484,72 @@ namespace PPMTool.Data.Entities
             var mergedRanges = MergeDateRanges(dateRanges);
 
             return mergedRanges;
+        }
+
+        /// <summary>
+        /// Method to generate leadership tasks for a project
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<SubTask> GenerateLeadershipTasks()
+        {
+            // Find leadership tasks within the window and convert to actual tasks
+            var dateRanges = GetLeadershipTaskRanges();
+            var leadershipTasks = new List<SubTask>();
+            if (ProjectManager == null)
+            {
+                return leadershipTasks;
+            }
+
+            // Build tasks
+            var daysOfLeadershipForProject = dateRanges.Sum(x => x.EndDate.Subtract(x.StartDate).TotalDays + 1);
+            foreach (var dateRange in dateRanges)
+            {
+                // Add leadership subtask based on the date range
+                var leadershipStart = dateRange.StartDate.Date;
+                var leadershipEnd = dateRange.EndDate.Date;
+
+                // Adjust leadership task start and end dates based on the person starting or leaving
+                // If calculating costs for planned leadership this is tasken into account later in GetAssignmentChunks
+                if (leadershipStart < ProjectManager.StartDate)
+                {
+                    leadershipStart = ProjectManager.StartDate;
+                }
+                if (ProjectManager.EndDate != null && leadershipEnd > ProjectManager.EndDate)
+                {
+                    leadershipEnd = ProjectManager.EndDate!.Value;
+                }
+
+                // Work out proportions based on adjusted dates
+                var daysOfLeadershipForRange = leadershipEnd.Subtract(leadershipStart).TotalDays + 1;
+                var proportionOfLeadershipCosts = daysOfLeadershipForRange / daysOfLeadershipForProject;
+
+                // Now create the leadership task
+                var leadershipTask = new SubTask
+                {
+                    AssignedResources = new List<Resource>
+                    {
+                        new Resource
+                        {
+                            Person = ProjectManager,
+                            AssignmentFTE = LeadershipFTE,
+                            FundedFrom = LeadershipFundingSource,
+                            PlannedCost = PlannedLeadershipCosts * proportionOfLeadershipCosts
+                        }
+                    },
+                    Name = "Leadership",
+                    SubTaskId = -1,
+                    OwningProject = this,
+                    StartDate = leadershipStart,
+                    EndDate = leadershipEnd,
+                    RequiresLeadership = false,
+                    TaskType = TaskType.FixedDuration,
+                    Demand = LeadershipFTE,
+                    OriginalDemand = LeadershipFTE
+                };
+                leadershipTasks.Add(leadershipTask);
+            }
+
+            return leadershipTasks;
         }
 
         /// <summary>

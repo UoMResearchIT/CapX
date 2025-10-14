@@ -25,11 +25,11 @@ namespace PPMTool.Data.Helpers
 
             // Filter list of projects to those running during the window
             var projectsInWindow = projects
-                .Where(x => !x.ProjectStatus.IsCancelled())
                 .Where(x => x.IsWithin(startDate, endDate));
 
-            // Get the breakdown of budget details for the tasks in the projects
-            var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projectsInWindow);
+            // Get the breakdown of budget details for the tasks/resources in the projects we care about
+            var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
+            Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details");
 
             // Filter list of tasks for those projects that just run during the window and are assigned to this person
             var tasksInWindow = projectsInWindow
@@ -41,8 +41,16 @@ namespace PPMTool.Data.Helpers
 
             Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
 
-            // Represent the assignments in the window as chunks
-            var data = GetAssignmentChunks(person, projectsInWindow, finrefs, startDate, endDate, tasksInWindow);
+            // Represent the assignments (inlcuidng leadership assignment if necessary) in the window as chunks
+            var data = GetAssignmentChunks(
+                person,
+                projectsInWindow,
+                finrefs,
+                startDate,
+                endDate,
+                tasksInWindow,
+                budgetDetails: projectBudgetDetails,
+                generateLeadershipTasks: true);
             Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
 
             return data;
@@ -58,6 +66,8 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
+        /// <param name="budgetDetails">An optional list of information about the task budget status that can be added to the data if supplied.</param>
+        /// <param name="generateLeadershipTasks">Should the process generate leadership tasks for projects</param>
         /// <returns></returns>
         internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
@@ -66,7 +76,9 @@ namespace PPMTool.Data.Helpers
             DateTime? startDate = null,
             DateTime? endDate = null,
             IEnumerable<SubTask> tasksInWindow = null,
-            bool shouldCalculateCosts = false)
+            bool shouldCalculateCosts = false,
+            IEnumerable<AssignmentBudgetDetail> budgetDetails = null,
+            bool generateLeadershipTasks = true)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -98,6 +110,16 @@ namespace PPMTool.Data.Helpers
                 tempTasksInWindow = tasksInWindow.ToList();
             }
 
+            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later if required
+            if (generateLeadershipTasks)
+            {
+                foreach (var project in projectsInWindow.Where(x => x.ProjectManager?.PersonId == person.PersonId))
+                {
+                    tempTasksInWindow.AddRange(project.GenerateLeadershipTasks()
+                        .Where(x => x.IsWithin(startDate ?? default, endDate ?? default)));
+                }
+            }
+
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges
                 .Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate)
@@ -120,58 +142,6 @@ namespace PPMTool.Data.Helpers
             var startFY = FinancialReference.GetFinancialYear(startDate ?? default);
             var endFY = FinancialReference.GetFinancialYear(endDate ?? default);
             var changesInFinancialYear = startFY != endFY;
-
-            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later
-            foreach (var project in projectsInWindow
-                .Where(x => x.CostModel == CostModel.TechAndLeadership && x.ProjectManager?.PersonId == person.PersonId))
-            {
-                // Find leadership tasks within the window and convert to actual tasks
-                var dateRanges = project.GetLeadershipTaskRanges();
-                foreach (var dateRange in dateRanges.Where(x => x.IsWithin(startDate ?? default, endDate ?? default)))
-                {
-                    // Add leadership subtask based on the date range
-                    var leadershipStart = dateRange.StartDate.Date < startDate ? startDate ?? default : dateRange.StartDate.Date;
-                    var leadershipEnd = dateRange.EndDate.Date > endDate ? endDate ?? default : dateRange.EndDate.Date;
-                    var daysOfLeadershipForChunk = leadershipEnd.Subtract(leadershipStart).TotalDays + 1;
-                    var fullDateRangeDuration = (dateRange.EndDate.Subtract(dateRange.StartDate).TotalDays + 1);
-                    var proportionOfTask = fullDateRangeDuration <= 0 ? 0 : daysOfLeadershipForChunk / fullDateRangeDuration;
-
-                    // Adjust leadership task start and end dates based on the person starting or leaving
-                    if (leadershipStart < person.StartDate)
-                    {
-                        leadershipStart = person.StartDate;
-                    }
-                    if (person.EndDate != null && leadershipEnd > person.EndDate)
-                    {
-                        leadershipEnd = person.EndDate!.Value;
-                    }
-
-                    // Now create the leadership task
-                    var leadershipTask = new SubTask
-                    {
-                        AssignedResources = new List<Resource>
-                    {
-                        new Resource
-                        {
-                            Person = person,
-                            AssignmentFTE = project.LeadershipFTE,
-                            FundedFrom = project.LeadershipFundingSource,
-                            PlannedCost = project.PlannedLeadershipCosts * proportionOfTask
-                        }
-                    },
-                        Name = "Leadership",
-                        SubTaskId = -1,
-                        OwningProject = project,
-                        StartDate = leadershipStart,
-                        EndDate = leadershipEnd,
-                        RequiresLeadership = false,
-                        TaskType = TaskType.FixedDuration,
-                        Demand = project.LeadershipFTE,
-                        OriginalDemand = project.LeadershipFTE
-                    };
-                    tempTasksInWindow.Add(leadershipTask);
-                }
-            }
 
             // Each assignment is at least one row of the report
             foreach (var task in tempTasksInWindow)

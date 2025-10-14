@@ -348,26 +348,11 @@ namespace PPMTool.Pages
             }
 
             // Add a gantt block representing the management task
-            var managementTasks = project.GetLeadershipTaskRanges();
-            foreach (var dateRange in managementTasks)
+            var managementTasks = project.GenerateLeadershipTasks();
+            foreach (var task in managementTasks)
             {
                 var leadershipName = "(Leadership)";
-                allBlocks.Insert(0, new GanttBlock(new SubTask
-                {
-                    Name = leadershipName,
-                    StartDate = dateRange.StartDate,
-                    EndDate = dateRange.EndDate,
-                    OwningProject = project,
-                    AssignedResources = new List<Resource>
-                    {
-                        new Resource
-                        {
-                            Person = project.ProjectManager,
-                            AssignmentFTE = Math.Round(project.LeadershipFTE, 3)
-                        }
-                    }
-
-                }, leadershipName, isLeadershipTask: true));
+                allBlocks.Insert(0, new GanttBlock(task, leadershipName, isLeadershipTask: true));
             }
 
             // Fill in the data
