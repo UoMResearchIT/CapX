@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using Radzen;
 
 namespace PPMTool.Data
@@ -187,6 +188,69 @@ namespace PPMTool.Data
                 else
                 {
                     throw new InvalidOperationException($"Key already exists in the dictionary so cannot add {kvp.Key}!");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extension method to use the budget detail to define the amounts and status of a window of time
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="proportion"></param>
+        /// <param name="budgetDetail"></param>
+        /// <param name="status"></param>
+        public static void GetBudgetDetailsForWindow(this AssignmentBudgetDetail budgetDetail, DateTime start, DateTime end, double proportion, out string status, out double amount)
+        {
+            amount = 0d;
+            status = BudgetStatus.NotInBudget.GetDescription();
+
+            // Only update if the budget line is found and the whole task is
+            // not out of budget since all the chunks will be as well
+            if (budgetDetail != null && budgetDetail.Status != BudgetStatus.NotInBudget)
+            {
+                if (budgetDetail.Status == BudgetStatus.FullyInBudget)
+                {
+                    amount = budgetDetail.InBudget * proportion;
+                    status = budgetDetail.Status.GetDescription();
+                }
+                else
+                {
+                    // If chunk includes the funding source expiry date then need to work out proportion
+                    if (budgetDetail.Status == BudgetStatus.PartiallyInBudget && budgetDetail.FundingSourceExpired != null)
+                    {
+                        var expiryDate = budgetDetail.FundingSourceExpired.Value;
+
+                        // If expired before the chunk starts then out of budget
+                        if (expiryDate < start)
+                        {
+                            amount = 0;
+                            status = BudgetStatus.NotInBudget.GetDescription();
+                        }
+
+                        // If expired after the end date then fully in budget
+                        else if (expiryDate > end)
+                        {
+                            amount = budgetDetail.InBudget * proportion;
+                            status = BudgetStatus.FullyInBudget.GetDescription();
+                        }
+
+                        // Expires sometime during the window
+                        else
+                        {
+                            // Proportion the amount
+                            var daysFunded = expiryDate.Subtract(start).TotalDays + 1;
+                            var lengthOfWindow = end.Subtract(start).TotalDays + 1;
+                            var proportionInBudget = daysFunded / lengthOfWindow;
+                            amount = budgetDetail.InBudget * proportion * proportionInBudget;
+                            status = BudgetStatus.PartiallyInBudget.GetDescription();
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Any partially funded resources should have an expiry date!");
+                    }
                 }
             }
         }

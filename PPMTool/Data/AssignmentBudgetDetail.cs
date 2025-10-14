@@ -27,5 +27,10 @@ namespace PPMTool.Data
         /// The daily cost of this assignment based on the planned cost
         /// </summary>
         public double DailyCost { get; set; }
+
+        /// <summary>
+        /// The date on which the funding source expired if partially funded.
+        /// </summary>
+        public DateTime? FundingSourceExpired { get; set; }
     }
 }

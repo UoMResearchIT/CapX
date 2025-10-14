@@ -161,8 +161,9 @@ namespace PPMTool.Data.Helpers
                         else if (budgetDetail.Status == BudgetStatus.FullyInBudget &&
                                  potHasMoneyBeforeUpdate && potEmptyAfterUpdate)
                         {
-                            // Downgrade to partial
+                            // Downgrade to partial and stash the expiry date
                             budgetDetail.Status = BudgetStatus.PartiallyInBudget;
+                            budgetDetail.FundingSourceExpired = currentDate;
 
                             // Update the in budget amount by the remainder
                             budgetDetail.InBudget += -potValue;
