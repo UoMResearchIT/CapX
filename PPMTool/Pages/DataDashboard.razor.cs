@@ -808,6 +808,7 @@ namespace PPMTool.Pages
                         {
                             // Assignments worksheet first
                             var worksheet = workbook.Worksheets.Add("Assignments");
+                            worksheet.SheetView.FreezeRows(1);
 
                             // Write header row
                             var props = typeof(AssignmentChunk).GetProperties();
@@ -853,7 +854,7 @@ namespace PPMTool.Pages
                                             cell.Value = rawValue?.ToString() ?? string.Empty;
                                         }
                                     }
-                                    else if (propName == nameof(AssignmentChunk.FundingSourceAmount) ||
+                                    else if (propName == nameof(AssignmentChunk.AmountCovered) ||
                                         propName == nameof(AssignmentChunk.SalaryCostEstimate) ||
                                         propName == nameof(AssignmentChunk.PlannedCost))
                                     {
@@ -928,6 +929,7 @@ namespace PPMTool.Pages
 
                             // Add tab
                             var worksheetTotals = workbook.AddWorksheet("Costs", 0);
+                            worksheetTotals.SheetView.FreezeRows(1);
 
                             // Header row
                             cell = worksheetTotals.Cell(1, 1);
