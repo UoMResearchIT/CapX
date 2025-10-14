@@ -810,8 +810,18 @@ namespace PPMTool.Pages
                             var worksheet = workbook.Worksheets.Add("Assignments");
                             worksheet.SheetView.FreezeRows(1);
 
+                            // Get properties and reorder the end date so it comes after the start date
+                            var props = typeof(AssignmentChunk).GetProperties().ToList();
+                            var startDateProp = props.FirstOrDefault(p => p.Name == nameof(AssignmentChunk.StartDate));
+                            var endDateProp = props.FirstOrDefault(p => p.Name == nameof(AssignmentChunk.EndDate));
+                            props.Remove(endDateProp);
+                            if (startDateProp != null && endDateProp != null)
+                            {
+                                var startIndex = props.IndexOf(startDateProp);
+                                props.Insert(startIndex + 1, endDateProp);
+                            }
+
                             // Write header row
-                            var props = typeof(AssignmentChunk).GetProperties();
                             IXLCell cell = default;
                             for (int i = 0; i < props.Count(); i++)
                             {
