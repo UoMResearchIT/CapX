@@ -103,8 +103,11 @@ namespace PPMTool.Data.Helpers
                 var project = projectsInWindow.First(x => x.ProjectId == task.OwningProject?.ProjectId);
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
 
+                // Get resource that matches the person
+                var resource = task.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
+
                 // Get funding source info
-                var fundingSource = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).FundedFrom;
+                var fundingSource = resource.FundedFrom;
 
                 // Proportion the data for the task based on the window
                 var taskStart = task.StartDate.Date < startDate ? startDate ?? default : task.StartDate;
@@ -121,17 +124,17 @@ namespace PPMTool.Data.Helpers
                     PostNumber = string.Empty,
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
-                    FTE = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE, 3),
-                    Project = project.GetFullName(),
+                    FTE = Math.Round(resource.AssignmentFTE, 3),
+                    ProjectName = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
                     School = project.School.GetDescription(),
                     PI = project.PI,
-                    Task = task.Name,
+                    TaskName = task.Name,
                     StartDate = taskStart,
                     EndDate = taskEnd,
                     FinancialYear = FinancialReference.GetFinancialYear(taskStart),
-                    PlannedCost = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost * proportionOfTask,
+                    PlannedCost = resource.PlannedCost * proportionOfTask,
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,

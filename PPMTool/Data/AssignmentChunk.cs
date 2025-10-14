@@ -17,11 +17,11 @@ namespace PPMTool.Data
 
         public double FTE { get; set; }
 
-        public string Project { get; set; }
+        public string ProjectName { get; set; }
 
         public string LeadRSE { get; set; }
 
-        public string Task { get; set; }
+        public string TaskName { get; set; }
 
         public string PI { get; set; }
 
@@ -85,12 +85,12 @@ namespace PPMTool.Data
             EmployeeName = taskToCopy.EmployeeName;
             Grade = taskToCopy.Grade;
             FTE = taskToCopy.FTE;
-            Project = taskToCopy.Project;
+            ProjectName = taskToCopy.ProjectName;
             LeadRSE = taskToCopy.LeadRSE;
             Faculty = taskToCopy.Faculty;
             School = taskToCopy.School;
             PI = taskToCopy.PI;
-            Task = taskToCopy.Task;
+            TaskName = taskToCopy.TaskName;
             StartDate = new DateTime(taskToCopy.StartDate.Ticks);
             EndDate = new DateTime(taskToCopy.EndDate.Ticks);
             FinancialYear = taskToCopy.FinancialYear;
