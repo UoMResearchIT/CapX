@@ -167,5 +167,28 @@ namespace PPMTool.Data
                 }
             }
         }
+
+        /// <summary>
+        /// Extension method to allow merging dictionaries as long as there are no duplicate keys
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="target"></param>
+        /// <param name="source"></param>
+        /// <exception cref="InvalidOperationException">If there are duplicate keys</exception>
+        public static void AddRange<T, U>(this IDictionary<T, U> target, IDictionary<T, U> source)
+        {
+            foreach (var kvp in source)
+            {
+                if (!target.ContainsKey(kvp.Key))
+                {
+                    target.Add(kvp.Key, kvp.Value);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Key already exists in the dictionary so cannot add {kvp.Key}!");
+                }
+            }
+        }
     }
 }

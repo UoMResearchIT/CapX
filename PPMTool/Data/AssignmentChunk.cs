@@ -75,9 +75,14 @@ namespace PPMTool.Data
         [Description("Whether the assignment is a leadership assignment which are not always rechargeable")]
         public bool IsLeadershipAssignment { get; set; }
 
-        public AssignmentChunk()
-        {
+        /// <summary>
+        /// This is the unique key which identifies the resource from which this chunk was defined
+        /// </summary>
+        public string UniqueResourceKey { get; }
 
+        public AssignmentChunk(string resourceKey)
+        {
+            UniqueResourceKey = resourceKey;
         }
 
         /// <summary>
@@ -107,6 +112,7 @@ namespace PPMTool.Data
             SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
             PlannedCost = taskToCopy.PlannedCost;
             IsLeadershipAssignment = taskToCopy.IsLeadershipAssignment;
+            UniqueResourceKey = taskToCopy.UniqueResourceKey;
         }
 
         /// <summary>

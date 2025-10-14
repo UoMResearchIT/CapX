@@ -52,14 +52,16 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
-        /// Generates a series of project budget detail objects, one for each project supplied.
-        /// Resources with no funding source will be ignored and can be assumed to be not in budget.
+        /// Generates a series of project budget detail objects, one for each resource assign to subtasks on the projects supplied.
+        /// Resources with no funding source will be ignored and will not be included in the dictionary.
+        /// They can be assumed to be not in budget.
         /// </summary>
         /// <param name="projects"></param>
         /// <returns></returns>
-        internal static IEnumerable<AssignmentBudgetDetail> GetProjectBudgetDetail(IEnumerable<Project> projects)
+        internal static IDictionary<string, AssignmentBudgetDetail> GetProjectBudgetDetail(IEnumerable<Project> projects)
         {
-            var budgets = new List<AssignmentBudgetDetail>();
+            // Initialise the dictionary
+            var budgets = new Dictionary<string, AssignmentBudgetDetail>();
 
             foreach (var project in projects)
             {
@@ -114,7 +116,7 @@ namespace PPMTool.Data.Helpers
                         Status = BudgetStatus.FullyInBudget
                     });
 
-                budgets.AddRange(budgetMap.Values);
+                budgets.AddRange(budgetMap);
 
                 // March through the project
                 while (currentDate <= endDate)
@@ -126,7 +128,7 @@ namespace PPMTool.Data.Helpers
                         if (!assignment.SubTask.IsWithin(currentDate))
                             continue;
 
-                        // Get budget detail of the assignment
+                        // Get budget detail of the assignment fro the dictionary
                         var budgetDetail = budgetMap[assignment.GenerateUniqueResourceKey()];
 
                         // Skip if already marked as out of budget as nothing to do

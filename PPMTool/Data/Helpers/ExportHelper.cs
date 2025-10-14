@@ -19,7 +19,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
-        /// <param name="budgetDetails">An optional list of information about the task budget status that can be added to the data if supplied.</param>
+        /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
         /// <param name="generateLeadershipTasks">Should the process generate leadership tasks for projects</param>
         /// <returns></returns>
         internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
@@ -30,7 +30,7 @@ namespace PPMTool.Data.Helpers
             DateTime? endDate = null,
             IEnumerable<SubTask> tasksInWindow = null,
             bool shouldCalculateCosts = false,
-            IEnumerable<AssignmentBudgetDetail> budgetDetails = null,
+            IDictionary<string, AssignmentBudgetDetail> budgetDetails = null,
             bool generateLeadershipTasks = true)
         {
             // New list
@@ -106,6 +106,9 @@ namespace PPMTool.Data.Helpers
                 // Get resource that matches the person
                 var resource = task.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
 
+                // Generate the resource key
+                var resKey = resource.GenerateUniqueResourceKey();
+
                 // Get funding source info
                 var fundingSource = resource.FundedFrom;
 
@@ -116,10 +119,23 @@ namespace PPMTool.Data.Helpers
                 var fullTaskDuration = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
                 var proportionOfTask = fullTaskDuration <= 0 ? 0 : daysOfTaskForChunk / fullTaskDuration;
 
-                // TODO: If budget infomation provided then use to populate chunk
+                // If budget infomation provided then use to populate chunk
+                var amountCovered = 0d;
+                var budgetStatus = BudgetStatus.NotInBudget.GetDescription();
+                if (budgetDetails != null)
+                {
+                    // Find the budget line associated with this chunk
+                    var budgetLine = budgetDetails.ContainsKey(resKey) ? budgetDetails[resKey] : null;
+
+                    // Only update if the budget line is found
+                    if (budgetLine != null)
+                    {
+                        // TODO
+                    }
+                }
 
                 // Create a line representing the full, un-chunked task to start off with
-                var initialChunk = new AssignmentChunk
+                var initialChunk = new AssignmentChunk(resKey)
                 {
                     PostNumber = string.Empty,
                     EmployeeName = person.Name,
@@ -138,8 +154,8 @@ namespace PPMTool.Data.Helpers
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    AmountCovered = 0,
-                    BudgetStatus = "",
+                    AmountCovered = amountCovered,
+                    BudgetStatus = budgetStatus,
                     IsLeadershipAssignment = task.SubTaskId < 0
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
