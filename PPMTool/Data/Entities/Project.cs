@@ -526,16 +526,6 @@ namespace PPMTool.Data.Entities
                 // Now create the leadership task
                 var leadershipTask = new SubTask
                 {
-                    AssignedResources = new List<Resource>
-                    {
-                        new Resource
-                        {
-                            Person = ProjectManager,
-                            AssignmentFTE = LeadershipFTE,
-                            FundedFrom = LeadershipFundingSource,
-                            PlannedCost = PlannedLeadershipCosts * proportionOfLeadershipCosts
-                        }
-                    },
                     Name = "Leadership",
                     SubTaskId = -1,
                     OwningProject = this,
@@ -545,6 +535,18 @@ namespace PPMTool.Data.Entities
                     TaskType = TaskType.FixedDuration,
                     Demand = LeadershipFTE,
                     OriginalDemand = LeadershipFTE
+                };
+                leadershipTask.AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        Person = ProjectManager,
+                        AssignmentFTE = LeadershipFTE,
+                        FundedFrom = LeadershipFundingSource,
+                        PlannedCost = PlannedLeadershipCosts * proportionOfLeadershipCosts,
+                        ActualCost = ActualLeadershipCosts * proportionOfLeadershipCosts,
+                        SubTask = leadershipTask
+                    }
                 };
                 leadershipTasks.Add(leadershipTask);
             }

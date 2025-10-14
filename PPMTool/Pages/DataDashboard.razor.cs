@@ -748,18 +748,40 @@ namespace PPMTool.Pages
                         var startDate = this.startDate.Date;
                         var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
 
+                        // Filter list of projects to those running during the window
+                        var projectsInWindow = realProjects
+                            .Where(x => x.IsWithin(startDate, endDate));
+                        Debug.WriteLine($"** {projectsInWindow.Count()} projects.");
+
+                        // Get the breakdown of budget details for the tasks/resources in the projects we care about
+                        var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
+                        Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details.");
+
                         // Get data for each person active in the window
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
-                            // Get the assignment data a person at a time in the window
-                            var data = ExportHelper.GetExportDataForPerson(
+                            // Filter list of tasks for those projects that just run during the window and are assigned to this person
+                            var tasksInWindow = projectsInWindow
+                                .SelectMany(x => x.SubTasks)
+                                .Where(x => x.AssignedResources
+                                    .Any(x => x.Person.PersonId == person.PersonId)
+                                )
+                                .Where(x => x.IsWithin(startDate, endDate));
+                            Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
+
+                            // Represent the assignments (including leadership assignment if necessary) in the window as chunks
+                            var data = ExportHelper.GetAssignmentChunks(
                                 person,
-                                realProjects,
+                                projectsInWindow,
+                                allFinRefs,
                                 startDate,
                                 endDate,
-                                allFinRefs
-                            );
+                                tasksInWindow,
+                                budgetDetails: projectBudgetDetails,
+                                generateLeadershipTasks: true);
+
+                            Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
                             assignmentChunks.AddRange(data);
                         }
                         assignmentChunks.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));

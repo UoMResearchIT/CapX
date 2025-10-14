@@ -95,10 +95,10 @@ namespace PPMTool.Data.Helpers
                     }
                 }
 
-                Debug.WriteLine($"{fundingPots.Count} funding pots. Total of {fundingPots.Sum(x => x.Value):C0}");
+                Debug.WriteLine($"** {fundingPots.Count} funding pots for {project.GetFullName()}. Total budget of {fundingPots.Sum(x => x.Value):C0}. Assignments = {assignments.Count}.");
 
-                // If no funding pots then move to next project
-                if (fundingPots.Count == 0)
+                // If no funding pots or billable assignments then move to next project
+                if (fundingPots.Count == 0 || assignments.Count == 0)
                 {
                     continue;
                 }

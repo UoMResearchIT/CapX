@@ -9,53 +9,6 @@ namespace PPMTool.Data.Helpers
 {
     public abstract class ExportHelper
     {
-
-        /// <summary>
-        /// Given a person, prepare data from database with a weekly granularity
-        /// </summary>
-        /// <param name="person">Person who is being exported</param>
-        /// <param name="projects">All projects as retrieved from the project service</param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="finrefs">All the financial references</param>
-        /// <returns>List of data items</returns>
-        public static IEnumerable<AssignmentChunk> GetExportDataForPerson(Person person, IEnumerable<Project> projects, DateTime startDate, DateTime endDate, IEnumerable<FinancialReference> finrefs)
-        {
-            Debug.WriteLine($"** Building data for {person.Name}...");
-
-            // Filter list of projects to those running during the window
-            var projectsInWindow = projects
-                .Where(x => x.IsWithin(startDate, endDate));
-
-            // Get the breakdown of budget details for the tasks/resources in the projects we care about
-            var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
-            Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details");
-
-            // Filter list of tasks for those projects that just run during the window and are assigned to this person
-            var tasksInWindow = projectsInWindow
-                .SelectMany(x => x.SubTasks)
-                .Where(x => x.AssignedResources
-                    .Any(x => x.Person.PersonId == person.PersonId)
-                )
-                .Where(x => x.IsWithin(startDate, endDate));
-
-            Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
-
-            // Represent the assignments (inlcuidng leadership assignment if necessary) in the window as chunks
-            var data = GetAssignmentChunks(
-                person,
-                projectsInWindow,
-                finrefs,
-                startDate,
-                endDate,
-                tasksInWindow,
-                budgetDetails: projectBudgetDetails,
-                generateLeadershipTasks: true);
-            Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
-
-            return data;
-        }
-
         /// <summary>
         /// Converts the subtasks of the projects provided, or the subtasks provided, into assingment chunk representation.
         /// </summary>
@@ -159,6 +112,8 @@ namespace PPMTool.Data.Helpers
                 var daysOfTaskForChunk = taskEnd.Subtract(taskStart).TotalDays + 1;
                 var fullTaskDuration = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
                 var proportionOfTask = fullTaskDuration <= 0 ? 0 : daysOfTaskForChunk / fullTaskDuration;
+
+                // TODO: If budget infomation provided then use to populate chunk
 
                 // Create a line
                 var initialChunk = new AssignmentChunk
