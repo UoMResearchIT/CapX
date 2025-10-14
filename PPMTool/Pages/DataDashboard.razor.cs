@@ -751,7 +751,7 @@ namespace PPMTool.Pages
                         // Filter list of projects to those running during the window
                         var projectsInWindow = realProjects
                             .Where(x => x.IsWithin(startDate, endDate));
-                        Debug.WriteLine($"** {projectsInWindow.Count()} projects.");
+                        Debug.WriteLine($"** {projectsInWindow.Count()} projects running during the window.");
 
                         // Get the breakdown of budget details for the tasks/resources in the projects we care about
                         var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);

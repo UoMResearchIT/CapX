@@ -95,7 +95,7 @@ namespace PPMTool.Data.Helpers
                     }
                 }
 
-                Debug.WriteLine($"** {fundingPots.Count} funding pots for {project.GetFullName()}. Total budget of {fundingPots.Sum(x => x.Value):C0}. Assignments = {assignments.Count}.");
+                Debug.WriteLine($"** {fundingPots.Count} funding pots for {project.GetFullName()}. Total budget of {fundingPots.Sum(x => x.Value):C0}. {assignments.Count} assignments with funding sources.");
 
                 // If no funding pots or billable assignments then move to next project
                 if (fundingPots.Count == 0 || assignments.Count == 0)
@@ -105,7 +105,7 @@ namespace PPMTool.Data.Helpers
 
                 // Initialise the budget details using a dictionary for lookup
                 var budgetMap = assignments.ToDictionary(
-                    x => x.ResourceId,
+                    x => x.GenerateUniqueResourceKey(),
                     x => new AssignmentBudgetDetail
                     {
                         Resource = x,
@@ -127,7 +127,7 @@ namespace PPMTool.Data.Helpers
                             continue;
 
                         // Get budget detail of the assignment
-                        var budgetDetail = budgetMap[assignment.ResourceId];
+                        var budgetDetail = budgetMap[assignment.GenerateUniqueResourceKey()];
 
                         // Skip if already marked as out of budget as nothing to do
                         if (budgetDetail.Status == BudgetStatus.NotInBudget)

@@ -132,5 +132,23 @@ namespace PPMTool.Data.Entities
 
             return chunks;
         }
+
+        /// <summary>
+        /// Generates a unique resource key based on the project, subtask and resource combination
+        /// </summary>
+        /// <returns></returns>
+        internal string GenerateUniqueResourceKey()
+        {
+            // Should be a unique set of information as leadership tasks without IDs don't overlap
+            var composite = $"{SubTask.OwningProject.RTP}|{SubTask.SubTaskId}|{SubTask.StartDate:yyyyMMdd}|{SubTask.EndDate:yyyyMMdd}|{ResourceId}";
+
+            // Get a unique hash and truncate so not too long
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(composite);
+                var hash = sha.ComputeHash(bytes);
+                return BitConverter.ToString(hash).Replace("-", "").Substring(0, 12);
+            }
+        }
     }
 }

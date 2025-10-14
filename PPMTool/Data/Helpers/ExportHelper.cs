@@ -118,7 +118,7 @@ namespace PPMTool.Data.Helpers
 
                 // TODO: If budget infomation provided then use to populate chunk
 
-                // Create a line
+                // Create a line representing the full, un-chunked task to start off with
                 var initialChunk = new AssignmentChunk
                 {
                     PostNumber = string.Empty,
@@ -138,7 +138,8 @@ namespace PPMTool.Data.Helpers
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    FundingSourceAmount = fundingSource?.AmountAvailable ?? 0,
+                    AmountCovered = 0,
+                    BudgetStatus = "",
                     IsLeadershipAssignment = task.SubTaskId < 0
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
