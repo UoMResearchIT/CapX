@@ -788,7 +788,7 @@ namespace PPMTool.Pages
                         Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
                         // Get recovery data for assignment chunks
-                        int totalDays = (int)(endDate.Subtract(startDate).TotalDays) + 1;
+                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays) + 1;
                         var totalData = ExportHelper.GetRecoveryData(
                             peopleActive,
                             assignmentChunks,
@@ -905,7 +905,7 @@ namespace PPMTool.Pages
                             {
                                 "Estimated Costs",
                                 "Actual Costs",
-                                "Estimate Variance",
+                                "Estimate Error",
                                 "Target",
                                 "Target Costs",
                                 "Baseline Budget",
@@ -916,25 +916,31 @@ namespace PPMTool.Pages
                                 "Recovered (Inc Lead)",
                                 "Recovered Costs (Inc Lead)",
                                 "Net (Capped, Inc Lead)",
-                                "Net Costs (Inc Lead)"
+                                "Net Costs (Inc Lead)",
+                                "In Budget Costs (Inc Lead)",
+                                "Actual Baseline (Inc Lead)",
+                                "Baseline Difference (Inc Lead)"
                             };
 
                             var columnComnnets = new List<string>
                             {
                                 "These are the costs of the person over the reporting period based on mid-grade estimates.",
                                 "These are the actual costs of the person over the reporting period based on finance tracker data.",
-                                "This is the variance between estimated and actual costs.",
-                                "This is the average target FTE for the person over the reporting period based on their workload model.",
-                                "These are the target costs of the person over the reporting period based on mid-grade estimates.",
+                                "This is the difference between estimated and actual costs.",
+                                "This is the average technical target recovery FTE for the person over the reporting period based on their workload model.",
+                                "These are the technical target recovery costs of the person over the reporting period based on mid-grade estimates.",
                                 "This is the baseline budget for the person over the reporting period (estimated costs - target costs).",
-                                "This is the average recovered FTE for the person over the reporting period based on their assignments.",
-                                "These are the recovered costs of the person over the reporting period based on mid-grade estimates.",
-                                "This is the average net (capped to their full-time FTE) for the person over the reporting period (target - recovered).",
-                                "These are the net (capped) costs of the person over the reporting period based on mid-grade estimates.",
+                                "This is the average recovered FTE for the person over the reporting period based on their technical assignments.",
+                                "These are the recovered costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
+                                "This is the average net FTE (capped to their full-time FTE) for the person over the reporting period (technical target - recovered).",
+                                "These are the net (capped) costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
                                 "This is the average recovered FTE including leadership assignments (assuming we can recharge these) for the person over the reporting period based on their assignments",
                                 "These are the recovered costs of the person including leaership assignments over the reporting period based on mid-grade estimates.",
-                                "This is the average net (capped to their full-time FTE) and including leadership assignments for the person over the reporting period (target - recovered inc lead).",
-                                "These are the net (capped) costs of the person including leadership assignments over the reporting period based on mid-grade estimates."
+                                "This is the average net FTE (capped to their full-time FTE) and including leadership assignments for the person over the reporting period (target - recovered inc lead).",
+                                "These are the net (capped) costs of the person including leadership assignments over the reporting period based on mid-grade estimates.",
+                                "These are the costs that can be covered by known research funding sources for all assignments (technical and leadership).",
+                                "This the actual baseline budget required for the person based on their technical and leadership assignments and what we believe is available in research funding to cover them.",
+                                "The difference between the baseline budget required by their workload model and what is actually required based on predicted recharge."
                             };
 
                             // Add tab
@@ -964,11 +970,21 @@ namespace PPMTool.Pages
                             // Each row
                             for (int i = 0; i < peopleActive.Count; ++i)
                             {
+                                // Adjust the start and end dates of the average period if necessary
                                 var person = peopleActive[i];
                                 var totalItem = totalData.First(x => x.Name == person.Name);
-                                int averagePeriod = person.EndDate != null && person.EndDate < endDate ?
-                                    (int)(person.EndDate!.Value.Subtract(person.StartDate).TotalDays) + 1 :
-                                    totalDays;
+                                var adjustedStart = startDate;
+                                var adjustedEnd = endDate;
+
+                                if (person.EndDate != null && person.EndDate < endDate)
+                                {
+                                    adjustedEnd = person.EndDate.Value;
+                                }
+                                if (person.StartDate > startDate)
+                                {
+                                    adjustedStart = person.StartDate;
+                                }
+                                int averagePeriod = (int)(adjustedEnd.Subtract(adjustedStart).TotalDays + 1);
 
                                 // Post Number
                                 cell = worksheetTotals.Cell(2 + i, 1);
@@ -1007,7 +1023,7 @@ namespace PPMTool.Pages
 
                                 // Baseline Budget
                                 cell = worksheetTotals.Cell(2 + i, 8);
-                                cell.Value = windowCosts - targetCosts;
+                                cell.FormulaR1C1 = cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C7";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered FTE
@@ -1049,6 +1065,21 @@ namespace PPMTool.Pages
                                 cell = worksheetTotals.Cell(2 + i, 16);
                                 cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // Amount in budget
+                                cell = worksheetTotals.Cell(2 + i, 17);
+                                cell.Value = totalItem.GetInBudgetTotals();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // Baseline
+                                cell = worksheetTotals.Cell(2 + i, 18);
+                                cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C17";
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // Difference to baseline
+                                cell = worksheetTotals.Cell(2 + i, 19);
+                                cell.FormulaR1C1 = $"=R{2 + i}C8-R{2 + i}C18";
+                                cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
                             // Add total row
@@ -1063,7 +1094,7 @@ namespace PPMTool.Pages
                             }
 
                             // Adjust the column widths
-                            worksheet.Columns().AdjustToContents();
+                            worksheetTotals.Columns().AdjustToContents();
 
                             // Save the workbook
                             workbook.SaveAs(path);

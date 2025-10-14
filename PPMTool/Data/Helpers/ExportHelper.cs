@@ -320,62 +320,6 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
-        /// Represents a collection of data related to the recovery report
-        /// </summary>
-        internal class RecoveryDataForDay
-        {
-            /// <summary>
-            /// Day of the data
-            /// </summary>
-            public DateTime Date { get; }
-
-            /// <summary>
-            /// Person-Value data based on what the time recovered should be for that day based on WLMs
-            /// </summary>
-            public IDictionary<string, float> TargetRecovery { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data based on what the sum of the person's assignments say they have on that day
-            /// </summary>
-            public IDictionary<string, float> RecoveredTime { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values and permits values over 100%
-            /// </summary>
-            public IDictionary<string, float> Net { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values but caps off values over 100%
-            /// </summary>
-            public IDictionary<string, float> NetCapped { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data based on what the sum of the person's assignments say they have on that day including leadership
-            /// </summary>
-            public IDictionary<string, float> RecoveredTimeIncLeadership { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values including leadership and permits values over 100%
-            /// </summary>
-            public IDictionary<string, float> NetIncLeadership { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which subtracts the target and recovered values including leadership but caps off values over 100%
-            /// </summary>
-            public IDictionary<string, float> NetCappedIncLeadership { get; } = new Dictionary<string, float>();
-
-            /// <summary>
-            /// Person-Value data which holds the costs for a person on that day
-            /// </summary>
-            public IDictionary<string, float> PersonCosts { get; } = new Dictionary<string, float>();
-
-            public RecoveryDataForDay(DateTime date)
-            {
-                Date = date;
-            }
-        }
-
-        /// <summary>
         /// Represents the summary over the window of the target and recovery for a person
         /// </summary>
         internal class RecoveryDataOverWindow
@@ -404,6 +348,8 @@ namespace PPMTool.Data.Helpers
 
             public float PersonCosts { get; private set; }
 
+            public float InBudgetCosts { get; private set; }
+
             public RecoveryDataOverWindow(string name)
             {
                 Name = name;
@@ -418,13 +364,15 @@ namespace PPMTool.Data.Helpers
             /// <param name="maxCap"></param>
             /// <param name="actualCosts">Costs of the person on the day (zero if left or not start)</param>
             /// <param name="costs">Annual cost / 365 (non-zero even if left or not started)</param>
+            /// <param name="inBudget">Amount considered in budget for recovery</param>
             public void Update(
                 float targetFTE,
                 float assignedFTE,
                 float assignedIncLeadFTE,
                 float maxCap,
                 float actualCosts,
-                float costs)
+                float costs,
+                float inBudget)
             {
                 Target += targetFTE;
                 TargetCosts += targetFTE * costs;
@@ -444,6 +392,7 @@ namespace PPMTool.Data.Helpers
                 NetCappedIncLeadCosts += netCapped * costs;
 
                 PersonCosts += actualCosts;
+                InBudgetCosts += inBudget;
             }
 
             /// <summary>
@@ -555,6 +504,15 @@ namespace PPMTool.Data.Helpers
             {
                 return PersonCosts;
             }
+
+            /// <summary>
+            /// The total budget amounts as accumlated over the days of the window
+            /// </summary>
+            /// <returns></returns>
+            public float GetInBudgetTotals()
+            {
+                return InBudgetCosts;
+            }
         }
 
         /// <summary>
@@ -581,7 +539,7 @@ namespace PPMTool.Data.Helpers
             var currentDate = startDate;
             var windowRecoveryData = new List<RecoveryDataOverWindow>();
 
-            // Create a context to be accesed on this thread
+            // Create a context to be accessed on this thread
             using (var context = contextFactory.CreateDbContext())
             {
                 // Get data for each person active in the window
@@ -608,9 +566,6 @@ namespace PPMTool.Data.Helpers
                     {
                         finref = financialReferenceService.GetFinancialReferenceForDate(context, currentDate);
                     }
-
-                    // Create a new item
-                    var currentDayData = new RecoveryDataForDay(currentDate);
 
                     // Loop over each person employed in the window
                     foreach (var person in peopleActive)
@@ -666,13 +621,8 @@ namespace PPMTool.Data.Helpers
                         var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
                         var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
 
-                        // Add to the data dictionary (this is mainly for troubleshooting)
-                        currentDayData.TargetRecovery.Add(person.Name, (float)projectWorkTargetFTE);
-                        currentDayData.RecoveredTime.Add(person.Name, (float)projectAssignmentsFTE);
-                        currentDayData.NetCapped.Add(person.Name, (float)netValueCapped);
-                        currentDayData.RecoveredTimeIncLeadership.Add(person.Name, (float)projectAssignmentsFTEIncLeadership);
-                        currentDayData.NetCappedIncLeadership.Add(person.Name, (float)netValueCappedIncLeadership);
-                        currentDayData.PersonCosts.Add(person.Name, (float)actualCostsOnDay);
+                        // Amount in budget for the day across all chunks
+                        var inBudget = chunks.Sum(x => x.AmountCovered / (x.EndDate.Subtract(x.StartDate).TotalDays + 1));
 
                         // Update the totals based on this day
                         windowRecoveryData
@@ -683,7 +633,8 @@ namespace PPMTool.Data.Helpers
                                 (float)projectAssignmentsFTEIncLeadership,
                                 (float)maxOverAllocation,
                                 (float)actualCostsOnDay,
-                                (float)referenceCostsForADay
+                                (float)referenceCostsForADay,
+                                (float)inBudget
                             );
                     }
 
