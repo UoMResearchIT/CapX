@@ -128,11 +128,11 @@ namespace PPMTool.Data.Helpers
                         if (!assignment.SubTask.IsWithin(currentDate))
                             continue;
 
-                        // Get budget detail of the assignment fro the dictionary
+                        // Get budget detail of the assignment from the dictionary
                         var budgetDetail = budgetMap[assignment.GenerateUniqueResourceKey()];
 
-                        // Skip if already marked as out of budget as nothing to do
-                        if (budgetDetail.Status == BudgetStatus.NotInBudget)
+                        // Skip if already marked as out of budget or partial as nothing to do
+                        if (budgetDetail.Status == BudgetStatus.NotInBudget || budgetDetail.Status == BudgetStatus.PartiallyInBudget)
                             continue;
 
                         // Is first day of the assignment
@@ -166,7 +166,8 @@ namespace PPMTool.Data.Helpers
                             budgetDetail.FundingSourceExpired = currentDate;
 
                             // Update the in budget amount by the remainder
-                            budgetDetail.InBudget += -potValue;
+                            budgetDetail.InBudget += budgetDetail.DailyCost;
+                            budgetDetail.InBudget += potValue;
                         }
 
                         // If still in budget then update the amount on the budget detail

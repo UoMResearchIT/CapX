@@ -534,7 +534,8 @@ namespace PPMTool.Data.Entities
                     RequiresLeadership = false,
                     TaskType = TaskType.FixedDuration,
                     Demand = LeadershipFTE,
-                    OriginalDemand = LeadershipFTE
+                    OriginalDemand = LeadershipFTE,
+                    DurationDays = (int)(leadershipEnd.Subtract(leadershipStart).TotalDays + 1)
                 };
                 leadershipTask.AssignedResources = new List<Resource>
                 {
