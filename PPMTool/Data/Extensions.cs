@@ -195,16 +195,25 @@ namespace PPMTool.Data
         /// <summary>
         /// Extension method to use the budget detail to define the amounts and status of a window of time
         /// </summary>
-        /// <param name="amount"></param>
         /// <param name="start"></param>
         /// <param name="end"></param>
-        /// <param name="proportion"></param>
-        /// <param name="budgetDetail"></param>
+        /// <param name="budgetDetail"></param>        
         /// <param name="status"></param>
-        public static void GetBudgetDetailsForWindow(this AssignmentBudgetDetail budgetDetail, DateTime start, DateTime end, double proportion, out string status, out double amount)
+        /// <param name="amount"></param>
+        public static void GetBudgetDetailsForWindow(
+            this AssignmentBudgetDetail budgetDetail,
+            DateTime start,
+            DateTime end,
+            out string status,
+            out double amount)
         {
             amount = 0d;
             status = BudgetStatus.NotInBudget.GetDescription();
+
+            var durationTask = budgetDetail.Resource.SubTask.DurationDays;
+            var lengthOfWindow = end.Subtract(start).TotalDays + 1;
+            var daysFunded = budgetDetail.InBudget / budgetDetail.DailyCost;
+            var proportionInBudget = lengthOfWindow / daysFunded;
 
             // Only update if the budget line is found and the whole task is
             // not out of budget since all the chunks will be as well
@@ -212,7 +221,7 @@ namespace PPMTool.Data
             {
                 if (budgetDetail.Status == BudgetStatus.FullyInBudget)
                 {
-                    amount = budgetDetail.InBudget * proportion;
+                    amount = budgetDetail.InBudget * proportionInBudget;
                     status = budgetDetail.Status.GetDescription();
                 }
                 else
@@ -232,18 +241,15 @@ namespace PPMTool.Data
                         // If expired after the end date then fully in budget
                         else if (expiryDate > end)
                         {
-                            amount = budgetDetail.InBudget * proportion;
+                            amount = budgetDetail.InBudget * proportionInBudget;
                             status = BudgetStatus.FullyInBudget.GetDescription();
                         }
 
                         // Expires sometime during the window
                         else
                         {
-                            // Proportion the amount
-                            var daysFunded = expiryDate.Subtract(start).TotalDays + 1;
-                            var lengthOfWindow = end.Subtract(start).TotalDays + 1;
-                            var proportionInBudget = daysFunded / lengthOfWindow;
-                            amount = budgetDetail.InBudget * proportion * proportionInBudget;
+                            proportionInBudget = (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
+                            amount = budgetDetail.InBudget * proportionInBudget;
                             status = BudgetStatus.PartiallyInBudget.GetDescription();
                         }
                     }

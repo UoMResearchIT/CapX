@@ -133,7 +133,7 @@ namespace PPMTool.Data.Helpers
                     budgetLine = budgetDetails.ContainsKey(resKey) ? budgetDetails[resKey] : null;
 
                     // Update the values to be assigned to the initial chunk
-                    budgetLine?.GetBudgetDetailsForWindow(adjustedTaskStart, adjustedTaskEnd, proportionOfTask, out budgetStatus, out amountCovered);
+                    budgetLine?.GetBudgetDetailsForWindow(adjustedTaskStart, adjustedTaskEnd, out budgetStatus, out amountCovered);
                 }
 
                 // Create a line representing the full, un-chunked task to start off with
@@ -197,7 +197,7 @@ namespace PPMTool.Data.Helpers
                             }
 
                             // Update the budget details
-                            budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, lengthOfNewChunk / lengthOfTask, out budgetStatus, out amountCovered);
+                            budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
 
                             // Add chunk
                             tempChunks.Add(new AssignmentChunk(initialChunk)
@@ -221,7 +221,7 @@ namespace PPMTool.Data.Helpers
                         var lengthOfFinalChunk = finalChunkEnd.Subtract(finalChunkStart).TotalDays + 1;
 
                         // Update the budget details
-                        budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, lengthOfFinalChunk / lengthOfTask, out budgetStatus, out amountCovered);
+                        budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, out budgetStatus, out amountCovered);
 
                         // Add chunk
                         tempChunks.Add(new AssignmentChunk(initialChunk)
@@ -279,7 +279,7 @@ namespace PPMTool.Data.Helpers
                                 }
 
                                 // Update the budget details
-                                budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, lengthOfNewChunk / lengthOfTask, out budgetStatus, out amountCovered);
+                                budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
 
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
