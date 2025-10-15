@@ -68,8 +68,12 @@ namespace PPMTool.Data.Helpers
             {
                 foreach (var project in projectsInWindow.Where(x => x.ProjectManager?.PersonId == person.PersonId))
                 {
-                    tempTasksInWindow.AddRange(project.GenerateLeadershipTasks()
-                        .Where(x => x.IsWithin(startDate ?? default, endDate ?? default)));
+                    if (generateLeadershipTasks == GenerateLeadershipTaskLogic.Always ||
+                        project.CostModel == CostModel.TechAndLeadership)
+                    {
+                        tempTasksInWindow.AddRange(project.GenerateLeadershipTasks()
+                            .Where(x => x.IsWithin(startDate ?? default, endDate ?? default)));
+                    }
                 }
             }
 
