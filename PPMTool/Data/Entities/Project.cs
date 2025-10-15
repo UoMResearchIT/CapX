@@ -152,12 +152,18 @@ namespace PPMTool.Data.Entities
             // Generate status messages to be maintained against a project
             statusMessages = new List<StatusMessage>
             {
+                // Info
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
                 new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false),
+
+                // Warning
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
+
+                // Error
+                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget()),
                 new StatusMessage("This project has no funding source for its leadership charges!", StatusMessage.MessageType.Error, () => HasNoLeadershipFundingSourcesButRan()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => HasNoBudget()),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
@@ -172,8 +178,19 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask()),
+                
+                // Success
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Determines whether the project is over budget based on planned costs.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsOverBudget()
+        {
+            return Budget < PlannedCost;
         }
 
         /// <summary>
