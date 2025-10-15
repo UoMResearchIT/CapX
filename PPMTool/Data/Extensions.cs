@@ -214,6 +214,10 @@ namespace PPMTool.Data
             var lengthOfWindow = end.Subtract(start).TotalDays + 1;
             var daysFunded = budgetDetail.InBudget / budgetDetail.DailyCost;
             var proportionInBudget = lengthOfWindow / daysFunded;
+            if (proportionInBudget > 1)
+            {
+                proportionInBudget = 1;
+            }
 
             // Only update if the budget line is found and the whole task is
             // not out of budget since all the chunks will be as well
@@ -249,8 +253,17 @@ namespace PPMTool.Data
                         else
                         {
                             proportionInBudget = (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
+                            if (proportionInBudget > 1)
+                            {
+                                proportionInBudget = 1;
+                                status = BudgetStatus.FullyInBudget.GetDescription();
+                            }
+                            else
+                            {
+                                status = BudgetStatus.PartiallyInBudget.GetDescription();
+                            }
                             amount = budgetDetail.InBudget * proportionInBudget;
-                            status = BudgetStatus.PartiallyInBudget.GetDescription();
+
                         }
                     }
                     else
