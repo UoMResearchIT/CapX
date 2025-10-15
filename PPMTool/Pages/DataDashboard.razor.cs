@@ -778,8 +778,7 @@ namespace PPMTool.Pages
                                 startDate,
                                 endDate,
                                 tasksInWindow,
-                                budgetDetails: projectBudgetDetails,
-                                generateLeadershipTasks: true);
+                                budgetDetails: projectBudgetDetails);
 
                             Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
                             assignmentChunks.AddRange(data);

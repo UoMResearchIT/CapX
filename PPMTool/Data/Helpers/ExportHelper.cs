@@ -31,7 +31,7 @@ namespace PPMTool.Data.Helpers
             IEnumerable<SubTask> tasksInWindow = null,
             bool shouldCalculateCosts = false,
             IDictionary<string, AssignmentBudgetDetail> budgetDetails = null,
-            bool generateLeadershipTasks = true)
+            GenerateLeadershipTaskLogic generateLeadershipTasks = GenerateLeadershipTaskLogic.CostModel)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -64,7 +64,7 @@ namespace PPMTool.Data.Helpers
             }
 
             // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later if required
-            if (generateLeadershipTasks)
+            if (generateLeadershipTasks != GenerateLeadershipTaskLogic.None)
             {
                 foreach (var project in projectsInWindow.Where(x => x.ProjectManager?.PersonId == person.PersonId))
                 {

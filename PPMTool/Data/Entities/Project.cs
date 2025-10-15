@@ -361,8 +361,7 @@ namespace PPMTool.Data.Entities
                 ProjectManager,
                 new List<Project> { this },
                 financialReferences,
-                shouldCalculateCosts: true,
-                generateLeadershipTasks: CostModel == CostModel.TechAndLeadership)
+                shouldCalculateCosts: true)
                 .Where(c => c.IsLeadershipAssignment);
             ActualLeadershipCosts = Math.Round(100 * CalculateActualLeadershipCosts(leadershipChunks)) / 100;
             PlannedLeadershipCosts = Math.Round(100 * leadershipChunks.Sum(x => x.PlannedCost)) / 100;

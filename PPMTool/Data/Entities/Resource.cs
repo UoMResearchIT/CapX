@@ -118,7 +118,7 @@ namespace PPMTool.Data.Entities
                     subTask.EndDate,
                     new List<SubTask> { subTask },
                     true,
-                    generateLeadershipTasks: false
+                    generateLeadershipTasks: GenerateLeadershipTaskLogic.None
                 );
 
                 // Planned costs
