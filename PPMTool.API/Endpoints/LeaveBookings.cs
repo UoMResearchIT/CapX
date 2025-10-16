@@ -1,23 +1,13 @@
-﻿using System.Text.Json;
+﻿using System.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using MySql.Data.MySqlClient;
-using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
-using PPMTool.Data.Context;
-using System.Dynamic;
-using System.Data;
-using DocumentFormat.OpenXml.Office.Word;
 
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
 /// Leave Bookings endpoint methods
 /// </summary>
-///     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LeaveBookingsDTO>))]
-[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LeaveBookingsDTO>))]
-[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-[ProducesResponseType(StatusCodes.Status404NotFound)]
 public static class LeaveBookings
 {
     /// <summary>
