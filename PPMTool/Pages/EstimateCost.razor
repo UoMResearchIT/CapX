@@ -45,10 +45,12 @@
                     </RadzenDropDown>
                 </div>
             </div>
+            <HintComponent Message="This section represents the summary for the project. The values are read-only as they are driven by the individual resource details below." />
             <TaskConfigurationComponent ReadOnly="true"
                                         ShowRates="@(costModel == CostModel.DayRate)" />
             <hr />
             <h2>Resources</h2>
+            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. Currently this tool only supports two different types of technical resource based on the two approved rates for costing. If you have multiple RSEs at the same rate, consider combining them into one aggregated resource." />
             @if (costModel == CostModel.TechAndLeadership)
             {
                 <h3>Leadership</h3>
