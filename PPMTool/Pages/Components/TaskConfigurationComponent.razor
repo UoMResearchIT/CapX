@@ -1,6 +1,10 @@
-﻿@using PPMTool.Data.Entities
+﻿@using PPMTool.Data
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Helpers
 @using PPMTool.Enums
 @using System.ComponentModel.DataAnnotations
+@using PPMTool.Services
 <div class="row">
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
@@ -108,7 +112,37 @@
     [Parameter]
     public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
 
+    [Parameter]
+    public PPMToolContext Context { get; set; }
+
+    [Inject]
+    private FinancialReferenceService FinancialReferenceService { get; set; }
+
     private TaskConfigModel model = new TaskConfigModel();
+
+    /// <summary>
+    /// Initialisation of the component
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Initialise the model with some defaults
+        model.Context = Context;
+        model.FinRefService = FinancialReferenceService;
+        model.CostModel = CostModel;
+        model.StartDate = DateTime.Today;
+        model.EndDate = DateTime.Today.AddDays(7);
+        model.Update(nameof(model.StartDate));
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Run a cost update to ensure the model is consistent with the cost model
+        model.UpdateCost();
+    }
 
     /// <summary>
     /// Method invoked when any of the inputs are modified
@@ -130,15 +164,124 @@
     {
         public double DayRate { get; set; }
         public Rate ResourceRate { get; set; }
+        public FinancialReferenceService FinRefService { get; set; }
+        public PPMToolContext Context { get; set; }
+
+        private CostModel costModel;
+        public CostModel CostModel
+        {
+            get => costModel;
+            set
+            {
+                if (costModel != value)
+                {
+                    costModel = value;
+                    UpdateCost();
+                }
+            }
+        }
 
         /// <summary>
-        /// Update the model parameters.
+        /// Update the model parameters. Assumes fixed duration behaviour.
         /// Need to know which one triggered the update to avoid a circular.
+        /// 1. Start Date
+        /// 2. End Date
+        /// 3. Demand
+        /// 4. Calendar Duration
+        /// 5. Billable Duration
+        /// 6. Work (Hours)
         /// </summary>
         /// <param name="nameOfPropertyTrigger"></param>
         public void Update(string nameOfPropertyTrigger)
         {
-            // TODO
+            switch(nameOfPropertyTrigger)
+            {
+                case nameof(StartDate):
+                case nameof(EndDate):
+
+                    // Start / end changed -> update duration, work and cost
+                    if (EndDate < StartDate) EndDate = StartDate.Date;
+                    UpdateDurationFromDates();
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(Demand):
+
+                    // Demand changed -> update work and cost
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(DurationDays):
+
+                    // Duration changed -> update end, billable days, work and cost
+                    UpdateEndDateFromDuration();
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(DurationBillableDays):
+
+                    // Billable Duration changed -> update duration, update end, work and cost
+                    DurationDays = (int)GetNumberOfCalendarDays(DurationBillableDays);
+                    UpdateEndDateFromDuration();
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(PlannedWorkHours):
+
+                    // Work changed -> update duration and cost
+                    UpdateDuration(Demand);
+                    UpdateEndDateFromDuration();
+                    UpdateCost();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Do a cost update based on the current parameters of the model
+        /// </summary>
+        public void UpdateCost()
+        {
+            // Reset
+            PlannedCost = 0;
+
+            // If using day rate
+            if (CostModel == CostModel.DayRate)
+            {
+                // Use day rate
+                PlannedCost = (DayRate * DurationBillableDays);
+            }
+            else
+            {
+                // Break the task into chunks based on financial year boundaries
+                foreach (var fyChunk in FinanceHelper.GetFinancialYearDateRanges(StartDate, EndDate))
+                {
+                    // Find reference data for the financial year
+                    var finRef = FinRefService.GetFinancialReferenceForDate(Context, fyChunk.StartDate);
+
+                    // Days in chunk
+                    var daysInChunk = fyChunk.EndDate.Subtract(fyChunk.StartDate).TotalDays + 1;
+                    var dayScaled = daysInChunk * Demand / 365d;
+
+                    switch (ResourceRate)
+                    {
+                        case Rate.Junior:
+                            PlannedCost += finRef.Grade51Costs * dayScaled;
+                            break;
+
+                        case Rate.Standard:
+                            PlannedCost += finRef.Grade71Costs * dayScaled;
+                            break;
+
+                        case Rate.Senior:
+                            PlannedCost += finRef.Grade75Costs * dayScaled;
+                            break;
+                    }
+                }
+            }
         }
     }
 }

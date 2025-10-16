@@ -24,10 +24,18 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Sets the calendar days duration based on the start and end dates.
         /// </summary>
-        protected void UpdateDurationFromEndDate()
+        protected void UpdateDurationFromDates()
         {
             // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
             DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
+        }
+
+        /// <summary>
+        /// Update the end date asssuming a fixed start date and duration in calendar days.
+        /// </summary>
+        protected void UpdateEndDateFromDuration()
+        {
+            EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
         }
 
         /// <summary>

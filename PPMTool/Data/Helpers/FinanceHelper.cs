@@ -184,5 +184,50 @@ namespace PPMTool.Data.Helpers
 
             return budgets;
         }
+
+        /// <summary>
+        /// Take the start and end dates and break it into chunks based on financial year boundaries
+        /// </summary>
+        /// <returns></returns>
+        public static List<DateRange> GetFinancialYearDateRanges(DateTime startDate, DateTime endDate)
+        {
+            var result = new List<DateRange>();
+            var overallRange = new DateRange
+            {
+                StartDate = startDate,
+                EndDate = endDate
+            };
+            DateTime currentStart = overallRange.StartDate;
+            DateTime financialYearEnd = new DateTime(currentStart.Month > 7 ? currentStart.Year + 1 : currentStart.Year, 7, 31);
+
+            while (true)
+            {
+                // If the financial year end is not within the remaining range, break
+                if (!overallRange.IsWithin(financialYearEnd))
+                {
+                    // Add the final chunk if there's still time left
+                    if (currentStart <= overallRange.EndDate)
+                    {
+                        result.Add(new DateRange
+                        {
+                            StartDate = currentStart,
+                            EndDate = overallRange.EndDate
+                        });
+                    }
+                    break;
+                }
+
+                result.Add(new DateRange
+                {
+                    StartDate = currentStart,
+                    EndDate = financialYearEnd
+                });
+
+                currentStart = financialYearEnd.AddDays(1);
+                financialYearEnd = financialYearEnd.AddYears(1);
+            }
+
+            return result;
+        }
     }
 }

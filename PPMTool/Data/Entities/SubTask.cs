@@ -225,10 +225,10 @@ namespace PPMTool.Data.Entities
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
                     // If we are allowed to move the end date to maintain the current duration despite being marked as fixed then set the end date now
-                    if (HasFixedEndDate && permitEndDateToMove) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
+                    if (HasFixedEndDate && permitEndDateToMove) UpdateEndDateFromDuration();
 
                     // If the end date is fixed then set duration here from the start and end dates
-                    if (HasFixedEndDate) UpdateDurationFromEndDate();
+                    if (HasFixedEndDate) UpdateDurationFromDates();
 
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
