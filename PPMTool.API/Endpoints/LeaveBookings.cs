@@ -1,7 +1,9 @@
 ﻿using System.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
 using PPMTool.API.DTOs;
+using PPMTool.Data.Context;
 
 namespace PPMTool.API.Endpoints;
 
@@ -21,6 +23,7 @@ public static class LeaveBookings
         ILogger logger,
         IConfiguration configuration,
         HttpContext http,
+        PPMToolContext context,
         [FromQuery] int year,
         [FromQuery] string? username = null)
     {
@@ -37,6 +40,12 @@ public static class LeaveBookings
             {
                 logger.LogWarning("LeaveBookings: Username could not be resolved.");
                 return Results.BadRequest("A valid username must be supplied.");
+            }
+
+            if (!await AuthoriseAccessAsync(context, http, resolvedUsername))
+            {
+                logger.LogWarning("LeaveBookings: Unauthorized access attempt to {TargetUsername}", resolvedUsername);
+                return Results.Unauthorized();
             }
 
             var connectionString = configuration["LeaveBookings:ConnectionString"];
@@ -89,6 +98,37 @@ public static class LeaveBookings
 
         candidate = candidate?.Trim();
         return string.IsNullOrEmpty(candidate) ? null : candidate;
+    }
+
+    private static async Task<bool> AuthoriseAccessAsync(
+        PPMToolContext context,
+        HttpContext http,
+        string requestedUsername)
+    {
+        var caller = Helpers.GetCurrentUser(http);
+        var callerUsername = caller.CASUserName?.Trim();
+        if (!string.IsNullOrEmpty(callerUsername) &&
+            string.Equals(callerUsername, requestedUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (Helpers.IsSuperUser(caller))
+        {
+            return true;
+        }
+
+        var targetUser = await context.Users
+            .Include(u => u.Person)
+                .ThenInclude(p => p.LineManager)
+            .FirstOrDefaultAsync(u => u.CASUserName.ToLower() == requestedUsername.ToLower());
+
+        if (targetUser?.Person == null)
+        {
+            return false;
+        }
+
+        return Helpers.IsSuperUserOrLineManagerOrSelf(context, http, targetUser.Person);
     }
 
     private static async Task<Dictionary<string, LeaveBookingAccumulator>> LoadStaffAsync(
