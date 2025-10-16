@@ -23,6 +23,13 @@
                 overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
             }
 
+            // Leave bookings connection string override
+            var leaveBookingsConnectionString = Environment.GetEnvironmentVariable("LEAVEBOOKINGS_CONNECTION_STRING");
+            if (!string.IsNullOrWhiteSpace(leaveBookingsConnectionString))
+            {
+                overridingValues.Add("LeaveBookings:ConnectionString", leaveBookingsConnectionString);
+            }
+
             // Add the overriding values to the configuration
             builder.Configuration.AddInMemoryCollection(overridingValues!);
         }
