@@ -57,7 +57,7 @@ namespace PPMTool.Data.Helpers
             // Only action the gap filler if a person is provided
             if (person != null && gapFillingFunction != null)
             {
-#if DEBUG
+#if LOCAL
                 var currentItemCount = chartItems.Count();
 #endif
                 var extraItems = new List<ChartItem>();
@@ -86,7 +86,7 @@ namespace PPMTool.Data.Helpers
                     chartItems.AddRange(extraItems);
                     chartItems = chartItems.OrderBy(x => x.StartDate).ToList();
                 }
-#if DEBUG
+#if LOCAL
                 if (currentItemCount != chartItems.Count)
                 {
                     Debug.WriteLine($"** {chartItems.Count} block(s) for {person.Name} after gap filling");
@@ -316,19 +316,19 @@ namespace PPMTool.Data.Helpers
                     // Duration of the task
                     int durationOfTask = subTask.DurationDays + 1;
 
-                    // Total effort demand met, planned and actuals
+                    // Find the total FTE across all resources
+                    double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+
+                    // Total effort assuming demand met (zero demand tasks contribute nothing in this case)
                     double billableDays = SubTask.GetNumberOfBillableDays(subTask.StartDate, durationOfTask - 1);
                     double effortDemandMet = Math.Floor(billableDays * 7 * subTask.Demand);
-                    if (subTask.UnmetDemand == 0)
-                    {
-                        // Just set to same as planned as close enough
-                        effortDemandMet = subTask.PlannedWorkHours;
-                    }
-                    double effortPlanned = subTask.PlannedWorkHours;
-                    double effortActual = subTask.ActualWorkHours;
 
-                    // Find the total FTE across all resources to later work out proportions
-                    double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
+                    // Total effort planned based on assigned resources
+                    // Note that subTask.PlannedWorkHours will be non-zero if no resources as it uses the demand so can't use that
+                    double effortPlanned = Math.Floor(billableDays * 7 * totalFTE);
+
+                    // Total effort actually delivered based on assigned resources
+                    double effortActual = subTask.ActualWorkHours;
 
                     // How many whole days does task run this week
                     int taskDaysThisWeek = subTask.GetTaskDaysInWeek(currentWeek);
@@ -341,7 +341,7 @@ namespace PPMTool.Data.Helpers
                     int daysRunSoFar = (int)(endDateActuals.Subtract(subTask.StartDate).TotalDays) + 1;
 
                     // Proportion of the actuals this week
-                    double proportionOfActualsThisWeek = endDateActuals > DateTime.Today ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
+                    double proportionOfActualsThisWeek = (endDateActuals > DateTime.Today || daysRunSoFar <= 0) ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
 
                     // Add to the demand for the week across all tasks
                     PlannedWorkHoursDemandMet += effortDemandMet * proportionOfTaskThisWeek;
@@ -449,16 +449,16 @@ namespace PPMTool.Data.Helpers
             var temp = new List<WeeklyTaskEffort>();
             if (subTasks.Count() < 1) return temp;
 
-            // Get all the unique resources
+            // Get all the unique resources on the subtasks
             var resources = subTasks.SelectMany(x => x.AssignedResources).DistinctBy(x => x.Person.PersonId);
 
-            // Get earliest assignment to get start date for marching
+            // Get earliest subtask to get start date for marching
             DateTime start = subTasks.MinBy(x => x.StartDate).StartDate;
 
             // Move to a Monday
             start = start.AddDays(-(int)start.DayOfWeek + (int)DayOfWeek.Monday);
 
-            // Get latest assignment finish, adding a day so the marching stops when there is no work to be done.
+            // Get latest subtask finish, adding a day so the marching stops when there is no work to be done.
             DateTime end = subTasks.MaxBy(x => x.EndDate).EndDate.AddDays(1);
 
             // Move to the next Sunday if not already a Sunday
@@ -472,7 +472,7 @@ namespace PPMTool.Data.Helpers
             DateTime endOfWeek = start.AddDays(6);
             while (startOfWeek < end)
             {
-                // Find assignments that run within current week
+                // Find subtasks that run within current week
                 var within = subTasks.Where(x => x.IsWithin(startOfWeek, endOfWeek));
 
                 // Create a new block for this week applying the value functions

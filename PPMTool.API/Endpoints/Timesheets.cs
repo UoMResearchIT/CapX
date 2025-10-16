@@ -7,14 +7,20 @@ namespace PPMTool.API.Endpoints;
 
 /// <summary>
 /// Read only transfer of weekly timesheets and nested entries.
-/// Access: superuser, the person, or their line manager
+/// Access: superuser, the person, or their line manager.
 /// </summary>
 public static class Timesheets
 {
     /// <summary>
-    /// Give timesheets for a person across a date range
-    /// Route uses underscore name, same pattern as skills endpoints
+    /// Get timesheets for a person across a date range.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="http"></param>
+    /// <param name="startDate">The start date of the query window in the format yyyy-MM-dd</param>
+    /// <param name="endDate">The end date of the query window in the format yyyy-MM-dd</param>
+    /// <param name="name">The name of the person with spaces replaced with underscores. If not present defaults to the API key owner.</param>
+    /// <param name="asCsv">Whether the retruned data should be as a CSV download. Default is JSON if not present.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -23,28 +29,36 @@ public static class Timesheets
         PPMToolContext context,
         ILogger logger,
         HttpContext http,
-        string name,
-        string startDate,
-        string endDate)
+        [FromQuery] string startDate,
+        [FromQuery] string endDate,
+        [FromQuery] string? name = null,
+        [FromQuery] bool? asCsv = null)
     {
         try
         {
             // Try parse the datetimes
-            var success = APIHelper.ParseDateTime(startDate, out DateTime start);
+            var success = Helpers.ParseDateTime(startDate, out DateTime start);
             if (!success)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid start date {startDate}");
                 return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
             }
-            success = APIHelper.ParseDateTime(endDate, out DateTime end);
+            success = Helpers.ParseDateTime(endDate, out DateTime end);
             if (!success)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid end date {endDate}");
                 return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
             }
 
+            // If the name is null then assume the caller
+            if (name == null)
+            {
+                var user = Helpers.GetCurrentUser(http);
+                name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
+            }
+
             // Get the person from the request arguments
-            var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
+            var person = await Helpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Person = {name} not found!");
@@ -52,7 +66,7 @@ public static class Timesheets
             }
 
             // Authorisation check
-            var canAccess = APIHelper.IsSuperUserOrLineManagerOrSelf(context, http, person);
+            var canAccess = Helpers.IsSuperUserOrLineManagerOrSelf(context, http, person);
             if (!canAccess)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Caller does not have permission to access the data!");
@@ -105,43 +119,53 @@ public static class Timesheets
                 )).ToList()
             )).ToList();
 
-            logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name}");
-            return Results.Json(timesheetsAsDTOs);
+            // Check to see if we need to return a CSV file
+            if (asCsv != null && asCsv == true)
+            {
+                logger.LogInformation($"Timesheets: Generating CSV for {person.Name}.");
+
+                // Flatten the data for a simple CSV structure
+                var csvData = timesheetsAsDTOs.SelectMany(timesheetDto =>
+
+                    // Map to a DTO for the CSV file
+                    timesheetDto.Entries.Select(entryDto =>
+                        new TimesheetCSVDTO(
+                            timesheetDto.OwnerName,
+                            timesheetDto.StartDate.ToString("yyyy-MM-dd"),
+                            timesheetDto.Status,
+                            timesheetDto.Info ?? "",
+                            entryDto.InnateCode,
+                            entryDto.InnateCodeName,
+                            entryDto.TaskName,
+                            entryDto.Duty,
+                            entryDto.MondayHours,
+                            entryDto.TuesdayHours,
+                            entryDto.WednesdayHours,
+                            entryDto.ThursdayHours,
+                            entryDto.FridayHours,
+                            entryDto.SaturdayHours,
+                            entryDto.SundayHours,
+                            entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
+                                entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
+                        )
+                    )
+                );
+
+                var fileBytes = Helpers.GenerateCsv(csvData);
+                var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";
+                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as CSV.");
+                return Results.File(fileBytes, "text/csv", fileName);
+            }
+            else
+            {
+                // Default to JSON
+                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as JSON.");
+                return Results.Json(timesheetsAsDTOs);
+            }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Timesheets: error");
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
-    }
-
-    /// <summary>
-    /// Convenience route for the caller's own timesheets
-    /// API key used to determine the user name argument
-    /// </summary>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public static async Task<IResult> GetMyTimesheetEntriesForDateRange(
-         PPMToolContext context,
-         ILogger logger,
-         HttpContext http,
-         string startDate,
-         string endDate)
-    {
-        try
-        {
-            // Get the caller from the request context -- should always be not null here as middleware would have rejected otherwise
-            var user = APIHelper.GetCurrentUser(http);
-
-            // Person entity might be null if the user is not linked to a person
-            var name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
-            return await GetTimesheetEntriesForPersonForDateRange(context, logger, http, name, startDate, endDate);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "MyTimesheets: error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

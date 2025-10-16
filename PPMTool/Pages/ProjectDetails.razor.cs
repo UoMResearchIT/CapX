@@ -166,6 +166,7 @@ namespace PPMTool.Pages
                     .DistinctBy(x => x.Person)
                     .Select(x => x.Person)
                     .ToList();
+                mentionables = cachedMentionables;
 
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)

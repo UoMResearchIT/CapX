@@ -8,7 +8,7 @@
 	<DocumentationFile></DocumentationFile>
 	<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	<Configurations>Debug;Release;Local</Configurations>
-	<UserSecretsId>cb20dfcc-dbde-4e84-9084-12a81da72596</UserSecretsId>
+	<UserSecretsId>e7872d05-f576-480b-817e-ccd3577d9f58</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

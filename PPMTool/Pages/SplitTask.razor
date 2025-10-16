@@ -84,7 +84,7 @@ else
             <StatusMessageSummaryComponent Messages="@statusMessages" IgnoreStatus="true" />
         }
         <div class="col-auto" style="margin-left: -1rem">
-            <RadzenButton Click="InitialiseTaskComponentsClicked" Text="Split Task" Icon="settings_ethernet" Disabled="@(splitPending || !UserInputProvided())" />
+            <RadzenButton Click="InitialiseTaskComponentsClicked" Text="Split Task" Icon="@(splitPending ? "hourglass_empty" : "settings_ethernet")" Disabled="@(splitPending || !UserInputProvided())" />
         </div>
     </RadzenStack>
     <hr />
@@ -114,7 +114,7 @@ else
 
         <div class="row">
             <div class="col-auto">
-                <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="refresh" />
+                <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="@(disableButtons ? "hourglass_empty" : "refresh")" Disabled="disableButtons" />
             </div>
             <div class="col align-items-center">
                 @if (showTaskInvalidError)
@@ -124,8 +124,8 @@ else
             </div>
             <div class="col-auto">
                 <RadzenStack JustifyContent="JustifyContent.End" Orientation="Radzen.Orientation.Horizontal" Gap="0.4rem" Style="width:100%">
-                    <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="check" Disabled=!EditAuthorised />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="close" />
+                    <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="@(disableButtons ? "hourglass_empty" : "check")" Disabled="@(!EditAuthorised || disableButtons)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="@(disableButtons ? "hourglass_empty" : "close")" Disabled="@disableButtons" />
                 </RadzenStack>
             </div>
         </div>

@@ -326,6 +326,8 @@ namespace PPMTool.Pages
                 seriesName,
                 startDate,
                 endDate,
+                // Providing the person truncates the blocks to the person's start and end dates which we want for the total row
+                person: isTotalRow ? person : null,
                 // Hatched function
                 hatchedFunction: assignments =>
                 {

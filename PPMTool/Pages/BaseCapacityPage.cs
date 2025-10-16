@@ -598,6 +598,9 @@ namespace PPMTool.Pages
                     JSRuntime.InvokeVoidAsync("apexChartsUpdateAxis", opt.Chart.Id, min, max);
                 }
             }
+
+            // Fire a background task to wait for the JS to run then trigger a redraw
+            Task.Run(async () => await Task.Delay(300)).ContinueWith(async t => await InvokeAsync(StateHasChanged));
         }
 
         /// <summary>
