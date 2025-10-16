@@ -126,9 +126,6 @@
     public bool ReadOnly { get; set; } = false;
 
     [Parameter]
-    public CostModel CostModel { get; set; }
-
-    [Parameter]
     public bool ShowRates { get; set; } = true;
 
     [Parameter]
@@ -139,6 +136,21 @@
 
     [Inject]
     private FinancialReferenceService FinancialReferenceService { get; set; }
+
+    private CostModel costModel;
+    public CostModel CostModel
+    {
+        get => costModel;
+        set
+        {
+            if (costModel != value)
+            {
+                costModel = value;
+                model.CostModel = costModel;
+                ValueChanged(nameof(model.CostModel));
+            }
+        }
+    }
 
     private TaskConfigModel model = new TaskConfigModel();
 
@@ -155,15 +167,7 @@
         model.CostModel = CostModel;
         model.StartDate = DateTime.Today;
         model.EndDate = DateTime.Today.AddDays(7);
-        model.Update(nameof(model.StartDate));
-    }
-
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-
-        // Run a cost update to ensure the model is consistent with the cost model
-        model.UpdateCost();
+        ValueChanged(nameof(model.StartDate));
     }
 
     /// <summary>
@@ -191,20 +195,7 @@
         public Rate ResourceRate { get; set; } = Rate.Standard;
         public FinancialReferenceService FinRefService { get; set; }
         public PPMToolContext Context { get; set; }
-
-        private CostModel costModel;
-        public CostModel CostModel
-        {
-            get => costModel;
-            set
-            {
-                if (costModel != value)
-                {
-                    costModel = value;
-                    UpdateCost();
-                }
-            }
-        }
+        public CostModel CostModel { get; set; }
 
         /// <summary>
         /// Update the model parameters. Assumes fixed duration behaviour.
@@ -216,6 +207,7 @@
         /// 5. Billable Duration
         /// 6. Work (Hours)
         /// 7. DayRate
+        /// 8. Cost Model
         /// </summary>
         /// <param name="nameOfPropertyTrigger"></param>
         public void Update(string nameOfPropertyTrigger)
@@ -265,6 +257,7 @@
                     break;
 
                 case nameof(DayRate):
+                case nameof(CostModel):
 
                     // Update the cost only
                     UpdateCost();

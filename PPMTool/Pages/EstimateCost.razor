@@ -36,7 +36,7 @@
                                  Text="Cost Model"
                                  Component="CostModel" /><br />
                     <RadzenDropDown class="radzen-dropdown"
-                                    @bind-Value="costModel"
+                                    @bind-Value="CostModel"
                                     Data="@(Enum.GetValues(typeof(CostModel)))"
                                     Name="CostModel">
                         <Template Context="cost">
@@ -47,21 +47,20 @@
             </div>
             <HintComponent Message="This section represents the summary for the project. The values are read-only as they are driven by the individual resource details below." />
             <TaskConfigurationComponent ReadOnly="true"
-                                        ShowRates="@(costModel == CostModel.DayRate)" />
+                                        ShowRates="@(CostModel == CostModel.DayRate)"
+                                        @ref=@summaryTask />
             <hr />
             <h2>Resources</h2>
-            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. Currently this tool only supports two different types of technical resource based on the two approved rates for costing. If you have multiple RSEs at the same rate, consider combining them into one aggregated resource." />
-            @if (costModel == CostModel.TechAndLeadership)
+            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed." />
+            @foreach (var component in resources)
             {
-                <h3>Leadership</h3>
-                <TaskConfigurationComponent CostModel="@costModel" />
-                <hr />
+                if (component.Key != "Leadership" || (component.Key == "Leadership" && CostModel == CostModel.TechAndLeadership))
+                {
+                    <h3>@component.Key</h3>
+                    @component
+                    <hr />
+                }
             }
-            <h3>Tech Effort 1</h3>
-            <TaskConfigurationComponent CostModel="@costModel" />
-            <hr />
-            <h3>Tech Effort 2</h3>
-            <TaskConfigurationComponent CostModel="@costModel" />
         </div>
     }
 </div>
