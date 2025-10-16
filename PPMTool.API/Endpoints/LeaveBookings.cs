@@ -14,7 +14,14 @@ public static class LeaveBookings
 {
     /// <summary>
     /// Get all bookings for the year for the staff of the user (inc the user)
+    /// Access: superuser, the person, or their line manager.
     /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="configuration"></param>
+    /// <param name="http"></param>
+    /// <param name="context"></param>
+    /// <param name="year">The year to query</param>
+    /// <param name="username">The username of the person with spaces replaced with underscores. If not present defaults to the API key owner.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LeaveBookingsDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
