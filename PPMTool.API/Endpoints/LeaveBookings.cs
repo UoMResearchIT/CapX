@@ -14,74 +14,246 @@ public static class LeaveBookings
     /// Get all bookings for the year for the staff of the user (inc the user)
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LeaveBookingsDTO>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<List<LeaveBookingsDTO>> GetMyStaffBookingsForYearAsync(string username, int year)
+    public static async Task<IResult> GetMyStaffBookingsForYearAsync(
+        ILogger logger,
+        IConfiguration configuration,
+        HttpContext http,
+        [FromQuery] int year,
+        [FromQuery] string? username = null)
     {
-        var results = new Dictionary<string, LeaveBookingsDTO>();
-#if LOCAL
-        // Requires a mapping from local machine to route to the MySQL server via Jumpbox. Requires access to the Jumpbox and also the CapX Dev VM
-        // Using: ssh -J <<your username>>@styx1.itservices.manchester.ac.uk <<your username>>@10.99.96.160 -L 3307:servalan.its.manchester.ac.uk:3306 -v -N
-        string connection = "Server=127.0.0.1;Port=3307;Database=epshol2;Uid=rit_readonly;Pwd=Or7WroucJuont{;";
-#else
-        string connection = "Server=servalan.its.manchester.ac.uk;Port=3306;Database=epshol2;Uid=rit_readonly;Pwd=Or7WroucJuont{;";
-#endif
-        using var conn = new MySqlConnection(connection);
-        await conn.OpenAsync();
-
-        // Use the provided username to get user's (and any staff who report to them) details.
-        // Will use the emp_ids later to shape the final query getting the relevant bookings
-        using var staffCmd = new MySqlCommand($"SELECT * FROM epshol2.vf_employee WHERE (sup_id = (select emp_id from epshol2.vf_employee WHERE username='{username}') AND enabled='Y') OR username='{username}';", conn);
-        using var staffReader = await staffCmd.ExecuteReaderAsync();
-
-        while (await staffReader.ReadAsync())
+        try
         {
-            // Store the results so we can easily add to them later
-            var employee_id = staffReader.GetString("emp_id");
+            if (year <= 1900 || year >= 3000)
+            {
+                logger.LogWarning("LeaveBookings: Invalid year {Year}", year);
+                return Results.BadRequest("A valid year must be supplied.");
+            }
 
-            results.Add(employee_id, new LeaveBookingsDTO
-            (
-                employee_id,
-                staffReader.GetInt32("sup_id"),
-                staffReader.GetString("username"),
-                staffReader.GetString("fname"),
-                staffReader.GetString("lname")
-            ));
+            var resolvedUsername = ResolveUsername(username, http);
+            if (resolvedUsername == null)
+            {
+                logger.LogWarning("LeaveBookings: Username could not be resolved.");
+                return Results.BadRequest("A valid username must be supplied.");
+            }
+
+            var connectionString = configuration["LeaveBookings:ConnectionString"];
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                logger.LogError("LeaveBookings: Connection string not configured.");
+                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            await using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            var staffLookup = await LoadStaffAsync(connection, resolvedUsername);
+            if (!staffLookup.Any())
+            {
+                logger.LogWarning("LeaveBookings: No staff records found for {Username}", resolvedUsername);
+                return Results.NotFound();
+            }
+
+            var employeeIdList = staffLookup.Keys.ToList();
+            await PopulateAllowancesAsync(connection, staffLookup, employeeIdList, year);
+            await PopulateBookingsAsync(connection, staffLookup, employeeIdList, year);
+
+            var dtos = staffLookup.Values
+                .Select(accumulator => accumulator.ToDto())
+                .OrderBy(dto => dto.LastName)
+                .ThenBy(dto => dto.FirstName)
+                .ToList();
+
+            logger.LogInformation("LeaveBookings: Returned {Count} staff records for {Username} in {Year}", dtos.Count, resolvedUsername, year);
+            return Results.Json(dtos);
+        }
+        catch (MySqlException ex)
+        {
+            logger.LogError(ex, "LeaveBookings: Database error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "LeaveBookings: Unexpected error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static string? ResolveUsername(string? username, HttpContext http)
+    {
+        var candidate = string.IsNullOrWhiteSpace(username)
+            ? Helpers.GetCurrentUser(http).CASUserName
+            : username;
+
+        candidate = candidate?.Trim();
+        return string.IsNullOrEmpty(candidate) ? null : candidate;
+    }
+
+    private static async Task<Dictionary<string, LeaveBookingAccumulator>> LoadStaffAsync(
+        MySqlConnection connection,
+        string username)
+    {
+        var lookup = new Dictionary<string, LeaveBookingAccumulator>(StringComparer.OrdinalIgnoreCase);
+
+        const string staffSql = @"
+            SELECT emp_id, sup_id, username, fname, lname
+            FROM epshol2.vf_employee
+            WHERE ((sup_id = (SELECT emp_id FROM epshol2.vf_employee WHERE username = @username) AND enabled = 'Y')
+                   OR username = @username);";
+
+        await using var command = new MySqlCommand(staffSql, connection);
+        command.Parameters.Add("@username", MySqlDbType.VarChar).Value = username;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var employeeId = reader.GetString("emp_id");
+            var supervisorIdOrdinal = reader.GetOrdinal("sup_id");
+            var supervisorId = reader.IsDBNull(supervisorIdOrdinal) ? 0 : reader.GetInt32(supervisorIdOrdinal);
+            var usernameOrdinal = reader.GetOrdinal("username");
+            var firstNameOrdinal = reader.GetOrdinal("fname");
+            var lastNameOrdinal = reader.GetOrdinal("lname");
+
+            var employeeUsername = reader.IsDBNull(usernameOrdinal) ? string.Empty : reader.GetString(usernameOrdinal);
+            var firstName = reader.IsDBNull(firstNameOrdinal) ? string.Empty : reader.GetString(firstNameOrdinal);
+            var lastName = reader.IsDBNull(lastNameOrdinal) ? string.Empty : reader.GetString(lastNameOrdinal);
+
+            lookup[employeeId] = new LeaveBookingAccumulator(employeeId, supervisorId, employeeUsername, firstName, lastName);
         }
 
-        await staffReader.CloseAsync();
+        return lookup;
+    }
 
-        // Get a list of the relevant employee ids so we can target the sql statements being used
-        var employeeIds = results.Keys.ToList();
-
-        // ADJUSTMENTS
-        using var adjustmentsCmd = new MySqlCommand($"SELECT * FROM epshol2.vf_emp_to_hours WHERE emp_id in ({string.Join(",", employeeIds)}) AND year={year}", conn);
-        using var adjustmentsReader = await adjustmentsCmd.ExecuteReaderAsync();
-
-        while (await adjustmentsReader.ReadAsync())
+    private static async Task PopulateAllowancesAsync(
+        MySqlConnection connection,
+        IDictionary<string, LeaveBookingAccumulator> lookup,
+        IReadOnlyList<string> employeeIds,
+        int year)
+    {
+        if (employeeIds.Count == 0)
         {
-            var employeeId = adjustmentsReader.GetString("emp_id");
-            results[employeeId].CoreAllowance = adjustmentsReader.IsDBNull("hours") ? 0.0 : adjustmentsReader.GetDouble("hours");
-            results[employeeId].Adjustment = adjustmentsReader.IsDBNull("hours_carried") ? 0.0 : adjustmentsReader.GetDouble("hours_carried");
+            return;
         }
 
-        await adjustmentsReader.CloseAsync();
+        var parameterNames = employeeIds.Select((_, index) => $"@emp{index}").ToArray();
+        var sql = $@"
+            SELECT emp_id, hours, hours_carried
+            FROM epshol2.vf_emp_to_hours
+            WHERE emp_id IN ({string.Join(", ", parameterNames)})
+              AND year = @year;";
 
-        // LEAVE BOOKINGS
-        using var bookingsCmd = new MySqlCommand($"SELECT * FROM epshol2.vf_vacation WHERE emp_id in ({string.Join(", ", employeeIds)}) AND deny <> 'Y' AND year='{year}';", conn);
-        using var bookingsReader = await bookingsCmd.ExecuteReaderAsync();
-
-        while (await bookingsReader.ReadAsync())
+        await using var command = new MySqlCommand(sql, connection);
+        for (var i = 0; i < employeeIds.Count; i++)
         {
-            var employeeId = bookingsReader.GetString("emp_id");
-            var date = bookingsReader.GetDateTime("date");
-            var ampm = bookingsReader.GetString("ampm");
+            command.Parameters.Add(parameterNames[i], MySqlDbType.VarChar).Value = employeeIds[i];
+        }
+        command.Parameters.Add("@year", MySqlDbType.Int32).Value = year;
 
-            results[employeeId].Bookings.Add(new BookingDTO(date, ampm));
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var employeeId = reader.GetString("emp_id");
+            if (!lookup.TryGetValue(employeeId, out var accumulator))
+            {
+                continue;
+            }
+
+            var coreAllowanceOrdinal = reader.GetOrdinal("hours");
+            var adjustmentOrdinal = reader.GetOrdinal("hours_carried");
+
+            accumulator.CoreAllowance = reader.IsDBNull(coreAllowanceOrdinal)
+                ? 0d
+                : reader.GetDouble(coreAllowanceOrdinal);
+            accumulator.Adjustment = reader.IsDBNull(adjustmentOrdinal)
+                ? 0d
+                : reader.GetDouble(adjustmentOrdinal);
+        }
+    }
+
+    private static async Task PopulateBookingsAsync(
+        MySqlConnection connection,
+        IDictionary<string, LeaveBookingAccumulator> lookup,
+        IReadOnlyList<string> employeeIds,
+        int year)
+    {
+        if (employeeIds.Count == 0)
+        {
+            return;
         }
 
-        await bookingsReader.CloseAsync();
+        var parameterNames = employeeIds.Select((_, index) => $"@emp{index}").ToArray();
+        var sql = $@"
+            SELECT emp_id, date, ampm
+            FROM epshol2.vf_vacation
+            WHERE emp_id IN ({string.Join(", ", parameterNames)})
+              AND deny <> 'Y'
+              AND year = @year;";
 
-        return results.Values.ToList();
+        await using var command = new MySqlCommand(sql, connection);
+        for (var i = 0; i < employeeIds.Count; i++)
+        {
+            command.Parameters.Add(parameterNames[i], MySqlDbType.VarChar).Value = employeeIds[i];
+        }
+        command.Parameters.Add("@year", MySqlDbType.Int32).Value = year;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var employeeId = reader.GetString("emp_id");
+            if (!lookup.TryGetValue(employeeId, out var accumulator))
+            {
+                continue;
+            }
+
+            var date = reader.GetDateTime("date");
+            var ampmOrdinal = reader.GetOrdinal("ampm");
+            var ampm = reader.IsDBNull(ampmOrdinal)
+                ? string.Empty
+                : reader.GetString(ampmOrdinal);
+
+            accumulator.Bookings.Add(new BookingDTO(date, ampm));
+        }
+    }
+
+    private sealed class LeaveBookingAccumulator
+    {
+        internal LeaveBookingAccumulator(
+            string employeeId,
+            int supervisorId,
+            string username,
+            string firstName,
+            string lastName)
+        {
+            EmployeeId = employeeId;
+            SupervisorId = supervisorId;
+            Username = username;
+            FirstName = firstName;
+            LastName = lastName;
+        }
+
+        internal string EmployeeId { get; }
+        internal int SupervisorId { get; }
+        internal string Username { get; }
+        internal string FirstName { get; }
+        internal string LastName { get; }
+        internal double CoreAllowance { get; set; }
+        internal double Adjustment { get; set; }
+        internal List<BookingDTO> Bookings { get; } = new();
+
+        internal LeaveBookingsDTO ToDto() =>
+            new(
+                EmployeeId,
+                SupervisorId,
+                Username,
+                FirstName,
+                LastName,
+                CoreAllowance,
+                Adjustment,
+                Bookings
+                    .OrderBy(b => b.Date)
+                    .ToList()
+            );
     }
 }
