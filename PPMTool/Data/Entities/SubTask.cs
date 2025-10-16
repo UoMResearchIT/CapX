@@ -6,7 +6,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an individual activity or phase of a project
     /// </summary>
-    public class SubTask : BaseTask
+    public class SubTask : BaseScheduledTask
     {
         public SubTask()
         {
@@ -36,9 +36,15 @@ namespace PPMTool.Data.Entities
             };
         }
 
+        /// <summary>
+        /// Primary key
+        /// </summary>
         public int SubTaskId { get; set; }
 
         private TaskType taskType;
+        /// <summary>
+        /// The type of the task to inform how it is scheduled
+        /// </summary>
         public TaskType TaskType
         {
             get => taskType;
@@ -52,6 +58,9 @@ namespace PPMTool.Data.Entities
             }
         }
 
+        /// <summary>
+        /// A list of the resources assigned to the task
+        /// </summary>
         public virtual IList<Resource> AssignedResources { get; set; } = new List<Resource>();
 
         /// <summary>
@@ -81,16 +90,6 @@ namespace PPMTool.Data.Entities
             }
         }
 
-        /// <summary>
-        /// Used to drive the end date from the start date assuming 7 hour days. This is includes weekends.
-        /// </summary>
-        public int DurationDays { get; set; }
-
-        /// <summary>
-        /// Used to drive the work assuming each day is 220 billable days spread over the year of 365 days so roughly 4.22 hours per calendar day.
-        /// </summary>
-        public int DurationBillableDays { get; set; }
-
         private bool hasFixedEndDate;
         /// <summary>
         /// For fixed duration tasks indicates whether the end date should be driven by the duration or the other way round (i.e. the end date is fixed)
@@ -114,12 +113,11 @@ namespace PPMTool.Data.Entities
             }
         }
 
-        private double demand;
         /// <summary>
-        /// The minimum demand required to complete this task in FTE.
+        /// Override the setter to call the unmet demand update
         /// </summary>
         [Required]
-        public double Demand
+        public override double Demand
         {
             get => demand;
             set
@@ -251,81 +249,6 @@ namespace PPMTool.Data.Entities
             {
                 return e.Message;
             }
-        }
-
-        /// <summary>
-        /// Sets the calendar days duration based on the start and end dates.
-        /// </summary>
-        private void UpdateDurationFromEndDate()
-        {
-            // Tasks that start and end on the same day should still have a duration of 1 day so add a day here
-            DurationDays = (int)Math.Round(EndDate.Date.Subtract(StartDate.Date).TotalDays) + 1;
-        }
-
-        /// <summary>
-        /// Updates the duration of the task based on the units and planned work.
-        /// </summary>
-        /// <param name="units"></param>
-        private void UpdateDuration(double units)
-        {
-            if (units == 0)
-            {
-                DurationDays = 0;
-                DurationBillableDays = 0;
-            }
-            else
-            {
-                // Compute the billable days from the planned work of the task where a billable day is 7 hours of work
-                var billableDays = PlannedWorkHours / (7 * units);
-                DurationDays = (int)Math.Ceiling(GetNumberOfCalendarDays(billableDays));
-                DurationBillableDays = (int)Math.Ceiling(billableDays);
-            }
-        }
-
-        /// <summary>
-        /// Updates the work given the units based on the current start date and calendar duration of a task
-        /// </summary>
-        /// <param name="units"></param>
-        private void UpdateWork(double units)
-        {
-            // Duration input is calendar days so need to compute billable days to get work
-            var billableDays = GetNumberOfBillableDays(StartDate, DurationDays);
-            PlannedWorkHours = (int)Math.Floor(billableDays * 7 * units);
-            DurationBillableDays = (int)Math.Ceiling(billableDays);
-        }
-
-        /// <summary>
-        /// Uses 220 billable days per year to estimate the number of billable days between a start date and a number of calendars into the future.
-        /// </summary>
-        /// <param name="startDate"></param>
-        /// <param name="durationCalendarDays"></param>
-        /// <returns></returns>
-        internal static double GetNumberOfBillableDays(DateTime startDate, int durationCalendarDays)
-        {
-            var endDate = startDate.AddDays(durationCalendarDays);
-            return GetNumberOfBillableDays(startDate, endDate);
-        }
-
-        /// <summary>
-        /// Uses 220 billable days per year to estimate the number of billable days between two dates.
-        /// </summary>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <returns></returns>
-        internal static double GetNumberOfBillableDays(DateTime startDate, DateTime endDate)
-        {
-            var calendarDays = endDate.Date.Subtract(startDate.Date).Days;
-            return (calendarDays / 365f) * 220f;
-        }
-
-        /// <summary>
-        /// Converts the number of billable days into a duration of calendar days assuming 220 billable days per 365 day year.
-        /// </summary>
-        /// <param name="billableDays"></param>
-        /// <returns></returns>
-        private double GetNumberOfCalendarDays(double billableDays)
-        {
-            return (billableDays / 220f) * 365f;
         }
 
         /// <summary>

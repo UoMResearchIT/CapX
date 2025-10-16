@@ -1,4 +1,5 @@
-﻿@using PPMTool.Enums
+﻿@using PPMTool.Data.Entities
+@using PPMTool.Enums
 @using System.ComponentModel.DataAnnotations
 <div class="row">
     <div class="col-3">
@@ -11,7 +12,8 @@
                        Step="0.001" Placeholder="0.00"
                        @bind-Value="model.Demand"
                        Name="Demand"
-                       Disabled="@ReadOnly" />
+                       Disabled="@ReadOnly"
+                       Change="@(() => ValueChanged(nameof(model.Demand)))"/>
     </div>
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
@@ -59,7 +61,7 @@
                        Min="0"
                        Step="0.5"
                        Placeholder="0"
-                       @bind-Value="model.Work"
+                       @bind-Value="model.PlannedWorkHours"
                        Name="WorkHours"
                        Disabled="@ReadOnly" />
     </div>
@@ -68,9 +70,9 @@
                      Text="Duration (Days)"
                      Component="Duration" />
         <RadzenNumeric class="radzen-numeric"
-                       TValue="double"
+                       TValue="int"
                        Min="0"
-                       @bind-Value="model.Duration"
+                       @bind-Value="model.DurationDays"
                        Name="Duration"
                        Disabled="@ReadOnly" />
     </div>
@@ -79,16 +81,16 @@
                      Text="Duration (Billable Days)"
                      Component="DurationBillable" />
         <RadzenNumeric class="radzen-numeric"
-                       TValue="double"
+                       TValue="int"
                        Min="0"
-                       @bind-Value="model.BillableDays"
+                       @bind-Value="model.DurationBillableDays"
                        Name="DurationBillable"
                        Disabled="@ReadOnly" />
     </div>
     <div class="col-3" style="justify-items: end">
         <RadzenLabel class="radzen-form-label"
                      Text="Cost" />
-        <RadzenText Text="@model.Cost.ToString("C2")"
+        <RadzenText Text="@model.PlannedCost.ToString("C2")"
                     Style="margin-bottom: 0; margin-top: 0.5rem; font-size: x-large;" />
     </div>
 </div>
@@ -103,38 +105,41 @@
     [Parameter]
     public bool ShowRates { get; set; } = true;
 
-    public class TaskConfigModel
-    {
-        public double Demand { get; set; }
-        public double DayRate { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public double Work { get; set; }
-        public double Duration { get; set; }
-        public double BillableDays { get; set; }
-        public double Cost { get; set; }
-        public Rate ResourceRate { get; set; }
-
-        private void ComputeCosts(CostModel costModel)
-        {
-            // TODO: Execute the costing approach
-        }
-
-        private void Schedule()
-        {
-            // TODO: Respond the the changes in the dependent parameters
-        }
-    }
+    [Parameter]
+    public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
 
     private TaskConfigModel model = new TaskConfigModel();
 
     /// <summary>
-    /// Update the model maintained by this component with a new model
+    /// Method invoked when any of the inputs are modified
     /// </summary>
-    /// <param name="model"></param>
-    public void UpdateTaskConfigModel(TaskConfigModel model)
+    /// <param name="nameOfProperty"></param>
+    private void ValueChanged(string nameOfProperty)
     {
-        this.model = model;
-        InvokeAsync(StateHasChanged);
+        // Update the other properties on the model
+        model.Update(nameOfProperty);
+
+        // If there is a listener, trigger it
+        ConfigModelUpdated?.Invoke(nameOfProperty, model);
     }
+
+    /// <summary>
+    /// Model which represents the configuration of the task component
+    /// </summary>
+    public class TaskConfigModel : BaseScheduledTask
+    {
+        public double DayRate { get; set; }
+        public Rate ResourceRate { get; set; }
+
+        /// <summary>
+        /// Update the model parameters.
+        /// Need to know which one triggered the update to avoid a circular.
+        /// </summary>
+        /// <param name="nameOfPropertyTrigger"></param>
+        public void Update(string nameOfPropertyTrigger)
+        {
+            // TODO
+        }
+    }
+}
 }
