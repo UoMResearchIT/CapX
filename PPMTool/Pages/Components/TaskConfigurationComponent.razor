@@ -134,7 +134,7 @@
     public PPMToolContext Context { get; set; }
 
     [Parameter]
-    public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
+    public Action<string> ConfigModelUpdated { get; set; }
 
     [Inject]
     private FinancialReferenceService FinancialReferenceService { get; set; }
@@ -172,7 +172,7 @@
         Model.Update(nameOfProperty);
 
         // If there is a listener, trigger it
-        ConfigModelUpdated?.Invoke(nameOfProperty, Model);
+        ConfigModelUpdated?.Invoke(nameOfProperty);
     }
 
     /// <summary>

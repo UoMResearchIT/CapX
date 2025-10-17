@@ -50,8 +50,7 @@ namespace PPMTool.Pages
         /// Update the summary componet from all the resources
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="taskConfig"></param>
-        private void UpdateSummaryComponent(string name, TaskConfigModel taskConfig)
+        private void UpdateSummaryComponent(string name)
         {
             Debug.WriteLine($"** EstimateCost: Updating the summary model triggered by {name}");
 
@@ -101,6 +100,29 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** EstimateCost: Setting cost model to {CostModel} on {resource.Key}");
                 resource.Value.CostModel = CostModel;
             }
+        }
+
+        /// <summary>
+        /// Add a resource to the list
+        /// </summary>
+        private void AddResource()
+        {
+            var numRes = models.Where(x => x.Key != "Leadership").Count() + 1;
+            models.Add($"RSE {numRes}", new TaskConfigModel(FinancialReferenceService, Context)
+            {
+                CostModel = this.CostModel
+            });
+        }
+
+        /// <summary>
+        /// Delete a resource
+        /// </summary>
+        /// <param name="key"></param>
+        private void DeleteResource(string key)
+        {
+            models.Remove(key);
+            UpdateSummaryComponent(key);
+            StateHasChanged();
         }
     }
 }

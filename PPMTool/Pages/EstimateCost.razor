@@ -51,13 +51,27 @@
                                         ShowSummaryOnly="true"
                                         @ref=@summaryComponent />
             <hr />
-            <h2>Resources</h2>
-            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed." />
+            <div class="row">
+                <div class="col">
+                    <h2>Resources</h2>
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Text="Add" Icon="add" Click="@AddResource" />
+                </div>
+            </div>
+            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. It cannot be deleted." />
             @foreach (var resource in models)
             {
                 if (ShouldIncludeResource(resource))
                 {
-                    <h3>@resource.Key</h3>
+                    <div class="row">
+                        <div class="col">
+                            <h3>@resource.Key</h3>
+                        </div>
+                        <div class="col-auto">
+                            <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource.Key))" Disabled="@(resource.Key == "Leadership")" />
+                        </div>
+                    </div>
                     <TaskConfigurationComponent Context=Context
                                                 Model="resource.Value"
                                                 ConfigModelUpdated="UpdateSummaryComponent" />
