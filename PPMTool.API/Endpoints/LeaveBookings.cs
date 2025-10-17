@@ -1,9 +1,7 @@
 ﻿using System.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
 using PPMTool.API.DTOs;
-using PPMTool.Data.Context;
 
 namespace PPMTool.API.Endpoints;
 
@@ -19,7 +17,6 @@ public static class LeaveBookings
     /// <param name="logger"></param>
     /// <param name="configuration"></param>
     /// <param name="http"></param>
-    /// <param name="context"></param>
     /// <param name="year">The year to query</param>
     /// <param name="username">The username of the person with spaces replaced with underscores. If not present defaults to the API key owner.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LeaveBookingsDTO>))]
@@ -30,7 +27,6 @@ public static class LeaveBookings
         ILogger logger,
         IConfiguration configuration,
         HttpContext http,
-        PPMToolContext context,
         [FromQuery] int year,
         [FromQuery] string? username = null)
     {
@@ -50,18 +46,18 @@ public static class LeaveBookings
                 logger.LogWarning("LeaveBookings: Username could not be resolved.");
                 return Results.BadRequest("A valid username must be supplied.");
             }
+            
+            // Connect to the Leave Bookings database
+            var connectionString = configuration["LeaveBookings:ConnectionString"];
+            await using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
 
             // Authorise access
-            if (!await AuthoriseAccessAsync(context, http, resolvedUsername))
+            if (!await AuthoriseAccessAsync(http, resolvedUsername, connection))
             {
                 logger.LogWarning("LeaveBookings: Unauthorized access attempt to {TargetUsername}", resolvedUsername);
                 return Results.Unauthorized();
             }
-
-            // Connect to Leave Bookings database
-            var connectionString = configuration["LeaveBookings:ConnectionString"];
-            await using var connection = new MySqlConnection(connectionString);
-            await connection.OpenAsync();
 
             // Get staff records
             var staffLookup = await LoadStaffAsync(connection, resolvedUsername);
@@ -116,42 +112,97 @@ public static class LeaveBookings
     }
 
     /// <summary>
-    /// Authorise access to the requested username's data
+    /// Authorise access to the requested username's data.
     /// </summary>
-    /// <param name="context">DB context</param>
-    /// <param name="http">The HTTP context</param>
-    /// <param name="requestedUsername">The username to authorise</param>
+    /// <param name="http">The HTTP context.</param>
+    /// <param name="requestedUsername">The username to authorise.</param>
+    /// <param name="connection">An open connection to the leave bookings database.</param>
     /// <returns>True if access is authorised, otherwise false</returns>
     private static async Task<bool> AuthoriseAccessAsync(
-        PPMToolContext context,
         HttpContext http,
-        string requestedUsername)
+        string requestedUsername,
+        MySqlConnection connection)
     {
         var caller = Helpers.GetCurrentUser(http);
         var callerUsername = caller.CASUserName?.Trim();
-        if (!string.IsNullOrEmpty(callerUsername) &&
-            string.Equals(callerUsername, requestedUsername, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
 
-        if (Helpers.IsSuperUser(caller))
-        {
-            return true;
-        }
-
-        var targetUser = await context.Users
-            .Include(u => u.Person)
-                .ThenInclude(p => p.LineManager)
-            .FirstOrDefaultAsync(u => u.CASUserName.ToLower() == requestedUsername.ToLower());
-
-        if (targetUser?.Person == null)
+        if (string.IsNullOrEmpty(callerUsername))
         {
             return false;
         }
 
-        return Helpers.IsSuperUserOrLineManagerOrSelf(context, http, targetUser.Person);
+        if (string.Equals(callerUsername, requestedUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var callerRecord = await GetLeaveBookingEmployeeAsync(connection, callerUsername);
+        if (callerRecord is null || !callerRecord.IsSupervisor)
+        {
+            return false;
+        }
+
+        var requestedRecord = await GetLeaveBookingEmployeeAsync(connection, requestedUsername);
+        if (requestedRecord is null)
+        {
+            return false;
+        }
+
+        return !string.IsNullOrEmpty(requestedRecord.SupervisorEmployeeId) &&
+               string.Equals(requestedRecord.SupervisorEmployeeId, callerRecord.EmployeeId, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// Get the leave booking employee record for a username
+    /// </summary>
+    /// <param name="connection">The database connection</param>
+    /// <param name="username">The username to query</param>
+    /// <returns>The leave booking employee record or null if not found</returns>
+    private static async Task<LeaveBookingEmployee?> GetLeaveBookingEmployeeAsync(
+        MySqlConnection connection,
+        string username)
+    {
+        const string sql = @"
+            SELECT emp_id, supervisor, sup_id
+            FROM epshol2.vf_employee
+            WHERE username = @username
+            LIMIT 1;";
+
+        await using var command = new MySqlCommand(sql, connection);
+        command.Parameters.Add("@username", MySqlDbType.VarChar).Value = username;
+
+        await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow);
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+
+        var employeeId = Convert.ToString(reader["emp_id"])?.Trim();
+        if (string.IsNullOrEmpty(employeeId))
+        {
+            return null;
+        }
+
+        var supervisorRaw = Convert.ToString(reader["supervisor"])?.Trim();
+        var isSupervisor = string.Equals(supervisorRaw, "1", StringComparison.OrdinalIgnoreCase);
+
+        string? supervisorEmployeeId = null;
+        var supIdOrdinal = reader.GetOrdinal("sup_id");
+        if (!reader.IsDBNull(supIdOrdinal))
+        {
+            supervisorEmployeeId = Convert.ToString(reader.GetValue(supIdOrdinal))?.Trim();
+        }
+
+        return new LeaveBookingEmployee(employeeId, isSupervisor, supervisorEmployeeId);
+    }
+
+    /// <summary>
+    /// Represents a leave booking employee record for authorization checks.
+    /// </summary>
+    /// <param name="EmployeeId">Employee ID</param>
+    /// <param name="IsSupervisor">Indicates if the employee is a supervisor</param>
+    /// <param name="SupervisorEmployeeId">Supervisor's Employee ID</param>
+    private sealed record LeaveBookingEmployee(string EmployeeId, bool IsSupervisor, string? SupervisorEmployeeId);
 
     /// <summary>
     /// Load the staff records
@@ -201,6 +252,33 @@ public static class LeaveBookings
         return lookup;
     }
 
+    private static MySqlCommand CreateEmployeeFilterCommand(
+        MySqlConnection connection,
+        string sqlTemplate,
+        IReadOnlyList<string> employeeIds)
+    {
+        if (employeeIds.Count == 0)
+        {
+            throw new ArgumentException("At least one employee ID must be supplied.", nameof(employeeIds));
+        }
+
+        var parameterNames = new string[employeeIds.Count];
+        for (var i = 0; i < employeeIds.Count; i++)
+        {
+            parameterNames[i] = $"@emp{i}";
+        }
+
+        var commandText = string.Format(sqlTemplate, string.Join(", ", parameterNames));
+        var command = new MySqlCommand(commandText, connection);
+
+        for (var i = 0; i < employeeIds.Count; i++)
+        {
+            command.Parameters.Add(parameterNames[i], MySqlDbType.VarChar).Value = employeeIds[i];
+        }
+
+        return command;
+    }
+
     /// <summary>
     /// Populate the allowances
     /// </summary>
@@ -221,22 +299,13 @@ public static class LeaveBookings
             return;
         }
 
-        // Build parameterized query
-        var parameterNames = employeeIds.Select((_, index) => $"@emp{index}").ToArray();
-        var sql = $@"
+        const string sqlTemplate = @"
             SELECT emp_id, hours, hours_carried
             FROM epshol2.vf_emp_to_hours
-            WHERE emp_id IN ({string.Join(", ", parameterNames)})
+            WHERE emp_id IN ({0})
               AND year = @year;";
 
-        // Execute query
-        await using var command = new MySqlCommand(sql, connection);
-
-        // Add parameterNames that was built earlier. This should make it safe from any sort of attack.
-        for (var i = 0; i < employeeIds.Count; i++)
-        {
-            command.Parameters.Add(parameterNames[i], MySqlDbType.VarChar).Value = employeeIds[i];
-        }
+        await using var command = CreateEmployeeFilterCommand(connection, sqlTemplate, employeeIds);
 
         // Add in the year parameter last.
         command.Parameters.Add("@year", MySqlDbType.Int32).Value = year;
@@ -287,21 +356,13 @@ public static class LeaveBookings
         {
             return;
         }
-        // Build parameterized query.
-        var parameterNames = employeeIds.Select((_, index) => $"@emp{index}").ToArray();
-        var sql = $@"
+        const string sqlTemplate = @"
             SELECT emp_id, date, ampm
             FROM epshol2.vf_vacation
-            WHERE emp_id IN ({string.Join(", ", parameterNames)})
+            WHERE emp_id IN ({0})
               AND deny <> 'Y'
               AND year = @year;";
-        // Execute query.
-        await using var command = new MySqlCommand(sql, connection);
-        // Add parameterNames that was built earlier. This should make it safe from any sort of attack.
-        for (var i = 0; i < employeeIds.Count; i++)
-        {
-            command.Parameters.Add(parameterNames[i], MySqlDbType.VarChar).Value = employeeIds[i];
-        }
+        await using var command = CreateEmployeeFilterCommand(connection, sqlTemplate, employeeIds);
         // Add in the year parameter last.
         command.Parameters.Add("@year", MySqlDbType.Int32).Value = year;
 
