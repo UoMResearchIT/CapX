@@ -46,6 +46,11 @@
             {
                 throw new InvalidOperationException("CONNECTION_STRING environment variable is not set!");
             }
+            
+            if (string.IsNullOrWhiteSpace(builder.Configuration["LeaveBookings:ConnectionString"]))
+            {
+                throw new InvalidOperationException("LEAVEBOOKINGS_CONNECTION_STRING environment variable is not set!");
+            }
         }
     }
 }
