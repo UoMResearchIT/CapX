@@ -11,14 +11,12 @@ namespace PPMTool.API.Endpoints;
 public static class LeaveBookings
 {
     /// <summary>
-    /// Get all bookings for the year for the staff of the user (inc the user)
-    /// Access: superuser, the person, or their line manager.
+    /// Get all staff leave bookings for the authenticated user's team for a given year.
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="configuration"></param>
     /// <param name="http"></param>
     /// <param name="year">The year to query</param>
-    /// <param name="username">The username of the person with spaces replaced with underscores. If not present defaults to the API key owner.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<LeaveBookingsDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -27,8 +25,7 @@ public static class LeaveBookings
         ILogger logger,
         IConfiguration configuration,
         HttpContext http,
-        [FromQuery] int year,
-        [FromQuery] string? username = null)
+        [FromQuery] int year)
     {
         try
         {
@@ -40,24 +37,17 @@ public static class LeaveBookings
             }
 
             // Resolve username
-            var resolvedUsername = ResolveUsername(username, http);
+            var resolvedUsername = Helpers.GetCurrentUser(http).CASUserName;
             if (resolvedUsername == null)
             {
                 logger.LogWarning("LeaveBookings: Username could not be resolved.");
                 return Results.BadRequest("A valid username must be supplied.");
             }
-            
+
             // Connect to the Leave Bookings database
             var connectionString = configuration["LeaveBookings:ConnectionString"];
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
-
-            // Authorise access
-            if (!await AuthoriseAccessAsync(http, resolvedUsername, connection))
-            {
-                logger.LogWarning("LeaveBookings: Unauthorized access attempt to {TargetUsername}", resolvedUsername);
-                return Results.Unauthorized();
-            }
 
             // Get staff records
             var staffLookup = await LoadStaffAsync(connection, resolvedUsername);
@@ -92,69 +82,6 @@ public static class LeaveBookings
             logger.LogError(ex, "LeaveBookings: Unexpected error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
-    }
-
-    /// <summary>
-    /// Resolve the username to use
-    /// </summary>
-    /// <param name="username">The supplied username</param>
-    /// <param name="http">The HTTP context</param>
-    /// <returns>>The resolved username or null if it cannot be determined</returns>
-    private static string? ResolveUsername(string? username, HttpContext http)
-    {
-        // If no username is supplied, use the API key owner's username
-        var candidate = string.IsNullOrWhiteSpace(username)
-            ? Helpers.GetCurrentUser(http).CASUserName
-            : username;
-
-        candidate = candidate?.Trim();
-        return string.IsNullOrEmpty(candidate) ? null : candidate;
-    }
-
-    /// <summary>
-    /// Authorise access to the requested username's data.
-    /// </summary>
-    /// <param name="http">The HTTP context.</param>
-    /// <param name="requestedUsername">The username to authorise.</param>
-    /// <param name="connection">An open connection to the leave bookings database.</param>
-    /// <returns>True if access is authorised, otherwise false</returns>
-    private static async Task<bool> AuthoriseAccessAsync(
-        HttpContext http,
-        string requestedUsername,
-        MySqlConnection connection)
-    {
-        // Get the caller's username
-        var caller = Helpers.GetCurrentUser(http);
-        var callerUsername = caller.CASUserName?.Trim();
-
-        if (string.IsNullOrEmpty(callerUsername))
-        {
-            return false;
-        }
-
-        // If the caller is requesting their own data, allow it
-        if (string.Equals(callerUsername, requestedUsername, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        // Get the caller's record
-        var callerRecord = await GetLeaveBookingEmployeeAsync(connection, callerUsername);
-        if (callerRecord is null || !callerRecord.IsSupervisor)
-        {
-            return false;
-        }
-
-        // Get the requested user's record
-        var requestedRecord = await GetLeaveBookingEmployeeAsync(connection, requestedUsername);
-        if (requestedRecord is null)
-        {
-            return false;
-        }
-
-        // Check if the requested user reports to the caller
-        return !string.IsNullOrEmpty(requestedRecord.SupervisorEmployeeId) &&
-               string.Equals(requestedRecord.SupervisorEmployeeId, callerRecord.EmployeeId, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -373,7 +300,7 @@ public static class LeaveBookings
         {
             return;
         }
-        
+
         // Create SQL Query
         const string sqlTemplate = @"
             SELECT emp_id, date, ampm
