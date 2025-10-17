@@ -123,6 +123,7 @@ public static class LeaveBookings
         string requestedUsername,
         MySqlConnection connection)
     {
+        // Get the caller's username
         var caller = Helpers.GetCurrentUser(http);
         var callerUsername = caller.CASUserName?.Trim();
 
@@ -131,23 +132,27 @@ public static class LeaveBookings
             return false;
         }
 
+        // If the caller is requesting their own data, allow it
         if (string.Equals(callerUsername, requestedUsername, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
+        // Get the caller's record
         var callerRecord = await GetLeaveBookingEmployeeAsync(connection, callerUsername);
         if (callerRecord is null || !callerRecord.IsSupervisor)
         {
             return false;
         }
 
+        // Get the requested user's record
         var requestedRecord = await GetLeaveBookingEmployeeAsync(connection, requestedUsername);
         if (requestedRecord is null)
         {
             return false;
         }
 
+        // Check if the requested user reports to the caller
         return !string.IsNullOrEmpty(requestedRecord.SupervisorEmployeeId) &&
                string.Equals(requestedRecord.SupervisorEmployeeId, callerRecord.EmployeeId, StringComparison.Ordinal);
     }
@@ -168,24 +173,29 @@ public static class LeaveBookings
             WHERE username = @username
             LIMIT 1;";
 
+        // Execute query
         await using var command = new MySqlCommand(sql, connection);
         command.Parameters.Add("@username", MySqlDbType.VarChar).Value = username;
 
+        // Read results
         await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow);
         if (!await reader.ReadAsync())
         {
             return null;
         }
 
+        // Get the necessary fields
         var employeeId = Convert.ToString(reader["emp_id"])?.Trim();
         if (string.IsNullOrEmpty(employeeId))
         {
             return null;
         }
 
+        // Determine if supervisor
         var supervisorRaw = Convert.ToString(reader["supervisor"])?.Trim();
         var isSupervisor = string.Equals(supervisorRaw, "1", StringComparison.OrdinalIgnoreCase);
 
+        // Get supervisor employee ID
         string? supervisorEmployeeId = null;
         var supIdOrdinal = reader.GetOrdinal("sup_id");
         if (!reader.IsDBNull(supIdOrdinal))
@@ -193,6 +203,7 @@ public static class LeaveBookings
             supervisorEmployeeId = Convert.ToString(reader.GetValue(supIdOrdinal))?.Trim();
         }
 
+        // Return result
         return new LeaveBookingEmployee(employeeId, isSupervisor, supervisorEmployeeId);
     }
 
@@ -257,25 +268,30 @@ public static class LeaveBookings
         string sqlTemplate,
         IReadOnlyList<string> employeeIds)
     {
+        // If no employee IDs are provided, throw an exception
         if (employeeIds.Count == 0)
         {
             throw new ArgumentException("At least one employee ID must be supplied.", nameof(employeeIds));
         }
 
+        // Create parameterized query
         var parameterNames = new string[employeeIds.Count];
         for (var i = 0; i < employeeIds.Count; i++)
         {
             parameterNames[i] = $"@emp{i}";
         }
 
+        // Create command
         var commandText = string.Format(sqlTemplate, string.Join(", ", parameterNames));
         var command = new MySqlCommand(commandText, connection);
 
+        // Add parameters
         for (var i = 0; i < employeeIds.Count; i++)
         {
             command.Parameters.Add(parameterNames[i], MySqlDbType.VarChar).Value = employeeIds[i];
         }
 
+        // Return command
         return command;
     }
 
@@ -299,6 +315,7 @@ public static class LeaveBookings
             return;
         }
 
+        // Create SQL Query
         const string sqlTemplate = @"
             SELECT emp_id, hours, hours_carried
             FROM epshol2.vf_emp_to_hours
@@ -356,6 +373,8 @@ public static class LeaveBookings
         {
             return;
         }
+        
+        // Create SQL Query
         const string sqlTemplate = @"
             SELECT emp_id, date, ampm
             FROM epshol2.vf_vacation
