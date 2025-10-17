@@ -4,6 +4,7 @@
 @using PPMTool.Data.Helpers
 @using PPMTool.Enums
 @using System.ComponentModel.DataAnnotations
+@using System.Diagnostics
 @using PPMTool.Services
 <div class="row">
     <div class="col-3">
@@ -44,7 +45,7 @@
         </div>
         <div class="col-3">
 
-            if (CostModel == CostModel.DayRate)
+            @if (Model.CostModel == CostModel.DayRate)
             {
                 <RadzenLabel class="radzen-form-label"
                              Text="Day Rate"
@@ -63,18 +64,14 @@
             else
             {
                 <RadzenLabel class="radzen-form-label"
-                             Text="Day Rate"
-                             Component="DayRate" />
-                <RadzenNumeric class="radzen-numeric"
-                               TValue="double"
-                               Min="0"
-                               Step="0.01"
-                               Placeholder="0"
-                               @bind-Value="Model.DayRate"
-                               Name="DayRate"
-                               Format="C2"
-                               Disabled="@ReadOnly"
-                               Change="@(() => ValueChanged(nameof(Model.DayRate)))" />
+                             Text="Resource Rate"
+                             Component="Rate" />
+                <RadzenDropDown class="radzen-dropdown"
+                                @bind-Value="Model.ResourceRate"
+                                Data="@(Enum.GetValues(typeof(Rate)))"
+                                Name="Rate"
+                                Disabled="@ReadOnly"
+                                Change="@(() => ValueChanged(nameof(Model.ResourceRate)))" />
             }
         </div>
     }
@@ -136,27 +133,14 @@
     [Parameter]
     public PPMToolContext Context { get; set; }
 
+    [Parameter]
+    public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
+
     [Inject]
     private FinancialReferenceService FinancialReferenceService { get; set; }
 
-    private CostModel costModel;
-    public CostModel CostModel
-    {
-        get => costModel;
-        set
-        {
-            if (costModel != value)
-            {
-                costModel = value;
-                Model.CostModel = costModel;
-                ValueChanged(nameof(Model.CostModel));
-            }
-        }
-    }
-
-    public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
-
-    public TaskConfigModel Model { get; set; } = new TaskConfigModel();
+    [Parameter]
+    public TaskConfigModel Model { get; set; }
 
     /// <summary>
     /// Initialisation of the component
@@ -165,12 +149,11 @@
     {
         base.OnInitialized();
 
-        // Initialise the model with some defaults
-        Model.Context = Context;
-        Model.FinRefService = FinancialReferenceService;
-        Model.CostModel = CostModel;
-        Model.StartDate = DateTime.Today;
-        Model.EndDate = DateTime.Today.AddDays(7);
+        // Initialise the model
+        if (Model == null)
+        {
+            Model = new TaskConfigModel(FinancialReferenceService, Context);
+        }
         ValueChanged(nameof(Model.StartDate));
     }
 
@@ -180,6 +163,8 @@
     /// <param name="nameOfProperty"></param>
     private void ValueChanged(string nameOfProperty)
     {
+        Debug.WriteLine($"** TaskConfig: Value changed by {nameOfProperty}");
+
         // Only fire if not read-only
         if (ReadOnly) return;
 
@@ -197,9 +182,18 @@
     {
         public double DayRate { get; set; } = GlobalDefaults.DayRateDefault;
         public Rate ResourceRate { get; set; } = Rate.Standard;
-        public FinancialReferenceService FinRefService { get; set; }
-        public PPMToolContext Context { get; set; }
         public CostModel CostModel { get; set; }
+
+        private FinancialReferenceService finRefService;
+        private PPMToolContext context;
+
+        public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context)
+        {
+            finRefService = financialReferenceService;
+            this.context = context;
+            StartDate = DateTime.Today;
+            EndDate = StartDate.AddDays(7);
+        }
 
         /// <summary>
         /// Update the model parameters. Assumes fixed duration behaviour.
@@ -212,10 +206,12 @@
         /// 6. Work (Hours)
         /// 7. DayRate
         /// 8. Cost Model
+        /// 9. Resource Rate
         /// </summary>
         /// <param name="nameOfPropertyTrigger"></param>
         public void Update(string nameOfPropertyTrigger)
         {
+            Debug.WriteLine($"** TaskModel: Model updating triggered by {nameOfPropertyTrigger}");
             switch(nameOfPropertyTrigger)
             {
                 case nameof(StartDate):
@@ -262,6 +258,7 @@
 
                 case nameof(DayRate):
                 case nameof(CostModel):
+                case nameof(ResourceRate):
 
                     // Update the cost only
                     UpdateCost();
@@ -289,7 +286,7 @@
                 foreach (var fyChunk in FinanceHelper.GetFinancialYearDateRanges(StartDate, EndDate))
                 {
                     // Find reference data for the financial year
-                    var finRef = FinRefService.GetFinancialReferenceForDate(Context, fyChunk.StartDate);
+                    var finRef = finRefService.GetFinancialReferenceForDate(context, fyChunk.StartDate);
 
                     // Days in chunk
                     var daysInChunk = fyChunk.EndDate.Subtract(fyChunk.StartDate).TotalDays + 1;
