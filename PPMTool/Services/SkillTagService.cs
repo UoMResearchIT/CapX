@@ -203,12 +203,12 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="activeUserId"></param>
         /// <returns></returns>
-        public int GetIncompleteRecordCount(PPMToolContext context, int activeUserId)
+        public async Task<int> GetIncompleteRecordCountAsync(PPMToolContext context, int activeUserId)
         {
-            var recordsForUser = context.OwnedSkills
+            var recordsForUser = await context.OwnedSkills
                 .Include(x => x.Owner)
                 .Where(x => x.Owner.PersonId == activeUserId)
-                .ToList();
+                .ToListAsync();
             return recordsForUser
                 .Where(x => !x.RecordComplete())
                 .Count();
