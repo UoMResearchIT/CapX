@@ -8,71 +8,76 @@
 <div class="row">
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
-                     Text="Demand (FTE)"
-                     Component="Demand" />
-        <RadzenNumeric class="radzen-numeric"
-                       TValue="double"
-                       Min="@Convert.ToDecimal(0.001)"
-                       Step="0.001" Placeholder="0.00"
-                       @bind-Value="model.Demand"
-                       Name="Demand"
-                       Disabled="@ReadOnly"
-                       Change="@(() => ValueChanged(nameof(model.Demand)))"/>
-    </div>
-    <div class="col-3">
-        <RadzenLabel class="radzen-form-label"
                      Text="Start Date" />
         <RadzenDatePicker class="radzen-datepicker"
-                          @bind-Value="model.StartDate"
+                          @bind-Value="Model.StartDate"
                           ShowTime="false"
                           DateFormat="dd/MM/yyyy"
                           Disabled="@ReadOnly"
-                          Change="@(() => ValueChanged(nameof(model.StartDate)))" />
+                          Change="@(() => ValueChanged(nameof(Model.StartDate)))" />
     </div>
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
                      Text="End Date" />
         <RadzenDatePicker class="radzen-datepicker"
-                          @bind-Value="model.EndDate"
+                          @bind-Value="Model.EndDate"
                           ShowTime="false"
                           DateFormat="dd/MM/yyyy"
                           Disabled="@ReadOnly"
-                          Change="@(() => ValueChanged(nameof(model.EndDate)))" />
+                          Change="@(() => ValueChanged(nameof(Model.EndDate)))" />
     </div>
-    <div class="col-3">
-        @if (ShowRates && CostModel == CostModel.DayRate)
-        {
+    @if (!ShowSummaryOnly)
+    {
+        <div class="col-3">
             <RadzenLabel class="radzen-form-label"
-                         Text="Day Rate"
-                         Component="DayRate" />
+                         Text="Demand (FTE)"
+                         Component="Demand" />
             <RadzenNumeric class="radzen-numeric"
                            TValue="double"
-                           Min="0"
-                           Step="0.01"
-                           Placeholder="0"
-                           @bind-Value="model.DayRate"
-                           Name="DayRate"
-                           Format="C2"
-                           Disabled="@(ReadOnly || CostModel != CostModel.DayRate)"
-                           Change="@(() => ValueChanged(nameof(model.DayRate)))" />
-        }
-        else if (ShowRates && CostModel != CostModel.DayRate)
-        {
-            <RadzenLabel class="radzen-form-label"
-                         Text="Day Rate"
-                         Component="DayRate" />
-            <RadzenNumeric class="radzen-numeric"
-                           TValue="double"
-                           Min="0"
-                           Step="0.01"
-                           Placeholder="0"
-                           @bind-Value="model.DayRate"
-                           Name="DayRate"
-                           Format="C2"
-                           Disabled="@(ReadOnly || CostModel != CostModel.DayRate)"
-                           Change="@(() => ValueChanged(nameof(model.DayRate)))" />
-        }
-    </div>
+                           Min="@Convert.ToDecimal(0.001)"
+                           Step="0.001"
+                           Placeholder="0.00"
+                           @bind-Value="Model.Demand"
+                           Name="Demand"
+                           Disabled="@ReadOnly"
+                           Change="@(() => ValueChanged(nameof(Model.Demand)))" />
+        </div>
+        <div class="col-3">
+
+            if (CostModel == CostModel.DayRate)
+            {
+                <RadzenLabel class="radzen-form-label"
+                             Text="Day Rate"
+                             Component="DayRate" />
+                <RadzenNumeric class="radzen-numeric"
+                               TValue="double"
+                               Min="0"
+                               Step="0.01"
+                               Placeholder="0"
+                               @bind-Value="Model.DayRate"
+                               Name="DayRate"
+                               Format="C2"
+                               Disabled="@ReadOnly"
+                               Change="@(() => ValueChanged(nameof(Model.DayRate)))" />
+            }
+            else
+            {
+                <RadzenLabel class="radzen-form-label"
+                             Text="Day Rate"
+                             Component="DayRate" />
+                <RadzenNumeric class="radzen-numeric"
+                               TValue="double"
+                               Min="0"
+                               Step="0.01"
+                               Placeholder="0"
+                               @bind-Value="Model.DayRate"
+                               Name="DayRate"
+                               Format="C2"
+                               Disabled="@ReadOnly"
+                               Change="@(() => ValueChanged(nameof(Model.DayRate)))" />
+            }
+        </div>
+    }
 </div>
 <div class="row">
     <div class="col-3">
@@ -84,10 +89,10 @@
                        Min="0"
                        Step="0.5"
                        Placeholder="0"
-                       @bind-Value="model.PlannedWorkHours"
+                       @bind-Value="Model.PlannedWorkHours"
                        Name="WorkHours"
                        Disabled="@ReadOnly"
-                       Change="@(() => ValueChanged(nameof(model.PlannedWorkHours)))" />
+                       Change="@(() => ValueChanged(nameof(Model.PlannedWorkHours)))" />
     </div>
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
@@ -96,10 +101,10 @@
         <RadzenNumeric class="radzen-numeric"
                        TValue="int"
                        Min="0"
-                       @bind-Value="model.DurationDays"
+                       @bind-Value="Model.DurationDays"
                        Name="Duration"
                        Disabled="@ReadOnly"
-                       Change="@(() => ValueChanged(nameof(model.DurationDays)))" />
+                       Change="@(() => ValueChanged(nameof(Model.DurationDays)))" />
     </div>
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
@@ -108,15 +113,15 @@
         <RadzenNumeric class="radzen-numeric"
                        TValue="int"
                        Min="0"
-                       @bind-Value="model.DurationBillableDays"
+                       @bind-Value="Model.DurationBillableDays"
                        Name="DurationBillable"
                        Disabled="@ReadOnly"
-                       Change="@(() => ValueChanged(nameof(model.DurationBillableDays)))" />
+                       Change="@(() => ValueChanged(nameof(Model.DurationBillableDays)))" />
     </div>
     <div class="col-3" style="justify-items: end">
         <RadzenLabel class="radzen-form-label"
                      Text="Cost" />
-        <RadzenText Text="@model.PlannedCost.ToString("C2")"
+        <RadzenText Text="@Model.PlannedCost.ToString("C2")"
                     Style="margin-bottom: 0; margin-top: 0.5rem; font-size: x-large;" />
     </div>
 </div>
@@ -126,10 +131,7 @@
     public bool ReadOnly { get; set; } = false;
 
     [Parameter]
-    public bool ShowRates { get; set; } = true;
-
-    [Parameter]
-    public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
+    public bool ShowSummaryOnly { get; set; } = false;
 
     [Parameter]
     public PPMToolContext Context { get; set; }
@@ -146,13 +148,15 @@
             if (costModel != value)
             {
                 costModel = value;
-                model.CostModel = costModel;
-                ValueChanged(nameof(model.CostModel));
+                Model.CostModel = costModel;
+                ValueChanged(nameof(Model.CostModel));
             }
         }
     }
 
-    private TaskConfigModel model = new TaskConfigModel();
+    public Action<string, TaskConfigModel> ConfigModelUpdated { get; set; }
+
+    public TaskConfigModel Model { get; set; } = new TaskConfigModel();
 
     /// <summary>
     /// Initialisation of the component
@@ -162,12 +166,12 @@
         base.OnInitialized();
 
         // Initialise the model with some defaults
-        model.Context = Context;
-        model.FinRefService = FinancialReferenceService;
-        model.CostModel = CostModel;
-        model.StartDate = DateTime.Today;
-        model.EndDate = DateTime.Today.AddDays(7);
-        ValueChanged(nameof(model.StartDate));
+        Model.Context = Context;
+        Model.FinRefService = FinancialReferenceService;
+        Model.CostModel = CostModel;
+        Model.StartDate = DateTime.Today;
+        Model.EndDate = DateTime.Today.AddDays(7);
+        ValueChanged(nameof(Model.StartDate));
     }
 
     /// <summary>
@@ -180,10 +184,10 @@
         if (ReadOnly) return;
 
         // Update the other properties on the model
-        model.Update(nameOfProperty);
+        Model.Update(nameOfProperty);
 
         // If there is a listener, trigger it
-        ConfigModelUpdated?.Invoke(nameOfProperty, model);
+        ConfigModelUpdated?.Invoke(nameOfProperty, Model);
     }
 
     /// <summary>

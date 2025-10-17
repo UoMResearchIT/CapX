@@ -47,17 +47,17 @@
             </div>
             <HintComponent Message="This section represents the summary for the project. The values are read-only as they are driven by the individual resource details below." />
             <TaskConfigurationComponent ReadOnly="true"
-                                        ShowRates="@(CostModel == CostModel.DayRate)"
-                                        @ref=@summaryTask />
+                                        ShowSummaryOnly="true"
+                                        @ref=@summaryComponent />
             <hr />
             <h2>Resources</h2>
             <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed." />
-            @foreach (var component in resources)
+            @foreach (var resource in resources)
             {
-                if (component.Key != "Leadership" || (component.Key == "Leadership" && CostModel == CostModel.TechAndLeadership))
+                if (resource.Key != "Leadership" || (resource.Key == "Leadership" && CostModel == CostModel.TechAndLeadership))
                 {
-                    <h3>@component.Key</h3>
-                    @component
+                    <h3>@resource.Key</h3>
+                    <TaskConfigurationComponent />
                     <hr />
                 }
             }
