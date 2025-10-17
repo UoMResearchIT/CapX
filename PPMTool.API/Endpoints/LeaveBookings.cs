@@ -189,7 +189,14 @@ public static class LeaveBookings
 
         return lookup;
     }
-
+    
+    /// <summary>
+    /// Create a MySqlCommand that filters by employee IDs
+    /// </summary>
+    /// <param name="connection">The database connection</param>
+    /// <param name="sqlTemplate">The SQL template</param>
+    /// <param name="employeeIds">The employee IDs to filter by</param>
+    /// <returns>The MySqlCommand</returns>
     private static MySqlCommand CreateEmployeeFilterCommand(
         MySqlConnection connection,
         string sqlTemplate,
