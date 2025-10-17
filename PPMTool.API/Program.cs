@@ -140,7 +140,7 @@ app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
 app.MapGet($"/wlm/analysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
-app.MapGet($"/leavebookings/getAll", LeaveBookings.GetMyStaffBookingsForYearAsync);
+app.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>
