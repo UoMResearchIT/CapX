@@ -9,6 +9,9 @@ using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
+    /// <summary>
+    /// Service offering email sending capabilities
+    /// </summary>
     public class EmailService
     {
         public EmailService(
@@ -32,14 +35,19 @@ namespace PPMTool.Services
         public ProjectService ProjectService { get; }
         public UserService UserService { get; }
         public PersonService PersonService { get; }
-
         public IDbContextFactory<PPMToolContext> DbContextFactory { get; }
         public ILogger Logger { get; }
 
+        /// <summary>
+        /// Send an email to the list of recipients provided.
+        /// </summary>
+        /// <param name="to"></param>
+        /// <param name="subject"></param>
+        /// <param name="message"></param>
         public void SendEmail(IEnumerable<string> to, string subject, string message)
         {
 
-            var client = new SmtpClient(Configuration["Email:SmtpServer"]);
+            using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
 
             var mailMessage = new MailMessage
             {
@@ -67,6 +75,11 @@ namespace PPMTool.Services
 #endif
         }
 
+        /// <summary>
+        /// Send a timesheet submission email notification to the staff member's line manager
+        /// </summary>
+        /// <param name="staff"></param>
+        /// <param name="timesheet"></param>
         public void SendTimesheetSubmissionEmailNotification(Person staff, Timesheet timesheet)
         {
             List<string> recipients = new List<string>();
@@ -102,6 +115,12 @@ namespace PPMTool.Services
             });
         }
 
+        /// <summary>
+        /// Send absence email notifications to relevant project managers
+        /// </summary>
+        /// <param name="newAbsences"></param>
+        /// <param name="modifiedAbsences"></param>
+        /// <param name="deletedAbsences"></param>
         public void SendAbsenceEmailNotifications(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
         {
             Task.Run(() =>
@@ -294,11 +313,24 @@ namespace PPMTool.Services
             return "New";
         }
 
+        /// <summary>
+        /// Format the absence information suitable for the email body
+        /// </summary>
+        /// <param name="absence"></param>
+        /// <param name="state"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private string GetFormattedAbsenceLine(Absence absence, string state, string name = null)
         {
             return $"<p>{name ?? absence.Person.Name} is absent from {absence.StartDate.ToShortDateString()} to {absence.EndDate?.ToShortDateString() ?? "present"} (<b>{state}</b>).</p>";
         }
 
+        /// <summary>
+        /// Send an email to the people mentioned in a note and the project owner
+        /// </summary>
+        /// <param name="note"></param>
+        /// <param name="mentions"></param>
+        /// <param name="listOfChanges"></param>
         internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
             Task.Run(() =>
