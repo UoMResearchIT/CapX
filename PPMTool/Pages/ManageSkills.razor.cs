@@ -21,6 +21,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
             dataGridEntityService = TagService;
             Loading = true;
             EnqueueLoadData(GetLoadTask);
