@@ -11,7 +11,7 @@ namespace PPMTool.API.Endpoints;
 public static class LeaveBookings
 {
     /// <summary>
-    /// Get all staff leave bookings for the authenticated user's team for a given year.
+    /// Get all staff leave bookings for the caller and their reports for a given year.
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="configuration"></param>
@@ -41,29 +41,29 @@ public static class LeaveBookings
             if (resolvedUsername == null)
             {
                 logger.LogWarning("LeaveBookings: Username could not be resolved.");
-                return Results.BadRequest("A valid username must be supplied.");
+                return Results.BadRequest("Username could not be deduced from the API key supplied.");
             }
 
-            // Connect to the Leave Bookings database
+            // Connect to the leave bookings database
             var connectionString = configuration["LeaveBookings:ConnectionString"];
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
 
-            // Get staff records
-            var staffLookup = await LoadStaffAsync(connection, resolvedUsername);
-            if (!staffLookup.Any())
+            // Get basica records of the caller and their reports
+            var recordDictionary = await LoadStaffRecordsForSelfAndReportsAsync(connection, resolvedUsername);
+            if (!recordDictionary.Any())
             {
-                logger.LogWarning("LeaveBookings: No staff records found for {Username}", resolvedUsername);
+                logger.LogWarning("LeaveBookings: No staff records found in the leave booking system for {Username}", resolvedUsername);
                 return Results.NotFound();
             }
 
-            // Get employee IDs
-            var employeeIdList = staffLookup.Keys.ToList();
-            await PopulateAllowancesAsync(connection, staffLookup, employeeIdList, year);
-            await PopulateBookingsAsync(connection, staffLookup, employeeIdList, year);
+            // Pull in allowances and bookings, adding to dictionary
+            var employeeIdList = recordDictionary.Keys.ToList();
+            await PopulateAllowancesAsync(connection, recordDictionary, employeeIdList, year);
+            await PopulateBookingsAsync(connection, recordDictionary, employeeIdList, year);
 
-            // Convert to DTOs
-            var dtos = staffLookup.Values
+            // Convert dictionary to DTOs
+            var dtos = recordDictionary.Values
                 .Select(accumulator => accumulator.ToDto())
                 .OrderBy(dto => dto.LastName)
                 .ThenBy(dto => dto.FirstName)
@@ -85,77 +85,19 @@ public static class LeaveBookings
     }
 
     /// <summary>
-    /// Get the leave booking employee record for a username
+    /// Load the staff records into an initial lookup dictionary for the caller and their reports.
     /// </summary>
     /// <param name="connection">The database connection</param>
     /// <param name="username">The username to query</param>
-    /// <returns>The leave booking employee record or null if not found</returns>
-    private static async Task<LeaveBookingEmployee?> GetLeaveBookingEmployeeAsync(
+    /// <returns>Dictionary of employee ID and employee records</returns>
+    private static async Task<Dictionary<string, LeaveBookingData>> LoadStaffRecordsForSelfAndReportsAsync(
         MySqlConnection connection,
         string username)
     {
-        const string sql = @"
-            SELECT emp_id, supervisor, sup_id
-            FROM epshol2.vf_employee
-            WHERE username = @username
-            LIMIT 1;";
+        // Initialise lookup dictionary
+        var lookup = new Dictionary<string, LeaveBookingData>(StringComparer.OrdinalIgnoreCase);
 
-        // Execute query
-        await using var command = new MySqlCommand(sql, connection);
-        command.Parameters.Add("@username", MySqlDbType.VarChar).Value = username;
-
-        // Read results
-        await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow);
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-
-        // Get the necessary fields
-        var employeeId = Convert.ToString(reader["emp_id"])?.Trim();
-        if (string.IsNullOrEmpty(employeeId))
-        {
-            return null;
-        }
-
-        // Determine if supervisor
-        var supervisorRaw = Convert.ToString(reader["supervisor"])?.Trim();
-        var isSupervisor = string.Equals(supervisorRaw, "1", StringComparison.OrdinalIgnoreCase);
-
-        // Get supervisor employee ID
-        string? supervisorEmployeeId = null;
-        var supIdOrdinal = reader.GetOrdinal("sup_id");
-        if (!reader.IsDBNull(supIdOrdinal))
-        {
-            supervisorEmployeeId = Convert.ToString(reader.GetValue(supIdOrdinal))?.Trim();
-        }
-
-        // Return result
-        return new LeaveBookingEmployee(employeeId, isSupervisor, supervisorEmployeeId);
-    }
-
-    /// <summary>
-    /// Represents a leave booking employee record for authorization checks.
-    /// </summary>
-    /// <param name="EmployeeId">Employee ID</param>
-    /// <param name="IsSupervisor">Indicates if the employee is a supervisor</param>
-    /// <param name="SupervisorEmployeeId">Supervisor's Employee ID</param>
-    private sealed record LeaveBookingEmployee(string EmployeeId, bool IsSupervisor, string? SupervisorEmployeeId);
-
-    /// <summary>
-    /// Load the staff records
-    /// </summary>
-    /// <param name="connection">The database connection</param>
-    /// <param name="username">The username to query</param>
-    /// <returns> A task representing the asynchronous operation </returns>
-    private static async Task<Dictionary<string, LeaveBookingAccumulator>> LoadStaffAsync(
-        MySqlConnection connection,
-        string username)
-    {
-        // Initialize lookup dictionary
-        var lookup = new Dictionary<string, LeaveBookingAccumulator>(StringComparer.OrdinalIgnoreCase);
-
-        // SQL to get staff records
+        // SQL to get staff records for the user and their reports
         const string staffSql = @"
             SELECT emp_id, sup_id, username, fname, lname
             FROM epshol2.vf_employee
@@ -164,7 +106,8 @@ public static class LeaveBookings
 
         // Execute query
         await using var command = new MySqlCommand(staffSql, connection);
-        // Add in the username parameter.
+
+        // Add in the username parameter
         command.Parameters.Add("@username", MySqlDbType.VarChar).Value = username;
 
         // Read results
@@ -183,13 +126,13 @@ public static class LeaveBookings
             var firstName = reader.IsDBNull(firstNameOrdinal) ? string.Empty : reader.GetString(firstNameOrdinal);
             var lastName = reader.IsDBNull(lastNameOrdinal) ? string.Empty : reader.GetString(lastNameOrdinal);
 
-            // Add to lookup. This accumulator is used to gather data from multiple queries later.
-            lookup[employeeId] = new LeaveBookingAccumulator(employeeId, supervisorId, employeeUsername, firstName, lastName);
+            // Add to dictionary
+            lookup[employeeId] = new LeaveBookingData(employeeId, supervisorId, employeeUsername, firstName, lastName);
         }
 
         return lookup;
     }
-    
+
     /// <summary>
     /// Create a MySqlCommand that filters by employee IDs
     /// </summary>
@@ -208,7 +151,7 @@ public static class LeaveBookings
             throw new ArgumentException("At least one employee ID must be supplied.", nameof(employeeIds));
         }
 
-        // Create parameterized query
+        // Create parameterised query
         var parameterNames = new string[employeeIds.Count];
         for (var i = 0; i < employeeIds.Count; i++)
         {
@@ -230,16 +173,16 @@ public static class LeaveBookings
     }
 
     /// <summary>
-    /// Populate the allowances
+    /// Populate the allowances, adding data to the dictionary provided.
     /// </summary>
     /// <param name="connection">The database connection</param>
-    /// <param name="lookup">The staff lookup</param>
+    /// <param name="lookup">The staff lookup dictionary</param>
     /// <param name="employeeIds">The employee IDs to query</param>
     /// <param name="year">The year to query</param>
     /// <returns> A task representing the asynchronous operation </returns>
     private static async Task PopulateAllowancesAsync(
         MySqlConnection connection,
-        IDictionary<string, LeaveBookingAccumulator> lookup,
+        IDictionary<string, LeaveBookingData> lookup,
         IReadOnlyList<string> employeeIds,
         int year)
     {
@@ -256,9 +199,10 @@ public static class LeaveBookings
             WHERE emp_id IN ({0})
               AND year = @year;";
 
+        // Create command from SQL query string
         await using var command = CreateEmployeeFilterCommand(connection, sqlTemplate, employeeIds);
 
-        // Add in the year parameter last.
+        // Add in the year parameter last
         command.Parameters.Add("@year", MySqlDbType.Int32).Value = year;
 
         // Read results
@@ -269,7 +213,7 @@ public static class LeaveBookings
             var employeeId = reader.GetString("emp_id");
 
             // Check if we have this employee in our lookup
-            if (!lookup.TryGetValue(employeeId, out var accumulator))
+            if (!lookup.TryGetValue(employeeId, out var data))
             {
                 continue;
             }
@@ -278,31 +222,31 @@ public static class LeaveBookings
             var coreAllowanceOrdinal = reader.GetOrdinal("hours");
             var adjustmentOrdinal = reader.GetOrdinal("hours_carried");
 
-            // Update accumulator. Accumulartor is used to gather data from multiple queries before converting to DTO.
-            accumulator.CoreAllowance = reader.IsDBNull(coreAllowanceOrdinal)
+            // Update data
+            data.CoreAllowance = reader.IsDBNull(coreAllowanceOrdinal)
                 ? 0d
                 : reader.GetDouble(coreAllowanceOrdinal);
-            accumulator.Adjustment = reader.IsDBNull(adjustmentOrdinal)
+            data.Adjustment = reader.IsDBNull(adjustmentOrdinal)
                 ? 0d
                 : reader.GetDouble(adjustmentOrdinal);
         }
     }
 
     /// <summary>
-    /// Populate the bookings
+    /// Populate the bookings, adding data to the dictionary provided.
     /// </summary>
     /// <param name="connection">The database connection</param>
-    /// <param name="lookup">The staff lookup</param>
+    /// <param name="lookup">The staff lookup dictionary</param>
     /// <param name="employeeIds">The employee IDs to query</param>
     /// <param name="year">The year to query</param>
     /// <returns> A task representing the asynchronous operation</returns>
     private static async Task PopulateBookingsAsync(
         MySqlConnection connection,
-        IDictionary<string, LeaveBookingAccumulator> lookup,
+        IDictionary<string, LeaveBookingData> lookup,
         IReadOnlyList<string> employeeIds,
         int year)
     {
-        // If no employee IDs are provided, there's nothing to do.
+        // If no employee IDs are provided, there's nothing to do
         if (employeeIds.Count == 0)
         {
             return;
@@ -315,19 +259,22 @@ public static class LeaveBookings
             WHERE emp_id IN ({0})
               AND deny <> 'Y'
               AND year = @year;";
+
+        // Create command from SQL query string
         await using var command = CreateEmployeeFilterCommand(connection, sqlTemplate, employeeIds);
-        // Add in the year parameter last.
+
+        // Add in the year parameter last
         command.Parameters.Add("@year", MySqlDbType.Int32).Value = year;
 
-        // Read results.
+        // Read results
         await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            // Get employee ID.
+            // Get employee ID
             var employeeId = reader.GetString("emp_id");
 
-            // Check if we have this employee in our lookup.
-            if (!lookup.TryGetValue(employeeId, out var accumulator))
+            // Check if we have this employee in our lookup
+            if (!lookup.TryGetValue(employeeId, out var data))
             {
                 continue;
             }
@@ -337,18 +284,19 @@ public static class LeaveBookings
             var ampm = reader.IsDBNull(ampmOrdinal)
                 ? string.Empty
                 : reader.GetString(ampmOrdinal);
-            // Add booking to accumulator. Accumulator is used to gather data from multiple queries before converting to DTO.
-            accumulator.Bookings.Add(new BookingDTO(date, ampm));
+
+            // Add booking data
+            data.Bookings.Add(new BookingDTO(date, ampm));
         }
     }
 
     /// <summary>
-    /// Accumulator for building up leave booking data before converting to DTO.
-    /// Used to gather data from multiple queries. Then converted to DTO at the end.
+    /// Leave booking data for a given employee in the leave booking system.
+    /// Internal object for gathering data from multiple queries. Then converted to DTO at the end.
     /// </summary>
-    private sealed class LeaveBookingAccumulator
+    private sealed class LeaveBookingData
     {
-        internal LeaveBookingAccumulator(
+        internal LeaveBookingData(
             string employeeId,
             int supervisorId,
             string username,
