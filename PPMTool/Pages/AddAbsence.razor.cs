@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +45,7 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"people/addperson/{PersonId}");
         }
 
-        private void HandleValidSubmit()
+        private async Task HandleValidSubmitAsync()
         {
             if (personModel != null)
             {

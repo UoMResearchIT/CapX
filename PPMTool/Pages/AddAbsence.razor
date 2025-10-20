@@ -10,7 +10,7 @@
         <h1>Edit Absences</h1>
         <hr />
         <div class="card">
-            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmitAsync">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">

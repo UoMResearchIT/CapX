@@ -57,7 +57,7 @@ namespace PPMTool.Services
                 IsBodyHtml = true,
             };
 
-            foreach (var recipient in to)
+            foreach (var recipient in to.Distinct())
             {
                 mailMessage.To.Add(recipient);
             }
@@ -66,7 +66,7 @@ namespace PPMTool.Services
 #if !LOCAL
             try
             {
-                client.Send(mailMessage);
+                client.SendAsync(mailMessage, null);
             }
             catch (Exception e)
             {
@@ -80,11 +80,12 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="staff"></param>
         /// <param name="timesheet"></param>
-        public void SendTimesheetSubmissionEmailNotification(Person staff, Timesheet timesheet)
+        public async Task SendTimesheetSubmissionEmailNotificationAsync(Person staff, Timesheet timesheet)
         {
             List<string> recipients = new List<string>();
 
-            Task.Run(() =>
+            // Run a background thread to do the sending and updating
+            await Task.Run(() =>
             {
                 // Create context and get relevant details for the email
                 using (var context = DbContextFactory.CreateDbContext())
@@ -121,9 +122,10 @@ namespace PPMTool.Services
         /// <param name="newAbsences"></param>
         /// <param name="modifiedAbsences"></param>
         /// <param name="deletedAbsences"></param>
-        public void SendAbsenceEmailNotifications(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
+        public async Task SendAbsenceEmailNotificationsAsync(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
         {
-            Task.Run(() =>
+            // Run this task on a background thread
+            await Task.Run(async () =>
             {
                 // Create context and get people for lookup
                 using (var context = DbContextFactory.CreateDbContext())
@@ -275,7 +277,7 @@ namespace PPMTool.Services
                                 $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                         Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
                         SendEmail(recipients, subject, body.ToString());
-                        Task.Delay(1000);
+                        await Task.Delay(1000);
                     }
                 }
             });
@@ -331,9 +333,9 @@ namespace PPMTool.Services
         /// <param name="note"></param>
         /// <param name="mentions"></param>
         /// <param name="listOfChanges"></param>
-        internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
+        internal async Task SendMentionAndOwnerEmailNotificationsAsync(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
-            Task.Run(() =>
+            await Task.Run(async () =>
             {
                 // Create context and get roles (ignoring externals)
                 using (var context = DbContextFactory.CreateDbContext())
@@ -419,7 +421,7 @@ namespace PPMTool.Services
                             .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
                                 $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
                         SendEmail(recipients, subject, body.ToString());
-                        Task.Delay(1000);
+                        await Task.Delay(1000);
                     }
                 }
             });

@@ -482,7 +482,7 @@ namespace PPMTool.Pages
             if (timesheet.Owner == ActiveUser?.Person)
             {
                 Debug.Write("** Sending an email to the Line Manager...");
-                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser?.Person, timesheet);
+                await EmailService.SendTimesheetSubmissionEmailNotificationAsync(ActiveUser?.Person, timesheet);
             }
 
             // Only navigate away if the status is new as this means the save button has been clicked
