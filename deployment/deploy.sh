@@ -22,9 +22,12 @@ sudo scp -i ~/.ssh/id_rsa mbgm6ah3@balex.itservices.manchester.ac.uk:/var/www/ca
 sudo chown mbgm6ah3:users ~/CapX/PPMTool/PPMTool.db*
 sudo sqlite3 ~/CapX/PPMTool/PPMTool.db VACUUM;
 
-# Run migrations
+# Run migrations (needs connection string from environment file)
 cd ~/CapX/PPMTool
 dotnet tool restore
+set -a
+source /var/www/capx/variables.env
+set +a
 dotnet ef database update
 cp PPMTool.db* ./bin/Release/net8.0/publish/
 
