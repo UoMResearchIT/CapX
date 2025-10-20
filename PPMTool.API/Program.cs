@@ -29,7 +29,7 @@ EnvironmentHelper.LoadEnvironmentVariables(builder);
 
 #if RELEASE
 // Get the log path from the configuration file
-var logPath = configuration.GetValue<string>("LogPath");
+var logPath = builder.Configuration.GetValue<string>("LogPath");
 if (string.IsNullOrEmpty(logPath))
 {
     throw new Exception("LogPath configuration is missing or empty!");
