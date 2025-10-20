@@ -45,7 +45,7 @@ public static class LeaveBookings
             }
 
             // Connect to the leave bookings database
-            var connectionString = configuration["LeaveBookings:ConnectionString"];
+            var connectionString = configuration["ConnectionStrings:LeaveBookingsDatabase"];
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
 
