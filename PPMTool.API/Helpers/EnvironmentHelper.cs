@@ -27,7 +27,7 @@
             var leaveBookingsConnectionString = Environment.GetEnvironmentVariable("LEAVEBOOKINGS_CONNECTION_STRING");
             if (!string.IsNullOrWhiteSpace(leaveBookingsConnectionString))
             {
-                overridingValues.Add("LeaveBookings:ConnectionString", leaveBookingsConnectionString);
+                overridingValues.Add("ConnectionStrings:LeaveBookingsDatabase", leaveBookingsConnectionString);
             }
 
             // Add the overriding values to the configuration
@@ -46,8 +46,8 @@
             {
                 throw new InvalidOperationException("CONNECTION_STRING environment variable is not set!");
             }
-            
-            if (string.IsNullOrWhiteSpace(builder.Configuration["LeaveBookings:ConnectionString"]))
+
+            if (string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:LeaveBookingsDatabase"]))
             {
                 throw new InvalidOperationException("LEAVEBOOKINGS_CONNECTION_STRING environment variable is not set!");
             }
