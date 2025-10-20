@@ -1,16 +1,16 @@
-# CapX
-This is a tool written in .NET Blazor (Server) for managing many aspects of the service delivery of the RSE department and the development of its staff.
+# Capacity eXtended (CapX)
+This is tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server), it is used for managing many aspects of the service delivery of the RSE department and the development of its staff.
 
 The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](https://balex.itservices.manchester.ac.uk) built from the `release` branch in the repo. This is a 10.99 private IP so users will need to be on the VPN to access.
 
-There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and show cases new features but might not be entirely stable. This is also on the private network.
+There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and showcases new features but might not be entirely stable. This is also on the private network.
 
-CapX also offers an API alongside the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively.
+CapX also offers an API alongside the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively. Endpoints require an API key to be supplied which can be generated in the developer settings part of the main web application.
 
 ## User Accounts and Access
-The app is integrated with UoM CAS with access to restricted parts of the app managed within the app using a Role-Based Access Control database table. Super-users are able to manage user roles via the "Manage Access" page.
+The app is integrated with UoM CAS with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles via the "Manage Access" page.
 
-The production version of CapX uses the DS CAS and users with a standard UoM user account can authenticate. The development version of CapX authenticates using the PPAD CAS instance; users will need a UoM PPAD account to use the development version.
+The production version of CapX uses the production (DS) CAS and users with a standard UoM user account can authenticate. The development version of CapX authenticates using the pre-production (PPAD) CAS instance; users will need a UoM PPAD account to use the development version.
 
 ## API Access
 Any user of the web application can gain access to the API endpoints. Note that their success in using the endpoints is dictated by their role in the web app as both the web application and the API application share the same database. To access the API, users need to generate an API key from the "Developer Settings" in the web app menu. If running from source, the successful generation of an API key depends on a suitable secret (minimum 32 characters) being injected into the `Jwt:SecretKey` configuration parameter for the web application. If using Visual Studio, this can be done by simply browsing to "User Secrets" for the project and adding `"Jwt:SecretKey" : "some-32-char-long-value"` to the .NET secrets manager. Otherwise, the parameter can be injected via an environment variable named `API_KEY_SECRET`.
