@@ -45,7 +45,7 @@ namespace PPMTool.Pages
             Navigation.NavigateTo($"people/addperson/{PersonId}");
         }
 
-        private async Task HandleValidSubmitAsync()
+        private void HandleValidSubmit()
         {
             if (personModel != null)
             {
@@ -102,8 +102,8 @@ namespace PPMTool.Pages
                     LogInformation($"Saving absences for {personModel.Name}.");
                     PersonService.Update(Context, personModel);
 
-                    // Send emails based on diff information
-                    await EmailService.SendAbsenceEmailNotificationsAsync(newAbsences, updatedAbsences, delAbsencesDictionary);
+                    // Send emails based on diff information (fire and forget)
+                    _ = EmailService.SendAbsenceEmailNotificationsAsync(newAbsences, updatedAbsences, delAbsencesDictionary);
                 }
                 else
                 {

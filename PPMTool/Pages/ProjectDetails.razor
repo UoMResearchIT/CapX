@@ -434,7 +434,7 @@
                             </div>
                             <div class="col-auto">
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                    <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNoteAsync : SaveNoteAsync)" />
+                                    <RadzenButton Icon="check" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(isEditExistingNote ? UpdateNote : SaveNote)" />
                                     <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardClicked" />
                                 </RadzenStack>
                             </div>

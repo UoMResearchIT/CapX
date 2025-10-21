@@ -894,7 +894,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Saves a new note to the database and hides the editor
         /// </summary>
-        private async Task SaveNoteAsync()
+        private void SaveNote()
         {
             Debug.WriteLine("** SAVING NOTE!!! ");
 
@@ -916,13 +916,13 @@ namespace PPMTool.Pages
             LoadNotesFromDB();
             FilterAndHighlightNotes();
             ShowOrHideEditor(false);
-            await EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions);
+            _ = EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions);
         }
 
         /// <summary>
         /// Updates an existing note in the DB and hides the editor
         /// </summary>
-        private async Task UpdateNoteAsync()
+        private void UpdateNote()
         {
             // Update model in DB
             noteModel.EditedDate = DateTime.Now;
@@ -935,7 +935,7 @@ namespace PPMTool.Pages
             LoadNotesFromDB();
             FilterAndHighlightNotes();
             ShowOrHideEditor(false);
-            await EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions, listOfNoteChanges);
+            _ = EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions, listOfNoteChanges);
         }
 
         /// <summary>
