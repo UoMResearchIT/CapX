@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -95,10 +91,6 @@ namespace PPMTool.Pages
                 // If there are no changes then just navigate back
                 if (newAbsences.Count > 0 || updatedAbsences.Count() > 0 || deletedAbsences.Count > 0)
                 {
-
-                    // Send emails based on diff information
-                    EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
-
                     // Assign the absences from the data grid to the model
                     personModel.Absences.Clear();
                     foreach (var ab in dataGridEntities)
@@ -109,6 +101,9 @@ namespace PPMTool.Pages
                     // Write to the database
                     LogInformation($"Saving absences for {personModel.Name}.");
                     PersonService.Update(Context, personModel);
+
+                    // Send emails based on diff information (fire and forget)
+                    _ = EmailService.SendAbsenceEmailNotificationsAsync(newAbsences, updatedAbsences, delAbsencesDictionary);
                 }
                 else
                 {

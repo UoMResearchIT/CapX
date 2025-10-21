@@ -916,7 +916,7 @@ namespace PPMTool.Pages
             LoadNotesFromDB();
             FilterAndHighlightNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions);
+            _ = EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions);
         }
 
         /// <summary>
@@ -935,7 +935,7 @@ namespace PPMTool.Pages
             LoadNotesFromDB();
             FilterAndHighlightNotes();
             ShowOrHideEditor(false);
-            EmailService.SendMentionAndOwnerEmailNotifications(noteModel, mentions, listOfNoteChanges);
+            _ = EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions, listOfNoteChanges);
         }
 
         /// <summary>
