@@ -12,6 +12,7 @@
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
+@inject LayoutActionBarService ActionBarService
 <PageTitle>CapX - Log In</PageTitle>
 
 <RadzenComponents />
@@ -154,13 +155,21 @@
             <div class="content-area rz-p-4">
                 @Body
             </div>
-            <footer class="action-footer">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" AlignItems="AlignItems.Center">
-                    <RadzenText Text="Error Messages" Style="color:red; margin-bottom: 0rem;" />
-                    <RadzenButton Text="Save" Icon="check" ButtonStyle="ButtonStyle.Primary" />
-                    <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Danger" />
-                </RadzenStack>
-            </footer>
+            @if (ActionBarService.ShowActionBar)
+            {
+                <footer class="action-footer">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+                        @if (!string.IsNullOrWhiteSpace(ActionBarService.ErrorMessage))
+                        {
+                            <RadzenText Text="@ActionBarService.ErrorMessage" Style="color:red; margin-bottom: 0rem;" />
+                        }
+                        @foreach (var btn in ActionBarService.Buttons)
+                        {
+                            <RadzenButton Text="@btn.Text" Icon="@btn.Icon" ButtonStyle="@btn.ButtonStyle" Click="@(() => btn.OnClick?.Invoke())" />
+                        }
+                    </RadzenStack>
+                </footer>
+            }
         </div>
     </RadzenBody>
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">

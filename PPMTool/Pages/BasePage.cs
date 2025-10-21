@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Services;
 using PPMTool.Shared;
 using Radzen;
 
@@ -35,6 +36,9 @@ namespace PPMTool.Pages
 
         [Inject]
         protected NotificationService NotificationService { get; set; }
+
+        [Inject]
+        protected LayoutActionBarService LayoutActionBarService { get; set; }
 
         private bool loading = true;
         [CascadingParameter]
