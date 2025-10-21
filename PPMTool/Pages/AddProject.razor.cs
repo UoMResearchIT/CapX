@@ -182,6 +182,7 @@ namespace PPMTool.Pages
                         // Leave resources on completed projects so we have a historical record.
                         if (projectModel.ProjectStatus.IsCancelled())
                         {
+                            Logger.LogInformation("Removing resources as cancelled!");
                             foreach (SubTask t in projectModel.SubTasks)
                             {
                                 t.AssignedResources.Clear();
@@ -191,7 +192,7 @@ namespace PPMTool.Pages
                         // If the project is marked as cancelled or finished then remove the followers
                         if (projectModel.ProjectStatus.IsFinishedOrCancelled())
                         {
-
+                            Logger.LogInformation("Removing followers as finished or cancelled!");
                             projectModel.Followers.Clear();
                         }
 
