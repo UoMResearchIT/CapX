@@ -149,9 +149,18 @@
             </AuthorizeView>
         </RadzenPanelMenu>
     </RadzenSidebar>
-    <RadzenBody>
-        <div class="rz-p-4">
-            @Body
+    <RadzenBody class="p-0">
+        <div class="body-wrapper">
+            <div class="content-area rz-p-4">
+                @Body
+            </div>
+            <footer class="action-footer">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" AlignItems="AlignItems.Center">
+                    <RadzenText Text="Error Messages" Style="color:red; margin-bottom: 0rem;" />
+                    <RadzenButton Text="Save" Icon="check" ButtonStyle="ButtonStyle.Primary" />
+                    <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Danger" />
+                </RadzenStack>
+            </footer>
         </div>
     </RadzenBody>
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
