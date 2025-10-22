@@ -26,6 +26,8 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = new List<Absence>();
             }
+            EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
 
             LogInformation($"Viewing absences for {personModel?.Name}");
         }
