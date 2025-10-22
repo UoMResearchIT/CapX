@@ -9,10 +9,10 @@
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
+@using PPMTool.Pages.Components
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
-@inject LayoutActionBarService ActionBarService
 <PageTitle>CapX - Log In</PageTitle>
 
 <RadzenComponents />
@@ -153,19 +153,25 @@
     <RadzenBody class="p-0">
         <div class="body-wrapper">
             <div class="content-area rz-p-4">
-                @Body
+                <CascadingValue Value="this">
+                    @Body
+                </CascadingValue>
             </div>
-            @if (ActionBarService.ShowActionBar)
+            @if (ShowActionBar)
             {
                 <footer class="action-footer">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
-                        @if (!string.IsNullOrWhiteSpace(ActionBarService.ErrorMessage))
+                        @if (ErrorMessage != null)
                         {
-                            <RadzenText Text="@ActionBarService.ErrorMessage" Style="color:red; margin-bottom: 0rem;" />
+                            <StatusMessageComponent Message="ErrorMessage" />
                         }
-                        @foreach (var btn in ActionBarService.Buttons)
+                        @foreach (var btn in Buttons)
                         {
-                            <RadzenButton Text="@btn.Text" Icon="@btn.Icon" ButtonStyle="@btn.ButtonStyle" Click="@(() => btn.OnClick?.Invoke())" />
+                            <RadzenButton Text="@btn.Text"
+                                          Icon="@btn.Icon"
+                                          ButtonStyle="@btn.ButtonStyle"
+                                          Click="@(() => btn.OnClick?.Invoke())"
+                                          Disabled="@btn.Disabled" />
                         }
                     </RadzenStack>
                 </footer>

@@ -96,9 +96,9 @@
                         </div>
                         <hr />
                         <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
+                                        AllowPaging="true"
+                                        PageSize="3"
                                         WrapItems="false"
-                                        AllowPaging="false"
                                         Data="@personModel.WorkloadModelChanges.OrderByDescending(x => x.ChangeDate)"
                                         TItem="WorkloadModelChange">
                             <Template Context="d">
@@ -154,9 +154,9 @@
                         </div>
                         <hr />
                         <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
                                         WrapItems="false"
-                                        AllowPaging="false"
+                                        AllowPaging="true"
+                                        PageSize="10"
                                         Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
                                         TItem="Absence">
                             <Template Context="a">

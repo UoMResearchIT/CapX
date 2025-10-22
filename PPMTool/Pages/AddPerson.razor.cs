@@ -59,6 +59,9 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
+            // Setup the default action bar
+            SetDefaultActionBar(HandleSubmit, DiscardChanges);
+
             // Find out if superuser for delete button
             isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
 

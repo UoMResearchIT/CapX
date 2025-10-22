@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-using PPMTool.Services;
 using PPMTool.Shared;
 using Radzen;
 
@@ -37,9 +36,6 @@ namespace PPMTool.Pages
         [Inject]
         protected NotificationService NotificationService { get; set; }
 
-        [Inject]
-        protected LayoutActionBarService LayoutActionBarService { get; set; }
-
         private bool loading = true;
         [CascadingParameter]
         public bool Loading
@@ -54,9 +50,12 @@ namespace PPMTool.Pages
             }
         }
 
+        [CascadingParameter]
+        public MainLayout Layout { get; set; }
+
         protected bool EditAuthorised { get; set; }
 
-        protected StatusMessage ErrorMessage { get; set; }
+        protected StatusMessage ErrorMessage { get; private set; }
 
         /// <summary>
         /// A queuing mechanism for background data loads on pages so they don't run at the same time
@@ -78,6 +77,33 @@ namespace PPMTool.Pages
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
+        }
+
+        /// <summary>
+        /// Setup a default save / discard action bar
+        /// </summary>
+        /// <param name="submit"></param>
+        /// <param name="discard"></param>
+        protected void SetDefaultActionBar(Action submit, Action discard)
+        {
+            if (Layout != null)
+            {
+                Layout.SetButtons(
+                [
+                    new ActionButton
+                    {
+                        OnClick = submit,
+                        Disabled = !EditAuthorised
+                    },
+                    new ActionButton
+                    {
+                        Icon = "close",
+                        Text = "Discard",
+                        ButtonStyle = ButtonStyle.Danger,
+                        OnClick = discard
+                    }
+                ]);
+            }
         }
 
         /// <summary>
