@@ -26,6 +26,8 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = new List<Absence>();
             }
+            EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
 
             LogInformation($"Viewing absences for {personModel?.Name}");
         }
@@ -60,7 +62,7 @@ namespace PPMTool.Pages
                 }));
                 if (absence != null)
                 {
-                    ErrorMessage = new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence periods cannot overlap!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence periods cannot overlap!", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -68,19 +70,19 @@ namespace PPMTool.Pages
                 absence = dataGridEntities.FirstOrDefault(x => x.EndDate != null ? x.StartDate > x.EndDate : false);
                 if (absence != null)
                 {
-                    ErrorMessage = new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence period ends before it starts!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence period ends before it starts!", StatusMessage.MessageType.Error));
                     return;
                 }
 
                 // Check only one open-ended absence
                 if (dataGridEntities.Where(x => x.EndDate == null).Count() > 1)
                 {
-                    ErrorMessage = new StatusMessage("Only one open-ended absence permitted!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Only one open-ended absence permitted!", StatusMessage.MessageType.Error));
                     return;
                 }
 
                 // Reset error
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Get tracking information for the absences (added or deleted won't be tracked yet)
                 var newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();

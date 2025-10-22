@@ -90,10 +90,10 @@ namespace PPMTool.Pages
         {
             if (TagService.DuplicateDetected(Context, entity))
             {
-                ErrorMessage = new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error));
                 return true;
             }
-            ErrorMessage = null;
+            ClearErrorMessage();
             return false;
         }
 

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -59,6 +61,9 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
+            // Setup the default action bar
+            SetDefaultActionBar(HandleSubmit, DiscardChanges);
+
             // Find out if superuser for delete button
             isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
 
@@ -89,7 +94,7 @@ namespace PPMTool.Pages
         private void EditAvailability()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -101,6 +106,11 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"people/addavailabilitychange/{personModel.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
@@ -109,7 +119,7 @@ namespace PPMTool.Pages
         private void EditAbsence()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -121,6 +131,11 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"people/addabsence/{personModel.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
@@ -129,7 +144,7 @@ namespace PPMTool.Pages
         private void EditSkills()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -141,11 +156,16 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"skills/{personModel?.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         private void HandleSubmit()
         {
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 if (PersonId > 0)
@@ -166,9 +186,7 @@ namespace PPMTool.Pages
                         {
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
-                        return;
                     }
-                    ;
                 }
                 else
                 {
@@ -186,11 +204,18 @@ namespace PPMTool.Pages
                         {
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
-                        return;
                     }
                 }
 
-                Navigation.NavigateTo("people");
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    Navigation.NavigateTo("people");
+                }
+            }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
             }
         }
 

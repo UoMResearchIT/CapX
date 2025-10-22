@@ -9,6 +9,7 @@
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
+@using PPMTool.Pages.Components
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
@@ -149,9 +150,29 @@
             </AuthorizeView>
         </RadzenPanelMenu>
     </RadzenSidebar>
-    <RadzenBody>
-        <div class="rz-p-4">
-            @Body
+    <RadzenBody class="p-0">
+        <div class="body-wrapper">
+            <div class="content-area rz-p-4">
+                <CascadingValue Value="this">
+                    @Body
+                </CascadingValue>
+            </div>
+            <footer class="action-footer" style="@(ShowActionBar ? "" : "display:none")">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+                    @if (ErrorMessage != null)
+                    {
+                        <StatusMessageComponent Message="ErrorMessage" />
+                    }
+                    @foreach (var btn in Buttons)
+                    {
+                        <RadzenButton Text="@btn.Text"
+                                        Icon="@btn.Icon"
+                                        ButtonStyle="@btn.ButtonStyle"
+                                        Click="@(() => btn.OnClick?.Invoke())"
+                                        Disabled="@btn.Disabled" />
+                    }
+                </RadzenStack>
+            </footer>
         </div>
     </RadzenBody>
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
@@ -162,7 +183,7 @@
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="width: 100%">
                         <div id="magic-bar" style="width: 100%">
                             <RadzenTextBox @bind-Value=@searchTerm
-                                           Placeholder="Navigate to a Project or Person..."
+                                           Placeholder="Navigate to a Project or Person by typing and pressing enter..."
                                            Change=@OnSearchTermEntered
                                            aria-label="Search bar to navigate to project or person" />
                         </div>

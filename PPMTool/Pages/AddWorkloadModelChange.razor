@@ -11,23 +11,16 @@
         <RadzenText Text="@personModel.Name" TextStyle="TextStyle.DisplayH5" />
         <hr />
         <div class="card">
-            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+            <EditForm Model="@personModel">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
                 <div class="row">
-                    <div class="col">
-                        <h2>Current Changes to Default Availability</h2>
-                    </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || !IsSuperuserOrLineManagerOfThisPerson(personModel)) />
+                    <div class="col align-content-center mb-2">
+                        <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || !EditAuthorised) />
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
                                 AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                AllowPaging="true"
-                                PageSize="15"
                                 AllowSorting="true"
-                                ShowPagingSummary="true"
                                 EditMode="DataGridEditMode.Single"
                                 FilterMode="FilterMode.Simple"
                                 Data="@dataGridEntities"
@@ -97,8 +90,8 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Filterable="false" Sortable="false" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!EditAuthorised)" />
                             </Template>
                             <EditTemplate Context="c">
                                 <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
@@ -107,18 +100,6 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
-                @if (ErrorMessage != null)
-                {
-                    <br />
-                    <StatusMessageComponent Message=@ErrorMessage />
-                }
             </EditForm>
         </div>
     }

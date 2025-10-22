@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
+﻿using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -50,12 +46,12 @@ namespace PPMTool.Pages
             // Validate
             if (string.IsNullOrWhiteSpace(entity.CASUserName))
             {
-                ErrorMessage = new StatusMessage("You must supply a user name", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("You must supply a user name", StatusMessage.MessageType.Error));
                 return;
             }
             if (string.IsNullOrWhiteSpace(entity.Name))
             {
-                ErrorMessage = new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error));
                 return;
             }
 

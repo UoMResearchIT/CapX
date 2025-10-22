@@ -19,10 +19,8 @@
         
         <hr />
         <div class="card">
-            <EditForm Model="@competency" OnValidSubmit="@HandleValidSubmit">
+            <EditForm Model="@competency">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
-
                 <div class="row">
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Grade" /><br />
@@ -57,19 +55,7 @@
                         <RadzenHtmlEditor @bind-Value="@competency.Objective" Style="min-height: 10rem" Placeholder="Formatted objective to demonstrate this competecny that can be added to PDRs." />
                     </div>
                 </div>
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
             </EditForm>
         </div>
-        @if (ErrorMessage != null)
-        {
-            <br />
-            <StatusMessageComponent Message=@ErrorMessage />
-        }
     }
 </div>

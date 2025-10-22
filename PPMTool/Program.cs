@@ -59,6 +59,7 @@ builder.Services.AddDbContextFactory<PPMToolContext>(options =>
 
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddRadzenComponents();
+builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();
@@ -74,7 +75,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
-builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
