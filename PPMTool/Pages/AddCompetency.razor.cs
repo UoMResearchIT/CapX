@@ -39,6 +39,8 @@ namespace PPMTool.Pages
                 competency = new Competency();
             }
 
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
+
             LogInformation($"Adding / Editing competency {competency?.GetSensibleObjectName()}");
         }
 
