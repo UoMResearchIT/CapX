@@ -21,6 +21,8 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = new List<WorkloadModelChange>();
             }
+            EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
 
             LogInformation($"Viewing workload model changes for {personModel?.Name}");
         }
