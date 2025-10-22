@@ -19,10 +19,8 @@
         
         <hr />
         <div class="card">
-            <EditForm Model="@innateCode" OnValidSubmit="@HandleValidSubmit">
+            <EditForm Model="@innateCode">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
-
                 <div class="row">
                     <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Activity Code" /><br />
@@ -52,10 +50,7 @@
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
                                 AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                AllowPaging="true"
-                                PageSize="15"
                                 AllowSorting="true"
-                                ShowPagingSummary="true"
                                 EditMode="DataGridEditMode.Single"
                                 FilterMode="FilterMode.Simple"
                                 Data="@dataGridEntities"
@@ -90,18 +85,6 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
-                @if (ErrorMessage != null)
-                {
-                    <br />
-                    <StatusMessageComponent Message=@ErrorMessage />
-                }
             </EditForm>
         </div>
     }

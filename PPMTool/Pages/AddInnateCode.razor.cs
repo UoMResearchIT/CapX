@@ -6,7 +6,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Superuser")]
     public partial class AddInnateCode : DataGridPage<InnateCodeTask>
     {
         [Parameter]
@@ -31,7 +31,7 @@ namespace PPMTool.Pages
                 innateCode = new InnateCode();
                 dataGridEntities = new List<InnateCodeTask>();
             }
-
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
             LogInformation($"Adding / Editing innate code {innateCode?.GetCodeAsString()}");
         }
 
@@ -56,6 +56,18 @@ namespace PPMTool.Pages
                 foreach (var task in dataGridEntities)
                 {
                     innateCode.Tasks.Add(task);
+                }
+
+                // Needs to have a name and code
+                if (string.IsNullOrWhiteSpace(innateCode.ActivityCode))
+                {
+                    SetErrorMessage(new StatusMessage("Codes must have an activity code!", StatusMessage.MessageType.Error));
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(innateCode.ActivityName))
+                {
+                    SetErrorMessage(new StatusMessage("Codes must have an activity name!", StatusMessage.MessageType.Error));
+                    return;
                 }
 
                 // Has to have at least one task
