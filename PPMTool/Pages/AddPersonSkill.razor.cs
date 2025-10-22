@@ -26,6 +26,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
         }
 
         protected override void OnParametersSet()
