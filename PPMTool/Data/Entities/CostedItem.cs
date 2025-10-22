@@ -1,6 +1,9 @@
 ﻿namespace PPMTool.Data.Entities
 {
-    public class CostedItem : ObjectWithStatusMessages
+    /// <summary>
+    /// Represents an item that has planned and actual hours and costs
+    /// </summary>
+    public abstract class CostedItem : ObjectWithStatusMessages
     {
         /// <summary>
         /// The planned effort to be expended on the item

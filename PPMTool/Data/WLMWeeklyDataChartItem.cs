@@ -46,9 +46,7 @@ namespace PPMTool.Data
             // Loop over all the duties but not including the other category
             foreach (var duty in WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
             {
-
-                // TODO: Update the net values so they are either FTE or Percent based on the chosen normalisation
-
+                // Update the net values so they are either FTE or Percent based on the chosen normalisation
                 if (toTotalHours)
                 {
                     // Difference between percentage of time booked against duty and the expected percentage of time based on targets

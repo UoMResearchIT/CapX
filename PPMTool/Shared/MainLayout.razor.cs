@@ -135,9 +135,9 @@ namespace PPMTool.Shared
             razorComponentReference = DotNetObjectReference.Create(this);
         }
 
-        protected override void OnAfterRender(bool firstRender)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnAfterRender(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
 
             // Update the badges in the sidebar if necessary
             if (loginView != null && loginView.ActiveUser != null)
@@ -150,15 +150,15 @@ namespace PPMTool.Shared
 
                     // Update timesheet badge
                     var oldTimesheetIssuesValue = totalTimesheetIssues;
-                    totalTimesheetIssues = TimesheetService.GetIssueCount(context, activeUserId ?? 0);
+                    totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserId ?? 0);
 
                     // Update timesheet code badge
                     var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
-                    totalTimesheetCodesToDeactivate = InnateCodeService.GetCodesToDeactivate(context).Count();
+                    totalTimesheetCodesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(context)).Count();
 
                     // Update skills badge
                     var oldIncompleteSkillsValue = totalIncompleteSkills;
-                    totalIncompleteSkills = SkillTagService.GetIncompleteRecordCount(context, activeUserId ?? 0);
+                    totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserId ?? 0);
 
                     // Only call state has changed when something has changed
                     if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 using Radzen;
 
 namespace PPMTool.Data
@@ -164,6 +165,111 @@ namespace PPMTool.Data
 
                     // Wait for 1 second before retrying
                     Thread.Sleep(1000);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extension method to allow merging dictionaries as long as there are no duplicate keys
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="target"></param>
+        /// <param name="source"></param>
+        /// <exception cref="InvalidOperationException">If there are duplicate keys</exception>
+        public static void AddRange<T, U>(this IDictionary<T, U> target, IDictionary<T, U> source)
+        {
+            foreach (var kvp in source)
+            {
+                if (!target.ContainsKey(kvp.Key))
+                {
+                    target.Add(kvp.Key, kvp.Value);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Key already exists in the dictionary so cannot add {kvp.Key}!");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extension method to use the budget detail to define the amounts and status of a window of time
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="budgetDetail"></param>        
+        /// <param name="status"></param>
+        /// <param name="amount"></param>
+        public static void GetBudgetDetailsForWindow(
+            this AssignmentBudgetDetail budgetDetail,
+            DateTime start,
+            DateTime end,
+            out string status,
+            out double amount)
+        {
+            amount = 0d;
+            status = BudgetStatus.NotInBudget.GetDescription();
+
+            var durationTask = budgetDetail.Resource.SubTask.DurationDays;
+            var lengthOfWindow = end.Subtract(start).TotalDays + 1;
+            var daysFunded = budgetDetail.InBudget / budgetDetail.DailyCost;
+            var proportionInBudget = lengthOfWindow / daysFunded;
+            if (proportionInBudget > 1)
+            {
+                proportionInBudget = 1;
+            }
+
+            // Only update if the budget line is found and the whole task is
+            // not out of budget since all the chunks will be as well
+            if (budgetDetail != null && budgetDetail.Status != BudgetStatus.NotInBudget)
+            {
+                if (budgetDetail.Status == BudgetStatus.FullyInBudget)
+                {
+                    amount = budgetDetail.InBudget * proportionInBudget;
+                    status = budgetDetail.Status.GetDescription();
+                }
+                else
+                {
+                    // If chunk includes the funding source expiry date then need to work out proportion
+                    if (budgetDetail.Status == BudgetStatus.PartiallyInBudget && budgetDetail.FundingSourceExpired != null)
+                    {
+                        var expiryDate = budgetDetail.FundingSourceExpired.Value;
+
+                        // If expired before the chunk starts then out of budget
+                        if (expiryDate < start)
+                        {
+                            amount = 0;
+                            status = BudgetStatus.NotInBudget.GetDescription();
+                        }
+
+                        // If expired after the end date then fully in budget
+                        else if (expiryDate > end)
+                        {
+                            amount = budgetDetail.InBudget * proportionInBudget;
+                            status = BudgetStatus.FullyInBudget.GetDescription();
+                        }
+
+                        // Expires sometime during the window
+                        else
+                        {
+                            proportionInBudget = (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
+                            if (proportionInBudget > 1)
+                            {
+                                proportionInBudget = 1;
+                                status = BudgetStatus.FullyInBudget.GetDescription();
+                            }
+                            else
+                            {
+                                status = BudgetStatus.PartiallyInBudget.GetDescription();
+                            }
+                            amount = budgetDetail.InBudget * proportionInBudget;
+
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Any partially funded resources should have an expiry date!");
+                    }
                 }
             }
         }

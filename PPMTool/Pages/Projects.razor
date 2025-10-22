@@ -19,6 +19,7 @@
                 <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
                 <RadzenSwitch @bind-Value="@IncludeFinished" />
                 <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled="@(!EditAuthorised || Loading)" />
+                <RadzenButton Text="Estimate Cost" Icon="calculate" Click="@EstimateCost" Disabled="@(!EditAuthorised || Loading)" />
             </RadzenStack>
         </div>
     </div>

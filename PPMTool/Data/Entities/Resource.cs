@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -58,12 +59,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// The cost rate of this person based on RSE costing model
-        /// </summary>
-        [Required]
-        public Rate Rate { get; set; }
-
-        /// <summary>
         /// This represents where the resource is funded from in terms of known funding sources for the project.
         /// It is optional since it needs to be possible to associated resources with tasks before the funding sources are known.
         /// </summary>
@@ -84,87 +79,76 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Updates the planned and actual cost of the resource given either a day rate a financial reference
         /// Assumptions:
-        /// 1. Ignores grade-changes mid-task
-        /// 2. Ignores financial reference changes year on year
+        /// 1. Ignores annual increments for people
         /// </summary>
-        /// <param name="costModel"></param>
-        /// <param name="taskStart"></param>
-        /// <param name="taskEnd"></param>
-        /// <param name="financialReference"></param>
-        /// <param name="projectDayRate"></param>
-        internal void UpdateResourceCosts(CostModel costModel, DateTime taskStart, DateTime taskEnd, double? projectDayRate, FinancialReference financialReference)
+        /// <param name="project"></param>
+        /// <param name="subTask"></param>
+        /// <param name="finrefs"></param>
+        internal IEnumerable<AssignmentChunk> UpdateResourceCosts(Project project, SubTask subTask, IEnumerable<FinancialReference> finrefs)
         {
-            // If using the day rate model then calculation is simple
-            if (costModel == CostModel.DayRate)
+            // Costs to the department are always salary-based regardless of the recharge cost model (day-rate or salary based)
+            // Therefore this computes the actual cost of the resource chosen over the full task (planned cost)
+            // or the duration worked indicated by the number of hours booked (actual cost)
+            IEnumerable<AssignmentChunk> chunks = new List<AssignmentChunk>();
+
+            // Get durations in days over which the work is spread
+            var durationDaysPlanned = PlannedWorkHours / 7f;
+            var durationDaysActual = ActualWorkHours / 7f;
+            var fundingSourceType = FundedFrom?.FundingSourceType;
+
+            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funidng sources which have to be salary costs
+            if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
-                ActualCost = (ActualWorkHours / 7f) * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
+                ActualCost = durationDaysActual * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
 
                 // Planned cost is the hours work of the assignment converted to billable days and multiplied by the day rate
-                PlannedCost = (PlannedWorkHours / 7f) * (UseProjectDayRate ? projectDayRate ?? 0 : DayRate ?? 0);
+                PlannedCost = durationDaysPlanned * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
             }
 
-            // If using the grade-based models
+            // If using the grade-based models or day rate but DI funding source
             else
             {
-                // Use a financial reference and the standard or junior rate to compute the cost
-                // assuming it persists throughout the project and doesn't increment year on year
+                // Convert to assignment chunks (do not generate extra leadership chunks)
+                chunks = ExportHelper.GetAssignmentChunks(
+                    Person,
+                    new List<Project> { project },
+                    finrefs,
+                    subTask.StartDate,
+                    subTask.EndDate,
+                    new List<SubTask> { subTask },
+                    true,
+                    generateLeadershipTasks: GenerateLeadershipTaskLogic.None
+                );
 
-                // Get the annual salary costs for resource based on rate
-                var annualCostPerBillableDay = financialReference.GetJuniorOrStandardAnnualCosts(Rate) / 220;
+                // Planned costs
+                PlannedCost = chunks.Sum(x => x.PlannedCost);
 
-                // Update the actuals
-                ActualCost = (ActualWorkHours / 7f) * annualCostPerBillableDay;
-
-                // Update the planned
-                PlannedCost = (PlannedWorkHours / 7f) * annualCostPerBillableDay;
+                // Actual costs are a proportion of the planned
+                ActualCost = 0d;
+                var proportion = durationDaysActual / durationDaysPlanned;
+                ActualCost = PlannedCost * proportion;
             }
 
-            // If we wanted to include the year to year variation based on financial references then we could do it like below.
-            // However, actuals would need to be recorded year on year to be able to match the planned cost algorithm
-            // I guess this actually exists now but a job for another day
+            return chunks;
+        }
 
-            //// Get WLM active at start of task
-            //var startWLM = Person.WorkloadModelChanges
-            //    .Where(x => x.ChangeDate <= taskStart)
-            //    .OrderByDescending(x => x.ChangeDate)
-            //    .FirstOrDefault();
+        /// <summary>
+        /// Generates a unique resource key based on the project, subtask and resource combination
+        /// </summary>
+        /// <returns></returns>
+        internal string GenerateUniqueResourceKey()
+        {
+            // Should be a unique set of information as leadership tasks without IDs don't overlap
+            var composite = $"{SubTask.OwningProject.RTP}|{SubTask.SubTaskId}|{SubTask.StartDate:yyyyMMdd}|{SubTask.EndDate:yyyyMMdd}|{ResourceId}";
 
-            //// If they haven't got a WLM then use the G6 default
-            //if (startWLM == null)
-            //{
-            //    startWLM = Person.GetWorkloadModelOnDateOrDefault(taskStart);
-            //}
-
-            //// Get WLM active at start of task (should never be null as person has to have started to be assigned to the task)
-            //var startWLM = Person.WorkloadModelChanges.Where(x => x.ChangeDate <= taskStart).OrderByDescending(x => x.ChangeDate).First();
-
-            //// Compute start and end FY for task
-            //var startFY = FinancialReference.GetFinancialYear(taskStart);
-            //var endFY = FinancialReference.GetFinancialYear(taskEnd);
-            //var currentFY = FinancialReference.GetFinancialYear(DateTime.Today);
-
-            //// Cost of each resource -- note that these are committed costs, cost of unmet demand is not included as it is not a planned cost.
-            //// Ignores WLM changes mid-assignment as too complicated to work out.
-            //PlannedCost = 0;
-
-            //// First period is partial year from start of task to end of the FY
-            //var finref = financialReference.GetSuitableFinancialReference(startFY);
-            //var billableDays = SubTask.GetNumberOfBillableDays(taskStart, new DateTime(startFY + 1, 7, 31)) * AssignmentFTE;
-            //PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade) * (billableDays / 220);
-
-            //// Compute cost for each complete FY
-            //for (int fy = startFY + 1; fy < endFY; ++fy)
-            //{
-            //    finref = financialReference.GetSuitableFinancialReference(fy);
-            //    billableDays = 220 * AssignmentFTE;
-            //    PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade);
-            //}
-
-            //// Final period is partial year again from start of FY to end of task
-            //finref = financialReference.GetSuitableFinancialReference(endFY);
-            //billableDays = SubTask.GetNumberOfBillableDays(new DateTime(endFY, 8, 1), taskEnd) * AssignmentFTE;
-            //PlannedCost += finref.GetSuitableCostForGrade(startWLM.Grade) * (billableDays / 220);
+            // Get a unique hash and truncate so not too long
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(composite);
+                var hash = sha.ComputeHash(bytes);
+                return BitConverter.ToString(hash).Replace("-", "").Substring(0, 12);
+            }
         }
     }
 }

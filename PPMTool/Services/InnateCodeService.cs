@@ -134,26 +134,28 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<CodeToDeactivate> GetCodesToDeactivate(PPMToolContext context)
+        public async Task<IEnumerable<CodeToDeactivate>> GetCodesToDeactivateAsync(PPMToolContext context)
         {
             // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
             // which are not associated with any currently active projects
-            var codes = context.InnateCodes
+            var codes = await context.InnateCodes
                 .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-") &&
                     context.Projects.Any(p =>
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
                         (int)p.ProjectStatus >= (int)ProjectStatus.Finished
                     )
-                );
+                )
+                .ToListAsync();
 
             // Map the codes to CodeToDeactivate objects
             IList<CodeToDeactivate> codesToDeactivate = new List<CodeToDeactivate>();
             foreach (var code in codes)
             {
-                var projects = context.Projects
+                var projects = await context.Projects
                     .Include(p => p.ProjectManager)
                     .Include(p => p.InnateActivity)
-                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId);
+                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId)
+                    .ToListAsync();
                 var pmNames = projects.Select(x => x.ProjectManager == null ? "Not Set" : x.ProjectManager.Name);
                 var obj = new CodeToDeactivate(code, pmNames, projects.Select(x => x.RTP));
                 codesToDeactivate.Add(obj);
