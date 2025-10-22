@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -48,7 +46,7 @@ namespace PPMTool.Pages
             if (innateCode != null)
             {
                 // Reset error message
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Write to the database
                 LogInformation($"Saving innate code {innateCode?.GetCodeAsString()} with tasks {string.Join(",", innateCode?.Tasks)}.");
@@ -63,7 +61,7 @@ namespace PPMTool.Pages
                 // Has to have at least one task
                 if (innateCode.Tasks.Count == 0)
                 {
-                    ErrorMessage = new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -80,7 +78,7 @@ namespace PPMTool.Pages
 
                 if (result == -1)
                 {
-                    ErrorMessage = new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error));
                     return;
                 }
 

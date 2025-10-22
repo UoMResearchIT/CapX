@@ -80,6 +80,39 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Sets the page error message -- if using action bar will set it there instead of using the page property
+        /// </summary>
+        /// <param name="message"></param>
+        protected void SetErrorMessage(StatusMessage message)
+        {
+            if (Layout.ShowActionBar)
+            {
+                Layout.SetErrorMessage(message);
+            }
+            else
+            {
+                ErrorMessage = message;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Clear the error messsage -- if using the action bar will clear it there instead of using the page property
+        /// </summary>
+        protected void ClearErrorMessage()
+        {
+            if (Layout.ShowActionBar)
+            {
+                Layout.ClearErrorMessage();
+            }
+            else
+            {
+                ErrorMessage = null;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
         /// Setup a default save / discard action bar
         /// </summary>
         /// <param name="submit"></param>

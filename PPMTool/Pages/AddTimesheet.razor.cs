@@ -428,12 +428,12 @@ namespace PPMTool.Pages
             timesheet.Status = newStatus;
 
             // Reset error message
-            ErrorMessage = null;
+            ClearErrorMessage();
 
             // Validation on minimum hours etc. and show a status message
             if ((timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover()) && dataGridEntities.Count == 0)
             {
-                ErrorMessage = new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error));
                 timesheet.Status = TimesheetStatus.New;
                 return;
             }
