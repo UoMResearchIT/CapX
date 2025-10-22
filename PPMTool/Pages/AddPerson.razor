@@ -54,19 +54,19 @@
         <hr />
 
         <div class="card">
-            <EditForm EditContext="editContext" OnSubmit="@HandleSubmit">
+            <EditForm EditContext="editContext">
                 <div class="row">
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Name" /><br>
-                        <RadzenTextBox TValue="string" @bind-Value="personModel.Name" Disabled=!EditAuthorised/>
+                        <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
+                        <RadzenTextBox Name="Name" TValue="string" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Initials" /><br>
-                        <RadzenTextBox TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
+                        <RadzenTextBox Name="Initials" TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Line Manager" /><br>
-                        <RadzenDropDown class="radzen-dropdown" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>
+                        <RadzenDropDown class="radzen-dropdown" Name="LM" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
                     </div>
                 </div>
                 <div class="row">
@@ -178,12 +178,6 @@
                 <hr />
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-                <div class="row float-right">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled=!EditAuthorised />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
             </EditForm>
         </div>
     }
