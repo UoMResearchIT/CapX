@@ -276,7 +276,10 @@ namespace PPMTool.Pages
 
             // Set error messages based on the message store
             var messages = editContext.GetValidationMessages();
-            SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
