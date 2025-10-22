@@ -5,6 +5,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Shared;
 using Radzen;
+using static PPMTool.Shared.MainLayout;
 
 namespace PPMTool.Pages
 {

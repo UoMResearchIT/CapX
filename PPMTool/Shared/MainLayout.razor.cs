@@ -41,6 +41,19 @@ namespace PPMTool.Shared
         [Inject]
         private SkillTagService SkillTagService { get; set; }
 
+        /// <summary>
+        /// Whether there are any buttons or error messages to show in the action bar.
+        /// </summary>
+        public bool ShowActionBar => Buttons.Any() || ErrorMessage != null;
+
+        /// <summary>
+        /// Error message to show
+        /// </summary>
+        public StatusMessage ErrorMessage { get; private set; }
+
+        // Action buttons to show in the action bar
+        public List<ActionButton> Buttons { get; } = new();
+
         private bool sidebarExpanded = true;
         private string versionString;
         private string searchTerm;
@@ -53,6 +66,67 @@ namespace PPMTool.Shared
         private bool adminMenuItemExpanded = false;
         private int? activeUserId;
         private RoleType activeUserRoleType;
+
+        /// <summary>
+        /// Specific object for populating the magic bar popup
+        /// </summary>
+        private class MagicBarItem
+        {
+            public int EntityId { get; }
+
+            public string Name { get; }
+
+            public string DisplayName { get; }
+
+            public Type ItemType { get; }
+
+            public MagicBarItem(Person person)
+            {
+                EntityId = person.PersonId;
+                Name = person.Name;
+                DisplayName = $"{person.Name} ({person.ShortName})";
+                ItemType = typeof(Person);
+            }
+
+            public MagicBarItem(Project project)
+            {
+                EntityId = project.ProjectId;
+                Name = project.Name;
+                DisplayName = $"{project.GetFullName()} ({project.PI})";
+                ItemType = typeof(Project);
+            }
+        }
+
+        /// <summary>
+        /// Model of an action button
+        /// </summary>
+        public class ActionButton
+        {
+            /// <summary>
+            /// Text on the button
+            /// </summary>
+            public string Text { get; set; } = "Save";
+
+            /// <summary>
+            /// Icon on the button
+            /// </summary>
+            public string Icon { get; set; } = "check";
+
+            /// <summary>
+            /// Action to invoke when clicked
+            /// </summary>
+            public Action OnClick { get; set; }
+
+            /// <summary>
+            /// Whether the button should be disabled or not
+            /// </summary>
+            public bool Disabled { get; set; }
+
+            /// <summary>
+            /// Style of the button
+            /// </summary>
+            public ButtonStyle ButtonStyle { get; set; } = ButtonStyle.Primary;
+        }
 
         protected override void OnInitialized()
         {
@@ -183,53 +257,13 @@ namespace PPMTool.Shared
             ClearMagicBar();
         }
 
+        /// <summary>
+        /// Called when dispose is called on the layout itself
+        /// </summary>
         public void Dispose()
         {
             razorComponentReference?.Dispose();
         }
-
-        /// <summary>
-        /// Specific object for populating the magic bar popup
-        /// </summary>
-        private class MagicBarItem
-        {
-            public int EntityId { get; }
-
-            public string Name { get; }
-
-            public string DisplayName { get; }
-
-            public Type ItemType { get; }
-
-            public MagicBarItem(Person person)
-            {
-                EntityId = person.PersonId;
-                Name = person.Name;
-                DisplayName = $"{person.Name} ({person.ShortName})";
-                ItemType = typeof(Person);
-            }
-
-            public MagicBarItem(Project project)
-            {
-                EntityId = project.ProjectId;
-                Name = project.Name;
-                DisplayName = $"{project.GetFullName()} ({project.PI})";
-                ItemType = typeof(Project);
-            }
-        }
-
-        /// <summary>
-        /// Whether there are any buttons or error messages to show in the action bar.
-        /// </summary>
-        public bool ShowActionBar => Buttons.Any() || ErrorMessage != null;
-
-        /// <summary>
-        /// Error message to show
-        /// </summary>
-        public StatusMessage ErrorMessage { get; private set; }
-
-        // Action buttons to show in the action bar
-        public List<ActionButton> Buttons { get; } = new();
 
         /// <summary>
         /// Helper to set buttons
@@ -270,36 +304,5 @@ namespace PPMTool.Shared
             ErrorMessage = null;
             StateHasChanged();
         }
-    }
-
-    /// <summary>
-    /// Model of an action button
-    /// </summary>
-    public class ActionButton
-    {
-        /// <summary>
-        /// Text on the button
-        /// </summary>
-        public string Text { get; set; } = "Save";
-
-        /// <summary>
-        /// Icon on the button
-        /// </summary>
-        public string Icon { get; set; } = "check";
-
-        /// <summary>
-        /// Action to invoke when clicked
-        /// </summary>
-        public Action OnClick { get; set; }
-
-        /// <summary>
-        /// Whether the button should be disabled or not
-        /// </summary>
-        public bool Disabled { get; set; }
-
-        /// <summary>
-        /// Style of the button
-        /// </summary>
-        public ButtonStyle ButtonStyle { get; set; } = ButtonStyle.Primary;
     }
 }

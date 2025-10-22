@@ -157,25 +157,22 @@
                     @Body
                 </CascadingValue>
             </div>
-            @if (ShowActionBar)
-            {
-                <footer class="action-footer">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
-                        @if (ErrorMessage != null)
-                        {
-                            <StatusMessageComponent Message="ErrorMessage" />
-                        }
-                        @foreach (var btn in Buttons)
-                        {
-                            <RadzenButton Text="@btn.Text"
-                                          Icon="@btn.Icon"
-                                          ButtonStyle="@btn.ButtonStyle"
-                                          Click="@(() => btn.OnClick?.Invoke())"
-                                          Disabled="@btn.Disabled" />
-                        }
-                    </RadzenStack>
-                </footer>
-            }
+            <footer class="action-footer" style="@(ShowActionBar ? "" : "display:none")">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem">
+                    @if (ErrorMessage != null)
+                    {
+                        <StatusMessageComponent Message="ErrorMessage" />
+                    }
+                    @foreach (var btn in Buttons)
+                    {
+                        <RadzenButton Text="@btn.Text"
+                                        Icon="@btn.Icon"
+                                        ButtonStyle="@btn.ButtonStyle"
+                                        Click="@(() => btn.OnClick?.Invoke())"
+                                        Disabled="@btn.Disabled" />
+                    }
+                </RadzenStack>
+            </footer>
         </div>
     </RadzenBody>
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
