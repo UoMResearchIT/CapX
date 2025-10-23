@@ -579,9 +579,6 @@ namespace PPMTool.Migrations
                     b.Property<double>("PlannedWorkHours")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("Rate")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("SubTaskId")
                         .HasColumnType("INTEGER");
 

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -8,7 +6,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Superuser")]
     public partial class AddInnateCode : DataGridPage<InnateCodeTask>
     {
         [Parameter]
@@ -33,7 +31,7 @@ namespace PPMTool.Pages
                 innateCode = new InnateCode();
                 dataGridEntities = new List<InnateCodeTask>();
             }
-
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
             LogInformation($"Adding / Editing innate code {innateCode?.GetCodeAsString()}");
         }
 
@@ -48,7 +46,7 @@ namespace PPMTool.Pages
             if (innateCode != null)
             {
                 // Reset error message
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Write to the database
                 LogInformation($"Saving innate code {innateCode?.GetCodeAsString()} with tasks {string.Join(",", innateCode?.Tasks)}.");
@@ -60,10 +58,22 @@ namespace PPMTool.Pages
                     innateCode.Tasks.Add(task);
                 }
 
+                // Needs to have a name and code
+                if (string.IsNullOrWhiteSpace(innateCode.ActivityCode))
+                {
+                    SetErrorMessage(new StatusMessage("Codes must have an activity code!", StatusMessage.MessageType.Error));
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(innateCode.ActivityName))
+                {
+                    SetErrorMessage(new StatusMessage("Codes must have an activity name!", StatusMessage.MessageType.Error));
+                    return;
+                }
+
                 // Has to have at least one task
                 if (innateCode.Tasks.Count == 0)
                 {
-                    ErrorMessage = new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -80,7 +90,7 @@ namespace PPMTool.Pages
 
                 if (result == -1)
                 {
-                    ErrorMessage = new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error));
                     return;
                 }
 

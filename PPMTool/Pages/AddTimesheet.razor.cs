@@ -428,12 +428,12 @@ namespace PPMTool.Pages
             timesheet.Status = newStatus;
 
             // Reset error message
-            ErrorMessage = null;
+            ClearErrorMessage();
 
             // Validation on minimum hours etc. and show a status message
             if ((timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover()) && dataGridEntities.Count == 0)
             {
-                ErrorMessage = new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error));
                 timesheet.Status = TimesheetStatus.New;
                 return;
             }
@@ -476,13 +476,15 @@ namespace PPMTool.Pages
             // Save to database
             LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            TimesheetService.GetIssueCount(Context, ActiveUser?.Person?.PersonId ?? 0);
+            await TimesheetService.GetIssueCountAsync(Context, ActiveUser?.Person?.PersonId ?? 0);
 
             // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
             if (timesheet.Owner == ActiveUser?.Person)
             {
                 Debug.Write("** Sending an email to the Line Manager...");
-                EmailService.SendTimesheetSubmissionEmailNotification(ActiveUser?.Person, timesheet);
+
+                // Fire and forget the send request
+                _ = EmailService.SendTimesheetSubmissionEmailNotificationAsync(ActiveUser?.Person, timesheet);
             }
 
             // Only navigate away if the status is new as this means the save button has been clicked

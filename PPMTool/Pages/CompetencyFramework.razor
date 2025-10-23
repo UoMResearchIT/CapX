@@ -36,7 +36,7 @@
     <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Vertical">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-            <RadzenButton Text="Download Data"
+            <RadzenButton Text="Download Assessments"
                           Icon="@(exportRunning ? "hourglass_empty" : "download")"
                           Click="@ExportDataAsync"
                           Disabled="@(Loading || exportRunning)" />
@@ -67,9 +67,18 @@
         <div class="col">
             <h2>Competencies Framework Assessment</h2>
         </div>
-        <div class="col-auto">
-            <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
-        </div>
+        @if (userIsSuperuser)
+        {
+            <div class="col-auto">
+                <RadzenButton Text="Download Framework"
+                          Icon="@(downloadFrameworkRunning ? "hourglass_empty" : "download")"
+                          Click="@ExportFrameworkAsync"
+                          Disabled="@(Loading || downloadFrameworkRunning)" />
+            </div>
+            <div class="col-auto">
+                <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" />
+            </div>
+        }
     </div>
     <div class="row">
         <div class="col">

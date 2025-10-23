@@ -317,7 +317,7 @@ else
                         <RadzenDataGrid @ref="dataGrid"
                                         AllowAlternatingRows="false"
                                         AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                        AllowPaging="true"
+                                        AllowPaging="IsSplit"
                                         PageSize="5"
                                         AllowSorting="true"
                                         EditMode="DataGridEditMode.Single"
@@ -412,23 +412,6 @@ else
                                         </EditTemplate>
                                     </RadzenDataGridColumn>
                                 }
-                                else
-                                {
-                                    <RadzenDataGridColumn TItem="Resource" Property="Rate" Width="120px" Title="Rate" MinWidth="10px">
-                                        <Template Context="res">
-                                            <RadzenText Style="margin-bottom: 0rem;" Text="@res.Rate.ToString()" />
-                                        </Template>
-                                        <EditTemplate Context="res">
-                                            <RadzenDropDown @bind-Value="res.Rate"
-                                                            Data="@availableRates"
-                                                            Style="width:100%; display: block;">
-                                                <Template Context="rate">
-                                                    <RadzenText Style="margin-bottom: 0rem;" Text="@rate.ToString()" />
-                                                </Template>
-                                            </RadzenDropDown>
-                                        </EditTemplate>
-                                    </RadzenDataGridColumn>
-                                }
                                 <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="180px" Title="Funding Source" MinWidth="10px">
                                     <Template Context="res">
                                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
@@ -477,24 +460,15 @@ else
 
                 <hr />
                 <DataAnnotationsValidator />
-                <ValidationSummary />
 
-                @if (!IsSplit)
+                @if (IsSplit)
                 {
-                    <div class="row">
-                        <div class="col">
-                            <RadzenButton ButtonType="ButtonType.Button" Click="UpdateSubTaskModelFromResourceDataGrid" Text="Update" Icon="refresh" />
-                        </div>
-                        <div class="col-auto" style="justify-content:end">
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Update & Save" Icon="check" Disabled=!EditAuthorised />
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                        </div>
-                    </div>
-                    <hr />
+                    <ValidationSummary />                    
                 }
-                @if (!IsValid)
+
+                @if (IsSplit && !IsValid)
                 {
-                    <StatusMessageComponent Message=@(new StatusMessage($"Task configuration is invalid: {error}", StatusMessage.MessageType.Error)) />
+                    <StatusMessageComponent Message=@ErrorMessage />
                 }
             
             </EditForm>

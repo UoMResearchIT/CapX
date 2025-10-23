@@ -3,12 +3,14 @@ using FluentDateTime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
+using static PPMTool.Shared.MainLayout;
 
 namespace PPMTool.Pages
 {
@@ -146,6 +148,31 @@ namespace PPMTool.Pages
             if (!IsSplit)
             {
                 await InitialiseComponentAsync();
+
+                // Set up the buttons for the action bar
+                Layout.SetButtons(
+                [
+                    new ActionButton
+                    {
+                        Icon = "refresh",
+                        Text = "Update",
+                        ButtonStyle = ButtonStyle.Light,
+                        OnClick = UpdateSubTaskModelFromResourceDataGrid
+                    },
+                    new ActionButton
+                    {
+                        Text = "Update & Save",
+                        OnClick = HandleSubmit,
+                        Disabled = !EditAuthorised
+                    },
+                    new ActionButton
+                    {
+                        Icon = "close",
+                        Text = "Discard",
+                        ButtonStyle = ButtonStyle.Danger,
+                        OnClick = DiscardChanges
+                    }
+                ]);
             }
         }
 
@@ -626,9 +653,24 @@ namespace PPMTool.Pages
         public void UpdateSubTaskModelFromResourceDataGrid()
         {
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Validating the sub task model...");
-            editContext?.Validate();
 
-            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating sub task resources from data grid...");
+            // Reset validation state
+            error = null;
+            IsValid = true;
+            ClearErrorMessage();
+
+            // Validate the edit form and present errors if necessary
+            editContext?.Validate();
+            var messages = editContext?.GetValidationMessages();
+            if (messages?.Count() > 0)
+            {
+                error = messages.First();
+                IsValid = false;
+                SetErrorMessage(new StatusMessage(error, StatusMessage.MessageType.Error));
+                return;
+            }
+
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Task validation OK. Updating sub task resources from data grid...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
@@ -660,8 +702,8 @@ namespace PPMTool.Pages
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
-            var finref = FinancialReferenceService.GetFinancialReferenceForDate(Context, TaskModel.StartDate);
-            TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, finref);
+            var finrefs = FinancialReferenceService.GetAll(Context);
+            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs);
 
             // Set validity based on scheduler result
             IsValid = error == null;
@@ -679,7 +721,6 @@ namespace PPMTool.Pages
                 error = "Task name must be unique within the project";
                 IsValid = false;
             }
-            ;
 
             if (TaskModel.OriginalDemand <= 0)
             {
@@ -699,6 +740,12 @@ namespace PPMTool.Pages
                 IsValid = false;
             }
 
+            // Set the action bar error
+            if (!IsValid)
+            {
+                SetErrorMessage(new StatusMessage($"Task configuration is invalid: {error}", StatusMessage.MessageType.Error));
+            }
+
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: ...Validation complete!");
 
             // Update UI
@@ -713,6 +760,8 @@ namespace PPMTool.Pages
             if (ProjectModel != null)
             {
                 UpdateSubTaskModelFromResourceDataGrid();
+
+                // If valid from the schedule and resource update then carry on and try to save
                 if (IsValid)
                 {
                     // Warn of the fact that they are setting a zero demand
@@ -731,7 +780,7 @@ namespace PPMTool.Pages
                         confirmed = await DialogService.Confirm(message, "Zero Demand Task") ?? false;
                     }
 
-                    // Bail early if they do not want to continue
+                    // Set error if they do not want to continue
                     if (!confirmed)
                     {
                         if (TaskModel.AssignedResources.Count != 0)
@@ -739,7 +788,6 @@ namespace PPMTool.Pages
                             IsValid = false;
                             error = "Task has zero demand but has resources assigned!";
                         }
-                        return;
                     }
 
                     // Fail if demand, original demand or assigned resources are assigned less than 3 DP
@@ -747,18 +795,22 @@ namespace PPMTool.Pages
                     {
                         IsValid = false;
                         error = "Demand has digits after the third decimal place which is not allowed!";
-                        return;
                     }
                     if (HasDigitsAfterThirdDecimalPlace(TaskModel.OriginalDemand))
                     {
                         IsValid = false;
                         error = "Original Demand has digits after the third decimal place which is not allowed!";
-                        return;
                     }
                     if (TaskModel.AssignedResources.Any(x => HasDigitsAfterThirdDecimalPlace(x.AssignmentFTE)))
                     {
                         IsValid = false;
                         error = "One or more resources have Assignment FTE with digits after the third decimal place which is not allowed!";
+                    }
+
+                    // Set the error message and exit early
+                    if (!IsValid)
+                    {
+                        SetErrorMessage(new StatusMessage(error, StatusMessage.MessageType.Error));
                         return;
                     }
 

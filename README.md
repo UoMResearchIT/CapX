@@ -1,16 +1,16 @@
-# CapX
-This is a tool written in .NET Blazor (Server) for managing many aspects of the service delivery of the RSE department and the development of its staff.
+# Capacity eXtended (CapX)
+This is tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server), it is used for managing many aspects of the service delivery of the RSE department and the development of its staff.
 
 The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](https://balex.itservices.manchester.ac.uk) built from the `release` branch in the repo. This is a 10.99 private IP so users will need to be on the VPN to access.
 
-There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and show cases new features but might not be entirely stable. This is also on the private network.
+There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and showcases new features but might not be entirely stable. This is also on the private network.
 
-CapX also offers an API alongside the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively.
+CapX also offers an API alongside the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively. Endpoints require an API key to be supplied which can be generated in the developer settings part of the main web application.
 
 ## User Accounts and Access
-The app is integrated with UoM CAS with access to restricted parts of the app managed within the app using a Role-Based Access Control database table. Super-users are able to manage user roles via the "Manage Access" page.
+The app is integrated with UoM CAS with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles via the "Manage Access" page.
 
-The production version of CapX uses the DS CAS and users with a standard UoM user account can authenticate. The development version of CapX authenticates using the PPAD CAS instance; users will need a UoM PPAD account to use the development version.
+The production version of CapX uses the production (DS) CAS and users with a standard UoM user account can authenticate. The development version of CapX authenticates using the pre-production (PPAD) CAS instance; users will need a UoM PPAD account to use the development version.
 
 ## API Access
 Any user of the web application can gain access to the API endpoints. Note that their success in using the endpoints is dictated by their role in the web app as both the web application and the API application share the same database. To access the API, users need to generate an API key from the "Developer Settings" in the web app menu. If running from source, the successful generation of an API key depends on a suitable secret (minimum 32 characters) being injected into the `Jwt:SecretKey` configuration parameter for the web application. If using Visual Studio, this can be done by simply browsing to "User Secrets" for the project and adding `"Jwt:SecretKey" : "some-32-char-long-value"` to the .NET secrets manager. Otherwise, the parameter can be injected via an environment variable named `API_KEY_SECRET`.
@@ -29,13 +29,16 @@ Documentation of features and how to use them is available in the Wiki associate
 ## Building and Running from Source
 The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution.
 
+## Database Connection
+The database connection string needs to be specified in the `CONNECTION_STRING` environment variable. During development in Visual Studio, User Secrets can be used to override the blank value in the `appsettings.json`. See the `deployment/variables.env` and `deployment/variables-api.env` files for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. The CapX API also connects the [leave booking system](https://holiday.its.manchester.ac.uk/) database. The connection string for this connection also needs to be specified in the same way in a variable called `LEAVEBOOKINGS_CONNECTION_STRING=`.
+
 ### Seeding the Database
 The default database produced when first running EF Core's `database update` command runs the migrations available in the source code. This produces a database which contains a single user and a single person attached to that user to allow you to login. In addition, based on the migration data available in the source code, the timesheet activities and tasks in use at UoM at the time the feature was added are also there as well as the initial version of the RSE competency framework. Every other table is blank. This limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
 
 > [!WARNING] 
 > This feature overwrites all data in the tables as soon as the app starts!
 
-> [!INFO] 
+> [!WARNING] 
 > When seeding dummy data, developers are required to set the name, username and email of a superuser since one is always required to allow administration of the application and database. If the developer does not set these via user secrets (development) or environment variables (production) - see the `deployment/variables.env` file - then the app will throw an exception.
 
 ### Solution/Build and Launch Configurations

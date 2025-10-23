@@ -152,12 +152,18 @@ namespace PPMTool.Data.Entities
             // Generate status messages to be maintained against a project
             statusMessages = new List<StatusMessage>
             {
+                // Info
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
                 new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false),
+
+                // Warning
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
+
+                // Error
+                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget()),
                 new StatusMessage("This project has no funding source for its leadership charges!", StatusMessage.MessageType.Error, () => HasNoLeadershipFundingSourcesButRan()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => HasNoBudget()),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
@@ -172,8 +178,19 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask()),
+                
+                // Success
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Determines whether the project is over budget based on planned costs.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsOverBudget()
+        {
+            return Budget < PlannedCost;
         }
 
         /// <summary>
@@ -327,6 +344,7 @@ namespace PPMTool.Data.Entities
             double actualCost = 0d;
             double actualHours = 0d;
             double plannedCost = 0d;
+            List<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
             // Loop over all the subtasks
             if (SubTasks != null)
@@ -340,11 +358,8 @@ namespace PPMTool.Data.Entities
                     // Sum technical costs and hours
                     if (updateSubTaskCosts)
                     {
-                        // Pick a suitable financial reference for this task
-                        var finref = financialReferences.GetSuitableFinancialReference(task.StartDate);
-
                         // Update the cost of the tasks (and resources)
-                        task.UpdateSubTaskCosts(CostModel, DayRate, finref);
+                        chunks.AddRange(task.UpdateSubTaskCosts(this, financialReferences));
                     }
 
                     // Read subtask costs and hours and accumulate
@@ -358,9 +373,15 @@ namespace PPMTool.Data.Entities
             StartDate = startDate;
             EndDate = endDate;
 
-            // Add the leadership costs
-            ActualLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(true, financialReferences)) / 100;
-            PlannedLeadershipCosts = Math.Round(100 * CalculateLeadershipCosts(false, financialReferences)) / 100;
+            // Add the leadership costs, generating chunks if the model requires it
+            var leadershipChunks = ExportHelper.GetAssignmentChunks(
+                ProjectManager,
+                new List<Project> { this },
+                financialReferences,
+                shouldCalculateCosts: true)
+                .Where(c => c.IsLeadershipAssignment);
+            ActualLeadershipCosts = Math.Round(100 * CalculateActualLeadershipCosts(leadershipChunks)) / 100;
+            PlannedLeadershipCosts = Math.Round(100 * leadershipChunks.Sum(x => x.PlannedCost)) / 100;
 
             // Truncate to 1 DP
             var newValue = Math.Round(10 * actualHours) / 10;
@@ -374,6 +395,9 @@ namespace PPMTool.Data.Entities
             // Truncate the cost to 2 DP as it is currency and add on leadership costs
             ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
             PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts;
+
+
+            // TODO: Work out how much of the subtask costs are in budget
         }
 
         /// <summary>
@@ -400,10 +424,9 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Method to run the calculation of leadership costs planned or actual
         /// </summary>
-        /// <param name="actualCosts">Compute actual costs to date rather than the planned costs in the plan</param>
-        /// <param name="financialReferences"></param>
+        /// <param name="leadershipChunks"></param>
         /// <returns></returns>
-        private double CalculateLeadershipCosts(bool actualCosts, IEnumerable<FinancialReference> financialReferences)
+        private double CalculateActualLeadershipCosts(IEnumerable<AssignmentChunk> leadershipChunks)
         {
             // If not using the leadership cost model then this is zero
             if (CostModel != CostModel.TechAndLeadership)
@@ -411,83 +434,30 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
-            // What to use for end date -- just the end date of the project for the planned costs
-            var endDateOfCalculation = EndDate;
-
-            // For actuals, it depends on what the current date is
-            if (actualCosts)
+            // Zero for actuals if project hasn't started yet
+            if (DateTime.Today < StartDate)
             {
-                // Use current date if looking for actuals and currently in the middle of the project
-                // Works out actual costs up to the current day from project start
-                if (IsWithin(DateTime.Today))
-                {
-                    endDateOfCalculation = DateTime.Today;
-                }
-
-                // If the today is before the project starts then costs are just zero for actuals
-                else if (DateTime.Today < StartDate)
-                {
-                    return 0d;
-                }
+                return 0d;
             }
 
-            // For each financial year
-            var totalCost = 0d;
-            for (var finYear = FinancialReference.GetFinancialYear(StartDate); finYear <= FinancialReference.GetFinancialYear(endDateOfCalculation); finYear++)
+            // Find leadership task running today
+            var currentChunk = leadershipChunks.FirstOrDefault(x => x.IsWithin(DateTime.Today));
+
+            // All tasks before today count toward the actuals and are the same as the planned
+            var costs = leadershipChunks
+                .Where(x => x.EndDate < DateTime.Today)
+                .Sum(x => x.PlannedCost);
+
+            // If we have a current chunk work out the proportion through the chunk
+            if (currentChunk != null)
             {
-                // Get a suitable financial reference
-                var reference = financialReferences.GetSuitableFinancialReference(finYear);
-                var yearCost = 0d;
-                var yearFraction = 0d;
-
-                // Compute the fraction of a financial the project runs //
-                // and correct for time tasks run within that period    //
-
-                // Starts this financial year
-                if (FinancialReference.GetFinancialYear(StartDate) == finYear)
-                {
-                    // Starts and ends in the same financial year
-                    if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
-                    {
-                        yearFraction = (endDateOfCalculation.Subtract(StartDate).TotalDays + 1) / 365f;
-                        yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, endDateOfCalculation);
-                    }
-
-                    // Starts this financial year but goes past the end
-                    else
-                    {
-                        var tempEndDate = new DateTime(finYear + 1, 7, 31);
-                        yearFraction = (tempEndDate.Subtract(StartDate).TotalDays + 1) / 365f;
-                        yearFraction *= GetFractionOfTimeWithTasksRunning(StartDate, tempEndDate);
-                    }
-                }
-
-                // Ends this financial year and starts in an earlier year
-                else if (FinancialReference.GetFinancialYear(endDateOfCalculation) == finYear)
-                {
-                    var tempStartDate = new DateTime(finYear, 8, 1);
-                    yearFraction = (endDateOfCalculation.Subtract(tempStartDate).TotalDays + 1) / 365f;
-                    yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, endDateOfCalculation);
-                }
-
-                // Starts and ends in different financial years
-                else
-                {
-                    yearFraction = 1d;
-                    var tempStartDate = new DateTime(finYear, 8, 1);
-                    var tempEndDate = new DateTime(finYear + 1, 7, 31);
-                    yearFraction *= GetFractionOfTimeWithTasksRunning(tempStartDate, tempEndDate);
-                }
-
-                // Compute cost (0.05 FTE per project)
-                yearCost = yearFraction * reference.Grade75Costs * LeadershipFTE;
-
-                // Accumulate
-                totalCost += yearCost;
+                var daysInChunk = DateTime.Today.Subtract(currentChunk.StartDate).TotalDays + 1;
+                var chunkLength = currentChunk.EndDate.Subtract(currentChunk.StartDate).TotalDays + 1;
+                var proportion = daysInChunk / chunkLength;
+                costs += proportion * currentChunk.PlannedCost;
             }
 
-            // Return the total cost
-            return totalCost < 0 ? 0 : totalCost;
+            return costs;
         }
 
         /// <summary>
@@ -530,6 +500,75 @@ namespace PPMTool.Data.Entities
             var mergedRanges = MergeDateRanges(dateRanges);
 
             return mergedRanges;
+        }
+
+        /// <summary>
+        /// Method to generate leadership tasks for a project
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<SubTask> GenerateLeadershipTasks()
+        {
+            // Find leadership tasks within the window and convert to actual tasks
+            var dateRanges = GetLeadershipTaskRanges();
+            var leadershipTasks = new List<SubTask>();
+            if (ProjectManager == null)
+            {
+                return leadershipTasks;
+            }
+
+            // Build tasks
+            var daysOfLeadershipForProject = dateRanges.Sum(x => x.EndDate.Subtract(x.StartDate).TotalDays + 1);
+            foreach (var dateRange in dateRanges)
+            {
+                // Add leadership subtask based on the date range
+                var leadershipStart = dateRange.StartDate.Date;
+                var leadershipEnd = dateRange.EndDate.Date;
+
+                // Adjust leadership task start and end dates based on the person starting or leaving
+                // If calculating costs for planned leadership this is tasken into account later in GetAssignmentChunks
+                if (leadershipStart < ProjectManager.StartDate)
+                {
+                    leadershipStart = ProjectManager.StartDate;
+                }
+                if (ProjectManager.EndDate != null && leadershipEnd > ProjectManager.EndDate)
+                {
+                    leadershipEnd = ProjectManager.EndDate!.Value;
+                }
+
+                // Work out proportions based on adjusted dates
+                var daysOfLeadershipForRange = leadershipEnd.Subtract(leadershipStart).TotalDays + 1;
+                var proportionOfLeadershipCosts = daysOfLeadershipForRange / daysOfLeadershipForProject;
+
+                // Now create the leadership task
+                var leadershipTask = new SubTask
+                {
+                    Name = "Leadership",
+                    SubTaskId = -1,
+                    OwningProject = this,
+                    StartDate = leadershipStart,
+                    EndDate = leadershipEnd,
+                    RequiresLeadership = false,
+                    TaskType = TaskType.FixedDuration,
+                    Demand = LeadershipFTE,
+                    OriginalDemand = LeadershipFTE,
+                    DurationDays = (int)(leadershipEnd.Subtract(leadershipStart).TotalDays + 1)
+                };
+                leadershipTask.AssignedResources = new List<Resource>
+                {
+                    new Resource
+                    {
+                        Person = ProjectManager,
+                        AssignmentFTE = LeadershipFTE,
+                        FundedFrom = LeadershipFundingSource,
+                        PlannedCost = PlannedLeadershipCosts * proportionOfLeadershipCosts,
+                        ActualCost = ActualLeadershipCosts * proportionOfLeadershipCosts,
+                        SubTask = leadershipTask
+                    }
+                };
+                leadershipTasks.Add(leadershipTask);
+            }
+
+            return leadershipTasks;
         }
 
         /// <summary>

@@ -1851,7 +1851,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "EA"),
                         PlannedCost = 42123.54,
                         PlannedWorkHours = 1129,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -1871,7 +1870,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "GC"),
                         PlannedCost = 2987.96,
                         PlannedWorkHours = 78.5,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -1887,7 +1885,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "SAN"),
                         PlannedCost = 50946.21,
                         PlannedWorkHours = 1307.5,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -1907,7 +1904,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "CS"),
                         PlannedCost = 7425,
                         PlannedWorkHours = 175,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -1927,7 +1923,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PlannedCost = 2894.47,
                         PlannedWorkHours = 112,
-                        Rate = Rate.Junior,
                         UseProjectDayRate = true
                     }
                 };
@@ -1947,7 +1942,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "LL"),
                         PlannedCost = 1960.25,
                         PlannedWorkHours = 51.5,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -1964,7 +1958,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "LL"),
                         PlannedCost = 584.46,
                         PlannedWorkHours = 15,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -1981,7 +1974,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "BM"),
                         PlannedCost = 1809.04,
                         PlannedWorkHours = 70,
-                        Rate = Rate.Junior,
                         UseProjectDayRate = true
                     }
                 };
@@ -2001,7 +1993,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "LS"),
                         PlannedCost = 3996.63,
                         PlannedWorkHours = 105,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -2018,7 +2009,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 304.50,
                         PlannedWorkHours = 8,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -2035,7 +2025,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "LS"),
                         PlannedCost = 3463.75,
                         PlannedWorkHours = 91,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -2052,7 +2041,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 2550.23,
                         PlannedWorkHours = 67,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -2069,7 +2057,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 1065.77,
                         PlannedWorkHours = 28,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -2086,7 +2073,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "LS"),
                         PlannedCost = 418.69,
                         PlannedWorkHours = 11,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };
@@ -2103,7 +2089,6 @@ namespace PPMTool.Data.Helpers
                         Person = context.People.First(x => x.ShortName == "AG"),
                         PlannedCost = 266.44,
                         PlannedWorkHours = 7,
-                        Rate = Rate.Standard,
                         UseProjectDayRate = true
                     }
                 };

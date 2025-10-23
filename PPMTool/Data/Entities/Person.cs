@@ -194,7 +194,7 @@ namespace PPMTool.Data.Entities
         /// Is the current staff member a current staff member at the moment
         /// </summary>
         /// <returns></returns>
-        internal bool IsCurrentStaff()
+        public bool IsCurrentStaff()
         {
             return StartDate <= DateTime.Today && (EndDate == null || EndDate > DateTime.Today);
         }
@@ -260,6 +260,32 @@ namespace PPMTool.Data.Entities
             if (EndDate != null && EndDate < date) return null;
 
             return GetWorkloadModelOnDateOrDefault(date).Grade;
+        }
+
+        /// <summary>
+        /// Gets the first workload model change on or after the date given
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetFirstWorkloadModelAfter(DateTime date)
+        {
+            return WorkloadModelChanges
+                .Where(x => x.ChangeDate >= date)
+                .OrderBy(x => x.ChangeDate)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Gets the most recent workload model change on or before the date given
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        internal WorkloadModelChange GetLastWorkloadModelBefore(DateTime date)
+        {
+            return WorkloadModelChanges
+                .Where(x => x.ChangeDate <= date)
+                .OrderBy(x => x.ChangeDate)
+                .LastOrDefault();
         }
     }
 }

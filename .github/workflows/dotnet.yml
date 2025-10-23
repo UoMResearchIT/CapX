@@ -46,4 +46,4 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore --verbosity detailed
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore -c Release

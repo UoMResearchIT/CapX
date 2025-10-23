@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -28,6 +26,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
         }
 
         protected override void OnParametersSet()
@@ -129,7 +128,7 @@ namespace PPMTool.Pages
             if (personModel != null)
             {
                 // Reset error
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Add tags to person model
                 personModel.OwnedSkills = ownedTags.ToList();

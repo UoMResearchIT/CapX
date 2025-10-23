@@ -59,6 +59,7 @@ builder.Services.AddDbContextFactory<PPMToolContext>(options =>
 
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddRadzenComponents();
+builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();
@@ -74,7 +75,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
-builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
@@ -134,7 +135,6 @@ var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    logger.LogInformation("DEVELOPMENT ENVIRONMENT");
     app.UseForwardedHeaders();
 }
 else
@@ -143,7 +143,6 @@ else
     app.UseForwardedHeaders();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
-    logger.LogInformation("PRODUCTION ENVIRONMENT");
 }
 
 app.UseCookiePolicy();
@@ -219,6 +218,9 @@ if (shouldSeed)
 var cultureInfo = new CultureInfo("en-GB");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+// Clean local application file path
+FileHelper.CleanLocalApplicationFilePath(logger);
 
 // Run the app
 app.Run();

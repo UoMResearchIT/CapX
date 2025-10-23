@@ -131,6 +131,19 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
+        /// Check if it is in the active, paused or maintenance state
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool IsActive(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.Active ||
+                status == ProjectStatus.Paused ||
+                status == ProjectStatus.Maintenance;
+        }
+
+        /// <summary>
         /// Gets the badge style of an enum based on the attribute
         /// </summary>
         /// <param name="status"></param>
