@@ -578,6 +578,11 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
+
+            // Add task explicitly as needed for cost calculation
+            resource.SubTask = taskModel;
+
+            // Add to the data grid
             dataGridEntities.Add(resource);
             entityToInsert = null;
             TaskModel.UpdateUnmetDemand(dataGridEntities);
