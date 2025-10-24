@@ -25,6 +25,9 @@ sudo sqlite3 ~/CapX-Prod/PPMTool/PPMTool.db VACUUM;
 # Run migrations and copy to publish folder
 cd ~/CapX-Prod/PPMTool
 dotnet tool restore
+set -a
+source /var/www/capx/variables.env
+set +a
 dotnet ef database update
 cp PPMTool.db* ./bin/Release/net8.0/publish/
 

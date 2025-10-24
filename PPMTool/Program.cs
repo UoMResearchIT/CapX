@@ -96,6 +96,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "CapXAuth";
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.None;
+
+        // Set expiration to match CAS session timeout
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        options.SlidingExpiration = false;
+
         options.Events = new CookieAuthenticationEvents
         {
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
@@ -283,7 +288,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
 /// <summary>
 /// What to do when the user signs out from a CAS session
 /// </summary>
-Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configuration)
+async Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configuration)
 {
     // Single Sign-Out
     var casUrl = new Uri(configuration["Authentication:CAS:ServerUrlBase"]);
@@ -303,23 +308,24 @@ Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configur
         redirectUri
     );
     context.Response.StatusCode = 204; // Prevent RedirectToReturnUrl
-    context.Options.Events.RedirectToLogout(logoutRedirectContext);
-    return Task.CompletedTask;
+    await context.Options.Events.RedirectToLogout(logoutRedirectContext);
 }
 
 /// <summary>
 /// What to do when there is a failure during login
 /// </summary>
-Task OnRemoteFailure(RemoteFailureContext context)
+async Task OnRemoteFailure(RemoteFailureContext context)
 {
     var failure = context.Failure;
     var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
     if (!string.IsNullOrWhiteSpace(failure?.Message))
     {
-        logger.LogError(failure, "{Exception}", failure.Message);
+        logger.LogError(failure, "CAS authentication failed: {Exception}", failure?.Message);
     }
+
+    // Clear local cookie
+    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
     context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
     context.HandleResponse();
-    return Task.CompletedTask;
 }
