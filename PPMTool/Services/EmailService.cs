@@ -187,7 +187,7 @@ namespace PPMTool.Services
                         var mentionedAbsences = new List<Absence>();
 
                         // Get affected projects owned by this person
-                        var myProjects = affectedProjects.Where(x => x.ProjectManager == pm);
+                        var myProjects = affectedProjects.Where(x => x.ProjectManager?.PersonId == pm?.PersonId);
 
                         // Loop over the projects
                         foreach (var project in myProjects)
