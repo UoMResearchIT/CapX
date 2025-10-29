@@ -259,7 +259,10 @@ namespace PPMTool.Pages
             }
             else
             {
-                TaskModel = new SubTask();
+                TaskModel = new SubTask()
+                {
+                    OwningProject = ProjectModel
+                };
             }
 
             // Populate predecessor dropdown source (exclude self)
