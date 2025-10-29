@@ -8,7 +8,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class SplitTask : BasePage
     {
         [Inject]
