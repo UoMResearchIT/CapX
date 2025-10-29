@@ -20,7 +20,7 @@ public static class Timesheets
     /// <param name="startDate">The start date of the query window in the format yyyy-MM-dd</param>
     /// <param name="endDate">The end date of the query window in the format yyyy-MM-dd</param>
     /// <param name="name">The name of the person with spaces replaced with underscores. If not present defaults to the API key owner.</param>
-    /// <param name="asCsv">Whether the retruned data should be as a CSV download. Default is JSON if not present.</param>
+    /// <param name="asCsv">Whether the returned data should be as a CSV download. Default is JSON if not present.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TimesheetsDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
