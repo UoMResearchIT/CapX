@@ -684,6 +684,12 @@ namespace PPMTool.Pages
             TaskModel.AssignedResources.Clear();
             foreach (var r in dataGridEntities)
             {
+                // Copies do not have a task model attached so attach here
+                if (r.SubTask == null)
+                {
+                    r.SubTask = TaskModel;
+                }
+
                 Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
                 TaskModel.AssignedResources.Add(r);
             }

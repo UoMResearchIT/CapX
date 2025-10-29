@@ -138,6 +138,9 @@ namespace PPMTool.Services
             // Reset ID
             clone.SubTaskId = 0;
 
+            // Add the project
+            clone.OwningProject = taskToClone.OwningProject;
+
             // Create new resources
             clone.AssignedResources.Clear();
             foreach (var res in taskToClone.AssignedResources)
