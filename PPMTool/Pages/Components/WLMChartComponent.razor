@@ -113,7 +113,7 @@
             }
         </ApexChart>
         <hr />
-        <RadzenText Text="Average for the Period" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5" />
+        <RadzenText Text="@($"Average for the Weeks Beginning ({ChartItems.Min(x => x.WeekStart).ToString("dd/MM/yyyy")} - {ChartItems.Max(x => x.WeekStart).ToString("dd/MM/yyyy")})")" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5" />
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
