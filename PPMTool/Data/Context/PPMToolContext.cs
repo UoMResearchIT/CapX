@@ -27,6 +27,7 @@ namespace PPMTool.Data.Context
         public DbSet<Payment> Payments { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
         public DbSet<FundingSource> FundingSources { get; set; }
+        public DbSet<Feature> Features { get; set; }
 
         /// <summary>
         /// Inject options.
