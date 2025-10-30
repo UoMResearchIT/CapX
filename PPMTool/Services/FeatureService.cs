@@ -1,4 +1,5 @@
-﻿using PPMTool.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Services
@@ -8,15 +9,32 @@ namespace PPMTool.Services
     /// </summary>
     public class FeatureService
     {
-        // TODO: The state of the features should be cached in memory as well as the DB for performance.
-        internal List<Feature> GetAllFeatures(PPMToolContext context)
+        // The state of the features should be cached in memory as well as the DB for performance
+        private IDictionary<string, bool> FeatureState { get; set; } = new Dictionary<string, bool>();
+
+        /// <summary>
+        /// Method to pull the full information about the features out of the database
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal async Task<List<Feature>> GetAllFeaturesAsync(PPMToolContext context)
         {
-            throw new NotImplementedException();
+            return await context.Features.ToListAsync();
         }
 
-        internal void UpdateFeatureState(PPMToolContext context, Feature feature)
+        /// <summary>
+        /// Updates the state of a particular feature in the local cache and the DB if commiting
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="feature"></param>
+        internal void UpdateFeatureState(PPMToolContext context, Feature feature, bool commitChanges = true)
         {
-            throw new NotImplementedException();
+            FeatureState[feature.Name] = feature.Enabled;
+            context.Features.Update(feature);
+            if (commitChanges)
+            {
+                context.SaveChanges();
+            }
         }
     }
 }

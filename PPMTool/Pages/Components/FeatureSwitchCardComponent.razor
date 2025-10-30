@@ -1,14 +1,14 @@
 ﻿@using PPMTool.Data.Entities
 
-<div class="card row align-items-center">
+<div class="row align-items-center">
     <div class="col">
-        <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+        <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.1rem">
             <RadzenText TextStyle="TextStyle.Subtitle2" Text="@Feature.Name" />
             <RadzenText TextStyle="TextStyle.Body2" Text="@Feature.Description" />
         </RadzenStack>
     </div>
     <div class="col-auto">
-        <RadzenSwitch @bind-Value="Feature.Enabled" Change="@(args => OnFeatureToggle?.Invoke(Feature))" />
+        <RadzenSwitch @bind-Value="Feature.Enabled" Change="@(args => OnFeatureToggle?.Invoke(Feature))" Disabled="@Feature.MustAlwaysBeEnabled" />
     </div>
 </div>
 

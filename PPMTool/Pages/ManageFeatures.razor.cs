@@ -13,11 +13,12 @@ namespace PPMTool.Pages
 
         private List<Feature> features;
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
-            features = FeatureService.GetAllFeatures(Context);
+            features = await FeatureService.GetAllFeaturesAsync(Context);
+            Loading = false;
 
             LogInformation($"Viewing feature list");
         }

@@ -15,19 +15,26 @@
         <StatusMessageComponent Message="ErrorMessage" />
     }
     <hr />
-    <div class="row">
-        <div class="col">
-            <RadzenDataList AllowVirtualization="true"
-                            WrapItems="false"
-                            AllowPaging="false"
-                            Style="width:100%;"
-                            Data="@features"
-                            TItem="Feature">
-                <Template Context="feature">
-                    <FeatureSwitchCardComponent Feature="feature" OnFeatureToggle="@(args => OnFeatureToggled(feature))" />
-                </Template>
-            </RadzenDataList>
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <RadzenDataList AllowVirtualization="true"
+                                WrapItems="false"
+                                AllowPaging="false"
+                                Style="width:100%;"
+                                Data="@features"
+                                TItem="Feature">
+                    <Template Context="feature">
+                        <FeatureSwitchCardComponent Feature="feature" OnFeatureToggle="@(args => OnFeatureToggled(feature))" />
+                    </Template>
+                </RadzenDataList>
+            </div>
         </div>
-    </div>
-    <br />
+        <br />
+    }
 </div>
