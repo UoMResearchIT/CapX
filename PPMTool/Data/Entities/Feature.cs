@@ -26,5 +26,11 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public bool Enabled { get; set; }
+
+        /// <summary>
+        /// This indicates if a feature cannot be turned off as it is so fundamental to how the app works
+        /// </summary>
+        [Required]
+        public bool MustAlwaysBeEnabled { get; set; }
     }
 }

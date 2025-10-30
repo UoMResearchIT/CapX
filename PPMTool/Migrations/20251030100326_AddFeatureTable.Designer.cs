@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20251030095844_AddFeatureTable")]
+    [Migration("20251030100326_AddFeatureTable")]
     partial class AddFeatureTable
     {
         /// <inheritdoc />
@@ -170,6 +170,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("MustAlwaysBeEnabled")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
