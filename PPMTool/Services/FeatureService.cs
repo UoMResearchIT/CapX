@@ -13,6 +13,16 @@ namespace PPMTool.Services
         private IDictionary<string, bool> FeatureState { get; set; } = new Dictionary<string, bool>();
 
         /// <summary>
+        /// Method to initialise the cache from the database
+        /// </summary>
+        /// <returns></returns>
+        public async Task IntialiseServiceCacheAsync(PPMToolContext context)
+        {
+            var features = await GetAllFeaturesAsync(context);
+            FeatureState = features.ToDictionary(f => f.Name, f => f.Enabled);
+        }
+
+        /// <summary>
         /// Method to pull the full information about the features out of the database
         /// </summary>
         /// <param name="context"></param>

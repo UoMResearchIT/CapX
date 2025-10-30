@@ -30,7 +30,8 @@
                                 Data="@features"
                                 TItem="Feature">
                     <Template Context="feature">
-                        <FeatureSwitchCardComponent Feature="feature" OnFeatureToggle="@(args => OnFeatureToggled(feature))" />
+                        <FeatureSwitchCardComponent Feature="feature"
+                                                    OnFeatureToggle="@(args => OnFeatureToggled(feature))" />
                     </Template>
                 </RadzenDataList>
             </div>

@@ -191,33 +191,33 @@ if (shouldSeed)
         throw new InvalidOperationException("Superuser email not set!");
     }
 
-    using var scope = app.Services.CreateScope();
-    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+    using var scopeSeed = app.Services.CreateScope();
+    var dbContextFactorySeed = scopeSeed.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
     // Clear the existing DB and recreate a vanilla file
-    using (var context = dbContextFactory.CreateDbContext())
+    using (var context = dbContextFactorySeed.CreateDbContext())
     {
         context.Database.EnsureDeleted();
         context.Database.Migrate();
     }
 
     // Seed tables with suitable values -- Note that competencies are already seeded
-    SeedHelper.SeedPeople(scope.ServiceProvider);
-    SeedHelper.SeedAbsences(scope.ServiceProvider);
-    SeedHelper.SeedUsers(scope.ServiceProvider);
-    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
-    SeedHelper.SeedSkillTags(scope.ServiceProvider);
-    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
-    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
-    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
-    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
-    SeedHelper.SeedProjects(scope.ServiceProvider);
-    SeedHelper.SeedFundingSources(scope.ServiceProvider);
-    SeedHelper.SeedSubTasks(scope.ServiceProvider);
-    SeedHelper.SeedResources(scope.ServiceProvider);
-    SeedHelper.SeedNotes(scope.ServiceProvider);
-    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
-    SeedHelper.SeedTimesheets(scope.ServiceProvider);
+    SeedHelper.SeedPeople(scopeSeed.ServiceProvider);
+    SeedHelper.SeedAbsences(scopeSeed.ServiceProvider);
+    SeedHelper.SeedUsers(scopeSeed.ServiceProvider);
+    SeedHelper.SeedWorkloadModelChanges(scopeSeed.ServiceProvider);
+    SeedHelper.SeedSkillTags(scopeSeed.ServiceProvider);
+    SeedHelper.SeedOwnedSkillsForPeople(scopeSeed.ServiceProvider);
+    SeedHelper.SeedCompetencyAssessments(scopeSeed.ServiceProvider);
+    SeedHelper.SeedInnateCodesAndTasks(scopeSeed.ServiceProvider);
+    SeedHelper.SeedFinancialReferences(scopeSeed.ServiceProvider);
+    SeedHelper.SeedProjects(scopeSeed.ServiceProvider);
+    SeedHelper.SeedFundingSources(scopeSeed.ServiceProvider);
+    SeedHelper.SeedSubTasks(scopeSeed.ServiceProvider);
+    SeedHelper.SeedResources(scopeSeed.ServiceProvider);
+    SeedHelper.SeedNotes(scopeSeed.ServiceProvider);
+    SeedHelper.SeedInvoicesAndPayments(scopeSeed.ServiceProvider);
+    SeedHelper.SeedTimesheets(scopeSeed.ServiceProvider);
 }
 
 // Set default culture
@@ -227,6 +227,15 @@ CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Clean local application file path
 FileHelper.CleanLocalApplicationFilePath(logger);
+
+// Initialise feature service cache
+using var scope = app.Services.CreateScope();
+var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+using (var context = dbContextFactory.CreateDbContext())
+{
+    var featureService = app.Services.GetRequiredService<FeatureService>();
+    _ = featureService.IntialiseServiceCacheAsync(context);
+}
 
 // Run the app
 app.Run();
