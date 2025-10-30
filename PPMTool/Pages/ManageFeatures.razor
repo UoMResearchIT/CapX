@@ -1,0 +1,33 @@
+﻿@page "/managefeatures"
+@inherits BasePage
+@using PPMTool.Pages.Components
+@using PPMTool.Data.Entities
+<PageTitle>Manage Features - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col-auto">
+            <h1>Manage Features</h1>
+        </div>
+    </div>
+    @if (ErrorMessage != null)
+    {
+        <StatusMessageComponent Message="ErrorMessage" />
+    }
+    <hr />
+    <div class="row">
+        <div class="col">
+            <RadzenDataList AllowVirtualization="true"
+                            WrapItems="false"
+                            AllowPaging="false"
+                            Style="width:100%;"
+                            Data="@features"
+                            TItem="Feature">
+                <Template Context="feature">
+                    <FeatureSwitchCardComponent Feature="feature" OnFeatureToggle="@(args => OnFeatureToggled(feature))" />
+                </Template>
+            </RadzenDataList>
+        </div>
+    </div>
+    <br />
+</div>
