@@ -75,6 +75,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
+builder.Services.AddSingleton<FeatureService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
