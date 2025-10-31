@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {
@@ -8,6 +9,12 @@ namespace PPMTool.Data.Entities
         /// Primary key
         /// </summary>
         public int FeatureId { get; set; }
+
+        /// <summary>
+        /// Compile time reference to the feature in the system
+        /// </summary>
+        [Required]
+        public FeatureType FeatureType { get; set; }
 
         /// <summary>
         /// Name of the feature

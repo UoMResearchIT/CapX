@@ -19,6 +19,7 @@ namespace PPMTool.Migrations
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
                     Enabled = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    FeatureType = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
                     MustAlwaysBeEnabled = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
@@ -28,40 +29,48 @@ namespace PPMTool.Migrations
 
             // Seed features
             migrationBuilder.Sql(@"
-                INSERT INTO features (Name, Description, Enabled, MustAlwaysBeEnabled) VALUES
+                INSERT INTO features (FeatureType, Name, Description, Enabled, MustAlwaysBeEnabled) VALUES
                 (
+                  0,
                   'Projects, Capacity & People',
                   'The core feature of the tool is provide visualisation of project load against availability of resources. As such, this is a mandatory feature the allows administrators to manage a team of people and a portfolio of projects a how that relates to the capacity of the team.',
                   1,
                   1
                 );
 
-                INSERT INTO features (Name, Description) VALUES
+                INSERT INTO features (FeatureType, Name, Description) VALUES
                 (
+                  1,      
                   'Absences',
                   'Allows mangers to add absences for team members, notifying project managers when their resources may be unavailable.'
                 ),
                 (
+                  2,  
                   'Skills',
                   'Allows administrators to curate a list of skill tags, people to add their skill profiles and tasks within projects to be associated with skill tags.'
                 ),
                 (
+                  3,
                   'Development Journey',
                   'Allows the inclusion of a three-tier competency framework and the ability of staff and managers to use it as a tool to support development.'
                 ),
                 (
+                  4,
                   'API',
                   'Enables the API endpoints. The available endpoints will be determined by the features enabled.'
                 ),
                 (
+                  5,
                   'Timesheets',
                   'Allows people to enter weekly timesheet data against activity and task codes curated by administrators. This also enables workload model analysis to allow people to monitor how they are spending their time against their workload mdoel.'
                 ),
                 (
+                  6,
                   'Project Finance',
                   'Allows managers to keep financial records associated with projects including funding sources and invoices. Allows the cost of projects to calculated.'
                 ),
                 (
+                  7,
                   'Data Dashboard',
                   'Provides a page visible to all system users that summarises key information and allows export of data from the database in structured reports.'
                 );

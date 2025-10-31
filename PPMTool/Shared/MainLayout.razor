@@ -13,6 +13,7 @@
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
+@inject FeatureService FeatureService
 <PageTitle>CapX - Log In</PageTitle>
 
 <RadzenComponents />
@@ -94,20 +95,23 @@
                         }
                         <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
                         <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
-                        <RadzenPanelMenuItem Path="timesheets" Icon="timer">
-                            <Template>
-                                <div style="flex: 1;">
-                                    @if (sidebarExpanded)
-                                    {
-                                        <span>Timesheets</span>
-                                    }
-                                    @if (totalTimesheetIssues > 0)
-                                    {
-                                        <span class="rz-badge rz-badge-danger notification-badge" style="margin-left: 0.25rem;">@totalTimesheetIssues</span>
-                                    }
-                                </div>
-                            </Template>
-                        </RadzenPanelMenuItem>
+                        @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
+                        {
+                            <RadzenPanelMenuItem Path="timesheets" Icon="timer">
+                                <Template>
+                                    <div style="flex: 1;">
+                                        @if (sidebarExpanded)
+                                        {
+                                            <span>Timesheets</span>
+                                        }
+                                        @if (totalTimesheetIssues > 0)
+                                        {
+                                            <span class="rz-badge rz-badge-danger notification-badge" style="margin-left: 0.25rem;">@totalTimesheetIssues</span>
+                                        }
+                                    </div>
+                                </Template>
+                            </RadzenPanelMenuItem>
+                        }
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />

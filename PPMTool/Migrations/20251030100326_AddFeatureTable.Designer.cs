@@ -172,6 +172,9 @@ namespace PPMTool.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("FeatureType")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("MustAlwaysBeEnabled")
                         .HasColumnType("INTEGER");
 

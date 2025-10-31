@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -10,7 +11,7 @@ namespace PPMTool.Services
     public class FeatureService
     {
         // The state of the features should be cached in memory as well as the DB for performance
-        private IDictionary<string, bool> FeatureState { get; set; } = new Dictionary<string, bool>();
+        private IDictionary<FeatureType, bool> FeatureState { get; set; } = new Dictionary<FeatureType, bool>();
 
         /// <summary>
         /// Method to initialise the cache from the database
@@ -19,7 +20,7 @@ namespace PPMTool.Services
         public async Task IntialiseServiceCacheAsync(PPMToolContext context)
         {
             var features = await GetAllFeaturesAsync(context);
-            FeatureState = features.ToDictionary(f => f.Name, f => f.Enabled);
+            FeatureState = features.ToDictionary(f => f.FeatureType, f => f.Enabled);
         }
 
         /// <summary>
@@ -39,12 +40,26 @@ namespace PPMTool.Services
         /// <param name="feature"></param>
         internal void UpdateFeatureState(PPMToolContext context, Feature feature, bool commitChanges = true)
         {
-            FeatureState[feature.Name] = feature.Enabled;
+            FeatureState[feature.FeatureType] = feature.Enabled;
             context.Features.Update(feature);
             if (commitChanges)
             {
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Check whether a feature is enabled
+        /// </summary>
+        /// <param name="feature"></param>
+        /// <returns></returns>
+        public bool IsFeatureEnabled(FeatureType feature)
+        {
+            if (FeatureState.ContainsKey(feature))
+            {
+                return FeatureState[feature];
+            }
+            return false;
         }
     }
 }
