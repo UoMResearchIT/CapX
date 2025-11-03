@@ -80,44 +80,21 @@ public static class Timesheets
 
             // Query weekly timesheets that overlap the window
             // Read only, include owner and entries with innate info
-            var timesheets = await context.Timesheets
+            var query = context.Timesheets
                 .Include(t => t.Owner)
                 .Include(t => t.TimesheetEntries)
                     .ThenInclude(e => e.InnateCodeTask)
                         .ThenInclude(tk => tk.InnateCode)
-                .Where(t =>
-                    t.OwnerId == person.PersonId &&
-                    t.StartDate < endDateExclusive &&
-                    t.StartDate.AddDays(7) > start)
+                .Where(t => t.OwnerId == person.PersonId);
+
+            query = Helpers.ApplyDateRangeFilter(query, start, endDateExclusive);
+
+            var timesheets = await query
                 .OrderBy(t => t.StartDate)
                 .ToListAsync();
 
-            // Map to DTOs
-            var timesheetsAsDTOs = timesheets.Select(t => new TimesheetsDTO(
-                TimesheetId: t.TimesheetId,
-                OwnerId: t.OwnerId,
-                OwnerName: t.Owner?.Name ?? "Unknown",
-                CreatedDate: t.CreatedDate,
-                StartDate: t.StartDate,
-                Status: t.Status.GetDescription(),
-                DateStatusChanged: t.DateStatusChanged,
-                Info: t.Info,
-                Entries: t.TimesheetEntries.Select(e => new TimesheetEntryDTO(
-                    TimesheetEntryId: e.TimesheetEntryId,
-                    InnateCodeTaskId: e.InnateCodeTask?.InnateCodeTaskId ?? 0,
-                    InnateCode: e.InnateCodeTask?.InnateCode?.ActivityCode ?? string.Empty,
-                    InnateCodeName: e.InnateCodeTask?.InnateCode?.ActivityName ?? string.Empty,
-                    TaskName: e.InnateCodeTask?.TaskName ?? string.Empty,
-                    Duty: e.InnateCodeTask?.Duty.GetDescription() ?? "None",
-                    MondayHours: e.MondayHours,
-                    TuesdayHours: e.TuesdayHours,
-                    WednesdayHours: e.WednesdayHours,
-                    ThursdayHours: e.ThursdayHours,
-                    FridayHours: e.FridayHours,
-                    SaturdayHours: e.SaturdayHours,
-                    SundayHours: e.SundayHours
-                )).ToList()
-            )).ToList();
+            // Map to DTOs using shared helper
+            var timesheetsAsDTOs = MapToTimesheetDTOs(timesheets);
 
             // Check to see if we need to return a CSV file
             if (asCsv != null && asCsv == true)
@@ -181,7 +158,7 @@ public static class Timesheets
     /// <param name="startDate">Optional start date in the format yyyy-MM-dd. If omitted, returns all historical data.</param>
     /// <param name="endDate">Optional end date in the format yyyy-MM-dd. If omitted, returns all historical data.</param>
     /// <param name="asCsv">Whether the returned data should be as a CSV download. Default is JSON if not present.</param>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TimesheetBookingsByCodeTaskDTO))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TimesheetsByCodeTaskResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -212,121 +189,31 @@ public static class Timesheets
                 return Results.BadRequest("Code parameter is required.");
             }
 
-            // Parse optional date parameters
-            DateTime? start = null;
-            DateTime? endDateExclusive = null;
-
-            if (!string.IsNullOrWhiteSpace(startDate))
+            // Parse optional date range
+            var (start, endDateExclusive, dateError) = Helpers.ParseOptionalDateRange(startDate, endDate);
+            if (dateError != null)
             {
-                var success = Helpers.ParseDateTime(startDate, out DateTime parsedStart);
-                if (!success)
-                {
-                    logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Invalid start date {startDate}");
-                    return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
-                }
-                start = parsedStart.Date;
+                logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: {dateError}");
+                return Results.BadRequest(dateError);
             }
 
-            if (!string.IsNullOrWhiteSpace(endDate))
-            {
-                var success = Helpers.ParseDateTime(endDate, out DateTime parsedEnd);
-                if (!success)
-                {
-                    logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Invalid end date {endDate}");
-                    return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
-                }
-                endDateExclusive = parsedEnd.Date.AddDays(1);
-            }
-
-            // Query weekly timesheets that contain entries matching the code/task
-            // NOTE: This query returns ALL timesheet statuses (New, Submitted, Rejected, Approved).
-            // To filter for approved timesheets only, add the following to the Where clause:
-            // && t.Status == TimesheetStatus.Approved
-            var query = context.Timesheets
-                .Include(t => t.Owner)
-                .Include(t => t.TimesheetEntries)
-                    .ThenInclude(e => e.InnateCodeTask)
-                        .ThenInclude(tk => tk!.InnateCode)
-                .Where(t =>
-                    t.TimesheetEntries.Any(e =>
-                        e.InnateCodeTask != null &&
-                        e.InnateCodeTask.InnateCode != null &&
-                        e.InnateCodeTask.InnateCode.ActivityCode == code &&
-                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName)
-                    ));
-
-            // Apply optional date filtering
-            if (start.HasValue && endDateExclusive.HasValue)
-            {
-                var startValue = start.Value;
-                var endValue = endDateExclusive.Value;
-                query = query.Where(t => t.StartDate < endValue && t.StartDate.AddDays(7) > startValue);
-            }
-            else if (start.HasValue)
-            {
-                var startValue = start.Value;
-                query = query.Where(t => t.StartDate >= startValue);
-            }
-            else if (endDateExclusive.HasValue)
-            {
-                var endValue = endDateExclusive.Value;
-                query = query.Where(t => t.StartDate < endValue);
-            }
+            // Query timesheets matching the code/task filter
+            var query = BuildTimesheetQueryWithCodeTaskFilter(context, code, taskName);
+            query = Helpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
             var timesheets = await query
                 .OrderBy(t => t.StartDate)
                 .ThenBy(t => t.Owner!.Name)
                 .ToListAsync();
 
-            // Flatten to individual booking entries
-            var bookingEntries = new List<TimesheetBookingEntryDTO>();
+            // Map to DTOs using the same logic as GetTimesheetEntriesForPersonForDateRange
+            var timesheetsAsDTOs = MapToTimesheetDTOs(timesheets);
 
-            foreach (var timesheet in timesheets)
-            {
-                // Filter entries to only those matching the code/task criteria
-                var matchingEntries = timesheet.TimesheetEntries
-                    .Where(e =>
-                        e.InnateCodeTask != null &&
-                        e.InnateCodeTask.InnateCode != null &&
-                        e.InnateCodeTask.InnateCode.ActivityCode == code &&
-                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName))
-                    .ToList();
+            // Filter entries within each timesheet to only include matching code/task
+            var filteredTimesheets = FilterTimesheetEntriesByCodeTask(timesheetsAsDTOs, code, taskName);
 
-                foreach (var entry in matchingEntries)
-                {
-                    var totalHours = entry.MondayHours + entry.TuesdayHours + entry.WednesdayHours +
-                                   entry.ThursdayHours + entry.FridayHours + entry.SaturdayHours + entry.SundayHours;
-
-                    bookingEntries.Add(new TimesheetBookingEntryDTO(
-                        PersonName: timesheet.Owner?.Name ?? "Unknown",
-                        WeekStartDate: timesheet.StartDate,
-                        TimesheetStatus: timesheet.Status.GetDescription(),
-                        InnateCode: entry.InnateCodeTask?.InnateCode?.ActivityCode ?? string.Empty,
-                        InnateCodeName: entry.InnateCodeTask?.InnateCode?.ActivityName ?? string.Empty,
-                        TaskName: entry.InnateCodeTask?.TaskName ?? string.Empty,
-                        Duty: entry.InnateCodeTask?.Duty.GetDescription() ?? "None",
-                        MondayHours: entry.MondayHours,
-                        TuesdayHours: entry.TuesdayHours,
-                        WednesdayHours: entry.WednesdayHours,
-                        ThursdayHours: entry.ThursdayHours,
-                        FridayHours: entry.FridayHours,
-                        SaturdayHours: entry.SaturdayHours,
-                        SundayHours: entry.SundayHours,
-                        TotalHours: totalHours
-                    ));
-                }
-            }
-
-            // Calculate aggregated summary by person
-            var summary = bookingEntries
-                .GroupBy(e => e.PersonName)
-                .Select(g => new PersonBookingSummaryDTO(
-                    PersonName: g.Key,
-                    TotalHours: g.Sum(e => e.TotalHours)
-                ))
-                .OrderByDescending(s => s.TotalHours)
-                .ToList();
-
+            // Calculate aggregated summary by person for capacity analysis
+            var summary = CalculatePersonHoursSummary(filteredTimesheets);
             var grandTotal = summary.Sum(s => s.TotalHours);
 
             // Check to see if we need to return a CSV file
@@ -334,30 +221,47 @@ public static class Timesheets
             {
                 logger.LogInformation($"Timesheets: Generating CSV for code {code}, task {taskName ?? "ALL"}.");
 
-                var fileBytes = Helpers.GenerateCsv(bookingEntries);
+                var csvData = filteredTimesheets.SelectMany(ts =>
+                    ts.Entries.Select(e => new TimesheetCSVDTO(
+                        ts.OwnerName,
+                        ts.StartDate.ToString("yyyy-MM-dd"),
+                        ts.Status,
+                        ts.Info ?? "",
+                        e.InnateCode,
+                        e.InnateCodeName,
+                        e.TaskName,
+                        e.Duty,
+                        e.MondayHours,
+                        e.TuesdayHours,
+                        e.WednesdayHours,
+                        e.ThursdayHours,
+                        e.FridayHours,
+                        e.SaturdayHours,
+                        e.SundayHours,
+                        e.MondayHours + e.TuesdayHours + e.WednesdayHours +
+                            e.ThursdayHours + e.FridayHours + e.SaturdayHours + e.SundayHours
+                    ))
+                );
+
+                var fileBytes = Helpers.GenerateCsv(csvData);
                 var taskFilter = string.IsNullOrWhiteSpace(taskName) ? "all_tasks" : taskName.Replace(' ', '_');
                 var dateFilter = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)
                     ? "all_dates"
                     : $"{startDate ?? "start"}_to_{endDate ?? "end"}";
-                var fileName = $"bookings_{code}_{taskFilter}_{dateFilter}.csv";
-                logger.LogInformation($"Timesheets: Returned {bookingEntries.Count} booking entries as CSV.");
+                var fileName = $"timesheets_{code}_{taskFilter}_{dateFilter}.csv";
+                logger.LogInformation($"Timesheets: Returned {filteredTimesheets.Count} timesheets as CSV. Grand total: {grandTotal} hours.");
                 return Results.File(fileBytes, "text/csv", fileName);
             }
             else
             {
-                // Default to JSON with both detailed entries and summary
-                // Pass nullable dates - null indicates no date filtering was applied
-                var response = new TimesheetBookingsByCodeTaskDTO(
-                    Code: code,
-                    TaskName: taskName,
-                    StartDate: start,
-                    EndDate: endDateExclusive?.AddDays(-1),
-                    Entries: bookingEntries,
+                // Default to JSON with timesheets and aggregated summary
+                var response = new TimesheetsByCodeTaskResponseDTO(
+                    Timesheets: filteredTimesheets,
                     Summary: summary,
                     GrandTotalHours: grandTotal
                 );
 
-                logger.LogInformation($"Timesheets: Returned {bookingEntries.Count} booking entries for code {code} as JSON. Grand total: {grandTotal} hours.");
+                logger.LogInformation($"Timesheets: Returned {filteredTimesheets.Count} timesheets for code {code} as JSON. Grand total: {grandTotal} hours.");
                 return Results.Json(response);
             }
         }
@@ -367,4 +271,106 @@ public static class Timesheets
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    #region Internal Methods
+
+    /// <summary>
+    /// Build a timesheet query filtered by code and optional task name.
+    /// NOTE: This query returns ALL timesheet statuses (New, Submitted, Rejected, Approved).
+    /// To filter for approved timesheets only, uncomment the line: t.Status == Enums.TimesheetStatus.Approved &&
+    /// </summary>
+    internal static IQueryable<Data.Entities.Timesheet> BuildTimesheetQueryWithCodeTaskFilter(
+        PPMToolContext context, string code, string? taskName)
+    {
+        return context.Timesheets
+            .Include(t => t.Owner)
+            .Include(t => t.TimesheetEntries)
+                .ThenInclude(e => e.InnateCodeTask)
+                    .ThenInclude(tk => tk!.InnateCode)
+            .Where(t =>
+                // t.Status == Enums.TimesheetStatus.Approved &&
+                t.TimesheetEntries.Any(e =>
+                    e.InnateCodeTask != null &&
+                    e.InnateCodeTask.InnateCode != null &&
+                    e.InnateCodeTask.InnateCode.ActivityCode == code &&
+                    (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName)
+                ));
+    }
+
+    /// <summary>
+    /// Map timesheet entities to DTOs. Reuses the same mapping logic across all timesheet endpoints.
+    /// </summary>
+    internal static List<TimesheetsDTO> MapToTimesheetDTOs(List<Data.Entities.Timesheet> timesheets)
+    {
+        return timesheets.Select(t => new TimesheetsDTO(
+            TimesheetId: t.TimesheetId,
+            OwnerId: t.OwnerId,
+            OwnerName: t.Owner?.Name ?? "Unknown",
+            CreatedDate: t.CreatedDate,
+            StartDate: t.StartDate,
+            Status: t.Status.GetDescription(),
+            DateStatusChanged: t.DateStatusChanged,
+            Info: t.Info,
+            Entries: t.TimesheetEntries.Select(e => new TimesheetEntryDTO(
+                TimesheetEntryId: e.TimesheetEntryId,
+                InnateCodeTaskId: e.InnateCodeTask?.InnateCodeTaskId ?? 0,
+                InnateCode: e.InnateCodeTask?.InnateCode?.ActivityCode ?? string.Empty,
+                InnateCodeName: e.InnateCodeTask?.InnateCode?.ActivityName ?? string.Empty,
+                TaskName: e.InnateCodeTask?.TaskName ?? string.Empty,
+                Duty: e.InnateCodeTask?.Duty.GetDescription() ?? "None",
+                MondayHours: e.MondayHours,
+                TuesdayHours: e.TuesdayHours,
+                WednesdayHours: e.WednesdayHours,
+                ThursdayHours: e.ThursdayHours,
+                FridayHours: e.FridayHours,
+                SaturdayHours: e.SaturdayHours,
+                SundayHours: e.SundayHours
+            )).ToList()
+        )).ToList();
+    }
+
+    /// <summary>
+    /// Filter timesheet entries to only include those matching the code/task criteria.
+    /// Returns new TimesheetsDTO instances with filtered entries.
+    /// </summary>
+    internal static List<TimesheetsDTO> FilterTimesheetEntriesByCodeTask(
+        List<TimesheetsDTO> timesheets, string code, string? taskName)
+    {
+        return timesheets
+            .Select(ts => new TimesheetsDTO(
+                ts.TimesheetId,
+                ts.OwnerId,
+                ts.OwnerName,
+                ts.CreatedDate,
+                ts.StartDate,
+                ts.Status,
+                ts.DateStatusChanged,
+                ts.Info,
+                ts.Entries.Where(e =>
+                    e.InnateCode == code &&
+                    (string.IsNullOrWhiteSpace(taskName) || e.TaskName == taskName)
+                ).ToList()
+            ))
+            .Where(ts => ts.Entries.Count > 0) // Only include timesheets with matching entries
+            .ToList();
+    }
+
+    /// <summary>
+    /// Calculate aggregated hours summary by person across all timesheets.
+    /// </summary>
+    internal static List<PersonHoursSummaryDTO> CalculatePersonHoursSummary(List<TimesheetsDTO> timesheets)
+    {
+        return timesheets
+            .GroupBy(ts => ts.OwnerName)
+            .Select(g => new PersonHoursSummaryDTO(
+                PersonName: g.Key,
+                TotalHours: g.SelectMany(ts => ts.Entries)
+                    .Sum(e => e.MondayHours + e.TuesdayHours + e.WednesdayHours +
+                              e.ThursdayHours + e.FridayHours + e.SaturdayHours + e.SundayHours)
+            ))
+            .OrderByDescending(s => s.TotalHours)
+            .ToList();
+    }
+
+    #endregion
 }
