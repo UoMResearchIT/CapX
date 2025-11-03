@@ -259,7 +259,10 @@ namespace PPMTool.Pages
             }
             else
             {
-                TaskModel = new SubTask();
+                TaskModel = new SubTask()
+                {
+                    OwningProject = ProjectModel
+                };
             }
 
             // Populate predecessor dropdown source (exclude self)
@@ -279,7 +282,7 @@ namespace PPMTool.Pages
             editContext = new EditContext(TaskModel);
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            EditAuthorised = (ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager) && ProjectModel.ProjectManager == ActiveUser?.Person);
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
 
@@ -681,6 +684,12 @@ namespace PPMTool.Pages
             TaskModel.AssignedResources.Clear();
             foreach (var r in dataGridEntities)
             {
+                // Copies do not have a task model attached so attach here
+                if (r.SubTask == null)
+                {
+                    r.SubTask = TaskModel;
+                }
+
                 Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
                 TaskModel.AssignedResources.Add(r);
             }
