@@ -21,22 +21,20 @@ namespace PPMTool.Pages
         [Parameter]
         public int PersonId { get; set; }
 
+        public bool ViewAuthorised { get; set; }
+
         private Person personModel = new();
         private IList<Person> managers = new List<Person>();
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
-        private bool canView;
 
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
 
-            // Default view permission based on edit authorisation
-            canView = EditAuthorised;
-
             // Load the person model if necessary
-            if (PersonId > 0)
+            if (PersonId > 0 && personModel?.PersonId != PersonId)
             {
                 personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
@@ -45,8 +43,11 @@ namespace PPMTool.Pages
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
+                    // Setup the default action bar
+                    SetDefaultActionBar(HandleSubmit, DiscardChanges);
+
                     // Developers can view their own page; managers can view all people pages
-                    canView = EditAuthorised || ActiveUser?.Person?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
+                    ViewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == Enums.RoleType.Manager;
                 }
             }
 
@@ -54,18 +55,15 @@ namespace PPMTool.Pages
             editContext = new EditContext(personModel);
             messageStore = new ValidationMessageStore(editContext);
 
-            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+            LogInformation((personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person") + $" - ViewAuthorised = {ViewAuthorised}; EditAuthorised = {EditAuthorised}");
         }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
-            // Setup the default action bar
-            SetDefaultActionBar(HandleSubmit, DiscardChanges);
-
             // Find out if superuser for delete button
-            isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
+            isSuperUser = ActiveUserRoleType == Enums.RoleType.Superuser;
 
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
