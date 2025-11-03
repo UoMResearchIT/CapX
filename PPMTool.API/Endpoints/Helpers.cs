@@ -95,6 +95,70 @@ public static class Helpers
     }
 
     /// <summary>
+    /// Parse optional date range parameters. Returns nullable DateTimes and error message if parsing fails.
+    /// </summary>
+    /// <param name="startDate">Optional start date string in format yyyy-MM-dd.</param>
+    /// <param name="endDate">Optional end date string in format yyyy-MM-dd.</param>
+    /// <returns>Tuple containing nullable start date, nullable end date (exclusive), and error message if parsing fails.</returns>
+    internal static (DateTime? start, DateTime? endExclusive, string? error) ParseOptionalDateRange(string? startDate, string? endDate)
+    {
+        DateTime? start = null;
+        DateTime? endExclusive = null;
+
+        if (!string.IsNullOrWhiteSpace(startDate))
+        {
+            if (!ParseDateTime(startDate, out DateTime parsedStart))
+            {
+                return (null, null, $"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
+            }
+            start = parsedStart.Date;
+        }
+
+        if (!string.IsNullOrWhiteSpace(endDate))
+        {
+            if (!ParseDateTime(endDate, out DateTime parsedEnd))
+            {
+                return (null, null, $"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+            }
+            endExclusive = parsedEnd.Date.AddDays(1);
+        }
+
+        return (start, endExclusive, null);
+    }
+
+    /// <summary>
+    /// Apply optional date range filtering to a timesheet query.
+    /// Handles weekly timesheets that may overlap with the date range boundaries.
+    /// </summary>
+    /// <param name="query">The base query to filter.</param>
+    /// <param name="start">Optional start date (inclusive).</param>
+    /// <param name="endExclusive">Optional end date (exclusive).</param>
+    /// <returns>The filtered query.</returns>
+    internal static IQueryable<Timesheet> ApplyDateRangeFilter(
+        IQueryable<Timesheet> query, DateTime? start, DateTime? endExclusive)
+    {
+        if (start.HasValue && endExclusive.HasValue)
+        {
+            var startValue = start.Value;
+            var endValue = endExclusive.Value;
+            // Timesheet overlaps if it starts before the end AND ends after the start
+            return query.Where(t => t.StartDate < endValue && t.StartDate.AddDays(7) > startValue);
+        }
+        else if (start.HasValue)
+        {
+            var startValue = start.Value;
+            return query.Where(t => t.StartDate >= startValue);
+        }
+        else if (endExclusive.HasValue)
+        {
+            var endValue = endExclusive.Value;
+            return query.Where(t => t.StartDate < endValue);
+        }
+
+        return query;
+    }
+
+    /// <summary>
     /// Formats a single object value for inclusion in a CSV field.
     /// It handles nulls and wraps strings containing commas in double quotes.
     /// </summary>
