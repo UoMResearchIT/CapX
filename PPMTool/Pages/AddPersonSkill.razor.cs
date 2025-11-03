@@ -23,12 +23,6 @@ namespace PPMTool.Pages
         private IList<OwnedSkill> ownedTags = new List<OwnedSkill>();
         private string autoCompleteText;
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
-        }
-
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
@@ -60,6 +54,9 @@ namespace PPMTool.Pages
                     EditAuthorised = IsSuperuserOrLineManagerOrPerson(personModel);
                 }
             }
+
+            // Now set the action bar since the person is now known
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
 
             LogInformation($"Viewing skills for {personModel?.Name}");
         }
