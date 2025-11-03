@@ -169,4 +169,202 @@ public static class Timesheets
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Get timesheet bookings for a specific activity code and task combination.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="http"></param>
+    /// <param name="code">The InnateCode ActivityCode to query (required). If Activity Code = "S-RESXXX - XXX", then InnateCode = "S-RESXXX".</param>
+    /// <param name="taskName">Optional task name to filter by. If null, returns all tasks for the code. This corresponds to the WLM Duty and Task field.</param>
+    /// <param name="startDate">Optional start date in the format yyyy-MM-dd. If omitted, returns all historical data.</param>
+    /// <param name="endDate">Optional end date in the format yyyy-MM-dd. If omitted, returns all historical data.</param>
+    /// <param name="asCsv">Whether the returned data should be as a CSV download. Default is JSON if not present.</param>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TimesheetBookingsByCodeTaskDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static async Task<IResult> GetTimesheetBookingsByCodeTask(
+        PPMToolContext context,
+        ILogger logger,
+        HttpContext http,
+        [FromQuery] string code,
+        [FromQuery] string? taskName = null,
+        [FromQuery] string? startDate = null,
+        [FromQuery] string? endDate = null,
+        [FromQuery] bool? asCsv = null)
+    {
+        try
+        {
+            // Authorization check - superuser only
+            var user = Helpers.GetCurrentUser(http);
+            if (!Helpers.IsSuperUser(user))
+            {
+                logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Non-superuser attempted to access booking data");
+                return Results.Unauthorized();
+            }
+
+            // Validate required parameters
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Missing code parameter");
+                return Results.BadRequest("Code parameter is required.");
+            }
+
+            // Parse optional date parameters
+            DateTime? start = null;
+            DateTime? endDateExclusive = null;
+
+            if (!string.IsNullOrWhiteSpace(startDate))
+            {
+                var success = Helpers.ParseDateTime(startDate, out DateTime parsedStart);
+                if (!success)
+                {
+                    logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Invalid start date {startDate}");
+                    return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
+                }
+                start = parsedStart.Date;
+            }
+
+            if (!string.IsNullOrWhiteSpace(endDate))
+            {
+                var success = Helpers.ParseDateTime(endDate, out DateTime parsedEnd);
+                if (!success)
+                {
+                    logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Invalid end date {endDate}");
+                    return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+                }
+                endDateExclusive = parsedEnd.Date.AddDays(1);
+            }
+
+            // Query weekly timesheets that contain entries matching the code/task
+            // NOTE: This query returns ALL timesheet statuses (New, Submitted, Rejected, Approved).
+            // To filter for approved timesheets only, add the following to the Where clause:
+            // && t.Status == TimesheetStatus.Approved
+            var query = context.Timesheets
+                .Include(t => t.Owner)
+                .Include(t => t.TimesheetEntries)
+                    .ThenInclude(e => e.InnateCodeTask)
+                        .ThenInclude(tk => tk!.InnateCode)
+                .Where(t =>
+                    t.TimesheetEntries.Any(e =>
+                        e.InnateCodeTask != null &&
+                        e.InnateCodeTask.InnateCode != null &&
+                        e.InnateCodeTask.InnateCode.ActivityCode == code &&
+                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName)
+                    ));
+
+            // Apply optional date filtering
+            if (start.HasValue && endDateExclusive.HasValue)
+            {
+                var startValue = start.Value;
+                var endValue = endDateExclusive.Value;
+                query = query.Where(t => t.StartDate < endValue && t.StartDate.AddDays(7) > startValue);
+            }
+            else if (start.HasValue)
+            {
+                var startValue = start.Value;
+                query = query.Where(t => t.StartDate >= startValue);
+            }
+            else if (endDateExclusive.HasValue)
+            {
+                var endValue = endDateExclusive.Value;
+                query = query.Where(t => t.StartDate < endValue);
+            }
+
+            var timesheets = await query
+                .OrderBy(t => t.StartDate)
+                .ThenBy(t => t.Owner!.Name)
+                .ToListAsync();
+
+            // Flatten to individual booking entries
+            var bookingEntries = new List<TimesheetBookingEntryDTO>();
+
+            foreach (var timesheet in timesheets)
+            {
+                // Filter entries to only those matching the code/task criteria
+                var matchingEntries = timesheet.TimesheetEntries
+                    .Where(e =>
+                        e.InnateCodeTask != null &&
+                        e.InnateCodeTask.InnateCode != null &&
+                        e.InnateCodeTask.InnateCode.ActivityCode == code &&
+                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName))
+                    .ToList();
+
+                foreach (var entry in matchingEntries)
+                {
+                    var totalHours = entry.MondayHours + entry.TuesdayHours + entry.WednesdayHours +
+                                   entry.ThursdayHours + entry.FridayHours + entry.SaturdayHours + entry.SundayHours;
+
+                    bookingEntries.Add(new TimesheetBookingEntryDTO(
+                        PersonName: timesheet.Owner?.Name ?? "Unknown",
+                        WeekStartDate: timesheet.StartDate,
+                        TimesheetStatus: timesheet.Status.GetDescription(),
+                        InnateCode: entry.InnateCodeTask?.InnateCode?.ActivityCode ?? string.Empty,
+                        InnateCodeName: entry.InnateCodeTask?.InnateCode?.ActivityName ?? string.Empty,
+                        TaskName: entry.InnateCodeTask?.TaskName ?? string.Empty,
+                        Duty: entry.InnateCodeTask?.Duty.GetDescription() ?? "None",
+                        MondayHours: entry.MondayHours,
+                        TuesdayHours: entry.TuesdayHours,
+                        WednesdayHours: entry.WednesdayHours,
+                        ThursdayHours: entry.ThursdayHours,
+                        FridayHours: entry.FridayHours,
+                        SaturdayHours: entry.SaturdayHours,
+                        SundayHours: entry.SundayHours,
+                        TotalHours: totalHours
+                    ));
+                }
+            }
+
+            // Calculate aggregated summary by person
+            var summary = bookingEntries
+                .GroupBy(e => e.PersonName)
+                .Select(g => new PersonBookingSummaryDTO(
+                    PersonName: g.Key,
+                    TotalHours: g.Sum(e => e.TotalHours)
+                ))
+                .OrderByDescending(s => s.TotalHours)
+                .ToList();
+
+            var grandTotal = summary.Sum(s => s.TotalHours);
+
+            // Check to see if we need to return a CSV file
+            if (asCsv != null && asCsv == true)
+            {
+                logger.LogInformation($"Timesheets: Generating CSV for code {code}, task {taskName ?? "ALL"}.");
+
+                var fileBytes = Helpers.GenerateCsv(bookingEntries);
+                var taskFilter = string.IsNullOrWhiteSpace(taskName) ? "all_tasks" : taskName.Replace(' ', '_');
+                var dateFilter = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)
+                    ? "all_dates"
+                    : $"{startDate ?? "start"}_to_{endDate ?? "end"}";
+                var fileName = $"bookings_{code}_{taskFilter}_{dateFilter}.csv";
+                logger.LogInformation($"Timesheets: Returned {bookingEntries.Count} booking entries as CSV.");
+                return Results.File(fileBytes, "text/csv", fileName);
+            }
+            else
+            {
+                // Default to JSON with both detailed entries and summary
+                // Pass nullable dates - null indicates no date filtering was applied
+                var response = new TimesheetBookingsByCodeTaskDTO(
+                    Code: code,
+                    TaskName: taskName,
+                    StartDate: start,
+                    EndDate: endDateExclusive?.AddDays(-1),
+                    Entries: bookingEntries,
+                    Summary: summary,
+                    GrandTotalHours: grandTotal
+                );
+
+                logger.LogInformation($"Timesheets: Returned {bookingEntries.Count} booking entries for code {code} as JSON. Grand total: {grandTotal} hours.");
+                return Results.Json(response);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Timesheets: error in GetTimesheetBookingsByCodeTask");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
