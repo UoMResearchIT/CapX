@@ -139,15 +139,27 @@ namespace PPMTool.Shared
         {
             await base.OnAfterRenderAsync(firstRender);
 
-            // Update the badges in the sidebar if necessary
-            if (loginView != null && loginView.ActiveUser != null)
+            // Set the user id to show the skills tab
+            if (activeUserId == null)
             {
                 using (var context = ContextFactory.CreateDbContext())
                 {
                     // Store the active user ID
                     activeUserId = loginView.ActiveUser?.Person?.PersonId;
                     activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
+                }
 
+                if (activeUserId != null)
+                {
+                    StateHasChanged();
+                }
+            }
+
+            // Update the badges in the sidebar if necessary
+            if (loginView != null && loginView.ActiveUser != null)
+            {
+                using (var context = ContextFactory.CreateDbContext())
+                {
                     // Update timesheet badge
                     var oldTimesheetIssuesValue = totalTimesheetIssues;
                     totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserId ?? 0);
