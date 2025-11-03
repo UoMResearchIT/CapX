@@ -35,45 +35,20 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// A single timesheet entry booking for a specific person, code/task combination.
+    /// Aggregated summary of hours booked by a person for a specific code/task.
     /// </summary>
-    public sealed record TimesheetBookingEntryDTO(
-        string PersonName,
-        DateTime WeekStartDate,
-        string TimesheetStatus,
-        string InnateCode,
-        string InnateCodeName,
-        string TaskName,
-        string Duty,
-        double MondayHours,
-        double TuesdayHours,
-        double WednesdayHours,
-        double ThursdayHours,
-        double FridayHours,
-        double SaturdayHours,
-        double SundayHours,
-        double TotalHours
-    );
-
-    /// <summary>
-    /// Aggregated summary of hours booked by a person.
-    /// </summary>
-    public sealed record PersonBookingSummaryDTO(
+    public sealed record PersonHoursSummaryDTO(
         string PersonName,
         double TotalHours
     );
 
     /// <summary>
-    /// Complete response for timesheet bookings by code/task query, including both detailed entries and aggregated summary.
-    /// StartDate and EndDate are null when no date filtering was applied (returns all historical data).
+    /// Response for timesheet bookings by code/task query.
+    /// Reuses existing TimesheetsDTO structure and adds aggregated summary for capacity analysis.
     /// </summary>
-    public sealed record TimesheetBookingsByCodeTaskDTO(
-        string Code,
-        string? TaskName,
-        DateTime? StartDate,
-        DateTime? EndDate,
-        IReadOnlyList<TimesheetBookingEntryDTO> Entries,
-        IReadOnlyList<PersonBookingSummaryDTO> Summary,
+    public sealed record TimesheetsByCodeTaskResponseDTO(
+        IReadOnlyList<TimesheetsDTO> Timesheets,
+        IReadOnlyList<PersonHoursSummaryDTO> Summary,
         double GrandTotalHours
     );
 }
