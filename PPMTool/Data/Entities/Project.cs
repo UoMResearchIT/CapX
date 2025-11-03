@@ -492,7 +492,7 @@ namespace PPMTool.Data.Entities
         public IEnumerable<DateRange> GetLeadershipTaskRanges()
         {
             // Convert the sub tasks to date ranges
-            var dateRanges = SubTasks
+            var dateRanges = (SubTasks ?? Enumerable.Empty<SubTask>())
                 .Where(x => x.RequiresLeadership)
                 .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate });
 
