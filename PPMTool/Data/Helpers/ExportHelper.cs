@@ -50,13 +50,13 @@ namespace PPMTool.Data.Helpers
             List<SubTask> tempTasksInWindow = null;
             if (tasksInWindow == null)
             {
+                // If there are no subtasks or resources then just replace with empty enumerables
                 tempTasksInWindow = projectsInWindow
-                .SelectMany(x => x.SubTasks)
-                .Where(x => x.AssignedResources
-                    .Any(x => x.Person.PersonId == person.PersonId)
-                )
-                .Where(x => x.IsWithin(startDate ?? default, endDate ?? default))
-                .ToList();
+                    .SelectMany(x => x.SubTasks ?? Enumerable.Empty<SubTask>())
+                    .Where(x => (x.AssignedResources ?? Enumerable.Empty<Resource>())
+                        .Any(r => r.Person.PersonId == person.PersonId))
+                    .Where(x => x.IsWithin(startDate ?? default, endDate ?? default))
+                    .ToList();
             }
             else
             {
