@@ -75,7 +75,13 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            Layout.Reset();
+            Layout?.Reset();
+
+            // Not sure why this happens but worth noting
+            if (Layout == null)
+            {
+                LogWarning("Layout is null!");
+            }
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
@@ -87,9 +93,9 @@ namespace PPMTool.Pages
         /// <param name="message"></param>
         protected void SetErrorMessage(StatusMessage message)
         {
-            if (Layout.ShowActionBar)
+            if (Layout?.ShowActionBar ?? false)
             {
-                Layout.SetErrorMessage(message);
+                Layout?.SetErrorMessage(message);
             }
             else
             {
@@ -103,9 +109,9 @@ namespace PPMTool.Pages
         /// </summary>
         protected void ClearErrorMessage()
         {
-            if (Layout.ShowActionBar)
+            if (Layout?.ShowActionBar ?? false)
             {
-                Layout.ClearErrorMessage();
+                Layout?.ClearErrorMessage();
             }
             else
             {
@@ -121,24 +127,21 @@ namespace PPMTool.Pages
         /// <param name="discard"></param>
         protected void SetDefaultActionBar(Action submit, Action discard)
         {
-            if (Layout != null)
-            {
-                Layout.SetButtons(
-                [
-                    new ActionButton
-                    {
-                        OnClick = submit,
-                        Disabled = !EditAuthorised
-                    },
-                    new ActionButton
-                    {
-                        Icon = "close",
-                        Text = "Discard",
-                        ButtonStyle = ButtonStyle.Danger,
-                        OnClick = discard
-                    }
-                ]);
-            }
+            Layout?.SetButtons(
+            [
+                new ActionButton
+                {
+                    OnClick = submit,
+                    Disabled = !EditAuthorised
+                },
+                new ActionButton
+                {
+                    Icon = "close",
+                    Text = "Discard",
+                    ButtonStyle = ButtonStyle.Danger,
+                    OnClick = discard
+                }
+            ]);
         }
 
         /// <summary>
