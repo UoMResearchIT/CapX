@@ -59,17 +59,6 @@ namespace PPMTool.Pages
         private double fundsReceived;
         private IEnumerable<FundingSource> availableFundingSources = new List<FundingSource>();
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-
-            // Add default buttons with handlers
-            SetDefaultActionBar(
-                () => { gotoDetails = true; discardChanges = false; HandleSubmit(); },
-                () => { gotoDetails = ProjectId > 0; discardChanges = true; HandleSubmit(); }
-            );
-        }
-
         protected override void OnAfterRender(bool firstRender)
         {
             base.OnAfterRender(firstRender);
@@ -102,6 +91,12 @@ namespace PPMTool.Pages
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = ActiveUser?.Person;
             }
+
+            // Add default buttons with handlers
+            SetDefaultActionBar(
+                () => { gotoDetails = true; discardChanges = false; HandleSubmit(); },
+                () => { gotoDetails = ProjectId > 0; discardChanges = true; HandleSubmit(); }
+            );
 
             // Initially load data
             innateActivityQuery = InnateCodeService.GetAll(Context).AsQueryable();
