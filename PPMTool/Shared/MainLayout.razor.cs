@@ -148,7 +148,11 @@ namespace PPMTool.Shared
                     activeUserId = loginView.ActiveUser?.Person?.PersonId;
                     activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
                 }
-                StateHasChanged();
+
+                if (activeUserId != null)
+                {
+                    StateHasChanged();
+                }
             }
 
             // Update the badges in the sidebar if necessary
