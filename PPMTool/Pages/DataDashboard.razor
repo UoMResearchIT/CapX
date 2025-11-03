@@ -17,6 +17,10 @@
     {
         <LoadingComponent />
     }
+    else if (!FeatureService.IsFeatureEnabled(FeatureType.DataDashboard))
+    {
+        <FeatureDisabledComponent FeatureType="FeatureType.DataDashboard" />
+    }
     else
     {
         <RadzenAccordion Multiple="true">

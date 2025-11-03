@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 
@@ -8,9 +7,6 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Superuser")]
     public partial class ManageFeatures : BasePage
     {
-        [Inject]
-        private FeatureService FeatureService { get; set; }
-
         private List<Feature> features;
 
         protected override async Task OnInitializedAsync()
