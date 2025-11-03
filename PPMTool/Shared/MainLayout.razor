@@ -31,52 +31,74 @@
             <LoginView @ref=loginView />
         </RadzenStack>
     </RadzenHeader>
+
     <RadzenSidebar Responsive="false" Style="width: max-content">
         <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="true">
             <AuthorizeView>
                 <Authorized>
-                    <RadzenPanelMenuItem Path="datadashboard" Text="Data Dashboard" Icon="speed" />
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.DataDashboard))
+                    {
+                        <RadzenPanelMenuItem Path="datadashboard" Text="Data Dashboard" Icon="speed" />
+                    }
                 </Authorized>
             </AuthorizeView>
+
             <AuthorizeView Roles="Superuser,Manager,Reader,Developer,Finance">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
-                        <AuthorizeView Roles="Superuser,Manager">
-                            <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
-                            </Authorized>
-                        </AuthorizeView>
-                        <AuthorizeView Roles="Superuser,Manager,Reader,Finance">
-                            <Authorized Context="sub_context_2">
-                                <RadzenPanelMenuItem Path="managefinancialitems" Text="Manage Finance" Icon="payments" />
-                            </Authorized>
-                        </AuthorizeView>
-                        <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
-                        <AuthorizeView Roles="Superuser,Manager,Developer">
-                            <Authorized Context="sub_context_1">
-                                <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
-                            </Authorized>
-                        </AuthorizeView>
-                    </RadzenPanelMenuItem>
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) || FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                    {
+                        <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                            {
+                                <AuthorizeView Roles="Superuser,Manager">
+                                    <Authorized Context="sub_context">
+                                        <RadzenPanelMenuItem Path="myprojects" Text="My Projects" Icon="assignment" />
+                                    </Authorized>
+                                </AuthorizeView>
+                            }
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) && FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                            {
+                                <AuthorizeView Roles="Superuser,Manager,Reader,Finance">
+                                    <Authorized Context="sub_context_2">
+                                        <RadzenPanelMenuItem Path="managefinancialitems" Text="Manage Finance" Icon="payments" />
+                                    </Authorized>
+                                </AuthorizeView>
+                            }
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                            {
+                                <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
+                                <AuthorizeView Roles="Superuser,Manager,Developer">
+                                    <Authorized Context="sub_context_1">
+                                        <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
+                                    </Authorized>
+                                </AuthorizeView>
+                            }
+                        </RadzenPanelMenuItem>
+                    }
                 </Authorized>
             </AuthorizeView>
+
             <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Capacity" Icon="lists" Expanded="true">
-                        <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="deployed_code_account" />
-                        <AuthorizeView Roles="Superuser,Manager,Reader">
-                            <Authorized Context="sub_context_1">
-                                <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="supervisor_account" />
-                            </Authorized>
-                        </AuthorizeView>
-                    </RadzenPanelMenuItem>
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                    {
+                        <RadzenPanelMenuItem Text="Capacity" Icon="lists" Expanded="true">
+                            <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="deployed_code_account" />
+                            <AuthorizeView Roles="Superuser,Manager,Reader">
+                                <Authorized Context="sub_context_1">
+                                    <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="supervisor_account" />
+                                </Authorized>
+                            </AuthorizeView>
+                        </RadzenPanelMenuItem>
+                    }
                 </Authorized>
             </AuthorizeView>
+
             <AuthorizeView Roles="Superuser,Manager,Developer">
                 <Authorized>
                     <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
                         <RadzenPanelMenuItem Path="people" Text="@(activeUserRoleType == RoleType.Developer ? "My Details" : "Manage People")" Icon="manage_accounts" />
-                        @if(activeUserId != null)
+                        @if (activeUserId != null && FeatureService.IsFeatureEnabled(FeatureType.Skills))
                         {
                             <RadzenPanelMenuItem Path="skills" Icon="military_tech">
                                 <Template>
@@ -93,8 +115,14 @@
                                 </Template>
                             </RadzenPanelMenuItem>
                         }
-                        <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
-                        <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
+                        @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
+                        {
+                            <RadzenPanelMenuItem Path="wlmanalysis" Text="Workload Model Analysis" Icon="stacked_bar_chart" />
+                        }
+                        @if (FeatureService.IsFeatureEnabled(FeatureType.DevelopmentJourney))
+                        {
+                            <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
+                        }
                         @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
                         {
                             <RadzenPanelMenuItem Path="timesheets" Icon="timer">
@@ -114,47 +142,65 @@
                         }
                         <AuthorizeView Roles="Superuser,Manager">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
+                                @if (FeatureService.IsFeatureEnabled(FeatureType.Absences))
+                                {
+                                    <RadzenPanelMenuItem Path="absences" Text="Current Absences" Icon="bed" />
+                                }
                             </Authorized>
                         </AuthorizeView>
                     </RadzenPanelMenuItem>
                 </Authorized>
-            </AuthorizeView>            
+            </AuthorizeView>
+
             <AuthorizeView Roles="Superuser,Manager">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
                         <AuthorizeView Roles="Superuser">
                             <Authorized Context="sub_context">
                                 <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
-                                <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
-                                    <Template>
-                                        <div style="flex: 1;">
-                                            @if (sidebarExpanded)
-                                            {
-                                                <span>Timesheet Codes</span>
-                                            }
-                                            @if (totalTimesheetCodesToDeactivate > 0)
-                                            {
-                                                <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalTimesheetCodesToDeactivate</span>
-                                            }
-                                        </div>
-                                    </Template>
-                                </RadzenPanelMenuItem>
+                                @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
+                                {
+                                    <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
+                                        <Template>
+                                            <div style="flex: 1;">
+                                                @if (sidebarExpanded)
+                                                {
+                                                    <span>Timesheet Codes</span>
+                                                }
+                                                @if (totalTimesheetCodesToDeactivate > 0)
+                                                {
+                                                    <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalTimesheetCodesToDeactivate</span>
+                                                }
+                                            </div>
+                                        </Template>
+                                    </RadzenPanelMenuItem>
+                                }
                                 <RadzenPanelMenuItem Path="managefeatures" Text="Features" Icon="extension" />
                             </Authorized>
                         </AuthorizeView>
-                        <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
-                        <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
+                        @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) && FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                        {
+                            <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
+                        }
+                        @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                        {
+                            <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
+                        }
                     </RadzenPanelMenuItem>
                 </Authorized>
             </AuthorizeView>
+
             <AuthorizeView Roles="Superuser,Manager,Developer">
                 <Authorized>
-                    <RadzenPanelMenuItem Path="profile" Text="Developer Settings" Icon="code" />
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.API))
+                    {
+                        <RadzenPanelMenuItem Path="profile" Text="Developer Settings" Icon="code" />
+                    }
                 </Authorized>
             </AuthorizeView>
         </RadzenPanelMenu>
     </RadzenSidebar>
+
     <RadzenBody class="p-0">
         <div class="body-wrapper">
             <div class="content-area rz-p-4">
@@ -180,6 +226,7 @@
             </footer>
         </div>
     </RadzenBody>
+
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="3rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" Style="margin-bottom: 0; color: white" Text="@versionString" />

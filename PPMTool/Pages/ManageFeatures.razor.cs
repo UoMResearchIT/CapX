@@ -31,6 +31,7 @@ namespace PPMTool.Pages
         {
             FeatureService.UpdateFeatureState(Context, feature);
             LogInformation($"Toggled feature '{feature.Name}' to {(feature.Enabled ? "enabled" : "disabled")}");
+            Layout?.Render();
         }
     }
 }
