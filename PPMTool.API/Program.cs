@@ -139,7 +139,7 @@ app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
 app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-app.MapGet($"/timesheets/bookings/byCodeTask", Timesheets.GetTimesheetBookingsByCodeTask);
+app.MapGet($"/timesheets/byCodeTask", Timesheets.GetTimesheetBookingsByCodeTask);
 app.MapGet($"/wlm/analysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
 app.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
 
