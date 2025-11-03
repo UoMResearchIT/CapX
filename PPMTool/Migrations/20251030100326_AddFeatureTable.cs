@@ -32,8 +32,8 @@ namespace PPMTool.Migrations
                 INSERT INTO features (FeatureType, Name, Description, Enabled, MustAlwaysBeEnabled) VALUES
                 (
                   0,
-                  'Projects, Capacity & People',
-                  'The core feature of the tool is provide visualisation of project load against availability of resources. As such, this is a mandatory feature the allows administrators to manage a team of people and a portfolio of projects a how that relates to the capacity of the team.',
+                  'People',
+                  'This is a mandatory feature that allows administrators to manage a team of people. People are at the centre of the data model so this cannot be disabled.',
                   1,
                   1
                 );
@@ -41,36 +41,41 @@ namespace PPMTool.Migrations
                 INSERT INTO features (FeatureType, Name, Description) VALUES
                 (
                   1,      
+                  'Projects & Capacity',
+                  'Allows mangers to add projects to the database and assign people to them. It also allows them to visualise the capacity of their team based on the project assignments and workload models of the people.'
+                ),
+                (
+                  2,      
                   'Absences',
                   'Allows mangers to add absences for team members, notifying project managers when their resources may be unavailable.'
                 ),
                 (
-                  2,  
+                  3,  
                   'Skills',
                   'Allows administrators to curate a list of skill tags, people to add their skill profiles and tasks within projects to be associated with skill tags.'
                 ),
                 (
-                  3,
+                  4,
                   'Development Journey',
                   'Allows the inclusion of a three-tier competency framework and the ability of staff and managers to use it as a tool to support development.'
                 ),
                 (
-                  4,
+                  5,
                   'API',
                   'Enables the API endpoints. The available endpoints will be determined by the features enabled.'
                 ),
                 (
-                  5,
+                  6,
                   'Timesheets',
                   'Allows people to enter weekly timesheet data against activity and task codes curated by administrators. This also enables workload model analysis to allow people to monitor how they are spending their time against their workload mdoel.'
                 ),
                 (
-                  6,
+                  7,
                   'Project Finance',
                   'Allows managers to keep financial records associated with projects including funding sources and invoices. Allows the cost of projects to calculated.'
                 ),
                 (
-                  7,
+                  8,
                   'Data Dashboard',
                   'Provides a page visible to all system users that summarises key information and allows export of data from the database in structured reports.'
                 );

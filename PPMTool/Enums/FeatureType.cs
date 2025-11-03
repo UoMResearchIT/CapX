@@ -5,13 +5,14 @@
     /// </summary>
     public enum FeatureType
     {
-        ProjectsCapacityAndPeople = 0,
-        Absences = 1,
-        Skills = 2,
-        DevelopmentJourney = 3,
-        API = 4,
-        Timesheets = 5,
-        ProjectFinance = 6,
-        DataDashboard = 7
+        People = 0,
+        ProjectsAndCapacity = 1,
+        Absences = 2,
+        Skills = 3,
+        DevelopmentJourney = 4,
+        API = 5,
+        Timesheets = 6,
+        ProjectFinance = 7,
+        DataDashboard = 8
     }
 }
