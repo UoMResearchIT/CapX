@@ -98,7 +98,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.None;
 
         // Set expiration to match CAS session timeout
-        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
+        options.ExpireTimeSpan = TimeSpan.FromHours(time);
         options.SlidingExpiration = false;
 
         options.Events = new CookieAuthenticationEvents
