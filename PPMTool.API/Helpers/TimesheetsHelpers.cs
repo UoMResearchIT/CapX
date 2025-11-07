@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Dynamic.Core;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -49,22 +50,32 @@ namespace PPMTool.API.Helpers
         /// <param name="code"></param>
         /// <param name="taskName"></param>
         /// <param name="approvedOnly">Whether the method should filter to just the approved timesheets</param>
-        internal static IQueryable<Timesheet> BuildTimesheetQueryWithCodeTaskFilter(
+        internal static IQueryable<Timesheet> BuildTimesheetQueryWithCodeAndTaskFilter(
             PPMToolContext context, string code, string? taskName, bool approvedOnly = false)
         {
-            return context.Timesheets
+            IQueryable<Timesheet> query = context.Timesheets
                 .Include(t => t.Owner)
                 .Include(t => t.TimesheetEntries)
                     .ThenInclude(e => e.InnateCodeTask)
-                        .ThenInclude(tk => tk!.InnateCode)
+                        .ThenInclude(tk => tk!.InnateCode);
+
+            // Add filter to query based on status if necessary
+            if (approvedOnly)
+            {
+                query = query.Where(t => t.Status == Enums.TimesheetStatus.Approved);
+            }
+
+            // Add code and task filter to query
+            query = query
                 .Where(t =>
-                    // t.Status == Enums.TimesheetStatus.Approved &&
                     t.TimesheetEntries.Any(e =>
                         e.InnateCodeTask != null &&
                         e.InnateCodeTask.InnateCode != null &&
-                        e.InnateCodeTask.InnateCode.ActivityCode == code &&
-                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName)
+                        e.InnateCodeTask.InnateCode.ActivityCode.Trim().ToLowerInvariant() == code.Trim().ToLowerInvariant() &&
+                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName.Trim().ToLowerInvariant() == taskName.Trim().ToLowerInvariant())
                     ));
+
+            return query;
         }
 
         /// <summary>

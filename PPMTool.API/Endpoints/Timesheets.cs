@@ -209,7 +209,7 @@ public static class Timesheets
             }
 
             // Query timesheets matching the code/task filter
-            var query = TimesheetsHelpers.BuildTimesheetQueryWithCodeTaskFilter(context, code, taskName);
+            var query = TimesheetsHelpers.BuildTimesheetQueryWithCodeAndTaskFilter(context, code, taskName);
             query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
             var timesheets = await query
