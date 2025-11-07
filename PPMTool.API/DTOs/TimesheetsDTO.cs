@@ -116,4 +116,55 @@ namespace PPMTool.API.DTOs
         double SundayHours,
         double TotalHoursForWeek
     );
+
+    /// <summary>
+    /// CSV row data for grouped timesheet bookings export.
+    /// </summary>
+    /// <param name="ProjectCode">The project/activity code</param>
+    /// <param name="TaskName">Name of the task</param>
+    /// <param name="PersonName">Name of the person</param>
+    /// <param name="Date">Date in formatted string</param>
+    /// <param name="Hours">Hours worked on that date</param>
+    public sealed record GroupedTimesheetCSVRowData(
+        string ProjectCode,
+        string TaskName,
+        string PersonName,
+        string Date,
+        double Hours
+    );
+
+    /// <summary>
+    /// Person allocation for a specific task, with daily hours breakdown.
+    /// </summary>
+    /// <param name="Person">Name of the person</param>
+    /// <param name="BookedHours">Dictionary of date (formatted string) to hours worked</param>
+    /// <param name="Total">Total hours for this person on this task</param>
+    public sealed record PersonAllocationDTO(
+        string Person,
+        IReadOnlyDictionary<string, double> BookedHours,
+        double Total
+    );
+
+    /// <summary>
+    /// Task allocation containing all person allocations for a specific task.
+    /// </summary>
+    /// <param name="TaskName">Name of the task</param>
+    /// <param name="Allocations">List of person allocations for this task</param>
+    /// <param name="TaskTotal">Total hours for this task across all people</param>
+    public sealed record TaskAllocationDTO(
+        string TaskName,
+        IReadOnlyList<PersonAllocationDTO> Allocations,
+        double TaskTotal
+    );
+
+    /// <summary>
+    /// Response for grouped timesheet bookings by code and task.
+    /// Data is grouped by task, then by person, with weekly hours breakdown.
+    /// </summary>
+    /// <param name="ProjectCode">The project/activity code</param>
+    /// <param name="Tasks">List of task allocations</param>
+    public sealed record TimesheetBookingsByCodeTaskResponseDTO(
+        string ProjectCode,
+        IReadOnlyList<TaskAllocationDTO> Tasks
+    );
 }
