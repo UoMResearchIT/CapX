@@ -112,35 +112,6 @@ namespace PPMTool.API.Helpers
         }
 
         /// <summary>
-        /// Filter timesheet entries to only include those matching the code/task criteria.
-        /// Returns new TimesheetsDTO instances with filtered entries.
-        /// </summary>
-        /// <param name="timesheets"></param>
-        /// <param name="code"></param>
-        /// <param name="taskName"></param>
-        internal static List<TimesheetsDTO> FilterTimesheetEntriesByCodeTask(
-            List<TimesheetsDTO> timesheets, string code, string? taskName)
-        {
-            return timesheets
-                .Select(ts => new TimesheetsDTO(
-                    ts.TimesheetId,
-                    ts.OwnerId,
-                    ts.OwnerName,
-                    ts.CreatedDate,
-                    ts.StartDate,
-                    ts.Status,
-                    ts.DateStatusChanged,
-                    ts.Info,
-                    ts.Entries.Where(e =>
-                        e.InnateCode == code &&
-                        (string.IsNullOrWhiteSpace(taskName) || e.TaskName == taskName)
-                    ).ToList()
-                ))
-                .Where(ts => ts.Entries.Count > 0) // Only include timesheets with matching entries
-                .ToList();
-        }
-
-        /// <summary>
         /// Calculate aggregated hours summary by person across all timesheets.
         /// </summary>
         /// <param name="timesheets"></param>

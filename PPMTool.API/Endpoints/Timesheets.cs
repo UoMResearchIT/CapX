@@ -210,18 +210,18 @@ public static class Timesheets
 
             // Query timesheets matching the code/task filter
             var query = TimesheetsHelpers.BuildTimesheetQueryWithCodeAndTaskFilter(context, code, taskName);
+
+            // Add the date range filter to the query
             query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
+            // Execute the query
             var timesheets = await query
                 .OrderBy(t => t.StartDate)
                 .ThenBy(t => t.Owner!.Name)
                 .ToListAsync();
 
-            // Map to DTOs using the same logic as GetTimesheetEntriesForPersonForDateRange
+            // Map to DTOs using the helper
             var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(timesheets);
-
-            // Filter entries within each timesheet to only include matching code/task
-            var filteredTimesheets = TimesheetsHelpers.FilterTimesheetEntriesByCodeTask(timesheetsAsDTOs, code, taskName);
 
             // Calculate aggregated summary by person for capacity analysis
             var summary = TimesheetsHelpers.CalculatePersonHoursSummary(filteredTimesheets);
