@@ -88,8 +88,10 @@ public static class Timesheets
                         .ThenInclude(tk => tk.InnateCode)
                 .Where(t => t.OwnerId == person.PersonId);
 
+            // Enhance query to apply date range filter
             query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
+            // Execute the query
             var timesheets = await query
                 .OrderBy(t => t.StartDate)
                 .ToListAsync();
@@ -154,8 +156,8 @@ public static class Timesheets
     /// <param name="context"></param>
     /// <param name="logger"></param>
     /// <param name="http"></param>
-    /// <param name="code">The InnateCode ActivityCode to query (required). If Activity Code = "S-RESXXX - XXX", then InnateCode = "S-RESXXX".</param>
-    /// <param name="taskName">Optional task name to filter by. If null, returns all tasks for the code. This corresponds to the WLM Duty and Task field.</param>
+    /// <param name="code">The code to query (required). This is just the code part of the full timesheet activity e.g. if timesheet activity = "S-RESXXX - Long Name", then code = "S-RESXXX".</param>
+    /// <param name="taskName">Optional task name to filter by. If null, returns bookings for all tasks for the code.</param>
     /// <param name="startDate">Optional start date in the format yyyy-MM-dd. If omitted, returns all historical data.</param>
     /// <param name="endDate">Optional end date in the format yyyy-MM-dd. If omitted, returns all historical data.</param>
     /// <param name="asCsv">Whether the returned data should be as a CSV download. Default is JSON if not present.</param>
@@ -163,7 +165,7 @@ public static class Timesheets
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public static async Task<IResult> GetTimesheetBookingsByCodeTask(
+    public static async Task<IResult> GetTimesheetBookingsByCodeAndTask(
         PPMToolContext context,
         ILogger logger,
         HttpContext http,
