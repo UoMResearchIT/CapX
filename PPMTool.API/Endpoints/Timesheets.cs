@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 
 namespace PPMTool.API.Endpoints;
@@ -37,13 +38,13 @@ public static class Timesheets
         try
         {
             // Try parse the datetimes
-            var success = Helpers.ParseDateTime(startDate, out DateTime start);
+            var success = GeneralHelpers.ParseDateTime(startDate, out DateTime start);
             if (!success)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid start date {startDate}");
                 return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
             }
-            success = Helpers.ParseDateTime(endDate, out DateTime end);
+            success = GeneralHelpers.ParseDateTime(endDate, out DateTime end);
             if (!success)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Invalid end date {endDate}");
@@ -53,12 +54,12 @@ public static class Timesheets
             // If the name is null then assume the caller
             if (name == null)
             {
-                var user = Helpers.GetCurrentUser(http);
+                var user = GeneralHelpers.GetCurrentUser(http);
                 name = user!.Person?.Name.Replace(' ', '_') ?? "Unknown";
             }
 
             // Get the person from the request arguments
-            var person = await Helpers.FindPersonWithLineManagerByNameAsync(context, name);
+            var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Person = {name} not found!");
@@ -66,7 +67,7 @@ public static class Timesheets
             }
 
             // Authorisation check
-            var canAccess = Helpers.IsSuperUserOrLineManagerOrSelf(context, http, person);
+            var canAccess = GeneralHelpers.IsSuperUserOrLineManagerOrSelf(context, http, person);
             if (!canAccess)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Caller does not have permission to access the data!");
@@ -87,14 +88,14 @@ public static class Timesheets
                         .ThenInclude(tk => tk.InnateCode)
                 .Where(t => t.OwnerId == person.PersonId);
 
-            query = Helpers.ApplyDateRangeFilter(query, start, endDateExclusive);
+            query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
             var timesheets = await query
                 .OrderBy(t => t.StartDate)
                 .ToListAsync();
 
             // Map to DTOs using shared helper
-            var timesheetsAsDTOs = MapToTimesheetDTOs(timesheets);
+            var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(timesheets);
 
             // Check to see if we need to return a CSV file
             if (asCsv != null && asCsv == true)
@@ -128,7 +129,7 @@ public static class Timesheets
                     )
                 );
 
-                var fileBytes = Helpers.GenerateCsv(csvData);
+                var fileBytes = GeneralHelpers.GenerateCsv(csvData);
                 var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";
                 logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as CSV.");
                 return Results.File(fileBytes, "text/csv", fileName);
@@ -175,8 +176,8 @@ public static class Timesheets
         try
         {
             // Authorization check - superuser only
-            var user = Helpers.GetCurrentUser(http);
-            if (!Helpers.IsSuperUser(user))
+            var user = GeneralHelpers.GetCurrentUser(http);
+            if (!GeneralHelpers.IsSuperUser(user))
             {
                 logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Non-superuser attempted to access booking data");
                 return Results.Unauthorized();
@@ -190,7 +191,7 @@ public static class Timesheets
             }
 
             // Parse optional date range
-            var (start, endDateExclusive, dateError) = Helpers.ParseOptionalDateRange(startDate, endDate);
+            var (start, endDateExclusive, dateError) = GeneralHelpers.ParseOptionalDateRange(startDate, endDate);
             if (dateError != null)
             {
                 logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: {dateError}");
@@ -198,8 +199,8 @@ public static class Timesheets
             }
 
             // Query timesheets matching the code/task filter
-            var query = BuildTimesheetQueryWithCodeTaskFilter(context, code, taskName);
-            query = Helpers.ApplyDateRangeFilter(query, start, endDateExclusive);
+            var query = TimesheetsHelpers.BuildTimesheetQueryWithCodeTaskFilter(context, code, taskName);
+            query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
             var timesheets = await query
                 .OrderBy(t => t.StartDate)
@@ -207,13 +208,13 @@ public static class Timesheets
                 .ToListAsync();
 
             // Map to DTOs using the same logic as GetTimesheetEntriesForPersonForDateRange
-            var timesheetsAsDTOs = MapToTimesheetDTOs(timesheets);
+            var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(timesheets);
 
             // Filter entries within each timesheet to only include matching code/task
-            var filteredTimesheets = FilterTimesheetEntriesByCodeTask(timesheetsAsDTOs, code, taskName);
+            var filteredTimesheets = TimesheetsHelpers.FilterTimesheetEntriesByCodeTask(timesheetsAsDTOs, code, taskName);
 
             // Calculate aggregated summary by person for capacity analysis
-            var summary = CalculatePersonHoursSummary(filteredTimesheets);
+            var summary = TimesheetsHelpers.CalculatePersonHoursSummary(filteredTimesheets);
             var grandTotal = summary.Sum(s => s.TotalHours);
 
             // Check to see if we need to return a CSV file
@@ -243,7 +244,7 @@ public static class Timesheets
                     ))
                 );
 
-                var fileBytes = Helpers.GenerateCsv(csvData);
+                var fileBytes = GeneralHelpers.GenerateCsv(csvData);
                 var taskFilter = string.IsNullOrWhiteSpace(taskName) ? "all_tasks" : taskName.Replace(' ', '_');
                 var dateFilter = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)
                     ? "all_dates"
@@ -271,106 +272,4 @@ public static class Timesheets
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
-
-    #region Internal Methods
-
-    /// <summary>
-    /// Build a timesheet query filtered by code and optional task name.
-    /// NOTE: This query returns ALL timesheet statuses (New, Submitted, Rejected, Approved).
-    /// To filter for approved timesheets only, uncomment the line: t.Status == Enums.TimesheetStatus.Approved &&
-    /// </summary>
-    internal static IQueryable<Data.Entities.Timesheet> BuildTimesheetQueryWithCodeTaskFilter(
-        PPMToolContext context, string code, string? taskName)
-    {
-        return context.Timesheets
-            .Include(t => t.Owner)
-            .Include(t => t.TimesheetEntries)
-                .ThenInclude(e => e.InnateCodeTask)
-                    .ThenInclude(tk => tk!.InnateCode)
-            .Where(t =>
-                // t.Status == Enums.TimesheetStatus.Approved &&
-                t.TimesheetEntries.Any(e =>
-                    e.InnateCodeTask != null &&
-                    e.InnateCodeTask.InnateCode != null &&
-                    e.InnateCodeTask.InnateCode.ActivityCode == code &&
-                    (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName == taskName)
-                ));
-    }
-
-    /// <summary>
-    /// Map timesheet entities to DTOs. Reuses the same mapping logic across all timesheet endpoints.
-    /// </summary>
-    internal static List<TimesheetsDTO> MapToTimesheetDTOs(List<Data.Entities.Timesheet> timesheets)
-    {
-        return timesheets.Select(t => new TimesheetsDTO(
-            TimesheetId: t.TimesheetId,
-            OwnerId: t.OwnerId,
-            OwnerName: t.Owner?.Name ?? "Unknown",
-            CreatedDate: t.CreatedDate,
-            StartDate: t.StartDate,
-            Status: t.Status.GetDescription(),
-            DateStatusChanged: t.DateStatusChanged,
-            Info: t.Info,
-            Entries: t.TimesheetEntries.Select(e => new TimesheetEntryDTO(
-                TimesheetEntryId: e.TimesheetEntryId,
-                InnateCodeTaskId: e.InnateCodeTask?.InnateCodeTaskId ?? 0,
-                InnateCode: e.InnateCodeTask?.InnateCode?.ActivityCode ?? string.Empty,
-                InnateCodeName: e.InnateCodeTask?.InnateCode?.ActivityName ?? string.Empty,
-                TaskName: e.InnateCodeTask?.TaskName ?? string.Empty,
-                Duty: e.InnateCodeTask?.Duty.GetDescription() ?? "None",
-                MondayHours: e.MondayHours,
-                TuesdayHours: e.TuesdayHours,
-                WednesdayHours: e.WednesdayHours,
-                ThursdayHours: e.ThursdayHours,
-                FridayHours: e.FridayHours,
-                SaturdayHours: e.SaturdayHours,
-                SundayHours: e.SundayHours
-            )).ToList()
-        )).ToList();
-    }
-
-    /// <summary>
-    /// Filter timesheet entries to only include those matching the code/task criteria.
-    /// Returns new TimesheetsDTO instances with filtered entries.
-    /// </summary>
-    internal static List<TimesheetsDTO> FilterTimesheetEntriesByCodeTask(
-        List<TimesheetsDTO> timesheets, string code, string? taskName)
-    {
-        return timesheets
-            .Select(ts => new TimesheetsDTO(
-                ts.TimesheetId,
-                ts.OwnerId,
-                ts.OwnerName,
-                ts.CreatedDate,
-                ts.StartDate,
-                ts.Status,
-                ts.DateStatusChanged,
-                ts.Info,
-                ts.Entries.Where(e =>
-                    e.InnateCode == code &&
-                    (string.IsNullOrWhiteSpace(taskName) || e.TaskName == taskName)
-                ).ToList()
-            ))
-            .Where(ts => ts.Entries.Count > 0) // Only include timesheets with matching entries
-            .ToList();
-    }
-
-    /// <summary>
-    /// Calculate aggregated hours summary by person across all timesheets.
-    /// </summary>
-    internal static List<PersonHoursSummaryDTO> CalculatePersonHoursSummary(List<TimesheetsDTO> timesheets)
-    {
-        return timesheets
-            .GroupBy(ts => ts.OwnerName)
-            .Select(g => new PersonHoursSummaryDTO(
-                PersonName: g.Key,
-                TotalHours: g.SelectMany(ts => ts.Entries)
-                    .Sum(e => e.MondayHours + e.TuesdayHours + e.WednesdayHours +
-                              e.ThursdayHours + e.FridayHours + e.SaturdayHours + e.SundayHours)
-            ))
-            .OrderByDescending(s => s.TotalHours)
-            .ToList();
-    }
-
-    #endregion
 }

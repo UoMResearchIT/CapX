@@ -1,18 +1,16 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 
-namespace PPMTool.API.Endpoints;
+namespace PPMTool.API.Helpers;
 
 /// <summary>
 /// Provides general helper methods for common repeatedable actions in minimal API endpoints.
 /// </summary>
-public static class Helpers
+public static class GeneralHelpers
 {
     /// <summary>
     /// Gets the authenticated user from the HttpContext. Should always be present if the authentication middleware is correctly set up.
@@ -127,38 +125,6 @@ public static class Helpers
     }
 
     /// <summary>
-    /// Apply optional date range filtering to a timesheet query.
-    /// Handles weekly timesheets that may overlap with the date range boundaries.
-    /// </summary>
-    /// <param name="query">The base query to filter.</param>
-    /// <param name="start">Optional start date (inclusive).</param>
-    /// <param name="endExclusive">Optional end date (exclusive).</param>
-    /// <returns>The filtered query.</returns>
-    internal static IQueryable<Timesheet> ApplyDateRangeFilter(
-        IQueryable<Timesheet> query, DateTime? start, DateTime? endExclusive)
-    {
-        if (start.HasValue && endExclusive.HasValue)
-        {
-            var startValue = start.Value;
-            var endValue = endExclusive.Value;
-            // Timesheet overlaps if it starts before the end AND ends after the start
-            return query.Where(t => t.StartDate < endValue && t.StartDate.AddDays(7) > startValue);
-        }
-        else if (start.HasValue)
-        {
-            var startValue = start.Value;
-            return query.Where(t => t.StartDate >= startValue);
-        }
-        else if (endExclusive.HasValue)
-        {
-            var endValue = endExclusive.Value;
-            return query.Where(t => t.StartDate < endValue);
-        }
-
-        return query;
-    }
-
-    /// <summary>
     /// Formats a single object value for inclusion in a CSV field.
     /// It handles nulls and wraps strings containing commas in double quotes.
     /// </summary>
@@ -212,59 +178,5 @@ public static class Helpers
         }
 
         return Encoding.UTF8.GetBytes(csvBuilder.ToString());
-    }
-
-    /// <summary>
-    /// Generates WLM analysis data for a collection of people over a specified date range.
-    /// This is a helper method specific to the WorkLoadModel API.
-    /// </summary>
-    /// <param name="context">The database context for data retrieval.</param>
-    /// <param name="people">The collection of people for whom to generate the analysis.</param>
-    /// <param name="startDate">The start date of the analysis period.</param>
-    /// <param name="endDate">The end date of the analysis period.</param>
-    /// <param name="compareToWLM">A flag to determine if the data should be the difference against the WLM.</param>
-    /// <param name="normalisedByTotalHours">A flag to determine if the data should be normalised as a fraction of total hours.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a list of DTOs with the structured WLM analysis data.</returns>
-    internal static async Task<List<WLMAnalysisPersonDataDTO>> GenerateWlmAnalysisDataAsync(
-        PPMToolContext context,
-        IEnumerable<Person> people,
-        DateTime startDate,
-        DateTime endDate,
-        bool compareToWLM,
-        bool normalisedByTotalHours)
-    {
-        var results = new List<WLMAnalysisPersonDataDTO>();
-
-        string units = WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
-
-        foreach (var person in people)
-        {
-            var personWeeklyData = new List<WLMWeeklyAnalysisDTO>();
-
-            var allTimesheets = await context.Timesheets
-                .Include(t => t.TimesheetEntries).ThenInclude(e => e.InnateCodeTask).ThenInclude(tk => tk.InnateCode)
-                .Where(t => t.Owner.PersonId == person.PersonId && t.StartDate >= startDate && t.StartDate <= endDate)
-                .ToListAsync();
-
-            var weekStart = startDate;
-            while (weekStart <= endDate)
-            {
-                var wlmDataItem = WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets);
-
-                if (normalisedByTotalHours)
-                {
-                    wlmDataItem.SwitchNormalisation(true);
-                }
-                wlmDataItem.UpdateWLMNetValues(normalisedByTotalHours);
-
-                var sourceData = compareToWLM ? wlmDataItem.WLMNetByDuty : wlmDataItem.WeeklyValuesByDuty;
-                var dutiesDict = sourceData.ToDictionary(kvp => kvp.Key.GetDescription(), kvp => kvp.Value);
-
-                personWeeklyData.Add(new WLMWeeklyAnalysisDTO(weekStart, units, dutiesDict));
-                weekStart = weekStart.AddDays(7);
-            }
-            results.Add(new WLMAnalysisPersonDataDTO(person.Name, personWeeklyData));
-        }
-        return results;
     }
 }

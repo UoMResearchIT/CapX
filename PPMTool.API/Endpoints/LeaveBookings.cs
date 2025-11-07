@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
 
 namespace PPMTool.API.Endpoints;
 
@@ -37,7 +38,7 @@ public static class LeaveBookings
             }
 
             // Resolve username
-            var resolvedUsername = Helpers.GetCurrentUser(http).CASUserName;
+            var resolvedUsername = GeneralHelpers.GetCurrentUser(http).CASUserName;
             if (resolvedUsername == null)
             {
                 logger.LogWarning("LeaveBookings: Username could not be resolved.");
