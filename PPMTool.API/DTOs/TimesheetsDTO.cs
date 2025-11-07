@@ -98,7 +98,7 @@ namespace PPMTool.API.DTOs
     /// <param name="SaturdayHours"></param>
     /// <param name="SundayHours"></param>
     /// <param name="TotalHoursForWeek"></param>
-    public sealed record TimesheetCSVDTO(
+    public sealed record TimesheetCSVRowData(
         string PersonName,
         string TimesheetWeekStart,
         string TimesheetStatus,

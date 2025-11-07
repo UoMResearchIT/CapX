@@ -104,33 +104,8 @@ public static class Timesheets
             {
                 logger.LogInformation($"Timesheets: Generating CSV for {person.Name}.");
 
-                // Flatten the data for a simple CSV structure
-                var csvData = timesheetsAsDTOs.SelectMany(timesheetDto =>
-
-                    // Map to a DTO for the CSV file
-                    timesheetDto.Entries.Select(entryDto =>
-                        new TimesheetCSVDTO(
-                            timesheetDto.OwnerName,
-                            timesheetDto.StartDate.ToString("yyyy-MM-dd"),
-                            timesheetDto.Status,
-                            timesheetDto.Info ?? "",
-                            entryDto.InnateCode,
-                            entryDto.InnateCodeName,
-                            entryDto.TaskName,
-                            entryDto.Duty,
-                            entryDto.MondayHours,
-                            entryDto.TuesdayHours,
-                            entryDto.WednesdayHours,
-                            entryDto.ThursdayHours,
-                            entryDto.FridayHours,
-                            entryDto.SaturdayHours,
-                            entryDto.SundayHours,
-                            entryDto.MondayHours + entryDto.TuesdayHours + entryDto.WednesdayHours +
-                                entryDto.ThursdayHours + entryDto.FridayHours + entryDto.SaturdayHours + entryDto.SundayHours
-                        )
-                    )
-                );
-
+                // Flatten the data for CSV
+                var csvData = TimesheetsHelpers.MapToCsvRowData(timesheetsAsDTOs);
                 var fileBytes = GeneralHelpers.GenerateCsv(csvData);
                 var fileName = $"{person.Name.Replace(' ', '_')}_timesheets_{startDate}_to_{endDate}.csv";
                 logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for {person.Name} as CSV.");
@@ -232,28 +207,8 @@ public static class Timesheets
             {
                 logger.LogInformation($"Timesheets: Generating CSV for code {code}, task {taskName ?? "ALL"}.");
 
-                var csvData = timesheetsAsDTOs.SelectMany(ts =>
-                    ts.Entries.Select(e => new TimesheetCSVDTO(
-                        ts.OwnerName,
-                        ts.StartDate.ToString("yyyy-MM-dd"),
-                        ts.Status,
-                        ts.Info ?? "",
-                        e.InnateCode,
-                        e.InnateCodeName,
-                        e.TaskName,
-                        e.Duty,
-                        e.MondayHours,
-                        e.TuesdayHours,
-                        e.WednesdayHours,
-                        e.ThursdayHours,
-                        e.FridayHours,
-                        e.SaturdayHours,
-                        e.SundayHours,
-                        e.MondayHours + e.TuesdayHours + e.WednesdayHours +
-                            e.ThursdayHours + e.FridayHours + e.SaturdayHours + e.SundayHours
-                    ))
-                );
-
+                // Flatten the data for CSV
+                var csvData = TimesheetsHelpers.MapToCsvRowData(timesheetsAsDTOs);
                 var fileBytes = GeneralHelpers.GenerateCsv(csvData);
                 var taskFilter = string.IsNullOrWhiteSpace(taskName) ? "all_tasks" : taskName.Replace(' ', '_');
                 var dateFilter = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)

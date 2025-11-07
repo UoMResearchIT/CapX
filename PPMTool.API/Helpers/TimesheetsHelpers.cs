@@ -79,6 +79,38 @@ namespace PPMTool.API.Helpers
         }
 
         /// <summary>
+        /// Method to map timesheet DTOs to CSV row data in a consistent way for all timesheets endpoints.
+        /// </summary>
+        /// <param name="timesheetsAsDTOs"></param>
+        /// <returns></returns>
+        internal static IEnumerable<TimesheetCSVRowData> MapToCsvRowData(IEnumerable<TimesheetsDTO> timesheetsAsDTOs)
+        {
+            return timesheetsAsDTOs.SelectMany(ts =>
+                ts.Entries.Select(e =>
+                    new TimesheetCSVRowData(
+                        ts.OwnerName,
+                        ts.StartDate.ToString("yyyy-MM-dd"),
+                        ts.Status,
+                        ts.Info ?? "",
+                        e.InnateCode,
+                        e.InnateCodeName,
+                        e.TaskName,
+                        e.Duty,
+                        e.MondayHours,
+                        e.TuesdayHours,
+                        e.WednesdayHours,
+                        e.ThursdayHours,
+                        e.FridayHours,
+                        e.SaturdayHours,
+                        e.SundayHours,
+                        e.MondayHours + e.TuesdayHours + e.WednesdayHours +
+                            e.ThursdayHours + e.FridayHours + e.SaturdayHours + e.SundayHours
+                    )
+                )
+            );
+        }
+
+        /// <summary>
         /// Map timesheet entities to DTOs. Reuses the same mapping logic across all timesheet endpoints.
         /// </summary>
         /// <param name="timesheets"></param>
