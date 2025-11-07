@@ -163,6 +163,7 @@ public static class Timesheets
     /// <param name="asCsv">Whether the returned data should be as a CSV download. Default is JSON if not present.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TimesheetsByCodeTaskResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static async Task<IResult> GetTimesheetBookingsByCodeAndTask(
@@ -177,11 +178,11 @@ public static class Timesheets
     {
         try
         {
-            // Authorization check - superuser only
+            // Authorization check - superusers and managers only
             var user = GeneralHelpers.GetCurrentUser(http);
-            if (!GeneralHelpers.IsSuperUser(user))
+            if (!GeneralHelpers.IsSuperUserOrManager(user))
             {
-                logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Non-superuser attempted to access booking data");
+                logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: User does not have permission to access booking data");
                 return Results.Unauthorized();
             }
 

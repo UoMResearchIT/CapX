@@ -40,6 +40,17 @@ public static class GeneralHelpers
     }
 
     /// <summary>
+    /// Checks to see if the user is a superuser or manager.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    internal static bool IsSuperUserOrManager(User? user)
+    {
+        if (user == null) return false;
+        return user.RoleType == RoleType.Superuser || user.RoleType == RoleType.Manager;
+    }
+
+    /// <summary>
     /// Get a matching person if they exist by name, case insensitive, underscores treated as spaces.
     /// </summary>
     /// <param name="context">The database context.</param>
