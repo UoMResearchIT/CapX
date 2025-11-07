@@ -147,12 +147,12 @@ namespace PPMTool.Services
         /// Get the project by its RTP number
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="RTP"></param>
+        /// <param name="rtp"></param>
         /// <returns></returns>
-        internal Project GetByRTP(PPMToolContext context, int? RTP)
+        internal Project GetByRTP(PPMToolContext context, int? rtp)
         {
-            return RTP == null ? null : GetAll(context)
-                .FirstOrDefault(p => p.RTP == RTP);
+            return rtp == null ? null : GetAll(context)
+                .FirstOrDefault(p => p.RTP == rtp);
         }
 
         /// <summary>

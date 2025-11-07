@@ -17,6 +17,7 @@ namespace PPMTool.Services
             this.contextFactory = contextFactory;
         }
 
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, User entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -28,23 +29,27 @@ namespace PPMTool.Services
             return entity.UserId;
         }
 
+        /// <inheritdoc />
         public override bool DuplicateDetected(PPMToolContext context, User entity)
         {
             return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.UserId != entity.UserId);
         }
 
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, User entity, bool commitChanges = true)
         {
             context.Users.Remove(entity);
             if (commitChanges) CommitChanges(context);
         }
 
+        /// <inheritdoc />
         public override IEnumerable<User> GetAll(PPMToolContext context)
         {
             return context.Users
                 .Include(x => x.Person);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, User entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -56,11 +61,23 @@ namespace PPMTool.Services
             return entity.UserId;
         }
 
+        /// <summary>
+        /// Get a user given the username
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="username"></param>
+        /// <returns></returns>
         public User GetByUsername(PPMToolContext context, string username)
         {
             return GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
         }
 
+        /// <summary>
+        /// Get the role type for the supplied username if the person exists in the DB otherwise none.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="username"></param>
+        /// <returns></returns>
         public RoleType GetRoleTypeForUsername(PPMToolContext context, string username)
         {
             User match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
@@ -71,10 +88,15 @@ namespace PPMTool.Services
             return RoleType.None;
         }
 
-        public void UpdateLastLoggedIn(PPMToolContext context, User UserEntity)
+        /// <summary>
+        /// Update the last logged in date in the DB for the user to current timestamp
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="user"></param>
+        public void UpdateLastLoggedIn(PPMToolContext context, User user)
         {
-            UserEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            context.Users.Update(UserEntity);
+            user.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Users.Update(user);
             CommitChanges(context);
         }
 
