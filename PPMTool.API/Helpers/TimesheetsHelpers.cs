@@ -192,5 +192,165 @@ namespace PPMTool.API.Helpers
                 .AsEnumerable() // Map everything into memory as we need to convert to lower
                 .Any(code => code.Trim().ToLowerInvariant() == normalisedCode);
         }
+
+        /// <summary>
+        /// Maps timesheets to grouped bookings format: grouped by task, then by person, with weekly hours breakdown.
+        /// </summary>
+        /// <param name="timesheets">List of timesheet entities</param>
+        /// <param name="projectCode">The project/activity code for the response</param>
+        /// <param name="code">The activity code to filter entries by</param>
+        /// <param name="taskName">Optional task name to filter entries by</param>
+        /// <returns>Grouped timesheet bookings response</returns>
+        internal static TimesheetBookingsByCodeTaskResponseDTO MapToGroupedBookingsDTO(
+            List<Timesheet> timesheets,
+            string projectCode,
+            string code,
+            string? taskName)
+        {
+            // Normalize filter values for comparison
+            var normalisedCode = code.Trim().ToLowerInvariant();
+            var normalisedTask = taskName?.Trim().ToLowerInvariant();
+            var dateFormat = "dd/MM/yyyy";
+
+            // Group all entries by task name and person, aggregating hours by week
+            // Filter entries to only include those matching the requested code and optional task
+            var taskGroups = timesheets
+                .SelectMany(ts => ts.TimesheetEntries
+                    .Where(e =>
+                        e.InnateCodeTask != null &&
+                        e.InnateCodeTask.InnateCode != null &&
+                        e.InnateCodeTask.InnateCode.ActivityCode.Trim().ToLowerInvariant() == normalisedCode &&
+                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName.Trim().ToLowerInvariant() == normalisedTask))
+                    .Select(e => new
+                    {
+                        TaskName = e.InnateCodeTask.TaskName,
+                        PersonName = ts.Owner?.Name ?? "Unknown",
+                        WeekStart = ts.StartDate,
+                        Entry = e
+                    })
+                )
+                .GroupBy(x => x.TaskName)
+                .OrderBy(g => g.Key) // Alphabetical order for tasks
+                .Select(taskGroup =>
+                {
+                    // Group by person within each task
+                    var personAllocations = taskGroup
+                        .GroupBy(x => x.PersonName)
+                        .OrderBy(g => g.Key) // Alphabetical order for persons
+                        .Select(personGroup =>
+                        {
+                            // Aggregate hours by week for this person
+                            var weeklyHoursDict = new Dictionary<DateTime, double>();
+
+                            foreach (var item in personGroup)
+                            {
+                                var weekStart = item.WeekStart;
+                                var entry = item.Entry;
+
+                                // Add hours for each day of the week
+                                var days = new[]
+                                {
+                                    (offset: 0, hours: entry.MondayHours),
+                                    (offset: 1, hours: entry.TuesdayHours),
+                                    (offset: 2, hours: entry.WednesdayHours),
+                                    (offset: 3, hours: entry.ThursdayHours),
+                                    (offset: 4, hours: entry.FridayHours),
+                                    (offset: 5, hours: entry.SaturdayHours),
+                                    (offset: 6, hours: entry.SundayHours)
+                                };
+
+                                foreach (var (offset, hours) in days)
+                                {
+                                    var date = weekStart.AddDays(offset);
+
+                                    if (weeklyHoursDict.ContainsKey(date))
+                                    {
+                                        weeklyHoursDict[date] += hours;
+                                    }
+                                    else
+                                    {
+                                        weeklyHoursDict[date] = hours;
+                                    }
+                                }
+                            }
+
+                            // Convert to formatted string dictionary and sort chronologically
+                            var weeklyHours = weeklyHoursDict
+                                .OrderBy(kvp => kvp.Key) // Chronological order
+                                .ToDictionary(
+                                    kvp => kvp.Key.ToString(dateFormat),
+                                    kvp => kvp.Value
+                                );
+
+                            var total = weeklyHours.Values.Sum();
+
+                            return new PersonAllocationDTO(
+                                Person: personGroup.Key,
+                                BookedHours: weeklyHours,
+                                Total: total
+                            );
+                        })
+                        .ToList();
+
+                    var taskTotal = personAllocations.Sum(p => p.Total);
+
+                    return new TaskAllocationDTO(
+                        TaskName: taskGroup.Key,
+                        Allocations: personAllocations,
+                        TaskTotal: taskTotal
+                    );
+                })
+                .ToList();
+
+            return new TimesheetBookingsByCodeTaskResponseDTO(
+                ProjectCode: projectCode,
+                Tasks: taskGroups
+            );
+        }
+
+        /// <summary>
+        /// Maps grouped bookings DTO to CSV row data, flattening the hierarchical structure.
+        /// Each row represents one date entry for a person working on a task, with summary rows.
+        /// </summary>
+        /// <param name="groupedData">The grouped timesheet bookings</param>
+        /// <returns>Flattened CSV rows with person and task totals</returns>
+        internal static IEnumerable<GroupedTimesheetCSVRowData> MapToGroupedCsvRowData(TimesheetBookingsByCodeTaskResponseDTO groupedData)
+        {
+            foreach (var task in groupedData.Tasks)
+            {
+                foreach (var person in task.Allocations)
+                {
+                    // Output all the person's booked hours
+                    foreach (var entry in person.BookedHours)
+                    {
+                        yield return new GroupedTimesheetCSVRowData(
+                            ProjectCode: groupedData.ProjectCode,
+                            TaskName: task.TaskName,
+                            PersonName: person.Person,
+                            Date: entry.Key,
+                            Hours: entry.Value
+                        );
+                    }
+
+                    // Add person total summary row
+                    yield return new GroupedTimesheetCSVRowData(
+                        ProjectCode: "",
+                        TaskName: "",
+                        PersonName: $"Person total: {person.Total}",
+                        Date: "",
+                        Hours: 0
+                    );
+                }
+
+                // Add task total summary row after all people in the task
+                yield return new GroupedTimesheetCSVRowData(
+                    ProjectCode: "",
+                    TaskName: $"Task total: {task.TaskTotal}",
+                    PersonName: "",
+                    Date: "",
+                    Hours: 0
+                );
+            }
+        }
     }
 }
