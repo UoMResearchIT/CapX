@@ -224,7 +224,7 @@ public static class Timesheets
             var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(timesheets);
 
             // Calculate aggregated summary by person for capacity analysis
-            var summary = TimesheetsHelpers.CalculatePersonHoursSummary(filteredTimesheets);
+            var summary = TimesheetsHelpers.CalculatePersonHoursSummary(timesheetsAsDTOs);
             var grandTotal = summary.Sum(s => s.TotalHours);
 
             // Check to see if we need to return a CSV file
@@ -232,7 +232,7 @@ public static class Timesheets
             {
                 logger.LogInformation($"Timesheets: Generating CSV for code {code}, task {taskName ?? "ALL"}.");
 
-                var csvData = filteredTimesheets.SelectMany(ts =>
+                var csvData = timesheetsAsDTOs.SelectMany(ts =>
                     ts.Entries.Select(e => new TimesheetCSVDTO(
                         ts.OwnerName,
                         ts.StartDate.ToString("yyyy-MM-dd"),
@@ -260,19 +260,19 @@ public static class Timesheets
                     ? "all_dates"
                     : $"{startDate ?? "start"}_to_{endDate ?? "end"}";
                 var fileName = $"timesheets_{code}_{taskFilter}_{dateFilter}.csv";
-                logger.LogInformation($"Timesheets: Returned {filteredTimesheets.Count} timesheets as CSV. Grand total: {grandTotal} hours.");
+                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets as CSV. Grand total: {grandTotal} hours.");
                 return Results.File(fileBytes, "text/csv", fileName);
             }
             else
             {
                 // Default to JSON with timesheets and aggregated summary
                 var response = new TimesheetsByCodeTaskResponseDTO(
-                    Timesheets: filteredTimesheets,
+                    Timesheets: timesheetsAsDTOs,
                     Summary: summary,
                     GrandTotalHours: grandTotal
                 );
 
-                logger.LogInformation($"Timesheets: Returned {filteredTimesheets.Count} timesheets for code {code} as JSON. Grand total: {grandTotal} hours.");
+                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for code {code} as JSON. Grand total: {grandTotal} hours.");
                 return Results.Json(response);
             }
         }
