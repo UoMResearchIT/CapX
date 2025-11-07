@@ -81,11 +81,7 @@ public static class Timesheets
 
             // Query weekly timesheets that overlap the window
             // Read only, include owner and entries with innate info
-            var query = context.Timesheets
-                .Include(t => t.Owner)
-                .Include(t => t.TimesheetEntries)
-                    .ThenInclude(e => e.InnateCodeTask)
-                        .ThenInclude(tk => tk.InnateCode)
+            var query = TimesheetsHelpers.BuildTimesheetQuery(context)
                 .Where(t => t.OwnerId == person.PersonId);
 
             // Enhance query to apply date range filter
@@ -141,7 +137,7 @@ public static class Timesheets
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public static async Task<IResult> GetTimesheetBookingsByCodeAndTask(
+    public static IResult GetTimesheetBookingsByCodeAndTask(
         PPMToolContext context,
         ILogger logger,
         HttpContext http,
@@ -169,7 +165,7 @@ public static class Timesheets
             }
 
             // Check the code exists in the system
-            if (TimesheetsHelpers.IsValidTimesheetCode(context, code))
+            if (!TimesheetsHelpers.IsValidTimesheetCode(context, code))
             {
                 logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Code provided is not known in the system");
                 return Results.NotFound("Unknown timesheet code.");
@@ -184,19 +180,22 @@ public static class Timesheets
             }
 
             // Query timesheets matching the code/task filter
-            var query = TimesheetsHelpers.BuildTimesheetQueryWithCodeAndTaskFilter(context, code, taskName);
+            var query = TimesheetsHelpers.BuildTimesheetQuery(context);
 
             // Add the date range filter to the query
             query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
+            // Filter on the task and code
+            var filteredTimesheets = TimesheetsHelpers.GetAllMatchingCodeAndTask(query, code, taskName);
+
             // Execute the query
-            var timesheets = await query
+            var orderedAndFilteredTimesheets = filteredTimesheets
                 .OrderBy(t => t.StartDate)
                 .ThenBy(t => t.Owner!.Name)
-                .ToListAsync();
+                .ToList();
 
             // Map to DTOs using the helper
-            var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(timesheets);
+            var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(orderedAndFilteredTimesheets);
 
             // Calculate aggregated summary by person for capacity analysis
             var summary = TimesheetsHelpers.CalculatePersonHoursSummary(timesheetsAsDTOs);

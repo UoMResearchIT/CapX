@@ -44,14 +44,12 @@ namespace PPMTool.API.Helpers
         }
 
         /// <summary>
-        /// Build a timesheet query filtered by code and optional task name.
+        /// Build a timesheet query with option to only look at approved.
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="code"></param>
-        /// <param name="taskName"></param>
         /// <param name="approvedOnly">Whether the method should filter to just the approved timesheets</param>
-        internal static IQueryable<Timesheet> BuildTimesheetQueryWithCodeAndTaskFilter(
-            PPMToolContext context, string code, string? taskName, bool approvedOnly = false)
+        internal static IQueryable<Timesheet> BuildTimesheetQuery(
+            PPMToolContext context, bool approvedOnly = false)
         {
             IQueryable<Timesheet> query = context.Timesheets
                 .Include(t => t.Owner)
@@ -65,17 +63,36 @@ namespace PPMTool.API.Helpers
                 query = query.Where(t => t.Status == Enums.TimesheetStatus.Approved);
             }
 
+            return query;
+        }
+
+        /// <summary>
+        /// Returns an in-memory collection of timesheets that match the specified code and optional task name.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="code"></param>
+        /// <param name="taskName"></param>
+        /// <returns></returns>
+        internal static IEnumerable<Timesheet> GetAllMatchingCodeAndTask(IQueryable<Timesheet> query, string code, string? taskName)
+        {
             // Add code and task filter to query
-            query = query
+            var normalisedCode = code.Trim().ToLowerInvariant();
+            var normalisedTask = taskName?.Trim().ToLowerInvariant();
+
+            return query
+                .Where(x => x.TimesheetEntries.Any(e =>
+                    e.InnateCodeTask != null &&
+                    e.InnateCodeTask.InnateCode != null)
+                )
+
+                // Have to pull into memory to do the string comparisons with trimming and normalisation
+                .AsEnumerable()
                 .Where(t =>
                     t.TimesheetEntries.Any(e =>
-                        e.InnateCodeTask != null &&
-                        e.InnateCodeTask.InnateCode != null &&
-                        e.InnateCodeTask.InnateCode.ActivityCode.Trim().ToLowerInvariant() == code.Trim().ToLowerInvariant() &&
-                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName.Trim().ToLowerInvariant() == taskName.Trim().ToLowerInvariant())
-                    ));
-
-            return query;
+                        e.InnateCodeTask.InnateCode.ActivityCode.Trim().ToLowerInvariant() == normalisedCode &&
+                        (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName.Trim().ToLowerInvariant() == normalisedTask)
+                    )
+                );
         }
 
         /// <summary>
@@ -169,7 +186,11 @@ namespace PPMTool.API.Helpers
         /// <returns></returns>
         internal static bool IsValidTimesheetCode(PPMToolContext context, string activityCode)
         {
-            return context.InnateCodes.Any(ic => ic.ActivityCode.Trim().ToLowerInvariant() == activityCode.Trim().ToLowerInvariant());
+            var normalisedCode = activityCode.Trim().ToLowerInvariant();
+            return context.InnateCodes
+                .Select(x => x.ActivityCode)
+                .AsEnumerable() // Map everything into memory as we need to convert to lower
+                .Any(code => code.Trim().ToLowerInvariant() == normalisedCode);
         }
     }
 }
