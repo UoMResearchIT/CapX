@@ -193,6 +193,13 @@ public static class Timesheets
                 return Results.BadRequest("Code parameter is required.");
             }
 
+            // Check the code exists in the system
+            if (TimesheetsHelpers.IsValidTimesheetCode(context, code))
+            {
+                logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Code provided is not known in the system");
+                return Results.NotFound("Unknown timesheet code.");
+            }
+
             // Parse optional date range
             var (start, endDateExclusive, dateError) = GeneralHelpers.ParseOptionalDateRange(startDate, endDate);
             if (dateError != null)

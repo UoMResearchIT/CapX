@@ -146,5 +146,16 @@ namespace PPMTool.API.Helpers
                 .OrderByDescending(s => s.TotalHours)
                 .ToList();
         }
+
+        /// <summary>
+        /// Checks whether a timesheet code exists with the specified activity code.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activityCode"></param>
+        /// <returns></returns>
+        internal static bool IsValidTimesheetCode(PPMToolContext context, string activityCode)
+        {
+            return context.InnateCodes.Any(ic => ic.ActivityCode.Trim().ToLowerInvariant() == activityCode.Trim().ToLowerInvariant());
+        }
     }
 }
