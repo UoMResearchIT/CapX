@@ -194,40 +194,38 @@ public static class Timesheets
                 .ThenBy(t => t.Owner!.Name)
                 .ToList();
 
-            // Map to DTOs using the helper
-            var timesheetsAsDTOs = TimesheetsHelpers.MapToTimesheetDTOs(orderedAndFilteredTimesheets);
+            // Map to grouped bookings format
+            var groupedResponse = TimesheetsHelpers.MapToGroupedBookingsDTO(
+                orderedAndFilteredTimesheets,
+                code,
+                code,
+                taskName
+            );
 
-            // Calculate aggregated summary by person for capacity analysis
-            var summary = TimesheetsHelpers.CalculatePersonHoursSummary(timesheetsAsDTOs);
-            var grandTotal = summary.Sum(s => s.TotalHours);
+            // Calculate grand total for logging
+            var grandTotal = groupedResponse.Tasks.Sum(t => t.TaskTotal);
 
             // Check to see if we need to return a CSV file
             if (asCsv != null && asCsv == true)
             {
-                logger.LogInformation($"Timesheets: Generating CSV for code {code}, task {taskName ?? "ALL"}.");
+                logger.LogInformation("Timesheets: Generating CSV for code {Code}, task {TaskName}", code, taskName ?? "ALL");
 
-                // Flatten the data for CSV
-                var csvData = TimesheetsHelpers.MapToCsvRowData(timesheetsAsDTOs);
+                // Flatten the grouped data for CSV
+                var csvData = TimesheetsHelpers.MapToGroupedCsvRowData(groupedResponse);
                 var fileBytes = GeneralHelpers.GenerateCsv(csvData);
                 var taskFilter = string.IsNullOrWhiteSpace(taskName) ? "all_tasks" : taskName.Replace(' ', '_');
                 var dateFilter = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)
                     ? "all_dates"
                     : $"{startDate ?? "start"}_to_{endDate ?? "end"}";
                 var fileName = $"timesheets_{code}_{taskFilter}_{dateFilter}.csv";
-                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets as CSV. Grand total: {grandTotal} hours.");
+                logger.LogInformation("Timesheets: Returned grouped timesheets as CSV. Grand total: {GrandTotal} hours", grandTotal);
                 return Results.File(fileBytes, "text/csv", fileName);
             }
             else
             {
-                // Default to JSON with timesheets and aggregated summary
-                var response = new TimesheetsByCodeTaskResponseDTO(
-                    Timesheets: timesheetsAsDTOs,
-                    Summary: summary,
-                    GrandTotalHours: grandTotal
-                );
-
-                logger.LogInformation($"Timesheets: Returned {timesheetsAsDTOs.Count} timesheets for code {code} as JSON. Grand total: {grandTotal} hours.");
-                return Results.Json(response);
+                // Return JSON with grouped format
+                logger.LogInformation("Timesheets: Returned grouped timesheets for code {Code} as JSON. Grand total: {GrandTotal} hours", code, grandTotal);
+                return Results.Json(groupedResponse);
             }
         }
         catch (Exception ex)
