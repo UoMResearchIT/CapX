@@ -256,12 +256,16 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
         using (var dbContext = dbContextFactory.CreateDbContext())
         {
+            // Log the attempt
+            var claimName = assertion.PrincipalName?.Trim().ToLower();
+            logger?.LogInformation($"Signing in {claimName}");
+
+            // Find the matching user in the DB
             var user = dbContext.Users
                 .Include(x => x.Person)
                 .ToList()
                 .FirstOrDefault(x =>
                 {
-                    var claimName = assertion.PrincipalName?.Trim().ToLower();
                     return
                         x.GetStandardisedUserName() == claimName ||
                         x.EmailAddress?.Trim().ToLower() == claimName;
@@ -274,7 +278,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
             }
             else
             {
-                logger?.LogError($"Cannot find a user in the access DB with UID: {assertion.PrincipalName}");
+                logger?.LogError($"Cannot find a user in the access DB with UID: {claimName}");
             }
 
             // Sign in the user
