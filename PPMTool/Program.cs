@@ -264,7 +264,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
                     var claimName = assertion.PrincipalName.Trim().ToLower();
                     return
                         x.GetStandardisedUserName() == claimName ||
-                        x.EmailAddress.Trim().ToLower() == claimName;
+                        x.EmailAddress?.Trim().ToLower() == claimName;
                 });
 
             // If found a user in the DB that matches, add their role claim
