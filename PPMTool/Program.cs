@@ -261,7 +261,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
                 .ToList()
                 .FirstOrDefault(x =>
                 {
-                    var claimName = assertion.PrincipalName.Trim().ToLower();
+                    var claimName = assertion.PrincipalName?.Trim().ToLower();
                     return
                         x.GetStandardisedUserName() == claimName ||
                         x.EmailAddress?.Trim().ToLower() == claimName;
