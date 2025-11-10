@@ -64,7 +64,8 @@ namespace PPMTool.Services
         /// <returns></returns>
         public User GetByUsername(PPMToolContext context, string username)
         {
-            return GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
+            return GetAll(context)
+                .FirstOrDefault(x => x.GetStandardisedUserName() == username);
         }
 
         /// <summary>
@@ -75,7 +76,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         public RoleType GetRoleTypeForUsername(PPMToolContext context, string username)
         {
-            User match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
+            User match = GetAll(context)
+                .FirstOrDefault(x => x.GetStandardisedUserName() == username);
+
+            // Read role type or else no role
             if (match != null)
             {
                 return match.RoleType;
@@ -96,20 +100,6 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Get a list of people who are managers
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public IEnumerable<Person> GetAllManagers(PPMToolContext context)
-        {
-            return context.Users
-                .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
-                .Include(x => x.Person)
-                .Select(x => x.Person)
-                .DistinctBy(x => x.Name);
-        }
-
-        /// <summary>
         /// Get the user that matches the given username or email
         /// </summary>
         /// <param name="context"></param>
@@ -117,8 +107,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public User GetByUsernameOrEmail(PPMToolContext context, string normalisedUsernameOrEmail)
         {
-            return context.Users
-                .Include(x => x.Person)
+            return GetAll(context)
                 .FirstOrDefault(x => x.MatchesClaim(normalisedUsernameOrEmail));
         }
     }
