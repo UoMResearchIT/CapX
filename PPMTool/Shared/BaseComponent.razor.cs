@@ -42,7 +42,7 @@ namespace PPMTool.Shared
                     if (Context == null) Context = ContextFactory.CreateDbContext();
 
                     // Get the user object
-                    User user = UserService.GetByUsernameOrEmail(Context, claimsPrincipal.Identity.Name.Trim().ToLower());
+                    User user = UserService.GetByUsernameOrEmail(Context, claimsPrincipal.Identity.Name?.Trim().ToLower());
 
                     // Get the active user
                     ActiveUser = user;
