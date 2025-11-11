@@ -56,14 +56,30 @@ namespace PPMTool.Services
             return entity.UserId;
         }
 
+        /// <summary>
+        /// Get the user that matches the given username
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="username"></param>
+        /// <returns></returns>
         public User GetByUsername(PPMToolContext context, string username)
         {
-            return GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
+            return GetAll(context)
+                .FirstOrDefault(x => x.GetStandardisedUserName() == username);
         }
 
+        /// <summary>
+        /// Get the role type for the given username
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="username"></param>
+        /// <returns></returns>
         public RoleType GetRoleTypeForUsername(PPMToolContext context, string username)
         {
-            User match = GetAll(context).FirstOrDefault(x => x.GetStandardisedUserName() == username);
+            User match = GetAll(context)
+                .FirstOrDefault(x => x.GetStandardisedUserName() == username);
+
+            // Read role type or else no role
             if (match != null)
             {
                 return match.RoleType;
@@ -71,6 +87,11 @@ namespace PPMTool.Services
             return RoleType.None;
         }
 
+        /// <summary>
+        /// Update the last logged in time for the given user
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="UserEntity"></param>
         public void UpdateLastLoggedIn(PPMToolContext context, User UserEntity)
         {
             UserEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -79,17 +100,15 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Get a list of people who are managers
+        /// Get the user that matches the given username or email
         /// </summary>
         /// <param name="context"></param>
+        /// <param name="normalisedUsernameOrEmail"></param>
         /// <returns></returns>
-        public IEnumerable<Person> GetAllManagers(PPMToolContext context)
+        public User GetByUsernameOrEmail(PPMToolContext context, string normalisedUsernameOrEmail)
         {
-            return context.Users
-                .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
-                .Include(x => x.Person)
-                .Select(x => x.Person)
-                .DistinctBy(x => x.Name);
+            return GetAll(context)
+                .FirstOrDefault(x => x.MatchesClaim(normalisedUsernameOrEmail));
         }
     }
 }

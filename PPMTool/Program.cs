@@ -264,12 +264,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
             var user = dbContext.Users
                 .Include(x => x.Person)
                 .ToList()
-                .FirstOrDefault(x =>
-                {
-                    return
-                        x.GetStandardisedUserName() == claimName ||
-                        x.EmailAddress?.Trim().ToLower() == claimName;
-                });
+                .FirstOrDefault(x => x.MatchesClaim(claimName));
 
             // If found a user in the DB that matches, add their role claim
             if (user != null)
