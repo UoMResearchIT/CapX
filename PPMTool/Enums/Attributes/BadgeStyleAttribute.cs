@@ -1,7 +1,6 @@
-﻿using System;
-using Radzen;
+﻿using Radzen;
 
-namespace PPMTool.Enums
+namespace PPMTool.Enums.Attributes
 {
     /// <summary>
     /// Custom attribute to assign a badge style to an enum

@@ -1,13 +1,14 @@
 ﻿@inherits ComponentBase
+@using System.Diagnostics
 @using Microsoft.Extensions.Configuration
 @using Microsoft.Extensions.Logging
 @using PPMTool.Data
 @using PPMTool.Data.Context
+@using PPMTool.Data.Entities
 @using PPMTool.Enums
+@using PPMTool.Enums.Attributes
 @using PPMTool.Services
 @using Radzen
-@using PPMTool.Data.Entities
-@using System.Diagnostics
 
 <RadzenTemplateForm TItem="ApiKey" Submit="@HandleValidSubmit" Data="@apiKey">
     <RadzenFieldset Text="Key Configuration">

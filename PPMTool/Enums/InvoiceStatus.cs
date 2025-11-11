@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
+using PPMTool.Enums.Attributes;
 using Radzen;
-using static PPMTool.Enums.Extensions;
 
 namespace PPMTool.Enums
 {
