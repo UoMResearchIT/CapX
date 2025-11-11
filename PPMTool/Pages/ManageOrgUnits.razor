@@ -1,0 +1,47 @@
+﻿@page "/manageorgunits"
+@inherits DataGridPage<BaseOrgUnit>
+@using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
+<PageTitle>Manage Skills - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col py-2">
+            <h1>Manage Organisational Units</h1>
+        </div>
+        <div class="col-auto py-2 align-items-center">
+            <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
+        </div>
+    </div>
+    @if (ErrorMessage != null)
+    {
+        <StatusMessageComponent Message="ErrorMessage" />
+    }
+    <hr />
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <RadzenDataGrid @ref="dataGrid"
+                        AllowFiltering="true"
+                        AllowPaging="false"
+                        Count="@count"
+                        AllowSorting="true"
+                        EditMode="DataGridEditMode.Single"
+                        Data="@dataGridEntities"
+                        TItem="SkillTag"
+                        RowUpdate="@OnUpdateRow"
+                        RowCreate="@OnCreateRow"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        FilterMode="FilterMode.Simple"
+                        LoadData="LoadDataGrid">
+            <Columns>
+                
+            </Columns>
+        </RadzenDataGrid>
+        <br />
+    }
+</div>
