@@ -21,12 +21,16 @@ namespace PPMTool.Migrations
             var filePath = "./Migrations/Data/SensitiveInnateCodes.txt";
             if (File.Exists(filePath))
             {
+                Console.WriteLine($"Reading sensitive codes from {filePath}");
                 var lines = File.ReadAllLines(filePath);
+                Console.WriteLine($"Found {lines.Length} codes to mark as sensitive");
+
                 foreach (var line in lines)
                 {
                     var activityCode = line.Trim().Replace("'", "''");
                     if (!string.IsNullOrWhiteSpace(activityCode))
                     {
+                        Console.WriteLine($"  Marking code '{activityCode}' as sensitive");
                         var sqlCommand = $@"
                             UPDATE InnateCodes
                             SET IsSensitive = 1
@@ -35,6 +39,11 @@ namespace PPMTool.Migrations
                         migrationBuilder.Sql(sqlCommand);
                     }
                 }
+                Console.WriteLine("Completed marking sensitive codes");
+            }
+            else
+            {
+                Console.WriteLine($"Warning: Sensitive codes file not found at {filePath}");
             }
         }
 
