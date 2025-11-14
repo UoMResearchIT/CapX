@@ -99,8 +99,8 @@ namespace PPMTool.Services
         /// <param name="UserEntity"></param>
         public void UpdateLastLoggedIn(PPMToolContext context, User UserEntity)
         {
-            user.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            context.Users.Update(user);
+            UserEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Users.Update(UserEntity);
             CommitChanges(context);
         }
 
