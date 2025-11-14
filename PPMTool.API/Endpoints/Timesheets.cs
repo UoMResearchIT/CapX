@@ -194,6 +194,22 @@ public static class Timesheets
                 .ThenBy(t => t.Owner!.Name)
                 .ToList();
 
+            // Check if the code is sensitive and filter bookings accordingly
+            var normalizedCode = code.Trim().ToLower();
+            var innateCode = context.InnateCodes
+                .FirstOrDefault(ic => ic.ActivityCode.Trim().ToLower() == normalizedCode);
+            bool isCodeSensitive = innateCode?.IsSensitive ?? false;
+
+            if (isCodeSensitive)
+            {
+                logger.LogInformation("Timesheets: Code {Code} is sensitive. Filtering bookings based on authorization", code);
+
+                // Filter out timesheets where the caller is not authorized to view the owner's sensitive data
+                orderedAndFilteredTimesheets = orderedAndFilteredTimesheets
+                    .Where(t => GeneralHelpers.CanViewSensitiveData(user, t.Owner))
+                    .ToList();
+            }
+
             // Map to grouped bookings format
             var groupedResponse = TimesheetsHelpers.MapToGroupedBookingsDTO(
                 orderedAndFilteredTimesheets,

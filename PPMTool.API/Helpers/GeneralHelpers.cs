@@ -89,6 +89,31 @@ public static class GeneralHelpers
     }
 
     /// <summary>
+    /// Determines if a caller can view sensitive timesheet data for a specific person.
+    /// Sensitive data can only be viewed by superusers, the person themselves, or their direct line manager.
+    /// </summary>
+    /// <param name="caller">The user making the request.</param>
+    /// <param name="timesheetOwner">The person who owns the timesheet being checked.</param>
+    /// <returns>True if the caller is authorized to view the sensitive data; otherwise, false.</returns>
+    internal static bool CanViewSensitiveData(User? caller, Person timesheetOwner)
+    {
+        if (caller == null) return false;
+
+        var callerPersonId = caller.Person?.PersonId ?? 0;
+
+        // Superusers can see everything
+        if (IsSuperUser(caller)) return true;
+
+        // Can see own data
+        if (callerPersonId != 0 && callerPersonId == timesheetOwner.PersonId) return true;
+
+        // Direct line manager can see direct report's data
+        if (timesheetOwner.LineManager?.PersonId == callerPersonId) return true;
+
+        return false;
+    }
+
+    /// <summary>
     /// Try parse a date from a string to a DateTime object.
     /// </summary>
     /// <param name="dateAsString">The string to parse, expected format "yyyy-MM-dd".</param>

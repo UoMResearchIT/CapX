@@ -53,6 +53,7 @@ namespace PPMTool.API.Helpers
         {
             IQueryable<Timesheet> query = context.Timesheets
                 .Include(t => t.Owner)
+                    .ThenInclude(o => o.LineManager)
                 .Include(t => t.TimesheetEntries)
                     .ThenInclude(e => e.InnateCodeTask)
                         .ThenInclude(tk => tk!.InnateCode);
