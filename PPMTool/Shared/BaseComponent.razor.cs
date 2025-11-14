@@ -41,12 +41,14 @@ namespace PPMTool.Shared
                     // Create the context on every page
                     if (Context == null) Context = ContextFactory.CreateDbContext();
 
-                    // Stash the user name
-                    ActiveUserName = authState?.User.Identity.Name.Trim().ToLower();
+                    // Get the user object
+                    User user = UserService.GetByUsernameOrEmail(Context, claimsPrincipal.Identity.Name?.Trim().ToLower());
 
                     // Get the active user
-                    var user = UserService.GetByUsername(Context, ActiveUserName);
                     ActiveUser = user;
+
+                    // Stash the user name
+                    ActiveUserName = user?.CASUserName;
 
                     // Get active user role
                     ActiveUserRoleType = user?.RoleType ?? RoleType.None;

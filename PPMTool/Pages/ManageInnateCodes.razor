@@ -96,6 +96,14 @@
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="InnateCode" Property="IsSensitive" Title="Sensitive" Width="5rem" MinWidth="10px">
+                    <Template Context="c">
+                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                            <RadzenLabel Style="visibility: hidden" Component="IsSensitive" Text="Is Sensitive?"/>
+                            <RadzenSwitch @bind-Value="c.IsSensitive" Disabled="true" Name="IsSensitive" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TItem="InnateCode" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                     <Template Context="code">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditCode(code))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
