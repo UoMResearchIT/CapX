@@ -10,7 +10,7 @@
         <h1>Workload Model Changes</h1>
         <RadzenText Text="@personModel.Name" TextStyle="TextStyle.DisplayH5" />
         <hr />
-        <div class="card">
+        <RadzenCard>
             <EditForm Model="@personModel">
                 <DataAnnotationsValidator />
                 <div class="row">
@@ -101,6 +101,6 @@
                     </Columns>
                 </RadzenDataGrid>
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>

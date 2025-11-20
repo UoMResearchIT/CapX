@@ -93,21 +93,21 @@ else
     {
         <div class="row">
             <div class="col" style="min-width: 500px">
-                <div class="card">
+                <RadzenCard>
                     <AddTask @ref="@originalAddTaskComponent"
                              IsSplit="true"
                              ProjectId="@ProjectId"
                              TaskId="@(SubTaskId ?? 0)" />
-                </div>
+                </RadzenCard>
             </div>
             <div class="col" style="min-width: 500px">
-                <div class="card">
+                <RadzenCard>
                     <AddTask @ref="@newAddTaskComponent"
                              IsSplit="true"
                              IsCopy="true"
                              ProjectId="@ProjectId"
                              TaskId="@(SubTaskId ?? 0)" />
-                </div>
+                </RadzenCard>
             </div>
         </div>
         <hr />

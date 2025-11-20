@@ -75,7 +75,7 @@
             <div class="row">
                 <div class="col" style="min-width: 500px">
                     <h2>Burn-Up Chart</h2>
-                    <div class="card">
+                    <RadzenCard>
                         @if (loadingBurnUpChart || burnUpChartSource == null)
                         {
                             <LoadingComponent />
@@ -132,7 +132,7 @@
 
                             </ApexChart>
                         }
-                    </div>
+                    </RadzenCard>
                     <div class="my-2">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical">
                             <RadzenText Text="Select Resources:" TextStyle="TextStyle.Subtitle1" />
@@ -152,7 +152,7 @@
 
                 <div class="col" style="min-width: 500px">
                     <h2>Schedule</h2>
-                    <div class="card">
+                    <RadzenCard>
                         @if (loadingGanttChart || confirmedBlocks == null || provisionalBlocks == null)
                         {
                             <LoadingComponent />
@@ -221,7 +221,7 @@
                                 </ApexPointTooltip>
                             </ApexChart>
                         }
-                    </div>
+                    </RadzenCard>
 
                     <div class="my-2">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
@@ -274,7 +274,7 @@
             }
             else
             {
-                <div class="card">
+                <RadzenCard>
                     <RadzenDataGrid AllowFiltering="@((gridTasks?.Count ?? 0) > 0)"
                                     AllowColumnResize="true"
                                     FilterMode="FilterMode.Simple"
@@ -345,7 +345,7 @@
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                </div>
+                </RadzenCard>
             }
             <hr />
         }

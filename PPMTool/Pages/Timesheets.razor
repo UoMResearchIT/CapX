@@ -31,7 +31,7 @@
                 </RadzenStack>
             </div>
         </div>
-        <div class="card">
+        <RadzenCard>
             @if (Loading)
             {
                 <LoadingComponent />
@@ -70,7 +70,7 @@
                 </RadzenDataGrid>
                 <HintComponent Message="Shows your 'New/Unsubmitted' and 'Rejected' timesheets by default, and all statuses if the 'Show All Timesheets' option is selected." />
             }
-        </div>
+        </RadzenCard>
         <br />
     }
     @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
@@ -97,7 +97,7 @@
                     </RadzenStack>
                 </div>
             </div>
-            <div class="card" hidden="@(!ShowSynopsis)">
+            <RadzenCard hidden="@(!ShowSynopsis)">
                 @if (Loading)
                 {
                     <LoadingComponent />
@@ -166,7 +166,7 @@
                     </table>
                     <HintComponent Message="Staff are ordered by their initials. A timesheet can be accessed by clicking the appropriate cell and its current status can be seen by hovering the mouse there. Current calendar week is shaded in cream." />
                 }
-            </div>
+            </RadzenCard>
             <hr />
             <div class="row align-items-center justify-content-end">
                 <div class="col-auto" style="margin-bottom: 1rem;">
@@ -176,7 +176,7 @@
                     </RadzenStack>
                 </div>
             </div>
-            <div class="card">
+            <RadzenCard>
                 @if (Loading)
                 {
                     <LoadingComponent />
@@ -216,7 +216,7 @@
                     </RadzenDataGrid>
                     <HintComponent Message="Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All but 'New/Unsubmitted' are shown if the 'Show All Timesheets' option is selected." />
                 }
-            </div>
+            </RadzenCard>
         </div>
     }
 </div>
