@@ -13,11 +13,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="~/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/standard-wcag.css">
+    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
     <link href="css/site.css" rel="stylesheet" />
     <link href="PPMTool.styles.css" rel="stylesheet" />
-    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
 <body>
     <component type="typeof(App)" render-mode="ServerPrerendered" />

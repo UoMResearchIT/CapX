@@ -7,14 +7,6 @@ a, .btn-link {
     color: #0366d6;
 }
 
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
-    margin-bottom: 10px;
-    margin-top: 10px;
-}
-
 .card {
     padding: 10px;
     width: 100%;
@@ -29,11 +21,11 @@ a, .btn-link {
 }
 
 .invalid {
-    outline: 1px solid red;
+    outline: 1px solid var(--rz-danger);
 }
 
 .validation-message {
-    color: red;
+    color: var(--rz-danger);
 }
 
 #blazor-error-ui {
@@ -211,13 +203,6 @@ mark {
 .rz-switch {
     margin: 0.3rem
 }
-.card {
-    background-color: #fcfcfc
-}
-
-.rz-card {
-    background-color: #fcfcfc
-}
 
 .table thead th {
     vertical-align: top
@@ -238,14 +223,8 @@ mark {
     background-color: var(--rz-base-100);
 }
 
-:root {
-    --rz-primary: #609;
-    --rz-on-primary-lighter: #609;
-    --rz-grid-cell-padding: 0.5rem;
-}
-
-.border-primary{
-    border-color: #609 !important;
+.border-primary {
+    border-color: var(--rz-primary) !important;
 }
 
 .competency-highlightable {
