@@ -42,7 +42,7 @@
                           Disabled="@(Loading || exportRunning)" />
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" Style="margin-top: -0.3rem; width: 100%">
-            <RadzenIcon Icon="person" IconStyle="IconStyle.Dark" />
+            <RadzenIcon Icon="person" IconStyle="IconStyle.Primary" />
             <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelectedAsync" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
         </RadzenStack>
             
@@ -90,7 +90,7 @@
     <div class="row">
         <div class="col">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
-                <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                <RadzenIcon Icon="search" IconStyle="IconStyle.Primary" />
                 <RadzenTextBox @bind-Value=@competencySearchTerms
                                Placeholder="Search Competencies"
                                Change=@FilterCompetencies
