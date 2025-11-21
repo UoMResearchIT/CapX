@@ -99,7 +99,7 @@ public static class GeneralHelpers
     {
         if (caller == null) return false;
 
-        var callerPersonId = caller.Person?.PersonId ?? 0;
+        var callerPersonId = caller!.Person?.PersonId ?? 0;
 
         // Superusers can see everything
         if (IsSuperUser(caller)) return true;
