@@ -59,12 +59,12 @@ namespace PPMTool
         /// <summary>
         /// Extension method to get the description attribute of an enum value
         /// </summary>
-        /// <param name="GenericEnum"></param>
+        /// <param name="genericEnum"></param>
         /// <returns></returns>
-        public static string GetDescription(this Enum GenericEnum)
+        public static string GetDescription(this Enum genericEnum)
         {
-            Type genericEnumType = GenericEnum.GetType();
-            MemberInfo[] memberInfo = genericEnumType.GetMember(GenericEnum.ToString());
+            Type genericEnumType = genericEnum.GetType();
+            MemberInfo[] memberInfo = genericEnumType.GetMember(genericEnum.ToString());
             if ((memberInfo != null && memberInfo.Length > 0))
             {
                 var _Attribs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
@@ -73,7 +73,7 @@ namespace PPMTool
                     return ((DescriptionAttribute)_Attribs.ElementAt(0)).Description;
                 }
             }
-            return GenericEnum.ToString();
+            return genericEnum.ToString();
         }
     }
 }

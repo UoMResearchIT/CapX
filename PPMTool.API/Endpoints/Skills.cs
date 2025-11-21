@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 
 namespace PPMTool.API.Endpoints;
@@ -66,7 +67,7 @@ public static class Skills
         try
         {
             // Find the person by name.
-            var person = await Helpers.FindPersonWithLineManagerByNameAsync(context, name);
+            var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
                 logger.LogWarning("API: GetAllSkillsTagsForPerson: Person = {Name} not found!", name);
