@@ -165,7 +165,8 @@ public static class Timesheets
             }
 
             // Check the code exists in the system
-            if (!TimesheetsHelpers.IsValidTimesheetCode(context, code))
+            var innateCode = TimesheetsHelpers.GetInnateCode(context, code);
+            if (innateCode == null)
             {
                 logger.LogWarning($"API: GetTimesheetBookingsByCodeTask: Code provided is not known in the system");
                 return Results.NotFound("Unknown timesheet code.");
@@ -195,10 +196,7 @@ public static class Timesheets
                 .ToList();
 
             // Check if the code is sensitive and filter bookings accordingly
-            var normalizedCode = code.Trim().ToLower();
-            var innateCode = context.InnateCodes
-                .FirstOrDefault(ic => ic.ActivityCode.Trim().ToLower() == normalizedCode);
-            bool isCodeSensitive = innateCode?.IsSensitive ?? false;
+            bool isCodeSensitive = innateCode.IsSensitive;
 
             if (isCodeSensitive)
             {
