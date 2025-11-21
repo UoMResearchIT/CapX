@@ -69,18 +69,26 @@ namespace PPMTool.API.Helpers
 
         /// <summary>
         /// Returns an in-memory collection of timesheets that match the specified code and optional task name.
+        /// Filters out timesheets for sensitive codes where the user is not authorized to view.
         /// </summary>
         /// <param name="query"></param>
         /// <param name="code"></param>
         /// <param name="taskName"></param>
+        /// <param name="innateCode">The InnateCode entity to check sensitivity</param>
+        /// <param name="user">The current user for authorization checks</param>
         /// <returns></returns>
-        internal static IEnumerable<Timesheet> GetAllMatchingCodeAndTask(IQueryable<Timesheet> query, string code, string? taskName)
+        internal static IEnumerable<Timesheet> GetAllMatchingCodeAndTask(
+            IQueryable<Timesheet> query,
+            string code,
+            string? taskName,
+            InnateCode innateCode,
+            User user)
         {
             // Add code and task filter to query
             var normalisedCode = code.Trim().ToLowerInvariant();
             var normalisedTask = taskName?.Trim().ToLowerInvariant();
 
-            return query
+            var timesheets = query
                 .Where(x => x.TimesheetEntries.Any(e =>
                     e.InnateCodeTask != null &&
                     e.InnateCodeTask.InnateCode != null)
@@ -94,6 +102,14 @@ namespace PPMTool.API.Helpers
                         (string.IsNullOrWhiteSpace(taskName) || e.InnateCodeTask.TaskName.Trim().ToLowerInvariant() == normalisedTask)
                     )
                 );
+
+            // Filter out timesheets for sensitive codes where user is not authorized
+            if (innateCode.IsSensitive)
+            {
+                timesheets = timesheets.Where(t => GeneralHelpers.CanViewSensitiveData(user, t.Owner));
+            }
+
+            return timesheets;
         }
 
         /// <summary>

@@ -186,27 +186,14 @@ public static class Timesheets
             // Add the date range filter to the query
             query = TimesheetsHelpers.ApplyDateRangeFilter(query, start, endDateExclusive);
 
-            // Filter on the task and code
-            var filteredTimesheets = TimesheetsHelpers.GetAllMatchingCodeAndTask(query, code, taskName);
+            // Filter on the task and code (includes sensitive data filtering)
+            var filteredTimesheets = TimesheetsHelpers.GetAllMatchingCodeAndTask(query, code, taskName, innateCode, user);
 
             // Execute the query
             var orderedAndFilteredTimesheets = filteredTimesheets
                 .OrderBy(t => t.StartDate)
                 .ThenBy(t => t.Owner!.Name)
                 .ToList();
-
-            // Check if the code is sensitive and filter bookings accordingly
-            bool isCodeSensitive = innateCode.IsSensitive;
-
-            if (isCodeSensitive)
-            {
-                logger.LogInformation("Timesheets: Code {Code} is sensitive. Filtering bookings based on authorization", code);
-
-                // Filter out timesheets where the caller is not authorized to view the owner's sensitive data
-                orderedAndFilteredTimesheets = orderedAndFilteredTimesheets
-                    .Where(t => GeneralHelpers.CanViewSensitiveData(user, t.Owner))
-                    .ToList();
-            }
 
             // Map to grouped bookings format
             var groupedResponse = TimesheetsHelpers.MapToGroupedBookingsDTO(
