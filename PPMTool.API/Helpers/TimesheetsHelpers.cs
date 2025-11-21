@@ -180,18 +180,17 @@ namespace PPMTool.API.Helpers
         }
 
         /// <summary>
-        /// Checks whether a timesheet code exists with the specified activity code.
+        /// Gets the InnateCode entity matching the specified activity code.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="activityCode"></param>
-        /// <returns></returns>
-        internal static bool IsValidTimesheetCode(PPMToolContext context, string activityCode)
+        /// <returns>The matching InnateCode entity, or null if not found.</returns>
+        internal static InnateCode? GetInnateCode(PPMToolContext context, string activityCode)
         {
             var normalisedCode = activityCode.Trim().ToLowerInvariant();
             return context.InnateCodes
-                .Select(x => x.ActivityCode)
                 .AsEnumerable() // Map everything into memory as we need to convert to lower
-                .Any(code => code.Trim().ToLowerInvariant() == normalisedCode);
+                .FirstOrDefault(ic => ic.ActivityCode.Trim().ToLowerInvariant() == normalisedCode);
         }
 
         /// <summary>
