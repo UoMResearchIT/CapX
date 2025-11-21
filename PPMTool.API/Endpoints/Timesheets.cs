@@ -149,7 +149,7 @@ public static class Timesheets
     {
         try
         {
-            // Authorization check - superusers and managers only
+            // Authorisation check - superusers and managers only
             var user = GeneralHelpers.GetCurrentUser(http);
             if (!GeneralHelpers.IsSuperUserOrManager(user))
             {
