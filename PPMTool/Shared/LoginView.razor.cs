@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Shared
 {
@@ -16,6 +18,12 @@ namespace PPMTool.Shared
         [Inject]
         private ILogger Logger { get; set; }
 
+        [Inject]
+        private ISessionStorageService SessionStorage { get; set; }
+
+        [Inject]
+        private ThemeService ThemeService { get; set; }
+
         private string displayName;
         private IEnumerable<User> users;
         private IEnumerable<string> filteredUsers;
@@ -26,12 +34,27 @@ namespace PPMTool.Shared
         private bool notLoggedIn = false;
         private PPMToolContext context;
 
+        /// <summary>
+        /// Method for stashing the result of the theme toggle
+        /// </summary>
+        /// <param name="isDark"></param>
+        /// <returns></returns>
+        private void StashTheme()
+        {
+            var isDark = ThemeService.Theme.Contains("dark");
+            Logger.LogInformation($"Dark mode set to {isDark}");
+            _ = InvokeAsync(async () => await SessionStorage.SetItemAsync("useDarkMode", isDark));
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             // Subscribe to the navigation manager's location changed event to force a rerender of the login view
             Navigation.LocationChanged += HandleLocationChanged;
+
+            // Subscribe to theme changes
+            ThemeService.ThemeChanged += StashTheme;
 
             // Show dropdown
 #if LOCAL
