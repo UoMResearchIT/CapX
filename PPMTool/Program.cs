@@ -7,10 +7,12 @@ using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
@@ -87,16 +89,29 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.Secure = CookieSecurePolicy.Always;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = new PathString("/Account/Login");
-        options.LogoutPath = new PathString("/Account/Logout");
-        options.Cookie.IsEssential = true;
-        options.Cookie.Name = "CapXAuth";
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.None;
 
+// Choose the authentication type based on configuration
+var authenticationType = builder.Configuration.GetValue("Authentication:Type", "CAS");
+
+// Set up cookie details
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = authenticationType == "AzureAd"
+        ? OpenIdConnectDefaults.AuthenticationScheme
+        : CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.Cookie.Name = "CapXAuth";
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.IsEssential = true;
+    options.LoginPath = new PathString("/Account/Login");
+    options.LogoutPath = new PathString("/Account/Logout");
+
+    if (authenticationType == "CAS")
+    {
         // Set expiration to match CAS session timeout
         int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
         options.ExpireTimeSpan = TimeSpan.FromHours(time);
@@ -106,28 +121,49 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
         };
-    })
-    .AddCAS(options =>
-    {
-        options.CasServerUrlBase = builder.Configuration["Authentication:CAS:ServerUrlBase"];
-        options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        var protocolVersion = builder.Configuration.GetValue("Authentication:CAS:ProtocolVersion", 2);
-        if (protocolVersion != 3)
-        {
-            options.ServiceTicketValidator = protocolVersion switch
-            {
-                1 => new Cas10ServiceTicketValidator(options),
-                2 => new Cas20ServiceTicketValidator(options),
-                _ => null
-            };
-        }
+    }
+});
 
-        options.Events = new CasEvents
+// Add specific authentication handlers
+if (authenticationType == "CAS")
+{
+    builder.Services.AddAuthentication()
+        .AddCAS(options =>
         {
-            OnCreatingTicket = OnCreatingTicket,
-            OnRemoteFailure = OnRemoteFailure
-        };
-    });
+            options.CasServerUrlBase = builder.Configuration["Authentication:CAS:ServerUrlBase"];
+            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            var protocolVersion = builder.Configuration.GetValue("Authentication:CAS:ProtocolVersion", 2);
+            if (protocolVersion != 3)
+            {
+                options.ServiceTicketValidator = protocolVersion switch
+                {
+                    1 => new Cas10ServiceTicketValidator(options),
+                    2 => new Cas20ServiceTicketValidator(options),
+                    _ => null
+                };
+            }
+            options.Events = new CasEvents
+            {
+                OnCreatingTicket = OnCreatingTicket,
+                OnRemoteFailure = OnRemoteFailure
+            };
+        });
+}
+else if (authenticationType == "AzureAd")
+{
+    builder.Services.AddAuthentication()
+        .AddMicrosoftIdentityWebApp(options =>
+        {
+            builder.Configuration.Bind("Authentication:AzureAd", options);
+        })
+        .EnableTokenAcquisitionToCallDownstreamApi()
+        .AddInMemoryTokenCaches();
+}
+else
+{
+    throw new Exception($"Unsupported authentication type: {authenticationType}");
+}
+
 builder.Services.AddAuthorization();
 
 // Build the application from the configuration
