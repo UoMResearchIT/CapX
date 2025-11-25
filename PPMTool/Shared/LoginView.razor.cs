@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Blazored.SessionStorage;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using PPMTool.Data.Context;
@@ -19,10 +19,7 @@ namespace PPMTool.Shared
         private ILogger Logger { get; set; }
 
         [Inject]
-        private ISessionStorageService SessionStorage { get; set; }
-
-        [Inject]
-        private ThemeService ThemeService { get; set; }
+        private ILocalStorageService LocalStorage { get; set; }
 
         private string displayName;
         private IEnumerable<User> users;
@@ -34,27 +31,12 @@ namespace PPMTool.Shared
         private bool notLoggedIn = false;
         private PPMToolContext context;
 
-        /// <summary>
-        /// Method for stashing the result of the theme toggle
-        /// </summary>
-        /// <param name="isDark"></param>
-        /// <returns></returns>
-        private void StashTheme()
-        {
-            var isDark = ThemeService.Theme.Contains("dark");
-            Logger.LogInformation($"Dark mode set to {isDark}");
-            _ = InvokeAsync(async () => await SessionStorage.SetItemAsync("useDarkMode", isDark));
-        }
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
             // Subscribe to the navigation manager's location changed event to force a rerender of the login view
             Navigation.LocationChanged += HandleLocationChanged;
-
-            // Subscribe to theme changes
-            ThemeService.ThemeChanged += StashTheme;
 
             // Show dropdown
 #if LOCAL
@@ -97,6 +79,27 @@ namespace PPMTool.Shared
                     Navigation.NavigateTo(loginLink, true);
 #endif
                 }
+            }
+        }
+
+        /// <summary>
+        /// Method for toggling the app theme
+        /// </summary>
+        /// <returns></returns>
+        private async Task ToggleThemeAsync()
+        {
+            var isCurrentlyDark = ThemeService.IsDarkTheme();
+            Logger.LogInformation($"Dark mode currently set to {isCurrentlyDark}");
+
+            // Toggle
+            ThemeService.SetDarkLight(!isCurrentlyDark);
+
+            // Stash the setting in local storatge
+            var storageValue = await LocalStorage.GetItemAsync<bool>("useDarkMode");
+            if (storageValue == isCurrentlyDark)
+            {
+                Logger.LogInformation($"Updating local storage value to {!isCurrentlyDark}");
+                await LocalStorage.SetItemAsync("useDarkMode", !isCurrentlyDark);
             }
         }
 

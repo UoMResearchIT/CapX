@@ -2,6 +2,7 @@
 @using Microsoft.EntityFrameworkCore
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
 @using PPMTool.Services
 @using System.Diagnostics
 
@@ -11,7 +12,7 @@
             <RadzenText Text="@($"Hello, {(string.IsNullOrEmpty(displayName) ? "Unknown User" : displayName)}!")" Style="color: white; margin-bottom: 0;" class="mr-3"/>
             @* Chose to wrap links here but could use a force reload on NavigateTo as well: https://stackoverflow.com/questions/71725951/navigationmanager-redirect-to-identity-cshtml-not-working-properly*@
             <a href="/Account/Logout"><RadzenButton class="mx-2" Text="Log out" ButtonStyle="ButtonStyle.Light" /></a>
-            <RadzenAppearanceToggle />
+            <ThemeToggleComponent ToggleThemeAction="@(async () => await ToggleThemeAsync())" />
         </RadzenStack>
     </Authorized>
     <NotAuthorized>
@@ -29,9 +30,9 @@
                                 Style="width: 23rem"/>
             }
             <a href="@loginLink">
-                <RadzenButton class="mx-2" Text="Log in" ButtonStyle="ButtonStyle.Secondary" />
+                <RadzenButton class="mx-2" Text="Log in" ButtonStyle="ButtonStyle.Light" />
             </a>
-            <RadzenAppearanceToggle />
+            <ThemeToggleComponent ToggleThemeAction="@(async () => await ToggleThemeAsync())" />
         </RadzenStack>
     </NotAuthorized>
 </AuthorizeView>
