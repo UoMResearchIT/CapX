@@ -63,6 +63,7 @@ namespace PPMTool.Shared
 
         private bool sidebarExpanded = true;
         private string versionString;
+        private string commitString;
         private string searchTerm;
         private List<MagicBarItem> sourceData = new();
         private DotNetObjectReference<MainLayout> razorComponentReference;
@@ -138,7 +139,8 @@ namespace PPMTool.Shared
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            versionString = $"v{Configuration["VersionNumber"]} #{ThisAssembly.Git.Commit}";
+            versionString = $"v{Configuration["VersionNumber"]}";
+            commitString = $"#{ThisAssembly.Git.Commit}";
             razorComponentReference = DotNetObjectReference.Create(this);
         }
 
