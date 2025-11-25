@@ -33,7 +33,7 @@
         </div>
     </div>
     <hr />
-    <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Vertical">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
             <RadzenButton Text="Download Assessments"
@@ -62,7 +62,7 @@
             </RadzenStack>
         }
     </RadzenStack>
-    <br />
+    <hr />
     <div class="row">
         <div class="col">
             <h2>Competencies Framework Assessment</h2>
@@ -127,7 +127,7 @@
                                          JustifyContent="JustifyContent.SpaceBetween"
                                          AlignItems="AlignItems.Center"
                                          Style="width:100%">
-                                <h3 style="margin-bottom:0.2rem; color: #609">@comp.Description</h3>
+                                <h3 style="margin-bottom:0.1rem; color: var(--rz-primary)">@comp.Description</h3>
                                 <RadzenProgressBar Value="@comp.Met"
                                                    Max="@comp.Total"
                                                    Unit="@($" out of {comp.Total} complete")"

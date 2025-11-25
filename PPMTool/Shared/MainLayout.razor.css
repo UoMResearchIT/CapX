@@ -11,7 +11,7 @@
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, #40045e 0%, #609 100%);
+    background-image: linear-gradient(180deg, #40045e 0%, var(--rz-primary) 100%);
     min-width: 250px;
 }
 
@@ -90,7 +90,7 @@
 .action-footer {
     flex-shrink: 0;
     padding: 1rem 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--rz-background);
     border-top: 1px solid #ddd;
     box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
 }

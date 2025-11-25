@@ -1,15 +1,10 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
+:root {
+    --chart-text-color: var(--rz-text-body1-color);
+}
+
 html, body {   
-}
-
-a, .btn-link {
-    color: #0366d6;
-}
-
-.card {
-    padding: 10px;
-    width: 100%;
 }
 
 .content {
@@ -87,12 +82,12 @@ select {
 
 .green {
     display: inline;
-    color: green;
+    color: var(--rz-success);
 }
 
 .red {
     display: inline;
-    color: red;
+    color: var(--rz-danger);
 }
 
 .radzen-numeric {
@@ -279,4 +274,34 @@ h4 {
 
 .rzi-star {
     font-variation-settings: 'FILL' 1;
+}
+
+th, tr {
+    color: var(--rz-text-body1-color);
+}
+
+
+/* ApexCharts SVG text commonly needs `fill` and sometimes `!important` */
+.apexcharts-title-text,
+.apexcharts-subtitle-text,
+.apexcharts-legend-text,
+.apexcharts-xaxis-title,
+.apexcharts-yaxis-title,
+.apexcharts-xaxis text,
+.apexcharts-yaxis text,
+.apexcharts-datalabels text {
+    fill: var(--chart-text-color) !important;
+}
+
+/* Tooltips are HTML; they use `color` */
+.apexcharts-tooltip,
+.apexcharts-tooltip-title,
+.apexcharts-tooltip-text {
+    color: var(--chart-text-color) !important;
+}
+
+/* For donut/pie totals and labels inside the chart (SVG text again) */
+.apexcharts-datalabel-label,
+.apexcharts-datalabel-value {
+    fill: var(--chart-text-color) !important;
 }
