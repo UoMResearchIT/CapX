@@ -138,7 +138,7 @@ namespace PPMTool.Shared
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            versionString = $"v{Configuration["VersionNumber"]}";
+            versionString = $"v{Configuration["VersionNumber"]} (#{ThisAssembly.Git.Commit})";
             razorComponentReference = DotNetObjectReference.Create(this);
         }
 
