@@ -291,14 +291,25 @@ th, tr {
 .apexcharts-yaxis text,
 .apexcharts-datalabels text {
     fill: var(--chart-text-color) !important;
+    color: var(--chart-text-color) !important;
 }
 
 /* Tooltips are HTML; they use `color` */
-.apexcharts-tooltip,
-.apexcharts-tooltip-title,
 .apexcharts-tooltip-text {
     color: var(--chart-text-color) !important;
 }
+
+.apexcharts-tooltip-title {
+    color: var(--chart-text-color) !important;
+    background-color: var(--rz-card-background-color) !important;
+}
+
+.apexcharts-tooltip {
+    background-color: var(--rz-card-background-color) !important;
+    color: var(--rz-text-body1-color) !important;
+    border: 1px solid var(--rz-border-color);
+}
+
 
 /* For donut/pie totals and labels inside the chart (SVG text again) */
 .apexcharts-datalabel-label,
