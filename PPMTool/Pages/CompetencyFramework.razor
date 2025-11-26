@@ -150,7 +150,7 @@
                                                              ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                              Selected="@(comp.CompetencySelectionState[key])"
                                                              @onclick="@(() => comp.ToggleAccordion(key))"
-                                                             Style="background-color: var(--rz-base-50);">
+                                                             Style="border: var(--rz-card-border);">
                                             <Template>
                                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                                                     <h4 style="margin-bottom:0.2rem; width:50%">@($"{group.FirstOrDefault()?.GetCategoryId()} {group.Key.GetDescription()}")</h4>
