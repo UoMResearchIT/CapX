@@ -106,13 +106,13 @@ namespace PPMTool.Data
             FundsRequestedOther = transactionBreakdown.Invoices;
             FundsReceivedOther = transactionBreakdown.Payments;
             ActualHours = actuals;
-            PlannedCostColour = PlannedCost > Budget ? "red" : "green";
-            ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
-            FundsReceivedColour = GetAllReceived() < GetAllRequested() ? "red" : "green";
-            FundsRequestedColour = GetAllRequested() < Budget ? "red" : "green";
+            PlannedCostColour = PlannedCost > Budget ? "var(--rz-danger)" : "var(--rz-success)";
+            ActualCostColour = ActualCost > PlannedCost ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsReceivedColour = GetAllReceived() < GetAllRequested() ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsRequestedColour = GetAllRequested() < Budget ? "var(--rz-danger)" : "var(--rz-success)";
             FundsOwed = GetAllRequested() - GetAllReceived();
-            FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
-            FundsDIColour = (FundsDI > AvailableFundsDI) ? "red" : "green";
+            FundsOwedColour = (FundsOwed > 0) ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsDIColour = (FundsDI > AvailableFundsDI) ? "var(--rz-danger)" : "var(--rz-success)";
 
             var sourcesAsList = transactionBreakdown.FundingSources
                 .Select(x => x.GetSensibleObjectName().Replace(" ", "&nbsp;"))

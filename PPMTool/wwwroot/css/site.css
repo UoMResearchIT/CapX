@@ -1,23 +1,10 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
+.rz-material {
+    --rz-primary: #609;
+}
+
 html, body {   
-}
-
-a, .btn-link {
-    color: #0366d6;
-}
-
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
-    margin-bottom: 10px;
-    margin-top: 10px;
-}
-
-.card {
-    padding: 10px;
-    width: 100%;
 }
 
 .content {
@@ -29,11 +16,11 @@ a, .btn-link {
 }
 
 .invalid {
-    outline: 1px solid red;
+    outline: 1px solid var(--rz-danger);
 }
 
 .validation-message {
-    color: red;
+    color: var(--rz-danger);
 }
 
 #blazor-error-ui {
@@ -95,12 +82,12 @@ select {
 
 .green {
     display: inline;
-    color: green;
+    color: var(--rz-success);
 }
 
 .red {
     display: inline;
-    color: red;
+    color: var(--rz-danger);
 }
 
 .radzen-numeric {
@@ -206,17 +193,10 @@ mark {
 }
 
 .center-text {
-    margin-bottom: 0rem;
+    margin-bottom: 0rem !important;
 }
 .rz-switch {
     margin: 0.3rem
-}
-.card {
-    background-color: #fcfcfc
-}
-
-.rz-card {
-    background-color: #fcfcfc
 }
 
 .table thead th {
@@ -238,14 +218,8 @@ mark {
     background-color: var(--rz-base-100);
 }
 
-:root {
-    --rz-primary: #609;
-    --rz-on-primary-lighter: #609;
-    --rz-grid-cell-padding: 0.5rem;
-}
-
-.border-primary{
-    border-color: #609 !important;
+.border-primary {
+    border-color: var(--rz-primary) !important;
 }
 
 .competency-highlightable {
@@ -268,7 +242,6 @@ mark {
     margin: 0.5rem 0 0 0;
     font-size: 0.9rem;
     font-weight: bold;
-    background-color: #F5F5F5;
     border-radius: 2px;
     border: 1px solid #ccc
 }
@@ -301,4 +274,45 @@ h4 {
 
 .rzi-star {
     font-variation-settings: 'FILL' 1;
+}
+
+th, tr {
+    color: var(--rz-text-body1-color);
+}
+
+
+/* ApexCharts SVG text commonly needs `fill` and sometimes `!important` */
+.apexcharts-title-text,
+.apexcharts-subtitle-text,
+.apexcharts-legend-text,
+.apexcharts-xaxis-title,
+.apexcharts-yaxis-title,
+.apexcharts-xaxis text,
+.apexcharts-yaxis text,
+.apexcharts-datalabels text {
+    fill: var(--rz-text-body1-color) !important;
+    color: var(--rz-text-body1-color) !important;
+}
+
+/* Tooltips are HTML; they use `color` */
+.apexcharts-tooltip-text {
+    color: var(--rz-text-body1-color) !important;
+}
+
+.apexcharts-tooltip-title {
+    color: var(--rz-text-body1-color) !important;
+    background-color: var(--rz-card-background-color) !important;
+}
+
+.apexcharts-tooltip {
+    background-color: var(--rz-card-background-color) !important;
+    color: var(--rz-text-body1-color) !important;
+    border: 1px solid var(--rz-border-color);
+}
+
+
+/* For donut/pie totals and labels inside the chart (SVG text again) */
+.apexcharts-datalabel-label,
+.apexcharts-datalabel-value {
+    fill: var(--rz-text-body1-color) !important;
 }
