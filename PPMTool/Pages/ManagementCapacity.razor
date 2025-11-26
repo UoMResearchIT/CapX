@@ -53,18 +53,20 @@
         else
         {
             <!-- Legend -->
-            <CapacityLegendComponent ShowProjectModeLegend="false" />
+            <div class="mt-2">
+                <CapacityLegendComponent ShowProjectModeLegend="false" />
+            </div>
 
             <!-- Chart -->
             <div class="row">
                 @for (int i = 0; i < chartModels.Count; ++i)
                 {
                     <div class="col" style="min-width: 50rem;">
-                        <RadzenCard>
+                        <div class="rz-card rz-variant-fill my-1">
                             <CapacityChartComponent ChartModel=@chartModels[i]
                                                     OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
                                                     OnChartZoomed="@OnChartZoomed" />
-                        </RadzenCard>
+                        </div>
                     </div>
                 }
             </div>

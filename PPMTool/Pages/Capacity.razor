@@ -62,7 +62,6 @@
                                                @bind-IncludeFinished="@includeFinished" />
             </RadzenStack>
         </RadzenCard>
-
     
         @if (chartModels == null || chartModels.Count < 1)
         {
@@ -73,18 +72,20 @@
         else
         {
             <!-- Legend -->
-            <CapacityLegendComponent ShowProjectModeLegend="@(chosenPeople != null && chosenPeople.Count() > 0)" />
+            <div class="mt-2">
+                <CapacityLegendComponent ShowProjectModeLegend="@(chosenPeople != null && chosenPeople.Count() > 0)" />
+            </div>
 
             <!-- Chart -->
             <div class="row">
                 @for (int i = 0; i < chartModels.Count; ++i)
                 {
                     <div class="col" style="min-width: 50rem;">
-                        <RadzenCard>
+                        <div class="rz-card rz-variant-fill my-1">
                             <CapacityChartComponent ChartModel=@chartModels[i]
                                                     OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
                                                     OnChartZoomed="@OnChartZoomed" />
-                        </RadzenCard>
+                        </div>
                     </div>
                 }
             </div>

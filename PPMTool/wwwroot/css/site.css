@@ -1,7 +1,6 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
 .rz-material {
-    --chart-text-color: var(--rz-text-body1-color);
     --rz-primary: #609;
 }
 
@@ -194,7 +193,7 @@ mark {
 }
 
 .center-text {
-    margin-bottom: 0rem;
+    margin-bottom: 0rem !important;
 }
 .rz-switch {
     margin: 0.3rem
@@ -291,17 +290,17 @@ th, tr {
 .apexcharts-xaxis text,
 .apexcharts-yaxis text,
 .apexcharts-datalabels text {
-    fill: var(--chart-text-color) !important;
-    color: var(--chart-text-color) !important;
+    fill: var(--rz-text-body1-color) !important;
+    color: var(--rz-text-body1-color) !important;
 }
 
 /* Tooltips are HTML; they use `color` */
 .apexcharts-tooltip-text {
-    color: var(--chart-text-color) !important;
+    color: var(--rz-text-body1-color) !important;
 }
 
 .apexcharts-tooltip-title {
-    color: var(--chart-text-color) !important;
+    color: var(--rz-text-body1-color) !important;
     background-color: var(--rz-card-background-color) !important;
 }
 
@@ -315,5 +314,5 @@ th, tr {
 /* For donut/pie totals and labels inside the chart (SVG text again) */
 .apexcharts-datalabel-label,
 .apexcharts-datalabel-value {
-    fill: var(--chart-text-color) !important;
+    fill: var(--rz-text-body1-color) !important;
 }
