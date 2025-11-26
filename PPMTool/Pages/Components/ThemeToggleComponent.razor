@@ -1,0 +1,31 @@
+﻿@inject ThemeService ThemeService
+
+<RadzenButton Icon="@(isInDarkMode ? "light_mode" : "dark_mode")" Click="@(args => ToggleThemeAction?.Invoke())" Variant="Variant.Text" Style="color: var(--rz-header-color)" />
+
+@code {
+    [Parameter]
+    public Action ToggleThemeAction { get; set; }
+
+    // Local state of the theme
+    private bool isInDarkMode = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Subscribe theme changes so we can update the local state
+        ThemeService.ThemeChanged += () => OnAfterRender(true);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        // Check if the theme matches the local state otherwise update
+        if (isInDarkMode != ThemeService.IsDarkTheme())
+        {
+            isInDarkMode = ThemeService.IsDarkTheme();
+            StateHasChanged();
+        }
+    }
+}

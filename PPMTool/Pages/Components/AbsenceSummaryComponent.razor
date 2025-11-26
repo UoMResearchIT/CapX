@@ -5,7 +5,7 @@
 @using PPMTool.Services
 @using System.Diagnostics
 
-<div class="card my-1">
+<RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0.3rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start" Gap="0.7rem">
@@ -30,7 +30,7 @@
             <RadzenText Text="@($"{Absence.EndDate?.ToString("dddd dd MMMM yyyy") ?? "Now"}")" TextStyle="TextStyle.Subtitle1" />
         </RadzenStack>
     </RadzenStack>
-</div>
+</RadzenCard>
 
 @code {
 

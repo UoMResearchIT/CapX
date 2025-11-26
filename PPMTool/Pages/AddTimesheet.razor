@@ -50,7 +50,7 @@
         <hr />
 
         <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
-            <div class="card">
+            <RadzenCard>
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">
@@ -289,11 +289,11 @@
                         </RadzenStack>
                     </div>
                 </div>
-            </div>
+            </RadzenCard>
 
             @if ((timesheet?.IsLineManager(ActiveUser) ?? false || ActiveUserRoleType == RoleType.Superuser) && currentWLM != null && wlmChartItem != null)
             {
-                <div class="card" style="margin-top: 0.5rem;">
+                <RadzenCard style="margin-top: 0.5rem;">
                     <div class="row">
                         <div class="col-2"><RadzenText Text="WLM Target:" TextStyle="TextStyle.Subtitle1" /></div>
                         <div class="col-10">
@@ -380,7 +380,7 @@
                             </div>
                         </div>
                     }
-                </div>
+                </RadzenCard>
             }
 
             <div class="row" style="margin-top: 1rem;">

@@ -44,11 +44,11 @@ namespace PPMTool.Pages
         private double entryStep = 0.25;
         private Dictionary<string, string> dayColours = new Dictionary<string, string>
         {
-            { "mon", "#EEE" },
-            { "wed", "#EEE" },
-            { "fri", "#EEE" },
-            { "sat", "#FDFBD4" },
-            { "sun", "#FDFBD4" }
+            { "mon", "var(--rz-grid-foot-background-color)" },
+            { "wed", "var(--rz-grid-foot-background-color)" },
+            { "fri", "var(--rz-grid-foot-background-color)" },
+            { "sat", "var(--rz-warning-lighter)" },
+            { "sun", "var(--rz-warning-lighter)" }
         };
         private TimesheetStatus newStatus;
         private Timesheet previousTimesheet;
