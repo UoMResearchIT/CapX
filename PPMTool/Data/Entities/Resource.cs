@@ -77,13 +77,14 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the planned and actual cost of the resource given either a day rate a financial reference
+        /// Updates the planned and actual cost of the resource given either a day rate a financial reference.
         /// Assumptions:
         /// 1. Ignores annual increments for people
         /// </summary>
         /// <param name="project"></param>
         /// <param name="subTask"></param>
         /// <param name="finrefs"></param>
+        /// <returns>A list of assignment chunks that represent this resource assignment</returns>
         internal IEnumerable<AssignmentChunk> UpdateResourceCosts(Project project, SubTask subTask, IEnumerable<FinancialReference> finrefs)
         {
             // Costs to the department are always salary-based regardless of the recharge cost model (day-rate or salary based)

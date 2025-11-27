@@ -46,7 +46,7 @@ else
                     }
                     <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
+                        @if (FinanceSummaryItem.CostModel.HasLeadership())
                         {
                             @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.PlannedCostColour}\">{FinanceSummaryItem.PlannedCost.ToString("C0")}</span>")
                             <br />
@@ -62,7 +62,7 @@ else
                         }
                     </td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
+                        @if (FinanceSummaryItem.CostModel.HasLeadership())
                         {
                             @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.ActualCostColour}\">{FinanceSummaryItem.ActualCost.ToString("C0")}</span>")
                             <br />

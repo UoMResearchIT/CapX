@@ -67,7 +67,7 @@ namespace PPMTool.Data.Helpers
             {
                 // Get all subtasks and add the leadership tasks if necessary
                 var subtasks = project.SubTasks.ToList();
-                if (project.CostModel == CostModel.TechAndLeadership)
+                if (project.CostModel.HasLeadership())
                 {
                     subtasks.AddRange(project.GenerateLeadershipTasks());
                 }

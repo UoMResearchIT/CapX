@@ -87,7 +87,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ShouldIncludeResource(KeyValuePair<string, TaskConfigModel> model)
         {
-            return CostModel == CostModel.TechAndLeadership || (CostModel != CostModel.TechAndLeadership && model.Key != "Leadership");
+            return CostModel.HasLeadership() || (!CostModel.HasLeadership() && model.Key != "Leadership");
         }
 
         /// <summary>
