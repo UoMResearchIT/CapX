@@ -24,5 +24,15 @@
         /// The actual cost of the item based on effort expended on it
         /// </summary>
         public double ActualCost { get; set; }
+
+        /// <summary>
+        /// If applicable, the planned indirects computed as a proportion of the planned cost
+        /// </summary>
+        public double PlannedIndirectCost { get; set; }
+
+        /// <summary>
+        /// If applicable, the actual indirects compute as a proportion of the actual cost
+        /// </summary>
+        public double ActualIndirectCost { get; set; }
     }
 }
