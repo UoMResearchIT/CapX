@@ -114,6 +114,21 @@ namespace PPMTool.Data.Entities
         public double ActualLeadershipCosts { get; set; }
 
         /// <summary>
+        /// If not using the day rate model, then this is the sum of the indirect BAU costs top sliced off the funding sources
+        /// </summary>
+        public double BudgetedIndirects { get; set; }
+
+        /// <summary>
+        /// If not using the day rate model, then this is the planned amount of indirect BAU costs calculated from assignments at the rate given
+        /// </summary>
+        public double PlannedIndirects { get; set; }
+
+        /// <summary>
+        /// If not using the day rate model, then this is the actual (to date) amount of indirect BAU costs calculated from assignment actuals at the rate given
+        /// </summary>
+        public double ActualIndirects { get; set; }
+
+        /// <summary>
         /// Timestamp recording when actuals were last updated.
         /// </summary>
         public string ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
@@ -347,7 +362,7 @@ namespace PPMTool.Data.Entities
             double plannedCost = 0d;
             List<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
-            // Loop over all the subtasks
+            // Loop over all the subtasks (technical assignments)
             if (SubTasks != null)
             {
                 foreach (var task in SubTasks)
