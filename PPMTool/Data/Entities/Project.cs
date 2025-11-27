@@ -351,6 +351,8 @@ namespace PPMTool.Data.Entities
             double actualHours = 0d;
             double plannedCost = 0d;
             double budgetIndirects = 0d;
+            double plannedIndirects = 0d;
+            double actualIndirects = 0d;
 
             // Loop over all the subtasks (technical assignments)
             if (SubTasks != null)
@@ -372,6 +374,8 @@ namespace PPMTool.Data.Entities
                     actualCost += task.ActualCost;
                     plannedCost += task.PlannedCost;
                     actualHours += task.ActualWorkHours;
+                    plannedIndirects += task.PlannedIndirectCost;
+                    actualIndirects += task.ActualIndirectCost;
                 }
             }
 
@@ -406,6 +410,8 @@ namespace PPMTool.Data.Entities
             ActualWorkHours = newValue;
 
             // Truncate the cost to 2 DP as it is currency and add on leadership costs and indirects
+            ActualIndirectCost = Math.Round(100 * actualIndirects) / 100;
+            PlannedIndirectCost = Math.Round(100 * plannedIndirects) / 100;
             ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts + ActualIndirectCost;
             PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts + PlannedIndirectCost;
         }

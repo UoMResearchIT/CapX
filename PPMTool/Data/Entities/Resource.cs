@@ -85,7 +85,10 @@ namespace PPMTool.Data.Entities
         /// <param name="subTask"></param>
         /// <param name="finrefs"></param>
         /// <returns>A list of assignment chunks that represent this resource assignment</returns>
-        internal IEnumerable<AssignmentChunk> UpdateResourceCosts(Project project, SubTask subTask, IEnumerable<FinancialReference> finrefs)
+        internal IEnumerable<AssignmentChunk> UpdateResourceCosts(
+            Project project,
+            SubTask subTask,
+            IEnumerable<FinancialReference> finrefs)
         {
             // Costs to the department are always salary-based regardless of the recharge cost model (day-rate or salary based)
             // Therefore this computes the actual cost of the resource chosen over the full task (planned cost)
@@ -97,7 +100,7 @@ namespace PPMTool.Data.Entities
             var durationDaysActual = ActualWorkHours / 7f;
             var fundingSourceType = FundedFrom?.FundingSourceType;
 
-            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funidng sources which have to be salary costs
+            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funding sources which have to be salary costs
             if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
@@ -122,13 +125,25 @@ namespace PPMTool.Data.Entities
                     generateLeadershipTasks: GenerateLeadershipTaskLogic.None
                 );
 
-                // Planned costs
+                // Planned costs (technical assignments only)
                 PlannedCost = chunks.Sum(x => x.PlannedCost);
 
-                // Actual costs are a proportion of the planned
+                // Actual costs are a proportion of the planned based on actuals recorded
                 ActualCost = 0d;
                 var proportion = durationDaysActual / durationDaysPlanned;
                 ActualCost = PlannedCost * proportion;
+            }
+
+            // The indirects only apply if the appropriate cost model is in place
+            ActualIndirectCost = 0d;
+            PlannedIndirectCost = 0d;
+            if (project.CostModel.HasIndirects())
+            {
+                // Planned indirects are just proportion of the technical costs
+                PlannedIndirectCost = PlannedCost * GlobalDefaults.BAUTopSliceFractionDefault;
+
+                // Actual costs are also just proportion of the actual technical costs
+                ActualIndirectCost = ActualCost * GlobalDefaults.BAUTopSliceFractionDefault;
             }
 
             return chunks;

@@ -521,6 +521,8 @@ namespace PPMTool.Data.Entities
             // Reset the totals for this sub task
             ActualCost = 0;
             PlannedCost = 0;
+            ActualIndirectCost = 0;
+            PlannedIndirectCost = 0;
             List<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
             // For each resource assigned, update the costs by generating a chunk from the resource
@@ -529,6 +531,8 @@ namespace PPMTool.Data.Entities
                 chunks.AddRange(res.UpdateResourceCosts(project, this, finrefs));
 
                 // Sum up the result post-update
+                ActualIndirectCost += res.ActualIndirectCost;
+                PlannedIndirectCost += res.PlannedIndirectCost;
                 ActualCost += res.ActualCost;
                 PlannedCost += res.PlannedCost;
             }
