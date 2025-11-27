@@ -41,6 +41,12 @@ namespace PPMTool.Data
 
         public double ActualLeadershipCosts { get; set; }
 
+        public double ActualIndirectCosts { get; set; }
+
+        public double PlannedIndirectCosts { get; set; }
+
+        public double BudgetIndirectCosts { get; set; }
+
         public double FundsRequestedOther { get; set; }
 
         public double FundsReceivedOther { get; set; }
@@ -96,10 +102,13 @@ namespace PPMTool.Data
             CostModel = project.CostModel;
             DayRate = project.DayRate;
             Budget = project.Budget;
+            BudgetIndirectCosts = project.BudgetedIndirects;
             PlannedCost = project.PlannedCost;
             PlannedLeadershipCosts = project.PlannedLeadershipCosts;
+            PlannedIndirectCosts = project.PlannedIndirectCost;
             ActualCost = project.ActualCost;
             ActualLeadershipCosts = project.ActualLeadershipCosts;
+            ActualIndirectCosts = project.ActualIndirectCost;
             FundsDA = transactionBreakdown.DirectlyAllocated;
             FundsDI = transactionBreakdown.DirectlyIncurred;
             AvailableFundsDI = transactionBreakdown.FundingSources.Where(x => x.FundingSourceType == FundingSourceType.DI).RoundedSum(x => x.AmountAvailable, 2);
