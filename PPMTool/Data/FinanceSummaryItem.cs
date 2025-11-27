@@ -106,13 +106,13 @@ namespace PPMTool.Data
             FundsRequestedOther = transactionBreakdown.Invoices;
             FundsReceivedOther = transactionBreakdown.Payments;
             ActualHours = actuals;
-            PlannedCostColour = PlannedCost > Budget ? "var(--rz-danger)" : "var(--rz-success)";
-            ActualCostColour = ActualCost > PlannedCost ? "var(--rz-danger)" : "var(--rz-success)";
-            FundsReceivedColour = GetAllReceived() < GetAllRequested() ? "var(--rz-danger)" : "var(--rz-success)";
-            FundsRequestedColour = GetAllRequested() < Budget ? "var(--rz-danger)" : "var(--rz-success)";
+            PlannedCostColour = Math.Floor(PlannedCost - Budget) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            ActualCostColour = Math.Floor(ActualCost - PlannedCost) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsReceivedColour = Math.Floor(GetAllRequested() - GetAllReceived()) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsRequestedColour = Math.Floor(Budget - GetAllRequested()) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
             FundsOwed = GetAllRequested() - GetAllReceived();
-            FundsOwedColour = (FundsOwed > 0) ? "var(--rz-danger)" : "var(--rz-success)";
-            FundsDIColour = (FundsDI > AvailableFundsDI) ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsOwedColour = (Math.Floor(FundsOwed) > 0) ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsDIColour = (Math.Floor(FundsDI - AvailableFundsDI) > 0) ? "var(--rz-danger)" : "var(--rz-success)";
 
             var sourcesAsList = transactionBreakdown.FundingSources
                 .Select(x => x.GetSensibleObjectName().Replace(" ", "&nbsp;"))
