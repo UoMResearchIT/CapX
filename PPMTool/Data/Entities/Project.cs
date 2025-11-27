@@ -190,7 +190,8 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private bool IsOverBudget()
         {
-            return Budget < PlannedCost;
+            // Has to be more than £1 difference
+            return Math.Floor(PlannedCost - Budget) > 0;
         }
 
         /// <summary>
