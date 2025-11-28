@@ -221,6 +221,12 @@ namespace PPMTool.Data.Entities
                 // Fixed Duration Update
                 else
                 {
+                    // If the task has a fixed end date and we are not permitted to move it, check if the start date has moved past the end date
+                    if (HasFixedEndDate && !permitEndDateToMove && StartDate > EndDate)
+                    {
+                        return $"Task '{Name}' has a fixed end date of {EndDate.ToShortDateString()} which is before the new start date {StartDate.ToShortDateString()} caused by the predecessor.";
+                    }
+
                     // Make sure the duration is at least zero or greater
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
