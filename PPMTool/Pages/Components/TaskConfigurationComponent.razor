@@ -118,8 +118,15 @@
     <div class="col-3" style="justify-items: end">
         <RadzenLabel class="radzen-form-label"
                      Text="Cost" />
-        <RadzenText Text="@Model.PlannedCost.ToString("C2")"
-                    Style="margin-bottom: 0; margin-top: 0.5rem; font-size: x-large;" />
+        <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End">
+            @if (Model.CostModel.HasIndirects() && !IsLeadershipComponent)
+            {
+                <RadzenText Text="@($"{Model.PlannedIndirectCost.ToString("C2")} (Indirects) + {Model.GetPlannedTechnicalCost().ToString("C2")} (Tech) = ")"
+                            Style="margin-bottom: 0; margin-top: 0.5rem; font-size: medium;" />
+            }
+            <RadzenText Text="@Model.PlannedCost.ToString("C2")"
+                        Style="margin-bottom: 0; margin-top: 0.5rem; font-size: x-large;" />
+        </RadzenStack>
     </div>
 </div>
 
@@ -142,6 +149,9 @@
     [Parameter]
     public TaskConfigModel Model { get; set; }
 
+    [Parameter]
+    public bool IsLeadershipComponent { get; set; }
+
     /// <summary>
     /// Initialisation of the component
     /// </summary>
@@ -152,7 +162,7 @@
         // Initialise the model
         if (Model == null)
         {
-            Model = new TaskConfigModel(FinancialReferenceService, Context);
+            Model = new TaskConfigModel(FinancialReferenceService, Context, IsLeadershipComponent);
         }
         ValueChanged(nameof(Model.StartDate));
     }
@@ -186,11 +196,13 @@
 
         private FinancialReferenceService finRefService;
         private PPMToolContext context;
+        private bool isLeadership;
 
-        public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context)
+        public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context, bool isLeadership)
         {
             finRefService = financialReferenceService;
             this.context = context;
+            this.isLeadership = isLeadership;
             StartDate = DateTime.Today;
             EndDate = StartDate.AddDays(7);
         }
@@ -273,6 +285,7 @@
         {
             // Reset
             PlannedCost = 0;
+            PlannedIndirectCost = 0;
 
             // If using day rate
             if (CostModel == CostModel.DayRate)
@@ -292,18 +305,25 @@
                     var daysInChunk = fyChunk.EndDate.Subtract(fyChunk.StartDate).TotalDays + 1;
                     var dayScaled = daysInChunk * Demand / 365d;
 
+                    double techCost = 0d;
                     switch (ResourceRate)
                     {
                         case Rate.Junior:
-                            PlannedCost += finRef.Grade51Costs * dayScaled;
+                            techCost = finRef.Grade51Costs * dayScaled;
+                            PlannedIndirectCost += (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
+                            PlannedCost += techCost + PlannedIndirectCost;
                             break;
 
                         case Rate.Standard:
-                            PlannedCost += finRef.Grade71Costs * dayScaled;
+                            techCost = finRef.Grade71Costs * dayScaled;
+                            PlannedIndirectCost += (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
+                            PlannedCost += techCost + PlannedIndirectCost;
                             break;
 
                         case Rate.Senior:
-                            PlannedCost += finRef.Grade75Costs * dayScaled;
+                            techCost = finRef.Grade75Costs * dayScaled;
+                            PlannedIndirectCost += (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
+                            PlannedCost += techCost + PlannedIndirectCost;
                             break;
                     }
                 }
