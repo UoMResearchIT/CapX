@@ -33,6 +33,11 @@ namespace PPMTool.Data.Entities
         public double AssignmentFTE { get; set; }
 
         /// <summary>
+        /// The FTE of the resource that is billed to the project (including indirects if applicable)
+        /// </summary>
+        public double BilledFTE { get; set; }
+
+        /// <summary>
         /// Whether the assignment is provisional
         /// </summary>
         public bool IsProvisional { get; set; }
