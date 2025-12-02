@@ -332,7 +332,16 @@
                             <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
                                 <Template Context="t">
-                                    @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
+                                    @string.Join(',', t.AssignedResources?.Select(x =>
+                                    {
+                                        var label = $"{x.Person.ShortName}[{x.AssignmentFTE}";
+                                        if (project.CostModel.HasIndirects())
+                                        {
+                                            label += $" ({Math.Round(x.BilledFTE, 3)})";
+                                        }
+                                        label += "]";
+                                        return label;
+                                    }))
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" Width="10rem" MinWidth="10px" />

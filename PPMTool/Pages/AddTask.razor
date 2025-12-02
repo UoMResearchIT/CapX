@@ -349,30 +349,25 @@ else
                                         </RadzenDropDown>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="80px" MinWidth="10px">
+                                <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="120px" MinWidth="10px">
                                     <Template Context="res">
-                                        <RadzenText Style="margin-bottom: 0rem;" Text="@res.AssignmentFTE.ToString()" />
+                                        <RadzenText Style="margin-bottom: 0rem;" Text="@($"{res.AssignmentFTE}{(ProjectModel.CostModel.HasIndirects() ? $" ({Math.Round(res.BilledFTE, 3)})" : "")}")" />
                                     </Template>
                                     <EditTemplate Context="res">
                                         <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Property="BilledFTE" Title="Billable FTE" Width="80px" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenText Style="margin-bottom: 0rem;" Text="@Math.Round(res.BilledFTE).ToString()" />
-                                    </Template>
-                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" MinWidth="10px">
                                     <Template Context="res">
-                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
+                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                                             <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true Name="IsProvisional" />
+                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
                                         </RadzenStack>
                                     </Template>
                                     <EditTemplate Context="res">
-                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
+                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                                             <RadzenSwitch @bind-Value="@res.IsProvisional" Name="IsProvisional"/>
+                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
                                         </RadzenStack>
                                     </EditTemplate>
                                 </RadzenDataGridColumn>
@@ -394,17 +389,17 @@ else
                                 {
                                     <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Width="120px" Title="Project Day Rate?" MinWidth="10px">
                                         <Template Context="res">
-                                            <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
+                                            <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                                                 <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true Name="UseProjectDayRate" />
                                                 <RadzenText Style="margin-bottom: 0rem;" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
                                             </RadzenStack>
                                         </Template>
                                         <EditTemplate Context="res">
-                                            <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
+                                            <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                                                 <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Name="UseProjectDayRate" />
                                                 <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
                                             </RadzenStack>
                                         </EditTemplate>
                                     </RadzenDataGridColumn>

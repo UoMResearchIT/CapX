@@ -17,7 +17,11 @@ namespace PPMTool.Migrations
                 nullable: false,
                 defaultValue: 0.0);
 
-            // Technically should give it a value based on AssignmentFTE and the project cost model but should be added at the same time as the cost model so 0 is fine for now.
+            // By default add the BilledFTE as equal to AssignmentFTE for existing records
+            migrationBuilder.Sql(@"
+                UPDATE Resources
+                SET BilledFTE = AssignmentFTE;
+            ");
         }
 
         /// <inheritdoc />
