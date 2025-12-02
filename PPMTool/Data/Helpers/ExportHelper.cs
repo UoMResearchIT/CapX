@@ -143,6 +143,7 @@ namespace PPMTool.Data.Helpers
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
                     FTE = Math.Round(resource.AssignmentFTE, 3),
+                    BilledFTE = Math.Round(resource.BilledFTE, 3),
                     ProjectName = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
@@ -611,9 +612,9 @@ namespace PPMTool.Data.Helpers
                         // Get the sum of their assignments on the day with and without leadership
                         var projectAssignmentsFTE = chunks
                             .Where(x => !x.IsLeadershipAssignment)
-                            .Sum(x => x.FTE);
+                            .Sum(x => x.BilledFTE);
                         var projectAssignmentsFTEIncLeadership = chunks
-                            .Sum(x => x.FTE);
+                            .Sum(x => x.BilledFTE);
 
                         // Net value
                         var netValue = projectAssignmentsFTE - projectWorkTargetFTE;

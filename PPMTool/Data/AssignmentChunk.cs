@@ -16,7 +16,15 @@ namespace PPMTool.Data
         [Description("The grade of the person for the duration of this assignment")]
         public int Grade { get; set; }
 
+        /// <summary>
+        /// This is the FTE of the resource for this assignment chunk based on the project work duty allocation
+        /// </summary>
         public double FTE { get; set; }
+
+        /// <summary>
+        /// This is the FTE of the resource that is being billed to the project for this assignment chunk (essentially the equivalent FTE including indirects if the project charges them)
+        /// </summary>
+        public double BilledFTE { get; set; }
 
         public string ProjectName { get; set; }
 
@@ -95,6 +103,7 @@ namespace PPMTool.Data
             EmployeeName = taskToCopy.EmployeeName;
             Grade = taskToCopy.Grade;
             FTE = taskToCopy.FTE;
+            BilledFTE = taskToCopy.BilledFTE;
             ProjectName = taskToCopy.ProjectName;
             LeadRSE = taskToCopy.LeadRSE;
             Faculty = taskToCopy.Faculty;
@@ -126,7 +135,7 @@ namespace PPMTool.Data
             {
                 var annualCosts = finrefs.GetSuitableFinancialReference(FinancialYear).GetMidGradeCosts(Grade);
                 var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
-                SalaryCostEstimate = annualCosts * FTE * fractionOfYear;
+                SalaryCostEstimate = annualCosts * BilledFTE * fractionOfYear;
 
                 // If the planned cost figures should be updated then they will match the salary cost estimate
                 if (shouldUpdatePlanned) PlannedCost = SalaryCostEstimate;
