@@ -52,7 +52,7 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
-        /// Generates a series of project budget detail objects, one for each resource assign to subtasks on the projects supplied.
+        /// Generates a series of project budget detail objects, one for each resource assigned to subtasks on the projects supplied.
         /// Resources with no funding source will be ignored and will not be included in the dictionary.
         /// They can be assumed to be not in budget.
         /// </summary>
@@ -105,7 +105,7 @@ namespace PPMTool.Data.Helpers
                     continue;
                 }
 
-                // Initialise the budget details using a dictionary for lookup
+                // Initialise the budget details using a dictionary for lookin gup the assignment
                 var budgetMap = assignments.ToDictionary(
                     x => x.GenerateUniqueResourceKey(),
                     x => new AssignmentBudgetDetail
