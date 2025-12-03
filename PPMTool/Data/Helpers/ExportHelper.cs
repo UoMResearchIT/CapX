@@ -650,5 +650,17 @@ namespace PPMTool.Data.Helpers
 
             return windowRecoveryData;
         }
+
+        /// <summary>
+        /// Represents the summary of the financial state of a project over an export period
+        /// </summary>
+        internal class ProjectBudgetSummary
+        {
+            public string ProjectName { get; set; }
+
+            public double PlannedCosts { get; set; }
+
+            public double RecoveredCosts { get; set; }
+        }
     }
 }
