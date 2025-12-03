@@ -811,6 +811,7 @@ namespace PPMTool.Pages
                                 {
                                     ProjectName = assignment.ProjectName
                                 };
+                                projectData.Add(summary);
                             }
 
                             // Add the values
@@ -1133,7 +1134,7 @@ namespace PPMTool.Pages
 
 
                             // Data
-                            for (int i = 0; 0 < projectData.Count; ++i)
+                            for (int i = 0; i < projectData.Count; ++i)
                             {
                                 var proj = projectData[i];
                                 cell = worksheetProjects.Cell(2 + i, 1);
@@ -1147,7 +1148,7 @@ namespace PPMTool.Pages
                                 cell.Value = proj.RecoveredCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                cell = worksheetProjects.Cell(2 + i, 2);
+                                cell = worksheetProjects.Cell(2 + i, 4);
                                 cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C2";
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
