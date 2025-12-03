@@ -636,9 +636,7 @@ namespace PPMTool.Pages
         protected override async Task SaveRow(Resource entity)
         {
             // Update the billed FTE
-            entity.BilledFTE = ProjectModel.CostModel.HasIndirects() ?
-                entity.AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) :
-                entity.AssignmentFTE;
+            entity.UpdateBilledFTE(projectModel.CostModel);
 
             // Save the row to the DB
             await base.SaveRow(entity);

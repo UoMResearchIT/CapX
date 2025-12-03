@@ -105,6 +105,9 @@ namespace PPMTool.Data.Entities
             var durationDaysActual = ActualWorkHours / 7f;
             var fundingSourceType = FundedFrom?.FundingSourceType;
 
+            // Update the billed FTE value for the resource based on the cost model
+            UpdateBilledFTE(project.CostModel);
+
             // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funding sources which have to be salary costs
             if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
             {
@@ -170,6 +173,15 @@ namespace PPMTool.Data.Entities
                 var hash = sha.ComputeHash(bytes);
                 return BitConverter.ToString(hash).Replace("-", "").Substring(0, 12);
             }
+        }
+
+        /// <summary>
+        /// Method to update the billed FTE based on the indirects rate if the project cost model requires it
+        /// </summary>
+        /// <param name="model"></param>
+        internal void UpdateBilledFTE(CostModel model)
+        {
+            BilledFTE = model.HasIndirects() ? AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) : AssignmentFTE;
         }
     }
 }
