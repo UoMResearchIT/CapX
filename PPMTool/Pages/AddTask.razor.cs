@@ -266,7 +266,7 @@ namespace PPMTool.Pages
                     OwningProject = ProjectModel
                 };
             }
-            
+
             // Initialise the defineByEndDate flag based on the fixed end date flag
             defineByEndDate = TaskModel.HasFixedEndDate;
 
@@ -498,7 +498,7 @@ namespace PPMTool.Pages
         {
             startDateDisabled = !TaskModel.HasFixedStart && selectedPredecessorId != null;
             workDisabled = TaskModel.TaskType == TaskType.FixedDuration;
-            
+
             // If define by end date is true then enable the end date picker and disable the duration picker
             endDateDisabled = !defineByEndDate;
             durationDisabled = defineByEndDate;
