@@ -114,10 +114,10 @@ else
 
                 <div class="row">
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Component="HasFixedStart" Text="Fixed Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Start date cannot be fixed as determined by end date of predecessor" Visible="@(selectedPredecessorId != null)" /><br />
+                        <RadzenLabel class="radzen-form-label" Component="HasFixedStart" Text="Fixed Start Date" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.HasFixedStart" Disabled="@(selectedPredecessorId != null)" Name="HasFixedStart" />
+                                <RadzenSwitch @bind-value="TaskModel.HasFixedStart" Name="HasFixedStart" Change=@(_ => UpdateUIState(TaskModel, null)) />
                             </div>
                         </div>
                     </div>
@@ -132,16 +132,25 @@ else
                         </div>
                     </div>
 
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Component="DefineByEndDate" Text="Define by End Date" /><br />
+                        <div class="align-items-center p-1">
+                            <div style="display: flex">
+                                <RadzenSwitch @bind-value="defineByEndDate" Name="DefineByEndDate" Change=@(_ => UpdateUIState(TaskModel, null)) />
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Start date is required if fixed start otherwise driven from predecesors -->
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled || selectedPredecessorId != null)" /><br />
-                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled || selectedPredecessorId != null)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <div class="col-3">
+                        <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled)" /><br />
+                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                     </div>
 
                     <!-- End date is can be driven by duration or chosen which will then drive the duration -->
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="End date is determined by work and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(!TaskModel.HasFixedEndDate || TaskModel.TaskType != TaskType.FixedDuration)" /><br />
-                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.EndDate" Disabled="@(!TaskModel.HasFixedEndDate)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                    <div class="col-3">
+                        <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="End date is determined by work/duration and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(endDateDisabled)" /><br />
+                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.EndDate" Disabled="@(endDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" />
                     </div>
                 </div>
 
