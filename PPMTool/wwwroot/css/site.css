@@ -276,8 +276,8 @@ h4 {
     font-variation-settings: 'FILL' 1;
 }
 
-th, tr {
-    color: var(--rz-text-body1-color);
+th, tr, td {
+    color: var(--rz-text-body1-color) !important;
 }
 
 

@@ -148,6 +148,7 @@ namespace PPMTool.Services
                 clone.AssignedResources.Add(new Resource
                 {
                     AssignmentFTE = res.AssignmentFTE,
+                    BilledFTE = res.BilledFTE,
                     DayRate = res.DayRate,
                     IsProvisional = res.IsProvisional,
                     Person = res.Person,

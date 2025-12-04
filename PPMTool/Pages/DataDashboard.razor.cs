@@ -10,6 +10,7 @@ using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.Helpers.ExportHelper;
 using Fill = ApexCharts.Fill;
 
 namespace PPMTool.Pages
@@ -798,6 +799,26 @@ namespace PPMTool.Pages
                         );
                         Debug.WriteLine($"** {totalData.Count()} recovery summary entries generated!");
 
+                        // Genearte data for project summary
+                        var projectData = new List<ProjectBudgetSummary>();
+                        foreach (var assignment in assignmentChunks)
+                        {
+                            // Find existing entry or add new
+                            var summary = projectData.FirstOrDefault(x => x.ProjectName == assignment.ProjectName);
+                            if (summary == null)
+                            {
+                                summary = new ProjectBudgetSummary
+                                {
+                                    ProjectName = assignment.ProjectName
+                                };
+                                projectData.Add(summary);
+                            }
+
+                            // Add the values
+                            summary.PlannedCosts += assignment.PlannedCost;
+                            summary.RecoveredCosts += assignment.AmountCovered;
+                        }
+
                         // Create file path
                         var filename = $"Recovery_{DateTime.Now.Ticks}.xlsx";
                         var path = FileHelper.GetLocalApplicationFilePath(filename);
@@ -885,7 +906,7 @@ namespace PPMTool.Pages
                                         }
                                         else if (rawValue is double)
                                         {
-                                            cell.Value = (double)rawValue;
+                                            cell.Value = Math.Round((double)rawValue, 3);
                                         }
                                         else
                                         {
@@ -1094,6 +1115,46 @@ namespace PPMTool.Pages
 
                             // Adjust the column widths
                             worksheetTotals.Columns().AdjustToContents();
+
+                            // Add another sheet here for the project summary
+                            var worksheetProjects = workbook.Worksheets.Add("Projects");
+                            worksheetProjects.SheetView.FreezeRows(1);
+
+                            // Header row
+                            props = typeof(ProjectBudgetSummary).GetProperties().ToList();
+                            for (int i = 0; i < props.Count; ++i)
+                            {
+                                cell = worksheetProjects.Cell(1, 1 + i);
+                                cell.Value = props[i].Name;
+                                cell.Style.Font.Bold = true;
+                            }
+                            cell = worksheetProjects.Cell(1, 1 + props.Count);
+                            cell.Value = "Deficit";
+                            cell.Style.Font.Bold = true;
+
+
+                            // Data
+                            for (int i = 0; i < projectData.Count; ++i)
+                            {
+                                var proj = projectData[i];
+                                cell = worksheetProjects.Cell(2 + i, 1);
+                                cell.Value = proj.ProjectName;
+
+                                cell = worksheetProjects.Cell(2 + i, 2);
+                                cell.Value = proj.PlannedCosts;
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                cell = worksheetProjects.Cell(2 + i, 3);
+                                cell.Value = proj.RecoveredCosts;
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                cell = worksheetProjects.Cell(2 + i, 4);
+                                cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C2";
+                                cell.Style.NumberFormat.Format = moneyFormat;
+                            }
+
+                            // Adjust the column widths
+                            worksheetProjects.Columns().AdjustToContents();
 
                             // Save the workbook
                             workbook.SaveAs(path);

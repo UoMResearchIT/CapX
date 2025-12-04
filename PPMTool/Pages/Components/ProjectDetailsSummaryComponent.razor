@@ -44,40 +44,102 @@ else
                     {
                         <td>@FinanceSummaryItem.DayRate.ToString("C0")</td>
                     }
-                    <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
+                        @if (FinanceSummaryItem.CostModel.HasIndirects())
                         {
-                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.PlannedCostColour}\">{FinanceSummaryItem.PlannedCost.ToString("C0")}</span>")
+                            @((MarkupString)$"<span>Total:</span>&nbsp;<span>{FinanceSummaryItem.Budget.ToString("C0")}</span>")
                             <br />
-                            @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts).ToString("C0")}</span>")
+                            @((MarkupString)$"<span>Directs:</span>&nbsp;<span>{(FinanceSummaryItem.Budget - FinanceSummaryItem.BudgetIndirectCosts).ToString("C0")}</span>")
                             <br />
-                            @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0")}</span>")
+                            @((MarkupString)$"<span>Indirects:</span>&nbsp;<span>{FinanceSummaryItem.BudgetIndirectCosts.ToString("C0")}</span>")
                         }
                         else
+                        {
+                            @FinanceSummaryItem.Budget.ToString("C0")
+                        }
+                    </td>
+                    <td>
+                        @if (!FinanceSummaryItem.CostModel.HasIndirects() && !FinanceSummaryItem.CostModel.HasLeadership())
                         {
                             <span style="color:@FinanceSummaryItem.PlannedCostColour">
                                 @FinanceSummaryItem.PlannedCost.ToString("C0")
                             </span>
                         }
+                        else
+                        {
+                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.PlannedCostColour}\">{FinanceSummaryItem.PlannedCost.ToString("C0")}</span>")
+                            <br />
+
+                            @if (FinanceSummaryItem.CostModel.HasLeadership())
+                            {
+                                @* Has leadership and indirects so show technical breakdown but calculated by substracting the indirects and leadership *@
+                                if (FinanceSummaryItem.CostModel.HasIndirects())
+                                {
+                                    @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts - FinanceSummaryItem.PlannedIndirectCosts).ToString("C0")}</span>")
+                                }
+
+                                @* Has leadership but no indirects so show technical breakdown but calculated by substracting the leadership *@
+                                else
+                                {
+                                    @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts).ToString("C0")}</span>")
+                                }
+
+                                <br />
+                                @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0")}</span>")
+                            }
+
+                            @* Has indirects but no leadership so show technical breakdown but calculated by substracting the indirects *@
+                            else
+                            {
+                                @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedIndirectCosts).ToString("C0")}</span>")
+                            }
+
+                            @if (FinanceSummaryItem.CostModel.HasIndirects())
+                            {
+                                <br />
+                                @((MarkupString)$"<span>Indirects:</span>&nbsp;<span>{FinanceSummaryItem.PlannedIndirectCosts.ToString("C0")}</span>")
+                            }
+                        }
                     </td>
                     <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
-                        {
-                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.ActualCostColour}\">{FinanceSummaryItem.ActualCost.ToString("C0")}</span>")
-                            <br />
-                            @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts).ToString("C0")}</span>")
-                            <br />
-                            @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.ActualLeadershipCosts.ToString("C0")}</span>")
-                        }
-                        else
+                        @if (!FinanceSummaryItem.CostModel.HasIndirects() && !FinanceSummaryItem.CostModel.HasLeadership())
                         {
                             <span style="color:@FinanceSummaryItem.ActualCostColour">
                                 @FinanceSummaryItem.ActualCost.ToString("C0")
                             </span>
                         }
+                        else
+                        {
+                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.ActualCostColour}\">{FinanceSummaryItem.ActualCost.ToString("C0")}</span>")
+                            <br />
+
+                            @if (FinanceSummaryItem.CostModel.HasLeadership())
+                            {
+                                if (FinanceSummaryItem.CostModel.HasIndirects())
+                                {
+                                    @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts - FinanceSummaryItem.ActualIndirectCosts).ToString("C0")}</span>")
+                                }
+                                else
+                                {
+                                    @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts).ToString("C0")}</span>")
+                                }
+
+                                <br />
+                                @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.ActualLeadershipCosts.ToString("C0")}</span>")
+                            }
+                            else
+                            {
+                                @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualIndirectCosts).ToString("C0")}</span>")
+                            }
+
+                            @if (FinanceSummaryItem.CostModel.HasIndirects())
+                            {
+                                <br />
+                                @((MarkupString)$"<span>Indirects:</span>&nbsp;<span>{FinanceSummaryItem.ActualIndirectCosts.ToString("C0")}</span>")
+                            }
+                        }
                         <br />
-                        @($" ({FinanceSummaryItem.ActualHours.ToString("F2")})")                        
+                        @($" ({FinanceSummaryItem.ActualHours.ToString("F2")} hrs)")                        
                     </td>
                     <td>
                         @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsRequestedColour}\">{FinanceSummaryItem.GetAllRequested().ToString("C0")}</span>")
