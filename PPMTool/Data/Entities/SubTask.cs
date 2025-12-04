@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -174,8 +174,8 @@ namespace PPMTool.Data.Entities
         {
             try
             {
-                // Start is driven by predecessor
-                if (Predecessor != null)
+                // Start is driven by predecessor but only if the start date is not fixed
+                if (Predecessor != null && !HasFixedStart)
                 {
                     StartDate = Predecessor.EndDate.Date.AddDays(Lag + 1);
                 }
@@ -255,6 +255,22 @@ namespace PPMTool.Data.Entities
             {
                 return e.Message;
             }
+        }
+
+        /// <summary>
+        /// Publicly expose the protected method to recalculate duration from dates
+        /// </summary>
+        public void RecalculateDurationFromDates()
+        {
+            UpdateDurationFromDates();
+        }
+
+        /// <summary>
+        /// Publicly expose the protected method to recalculate end date from duration
+        /// </summary>
+        public void RecalculateEndDateFromDuration()
+        {
+            UpdateEndDateFromDuration();
         }
 
         /// <summary>
