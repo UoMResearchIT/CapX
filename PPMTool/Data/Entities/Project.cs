@@ -575,6 +575,7 @@ namespace PPMTool.Data.Entities
                     {
                         Person = ProjectManager,
                         AssignmentFTE = LeadershipFTE,
+                        BilledFTE = LeadershipFTE, // No indirects on leadership
                         FundedFrom = LeadershipFundingSource,
                         PlannedCost = PlannedLeadershipCosts * proportionOfLeadershipCosts,
                         ActualCost = ActualLeadershipCosts * proportionOfLeadershipCosts,
