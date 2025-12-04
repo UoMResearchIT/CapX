@@ -142,8 +142,8 @@ namespace PPMTool.Data.Helpers
                     PostNumber = string.Empty,
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
-                    FTE = Math.Round(resource.AssignmentFTE, 3),
-                    BilledFTE = Math.Round(resource.BilledFTE, 3),
+                    FTE = resource.AssignmentFTE,
+                    BilledFTE = resource.BilledFTE,
                     ProjectName = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
@@ -314,7 +314,7 @@ namespace PPMTool.Data.Helpers
                 data.AddRange(taskChunks);
             }
 
-            // Add the mid-grade salary estimates and ovewrite the planned costs if necessary
+            // Add the mid-grade salary estimates and overwrite the planned costs if necessary
             foreach (var chunk in data)
             {
                 // Cost estimate based on mid-grade salaries

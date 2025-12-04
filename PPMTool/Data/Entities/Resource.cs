@@ -148,10 +148,10 @@ namespace PPMTool.Data.Entities
             if (project.CostModel.HasIndirects())
             {
                 // Planned indirects are just proportion of the technical costs
-                PlannedIndirectCost = PlannedCost * GlobalDefaults.BAUTopSliceFractionDefault;
+                PlannedIndirectCost = (PlannedCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
 
                 // Actual costs are also just proportion of the actual technical costs
-                ActualIndirectCost = ActualCost * GlobalDefaults.BAUTopSliceFractionDefault;
+                ActualIndirectCost = (ActualCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
             }
 
             return chunks;

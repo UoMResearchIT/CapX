@@ -409,11 +409,11 @@ namespace PPMTool.Data.Entities
             }
             ActualWorkHours = newValue;
 
-            // Truncate the cost to 2 DP as it is currency and add on leadership costs and indirects
+            // Truncate the cost to 2 DP as it is currency and add on leadership costs (indirects already included in planned cost total)
             ActualIndirectCost = Math.Round(100 * actualIndirects) / 100;
             PlannedIndirectCost = Math.Round(100 * plannedIndirects) / 100;
-            ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts + ActualIndirectCost;
-            PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts + PlannedIndirectCost;
+            ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
+            PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts;
         }
 
         /// <summary>
