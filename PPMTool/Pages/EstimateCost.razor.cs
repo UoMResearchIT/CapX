@@ -63,12 +63,14 @@ namespace PPMTool.Pages
             }
 
             // Compute the values for the summary
+            summaryModel.SetCostModel(CostModel, false);
             summaryModel.StartDate = resourcesToInclude.Min(x => x.StartDate);
             summaryModel.EndDate = resourcesToInclude.Max(x => x.EndDate);
             summaryModel.DurationDays = resourcesToInclude.Max(x => x.DurationDays);
             summaryModel.DurationBillableDays = resourcesToInclude.Sum(x => x.DurationBillableDays);
             summaryModel.PlannedWorkHours = resourcesToInclude.Sum(x => x.PlannedWorkHours);
             summaryModel.PlannedCost = resourcesToInclude.Sum(x => x.PlannedCost);
+            summaryModel.PlannedIndirectCost = resourcesToInclude.Sum(x => x.PlannedIndirectCost);
             StateHasChanged();
         }
 
@@ -90,7 +92,7 @@ namespace PPMTool.Pages
             foreach (var resource in models)
             {
                 Debug.WriteLine($"** EstimateCost: Setting cost model to {CostModel} on {resource.Key}");
-                resource.Value.UpdateCost(CostModel);
+                resource.Value.SetCostModel(CostModel);
             }
             UpdateSummaryComponent("Self: Cost Model");
         }
@@ -103,7 +105,7 @@ namespace PPMTool.Pages
             var numRes = models.Where(x => x.Key != "Leadership").Count() + 1;
             var res = new TaskConfigModel(FinancialReferenceService, Context, false);
             models.Add($"RSE {numRes}", res);
-            res.UpdateCost(CostModel);
+            res.SetCostModel(CostModel);
             UpdateSummaryComponent("Self: Add Resource");
         }
 

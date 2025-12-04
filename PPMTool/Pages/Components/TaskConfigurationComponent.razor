@@ -279,18 +279,29 @@
         }
 
         /// <summary>
-        /// Do a cost update based on the current parameters of the model
+        /// Set the cost model property and optionally recompute the cost of the resource.
+        ///  Don't do this for summary components as they have their costs computed from dependent components.
         /// </summary>
         /// <param name="newCostModel"></param>
-        public void UpdateCost(CostModel? newCostModel = null)
+        /// <param name="updateCosts"></param>
+        public void SetCostModel(CostModel newCostModel, bool updateCosts = true)
+        {
+            // Update the cost model property
+            CostModel = newCostModel;
+
+            // Run a calculation based on the current state of the properties
+            if (updateCosts)
+            {
+                UpdateCost();
+            }
+        }
+
+        /// <summary>
+        /// Do a cost update based on the current parameters of the model
+        /// </summary>
+        public void UpdateCost()
         {
             Debug.WriteLine("** Updating costs...");
-
-            // Set model if needed
-            if (newCostModel != null)
-            {
-                CostModel = newCostModel ?? default;
-            }
 
             // Reset
             PlannedCost = 0;
