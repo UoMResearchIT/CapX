@@ -19,11 +19,13 @@ namespace PPMTool.Data
         /// <summary>
         /// This is the FTE of the resource for this assignment chunk based on the project work duty allocation
         /// </summary>
+        [Description("The assignment FTE in terms of the person's project allowance in our planning system")]
         public double FTE { get; set; }
 
         /// <summary>
         /// This is the FTE of the resource that is being billed to the project for this assignment chunk (essentially the equivalent FTE including indirects if the project charges them)
         /// </summary>
+        [Description("The FTE we are recharging to the project for this assignment")]
         public double BilledFTE { get; set; }
 
         public string ProjectName { get; set; }

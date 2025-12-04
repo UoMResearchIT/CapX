@@ -906,7 +906,7 @@ namespace PPMTool.Pages
                                         }
                                         else if (rawValue is double)
                                         {
-                                            cell.Value = (double)rawValue;
+                                            cell.Value = Math.Round((double)rawValue, 3);
                                         }
                                         else
                                         {
