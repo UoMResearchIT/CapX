@@ -22,7 +22,7 @@ namespace PPMTool.Pages
                 if (costModel != value)
                 {
                     costModel = value;
-                    UpdateComponentCostModels();
+                    CostModelChanged();
                 }
             }
         }
@@ -45,7 +45,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Update the summary componet from all the resources
+        /// Update the summary component from all the resources
         /// </summary>
         /// <param name="name"></param>
         private void UpdateSummaryComponent(string name)
@@ -85,17 +85,14 @@ namespace PPMTool.Pages
         /// <summary>
         /// Updates the cost model for all resource components when the selected cost model changes.
         /// </summary>
-        private void UpdateComponentCostModels()
+        private void CostModelChanged()
         {
             foreach (var resource in models)
             {
                 Debug.WriteLine($"** EstimateCost: Setting cost model to {CostModel} on {resource.Key}");
-                resource.Value.CostModel = CostModel;
+                resource.Value.UpdateCost(CostModel);
             }
-
-            // Update summary component
-            Debug.WriteLine($"** EstimateCost: Setting summary cost model to {CostModel}");
-            summaryModel.CostModel = CostModel;
+            UpdateSummaryComponent("Self: Cost Model");
         }
 
         /// <summary>
@@ -104,10 +101,10 @@ namespace PPMTool.Pages
         private void AddResource()
         {
             var numRes = models.Where(x => x.Key != "Leadership").Count() + 1;
-            models.Add($"RSE {numRes}", new TaskConfigModel(FinancialReferenceService, Context, false)
-            {
-                CostModel = this.CostModel
-            });
+            var res = new TaskConfigModel(FinancialReferenceService, Context, false);
+            models.Add($"RSE {numRes}", res);
+            res.UpdateCost(CostModel);
+            UpdateSummaryComponent("Self: Add Resource");
         }
 
         /// <summary>

@@ -175,7 +175,7 @@
     {
         Debug.WriteLine($"** TaskConfig: Value changed by {nameOfProperty}");
 
-        // Only fire if not read-only
+        // Only fire if not read-only -- read-only means it doesn't do its own calculations
         if (ReadOnly) return;
 
         // Update the other properties on the model
@@ -192,7 +192,7 @@
     {
         public double DayRate { get; set; } = GlobalDefaults.DayRateDefault;
         public Rate ResourceRate { get; set; } = Rate.Standard;
-        public CostModel CostModel { get; set; }
+        public CostModel CostModel { get; private set; }
 
         private FinancialReferenceService finRefService;
         private PPMToolContext context;
@@ -281,8 +281,17 @@
         /// <summary>
         /// Do a cost update based on the current parameters of the model
         /// </summary>
-        public void UpdateCost()
+        /// <param name="newCostModel"></param>
+        public void UpdateCost(CostModel? newCostModel = null)
         {
+            Debug.WriteLine("** Updating costs...");
+
+            // Set model if needed
+            if (newCostModel != null)
+            {
+                CostModel = newCostModel ?? default;
+            }
+
             // Reset
             PlannedCost = 0;
             PlannedIndirectCost = 0;
@@ -328,6 +337,8 @@
                     }
                 }
             }
+
+            Debug.WriteLine($"** Planned Costs = {PlannedCost}");
         }
     }
 }
