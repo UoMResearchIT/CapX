@@ -581,9 +581,13 @@ namespace PPMTool.Pages
         protected override void CancelEdit(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Cancel edit row for {resource.GetSensibleObjectName()}");
+
+            // Reset the entity tracking
             Reset();
             SubTaskService.RestoreModel(Context, ref resource);
             dataGrid.CancelEditRow(resource);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -600,7 +604,11 @@ namespace PPMTool.Pages
 
             // Add to the data grid
             dataGridEntities.Add(resource);
+
+            // Reset the entity tracking
             entityToInsert = null;
+
+            // Update UI elements
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -610,7 +618,10 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnUpdateRow(Resource entity)
         {
+            // Reset the entity tracking
             Reset();
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -622,7 +633,11 @@ namespace PPMTool.Pages
         protected override async Task DeleteRow(Resource entity)
         {
             await base.DeleteRow(entity);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
+
+            // Update task unmet demand
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -633,8 +648,16 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
+            // Update the billed FTE
+            entity.UpdateBilledFTE(projectModel.CostModel);
+
+            // Save the row to the DB
             await base.SaveRow(entity);
+
+            // Update UI elemnts
             UpdatePeopleDropdownSource(new LoadDataArgs());
+
+            // Update task unmet demand
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -645,6 +668,8 @@ namespace PPMTool.Pages
         protected override async Task InsertRow()
         {
             await base.InsertRow();
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -656,6 +681,8 @@ namespace PPMTool.Pages
         protected override async Task EditRow(Resource entity)
         {
             await base.EditRow(entity);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 

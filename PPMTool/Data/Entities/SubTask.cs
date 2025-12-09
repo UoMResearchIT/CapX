@@ -533,24 +533,28 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the actual and planned technical costs of the task based on the resources
+        /// Updates the actual and planned technical costs of the task based on the resources.
         /// </summary>
         /// <param name="project"></param>
         /// <param name="finrefs"></param>
-        /// <returns></returns>
+        /// <returns>Assignment chunk representation of the resources on the task</returns>
         internal IEnumerable<AssignmentChunk> UpdateSubTaskCosts(Project project, IEnumerable<FinancialReference> finrefs)
         {
             // Reset the totals for this sub task
             ActualCost = 0;
             PlannedCost = 0;
+            ActualIndirectCost = 0;
+            PlannedIndirectCost = 0;
             List<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
-            // For each resource assigned, update the costs
+            // For each resource assigned, update the costs by generating a chunk from the resource
             foreach (var res in AssignedResources)
             {
                 chunks.AddRange(res.UpdateResourceCosts(project, this, finrefs));
 
                 // Sum up the result post-update
+                ActualIndirectCost += res.ActualIndirectCost;
+                PlannedIndirectCost += res.PlannedIndirectCost;
                 ActualCost += res.ActualCost;
                 PlannedCost += res.PlannedCost;
             }

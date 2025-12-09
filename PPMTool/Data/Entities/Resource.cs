@@ -33,6 +33,11 @@ namespace PPMTool.Data.Entities
         public double AssignmentFTE { get; set; }
 
         /// <summary>
+        /// The FTE of the resource that is billed to the project (including indirects if applicable)
+        /// </summary>
+        public double BilledFTE { get; set; }
+
+        /// <summary>
         /// Whether the assignment is provisional
         /// </summary>
         public bool IsProvisional { get; set; }
@@ -77,14 +82,18 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the planned and actual cost of the resource given either a day rate a financial reference
+        /// Updates the planned and actual cost of the resource given either a day rate a financial reference.
         /// Assumptions:
         /// 1. Ignores annual increments for people
         /// </summary>
         /// <param name="project"></param>
         /// <param name="subTask"></param>
         /// <param name="finrefs"></param>
-        internal IEnumerable<AssignmentChunk> UpdateResourceCosts(Project project, SubTask subTask, IEnumerable<FinancialReference> finrefs)
+        /// <returns>A list of assignment chunks that represent this resource assignment</returns>
+        internal IEnumerable<AssignmentChunk> UpdateResourceCosts(
+            Project project,
+            SubTask subTask,
+            IEnumerable<FinancialReference> finrefs)
         {
             // Costs to the department are always salary-based regardless of the recharge cost model (day-rate or salary based)
             // Therefore this computes the actual cost of the resource chosen over the full task (planned cost)
@@ -96,7 +105,10 @@ namespace PPMTool.Data.Entities
             var durationDaysActual = ActualWorkHours / 7f;
             var fundingSourceType = FundedFrom?.FundingSourceType;
 
-            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funidng sources which have to be salary costs
+            // Update the billed FTE value for the resource based on the cost model
+            UpdateBilledFTE(project.CostModel);
+
+            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funding sources which have to be salary costs
             if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
@@ -121,13 +133,25 @@ namespace PPMTool.Data.Entities
                     generateLeadershipTasks: GenerateLeadershipTaskLogic.None
                 );
 
-                // Planned costs
+                // Planned costs (technical assignments only)
                 PlannedCost = chunks.Sum(x => x.PlannedCost);
 
-                // Actual costs are a proportion of the planned
+                // Actual costs are a proportion of the planned based on actuals recorded
                 ActualCost = 0d;
                 var proportion = durationDaysActual / durationDaysPlanned;
                 ActualCost = PlannedCost * proportion;
+            }
+
+            // The indirects only apply if the appropriate cost model is in place
+            ActualIndirectCost = 0d;
+            PlannedIndirectCost = 0d;
+            if (project.CostModel.HasIndirects())
+            {
+                // Planned indirects are just proportion of the technical costs
+                PlannedIndirectCost = (PlannedCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
+
+                // Actual costs are also just proportion of the actual technical costs
+                ActualIndirectCost = (ActualCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
             }
 
             return chunks;
@@ -149,6 +173,15 @@ namespace PPMTool.Data.Entities
                 var hash = sha.ComputeHash(bytes);
                 return BitConverter.ToString(hash).Replace("-", "").Substring(0, 12);
             }
+        }
+
+        /// <summary>
+        /// Method to update the billed FTE based on the indirects rate if the project cost model requires it
+        /// </summary>
+        /// <param name="model"></param>
+        internal void UpdateBilledFTE(CostModel model)
+        {
+            BilledFTE = model.HasIndirects() ? AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) : AssignmentFTE;
         }
     }
 }

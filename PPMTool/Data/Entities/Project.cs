@@ -114,6 +114,11 @@ namespace PPMTool.Data.Entities
         public double ActualLeadershipCosts { get; set; }
 
         /// <summary>
+        /// If not using the day rate model, then this is the sum of the indirect BAU costs top sliced off the funding sources
+        /// </summary>
+        public double BudgetedIndirects { get; set; }
+
+        /// <summary>
         /// Timestamp recording when actuals were last updated.
         /// </summary>
         public string ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
@@ -209,7 +214,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private bool HasNoLeadershipFundingSourcesButRan()
         {
-            return CostModel == CostModel.TechAndLeadership && ProjectStatus.DidRun() && LeadershipFundingSource == null;
+            return CostModel.HasLeadership() && ProjectStatus.DidRun() && LeadershipFundingSource == null;
         }
 
         /// <summary>
@@ -345,9 +350,11 @@ namespace PPMTool.Data.Entities
             double actualCost = 0d;
             double actualHours = 0d;
             double plannedCost = 0d;
-            List<AssignmentChunk> chunks = new List<AssignmentChunk>();
+            double budgetIndirects = 0d;
+            double plannedIndirects = 0d;
+            double actualIndirects = 0d;
 
-            // Loop over all the subtasks
+            // Loop over all the subtasks (technical assignments)
             if (SubTasks != null)
             {
                 foreach (var task in SubTasks)
@@ -360,21 +367,30 @@ namespace PPMTool.Data.Entities
                     if (updateSubTaskCosts)
                     {
                         // Update the cost of the tasks (and resources)
-                        chunks.AddRange(task.UpdateSubTaskCosts(this, financialReferences));
+                        task.UpdateSubTaskCosts(this, financialReferences);
                     }
 
                     // Read subtask costs and hours and accumulate
                     actualCost += task.ActualCost;
                     plannedCost += task.PlannedCost;
                     actualHours += task.ActualWorkHours;
+                    plannedIndirects += task.PlannedIndirectCost;
+                    actualIndirects += task.ActualIndirectCost;
                 }
             }
+
+            // Compute the budgeted indirects
+            if (FundingSources != null && FundingSources.Count > 0)
+            {
+                budgetIndirects = GlobalDefaults.BAUTopSliceFractionDefault * FundingSources.Sum(x => x.AmountAvailable);
+            }
+            BudgetedIndirects = Math.Round(100 * budgetIndirects) / 100;
 
             // Update project dates
             StartDate = startDate;
             EndDate = endDate;
 
-            // Add the leadership costs, generating chunks if the model requires it
+            // Add the leadership costs, generating chunks on the fly if the model requires it
             var leadershipChunks = ExportHelper.GetAssignmentChunks(
                 ProjectManager,
                 new List<Project> { this },
@@ -393,12 +409,11 @@ namespace PPMTool.Data.Entities
             }
             ActualWorkHours = newValue;
 
-            // Truncate the cost to 2 DP as it is currency and add on leadership costs
+            // Truncate the cost to 2 DP as it is currency and add on leadership costs (indirects already included in planned cost total)
+            ActualIndirectCost = Math.Round(100 * actualIndirects) / 100;
+            PlannedIndirectCost = Math.Round(100 * plannedIndirects) / 100;
             ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
             PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts;
-
-
-            // TODO: Work out how much of the subtask costs are in budget
         }
 
         /// <summary>
@@ -430,7 +445,7 @@ namespace PPMTool.Data.Entities
         private double CalculateActualLeadershipCosts(IEnumerable<AssignmentChunk> leadershipChunks)
         {
             // If not using the leadership cost model then this is zero
-            if (CostModel != CostModel.TechAndLeadership)
+            if (!CostModel.HasLeadership())
             {
                 return 0;
             }
@@ -560,6 +575,7 @@ namespace PPMTool.Data.Entities
                     {
                         Person = ProjectManager,
                         AssignmentFTE = LeadershipFTE,
+                        BilledFTE = LeadershipFTE, // No indirects on leadership
                         FundedFrom = LeadershipFundingSource,
                         PlannedCost = PlannedLeadershipCosts * proportionOfLeadershipCosts,
                         ActualCost = ActualLeadershipCosts * proportionOfLeadershipCosts,
