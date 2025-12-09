@@ -167,10 +167,9 @@ namespace PPMTool.Data.Entities
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
-        /// <param name="permitEndDateToMove">Whether we can move the end date to maintain 
         /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule(bool permitEndDateToMove)
+        public string Schedule()
         {
             try
             {
@@ -211,18 +210,21 @@ namespace PPMTool.Data.Entities
                 // Fixed Work Update
                 if (TaskType == TaskType.FixedWork)
                 {
-                    // End Date must be driven
+                    // End Date must be driven as by fixing the end date, you are essentially making it fixed duration
                     HasFixedEndDate = false;
 
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
+
+                    // Set end date from the duration (never has fixed end date)
+                    UpdateEndDateFromDuration();
                 }
 
                 // Fixed Duration Update
                 else
                 {
-                    // If the task has a fixed end date and we are not permitted to move it, check if the start date has moved past the end date
-                    if (HasFixedEndDate && !permitEndDateToMove && StartDate > EndDate)
+                    // If the task has a fixed end date then we are not permitted to move it, check if the start date has moved past the end date
+                    if (HasFixedEndDate && StartDate > EndDate)
                     {
                         return $"Task '{Name}' has a fixed end date of {EndDate.ToShortDateString()} which is before the new start date {StartDate.ToShortDateString()} caused by the predecessor.";
                     }
@@ -230,11 +232,16 @@ namespace PPMTool.Data.Entities
                     // Make sure the duration is at least zero or greater
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
-                    // If we are allowed to move the end date to maintain the current duration despite being marked as fixed then set the end date now
-                    if (HasFixedEndDate && permitEndDateToMove) UpdateEndDateFromDuration();
-
+                    // If we are allowed to move the end date to maintain the current duration then set the end date now
+                    if (!HasFixedEndDate)
+                    {
+                        UpdateEndDateFromDuration();
+                    }
                     // If the end date is fixed then set duration here from the start and end dates
-                    if (HasFixedEndDate) UpdateDurationFromDates();
+                    else
+                    {
+                        UpdateDurationFromDates();
+                    }
 
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
@@ -245,9 +252,6 @@ namespace PPMTool.Data.Entities
                 {
                     res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
                 }
-
-                // Set end date from the duration
-                if (!HasFixedEndDate) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
                 return null;
             }

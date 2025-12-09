@@ -751,7 +751,7 @@ namespace PPMTool.Pages
             }
 
             // Schedule (updates planned work, duration etc.)
-            error = TaskModel.Schedule(false);
+            error = TaskModel.Schedule();
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 

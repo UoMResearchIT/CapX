@@ -75,7 +75,7 @@ namespace PPMTool.Services
             foreach (var followerTask in followerTasks)
             {
                 // Call schedule and have it tracked in the context
-                error = followerTask.Schedule(false);
+                error = followerTask.Schedule();
 
                 // If error then abandon forward propagation
                 if (error != null) return new Tuple<string, string>(followerTask.Name, error);
