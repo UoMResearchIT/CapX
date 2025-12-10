@@ -515,7 +515,7 @@ namespace PPMTool.Pages
             else
             {
                 specifyEndDateDisabled = false;
-                
+
                 // If define by end date is true then enable the end date picker and disable the duration picker
                 endDateDisabled = !defineByEndDate;
                 durationDisabled = defineByEndDate;
