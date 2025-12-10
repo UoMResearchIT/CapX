@@ -128,6 +128,7 @@ namespace PPMTool.Pages
         private bool workDisabled;
         private bool durationDisabled;
         private bool endDateDisabled;
+        private bool specifyEndDateDisabled;
         private bool defineByEndDate;
         private string error;
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
@@ -504,9 +505,21 @@ namespace PPMTool.Pages
             startDateDisabled = !TaskModel.HasFixedStart && selectedPredecessorId != null;
             workDisabled = TaskModel.TaskType == TaskType.FixedDuration;
 
-            // If define by end date is true then enable the end date picker and disable the duration picker
-            endDateDisabled = !defineByEndDate;
-            durationDisabled = defineByEndDate;
+            if (TaskModel.TaskType == TaskType.FixedWork)
+            {
+                specifyEndDateDisabled = true;
+                defineByEndDate = false;
+                endDateDisabled = true;
+                durationDisabled = true;
+            }
+            else
+            {
+                specifyEndDateDisabled = false;
+                
+                // If define by end date is true then enable the end date picker and disable the duration picker
+                endDateDisabled = !defineByEndDate;
+                durationDisabled = defineByEndDate;
+            }
         }
 
         /// <summary>
