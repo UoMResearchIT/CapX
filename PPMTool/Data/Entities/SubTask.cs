@@ -250,7 +250,14 @@ namespace PPMTool.Data.Entities
                 // Update hours on the resources
                 foreach (var res in AssignedResources)
                 {
-                    res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
+                    if (units > 0)
+                    {
+                        res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
+                    }
+                    else
+                    {
+                        res.PlannedWorkHours = 0;
+                    }
                 }
 
                 return null;
