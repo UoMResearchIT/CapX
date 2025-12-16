@@ -170,16 +170,6 @@ namespace PPMTool.Services
                         managersToNotify = affectedPMs;
                     }
 
-                    // Ensure superusers are in the list in any case
-                    var superusers = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
-                    foreach (var su in superusers)
-                    {
-                        if (!affectedPMs.Contains(su))
-                        {
-                            affectedPMs.Add(su);
-                        }
-                    }
-
                     // For each manager to notify
                     foreach (var pm in managersToNotify)
                     {
