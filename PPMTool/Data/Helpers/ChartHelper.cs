@@ -345,7 +345,7 @@ namespace PPMTool.Data.Helpers
                     DateTime actualWeekStart = subTask.StartDate > currentWeek ? subTask.StartDate : currentWeek;
                     DateTime actualWeekEnd = endDateActuals < currentWeek.AddDays(6) ? endDateActuals : currentWeek.AddDays(6);
                     double actualsDaysInWeek = 0;
-                    
+
                     if (actualWeekEnd >= actualWeekStart)
                     {
                         actualsDaysInWeek = (actualWeekEnd - actualWeekStart).TotalDays + 1;
