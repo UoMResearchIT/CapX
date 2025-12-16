@@ -280,7 +280,6 @@ th, tr, td {
     color: var(--rz-text-body1-color) !important;
 }
 
-
 /* ApexCharts SVG text commonly needs `fill` and sometimes `!important` */
 .apexcharts-title-text,
 .apexcharts-subtitle-text,
@@ -310,9 +309,12 @@ th, tr, td {
     border: 1px solid var(--rz-border-color);
 }
 
-
 /* For donut/pie totals and labels inside the chart (SVG text again) */
 .apexcharts-datalabel-label,
 .apexcharts-datalabel-value {
     fill: var(--rz-text-body1-color) !important;
+}
+
+hr {
+    border-top: 2px solid var(--rz-border-color);
 }

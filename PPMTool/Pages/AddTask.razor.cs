@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using FluentDateTime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -127,6 +127,9 @@ namespace PPMTool.Pages
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
+        private bool endDateDisabled;
+        private bool specifyEndDateDisabled;
+        private bool defineByEndDate;
         private string error;
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
@@ -264,6 +267,9 @@ namespace PPMTool.Pages
                     OwningProject = ProjectModel
                 };
             }
+
+            // Initialise the defineByEndDate flag based on the fixed end date flag
+            defineByEndDate = TaskModel.HasFixedEndDate;
 
             // Populate predecessor dropdown source (exclude self)
             predecessorTasks = ProjectModel.SubTasks
@@ -491,9 +497,29 @@ namespace PPMTool.Pages
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            startDateDisabled = !TaskModel.HasFixedStart;
+            if (TaskModel.HasFixedStart)
+            {
+                selectedPredecessorId = null;
+            }
+
+            startDateDisabled = !TaskModel.HasFixedStart && selectedPredecessorId != null;
             workDisabled = TaskModel.TaskType == TaskType.FixedDuration;
-            durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate;
+
+            if (TaskModel.TaskType == TaskType.FixedWork)
+            {
+                specifyEndDateDisabled = true;
+                defineByEndDate = false;
+                endDateDisabled = true;
+                durationDisabled = true;
+            }
+            else
+            {
+                specifyEndDateDisabled = false;
+
+                // If define by end date is true then enable the end date picker and disable the duration picker
+                endDateDisabled = !defineByEndDate;
+                durationDisabled = defineByEndDate;
+            }
         }
 
         /// <summary>
@@ -727,8 +753,18 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
+            // Before we schedule, we need to ensure the duration and end date are consistent with the input method
+            if (defineByEndDate)
+            {
+                TaskModel.RecalculateDurationFromDates();
+            }
+            else
+            {
+                TaskModel.RecalculateEndDateFromDuration();
+            }
+
             // Schedule (updates planned work, duration etc.)
-            error = TaskModel.Schedule(false);
+            error = TaskModel.Schedule();
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 
