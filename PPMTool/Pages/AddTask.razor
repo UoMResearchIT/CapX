@@ -153,7 +153,7 @@ else
                         <RadzenLabel class="radzen-form-label" Component="DefineByEndDate" Text="Specify End Date" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="defineByEndDate" Name="DefineByEndDate" Change=@(_ => UpdateUIState(TaskModel, null)) />
+                                <RadzenSwitch @bind-value="defineByEndDate" Name="DefineByEndDate" Change=@(_ => UpdateUIState(TaskModel, null)) Disabled="specifyEndDateDisabled" />
                             </div>
                         </div>
                     </div>
