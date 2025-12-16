@@ -138,8 +138,11 @@ namespace PPMTool.Data.Entities
 
                 // Actual costs are a proportion of the planned based on actuals recorded
                 ActualCost = 0d;
-                var proportion = durationDaysActual / durationDaysPlanned;
-                ActualCost = PlannedCost * proportion;
+                if (durationDaysPlanned > 0)
+                {
+                    var proportion = durationDaysActual / durationDaysPlanned;
+                    ActualCost = PlannedCost * proportion;
+                }
             }
 
             // The indirects only apply if the appropriate cost model is in place
