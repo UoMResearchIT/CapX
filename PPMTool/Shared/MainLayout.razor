@@ -186,7 +186,7 @@
                 <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" Style="margin-bottom: 0; color: var(--rz-header-color)" Text="@versionString" title="@commitString" />
                 @if (Environment.IsDevelopment())
                 {
-                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Variant="Variant.Outlined" />
+                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Variant="Variant.Outlined" Text="@commitString" />
                 }
             </RadzenStack>
             <AuthorizeView>
