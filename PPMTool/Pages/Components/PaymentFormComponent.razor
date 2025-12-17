@@ -141,6 +141,8 @@
             PostNoteToProject(FinanceItemChangeType.Add, Payment);
         }
 
+        // TODO: Recompute the invoice status if necessary
+
         CloseForm(true);
         return true;
     }
@@ -158,6 +160,9 @@
 
             PaymentService.Delete(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Delete, Payment);
+
+            // TODO: Recompute the invoice status if necessary
+
             CloseForm(true);
         }
     }

@@ -24,16 +24,10 @@
             <RadzenLabel Component="InvoieReference" Text="Invoice Reference" class="font-weight-bold" />
             <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
             <RadzenLabel Component="Status" Text="Status" class="font-weight-bold" />
-            <RadzenDropDown Data="@statuses"
-                            @bind-Value="Invoice.Status"
-                            Name="Status"
-                            Style="width:100%;"
-                            Placeholder="Select Invoice Status">
-                <Template Context="item">
-                    @(((InvoiceStatus)item).GetDescription())
-                </Template>
-            </RadzenDropDown>
             <HintComponent Message="The status of an invoice is determined from the linked payments or whether it has been marked as cancelled. Add and link a payment to update the invoice status or cancel it using the switch provided to update the status." />
+            <RadzenBadge Text="@Invoice.Status.GetDescription()" BadgeStyle="@Invoice.Status.GetBadgeStyle()" />
+            <RadzenLabel class="font-weight-bold" Text="Cancel Invoice?" Component="Cancel" />
+            <RadzenSwitch Name="Cancel" Change="@CancelToggled" @bind-Value="isCancelled" />
             <RadzenLabel Component="InvoiceURL" Text="Link to Invoice" class="font-weight-bold" />
             <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%; margin-left: 0;" />
         </RadzenStack>
@@ -61,6 +55,7 @@
     public Invoice Invoice { get; set; }
 
     private IEnumerable<InvoiceStatus> statuses;
+    private bool isCancelled;
 
     protected override void OnInitialized()
     {
@@ -78,8 +73,27 @@
         // Statuses for the dropdown
         statuses = Enum.GetValues(typeof(InvoiceStatus)).Cast<InvoiceStatus>();
 
+        // Set value of the switch
+        isCancelled = Invoice.Status == InvoiceStatus.Cancelled;
+
         // Set the internal reference on the base class
         SetFinanceItemModel(Invoice);
+    }
+
+    /// <summary>
+    /// Method to handle the change of invoice status when the cancel switch is toggled
+    /// </summary>
+    /// <param name="isCancelled"></param>
+    private void CancelToggled(bool isCancelled)
+    {
+        if (isCancelled)
+        {
+            Invoice.Status = InvoiceStatus.Cancelled;
+        }
+        else
+        {
+            Invoice.Status = PaymentService.GetInvoiceStatusFromPayments(Context, Invoice);
+        }
     }
 
     protected override bool HandleValidSubmit()
