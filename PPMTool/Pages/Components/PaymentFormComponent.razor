@@ -38,6 +38,8 @@
         </RadzenDropDown>
     </RadzenFieldset>
     <RadzenFieldset Text="Associated Invoice">
+        <HintComponent Message="This only contains invoices that are not cancelled." />
+        <br />
         <RadzenDropDown Data="@invoices"
                         @bind-Value="Payment.Invoice"
                         Name="InvoiceId"
@@ -93,10 +95,10 @@
         // Set base model
         SetFinanceItemModel(Payment);
 
-        // Load invoices for the dropdown
+        // Load invoices for the dropdown (exclude cancelled as shouldn't be paying a cancelled invoice)
         invoices = InvoiceService
             .GetAll(Context)
-            .Where(x => x.Project?.ProjectId == Project?.ProjectId)
+            .Where(x => x.Project?.ProjectId == Project?.ProjectId && x.Status != InvoiceStatus.Cancelled)
             .OrderBy(x => x.InvoiceId);
 
         // Load funding sources for the dropdown -- only include "other" types as shouldn't be allowed to create 
@@ -141,7 +143,8 @@
             PostNoteToProject(FinanceItemChangeType.Add, Payment);
         }
 
-        // TODO: Recompute the invoice status if necessary
+        // Recompute the invoice status if necessary
+        UpdateLinkedInvoiceStatus();
 
         CloseForm(true);
         return true;
@@ -161,7 +164,8 @@
             PaymentService.Delete(Context, Payment);
             PostNoteToProject(FinanceItemChangeType.Delete, Payment);
 
-            // TODO: Recompute the invoice status if necessary
+            // Recompute the invoice status if necessary
+            UpdateLinkedInvoiceStatus();
 
             CloseForm(true);
         }
@@ -171,5 +175,25 @@
     protected override int GetItemId()
     {
         return Payment?.PaymentId ?? 0;
+    }
+
+    /// <summary>
+    /// Update an invoice's status given the change to this payment
+    /// </summary>
+    private void UpdateLinkedInvoiceStatus()
+    {
+        if (Payment.Invoice == null || Payment.Invoice.Status == InvoiceStatus.Cancelled)
+        {
+            Logger.LogInformation($"Payment {Payment?.PaymentId}: Linked Invoice is null or cancelled. Not updating.");
+            return;
+        }
+
+        // Only update if the status has actually changed
+        var status = PaymentService.GetInvoiceStatusFromPayments(Context, Payment.Invoice);
+        if (status != Payment.Invoice?.Status)
+        {
+            Payment.Invoice.Status = status;
+            InvoiceService.Update(Context, Payment.Invoice);
+        }
     }
 }
