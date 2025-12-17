@@ -33,6 +33,7 @@
                     @(((InvoiceStatus)item).GetDescription())
                 </Template>
             </RadzenDropDown>
+            <HintComponent Message="The status of an invoice is determined from the linked payments or whether it has been marked as cancelled. Add and link a payment to update the invoice status or cancel it using the switch provided to update the status." />
             <RadzenLabel Component="InvoiceURL" Text="Link to Invoice" class="font-weight-bold" />
             <RadzenTextBox @bind-Value="Invoice.InvoiceUrl" Name="InvoiceURL" Placeholder="Link to Invoice e.g. https://" Style="width:100%; margin-left: 0;" />
         </RadzenStack>
