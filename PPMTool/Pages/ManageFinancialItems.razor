@@ -76,6 +76,7 @@ else
             <RadzenTabs @bind-SelectedIndex="selectedTab">
                 <Tabs>
                     <RadzenTabsItem Text="Invoices">
+                        <HintComponent Message="The status of an invoice is determined from the linked payments or whether it has been marked as cancelled. Add and link a payment to update the invoice status or cancel it using the switch provided on the edit popup." />
                         <RadzenDataGrid Data="@invoices"
                                         TItem="Invoice"
                                         ColumnWidth="5rem"
