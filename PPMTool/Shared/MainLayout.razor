@@ -183,8 +183,11 @@
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="3rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Wrap="FlexWrap.NoWrap" Gap=".25rem" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
-                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" Style="margin-bottom: 0; color: var(--rz-header-color)" Text="@versionString" />
-                <RadzenBadge BadgeStyle="BadgeStyle.Light" Variant="Variant.Outlined" Text="@commitString" />
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" Style="margin-bottom: 0; color: var(--rz-header-color)" Text="@versionString" title="@commitString" />
+                @if (Environment.IsDevelopment())
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Variant="Variant.Outlined" Text="@commitString" />
+                }
             </RadzenStack>
             <AuthorizeView>
                 <Authorized>
