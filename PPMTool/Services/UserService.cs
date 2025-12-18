@@ -17,6 +17,7 @@ namespace PPMTool.Services
             this.contextFactory = contextFactory;
         }
 
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, User entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -28,23 +29,27 @@ namespace PPMTool.Services
             return entity.UserId;
         }
 
+        /// <inheritdoc />
         public override bool DuplicateDetected(PPMToolContext context, User entity)
         {
             return GetAll(context).Any(x => x.GetStandardisedUserName() == entity.GetStandardisedUserName() && x.UserId != entity.UserId);
         }
 
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, User entity, bool commitChanges = true)
         {
             context.Users.Remove(entity);
             if (commitChanges) CommitChanges(context);
         }
 
+        /// <inheritdoc />
         public override IEnumerable<User> GetAll(PPMToolContext context)
         {
             return context.Users
                 .Include(x => x.Person);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, User entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -91,11 +96,11 @@ namespace PPMTool.Services
         /// Update the last logged in time for the given user
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="UserEntity"></param>
-        public void UpdateLastLoggedIn(PPMToolContext context, User UserEntity)
+        /// <param name="userEntity"></param>
+        public void UpdateLastLoggedIn(PPMToolContext context, User userEntity)
         {
-            UserEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            context.Users.Update(UserEntity);
+            userEntity.LastLoggedIn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            context.Users.Update(userEntity);
             CommitChanges(context);
         }
 

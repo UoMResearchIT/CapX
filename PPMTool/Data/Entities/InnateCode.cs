@@ -24,6 +24,11 @@ namespace PPMTool.Data.Entities
         public bool IsActive { get; set; } = true;
 
         /// <summary>
+        /// Whether this code contains sensitive information that should be restricted to line manager and the person
+        /// </summary>
+        public bool IsSensitive { get; set; }
+
+        /// <summary>
         /// The collection of innate code tasks that belong to this code
         /// </summary>
         public virtual ICollection<InnateCodeTask> Tasks { get; set; } = new List<InnateCodeTask>();

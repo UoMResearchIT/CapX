@@ -5,6 +5,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Shared
 {
@@ -26,6 +27,9 @@ namespace PPMTool.Shared
 
         [Inject]
         protected IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+
+        [Inject]
+        protected ThemeService ThemeService { get; set; }
 
         protected override void OnInitialized()
         {

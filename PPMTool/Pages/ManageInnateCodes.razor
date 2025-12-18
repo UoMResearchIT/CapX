@@ -90,9 +90,17 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="InnateCode" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px">
                     <Template Context="c">
-                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap">
-                            <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?"/>
+                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                             <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" Name="IsActive" />
+                            <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="InnateCode" Property="IsSensitive" Title="Sensitive" Width="5rem" MinWidth="10px">
+                    <Template Context="c">
+                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                            <RadzenSwitch @bind-Value="c.IsSensitive" Disabled="true" Name="IsSensitive" />
+                            <RadzenLabel Style="visibility: hidden" Component="IsSensitive" Text="Is Sensitive?"/>
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>

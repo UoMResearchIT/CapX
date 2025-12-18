@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Shared
 {
@@ -15,6 +17,9 @@ namespace PPMTool.Shared
 
         [Inject]
         private ILogger Logger { get; set; }
+
+        [Inject]
+        private ILocalStorageService LocalStorage { get; set; }
 
         private string displayName;
         private IEnumerable<User> users;
@@ -74,6 +79,27 @@ namespace PPMTool.Shared
                     Navigation.NavigateTo(loginLink, true);
 #endif
                 }
+            }
+        }
+
+        /// <summary>
+        /// Method for toggling the app theme
+        /// </summary>
+        /// <returns></returns>
+        private async Task ToggleThemeAsync()
+        {
+            var isCurrentlyDark = ThemeService.IsDarkTheme();
+            Logger.LogInformation($"Dark mode currently set to {isCurrentlyDark}");
+
+            // Toggle
+            ThemeService.SetDarkLight(!isCurrentlyDark);
+
+            // Stash the setting in local storatge
+            var storageValue = await LocalStorage.GetItemAsync<bool>("useDarkMode");
+            if (storageValue == isCurrentlyDark)
+            {
+                Logger.LogInformation($"Updating local storage value to {!isCurrentlyDark}");
+                await LocalStorage.SetItemAsync("useDarkMode", !isCurrentlyDark);
             }
         }
 

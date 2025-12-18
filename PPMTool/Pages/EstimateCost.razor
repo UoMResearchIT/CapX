@@ -1,4 +1,4 @@
-﻿@page "/projects/estimatecost"
+﻿@page "/estimatecost"
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Enums
@@ -28,7 +28,7 @@
     }
     else
     {
-        <div class="card">
+        <RadzenCard>
             <h2>Project Details</h2>
             <div class="row">
                 <div class="col">
@@ -49,7 +49,7 @@
             <TaskConfigurationComponent Context=Context
                                         ReadOnly="true"
                                         ShowSummaryOnly="true"
-                                        @ref=@summaryComponent />
+                                        Model="summaryModel" />
             <hr />
             <div class="row">
                 <div class="col">
@@ -74,10 +74,11 @@
                     </div>
                     <TaskConfigurationComponent Context=Context
                                                 Model="resource.Value"
-                                                ConfigModelUpdated="UpdateSummaryComponent" />
+                                                ConfigModelUpdated="UpdateSummaryComponent"
+                                                IsLeadershipComponent="@(resource.Key == "Leadership")"/>
                     <hr />
                 }
             }
-        </div>
+        </RadzenCard>
     }
 </div>

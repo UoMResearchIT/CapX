@@ -18,7 +18,7 @@
         }
         
         <hr />
-        <div class="card">
+        <RadzenCard>
             <EditForm Model="@innateCode">
                 <DataAnnotationsValidator />
                 <div class="row">
@@ -33,6 +33,10 @@
                     <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Active" Component="IsActive" /><br />
                         <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem" Name="IsActive" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Sensitive" Component="IsSensitive" /><br />
+                        <RadzenSwitch @bind-Value="innateCode.IsSensitive" Style="margin-top: 1rem" Name="IsSensitive" />
                     </div>
                 </div>
 
@@ -86,6 +90,6 @@
                     </Columns>
                 </RadzenDataGrid>
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>
