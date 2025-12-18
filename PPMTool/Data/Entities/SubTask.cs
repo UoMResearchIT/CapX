@@ -30,6 +30,7 @@ namespace PPMTool.Data.Entities
 
                 // Error
                 new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning()),
+                new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
                 
                 // Success
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
@@ -454,6 +455,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether any resources on this task have zero FTE assignment.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasResourceWithZeroFTE()
+        {
+            return AssignedResources.Any(r => r.AssignmentFTE == 0);
+        }
+
+        /// <summary>
         /// Checks whether any resources on this task have no associated funding source and the task is currently running or ran in the past.
         /// </summary>
         /// <returns></returns>
@@ -506,6 +516,12 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
+            // If duration is zero then there's no work to distribute
+            if (DurationDays == 0)
+            {
+                return 0;
+            }
+
             // Daily work is average planned work
             var workPerDay = PlannedWorkHours / DurationDays;
 
@@ -513,7 +529,7 @@ namespace PPMTool.Data.Entities
             // since it will have been computed based on the assigned resources which only
             // partially meet the demand. This only matters for fixed duration tasks since the
             // work is the driven quantity in those cases.
-            if (ignoreUnmetDemand && UnmetDemand != 0 && TaskType == TaskType.FixedDuration)
+            if (ignoreUnmetDemand && UnmetDemand != 0 && TaskType == TaskType.FixedDuration && DurationDays > 0)
             {
                 var billableDays = GetNumberOfBillableDays(StartDate, DurationDays);
                 var workHours = (int)Math.Floor(billableDays * 7 * Demand);
