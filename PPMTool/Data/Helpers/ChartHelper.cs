@@ -302,7 +302,7 @@ namespace PPMTool.Data.Helpers
             public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
 
             /// <summary>
-            /// Ctor takes the tasks running and the current week to generate resource breakdown
+            /// Ctor takes the tasks running and the current week to generate resource breakdown.
             /// </summary>
             /// <param name="currentWeek"></param>
             /// <param name="tasksRunningInWeek"></param>
@@ -352,7 +352,7 @@ namespace PPMTool.Data.Helpers
                     }
 
                     // Proportion of the actuals this week
-                    double proportionOfActualsThisWeek = (daysRunSoFar <= 0) ? 0 : actualsDaysInWeek / (double)daysRunSoFar;
+                    double proportionOfActualsThisWeek = (daysRunSoFar <= 0) ? 0 : actualsDaysInWeek / daysRunSoFar;
 
                     // Add to the demand for the week across all tasks
                     PlannedWorkHoursDemandMet += effortDemandMet * proportionOfTaskThisWeek;
