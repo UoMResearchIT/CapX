@@ -136,7 +136,7 @@ else
                     <!-- Start date is required if fixed start otherwise driven from predecesors -->
                     <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled)" /><br />
-                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" Change="@OnStartDateChange" />
                     </div>
 
                     <!-- Choice of whether the end drive should be picked or driven -->

@@ -491,6 +491,24 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Handler for when the start date changes to ensure the end date is valid
+        /// </summary>
+        /// <param name="date"></param>
+        private void OnStartDateChange(DateTime? date)
+        {
+            if (date.HasValue)
+            {
+                // If the start date is moved past the end date, update the end date to be the day after
+                if (TaskModel.EndDate <= TaskModel.StartDate)
+                {
+                    // If there is a duration already then migth be convenient to use that to bump the end date?
+                    TaskModel.EndDate = TaskModel.DurationDays > 0 ? TaskModel.StartDate.AddDays(TaskModel.DurationDays) : TaskModel.StartDate.AddDays(1);
+                }
+                UpdateUIState(TaskModel, new EventArgs());
+            }
+        }
+
+        /// <summary>
         /// Handler for the events on the sub task to update various UI flags
         /// </summary>
         /// <param name="sender"></param>
