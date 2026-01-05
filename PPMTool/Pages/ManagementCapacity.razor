@@ -17,7 +17,7 @@
     }
     else
     {
-        <div class="card">
+        <RadzenCard>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
                 <RadzenDropDown @bind-Value=@chosenPeople
                                 Data=@filteredPeople
@@ -42,25 +42,27 @@
                                                @bind-IncludeLeavers="@includeLeavers"
                                                @bind-IncludeFinished="@includeFinished" />
             </RadzenStack>
-        </div>
+        </RadzenCard>
 
         @if (chartModels == null || chartModels.Count == 0)
         {
-            <div class="card">
+            <RadzenCard>
                 <p class="lead">No data to show for the selected managers</p>
-            </div>
+            </RadzenCard>
         }
         else
         {
             <!-- Legend -->
-            <CapacityLegendComponent ShowProjectModeLegend="false" />
+            <div class="mt-2">
+                <CapacityLegendComponent ShowProjectModeLegend="false" />
+            </div>
 
             <!-- Chart -->
             <div class="row">
                 @for (int i = 0; i < chartModels.Count; ++i)
                 {
                     <div class="col" style="min-width: 50rem;">
-                        <div class="card my-1">
+                        <div class="rz-card rz-variant-fill my-1">
                             <CapacityChartComponent ChartModel=@chartModels[i]
                                                     OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
                                                     OnChartZoomed="@OnChartZoomed" />

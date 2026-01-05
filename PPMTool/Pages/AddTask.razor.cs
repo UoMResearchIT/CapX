@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using FluentDateTime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -127,6 +127,9 @@ namespace PPMTool.Pages
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
+        private bool endDateDisabled;
+        private bool specifyEndDateDisabled;
+        private bool defineByEndDate;
         private string error;
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
@@ -264,6 +267,9 @@ namespace PPMTool.Pages
                     OwningProject = ProjectModel
                 };
             }
+
+            // Initialise the defineByEndDate flag based on the fixed end date flag
+            defineByEndDate = TaskModel.HasFixedEndDate;
 
             // Populate predecessor dropdown source (exclude self)
             predecessorTasks = ProjectModel.SubTasks
@@ -485,15 +491,53 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Handler for when the start date changes to ensure the end date is valid
+        /// </summary>
+        /// <param name="date"></param>
+        private void OnStartDateChange(DateTime? date)
+        {
+            if (date.HasValue)
+            {
+                // If the start date is moved past the end date, update the end date to be the day after
+                if (TaskModel.EndDate <= TaskModel.StartDate)
+                {
+                    // If there is a duration already then migth be convenient to use that to bump the end date?
+                    TaskModel.EndDate = TaskModel.DurationDays > 0 ? TaskModel.StartDate.AddDays(TaskModel.DurationDays) : TaskModel.StartDate.AddDays(1);
+                }
+                UpdateUIState(TaskModel, new EventArgs());
+            }
+        }
+
+        /// <summary>
         /// Handler for the events on the sub task to update various UI flags
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            startDateDisabled = !TaskModel.HasFixedStart;
+            if (TaskModel.HasFixedStart)
+            {
+                selectedPredecessorId = null;
+            }
+
+            startDateDisabled = !TaskModel.HasFixedStart && selectedPredecessorId != null;
             workDisabled = TaskModel.TaskType == TaskType.FixedDuration;
-            durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate;
+
+            if (TaskModel.TaskType == TaskType.FixedWork)
+            {
+                specifyEndDateDisabled = true;
+                defineByEndDate = false;
+                endDateDisabled = true;
+                durationDisabled = true;
+            }
+            else
+            {
+                specifyEndDateDisabled = false;
+
+                // If define by end date is true then enable the end date picker and disable the duration picker
+                endDateDisabled = !defineByEndDate;
+                durationDisabled = defineByEndDate;
+            }
         }
 
         /// <summary>
@@ -568,9 +612,13 @@ namespace PPMTool.Pages
         protected override void CancelEdit(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Cancel edit row for {resource.GetSensibleObjectName()}");
+
+            // Reset the entity tracking
             Reset();
             SubTaskService.RestoreModel(Context, ref resource);
             dataGrid.CancelEditRow(resource);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -587,7 +635,11 @@ namespace PPMTool.Pages
 
             // Add to the data grid
             dataGridEntities.Add(resource);
+
+            // Reset the entity tracking
             entityToInsert = null;
+
+            // Update UI elements
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -597,7 +649,10 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnUpdateRow(Resource entity)
         {
+            // Reset the entity tracking
             Reset();
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -609,7 +664,11 @@ namespace PPMTool.Pages
         protected override async Task DeleteRow(Resource entity)
         {
             await base.DeleteRow(entity);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
+
+            // Update task unmet demand
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -620,8 +679,16 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
+            // Update the billed FTE
+            entity.UpdateBilledFTE(projectModel.CostModel);
+
+            // Save the row to the DB
             await base.SaveRow(entity);
+
+            // Update UI elemnts
             UpdatePeopleDropdownSource(new LoadDataArgs());
+
+            // Update task unmet demand
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -632,6 +699,8 @@ namespace PPMTool.Pages
         protected override async Task InsertRow()
         {
             await base.InsertRow();
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -643,6 +712,8 @@ namespace PPMTool.Pages
         protected override async Task EditRow(Resource entity)
         {
             await base.EditRow(entity);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -700,8 +771,18 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
+            // Before we schedule, we need to ensure the duration and end date are consistent with the input method
+            if (defineByEndDate)
+            {
+                TaskModel.RecalculateDurationFromDates();
+            }
+            else
+            {
+                TaskModel.RecalculateEndDateFromDuration();
+            }
+
             // Schedule (updates planned work, duration etc.)
-            error = TaskModel.Schedule(false);
+            error = TaskModel.Schedule();
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 

@@ -224,7 +224,6 @@ namespace PPMTool.Pages
                         }
 
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
-
                         var res = ProjectService.Update(Context, projectModel);
                         CheckResultOfAddOrUpdate(res);
                     }
@@ -232,22 +231,7 @@ namespace PPMTool.Pages
                     {
                         LogInformation("Adding new project...");
                         var res = ProjectService.Add(Context, projectModel);
-                        if (CheckResultOfAddOrUpdate(res))
-                        {
-
-                            // Make sure that super users automatically follow the project
-                            var superusers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
-                            foreach (var s in superusers)
-                            {
-                                if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");
-
-                                if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
-                                {
-                                    projectModel.Followers.Add(s);
-                                }
-                            }
-                            ProjectService.Update(Context, projectModel);
-                        }
+                        CheckResultOfAddOrUpdate(res);
                     }
                 }
 

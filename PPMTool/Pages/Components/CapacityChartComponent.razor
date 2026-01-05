@@ -7,7 +7,7 @@
 @if ((confirmedChartItems?.Count() ?? 0) == 0 && (provisionalChartItems?.Count() ?? 0) == 0)
 {
     <RadzenStack Orientation="Radzen.Orientation.Vertical" class="mx-2">
-        <div class="apexcharts-title-text" style="font-family:Arial, Helvetica, sans-serif; font-weight: 900; font-size: 14px">@ChartModel?.ChartTitle</div>
+        <RadzenText Text="@ChartModel?.ChartTitle" TextStyle="TextStyle.Subtitle1" />
         <RadzenText Text="No data to show" />
     </RadzenStack>
 }

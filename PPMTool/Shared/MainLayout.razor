@@ -17,15 +17,15 @@
 
 <RadzenComponents />
 <RadzenLayout>
-    <RadzenHeader Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
+    <RadzenHeader Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "var(--rz-primary)")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
                 <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
-                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H1" Style="margin-bottom: 0; color: white">CapX - RSE Operational Management Tool</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H1" Style="margin-bottom: 0; color: var(--rz-header-color)">CapX - RSE Operational Management Tool</RadzenText>
             </RadzenStack>
             @if (Environment.IsDevelopment())
             {
-                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H2" Style="color: white; margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H2" Style="color: var(--rz-header-color); margin-bottom: 0;">&#x26A0; DEVELOPMENT VERSION &#x26A0;</RadzenText>
             }
             <LoginView @ref=loginView />
         </RadzenStack>
@@ -51,6 +51,11 @@
                             </Authorized>
                         </AuthorizeView>
                         <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
+                        <AuthorizeView Roles="Superuser,Manager,Reader,Finance">
+                            <Authorized Context="sub_context_3">
+                                <RadzenPanelMenuItem Path="estimatecost" Text="Estimate Project Cost" Icon="calculate" />
+                            </Authorized>
+                        </AuthorizeView>
                         <AuthorizeView Roles="Superuser,Manager,Developer">
                             <Authorized Context="sub_context_1">
                                 <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
@@ -177,7 +182,13 @@
     </RadzenBody>
     <RadzenFooter Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "#609")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="3rem" JustifyContent="JustifyContent.SpaceBetween" Style="height: 3rem">
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" Style="margin-bottom: 0; color: white" Text="@versionString" />
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" Wrap="FlexWrap.NoWrap" Gap=".25rem" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" Style="margin-bottom: 0; color: var(--rz-header-color)" Text="@versionString" title="@commitString" />
+                @if (Environment.IsDevelopment())
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Variant="Variant.Outlined" Text="@commitString" />
+                }
+            </RadzenStack>
             <AuthorizeView>
                 <Authorized>
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Style="width: 100%">
@@ -191,7 +202,7 @@
                     </RadzenStack>
                 </Authorized>
             </AuthorizeView>
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" style="margin-bottom: 0; color: white" Text="The University of Manchester - Research IT" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" style="margin-bottom: 0; color: var(--rz-header-color)" Text="The University of Manchester - Research IT" />
         </RadzenStack>
     </RadzenFooter>
 </RadzenLayout>

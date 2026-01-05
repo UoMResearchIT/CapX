@@ -150,13 +150,5 @@ namespace PPMTool.Pages
         {
             Navigation.NavigateTo($"projects/addproject/-1");
         }
-
-        /// <summary>
-        /// Navigate to the estimate cost page
-        /// </summary>
-        private void EstimateCost()
-        {
-            Navigation.NavigateTo($"projects/estimatecost");
-        }
     }
 }
