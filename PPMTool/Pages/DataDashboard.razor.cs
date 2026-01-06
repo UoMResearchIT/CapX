@@ -1027,7 +1027,7 @@ namespace PPMTool.Pages
 
                                 // Variance is formula
                                 cell = worksheetTotals.Cell(2 + i, 5);
-                                cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C4";
+                                cell.FormulaR1C1 = "=RC[-2]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Target FTE
@@ -1043,7 +1043,7 @@ namespace PPMTool.Pages
 
                                 // Baseline Budget
                                 cell = worksheetTotals.Cell(2 + i, 8);
-                                cell.FormulaR1C1 = cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C7";
+                                cell.FormulaR1C1 = "=RC[-5]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered FTE
@@ -1093,13 +1093,16 @@ namespace PPMTool.Pages
 
                                 // Baseline
                                 cell = worksheetTotals.Cell(2 + i, 18);
-                                cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C17";
+                                // = C - Q, both on the same row (relative R1C1: no anchors)
+                                cell.FormulaR1C1 = "=RC[-15]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Difference to baseline
                                 cell = worksheetTotals.Cell(2 + i, 19);
-                                cell.FormulaR1C1 = $"=R{2 + i}C8-R{2 + i}C18";
+                                // = H - (baseline in col 18), same row (relative R1C1: no anchors)
+                                cell.FormulaR1C1 = "=RC[-11]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
+
                             }
 
                             // Add total row (leave blank row)
