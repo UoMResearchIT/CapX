@@ -1103,15 +1103,20 @@ namespace PPMTool.Pages
                             }
 
                             // Add total row (leave blank row)
+                            var totalRow = peopleActive.Count + 3;
                             for (var col = 0; col < columnTitles.Count; ++col)
                             {
-                                cell = worksheetTotals.Cell(peopleActive.Count + 3, col + 3);
-                                cell.FormulaR1C1 = $"=SUM(R2C{col + 3}:R{peopleActive.Count + 1}C{col + 3})";
+                                var totalCell = worksheetTotals.Cell(totalRow, col + 3);
 
-                                var cellAbove = worksheetTotals.Cell(peopleActive.Count + 2, col + 3);
-                                cell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
-                                cell.Style.Font.Bold = true;
+                                // SUM from row 2 in this column to the row above the gap before the total row
+                                totalCell.FormulaR1C1 = "=SUM(R2C:R[-2]C)";
+
+                                // Copy formatting
+                                var cellAbove = worksheetTotals.Cell(totalRow - 2, col + 3);
+                                totalCell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
+                                totalCell.Style.Font.Bold = true;
                             }
+
 
                             // Adjust the column widths
                             worksheetTotals.Columns().AdjustToContents();
