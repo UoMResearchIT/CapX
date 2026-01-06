@@ -1102,13 +1102,13 @@ namespace PPMTool.Pages
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
-                            // Add total row
+                            // Add total row (leave blank row)
                             for (var col = 0; col < columnTitles.Count; ++col)
                             {
-                                cell = worksheetTotals.Cell(peopleActive.Count + 2, col + 3);
+                                cell = worksheetTotals.Cell(peopleActive.Count + 3, col + 3);
                                 cell.FormulaR1C1 = $"=SUM(R2C{col + 3}:R{peopleActive.Count + 1}C{col + 3})";
 
-                                var cellAbove = worksheetTotals.Cell(peopleActive.Count + 1, col + 3);
+                                var cellAbove = worksheetTotals.Cell(peopleActive.Count + 2, col + 3);
                                 cell.Style.NumberFormat.Format = cellAbove.Style.NumberFormat.Format;
                                 cell.Style.Font.Bold = true;
                             }
