@@ -1102,7 +1102,6 @@ namespace PPMTool.Pages
                                 // = H - (baseline in col 18), same row (relative R1C1: no anchors)
                                 cell.FormulaR1C1 = "=RC[-11]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
-
                             }
 
                             // Add total row (leave blank row)
