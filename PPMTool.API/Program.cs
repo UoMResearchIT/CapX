@@ -138,8 +138,9 @@ app.UseMiddleware<APIKeyAuthMiddleware>();
 app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
 app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-app.MapGet($"/timesheets/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-app.MapGet($"/wlm/analysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
+app.MapGet($"/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+app.MapGet($"/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
+app.MapGet($"/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
 app.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
 
 // Fallback for unmatched routes

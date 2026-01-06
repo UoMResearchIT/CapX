@@ -302,7 +302,7 @@ namespace PPMTool.Data.Helpers
             public IList<ResourceEffort> ResourceEffort { get; } = new List<ResourceEffort>();
 
             /// <summary>
-            /// Ctor takes the tasks running and the current week to generate resource breakdown
+            /// Ctor takes the tasks running and the current week to generate resource breakdown.
             /// </summary>
             /// <param name="currentWeek"></param>
             /// <param name="tasksRunningInWeek"></param>
@@ -314,13 +314,13 @@ namespace PPMTool.Data.Helpers
                 foreach (var subTask in tasksRunningInWeek)
                 {
                     // Duration of the task
-                    int durationOfTask = subTask.DurationDays + 1;
+                    int durationOfTask = subTask.DurationDays;
 
                     // Find the total FTE across all resources
                     double totalFTE = subTask.AssignedResources.Sum(x => x.AssignmentFTE);
 
                     // Total effort assuming demand met (zero demand tasks contribute nothing in this case)
-                    double billableDays = SubTask.GetNumberOfBillableDays(subTask.StartDate, durationOfTask - 1);
+                    double billableDays = SubTask.GetNumberOfBillableDays(subTask.StartDate, durationOfTask);
                     double effortDemandMet = Math.Floor(billableDays * 7 * subTask.Demand);
 
                     // Total effort planned based on assigned resources
@@ -340,8 +340,19 @@ namespace PPMTool.Data.Helpers
                     DateTime endDateActuals = subTask.EndDate < DateTime.Today ? subTask.EndDate : DateTime.Today;
                     int daysRunSoFar = (int)(endDateActuals.Subtract(subTask.StartDate).TotalDays) + 1;
 
+                    // Calculate how many days the task ran IN THIS WEEK up to the actuals end date
+                    // This prevents over-counting future days in the current week or applying current run-rate to past full weeks incorrectly
+                    DateTime actualWeekStart = subTask.StartDate > currentWeek ? subTask.StartDate : currentWeek;
+                    DateTime actualWeekEnd = endDateActuals < currentWeek.AddDays(6) ? endDateActuals : currentWeek.AddDays(6);
+                    double actualsDaysInWeek = 0;
+
+                    if (actualWeekEnd >= actualWeekStart)
+                    {
+                        actualsDaysInWeek = (actualWeekEnd - actualWeekStart).TotalDays + 1;
+                    }
+
                     // Proportion of the actuals this week
-                    double proportionOfActualsThisWeek = (endDateActuals > DateTime.Today || daysRunSoFar <= 0) ? 0 : taskDaysThisWeek / (double)daysRunSoFar;
+                    double proportionOfActualsThisWeek = (daysRunSoFar <= 0) ? 0 : actualsDaysInWeek / daysRunSoFar;
 
                     // Add to the demand for the week across all tasks
                     PlannedWorkHoursDemandMet += effortDemandMet * proportionOfTaskThisWeek;

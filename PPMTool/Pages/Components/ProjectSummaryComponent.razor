@@ -5,7 +5,7 @@
 @using PPMTool.Services
 @using System.Diagnostics
 
-<div class="card my-1">
+<RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
         <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.3rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
@@ -47,7 +47,7 @@
             <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
         </RadzenStack>
     </RadzenStack>
-</div>
+</RadzenCard>
 
 @code {
 

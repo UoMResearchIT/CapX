@@ -1,6 +1,6 @@
 ﻿@using PPMTool.Data
 @using PPMTool.Enums
-<div class="card">
+<RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
         @if (MainColourScale == ColourScale.Capacity)
         {
@@ -74,7 +74,7 @@
             </RadzenStack>
         }
     </RadzenStack>
-</div>
+</RadzenCard>
 
 @code {
     [Parameter]

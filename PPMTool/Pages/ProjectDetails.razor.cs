@@ -1160,6 +1160,11 @@ namespace PPMTool.Pages
                 // Sort via the OrderBy method
                 query = query.OrderBy(args.OrderBy);
             }
+            else
+            {
+                // By default sort by start date
+                query = query.OrderBy(x => x.StartDate);
+            }
 
             // Important!!! Make sure the Count property of RadzenDataGrid is set.
             count = query.Count();

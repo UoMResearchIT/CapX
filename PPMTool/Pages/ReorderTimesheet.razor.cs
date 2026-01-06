@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using PPMTool.Data;
@@ -31,64 +27,59 @@ namespace PPMTool.Pages
         private TimesheetTemplateItem draggedItem;
         private string finalOrder;
 
-        protected override async Task OnParametersSetAsync()
+        protected override async Task OnInitializedAsync()
         {
-            await base.OnParametersSetAsync();
+            await base.OnInitializedAsync();
 
             Loading = true;
             StateHasChanged();
-            EnqueueLoadData(GetTask);
+            await Task.Yield();
+
+            // Load the data
+            LoadTemplate();
+
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>
         /// Getter for background load task
         /// </summary>
         /// <returns></returns>
-        private Task GetTask()
+        private void LoadTemplate()
         {
-            return Task.Run(() =>
+            // Handle if the user is not found
+            if (ActiveUser == null)
             {
-                // Handle if the user is not found
-                if (ActiveUser == null)
+                LogError($"No person found for {ActiveUserName}!");
+                return;
+            }
+
+            // Get the user's timesheet template details to work with
+            templateData = new ObservableCollection<TimesheetTemplateItem>();
+
+            if (ActiveUser?.Person?.TimesheetTemplateData != null)
+            {
+                finalOrder = ActiveUser?.Person?.TimesheetTemplateData;
+                var split = finalOrder.Split("|");
+                IEnumerable<InnateCodeTask> tasks = InnateCodeService.GetAllTasks(Context);
+
+                foreach (string id in split)
                 {
-                    LogError($"No person found for {ActiveUserName}!");
-                    return;
-                }
-
-                // Get the user's timesheet template details to work with
-                templateData = new ObservableCollection<TimesheetTemplateItem>();
-
-                if (ActiveUser?.Person?.TimesheetTemplateData != null)
-                {
-                    finalOrder = ActiveUser?.Person?.TimesheetTemplateData;
-                    var split = finalOrder.Split("|");
-                    IEnumerable<InnateCodeTask> tasks = InnateCodeService.GetAllTasks(Context);
-
-                    foreach (string id in split)
+                    InnateCodeTask task = tasks.First(x => x.InnateCodeTaskId == int.Parse(id));
+                    if (task != null)
                     {
-                        InnateCodeTask task = tasks.First(x => x.InnateCodeTaskId == int.Parse(id));
-                        if (task != null)
-                        {
-                            TimesheetTemplateItem item = new TimesheetTemplateItem();
-                            item.TimesheetTemplateItemId = task.InnateCodeTaskId;
-                            item.InnateCode = task.InnateCode;
-                            item.InnateCodeTask = task;
+                        TimesheetTemplateItem item = new TimesheetTemplateItem();
+                        item.TimesheetTemplateItemId = task.InnateCodeTaskId;
+                        item.InnateCode = task.InnateCode;
+                        item.InnateCodeTask = task;
 
-                            templateData.Add(item);
-                        }
+                        templateData.Add(item);
                     }
                 }
+            }
 
-                selectedTemplateItem = new List<TimesheetTemplateItem>() { templateData.FirstOrDefault() };
-
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
+            selectedTemplateItem = new List<TimesheetTemplateItem>() { templateData.FirstOrDefault() };
         }
 
         /// <summary>

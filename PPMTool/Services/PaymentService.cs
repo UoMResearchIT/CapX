@@ -2,6 +2,7 @@
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Enums;
 
 namespace PPMTool.Services
 {
@@ -82,6 +83,32 @@ namespace PPMTool.Services
             return context.Payments
                 .Where(x => x.Project.ProjectId == projectId)
                 .RoundedSum(x => x.Value, 0);
+        }
+
+        /// <summary>
+        /// Gets the invoice status by evaluating payments made against the invoice value
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="invoice"></param>
+        /// <returns></returns>
+        public InvoiceStatus GetInvoiceStatusFromPayments(PPMToolContext context, Invoice invoice)
+        {
+            var payments = context.Payments
+                .Where(x => x.Invoice.InvoiceId == invoice.InvoiceId)
+                .ToList();
+            var totalPaid = payments.RoundedSum(x => x.Value, 0);
+            if (totalPaid <= 0)
+            {
+                return InvoiceStatus.Unpaid;
+            }
+            else if (totalPaid < invoice.Value)
+            {
+                return InvoiceStatus.PartiallyPaid;
+            }
+            else
+            {
+                return InvoiceStatus.Paid;
+            }
         }
     }
 }

@@ -129,7 +129,7 @@
                         @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
                         {
                             <td>
-                                <RadzenText Text="@GetTableValue(duty).ToString()" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(GetTableValue(duty)) > 0.1 ? "red" : "green")};")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@GetTableValue(duty).ToString()" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(GetTableValue(duty)) > 0.1 ? "var(--rz-danger)" : "var(--rz-success)")};")" TextStyle="TextStyle.Subtitle1" />
                             </td>
                         }
                     </tr>

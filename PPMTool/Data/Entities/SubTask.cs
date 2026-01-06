@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
@@ -30,6 +30,7 @@ namespace PPMTool.Data.Entities
 
                 // Error
                 new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning()),
+                new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
                 
                 // Success
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
@@ -167,15 +168,14 @@ namespace PPMTool.Data.Entities
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
-        /// <param name="permitEndDateToMove">Whether we can move the end date to maintain 
         /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule(bool permitEndDateToMove)
+        public string Schedule()
         {
             try
             {
-                // Start is driven by predecessor
-                if (Predecessor != null)
+                // Start is driven by predecessor but only if the start date is not fixed
+                if (Predecessor != null && !HasFixedStart)
                 {
                     StartDate = Predecessor.EndDate.Date.AddDays(Lag + 1);
                 }
@@ -211,24 +211,38 @@ namespace PPMTool.Data.Entities
                 // Fixed Work Update
                 if (TaskType == TaskType.FixedWork)
                 {
-                    // End Date must be driven
+                    // End Date must be driven as by fixing the end date, you are essentially making it fixed duration
                     HasFixedEndDate = false;
 
                     // Always updates duration and leaves units fixed
                     UpdateDuration(units);
+
+                    // Set end date from the duration (never has fixed end date)
+                    UpdateEndDateFromDuration();
                 }
 
                 // Fixed Duration Update
                 else
                 {
+                    // If the task has a fixed end date then we are not permitted to move it, check if the start date has moved past the end date
+                    if (HasFixedEndDate && StartDate > EndDate)
+                    {
+                        return $"Task '{Name}' has a fixed end date of {EndDate.ToShortDateString()} which is before the new start date {StartDate.ToShortDateString()} caused by the predecessor.";
+                    }
+
                     // Make sure the duration is at least zero or greater
                     if (EndDate < StartDate) EndDate = StartDate.Date;
 
-                    // If we are allowed to move the end date to maintain the current duration despite being marked as fixed then set the end date now
-                    if (HasFixedEndDate && permitEndDateToMove) UpdateEndDateFromDuration();
-
+                    // If we are allowed to move the end date to maintain the current duration then set the end date now
+                    if (!HasFixedEndDate)
+                    {
+                        UpdateEndDateFromDuration();
+                    }
                     // If the end date is fixed then set duration here from the start and end dates
-                    if (HasFixedEndDate) UpdateDurationFromDates();
+                    else
+                    {
+                        UpdateDurationFromDates();
+                    }
 
                     // Always updates the work and leaves units fixed
                     UpdateWork(units);
@@ -237,11 +251,15 @@ namespace PPMTool.Data.Entities
                 // Update hours on the resources
                 foreach (var res in AssignedResources)
                 {
-                    res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
+                    if (units > 0)
+                    {
+                        res.PlannedWorkHours = (res.AssignmentFTE / units) * PlannedWorkHours;
+                    }
+                    else
+                    {
+                        res.PlannedWorkHours = 0;
+                    }
                 }
-
-                // Set end date from the duration
-                if (!HasFixedEndDate) EndDate = StartDate.Date.AddDays(DurationDays - 1).Date;
 
                 return null;
             }
@@ -249,6 +267,22 @@ namespace PPMTool.Data.Entities
             {
                 return e.Message;
             }
+        }
+
+        /// <summary>
+        /// Publicly expose the protected method to recalculate duration from dates
+        /// </summary>
+        public void RecalculateDurationFromDates()
+        {
+            UpdateDurationFromDates();
+        }
+
+        /// <summary>
+        /// Publicly expose the protected method to recalculate end date from duration
+        /// </summary>
+        public void RecalculateEndDateFromDuration()
+        {
+            UpdateEndDateFromDuration();
         }
 
         /// <summary>
@@ -421,6 +455,15 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether any resources on this task have zero FTE assignment.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasResourceWithZeroFTE()
+        {
+            return AssignedResources.Any(r => r.AssignmentFTE == 0);
+        }
+
+        /// <summary>
         /// Checks whether any resources on this task have no associated funding source and the task is currently running or ran in the past.
         /// </summary>
         /// <returns></returns>
@@ -473,6 +516,12 @@ namespace PPMTool.Data.Entities
                 return 0;
             }
 
+            // If duration is zero then there's no work to distribute
+            if (DurationDays == 0)
+            {
+                return 0;
+            }
+
             // Daily work is average planned work
             var workPerDay = PlannedWorkHours / DurationDays;
 
@@ -480,7 +529,7 @@ namespace PPMTool.Data.Entities
             // since it will have been computed based on the assigned resources which only
             // partially meet the demand. This only matters for fixed duration tasks since the
             // work is the driven quantity in those cases.
-            if (ignoreUnmetDemand && UnmetDemand != 0 && TaskType == TaskType.FixedDuration)
+            if (ignoreUnmetDemand && UnmetDemand != 0 && TaskType == TaskType.FixedDuration && DurationDays > 0)
             {
                 var billableDays = GetNumberOfBillableDays(StartDate, DurationDays);
                 var workHours = (int)Math.Floor(billableDays * 7 * Demand);
@@ -511,24 +560,28 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Updates the actual and planned technical costs of the task based on the resources
+        /// Updates the actual and planned technical costs of the task based on the resources.
         /// </summary>
         /// <param name="project"></param>
         /// <param name="finrefs"></param>
-        /// <returns></returns>
+        /// <returns>Assignment chunk representation of the resources on the task</returns>
         internal IEnumerable<AssignmentChunk> UpdateSubTaskCosts(Project project, IEnumerable<FinancialReference> finrefs)
         {
             // Reset the totals for this sub task
             ActualCost = 0;
             PlannedCost = 0;
+            ActualIndirectCost = 0;
+            PlannedIndirectCost = 0;
             List<AssignmentChunk> chunks = new List<AssignmentChunk>();
 
-            // For each resource assigned, update the costs
+            // For each resource assigned, update the costs by generating a chunk from the resource
             foreach (var res in AssignedResources)
             {
                 chunks.AddRange(res.UpdateResourceCosts(project, this, finrefs));
 
                 // Sum up the result post-update
+                ActualIndirectCost += res.ActualIndirectCost;
+                PlannedIndirectCost += res.PlannedIndirectCost;
                 ActualCost += res.ActualCost;
                 PlannedCost += res.PlannedCost;
             }

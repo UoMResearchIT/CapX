@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Web;
+using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -58,6 +59,7 @@ builder.Services.AddDbContextFactory<PPMToolContext>(options =>
 );
 
 builder.Services.AddBlazoredSessionStorage();
+builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
 builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
@@ -264,12 +266,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
             var user = dbContext.Users
                 .Include(x => x.Person)
                 .ToList()
-                .FirstOrDefault(x =>
-                {
-                    return
-                        x.GetStandardisedUserName() == claimName ||
-                        x.EmailAddress?.Trim().ToLower() == claimName;
-                });
+                .FirstOrDefault(x => x.MatchesClaim(claimName));
 
             // If found a user in the DB that matches, add their role claim
             if (user != null)

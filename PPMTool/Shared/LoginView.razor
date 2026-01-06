@@ -2,19 +2,24 @@
 @using Microsoft.EntityFrameworkCore
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
+@using PPMTool.Enums
+@using PPMTool.Pages.Components
 @using PPMTool.Services
 @using System.Diagnostics
+@inject IWebHostEnvironment Environment
 
 <AuthorizeView>
     <Authorized>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.3rem">
-            <RadzenText Text="@($"Hello, {(string.IsNullOrEmpty(displayName) ? "Unknown User" : displayName)}!")" Style="color: white; margin-bottom: 0;" class="mr-3"/>
+        <RadzenStack class="mx-2" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.3rem">
+            <RadzenText Text="@($"Hello, {(string.IsNullOrEmpty(displayName) ? "Unknown User" : displayName)}!")" class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")} mr-3")" />
+            <RadzenBadge BadgeStyle="BadgeStyle.Light" Variant="Variant.Outlined" Text="@ActiveUserRoleType.ToNiceString()" />
             @* Chose to wrap links here but could use a force reload on NavigateTo as well: https://stackoverflow.com/questions/71725951/navigationmanager-redirect-to-identity-cshtml-not-working-properly*@
             <a href="/Account/Logout"><RadzenButton class="mx-2" Text="Log out" ButtonStyle="ButtonStyle.Light" /></a>
+            <ThemeToggleComponent ToggleThemeAction="@(async () => await ToggleThemeAsync())" />
         </RadzenStack>
     </Authorized>
     <NotAuthorized>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+        <RadzenStack class="mx-2" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
             @if (showDropDown)
             {
                 <RadzenDropDown TValue="string"
@@ -28,8 +33,9 @@
                                 Style="width: 23rem"/>
             }
             <a href="@loginLink">
-                <RadzenButton class="mx-2" Text="Log in" ButtonStyle="ButtonStyle.Secondary" />
+                <RadzenButton class="mx-2" Text="Log in" ButtonStyle="ButtonStyle.Light" />
             </a>
+            <ThemeToggleComponent ToggleThemeAction="@(async () => await ToggleThemeAsync())" />
         </RadzenStack>
     </NotAuthorized>
 </AuthorizeView>

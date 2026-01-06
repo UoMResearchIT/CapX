@@ -1,10 +1,43 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
+using Radzen;
 
 namespace PPMTool
 {
     public static class Extensions
     {
+        /// <summary>
+        /// Sets to material dark or light mode with WCAG colours
+        /// </summary>
+        /// <param name="themeService"></param>
+        /// <param name="darkMode"></param>
+        public static void SetDarkLight(this ThemeService themeService, bool darkMode)
+        {
+            // Conditional setting
+            if (themeService.IsDarkTheme() != darkMode)
+            {
+                Debug.WriteLine($"** Setting theme. Dark mode = {darkMode}");
+                themeService.SetTheme(new ThemeOptions
+                {
+                    Theme = darkMode ? "material-dark" : "material",
+                    Wcag = true,
+                    TriggerChange = true,
+                    RightToLeft = false
+                });
+            }
+        }
+
+        /// <summary>
+        /// Whether the current theme is a dark theme. Assumes that dark themes have "dark" in the name.
+        /// </summary>
+        /// <param name="themeService"></param>
+        /// <returns></returns>
+        public static bool IsDarkTheme(this ThemeService themeService)
+        {
+            return themeService.Theme.ToLowerInvariant().Contains("dark");
+        }
+
         /// <summary>
         /// Extension method to get all messages from an exception and its inner exceptions.
         /// </summary>
@@ -59,12 +92,12 @@ namespace PPMTool
         /// <summary>
         /// Extension method to get the description attribute of an enum value
         /// </summary>
-        /// <param name="GenericEnum"></param>
+        /// <param name="genericEnum"></param>
         /// <returns></returns>
-        public static string GetDescription(this Enum GenericEnum)
+        public static string GetDescription(this Enum genericEnum)
         {
-            Type genericEnumType = GenericEnum.GetType();
-            MemberInfo[] memberInfo = genericEnumType.GetMember(GenericEnum.ToString());
+            Type genericEnumType = genericEnum.GetType();
+            MemberInfo[] memberInfo = genericEnumType.GetMember(genericEnum.ToString());
             if ((memberInfo != null && memberInfo.Length > 0))
             {
                 var _Attribs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
@@ -73,7 +106,7 @@ namespace PPMTool
                     return ((DescriptionAttribute)_Attribs.ElementAt(0)).Description;
                 }
             }
-            return GenericEnum.ToString();
+            return genericEnum.ToString();
         }
     }
 }

@@ -260,12 +260,12 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to configure the sources for the capacity chart objects
         /// </summary>
-        /// <param name="AfterConfigureTask">Runs after the configuration task has completed</param>
+        /// <param name="afterConfigureTask">Runs after the configuration task has completed</param>
         /// <param name="manualStartDate">Overrides the start window for things like axis limits</param>
         /// <param name="manualEndDate">Overrides the end window for things like axis limits</param>
         /// <param name="customChartTitleGenerator">Generates the title for the charts - takes the name of the person if in project mode</param>
         /// <param name="projectModeCondition">Optional OR condition for deciding whether in project mode</param>
-        protected async Task ConfigureChartSource(Action AfterConfigureTask = null, DateTime? manualStartDate = null, DateTime? manualEndDate = null, Func<string, string> customChartTitleGenerator = null, Func<bool> projectModeCondition = null)
+        protected async Task ConfigureChartSource(Action afterConfigureTask = null, DateTime? manualStartDate = null, DateTime? manualEndDate = null, Func<string, string> customChartTitleGenerator = null, Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
@@ -429,7 +429,7 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine($"** ...task complete. Status = {task.Status}");
 
-                AfterConfigureTask?.Invoke();
+                afterConfigureTask?.Invoke();
 
                 InvokeAsync(() =>
                 {

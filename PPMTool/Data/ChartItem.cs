@@ -145,7 +145,17 @@ namespace PPMTool.Data
             }
         }
 
-        public static string InterpolateColor(double H, double startS, double startV, double endS, double endV, double percentage)
+        /// <summary>
+        /// Helper method to generate an interpolated value of colour given a HSV range.
+        /// </summary>
+        /// <param name="hue"></param>
+        /// <param name="startS"></param>
+        /// <param name="startV"></param>
+        /// <param name="endS"></param>
+        /// <param name="endV"></param>
+        /// <param name="percentage"></param>
+        /// <returns></returns>
+        public static string InterpolateColor(double hue, double startS, double startV, double endS, double endV, double percentage)
         {
             // Clamp percentage between 0 and 1
             percentage = Math.Max(0, Math.Min(1, percentage / 100));
@@ -155,12 +165,19 @@ namespace PPMTool.Data
             double v = startV + (endV - startV) * percentage;
 
             // Convert HSV to RGB
-            (int r, int g, int b) = HSVtoRGB(H, s, v);
+            (int r, int g, int b) = HSVtoRGB(hue, s, v);
 
             // Return the color as a hex string
             return $"#{r:X2}{g:X2}{b:X2}";
         }
 
+        /// <summary>
+        /// Convert HSV to RGB values for a colour.
+        /// </summary>
+        /// <param name="h"></param>
+        /// <param name="s"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
         private static (int, int, int) HSVtoRGB(double h, double s, double v)
         {
             double c = v * s;
