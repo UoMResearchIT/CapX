@@ -1137,19 +1137,24 @@ namespace PPMTool.Pages
                             for (int i = 0; i < projectData.Count; ++i)
                             {
                                 var proj = projectData[i];
+
+                                // Column A: Project name
                                 cell = worksheetProjects.Cell(2 + i, 1);
                                 cell.Value = proj.ProjectName;
 
+                                // Column B: PlannedCosts
                                 cell = worksheetProjects.Cell(2 + i, 2);
                                 cell.Value = proj.PlannedCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
+                                // Column C: RecoveredCosts
                                 cell = worksheetProjects.Cell(2 + i, 3);
                                 cell.Value = proj.RecoveredCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
+                                // Column D: Formula = C - B (relative R1C1, no anchors)
                                 cell = worksheetProjects.Cell(2 + i, 4);
-                                cell.FormulaR1C1 = $"=R{2 + i}C3-R{2 + i}C2";
+                                cell.FormulaR1C1 = "=RC[-1]-RC[-2]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
