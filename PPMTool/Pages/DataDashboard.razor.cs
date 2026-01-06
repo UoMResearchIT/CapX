@@ -945,11 +945,11 @@ namespace PPMTool.Pages
                             var columnComnnets = new List<string>
                             {
                                 "These are the costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the actual costs of the person over the reporting period based on finance tracker data.",
+                                "These are the actual costs of the person over the reporting period based on finance tracker data (including PCM costs).",
                                 "This is the difference between estimated and actual costs.",
                                 "This is the average technical target recovery FTE for the person over the reporting period based on their workload model.",
                                 "These are the technical target recovery costs of the person over the reporting period based on mid-grade estimates.",
-                                "This is the baseline budget for the person over the reporting period (estimated costs - target costs).",
+                                "This is the required baseline budget for the person over the reporting period (estimated costs - target costs).",
                                 "This is the average recovered FTE for the person over the reporting period based on their technical assignments.",
                                 "These are the recovered costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
                                 "This is the average net FTE (capped to their full-time FTE) for the person over the reporting period (technical target - recovered).",
