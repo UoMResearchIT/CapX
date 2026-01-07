@@ -327,3 +327,11 @@ hr {
 .header-footer-text-dev {
     color: var(--rz-on-danger);
 }
+
+.header-footer-icon {
+    color: var(--rz-on-primary) !important;
+}
+
+.header-footer-icon-dev {
+    color: var(--rz-on-danger) !important;
+}
