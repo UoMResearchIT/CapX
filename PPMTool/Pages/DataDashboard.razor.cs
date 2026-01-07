@@ -826,8 +826,14 @@ namespace PPMTool.Pages
                         // Create workbook and worksheet
                         using (var workbook = new XLWorkbook())
                         {
+                            // **** Blank Posts Worksheet **** //
+                            var worksheet = workbook.Worksheets.Add("Posts");
+                            worksheet.SheetView.FreezeRows(1);
+
+                            // **** Assignments Worksheet **** //
+
                             // Assignments worksheet first
-                            var worksheet = workbook.Worksheets.Add("Assignments");
+                            worksheet = workbook.Worksheets.Add("Assignments");
                             worksheet.SheetView.FreezeRows(1);
 
                             // Get properties and reorder the end date so it comes after the start date
@@ -843,6 +849,7 @@ namespace PPMTool.Pages
 
                             // Write header row
                             IXLCell cell = default;
+                            IXLComment comment = default;
                             for (int i = 0; i < props.Count(); i++)
                             {
                                 var prop = props[i];
@@ -855,7 +862,7 @@ namespace PPMTool.Pages
                                 if (descriptionAttr != null)
                                 {
                                     var description = (descriptionAttr as DescriptionAttribute).Description;
-                                    var comment = cell.CreateComment();
+                                    comment = cell.CreateComment();
                                     comment.AddText(description);
                                 }
                             }
@@ -926,6 +933,8 @@ namespace PPMTool.Pages
                             // Adjust the column widths
                             worksheet.Columns().AdjustToContents();
 
+                            // **** Costs Worksheet **** //
+
                             // Get a list of people active by name
                             var totalPeople = peopleActive.Count;
                             var columnTitles = new List<string>
@@ -986,7 +995,7 @@ namespace PPMTool.Pages
                                 cell = worksheetTotals.Cell(1, 3 + i);
                                 cell.Value = columnTitles[i];
                                 cell.Style.Font.Bold = true;
-                                var comment = cell.CreateComment();
+                                comment = cell.CreateComment();
                                 comment.Author = "CapX Exporter";
                                 comment.AddText(columnComnnets[i]);
                             }
@@ -1129,9 +1138,10 @@ namespace PPMTool.Pages
                                 totalCell.Style.Font.Bold = true;
                             }
 
-
                             // Adjust the column widths
                             worksheetTotals.Columns().AdjustToContents();
+
+                            // **** Projects Sheet **** //
 
                             // Add another sheet here for the project summary
                             var worksheetProjects = workbook.Worksheets.Add("Projects");
@@ -1148,7 +1158,6 @@ namespace PPMTool.Pages
                             cell = worksheetProjects.Cell(1, 1 + props.Count);
                             cell.Value = "Deficit";
                             cell.Style.Font.Bold = true;
-
 
                             // Data
                             for (int i = 0; i < projectData.Count; ++i)
@@ -1177,6 +1186,61 @@ namespace PPMTool.Pages
 
                             // Adjust the column widths
                             worksheetProjects.Columns().AdjustToContents();
+
+                            // **** Summary Worksheet **** //
+
+                            // Add another sheet here for the overall summary
+                            var ws = workbook.Worksheets.Add("Summary", 0);
+                            ws.SheetView.FreezeRows(1);
+
+                            // Title
+                            cell = ws.Cell("A1");
+                            cell.Value = "Cost Summary";
+                            cell.Style.Font.Bold = true;
+                            cell.Style.Font.FontSize = 16;
+                            ws.Range("A1:B1").Merge().Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+                            // Period length
+                            cell = ws.Cell("A2");
+                            cell.Value = "Period (months)";
+                            ws.Cell("B2").Value = monthsAhead;
+
+                            // Annual budget
+                            cell = ws.Cell("A3");
+                            cell.Value = "Annual Budget";
+                            cell = ws.Cell("B3");
+                            cell.Value = 936370;
+                            cell.Style.NumberFormat.Format = moneyFormat;
+                            comment = cell.CreateComment();
+                            comment.Author = "CapX Exporter";
+                            comment.AddText("Number lifted from the tracker");
+
+                            // Style header
+                            var range = ws.Range("A1:B3");
+                            range.Style.Fill.BackgroundColor = XLColor.LightGray;
+                            range.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                            range.Style.Border.BottomBorderColor = XLColor.Black;
+
+                            // Write the rows
+                            AddSummaryRow(ws, 4, "How much I think we cost (mid-grade estimates)", moneyFormat, $"=Costs!C{totalRow}");
+                            AddSummaryRow(ws, 5, "How much we aim to recover through WLM project work allocations (salary estimates)", moneyFormat, $"=Costs!G{totalRow}");
+                            AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!N{totalRow}");
+                            AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!Q{totalRow} - Costs!N{totalRow}");
+                            AddSummaryRow(ws, 8, "How much we actually can recover (based on money in the project budgets)", moneyFormat, null, "=R[-2]C + R[-1]C");
+                            AddSummaryRow(ws, 9, "Actual shortfall against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C + R[-4]C");
+                            AddSummaryRow(ws, 10, "How much ITS give us (baseline budget)", moneyFormat, null, "=R[-8]C * R[-7]C / 12");
+                            AddSummaryRow(ws, 11, "Shortfall in the budget provided by ITS to cover current operation (salary estimate)", moneyFormat, null, "=R[-1]C - (R[-6]C - R[-3]C)");
+                            AddSummaryRow(ws, 12, "How much we actually cost (from tracker)", moneyFormat, $"Costs!D{totalRow}");
+                            AddSummaryRow(ws, 13, "Shortfall in the budget provided by ITS to cover operation based on actual costs from tracker", moneyFormat, null, "=R[-3]C - (R[-1]C - R[-4]C)");
+
+                            // Style final row
+                            range = ws.Range("A13:B13");
+                            range.Style.Fill.BackgroundColor = XLColor.LightGray;
+                            range.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                            range.Style.Border.TopBorderColor = XLColor.Black;
+
+                            // Adjust the column widths
+                            ws.Columns().AdjustToContents();
 
                             // Save the workbook
                             workbook.SaveAs(path);
@@ -1209,6 +1273,36 @@ namespace PPMTool.Pages
                     StateHasChanged();
                 });
             });
+        }
+
+        /// <summary>
+        /// Helper method to add a summary row
+        /// </summary>
+        /// <param name="ws"></param>
+        /// <param name="row"></param>
+        /// <param name="text"></param>
+        /// <param name="numberFormat"></param>
+        /// <param name="formulaA1"></param>
+        /// <param name="formulaR1C1"></param>
+        private void AddSummaryRow(IXLWorksheet ws, int row, string text, string numberFormat, string formulaA1 = null, string formulaR1C1 = null)
+        {
+            var cell = ws.Cell(row, 1);
+            cell.Value = text;
+            cell.Style.Font.Bold = true;
+            cell = ws.Cell(row, 2);
+            if (!string.IsNullOrWhiteSpace(formulaA1))
+            {
+                cell.FormulaA1 = formulaA1;
+            }
+            else if (!string.IsNullOrWhiteSpace(formulaR1C1))
+            {
+                cell.FormulaR1C1 = formulaR1C1;
+            }
+            else
+            {
+                throw new Exception("Formula not provided!");
+            }
+            cell.Style.NumberFormat.Format = numberFormat;
         }
     }
 }
