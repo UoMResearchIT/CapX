@@ -871,6 +871,13 @@ namespace PPMTool.Pages
                                     var rawValue = property?.GetValue(record);
                                     cell = worksheet.Cell(row + 2, col + 1);
 
+                                    // The SPOT ID column is unique
+                                    if (col == 0)
+                                    {
+                                        cell.FormulaR1C1 = "=VLOOKUP(RC[1],Posts!R2C1:R60C5,4,FALSE)";
+                                        continue;
+                                    }
+
                                     // Format and assign
                                     if (propName == nameof(AssignmentChunk.StartDate) || propName == nameof(AssignmentChunk.EndDate))
                                     {
@@ -969,7 +976,7 @@ namespace PPMTool.Pages
 
                             // Header row
                             cell = worksheetTotals.Cell(1, 1);
-                            cell.Value = "Post Number";
+                            cell.Value = "SPOT ID";
                             cell.Style.Font.Bold = true;
                             cell = worksheetTotals.Cell(1, 2);
                             cell.Value = "Name";
@@ -1006,9 +1013,9 @@ namespace PPMTool.Pages
                                 }
                                 int averagePeriod = (int)(adjustedEnd.Subtract(adjustedStart).TotalDays + 1);
 
-                                // Post Number
+                                // SPOT ID
                                 cell = worksheetTotals.Cell(2 + i, 1);
-                                //cell.Value = person.PostNumber;
+                                cell.FormulaR1C1 = "=VLOOKUP(RC[1],Posts!R2C1:R60C5,4,FALSE)";
                                 cell.Style.Font.Bold = true;
 
                                 // Name
@@ -1024,6 +1031,9 @@ namespace PPMTool.Pages
 
                                 // Leave next column blank
                                 // Actual costs filled in manually from finance tracker
+                                cell = worksheetTotals.Cell(2 + i, 4);
+                                cell.Value = "=VLOOKUP(RC[-2],Posts!R2C1:R60C5,5,FALSE)";
+                                cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Variance is formula
                                 cell = worksheetTotals.Cell(2 + i, 5);
