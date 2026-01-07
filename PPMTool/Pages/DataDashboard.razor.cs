@@ -850,20 +850,19 @@ namespace PPMTool.Pages
                             // Write header row
                             IXLCell cell = default;
                             IXLComment comment = default;
-                            for (int col = 0; col < props.Count() + 1; col++)
+
+                            // The SPOT ID column is unique
+                            cell = worksheet.Cell(1, 1);
+                            cell.Value = "SPOT ID";
+                            cell.Style.Font.Bold = true;
+
+                            // Other headers
+                            for (int col = 0; col < props.Count(); col++)
                             {
                                 var prop = props[col];
                                 cell = worksheet.Cell(1, col + 2);
                                 cell.Value = prop.Name;
                                 cell.Style.Font.Bold = true;
-
-                                // The SPOT ID column is unique
-                                if (col == 0)
-                                {
-                                    cell = worksheet.Cell(1, 1);
-                                    cell.Value = "SPOT ID";
-                                    continue;
-                                }
 
                                 var attributes = prop.GetCustomAttributes(false);
                                 var descriptionAttr = attributes.FirstOrDefault(x => x.GetType() == typeof(DescriptionAttribute));
@@ -879,21 +878,19 @@ namespace PPMTool.Pages
                             for (int row = 0; row < assignmentChunks.Count; row++)
                             {
                                 var record = assignmentChunks[row];
-                                for (int col = 0; col < props.Count() + 1; col++)
+
+                                // The SPOT ID column is unique
+                                cell = worksheet.Cell(row + 2, 1);
+                                cell.FormulaR1C1 = "=VLOOKUP(RC[1],Posts!R2C1:R60C5,4,FALSE)";
+                                cell.Style.NumberFormat.SetFormat("@");
+
+                                // Rest of the data
+                                for (int col = 0; col < props.Count(); col++)
                                 {
                                     var propName = props[col].Name;
                                     var property = record.GetType().GetProperty(propName);
                                     var rawValue = property?.GetValue(record);
                                     cell = worksheet.Cell(row + 2, col + 2);
-
-                                    // The SPOT ID column is unique
-                                    if (col == 0)
-                                    {
-                                        cell = worksheet.Cell(row + 2, 1);
-                                        cell.FormulaR1C1 = "=VLOOKUP(RC[1],Posts!R2C1:R60C5,4,FALSE)";
-                                        cell.Style.NumberFormat.SetFormat("@");
-                                        continue;
-                                    }
 
                                     // Format and assign
                                     if (propName == nameof(AssignmentChunk.StartDate) || propName == nameof(AssignmentChunk.EndDate))
