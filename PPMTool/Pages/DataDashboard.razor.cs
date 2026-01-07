@@ -833,7 +833,7 @@ namespace PPMTool.Pages
                             // **** Assignments Worksheet **** //
 
                             // Assignments worksheet first
-                            worksheet = workbook.Worksheets.Add("Assignments");
+                            worksheet = workbook.Worksheets.Add("Assignments", 0);
                             worksheet.SheetView.FreezeRows(1);
 
                             // Get properties and reorder the end date so it comes after the start date
@@ -850,12 +850,20 @@ namespace PPMTool.Pages
                             // Write header row
                             IXLCell cell = default;
                             IXLComment comment = default;
-                            for (int i = 0; i < props.Count(); i++)
+                            for (int col = 0; col < props.Count() + 1; col++)
                             {
-                                var prop = props[i];
-                                cell = worksheet.Cell(1, i + 1);
+                                var prop = props[col];
+                                cell = worksheet.Cell(1, col + 2);
                                 cell.Value = prop.Name;
                                 cell.Style.Font.Bold = true;
+
+                                // The SPOT ID column is unique
+                                if (col == 0)
+                                {
+                                    cell = worksheet.Cell(1, 1);
+                                    cell.Value = "SPOT ID";
+                                    continue;
+                                }
 
                                 var attributes = prop.GetCustomAttributes(false);
                                 var descriptionAttr = attributes.FirstOrDefault(x => x.GetType() == typeof(DescriptionAttribute));
@@ -871,17 +879,19 @@ namespace PPMTool.Pages
                             for (int row = 0; row < assignmentChunks.Count; row++)
                             {
                                 var record = assignmentChunks[row];
-                                for (int col = 0; col < props.Count(); col++)
+                                for (int col = 0; col < props.Count() + 1; col++)
                                 {
                                     var propName = props[col].Name;
                                     var property = record.GetType().GetProperty(propName);
                                     var rawValue = property?.GetValue(record);
-                                    cell = worksheet.Cell(row + 2, col + 1);
+                                    cell = worksheet.Cell(row + 2, col + 2);
 
                                     // The SPOT ID column is unique
                                     if (col == 0)
                                     {
+                                        cell = worksheet.Cell(row + 2, 1);
                                         cell.FormulaR1C1 = "=VLOOKUP(RC[1],Posts!R2C1:R60C5,4,FALSE)";
+                                        cell.Style.NumberFormat.SetFormat("@");
                                         continue;
                                     }
 
@@ -1026,6 +1036,7 @@ namespace PPMTool.Pages
                                 cell = worksheetTotals.Cell(2 + i, 1);
                                 cell.FormulaR1C1 = "=VLOOKUP(RC[1],Posts!R2C1:R60C5,4,FALSE)";
                                 cell.Style.Font.Bold = true;
+                                cell.Style.NumberFormat.SetFormat("@");
 
                                 // Name
                                 cell = worksheetTotals.Cell(2 + i, 2);
@@ -1144,7 +1155,7 @@ namespace PPMTool.Pages
                             // **** Projects Sheet **** //
 
                             // Add another sheet here for the project summary
-                            var worksheetProjects = workbook.Worksheets.Add("Projects");
+                            var worksheetProjects = workbook.Worksheets.Add("Projects", 1);
                             worksheetProjects.SheetView.FreezeRows(1);
 
                             // Header row
