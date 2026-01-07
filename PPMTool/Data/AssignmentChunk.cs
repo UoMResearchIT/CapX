@@ -9,8 +9,6 @@ namespace PPMTool.Data
     /// </summary>
     public class AssignmentChunk : DateRange
     {
-        public string PostNumber { get; set; }
-
         public string EmployeeName { get; set; }
 
         [Description("The grade of the person for the duration of this assignment")]
@@ -101,7 +99,6 @@ namespace PPMTool.Data
         /// <param name="taskToCopy"></param>
         public AssignmentChunk(AssignmentChunk taskToCopy)
         {
-            PostNumber = taskToCopy.PostNumber;
             EmployeeName = taskToCopy.EmployeeName;
             Grade = taskToCopy.Grade;
             FTE = taskToCopy.FTE;
