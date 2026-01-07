@@ -1032,7 +1032,7 @@ namespace PPMTool.Pages
                                 // Leave next column blank
                                 // Actual costs filled in manually from finance tracker
                                 cell = worksheetTotals.Cell(2 + i, 4);
-                                cell.Value = "=VLOOKUP(RC[-2],Posts!R2C1:R60C5,5,FALSE)";
+                                cell.FormulaR1C1 = "=VLOOKUP(RC[-2],Posts!R2C1:R60C5,5,FALSE)";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Variance is formula
