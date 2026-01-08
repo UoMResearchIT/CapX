@@ -97,7 +97,7 @@
         var temp = AssessmentsForGradeAndPerson.GroupBy(x => x.CompetencyId);
         foreach (var group in temp)
         {
-            var latest = group.OrderBy(x => x.DateCreated).Last();
+            var latest = group.OrderBy(x => DateTime.Parse(x.DateCreated)).Last();
             latestAssessmentsByCompetencyId.Add(latest);
         }
 
