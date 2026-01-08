@@ -1,5 +1,6 @@
 ﻿@using PPMTool.Data.Entities
 @using PPMTool.Enums
+@using System.Diagnostics
 
 @if (dataItems != null)
 {
@@ -84,8 +85,13 @@
         }
     }
 
+    /// <summary>
+    /// Loads the data to display in the radial gauge
+    /// </summary>
     private void LoadData()
     {
+        Debug.WriteLine($"** Competency Gauge {Title}: Loading Data...");
+
         // Get the latest status of each distinct competency with assessments
         latestAssessmentsByCompetencyId = new List<CompetencyAssessment>();
         var temp = AssessmentsForGradeAndPerson.GroupBy(x => x.CompetencyId);
@@ -115,6 +121,8 @@
             Value = TotalNumberOfCompetenciesInGrade - latestAssessmentsByCompetencyId.Where(x => x.Status == AssessmentStatus.PartiallyMet || x.Status == AssessmentStatus.FullyMet).Count(),
             Colour = "#f44336"
         });
+
+        Debug.WriteLine($"** Competency Gauge {Title}: Data Loaded. FullyMet = {dataItems[0].Value}, PartiallyMet = {dataItems[1].Value}, Unmet = {dataItems[2].Value}");
 
         // Compute percent complete
         var valueComplete = dataItems.FirstOrDefault(x => x.Status == AssessmentStatus.FullyMet)?.Value ?? 0f;
