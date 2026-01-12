@@ -17,13 +17,6 @@ namespace PPMTool.Pages
 {
     public partial class DataDashboard : BasePage
     {
-        private float personalDevFTE = 0.1f;
-        private float architectureFTE = 0.05f;
-        private float projectManFTE = GlobalDefaults.ProjectManagementDefaultFTE;
-        private float staffManFTE = 0.05f;
-        private float coachFTE = 0.1f;
-
-        private int numberOfStaffManagedByHead = 6;
         private DateTime startDate = DateTime.Today;
         private int monthsAhead;
         private bool showFinishedAsSeparate = false;
@@ -528,7 +521,7 @@ namespace PPMTool.Pages
                         StaffManFTE = wlmStaff,
                         RSAFTE = wlmRSA,
                         NumberOfStaff = numStaff,
-                        NumberStaffRequiringLineManagement = numStaff - numberOfStaffManagedByHead,
+                        NumberStaffRequiringLineManagement = numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault,
                         NumberOfConfirmedProjects = numberConfirmed,
                         NumberOfUnconfirmedProjects = numberUnconfirmed,
                         UnmetDemandFTE = unmetDemand,
@@ -560,9 +553,9 @@ namespace PPMTool.Pages
                     numberOfWeeks++;
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
-                    item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - numberOfStaffManagedByHead) * staffManFTE, numberOfWeeks);
-                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - projectManFTE * (numberConfirmed + numberUnconfirmed), numberOfWeeks);
-                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * architectureFTE, numberOfWeeks);
+                    item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault) * GlobalDefaults.StaffManagementDefaultFTE, numberOfWeeks);
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - GlobalDefaults.ProjectManagementDefaultFTE * (numberConfirmed + numberUnconfirmed), numberOfWeeks);
+                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * GlobalDefaults.TechnicalLeadershipDefaultFTE, numberOfWeeks);
 
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);
