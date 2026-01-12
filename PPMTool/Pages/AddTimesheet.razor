@@ -1,6 +1,5 @@
 ﻿@page "/timesheets/addtimesheet/{TimesheetId:int}"
 @inherits PPMTool.Pages.DataGridPage<TimesheetEntry>
-@using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
@@ -51,7 +50,7 @@
         <hr />
 
         <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
-            <div class="card">
+            <RadzenCard>
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row">
@@ -75,16 +74,16 @@
                                 TItem="TimesheetEntry"
                                 RowUpdate="@OnUpdateRow"
                                 RowCreate="@OnCreateRow"
-                                ColumnWidth="5rem"
+                                ColumnWidth="6.5rem"
                                 CellRender="@CellRender"
                                 LoadData="OnDataLoad">
                     <Columns>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="IsInTemplate" Title="" Width="10px">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="IsInTemplate" Title="" MinWidth="10px" Width="10px">
                             <Template Context="entry">
                                &nbsp;
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Activity Code" MinWidth="7px" Width="12rem">
+                        <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask" Title="Activity Code" MinWidth="10px" Width="12rem">
                             <Template Context="entry">
                                 <RadzenText TextStyle="TextStyle.Body2" Text="@entry.InnateCodeTask.InnateCode.GetCodeAsString()" Style="width: 100%; white-space:pre-wrap" />
                             </Template>
@@ -290,11 +289,11 @@
                         </RadzenStack>
                     </div>
                 </div>
-            </div>
+            </RadzenCard>
 
             @if ((timesheet?.IsLineManager(ActiveUser) ?? false || ActiveUserRoleType == RoleType.Superuser) && currentWLM != null && wlmChartItem != null)
             {
-                <div class="card" style="margin-top: 0.5rem;">
+                <RadzenCard style="margin-top: 0.5rem;">
                     <div class="row">
                         <div class="col-2"><RadzenText Text="WLM Target:" TextStyle="TextStyle.Subtitle1" /></div>
                         <div class="col-10">
@@ -381,7 +380,7 @@
                             </div>
                         </div>
                     }
-                </div>
+                </RadzenCard>
             }
 
             <div class="row" style="margin-top: 1rem;">

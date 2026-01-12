@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using ClosedXML.Excel;
-using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -9,6 +8,7 @@ using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using Xceed.Words.NET;
 
 namespace PPMTool.Pages
 {
@@ -216,6 +216,7 @@ namespace PPMTool.Pages
         private bool showUnMetOnly;
         private bool showAllStaff = true;
         private bool exportRunning;
+        private bool downloadFrameworkRunning;
 
         private class CompetencyAssessmentExportLine
         {
@@ -266,6 +267,85 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Method to export the competency framework to a Word doc to make it easier to update as a group
+        /// </summary>
+        /// <returns></returns>
+        private async Task ExportFrameworkAsync()
+        {
+            LogInformation($"Exporting competency framework to Word...");
+
+            downloadFrameworkRunning = true;
+
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    // Create file path
+                    var filename = $"CompetencyFramework_{DateTime.Now.ToString("yyyyMMddHHmmss")}.docx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
+
+                    // Create Word Doc
+                    var doc = DocX.Create(path);
+                    foreach (var group in competencyGroups)
+                    {
+                        // Write Heading 1
+                        var text = doc.InsertParagraph(group.Description);
+                        text.StyleId = "Heading1";
+
+                        foreach (var category in group.CompetenciesGroupedByCategory)
+                        {
+                            // Write Heading 2
+                            text = doc.InsertParagraph(category.Key.GetDescription());
+                            text.StyleId = "Heading2";
+
+                            foreach (var competency in category.Where(x => x.IsActive))
+                            {
+                                // Write Heading 3
+                                text = doc.InsertParagraph(competency.GetHierarchyId());
+                                text.StyleId = "Heading3";
+
+                                // Write Competency Description
+                                HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.GetSensibleObjectName(), "Normal");
+
+                                // Write Competency Objective
+                                doc.InsertParagraph("");
+                                text = doc.InsertParagraph("Objective");
+                                text.StyleId = "Normal";
+                                text.Bold();
+                                HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.Objective, "Normal");
+                            }
+                        }
+                    }
+
+                    // Save the document
+                    doc.Save();
+
+                    await InvokeAsync(async () =>
+                    {
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    });
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exporting framework failed: {e}");
+                }
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Framework export task finished {t.Status}");
+                    downloadFrameworkRunning = false;
+                    StateHasChanged();
+                });
+            });
+        }
+
+        /// <summary>
         /// Method to export an Excel file with the information in it from the currently displayed journey
         /// </summary>
         private async Task ExportDataAsync()
@@ -276,116 +356,113 @@ namespace PPMTool.Pages
 
             await Task.Run(async () =>
             {
-                // Create blank list of data
-                var assessments = new List<CompetencyAssessmentExportLine>();
-
-                // Get the assessment info
-                if (SelectedPerson == null)
+                try
                 {
-                    LogWarning("Tried to export data without selecting a person!");
-                    return;
-                }
+                    // Create blank list of data
+                    var assessments = new List<CompetencyAssessmentExportLine>();
 
-                // Go through the groups and extract the info
-                foreach (var group in competencyGroups)
-                {
-                    foreach (var category in group.CompetenciesGroupedByCategory)
+                    // Get the assessment info
+                    if (SelectedPerson == null)
                     {
-                        foreach (var competency in category.Where(x => x.IsActive))
+                        LogWarning("Tried to export data without selecting a person!");
+                        return;
+                    }
+
+                    // Go through the groups and extract the info
+                    foreach (var group in competencyGroups)
+                    {
+                        foreach (var category in group.CompetenciesGroupedByCategory)
                         {
-                            var latestAssessment = competency.Assessments
-                                .Where(x => x.PersonId == SelectedPerson.PersonId)
-                                .OrderByDescending(x => x.DateCreated)
-                                .FirstOrDefault();
-                            assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                            foreach (var competency in category.Where(x => x.IsActive))
+                            {
+                                var latestAssessment = competency.Assessments
+                                    .Where(x => x.PersonId == SelectedPerson.PersonId)
+                                    .OrderByDescending(x => DateTime.Parse(x.DateCreated))
+                                    .FirstOrDefault();
+                                assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                            }
                         }
                     }
-                }
 
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
-                {
-                    try
+                    // Create file path
+                    var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
+
+                    // Create workbook and worksheet
+                    using (var workbook = new XLWorkbook())
                     {
-                        // Create file path
-                        var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
+                        var worksheet = workbook.Worksheets.Add("Data");
 
-                        // Create workbook and worksheet
-                        using (var workbook = new XLWorkbook())
+                        // Write header row
+                        var props = typeof(CompetencyAssessmentExportLine).GetProperties();
+                        var propNames = props.Select(x => x.Name).ToList();
+                        for (int i = 0; i < propNames.Count; i++)
                         {
-                            var worksheet = workbook.Worksheets.Add("Data");
+                            var cell = worksheet.Cell(1, i + 1);
+                            cell.Value = propNames[i];
+                            cell.Style.Font.Bold = true;
+                        }
 
-                            // Write header row
-                            var props = typeof(CompetencyAssessmentExportLine).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
-                            for (int i = 0; i < propNames.Count; i++)
+                        // Write data rows
+                        for (int row = 0; row < assessments.Count; row++)
+                        {
+                            var record = assessments[row];
+                            for (int col = 0; col < propNames.Count; col++)
                             {
-                                var cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
-                                cell.Style.Font.Bold = true;
-                            }
+                                var property = record.GetType().GetProperty(propNames[col]);
+                                var rawValue = property?.GetValue(record);
+                                var cell = worksheet.Cell(row + 2, col + 1);
 
-                            // Write data rows
-                            for (int row = 0; row < assessments.Count; row++)
-                            {
-                                var record = assessments[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                // Format and assign
+                                if (propNames[col] == "LatestAssessmentDate")
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
-                                    var rawValue = property?.GetValue(record);
-                                    var cell = worksheet.Cell(row + 2, col + 1);
-
-                                    // Format and assign
-                                    if (propNames[col] == "LatestAssessmentDate")
+                                    if (rawValue is DateTime dt)
                                     {
-                                        if (rawValue is DateTime dt)
-                                        {
-                                            cell.Value = dt;
-                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
+                                        cell.Value = dt;
+                                        cell.Style.DateFormat.Format = "dd/MM/yyyy";
                                     }
                                     else
                                     {
-                                        if (rawValue is int)
-                                        {
-                                            cell.Value = (int)rawValue;
-                                        }
-                                        else if (rawValue is double)
-                                        {
-                                            cell.Value = (double)rawValue;
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
+                                        cell.Value = rawValue?.ToString() ?? string.Empty;
+                                    }
+                                }
+                                else
+                                {
+                                    if (rawValue is int)
+                                    {
+                                        cell.Value = (int)rawValue;
+                                    }
+                                    else if (rawValue is double)
+                                    {
+                                        cell.Value = (double)rawValue;
+                                    }
+                                    else
+                                    {
+                                        cell.Value = rawValue?.ToString() ?? string.Empty;
                                     }
                                 }
                             }
-
-                            // Save the workbook
-                            workbook.SaveAs(path);
                         }
 
-                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+                        // Save the workbook
+                        workbook.SaveAs(path);
 
+                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+                    }
+
+                    await InvokeAsync(async () =>
+                    {
                         // Get file stream
                         using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
 
                         // Invoke JS on the client to download the file
                         await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
+                    });
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exporting development journey failed: {e}");
+                }
 
             }).ContinueWith(t =>
             {
@@ -459,7 +536,7 @@ namespace PPMTool.Pages
                     var latestAssessments = competencies
                             .SelectMany(x => x.Assessments)
                             .Where(x => x.PersonId == selectedPerson.PersonId)
-                            .OrderByDescending(x => x.DateCreated)
+                            .OrderByDescending(x => DateTime.Parse(x.DateCreated))
                             .GroupBy(x => x.CompetencyId);
 
                     // Get a list of competency IDs for those where the latest assessment is fully met
@@ -490,7 +567,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson?.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -506,7 +583,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson?.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);
@@ -522,7 +599,7 @@ namespace PPMTool.Pages
                     competencies
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
-                        .Where(x => x.PersonId == selectedPerson.PersonId)
+                        .Where(x => x.PersonId == selectedPerson?.PersonId)
                 );
                 newGroup.OnAccordionToggled += OnAccordionToggled;
                 groups.Add(newGroup);

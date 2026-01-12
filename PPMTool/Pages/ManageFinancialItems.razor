@@ -4,7 +4,6 @@
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
 @using Radzen
-@using DotNetExtensions
 <PageTitle>Manage Finance Items - CapX</PageTitle>
 
 @if (Loading)
@@ -28,7 +27,7 @@ else
             <HintComponent Message="Select a project to be able to add an item or navigate to that project's details page" />
         }
         <hr />
-        <div class="card">
+        <RadzenCard>
             <div class="row">
                 <div class="col-auto align-content-center">
                     <RadzenText Text="Project:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
@@ -199,6 +198,6 @@ else
                     </RadzenTabsItem>
                 </Tabs>
             </RadzenTabs>
-        </div>
+        </RadzenCard>
     </div>
 }

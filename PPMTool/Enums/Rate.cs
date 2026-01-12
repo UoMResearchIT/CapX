@@ -1,4 +1,6 @@
-﻿namespace PPMTool.Enums
+﻿using System.ComponentModel;
+
+namespace PPMTool.Enums
 {
     /// <summary>
     /// This is the rate that a resource is to be costed at when using a non-day-rate approach to costing.
@@ -6,8 +8,11 @@
     /// </summary>
     public enum Rate
     {
+        [Description("Grade 7.1")]
         Standard,
+        [Description("Grade 5.1")]
         Junior,
+        [Description("Grade 7.5")]
         Senior
     }
 }

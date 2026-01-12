@@ -5,7 +5,6 @@
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
 @using Radzen
-@using DotNetExtensions
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Finance Summary - CapX</PageTitle>
 
@@ -19,7 +18,7 @@
         </div>
     </div>
     <hr />
-    <div class="card">
+    <RadzenCard>
         <RadzenDataGrid Data="@items"
                         TItem="FinanceSummaryItem"
                         ColumnWidth="5rem"
@@ -93,5 +92,5 @@
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
-    </div>
+    </RadzenCard>
 </div>

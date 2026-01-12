@@ -21,6 +21,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
             dataGridEntityService = TagService;
             Loading = true;
             EnqueueLoadData(GetLoadTask);
@@ -89,10 +90,10 @@ namespace PPMTool.Pages
         {
             if (TagService.DuplicateDetected(Context, entity))
             {
-                ErrorMessage = new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error));
                 return true;
             }
-            ErrorMessage = null;
+            ClearErrorMessage();
             return false;
         }
 
@@ -164,7 +165,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** {toVerify.Count} tags to verify...");
                 foreach (var tag in toVerify)
                 {
-                    var res = await tag.UpdateValidLink();
+                    var res = await tag.UpdateValidLinkAsync();
                     if (res != LinkCheckState.Pending)
                     {
                         Logger.LogInformation($"Updating the wiki link status for {tag.ControlledName}");

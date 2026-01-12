@@ -361,3 +361,6 @@ MigrationBackup/
 
 # secrets file
 .secrets
+
+# Visual Studio Code settings
+.vscode/*

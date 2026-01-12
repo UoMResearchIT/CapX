@@ -1,11 +1,9 @@
-﻿using System;
-
-namespace PPMTool.Data
+﻿namespace PPMTool.Data
 {
     /// <summary>
     /// A helper class to assist with finding how much of the tasks run during a financial year
     /// </summary>
-    public class DateRange
+    public class DateRange : IWithin
     {
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -18,7 +16,7 @@ namespace PPMTool.Data
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        static public bool IsWithin(DateTime testDate, DateTime startDate, DateTime endDate)
+        public static bool IsWithin(DateTime testDate, DateTime startDate, DateTime endDate)
         {
             return startDate.Date == endDate.Date ? testDate.Date == startDate.Date : testDate.Date >= startDate.Date && testDate.Date <= endDate.Date;
         }
@@ -31,9 +29,21 @@ namespace PPMTool.Data
         /// <param name="testStart"></param>
         /// <param name="testEnd"></param>
         /// <returns></returns>
-        static public bool IsWithin(DateTime testStart, DateTime testEnd, DateTime startDate, DateTime endDate)
+        public static bool IsWithin(DateTime testStart, DateTime testEnd, DateTime startDate, DateTime endDate)
         {
             return startDate.Date <= testEnd.Date && endDate.Date >= testStart.Date;
+        }
+
+        /// <inheritdoc />
+        public bool IsWithin(DateTime testDate)
+        {
+            return IsWithin(testDate, StartDate, EndDate);
+        }
+
+        /// <inheritdoc />
+        public bool IsWithin(DateTime startDate, DateTime endDate)
+        {
+            return IsWithin(StartDate, EndDate, startDate, endDate);
         }
     }
 }

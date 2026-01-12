@@ -2,6 +2,9 @@
 
 namespace PPMTool.Data.Entities
 {
+    /// <summary>
+    /// Represents a task with durations and costs
+    /// </summary>
     public abstract class BaseTask : CostedItem, IWithin
     {
         [Required]

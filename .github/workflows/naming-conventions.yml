@@ -8,6 +8,7 @@ on:
 
 jobs:
   check-repo-name-conventions:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
@@ -21,12 +22,12 @@ jobs:
           fi
           
   check-branch-name-conventions:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check branch name
         run: |

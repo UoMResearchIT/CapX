@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Enums;
 
@@ -31,7 +30,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Optional person associated with this user
         /// </summary>
-        public Person Person
+        public virtual Person Person
         {
             get => person;
             set
@@ -62,13 +61,13 @@ namespace PPMTool.Data.Entities
         /// List of notes this person has authored
         /// </summary>
         [InverseProperty("Author")]
-        public ICollection<Note> AuthoredNotes { get; set; } = new List<Note>();
+        public virtual ICollection<Note> AuthoredNotes { get; set; } = new List<Note>();
 
         /// <summary>
         /// List of notes this person has edited
         /// </summary>
         [InverseProperty("Editor")]
-        public ICollection<Note> EditedNotes { get; set; } = new List<Note>();
+        public virtual ICollection<Note> EditedNotes { get; set; } = new List<Note>();
 
         public string GetSensibleObjectName()
         {
@@ -91,6 +90,16 @@ namespace PPMTool.Data.Entities
         public string GetName()
         {
             return Person?.Name ?? Name;
+        }
+
+        /// <summary>
+        /// Checks whether this user matches the provided claim name (either by CAS username or email address)
+        /// </summary>
+        /// <param name="claimName"></param>
+        /// <returns></returns>
+        internal bool MatchesClaim(string claimName)
+        {
+            return GetStandardisedUserName() == claimName || EmailAddress?.Trim().ToLower() == claimName;
         }
     }
 }

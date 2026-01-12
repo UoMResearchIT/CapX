@@ -303,7 +303,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="activeUserId"></param>
         /// <returns></returns>
-        public int GetIssueCount(PPMToolContext context, int activeUserId)
+        public async Task<int> GetIssueCountAsync(PPMToolContext context, int activeUserId)
         {
             Debug.WriteLine("** Updating timesheet notification count");
             HasOwnTimesheetActions = false;
@@ -313,16 +313,23 @@ namespace PPMTool.Services
             int staffNotificationsCount = 0;
 
             // Get user's rejected timesheet numbers
-            selfNotificationsCount += context.Timesheets.Include(x => x.Owner).Where(x => x.Owner.PersonId == activeUserId && x.Status == Enums.TimesheetStatus.Rejected).Count();
+            selfNotificationsCount += await context.Timesheets
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == activeUserId && x.Status == Enums.TimesheetStatus.Rejected)
+                .CountAsync();
             HasOwnTimesheetActions = selfNotificationsCount > 0;
 
             // Get line managed staff numbers (submitted timesheets)
-            var peopleManaged = context.People.Where(x => x.LineManager.PersonId == activeUserId);
-            if (peopleManaged.Count() > 0)
+            var peopleManaged = context.People
+                .Where(x => x.LineManager.PersonId == activeUserId);
+            if (await peopleManaged.CountAsync() > 0)
             {
                 foreach (Person p in peopleManaged)
                 {
-                    staffNotificationsCount += context.Timesheets.Include(x => x.Owner).Where(x => x.Owner.PersonId == p.PersonId && x.Status == Enums.TimesheetStatus.Submitted).Count();
+                    staffNotificationsCount += await context.Timesheets
+                        .Include(x => x.Owner)
+                        .Where(x => x.Owner.PersonId == p.PersonId && x.Status == Enums.TimesheetStatus.Submitted)
+                        .CountAsync();
                 }
             }
             HasStaffTimesheetActions = staffNotificationsCount > 0;

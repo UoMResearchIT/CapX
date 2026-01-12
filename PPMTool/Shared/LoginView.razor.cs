@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.Extensions.Logging;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Shared
 {
@@ -19,6 +18,9 @@ namespace PPMTool.Shared
         [Inject]
         private ILogger Logger { get; set; }
 
+        [Inject]
+        private ILocalStorageService LocalStorage { get; set; }
+
         private string displayName;
         private IEnumerable<User> users;
         private IEnumerable<string> filteredUsers;
@@ -27,6 +29,7 @@ namespace PPMTool.Shared
         private User loginAs;
         private string loginLink = string.Empty;
         private bool notLoggedIn = false;
+        private PPMToolContext context;
 
         protected override void OnInitialized()
         {
@@ -46,7 +49,11 @@ namespace PPMTool.Shared
 
                 if (user?.Identity is null || !user.Identity.IsAuthenticated)
                 {
-                    users = UserService.GetAll(ContextFactory.CreateDbContext()).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
+                    if (context == null)
+                    {
+                        context = ContextFactory.CreateDbContext();
+                    }
+                    users = UserService.GetAll(context).OrderByDescending(x => x.RoleType).ThenBy(x => x.Name);
                     filteredUsers = users.Select(x => UserToString(x));
                     selectedUser = filteredUsers.FirstOrDefault();
                     OnChange();
@@ -72,6 +79,27 @@ namespace PPMTool.Shared
                     Navigation.NavigateTo(loginLink, true);
 #endif
                 }
+            }
+        }
+
+        /// <summary>
+        /// Method for toggling the app theme
+        /// </summary>
+        /// <returns></returns>
+        private async Task ToggleThemeAsync()
+        {
+            var isCurrentlyDark = ThemeService.IsDarkTheme();
+            Logger.LogInformation($"Dark mode currently set to {isCurrentlyDark}");
+
+            // Toggle
+            ThemeService.SetDarkLight(!isCurrentlyDark);
+
+            // Stash the setting in local storatge
+            var storageValue = await LocalStorage.GetItemAsync<bool>("useDarkMode");
+            if (storageValue == isCurrentlyDark)
+            {
+                Logger.LogInformation($"Updating local storage value to {!isCurrentlyDark}");
+                await LocalStorage.SetItemAsync("useDarkMode", !isCurrentlyDark);
             }
         }
 
@@ -111,6 +139,9 @@ namespace PPMTool.Shared
         {
             // Unsubscribe
             Navigation.LocationChanged -= HandleLocationChanged;
+
+            // Dispose the context
+            context?.Dispose();
         }
 
         private void HandleLocationChanged(object sender, LocationChangedEventArgs e)

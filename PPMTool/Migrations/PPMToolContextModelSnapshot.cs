@@ -239,6 +239,9 @@ namespace PPMTool.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("InnateCodeId");
 
                     b.ToTable("InnateCodes");
@@ -458,6 +461,9 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualCost")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ActualIndirectCost")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ActualLeadershipCosts")
                         .HasColumnType("REAL");
 
@@ -468,6 +474,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Budget")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("BudgetedIndirects")
                         .HasColumnType("REAL");
 
                     b.Property<int>("CostModel")
@@ -504,6 +513,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<double>("PlannedCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PlannedIndirectCost")
                         .HasColumnType("REAL");
 
                     b.Property<double>("PlannedLeadershipCosts")
@@ -555,10 +567,16 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualCost")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ActualIndirectCost")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
                     b.Property<double>("AssignmentFTE")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("BilledFTE")
                         .HasColumnType("REAL");
 
                     b.Property<double?>("DayRate")
@@ -576,11 +594,11 @@ namespace PPMTool.Migrations
                     b.Property<double>("PlannedCost")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("PlannedWorkHours")
+                    b.Property<double>("PlannedIndirectCost")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("Rate")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("PlannedWorkHours")
+                        .HasColumnType("REAL");
 
                     b.Property<int>("SubTaskId")
                         .HasColumnType("INTEGER");
@@ -636,6 +654,9 @@ namespace PPMTool.Migrations
                     b.Property<double>("ActualCost")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("ActualIndirectCost")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("ActualWorkHours")
                         .HasColumnType("REAL");
 
@@ -671,6 +692,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<double>("PlannedCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PlannedIndirectCost")
                         .HasColumnType("REAL");
 
                     b.Property<double>("PlannedWorkHours")

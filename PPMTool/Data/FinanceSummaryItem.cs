@@ -41,6 +41,12 @@ namespace PPMTool.Data
 
         public double ActualLeadershipCosts { get; set; }
 
+        public double ActualIndirectCosts { get; set; }
+
+        public double PlannedIndirectCosts { get; set; }
+
+        public double BudgetIndirectCosts { get; set; }
+
         public double FundsRequestedOther { get; set; }
 
         public double FundsReceivedOther { get; set; }
@@ -96,23 +102,26 @@ namespace PPMTool.Data
             CostModel = project.CostModel;
             DayRate = project.DayRate;
             Budget = project.Budget;
+            BudgetIndirectCosts = project.BudgetedIndirects;
             PlannedCost = project.PlannedCost;
             PlannedLeadershipCosts = project.PlannedLeadershipCosts;
+            PlannedIndirectCosts = project.PlannedIndirectCost;
             ActualCost = project.ActualCost;
             ActualLeadershipCosts = project.ActualLeadershipCosts;
+            ActualIndirectCosts = project.ActualIndirectCost;
             FundsDA = transactionBreakdown.DirectlyAllocated;
             FundsDI = transactionBreakdown.DirectlyIncurred;
             AvailableFundsDI = transactionBreakdown.FundingSources.Where(x => x.FundingSourceType == FundingSourceType.DI).RoundedSum(x => x.AmountAvailable, 2);
             FundsRequestedOther = transactionBreakdown.Invoices;
             FundsReceivedOther = transactionBreakdown.Payments;
             ActualHours = actuals;
-            PlannedCostColour = PlannedCost > Budget ? "red" : "green";
-            ActualCostColour = ActualCost > PlannedCost ? "red" : "green";
-            FundsReceivedColour = GetAllReceived() < GetAllRequested() ? "red" : "green";
-            FundsRequestedColour = GetAllRequested() < Budget ? "red" : "green";
+            PlannedCostColour = Math.Floor(PlannedCost - Budget) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            ActualCostColour = Math.Floor(ActualCost - PlannedCost) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsReceivedColour = Math.Floor(GetAllRequested() - GetAllReceived()) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsRequestedColour = Math.Floor(Budget - GetAllRequested()) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
             FundsOwed = GetAllRequested() - GetAllReceived();
-            FundsOwedColour = (FundsOwed > 0) ? "red" : "green";
-            FundsDIColour = (FundsDI > AvailableFundsDI) ? "red" : "green";
+            FundsOwedColour = (Math.Floor(FundsOwed) > 0) ? "var(--rz-danger)" : "var(--rz-success)";
+            FundsDIColour = (Math.Floor(FundsDI - AvailableFundsDI) > 0) ? "var(--rz-danger)" : "var(--rz-success)";
 
             var sourcesAsList = transactionBreakdown.FundingSources
                 .Select(x => x.GetSensibleObjectName().Replace(" ", "&nbsp;"))

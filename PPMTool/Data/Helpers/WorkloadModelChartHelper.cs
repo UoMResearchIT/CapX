@@ -72,5 +72,18 @@ namespace PPMTool.Data.Helpers
             item.UpdateWLMNetValues();
             return item;
         }
+
+        /// <summary>
+        /// Generates a descriptive string for chart units based on query parameters.
+        /// </summary>
+        /// <param name="compare">Whether the data is a comparison against the WLM.</param>
+        /// <param name="normalise">Whether the data is normalised by total hours.</param>
+        /// <returns>A string describing the data units for a chart's Y-axis.</returns>
+        public static string GetChartYAxisTitle(bool compare, bool normalise)
+        {
+            var title = compare ? "Difference between Time Booked and WLM" : "Time Booked";
+            title += normalise ? " (Fraction of Total Hours)" : " (FTE)";
+            return title;
+        }
     }
 }

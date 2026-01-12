@@ -20,7 +20,6 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
-        private bool hideStaffResults = true;
         private bool showAllMyTimesheets;
         private DateTime dateNextTimesheet;
         private DateTime dateMondayThisWeek;
@@ -44,7 +43,7 @@ namespace PPMTool.Pages
                     if (initialLoadComplete)
                     {
                         Loading = true;
-                        EnqueueLoadData(GenerateTask);
+                        _ = LoadDataAsync();
                     }
                 }
             }
@@ -63,7 +62,7 @@ namespace PPMTool.Pages
                     if (initialLoadComplete)
                     {
                         Loading = true;
-                        EnqueueLoadData(GenerateTask);
+                        _ = LoadDataAsync();
                     }
                 }
             }
@@ -97,7 +96,7 @@ namespace PPMTool.Pages
                     if (initialLoadComplete)
                     {
                         Loading = true;
-                        EnqueueLoadData(GenerateTask);
+                        _ = LoadDataAsync();
                     }
                 }
             }
@@ -123,31 +122,7 @@ namespace PPMTool.Pages
             if (temp != null) ShowSynopsis = temp ?? true;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-superuser-showall");
             if (temp != null) SuperuserShowSynopsisForAllStaff = temp ?? true;
-            EnqueueLoadData(GenerateTask);
-        }
-
-        /// <summary>
-        /// Generates a task to load data
-        /// </summary>
-        /// <returns></returns>
-        private Task GenerateTask()
-        {
-            // TODO: Do away with this and just use the async/await on the main thread
-            return Task.Run(async () =>
-            {
-                await LoadDataAsync();
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    if (!initialLoadComplete)
-                    {
-                        initialLoadComplete = true;
-                    }
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
+            await LoadDataAsync();
         }
 
         /// <summary>
@@ -157,16 +132,19 @@ namespace PPMTool.Pages
         private async Task LoadDataAsync()
         {
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
-            myTimesheets = new List<Timesheet>(); // Initialise the list
-            myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
-
-            // Set the start date for the next one
-            dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
-
-            if (!ShowAllMyTimesheets)
+            myTimesheets = new List<Timesheet>();
+            if (ActiveUser?.Person != null)
             {
-                // Remove items with Submitted or Approved status
-                myTimesheets = myTimesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
+                myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
+
+                // Set the start date for the next one
+                dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
+
+                if (!ShowAllMyTimesheets)
+                {
+                    // Remove items with Submitted or Approved status
+                    myTimesheets = myTimesheets.Where(t => t.Status != TimesheetStatus.Submitted && t.Status != TimesheetStatus.Approved).ToList();
+                }
             }
 
             // Show second grid if user manages staff - need to see the timesheets they have submitted.
@@ -179,11 +157,11 @@ namespace PPMTool.Pages
                 managedPeople = await PersonService.GetAllShallowAsync(Context);
             }
 
-            if (managedPeople.Count() > 0)  // Is a manager
+            // Is a manager with staff
+            myStaffTimesheets = new List<Timesheet>();
+            myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
+            if (managedPeople.Count() > 0)
             {
-                hideStaffResults = false;  // Show/Hide the second grid based on this
-                myStaffTimesheets = new List<Timesheet>();
-                myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
                 dateMondayThisWeek = GetDateForMondayThisWeek();
                 synopsisStartDate = GetDateForAMonday(7); // Weeks in the past
                 synopsisEndDate = GetDateForAMonday(2, false); // Weeks in the future
@@ -219,6 +197,14 @@ namespace PPMTool.Pages
                 // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
                 myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
             }
+
+            // Finish off
+            if (!initialLoadComplete)
+            {
+                initialLoadComplete = true;
+            }
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>

@@ -1,11 +1,35 @@
 ﻿using System.Reflection;
-using DotNetExtensions;
 using Radzen;
 
 namespace PPMTool.Enums
 {
     public static class Extensions
     {
+        /// <summary>
+        /// Whether a cost model is one which carries indirects
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static bool HasIndirects(this CostModel model)
+        {
+            return model == CostModel.TechOnlyWithIndirects || model == CostModel.TechAndLeadershipWithIndirects;
+        }
+
+        /// <summary>
+        /// Whether a cost model is one with leadership charges
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static bool HasLeadership(this CostModel model)
+        {
+            return model == CostModel.TechAndLeadership || model == CostModel.TechAndLeadershipWithIndirects;
+        }
+
+        /// <summary>
+        /// Makes use of the decription attribute to convert to a string if it is avaialble
+        /// </summary>
+        /// <param name="me"></param>
+        /// <returns></returns>
         public static string ToNiceString(this Enum me)
         {
             return me.GetDescription() ?? me.ToString();
@@ -129,6 +153,19 @@ namespace PPMTool.Enums
                 status == ProjectStatus.Paused ||
                 status == ProjectStatus.Maintenance ||
                 status == ProjectStatus.Finished;
+        }
+
+        /// <summary>
+        /// Check if it is in the active, paused or maintenance state
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static bool IsActive(this ProjectStatus status)
+        {
+            return
+                status == ProjectStatus.Active ||
+                status == ProjectStatus.Paused ||
+                status == ProjectStatus.Maintenance;
         }
 
         /// <summary>

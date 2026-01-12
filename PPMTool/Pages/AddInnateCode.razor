@@ -3,7 +3,6 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using PPMTool.Enums
-@using DotNetExtensions
 <PageTitle>Add Timesheet Code - CapX</PageTitle>
 
 <div class="container">
@@ -19,11 +18,9 @@
         }
         
         <hr />
-        <div class="card">
-            <EditForm Model="@innateCode" OnValidSubmit="@HandleValidSubmit">
+        <RadzenCard>
+            <EditForm Model="@innateCode">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
-
                 <div class="row">
                     <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Activity Code" /><br />
@@ -34,8 +31,12 @@
                         <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityName" />
                     </div>
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Active" /><br />
-                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem"/>
+                        <RadzenLabel class="radzen-form-label" Text="Active" Component="IsActive" /><br />
+                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem" Name="IsActive" />
+                    </div>
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Sensitive" Component="IsSensitive" /><br />
+                        <RadzenSwitch @bind-Value="innateCode.IsSensitive" Style="margin-top: 1rem" Name="IsSensitive" />
                     </div>
                 </div>
 
@@ -53,10 +54,7 @@
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
                                 AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                AllowPaging="true"
-                                PageSize="15"
                                 AllowSorting="true"
-                                ShowPagingSummary="true"
                                 EditMode="DataGridEditMode.Single"
                                 FilterMode="FilterMode.Simple"
                                 Data="@dataGridEntities"
@@ -91,19 +89,7 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
-                @if (ErrorMessage != null)
-                {
-                    <br />
-                    <StatusMessageComponent Message=@ErrorMessage />
-                }
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>

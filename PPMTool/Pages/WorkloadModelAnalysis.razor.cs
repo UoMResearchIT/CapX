@@ -1,5 +1,4 @@
 ﻿using ApexCharts;
-using DotNetExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -214,7 +213,11 @@ namespace PPMTool.Pages
                 },
                 Xaxis = new XAxis
                 {
-                    Categories = Enum.GetValues<Duty>().Select(x => x.GetDescription())
+                    Type = XAxisType.Datetime,
+                    Labels = new XAxisLabels
+                    {
+                        Format = "dd MMM yyyy"
+                    }
                 }
             });
         }
@@ -225,9 +228,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private string GetYAxisTitle()
         {
-            var title = compareToWLM ? "Difference between Time Booked and WLM" : "Time Booked";
-            title += normalisedByTotalHours ? " (Fraction of Total Hours)" : " (FTE)";
-            return title;
+            return WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
         }
     }
 }

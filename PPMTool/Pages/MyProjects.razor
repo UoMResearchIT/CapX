@@ -15,33 +15,35 @@
         </div>
         <div class="col-auto">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenText Text="Include Finished" Style="margin-bottom: 0.1rem" />
-                <RadzenSwitch @bind-Value="@IncludeFinished" />
+                <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
+                <RadzenSwitch Name="IncludeFinished" @bind-Value="@IncludeFinished" />
             </RadzenStack>
         </div>
     </div>
     <hr />
-    @if (ownedProjectsAndDueNotes == null)
+    @if (Loading)
     {
         <LoadingComponent />            
     }
-    else if (ownedProjectsAndDueNotes.Count() == 0)
+    else if (ownedProjectsAndDueNotes == null || ownedProjectsAndDueNotes.Count() == 0)
     {
         <RadzenText Text="You don't have any projects to manage!" />
     }
     else
     {
-        foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
-        {
-            <ProjectSummaryComponent Project="projectAndNotes.Key"
-                                     EditAuthorised="EditAuthorised"
-                                     DetailsButtonClicked="DetailsButtonClicked"
-                                     OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
-                                     DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
-                                     NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
-                                     DueButtonClicked="DueButtonClicked"
-                                     ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
-        }
+        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
+            @foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
+            {
+                <ProjectSummaryComponent Project="projectAndNotes.Key"
+                                         EditAuthorised="EditAuthorised"
+                                         DetailsButtonClicked="DetailsButtonClicked"
+                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
+                                         NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
+                                         DueButtonClicked="DueButtonClicked"
+                                         ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+            }
+        </RadzenStack>
     }
 </div>
 <br/>

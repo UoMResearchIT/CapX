@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -46,7 +44,7 @@ namespace PPMTool.Pages
                 dataGridEntities.Remove(entity);
                 dataGrid.Reload();
                 Reset();
-                ErrorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error));
                 return;
             }
             LogInformation($"Added finref {entity.GetSensibleObjectName()}");
@@ -59,7 +57,7 @@ namespace PPMTool.Pages
             if (result == -1)
             {
                 CancelEdit(entity);
-                ErrorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error));
                 return;
             }
             LogInformation($"Updated finref {entity.GetSensibleObjectName()}");

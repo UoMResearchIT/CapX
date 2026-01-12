@@ -27,15 +27,21 @@ namespace PPMTool.Services
             return entity.InnateCodeId;
         }
 
+        /// <summary>
+        /// Duplicate detected if the name or the code are the same as another 
+        /// or if any of the tasks within the code have the same name as another task on the code
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, InnateCode entity)
         {
-            // Duplicate detected if the name or the code are the same as another or if any of the tasks within the
-            // code have the same name as another
             var all = GetAll(context);
             var duplicatesNameOfAnother = all
-            .Any(x => (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() &&
-                x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower())
-                && x.InnateCodeId != entity.InnateCodeId);
+                .Any(x =>
+                (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() ||
+                x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower()) &&
+                x.InnateCodeId != entity.InnateCodeId);
             var duplicatesTasks = entity.Tasks.DistinctBy(x => x.TaskName.Trim().ToLower()).Count() != entity.Tasks.Count;
             return duplicatesNameOfAnother || duplicatesTasks;
         }
@@ -128,26 +134,35 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<CodeToDeactivate> GetCodesToDeactivate(PPMToolContext context)
+        public async Task<IEnumerable<CodeToDeactivate>> GetCodesToDeactivateAsync(PPMToolContext context)
         {
             // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
-            // which are not associated with any currently active projects
-            var codes = context.InnateCodes
+            // which are not associated with any currently active projects. If finished, then 
+            // only include if the end date of the associated project is more than 4 weeks ago.
+            // This is to allow people to submit final timesheets against recently finished projects.
+            var codes = await context.InnateCodes
                 .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-") &&
                     context.Projects.Any(p =>
+
+                        // Project timesheet code matches
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
-                        (int)p.ProjectStatus >= (int)ProjectStatus.Finished
+
+                        // Project is cancelled or finished more than 28 days ago
+                        ((int)p.ProjectStatus > (int)ProjectStatus.Finished ||
+                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= DateTime.UtcNow.AddDays(-28)))
                     )
-                );
+                )
+                .ToListAsync();
 
             // Map the codes to CodeToDeactivate objects
             IList<CodeToDeactivate> codesToDeactivate = new List<CodeToDeactivate>();
             foreach (var code in codes)
             {
-                var projects = context.Projects
+                var projects = await context.Projects
                     .Include(p => p.ProjectManager)
                     .Include(p => p.InnateActivity)
-                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId);
+                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId)
+                    .ToListAsync();
                 var pmNames = projects.Select(x => x.ProjectManager == null ? "Not Set" : x.ProjectManager.Name);
                 var obj = new CodeToDeactivate(code, pmNames, projects.Select(x => x.RTP));
                 codesToDeactivate.Add(obj);

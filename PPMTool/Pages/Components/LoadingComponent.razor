@@ -1,18 +1,19 @@
 ﻿
 <RadzenStack AlignItems="AlignItems.Center" Class="rz-m-12" Gap="2rem">
     <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-    <RadzenText Text="@SpinnerText" TextStyle="TextStyle.Subtitle2" />
+    <RadzenText TagName="TagName.Span" Text="@SpinnerText" TextStyle="TextStyle.Subtitle2" aria-label="@defaultText" />
 </RadzenStack>
 
 @code {
-
     [Parameter]
-    public string SpinnerText { get; set; }
+    public string SpinnerText { get; set; } = defaultText;
 
     [Parameter]
     public EventCallback<string> SpinnerTextChanged { get; set; }
 
-    private string spinnerText = "Loading...";
+    private string spinnerText = defaultText;
+
+    private static readonly string defaultText = "Loading...";
 
     protected override void OnParametersSet()
     {

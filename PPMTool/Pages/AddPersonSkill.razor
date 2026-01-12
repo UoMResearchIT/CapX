@@ -1,7 +1,6 @@
 ﻿@page "/skills"
 @page "/skills/{PersonId:int}"
 @inherits BasePage
-@using DotNetExtensions
 @using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
@@ -14,10 +13,9 @@
         <h1>Edit Skills</h1>
         <RadzenText Text="@personModel?.Name" TextStyle="TextStyle.DisplayH5" />
         <hr />
-        <div class="card">
-            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+        <RadzenCard>
+            <EditForm Model="@personModel">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
                 <div class="row">
                     <div class="col py-2">
                         <h3>Skill Tags</h3>
@@ -53,7 +51,6 @@
                 <div class="row">
                     <div class="col">
                         <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
                                         WrapItems="false"
                                         AllowPaging="false"
                                         Style="width:100%;"
@@ -108,24 +105,7 @@
                         </RadzenDataList>
                     </div>
                 </div>
-                <hr />
-                <div class="row">
-                    <div class="col py-2 align-items-center">
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End">
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Icon="check" Disabled="@(!EditAuthorised)" />
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                        </RadzenStack>
-                    </div>
-                </div>
-                @if (ErrorMessage != null)
-                {
-                    <div class="row">
-                        <div class="col-auto float-right">
-                            <StatusMessageComponent Message=@ErrorMessage />
-                        </div>
-                    </div>
-                }
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>

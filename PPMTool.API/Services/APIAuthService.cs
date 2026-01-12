@@ -6,7 +6,7 @@ using PPMTool.Data.Entities;
 namespace PPMTool.API.Services
 {
     /// <summary>
-    /// Service to check the validity of the API key
+    /// Service to check the validity of the API key.
     /// </summary>
     public class APIAuthService
     {
@@ -23,7 +23,10 @@ namespace PPMTool.API.Services
                 return null;
             }
 
-            var key = context.ApiKeys.Include(x => x.Owner).FirstOrDefault(x => x.Key == keyValue);
+            var key = context.ApiKeys
+                .Include(x => x.Owner)
+                .ThenInclude(owner => owner.Person)
+                .FirstOrDefault(x => x.Key == keyValue);
 
             if (key != null && key.Active)
             {

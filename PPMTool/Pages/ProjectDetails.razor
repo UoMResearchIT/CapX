@@ -75,8 +75,8 @@
             <div class="row">
                 <div class="col" style="min-width: 500px">
                     <h2>Burn-Up Chart</h2>
-                    <div class="card">
-                        @if (loadingBurnUpChart)
+                    <RadzenCard>
+                        @if (loadingBurnUpChart || burnUpChartSource == null)
                         {
                             <LoadingComponent />
                         }
@@ -132,7 +132,7 @@
 
                             </ApexChart>
                         }
-                    </div>
+                    </RadzenCard>
                     <div class="my-2">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical">
                             <RadzenText Text="Select Resources:" TextStyle="TextStyle.Subtitle1" />
@@ -152,69 +152,76 @@
 
                 <div class="col" style="min-width: 500px">
                     <h2>Schedule</h2>
-                    <div class="card">
-                        <ApexChart TItem="GanttBlock"
-                                   XAxisType="XAxisType.Datetime"
-                                   Options=ganttChartOptions
-                                   OnDataPointSelection="TaskSelected"
-                                   @ref="scheduleChart">
-                            <ChildContent>
-                                <ApexRangeSeries TItem="GanttBlock"
-                                                 Items="confirmedBlocks"
-                                                 Name="Resources Confirmed"
-                                                 XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                 YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                 YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                                 PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                    <RadzenCard>
+                        @if (loadingGanttChart || confirmedBlocks == null || provisionalBlocks == null)
+                        {
+                            <LoadingComponent />
+                        }
+                        else
+                        {
+                            <ApexChart TItem="GanttBlock"
+                                       XAxisType="XAxisType.Datetime"
+                                       Options=ganttChartOptions
+                                       OnDataPointSelection="TaskSelected"
+                                       @ref="scheduleChart">
+                                <ChildContent>
+                                    <ApexRangeSeries TItem="GanttBlock"
+                                                     Items="confirmedBlocks"
+                                                     Name="Resources Confirmed"
+                                                     XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                                     YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                                     YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                                     PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
-                                <ApexRangeSeries TItem="GanttBlock"
-                                                 Items="provisionalBlocks"
-                                                 Name="Resources Provisional"
-                                                 XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
-                                                 YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
-                                                 YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                                 PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
-                            </ChildContent>
-                            <ApexPointTooltip>
-                                <div class="m-2">
-                                    @{
-                                        var point = (ListPoint<GanttBlock>)context.DataPoint;
-                                        <div class="m-0 p-3">
-                                            <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
-                                            @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
-                                            {
-                                                @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
+                                    <ApexRangeSeries TItem="GanttBlock"
+                                                     Items="provisionalBlocks"
+                                                     Name="Resources Provisional"
+                                                     XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
+                                                     YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
+                                                     YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
+                                                     PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                </ChildContent>
+                                <ApexPointTooltip>
+                                    <div class="m-2">
+                                        @{
+                                            var point = (ListPoint<GanttBlock>)context.DataPoint;
+                                            <div class="m-0 p-3">
+                                                <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
+                                                @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
                                                 {
-                                                    <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
+                                                    @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
+                                                    {
+                                                        <h4 class="me-1 text-danger"> &#x26A0; [Under Resourced (@point.Items.FirstOrDefault().Task.UnmetDemand FTE)]</h4>
+                                                    }
+                                                    @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
+                                                    {
+                                                        <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
+                                                    }
+                                                    @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
+                                                    {
+                                                        <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
+                                                    }
+                                                    @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
+                                                    {
+                                                        <h4 class="me-1 text-info">[Currently No Demand]</h4>
+                                                    }
                                                 }
-                                                @if (point.Items.FirstOrDefault()?.Task.HasProvisionalResources() ?? false)
+                                                <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{Math.Round(x.AssignmentFTE, 3)}]"))</h4>
+                                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
+                                                <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                                                @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
                                                 {
-                                                    <h4 class="me-1 text-warning"> &#x26A0; [Provisional Assignment]</h4>
+                                                    var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
+                                                    var skillsList = SkillTagService.GetSkillsForSubTask(Context, taskId);
+                                                    <SkillsAsBadgesComponent SkillsList="@skillsList" EmptyMessage="- No skill tags for this task" />
                                                 }
-                                                @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandButResourced() ?? false)
-                                                {
-                                                    <h4 class="me-1 text-warning"> &#x26A0; [Resourced Zero Demand (@point.Items.FirstOrDefault().Task.AssignedResources.RoundedSum(x => x.AssignmentFTE, 3) FTE)]</h4>
-                                                }
-                                                @if (point.Items.FirstOrDefault()?.Task.HasZeroDemandAndNoResources() ?? false)
-                                                {
-                                                    <h4 class="me-1 text-info">[Currently No Demand]</h4>
-                                                }
-                                            }
-                                            <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
-                                            <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                            <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
-                                            @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
-                                            {
-                                                var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
-                                                var skillsList = SkillTagService.GetSkillsForSubTask(Context, taskId);
-                                                <SkillsAsBadgesComponent SkillsList="@skillsList" EmptyMessage="- No skill tags for this task" />
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            </ApexPointTooltip>
-                        </ApexChart>
-                    </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </ApexPointTooltip>
+                            </ApexChart>
+                        }
+                    </RadzenCard>
 
                     <div class="my-2">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
@@ -267,12 +274,12 @@
             }
             else
             {
-                <div class="card">
+                <RadzenCard>
                     <RadzenDataGrid AllowFiltering="@((gridTasks?.Count ?? 0) > 0)"
                                     AllowColumnResize="true"
                                     FilterMode="FilterMode.Simple"
                                     AllowSorting="true"
-                                    PageSize="10"
+                                    PageSize="@gridPageSize"
                                     AllowPaging="true"
                                     ShowPagingSummary="true"
                                     Data="@gridTasks"
@@ -325,7 +332,16 @@
                             <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
                                 <Template Context="t">
-                                    @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
+                                    @string.Join(',', t.AssignedResources?.Select(x =>
+                                    {
+                                        var label = $"{x.Person.ShortName}[{x.AssignmentFTE}";
+                                        if (project.CostModel.HasIndirects())
+                                        {
+                                            label += $" ({Math.Round(x.BilledFTE, 3)})";
+                                        }
+                                        label += "]";
+                                        return label;
+                                    }))
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" Width="10rem" MinWidth="10px" />
@@ -338,7 +354,7 @@
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                </div>
+                </RadzenCard>
             }
             <hr />
         }
@@ -439,10 +455,10 @@
                 <div class="row justify-content-center ml-1">
                     <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Center" Gap="0.1rem" AlignItems="AlignItems.Center">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
-                            <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                            <RadzenIcon Icon="search" IconStyle="IconStyle.Primary" />
                             <RadzenTextBox @bind-Value=@noteSearchTerms
                                             Placeholder="Search Notes"
-                                            Change=@FilterNotes
+                                            Change=@FilterAndHighlightNotes
                                             Style="width:100%" />
                             <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                         </RadzenStack>

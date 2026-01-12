@@ -1,0 +1,84 @@
+﻿@page "/estimatecost"
+@inherits BasePage
+@using PPMTool.Data
+@using PPMTool.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using System.Diagnostics
+@using System.ComponentModel.DataAnnotations
+@using static PPMTool.Data.Entities.Project
+<PageTitle>Estimate Cost - CapX</PageTitle>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-auto">
+            <h1>Estimate Project Cost</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <p>Tool for estimating the cost of a project based on the established costing approach.</p>
+        </div>
+    </div>
+    <hr />
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <RadzenCard>
+            <h2>Project Details</h2>
+            <div class="row">
+                <div class="col">
+                    <RadzenLabel class="radzen-form-label"
+                                 Text="Cost Model"
+                                 Component="CostModel" /><br />
+                    <RadzenDropDown class="radzen-dropdown"
+                                    @bind-Value="CostModel"
+                                    Data="@(Enum.GetValues(typeof(CostModel)))"
+                                    Name="CostModel">
+                        <Template Context="cost">
+                            @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+            </div>
+            <HintComponent Message="This section represents the summary for the project. The values are read-only as they are driven by the individual resource details below." />
+            <TaskConfigurationComponent Context=Context
+                                        ReadOnly="true"
+                                        ShowSummaryOnly="true"
+                                        Model="summaryModel" />
+            <hr />
+            <div class="row">
+                <div class="col">
+                    <h2>Resources</h2>
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Text="Add" Icon="add" Click="@AddResource" />
+                </div>
+            </div>
+            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. It cannot be deleted." />
+            @foreach (var resource in models)
+            {
+                if (ShouldIncludeResource(resource))
+                {
+                    <div class="row">
+                        <div class="col">
+                            <h3>@resource.Key</h3>
+                        </div>
+                        <div class="col-auto">
+                            <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource.Key))" Disabled="@(resource.Key == "Leadership")" />
+                        </div>
+                    </div>
+                    <TaskConfigurationComponent Context=Context
+                                                Model="resource.Value"
+                                                ConfigModelUpdated="UpdateSummaryComponent"
+                                                IsLeadershipComponent="@(resource.Key == "Leadership")"/>
+                    <hr />
+                }
+            }
+        </RadzenCard>
+    }
+</div>

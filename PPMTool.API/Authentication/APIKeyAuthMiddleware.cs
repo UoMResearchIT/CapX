@@ -4,7 +4,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.API.Authentication
 {
     /// <summary>
-    /// Middleware to authenticate API key
+    /// Middleware to authenticate API key.
     /// </summary>
     public sealed class APIKeyAuthMiddleware
     {
@@ -35,7 +35,7 @@ namespace PPMTool.API.Authentication
             // Authentication everything else
             if (!context.Request.Headers.TryGetValue("x-api-key", out var extractedApiKey))
             {
-                context.Response.StatusCode = 401;
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("API Key is missing");
                 return;
             }
@@ -44,10 +44,13 @@ namespace PPMTool.API.Authentication
 
             if (matchingUser == null)
             {
-                context.Response.StatusCode = 401;
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Invalid API Key");
                 return;
             }
+
+            // Add the user as well
+            context.Items.Add("User", matchingUser);
 
             await next(context);
         }

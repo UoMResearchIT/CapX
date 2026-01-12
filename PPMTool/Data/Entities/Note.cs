@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -11,16 +10,16 @@ namespace PPMTool.Data.Entities
         public string HtmlContent { get; set; }
 
         [Required]
-        public User Author { get; set; }
+        public virtual User Author { get; set; }
 
         [Required]
-        public Project Project { get; set; }
+        public virtual Project Project { get; set; }
 
         public DateTime CreatedDate { get; set; }
 
         public DateTime EditedDate { get; set; }
 
-        public User Editor { get; set; }
+        public virtual User Editor { get; set; }
 
         public bool IsFinanceInfo { get; set; }
 
