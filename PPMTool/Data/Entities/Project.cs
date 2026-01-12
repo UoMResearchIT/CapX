@@ -487,31 +487,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Computes the fraction of time within the given window where tasks are running
-        /// </summary>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <returns></returns>
-        private double GetFractionOfTimeWithTasksRunning(DateTime startDate, DateTime endDate)
-        {
-            // Obviously if no tasks then no fraction
-            if (SubTasks.Count == 0)
-            {
-                return 0;
-            }
-
-            // Convert tasks to date ranges
-            var dateRanges = GetLeadershipTaskRanges();
-
-            // Get the number of overlapping days in this window
-            var days = CalculateOverlappingDays(dateRanges, startDate, endDate);
-
-            // Return fraction of the days in the window
-            var windowSize = endDate.Subtract(startDate).TotalDays + 1;
-            return days / windowSize;
-        }
-
-        /// <summary>
         /// Generates a list of date ranges for the leadership tasks
         /// </summary>
         /// <returns></returns>
