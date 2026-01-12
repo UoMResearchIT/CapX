@@ -517,9 +517,9 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public IEnumerable<DateRange> GetLeadershipTaskRanges()
         {
-            // Convert the sub tasks to date ranges
+            // Convert the sub tasks to date ranges -- exclude those that do not require leadership, or zero demand
             var dateRanges = (SubTasks ?? Enumerable.Empty<SubTask>())
-                .Where(x => x.RequiresLeadership)
+                .Where(x => x.RequiresLeadership && x.Demand > 0)
                 .Select(x => new DateRange { StartDate = x.StartDate, EndDate = x.EndDate });
 
             // Merge overlapping date ranges
