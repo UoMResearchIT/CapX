@@ -23,6 +23,9 @@ RUN dotnet tool restore
 COPY PPMTool PPMTool
 COPY PPMTool.API PPMTool.API
 
+# Restore again now that we have full source (some packages may need source files)
+RUN dotnet restore "PPMTool/PPMTool.csproj"
+
 # Create the database by running migrations
 # The CONNECTION_STRING env var is required by the DesignTimeDbContextFactory
 ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db"
