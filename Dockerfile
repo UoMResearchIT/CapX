@@ -6,6 +6,7 @@ WORKDIR /app
 EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIG=Local
 WORKDIR /src
 COPY nuget.config nuget.config
 
@@ -30,9 +31,10 @@ ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db"
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
+ARG BUILD_CONFIG=Local
 # Publish only the main projects (not the test projects) to avoid assembly conflicts
-RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool/PPMTool.csproj"
-RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool.API/PPMTool.API.csproj"
+RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net8.0 "PPMTool/PPMTool.csproj"
+RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net8.0 "PPMTool.API/PPMTool.API.csproj"
 RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
 VOLUME /app/publish/state
