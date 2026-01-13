@@ -16,88 +16,63 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          version: v0.26.1
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Docker Compose Build
+      - name: Build Docker images
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_TOKEN }}
           API_KEY_SECRET: super-secret-key-that-is-32-chars-min
         run: |
-          echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> .env
           echo "API_KEY_SECRET=$API_KEY_SECRET" >> .env
-          docker compose --env-file .env -f compose.yml build 
-      
+          docker compose build
+
       - name: Start containers
+        run: docker compose up -d
+
+      - name: Wait for containers to be healthy
         run: |
-          docker compose --env-file .env -f compose.yml up -d
-
-      - name: Check health of containers (only those with healthcheck)
-        run: |
-          echo "🔎 Checking health for containers with healthchecks..."
-
-          # Get list of running containers with their ID and name
-          docker ps --format '{{.ID}} {{.Names}}' | while read -r cid name; do
-            # Detect if container has a healthcheck
-            has_health=$(docker inspect --format='{{if .Config.Healthcheck}}yes{{else}}no{{end}}' "$cid")
-
-            if [ "$has_health" = "no" ]; then
-              echo "⚠️  $name has no healthcheck. Skipping..."
-              continue
-            fi
-
-            echo ""
-            echo "📦 Checking container: $name (ID: $cid)"
-
-            success=0
-            fail=0
-
-            for i in {1..10}; do
-              status=$(docker inspect --format='{{.State.Health.Status}}' "$cid")
-
-              echo "  Attempt $i: Health status = $status"
-
-              if [ "$status" = "healthy" ]; then
-                success=$((success+1))
-                fail=0
-              elif [ "$status" = "unhealthy" ]; then
-                fail=$((fail+1))
-                success=0
-              else
-                echo "  ⏳ Still starting..."
+          echo "Waiting for containers to pass health checks..."
+          
+          # Wait up to 60 seconds for all containers to be healthy
+          timeout=60
+          elapsed=0
+          
+          while [ $elapsed -lt $timeout ]; do
+            all_healthy=true
+            
+            for cid in $(docker ps -q); do
+              name=$(docker inspect --format='{{.Name}}' "$cid" | sed 's/^\/*//')
+              has_health=$(docker inspect --format='{{if .Config.Healthcheck}}yes{{else}}no{{end}}' "$cid")
+              
+              if [ "$has_health" = "no" ]; then
+                continue
               fi
-
-              if [ "$fail" -ge 3 ]; then
-                echo "  ❌ $name failed health check 3 times in a row."
+              
+              status=$(docker inspect --format='{{.State.Health.Status}}' "$cid")
+              echo "  $name: $status"
+              
+              if [ "$status" = "unhealthy" ]; then
+                echo "Container $name is unhealthy"
+                docker logs "$cid"
                 exit 1
               fi
-
-              if [ "$success" -ge 3 ]; then
-                echo "  ✅ $name is healthy 3 times in a row."
-                break
+              
+              if [ "$status" != "healthy" ]; then
+                all_healthy=false
               fi
-
-              sleep 3
             done
-
-            if [ "$success" -lt 3 ]; then
-              echo "  ❌ $name did not become healthy. Exiting."
-              exit 1
+            
+            if [ "$all_healthy" = true ]; then
+              echo "All containers are healthy"
+              exit 0
             fi
+            
+            sleep 5
+            elapsed=$((elapsed + 5))
           done
+          
+          echo "Timeout: containers did not become healthy within ${timeout}s"
+          exit 1
 
-          echo ""
-          echo "✅ All containers with published ports passed health checks."
-
-      - name: Show container logs (on failure)
+      - name: Show container logs on failure
         if: failure()
         run: docker compose logs
 
