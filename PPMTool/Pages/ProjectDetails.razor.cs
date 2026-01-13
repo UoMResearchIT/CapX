@@ -84,18 +84,33 @@ namespace PPMTool.Pages
             }
         }
 
+        // Chart stuff
         private List<GanttBlock> confirmedBlocks;
         private List<GanttBlock> provisionalBlocks;
-        private List<SubTask> allTasks;
-        private IList<SubTask> gridTasks;
-        private List<Note> allNotes;
-        private Project project;
-        private FinanceSummaryItem financeSummaryItem;
         private List<ChartHelper.WeeklyTaskEffort> burnUpChartSource;
         private ApexChartOptions<GanttBlock> ganttChartOptions;
         private ApexChartOptions<ChartHelper.WeeklyTaskEffort> burnUpChartOptions;
+        private bool groupLinkedTasks;
+        private ApexChart<GanttBlock> scheduleChart;
+        private bool loadingBurnUpChart = false;
+        IEnumerable<Person> resources = new List<Person>();
+        IList<Person> selectedResources = new List<Person>();
+
+        // Basics
+        private Project project;
+        private FinanceSummaryItem financeSummaryItem;
+        private bool isCurrentUserFollowing;
+        private bool isProjectManager;
+        private IEnumerable<SkillTag> skillsRequiredForProject;
+
+        // Task grid
         private int count;
         private readonly int gridPageSize = 10;
+        private List<SubTask> allTasks;
+        private IList<SubTask> gridTasks;
+
+        // Notes
+        private List<Note> allNotes;
         private bool isEditExistingNote;
         private bool editorVisible;
         private Note noteModel;
@@ -110,43 +125,76 @@ namespace PPMTool.Pages
         private IList<Person> cachedMentionables;
         private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
-        private bool isCurrentUserFollowing;
-        private bool isProjectManager;
-        private bool groupLinkedTasks;
-        private ApexChart<GanttBlock> scheduleChart;
-        private IEnumerable<SkillTag> skillsRequiredForProject;
-        private bool loadingBurnUpChart = false;
-        private bool loadingGanttChart = false;
-        IEnumerable<Person> resources = new List<Person>();
-        IList<Person> selectedResources = new List<Person>();
+
+        // Loading parameter cache
+        private int? lastRTP;
+        private int? lastId;
+        private int? lastNote;
+        private bool lastDue;
+        private CancellationTokenSource loadCts;
+
 
         /// <summary>
         /// Fired when the paramters are changed
         /// </summary>
-        protected override void OnParametersSet()
+        protected override async Task OnParametersSetAsync()
         {
-            // Set the loading flag and redraw the view while the background task runs
-            base.OnParametersSet();
+            await base.OnParametersSetAsync();
 
-            Debug.WriteLine("** OnParameters!!!!");
+            // Detect parameter change safely
+            bool changed =
+                lastRTP != RTP ||
+                lastId != ProjectId ||
+                lastNote != FilteredNote ||
+                lastDue != FilterDueNotes;
 
-            // Fire the load task
-            _ = LoadDataAsync();
+            Debug.WriteLine($"** [Project Details] OnParameters fired - changed={changed}");
 
-            Debug.WriteLine($"** Initialised project details");
+            if (!changed)
+                return;
+
+            // Cancel any in-flight loads
+            loadCts?.Cancel();
+            loadCts = new CancellationTokenSource();
+
+            // Snapshot parameters (null-safe)
+            lastRTP = RTP;
+            lastId = ProjectId;
+            lastNote = FilteredNote;
+            lastDue = FilterDueNotes;
+
+            try
+            {
+                await LoadDataAsync(loadCts.Token);
+
+                if (ProjectId is null)
+                {
+                    Navigation.NavigateTo("nothinghere");
+                    return;
+                }
+
+                if (!Navigation.Uri.Contains("projects/projectdetails"))
+                {
+                    Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
+                    return;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.WriteLine("** Load cancelled");
+            }
         }
 
         /// <summary>
         /// Method to get the background task that does all the intialisation work
         /// </summary>
         /// <returns></returns>
-        private async Task LoadDataAsync()
+        private async Task LoadDataAsync(CancellationToken ct)
         {
-            Debug.WriteLine("** Loading Data...");
+            Debug.WriteLine("** [Project Details] Loading Data...");
             try
             {
                 Loading = true;
-                StateHasChanged();
                 await Task.Yield();
 
                 // Setup initial state
@@ -167,6 +215,9 @@ namespace PPMTool.Pages
                     .Select(x => x.Person)
                     .ToList();
                 mentionables = cachedMentionables;
+
+                // Check if we can proceed
+                if (ct.IsCancellationRequested) return;
 
                 // Query string only consulted when Project ID is not specified in URL
                 if (ProjectId == null && RTP != null)
@@ -203,6 +254,9 @@ namespace PPMTool.Pages
                         transactions
                     );
 
+                    // Check if we can proceed
+                    if (ct.IsCancellationRequested) return;
+
                     // Load the task grid
                     allTasks = project.SubTasks.OrderBy(x => x.StartDate).ToList();
                     LoadTaskData(new LoadDataArgs());
@@ -222,19 +276,25 @@ namespace PPMTool.Pages
                     }
                     resources = tempResourceNames;
 
-                    // Load other parts of the page concurrently
-                    await Task.WhenAll(
-                        LoadGanttChartAsync(),
-                        LoadBurnUpChartAsync(),
-                        ConfigureNotesAsync()
-                    );
+                    // Check if we can proceed
+                    if (ct.IsCancellationRequested) return;
+
+                    // Go fetch the notes
+                    LoadNotes();
+
+                    // Check if we can proceed
+                    if (ct.IsCancellationRequested) return;
+
+                    // Load charts
+                    LoadGanttChart();
+                    LoadBurnUpChart();
                 }
 
                 LogInformation($"Viewing project details for RTP-{project?.RTP}");
             }
             finally
             {
-                Debug.WriteLine("** ...Finished Loading Data!");
+                Debug.WriteLine("** [Project Details] ...Finished Loading Data!");
                 Loading = false;
                 StateHasChanged();
             }
@@ -249,59 +309,101 @@ namespace PPMTool.Pages
         {
             await base.OnAfterRenderAsync(firstRender);
 
-            // If no project ID set by the time the page is renderered then navigate away
-            if (ProjectId == null)
-            {
-                Navigation.NavigateTo("nothinghere");
-                return;
-            }
-
-            // If the path is the legacy path then redirect
-            if (!Navigation.Uri.Contains("projects/projectdetails"))
-            {
-                Navigation.NavigateTo(Navigation.Uri.Replace("/projectdetails", "/projects/projectdetails"));
-                return;
-            }
-
             if (firstRender)
             {
-                Debug.WriteLine("** After Render - first render!");
+                Debug.WriteLine("** [Project Details] After Render - first render!");
 
                 // Create a reference to self in JS
                 await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
 
-                // Go fetch the notes (has to be after render as need to scroll to)
-                await ConfigureNotesAsync();
+                // Do the JS highlighting and scrolling if required
+                await FilterHighlightScrollNotesAsync();
             }
         }
 
         /// <summary>
-        /// Configures the note filters and then gets them from the DB applying scroll to as required
+        /// Loads notes from the DB based on the state of the filter switches
         /// </summary>
         /// <returns></returns>
-        private async Task ConfigureNotesAsync()
+        private void LoadNotes()
         {
-            // After the page has finished rendering then apply the search string from the parameter
-            if (FilteredNote != null)
-            {
-                // Set the search term to filter
-                noteSearchTerms = $"#id={FilteredNote}";
-            }
-            else if (FilterDueNotes)
+            // Set defaults applying from the parameters later
+            showOnlyDueItems = false;
+            sortByDueDate = false;
+
+            // Set the switches based on the parameters
+            if (FilterDueNotes)
             {
                 showOnlyDueItems = true;
                 sortByDueDate = true;
             }
 
-            // Get the notes from the DB
+            // If parameter is present to filter to a specific note then set in search box
+            // if the search box is empty
+            if (string.IsNullOrWhiteSpace(noteSearchTerms) && FilteredNote != null)
+            {
+                // Set the search term to filter
+                noteSearchTerms = $"#id={FilteredNote}";
+            }
+
+            // Get the notes from the DB based on what is needed
             LoadNotesFromDB();
+        }
 
-            // Filter and Highlight
-            FilterAndHighlightNotes();
+        /// <summary>
+        /// Method to filter the notes and invoke JS to based on the search terms to highlight and scroll to notes as required
+        /// </summary>
+        private async Task FilterHighlightScrollNotesAsync()
+        {
+            // Clear any existing highlights
+            await JSRuntime.InvokeVoidAsync("clearHighlightInNotes");
+            await Task.Delay(500);
 
-            // Refresh
-            StateHasChanged();
-            await Task.Yield();
+            // No search terms so show all
+            if (string.IsNullOrWhiteSpace(noteSearchTerms))
+            {
+                filteredNotes = allNotes;
+                Debug.WriteLine($"** Notes reset");
+                StateHasChanged();
+                await Task.Yield();
+            }
+
+            // Search terms are present so filter the list content
+            else
+            {
+                // Search by DB ID (useful for resolving links)
+                if (noteSearchTerms.StartsWith("#id=") && noteSearchTerms.Length > 4 && int.TryParse(noteSearchTerms.Substring(4), out int noteId))
+                {
+                    filteredNotes = allNotes.Where(x => x.NoteId == noteId).ToList();
+                    Debug.WriteLine($"** Filtered based on ID {noteId} giving {filteredNotes.Count} notes.");
+
+                    // Re-render the view and allow a redraw by yiedling
+                    StateHasChanged();
+                    await Task.Yield();
+
+                    // Call JS function to scroll to the note based on what should now be displayed
+                    await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{noteId}");
+                }
+                else
+                {
+                    // Filter based on the search terms (plain text content)
+                    filteredNotes = allNotes.Where(x =>
+                    {
+                        var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
+                        return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                    }).ToList();
+
+                    Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
+
+                    // Re-render the view and allow a redraw by yiedling
+                    StateHasChanged();
+                    await Task.Yield();
+
+                    // Call JS function to highlight the terms of what now will be displayed
+                    await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
+                    await Task.Delay(500);
+                }
+            }
 
             // Check whether the parameter is present to scroll to the due notes
             if (FilterDueNotes)
@@ -315,11 +417,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Method to load the data for the schedule chart
         /// </summary>
-        private async Task LoadGanttChartAsync()
+        private void LoadGanttChart()
         {
-            Debug.WriteLine("** Loading Gantt...");
-            loadingGanttChart = true;
-            await InvokeAsync(StateHasChanged);
+            Debug.WriteLine("** [Project Details] Loading Gantt...");
 
             // Generate the blocks for the schedule chart
             var allBlocks = new List<GanttBlock>();
@@ -420,21 +520,15 @@ namespace PPMTool.Pages
 
             // Update the Gantt chart axis limits
             UpdateScheduleChartAxisLimits();
-
-            // Reset the flag
-            loadingGanttChart = false;
-            await InvokeAsync(StateHasChanged);
-            Debug.WriteLine("** ...Finished Loading Gantt!");
+            Debug.WriteLine("** [Project Details] ...Finished Loading Gantt!");
         }
 
         /// <summary>
-        /// Method to load the burn-up chart -- can be called from a background thread
+        /// Method to load the burn-up chart
         /// </summary>
-        private async Task LoadBurnUpChartAsync()
+        private void LoadBurnUpChart()
         {
-            Debug.WriteLine("** Loading Burn-Up...");
-            loadingBurnUpChart = true;
-            await InvokeAsync(StateHasChanged);
+            Debug.WriteLine("** [Project Details] Loading Burn-Up...");
 
             // Create the burn-up chart items
             burnUpChartSource = new List<ChartHelper.WeeklyTaskEffort>();
@@ -507,9 +601,26 @@ namespace PPMTool.Pages
                 }
             };
 
-            loadingBurnUpChart = false;
-            await InvokeAsync(StateHasChanged);
-            Debug.WriteLine("** ...Finished Loading Burn-Up!");
+            Debug.WriteLine("** [Project Details] ...Finished Loading Burn-Up!");
+        }
+
+        /// <summary>
+        /// Updates the schedule chart axis limits as switching between grouped and ungrouped doesn't auto update properly
+        /// </summary>
+        private void UpdateScheduleChartAxisLimits()
+        {
+            var allBlocks = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake());
+
+            // Set the axis limits
+            ganttChartOptions.Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Min = allBlocks.Count() == 0 ? null : allBlocks.Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
+                    Max = allBlocks.Count() == 0 ? null : allBlocks.Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
+                }
+            };
+            scheduleChart?.UpdateOptionsAsync(false, false, false);
         }
 
         /// <summary>
@@ -531,7 +642,10 @@ namespace PPMTool.Pages
             }
 
             // Reload the chart
-            Task.Run(LoadBurnUpChartAsync);
+            loadingBurnUpChart = true;
+            LoadBurnUpChart();
+            loadingBurnUpChart = false;
+            StateHasChanged();
         }
 
         /// <summary>
@@ -544,25 +658,6 @@ namespace PPMTool.Pages
 
             // Redraw the chart
             scheduleChart?.RenderAsync();
-        }
-
-        /// <summary>
-        /// Updates the schedule chart axis limits as switching between grouped and ungrouped doesn't auto update properly
-        /// </summary>
-        private void UpdateScheduleChartAxisLimits()
-        {
-            var allBlocks = confirmedBlocks.Concat(provisionalBlocks).Where(x => !x.IsFake());
-
-            // Set the axis limits
-            ganttChartOptions.Yaxis = new List<YAxis>
-            {
-                new YAxis
-                {
-                    Min = allBlocks.Count() == 0 ? null : allBlocks.Min(x => x.Task.StartDate).ToUnixTimeMilliseconds(),
-                    Max = allBlocks.Count() == 0 ? null : allBlocks.Max(x => x.Task.EndDate).ToUnixTimeMilliseconds()
-                }
-            };
-            scheduleChart?.UpdateOptionsAsync(false, false, false);
         }
 
         /// <summary>
@@ -622,7 +717,7 @@ namespace PPMTool.Pages
                     .ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
-            Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
+            Debug.WriteLine($"** [Project Details] Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
         }
 
         /// <summary>
@@ -716,7 +811,7 @@ namespace PPMTool.Pages
         private void FilterSwitchToggled()
         {
             LoadNotesFromDB();
-            FilterAndHighlightNotes();
+            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
         }
 
         /// <summary>
@@ -724,7 +819,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadNotesFromDB()
         {
-            Debug.WriteLine("** Populating notes...");
+            Debug.WriteLine("** [Project Details] Populating notes...");
             allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
@@ -733,75 +828,12 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Filters the notes in the list via JS and also applies text highlighting if searching
-        /// </summary>
-        private void FilterAndHighlightNotes()
-        {
-            Debug.WriteLine("** Filtering / Highlighting notes...");
-
-            // Clear existing highlighting
-            InvokeAsync(async () =>
-            {
-                await JSRuntime.InvokeVoidAsync("clearHighlightInNotes");
-            }).ContinueWith(async t =>
-            {
-                await InvokeAsync(async () =>
-                {
-                    // Wait for JS to finish
-                    await Task.Delay(500);
-
-                    // No search terms so show all
-                    if (string.IsNullOrWhiteSpace(noteSearchTerms))
-                    {
-                        filteredNotes = allNotes;
-                        Debug.WriteLine($"** Notes reset");
-                        StateHasChanged();
-                    }
-
-                    // Search terms are present
-                    else
-                    {
-                        // Search by DB ID (useful for resolving links)
-                        if (noteSearchTerms.StartsWith("#id=") && noteSearchTerms.Length > 4 && int.TryParse(noteSearchTerms.Substring(4), out int noteId))
-                        {
-                            filteredNotes = allNotes.Where(x => x.NoteId == noteId).ToList();
-                            Debug.WriteLine($"** Filtered based on ID {noteId} giving {filteredNotes.Count} notes.");
-
-                            // Re-render then scroll to note
-                            StateHasChanged();
-                            await Task.Delay(300);
-                            await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{noteId}");
-                        }
-                        else
-                        {
-                            // Filter based on the search terms (plain text content)
-                            filteredNotes = allNotes.Where(x =>
-                            {
-                                var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
-                                return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
-                            }).ToList();
-
-                            Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
-
-                            // Re-render the view
-                            StateHasChanged();
-                            await Task.Delay(500);
-
-                            // Call highlighter JS function
-                            await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
-                        }
-                    }
-                });
-            });
-        }
-
-        /// <summary>
         /// Clears the search terms and resets the filter
         /// </summary>
         private void ClearSearch()
         {
             noteSearchTerms = string.Empty;
-            FilterAndHighlightNotes();
+            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
         }
 
         /// <summary>
@@ -872,7 +904,7 @@ namespace PPMTool.Pages
             }
             isEditExistingNote = false;
             LoadNotesFromDB();
-            FilterAndHighlightNotes();
+            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
             ShowOrHideEditor(false);
         }
 
@@ -899,7 +931,7 @@ namespace PPMTool.Pages
             LogInformation($"Added note for {project.GetFullName()}");
             noteSearchTerms = string.Empty;
             LoadNotesFromDB();
-            FilterAndHighlightNotes();
+            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
             ShowOrHideEditor(false);
             _ = EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions);
         }
@@ -918,7 +950,7 @@ namespace PPMTool.Pages
             NoteService.Update(Context, noteModel, true);
             LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
             LoadNotesFromDB();
-            FilterAndHighlightNotes();
+            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
             ShowOrHideEditor(false);
             _ = EmailService.SendMentionAndOwnerEmailNotificationsAsync(noteModel, mentions, listOfNoteChanges);
         }
@@ -951,7 +983,7 @@ namespace PPMTool.Pages
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
                 NoteService.Delete(Context, noteToDelete);
                 LoadNotesFromDB();
-                FilterAndHighlightNotes();
+                await FilterHighlightScrollNotesAsync();
                 StateHasChanged();
             }
         }
