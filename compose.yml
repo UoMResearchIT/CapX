@@ -4,15 +4,19 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:-Local}
+        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:?}
     volumes:
       - state:/app/state
     environment:
       - API_KEY_SECRET=${API_KEY_SECRET:?}
-      - CONNECTION_STRING=Data Source=state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - CONNECTION_STRING=${CONNECTION_STRING:?}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
+      - SEED_DUMMY_DATA=${SEED_DUMMY_DATA:-FALSE}
+      - SUPERUSER_NAME=${SUPERUSER_NAME:-}
+      - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:-}
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:-}
     ports:
-      - ${CAPX_HTTP_PORT:-3000}:8080
+      - ${CAPX_HTTP_PORT:?}:8080
     command: ["dotnet", "PPMTool.dll"]
 
     healthcheck:
@@ -29,15 +33,15 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:-Local}
+        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:?}
     volumes:
       - state:/app/state
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - CONNECTION_STRING=Data Source=state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
-      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:-Data Source=state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
+      - CONNECTION_STRING=${CONNECTION_STRING:?}
+      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:?}
     ports:
-      - ${CAPX_API_PORT:-8080}:8080
+      - ${CAPX_API_PORT:?}:8080
     command: ["dotnet", "PPMTool.API.dll"]
 
     healthcheck:
