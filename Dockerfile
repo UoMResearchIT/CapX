@@ -12,20 +12,26 @@ COPY nuget.config nuget.config
 COPY PPMTool.API/PPMTool.API.csproj PPMTool.API/PPMTool.API.csproj
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
+COPY PPMTool.Tests/PPMTool.Tests.csproj PPMTool.Tests/PPMTool.Tests.csproj
+COPY PPMTool.API.Tests/PPMTool.API.Tests.csproj PPMTool.API.Tests/PPMTool.API.Tests.csproj
 
-RUN --mount=type=secret,id=github_token \
-    NuGetPackageSourceCredentials_UoMResearchITGitHub="Username=none;Password=$(cat /run/secrets/github_token)" \
-    dotnet restore "PPMTool/PPMTool.sln"
+RUN dotnet restore "PPMTool/PPMTool.sln"
 
 COPY .config .config
 RUN dotnet tool restore
 
 COPY PPMTool PPMTool
 COPY PPMTool.API PPMTool.API
+
+# Create the database by running migrations
+# The CONNECTION_STRING env var is required by the DesignTimeDbContextFactory
+ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db"
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
-RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool/PPMTool.sln"
+# Publish only the main projects (not the test projects) to avoid assembly conflicts
+RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool/PPMTool.csproj"
+RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool.API/PPMTool.API.csproj"
 RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
 VOLUME /app/publish/state
