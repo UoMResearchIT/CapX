@@ -3,13 +3,11 @@ services:
     build:
       context: .
       target: final
-      secrets:
-        - github_token
     volumes:
       - state:/app/state
-    environment:    
-      - GITHUB_TOKEN=${GITHUB_TOKEN:?}
+    environment:
       - API_KEY_SECRET=${API_KEY_SECRET:?}
+      - CONNECTION_STRING=Data Source=state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
     ports:
       - ${CAPX_HTTP_PORT:-3000}:8080
@@ -28,13 +26,12 @@ services:
     build:
       context: .
       target: final
-      secrets:
-        - github_token
     volumes:
       - state:/app/state
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - DB_CONNECTION_STRING="Data Source=PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;"
+      - CONNECTION_STRING=Data Source=state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
+      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:-Data Source=state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;}
     ports:
       - ${CAPX_API_PORT:-8080}:8080
     command: ["dotnet", "PPMTool.API.dll"]
@@ -48,7 +45,3 @@ services:
 
 volumes:
   state:
-
-secrets:
-  github_token:
-    environment: GITHUB_TOKEN
