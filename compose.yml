@@ -3,6 +3,8 @@ services:
     build:
       context: .
       target: final
+      args:
+        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:-Local}
     volumes:
       - state:/app/state
     environment:
@@ -26,6 +28,8 @@ services:
     build:
       context: .
       target: final
+      args:
+        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:-Local}
     volumes:
       - state:/app/state
     environment:
