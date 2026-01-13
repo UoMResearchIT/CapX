@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      API_KEY_SECRET: super-secret-key-that-is-32-chars-min
 
     steps:
       - name: Checkout repository
@@ -18,11 +20,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker images
-        env:
-          API_KEY_SECRET: super-secret-key-that-is-32-chars-min
-        run: |
-          echo "API_KEY_SECRET=$API_KEY_SECRET" >> .env
-          docker compose build
+        run: docker compose build
 
       - name: Start containers
         run: docker compose up -d
@@ -71,6 +69,16 @@ jobs:
           
           echo "Timeout: containers did not become healthy within ${timeout}s"
           exit 1
+
+      - name: Test homepage responds
+        run: |
+          curl --fail --silent --show-error -L http://localhost:3000 | grep -q '<!DOCTYPE html>'
+          echo "Homepage test passed"
+
+      - name: Test API responds
+        run: |
+          curl --fail --silent --show-error http://localhost:8080/swagger/index.html | grep -q 'swagger'
+          echo "API test passed"
 
       - name: Show container logs on failure
         if: failure()
