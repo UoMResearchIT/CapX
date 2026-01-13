@@ -128,12 +128,12 @@ namespace PPMTool.Pages
             // Set the loading flag and redraw the view while the background task runs
             base.OnParametersSet();
 
-            Debug.WriteLine("** OnParameters!!!!");
+            Debug.WriteLine($"** [Project Details] OnParameters fired! RTP={RTP} | ProjectId={ProjectId} | FilteredNote={FilteredNote} | FilterDueItems={FilterDueNotes}");
 
             // Fire the load task
             _ = LoadDataAsync();
 
-            Debug.WriteLine($"** Initialised project details");
+            Debug.WriteLine($"** [Project Details] OnParameters finished!");
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task LoadDataAsync()
         {
-            Debug.WriteLine("** Loading Data...");
+            Debug.WriteLine("** [Project Details] Loading Data...");
             try
             {
                 Loading = true;
@@ -234,7 +234,7 @@ namespace PPMTool.Pages
             }
             finally
             {
-                Debug.WriteLine("** ...Finished Loading Data!");
+                Debug.WriteLine("** [Project Details] ...Finished Loading Data!");
                 Loading = false;
                 StateHasChanged();
             }
@@ -265,7 +265,7 @@ namespace PPMTool.Pages
 
             if (firstRender)
             {
-                Debug.WriteLine("** After Render - first render!");
+                Debug.WriteLine("** [Project Details] After Render - first render!");
 
                 // Create a reference to self in JS
                 await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
@@ -317,7 +317,7 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task LoadGanttChartAsync()
         {
-            Debug.WriteLine("** Loading Gantt...");
+            Debug.WriteLine("** [Project Details] Loading Gantt...");
             loadingGanttChart = true;
             await InvokeAsync(StateHasChanged);
 
@@ -424,7 +424,7 @@ namespace PPMTool.Pages
             // Reset the flag
             loadingGanttChart = false;
             await InvokeAsync(StateHasChanged);
-            Debug.WriteLine("** ...Finished Loading Gantt!");
+            Debug.WriteLine("** [Project Details] ...Finished Loading Gantt!");
         }
 
         /// <summary>
@@ -432,7 +432,7 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task LoadBurnUpChartAsync()
         {
-            Debug.WriteLine("** Loading Burn-Up...");
+            Debug.WriteLine("** [Project Details] Loading Burn-Up...");
             loadingBurnUpChart = true;
             await InvokeAsync(StateHasChanged);
 
@@ -509,7 +509,7 @@ namespace PPMTool.Pages
 
             loadingBurnUpChart = false;
             await InvokeAsync(StateHasChanged);
-            Debug.WriteLine("** ...Finished Loading Burn-Up!");
+            Debug.WriteLine("** [Project Details] ...Finished Loading Burn-Up!");
         }
 
         /// <summary>
@@ -622,7 +622,7 @@ namespace PPMTool.Pages
                     .ToList();
             }
             highlightedPerson = mentionables.FirstOrDefault();
-            Debug.WriteLine($"** Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
+            Debug.WriteLine($"** [Project Details] Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
         }
 
         /// <summary>
@@ -724,7 +724,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadNotesFromDB()
         {
-            Debug.WriteLine("** Populating notes...");
+            Debug.WriteLine("** [Project Details] Populating notes...");
             allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
@@ -737,7 +737,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterAndHighlightNotes()
         {
-            Debug.WriteLine("** Filtering / Highlighting notes...");
+            Debug.WriteLine("** [Project Details] Filtering / Highlighting notes...");
 
             // Clear existing highlighting
             InvokeAsync(async () =>
