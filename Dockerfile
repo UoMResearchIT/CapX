@@ -26,15 +26,21 @@ COPY PPMTool.API PPMTool.API
 # Restore again now that we have full source (some packages may need source files)
 RUN dotnet restore "PPMTool/PPMTool.csproj"
 
+# Build the project explicitly first so we can see any build errors
+# Also set GitInfoReportImportance to low to suppress warnings when not in a git repo
+RUN dotnet build "PPMTool/PPMTool.csproj" -c Local -p:GitInfoReportImportance=low
+
 # Create the database by running migrations
 # The CONNECTION_STRING env var is required by the DesignTimeDbContextFactory
+# Use --no-build since we already built above
 ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db"
-RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
+RUN dotnet ef database update -p "PPMTool/PPMTool.csproj" --no-build
 
 FROM build AS publish
 # Publish only the main projects (not the test projects) to avoid assembly conflicts
-RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool/PPMTool.csproj"
-RUN dotnet publish -c Local -o /app/publish -f net8.0 "PPMTool.API/PPMTool.API.csproj"
+# Use GitInfoReportImportance=low to suppress warnings when not in a git repo
+RUN dotnet publish -c Local -o /app/publish -f net8.0 -p:GitInfoReportImportance=low "PPMTool/PPMTool.csproj"
+RUN dotnet publish -c Local -o /app/publish -f net8.0 -p:GitInfoReportImportance=low "PPMTool.API/PPMTool.API.csproj"
 RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
 VOLUME /app/publish/state
