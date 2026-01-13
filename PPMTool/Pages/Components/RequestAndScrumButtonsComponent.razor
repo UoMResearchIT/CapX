@@ -45,7 +45,7 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        hasScrumLink = HtmlHelper.IsValidLink(Project.ScrumProjectLink);
+        hasScrumLink = HtmlHelper.IsValidLink(Project?.ScrumProjectLink);
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
         scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
         requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";
