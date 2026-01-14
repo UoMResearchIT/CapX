@@ -153,7 +153,7 @@
                 <div class="col" style="min-width: 500px">
                     <h2>Schedule</h2>
                     <RadzenCard>
-                        @if (loadingGanttChart || confirmedBlocks == null || provisionalBlocks == null)
+                        @if (confirmedBlocks == null || provisionalBlocks == null)
                         {
                             <LoadingComponent />
                         }
@@ -457,9 +457,9 @@
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
                             <RadzenIcon Icon="search" IconStyle="IconStyle.Primary" />
                             <RadzenTextBox @bind-Value=@noteSearchTerms
-                                            Placeholder="Search Notes"
-                                            Change=@FilterAndHighlightNotes
-                                            Style="width:100%" />
+                                           Placeholder="Search Notes"
+                                           Change=@(args => InvokeAsync(async () => await FilterHighlightScrollNotesAsync()))
+                                           Style="width:100%" />
                             <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                         </RadzenStack>
                         <RadzenText TextStyle="TextStyle.Subtitle2">
