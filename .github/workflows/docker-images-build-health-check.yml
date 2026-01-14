@@ -27,53 +27,8 @@ jobs:
       - name: Build Docker images
         run: docker compose build
 
-      - name: Start containers
-        run: docker compose up -d
-
-      - name: Wait for containers to be healthy
-        run: |
-          echo "Waiting for containers to pass health checks..."
-          
-          # Wait up to 60 seconds for all containers to be healthy
-          timeout=60
-          elapsed=0
-          
-          while [ $elapsed -lt $timeout ]; do
-            all_healthy=true
-            
-            for cid in $(docker ps -q); do
-              name=$(docker inspect --format='{{.Name}}' "$cid" | sed 's/^\/*//')
-              has_health=$(docker inspect --format='{{if .Config.Healthcheck}}yes{{else}}no{{end}}' "$cid")
-              
-              if [ "$has_health" = "no" ]; then
-                continue
-              fi
-              
-              status=$(docker inspect --format='{{.State.Health.Status}}' "$cid")
-              echo "  $name: $status"
-              
-              if [ "$status" = "unhealthy" ]; then
-                echo "Container $name is unhealthy"
-                docker logs "$cid"
-                exit 1
-              fi
-              
-              if [ "$status" != "healthy" ]; then
-                all_healthy=false
-              fi
-            done
-            
-            if [ "$all_healthy" = true ]; then
-              echo "All containers are healthy"
-              exit 0
-            fi
-            
-            sleep 5
-            elapsed=$((elapsed + 5))
-          done
-          
-          echo "Timeout: containers did not become healthy within ${timeout}s"
-          exit 1
+      - name: Start containers and wait for health checks
+        run: docker compose up --wait --wait-timeout 60
 
       - name: Test homepage responds
         run: |
