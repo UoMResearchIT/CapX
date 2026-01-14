@@ -359,8 +359,5 @@ MigrationBackup/
 # env files
 .env
 
-# secrets file
-.secrets
-
 # Visual Studio Code settings
 .vscode/*
