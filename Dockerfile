@@ -39,6 +39,8 @@ RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
 VOLUME /app/publish/state
 RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
+# Copy migration data files needed for runtime seeding (SEED_DUMMY_DATA=TRUE)
+RUN mkdir -p /app/publish/Migrations && cp -r PPMTool/Migrations/Data /app/publish/Migrations/
 
 FROM base AS final
 WORKDIR /app
