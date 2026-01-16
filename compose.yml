@@ -4,7 +4,7 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:?}
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
     volumes:
       - state:/app/state
     environment:
@@ -33,7 +33,7 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${ASPNETCORE_ENVIRONMENT:?}
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
     volumes:
       - state:/app/state
     environment:
