@@ -10,7 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      ASPNETCORE_ENVIRONMENT: Local
+      ASPNETCORE_ENVIRONMENT: Development
+      BUILD_CONFIGURATION: Local
       API_KEY_SECRET: super-secret-key-that-is-32-chars-min
       CONNECTION_STRING: Data Source=state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
       LEAVEBOOKINGS_CONNECTION_STRING: Data Source=state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;
