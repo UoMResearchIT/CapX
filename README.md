@@ -56,7 +56,8 @@ Create a `.env` file in the repository root with the following required variable
 
 | Variable | Description |
 |----------|-------------|
-| `ASPNETCORE_ENVIRONMENT` | Used both as the .NET build configuration (`-c` flag) and the ASP.NET Core runtime environment. Valid values: `Local`, `Debug`, or `Release`. This determines which `appsettings.*.json` file is loaded at runtime. |
+| `ASPNETCORE_ENVIRONMENT` | ASP.NET Core runtime environment. Valid values: `Development` or `Production`. This determines which `appsettings.*.json` file is loaded at runtime. |
+| `BUILD_CONFIGURATION` | .NET build configuration (`-c` flag). Valid values: `Local`, `Debug`, or `Release`. See [Solution/Build and Launch Configurations](#solutionbuild-and-launch-configurations) for details. |
 | `CONNECTION_STRING` | SQLite connection string, e.g. `Data Source=state/PPMTool.db` |
 | `LEAVEBOOKINGS_CONNECTION_STRING` | Connection string for the leave bookings database |
 | `API_KEY_SECRET` | Secret for API key generation (minimum 16 characters). Use `openssl rand -hex 16` to generate a strong key. |
@@ -75,7 +76,8 @@ Optional variables for seeding dummy data (see [Seeding the Database](#seeding-t
 Example `.env` file:
 
 ```env
-ASPNETCORE_ENVIRONMENT=Local
+ASPNETCORE_ENVIRONMENT=Development
+BUILD_CONFIGURATION=Local
 CONNECTION_STRING=Data Source=state/PPMTool.db
 LEAVEBOOKINGS_CONNECTION_STRING=Data Source=state/LeaveBookings.db
 API_KEY_SECRET=your-generated-secret-here
