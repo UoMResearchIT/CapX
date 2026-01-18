@@ -119,9 +119,11 @@
         <RadzenLabel class="radzen-form-label"
                      Text="Cost" />
         <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End">
+            
+            @* Show the split between tec/leadership costs and the indirects if needed *@
             @if (Model.CostModel.HasIndirects() && !IsLeadershipComponent)
             {
-                <RadzenText Text="@($"{Model.PlannedIndirectCost.ToString("C2")} (Indirects) + {Model.GetPlannedTechnicalCost().ToString("C2")} (Tech) = ")"
+                <RadzenText Text="@($"{Model.PlannedIndirectCost.ToString("C2")} (Indirects) + {Model.GetPlannedTechnicalCost().ToString("C2")} ({((ShowSummaryOnly && Model.CostModel.HasLeadership()) ? "Tech + Leadership" : "Tech")}) = ")"
                             Style="margin-bottom: 0; margin-top: 0.5rem; font-size: medium;" />
             }
             <RadzenText Text="@Model.PlannedCost.ToString("C2")"
