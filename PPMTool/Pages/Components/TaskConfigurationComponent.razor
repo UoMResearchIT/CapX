@@ -325,27 +325,24 @@
                     var daysInChunk = fyChunk.EndDate.Subtract(fyChunk.StartDate).TotalDays + 1;
                     var dayScaled = daysInChunk * Demand / 365d;
 
+                    // Reset the local calculations
                     double techCost = 0d;
-                    switch (ResourceRate)
+                    double indirectCost = 0d;
+
+                    // Use switch to select rate only
+                    double resourceRate = ResourceRate switch
                     {
-                        case Rate.Junior:
-                            techCost = finRef.Grade51Costs * dayScaled;
-                            PlannedIndirectCost += (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
-                            PlannedCost += techCost + PlannedIndirectCost;
-                            break;
+                        Rate.Junior => finRef.Grade51Costs,
+                        Rate.Standard => finRef.Grade71Costs,
+                        Rate.Senior => finRef.Grade75Costs,
+                        _ => throw new ArgumentOutOfRangeException(nameof(ResourceRate), ResourceRate, "Unsupported Rate!")
+                    };
 
-                        case Rate.Standard:
-                            techCost = finRef.Grade71Costs * dayScaled;
-                            PlannedIndirectCost += (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
-                            PlannedCost += techCost + PlannedIndirectCost;
-                            break;
-
-                        case Rate.Senior:
-                            techCost = finRef.Grade75Costs * dayScaled;
-                            PlannedIndirectCost += (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
-                            PlannedCost += techCost + PlannedIndirectCost;
-                            break;
-                    }
+                    // Calculate the costs
+                    techCost = resourceRate * dayScaled;
+                    indirectCost = (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
+                    PlannedIndirectCost += indirectCost;
+                    PlannedCost += techCost + indirectCost;
                 }
             }
 
