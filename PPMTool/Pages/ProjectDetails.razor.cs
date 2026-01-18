@@ -627,7 +627,7 @@ namespace PPMTool.Pages
         /// Callback for when the values of the dropdown are changed
         /// </summary>
         /// <param name="values"></param>
-        private void ResourceSelectionChanged(object values)
+        private async Task ResourceSelectionChangedAsync(object values)
         {
             var personIds = values as IEnumerable<int>;
             selectedResources = new List<Person>();
@@ -643,6 +643,7 @@ namespace PPMTool.Pages
 
             // Reload the chart
             loadingBurnUpChart = true;
+            await Task.Yield();
             LoadBurnUpChart();
             loadingBurnUpChart = false;
             StateHasChanged();
