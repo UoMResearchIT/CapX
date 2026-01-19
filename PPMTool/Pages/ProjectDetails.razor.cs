@@ -740,7 +740,7 @@ namespace PPMTool.Pages
             }
             else
             {
-                HideMentionPanel();
+                await HideMentionPanelAsync();
             }
 
             StateHasChanged();
@@ -787,7 +787,7 @@ namespace PPMTool.Pages
                     }
                     break;
                 case "Escape":
-                    HideMentionPanel();
+                    await HideMentionPanelAsync();
                     StateHasChanged();
                     break;
             }
@@ -806,11 +806,11 @@ namespace PPMTool.Pages
 
             await htmlEditor!.ExecuteCommandAsync(HtmlEditorCommands.InsertHtml, markup);
 
-            HideMentionPanel();
+            await HideMentionPanelAsync();
             StateHasChanged();
         }
 
-        private async void HideMentionPanel()
+        private async Task HideMentionPanelAsync()
         {
             mention.Visible = false;
             mention.Trigger = null;

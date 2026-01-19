@@ -39,37 +39,92 @@ function copyText(text) {
 
 // JS functions scoped to "mentions" namespace
 window.mentions = (function () {
-
-    // ===== STATE =====
     let active = false;
 
-    // ===== UTIL =====
-    function getEditable(host) {
-        // Radzen HtmlEditor wraps a contenteditable element under .rz-html-editor-content
-        return host.querySelector('.rz-html-editor-content [contenteditable="true"]')
-            || host.querySelector('.rz-html-editor-content');
+    // ---------- Helpers ----------
+    function getEditableHost(hostSelector) {
+        const outer = document.querySelector(hostSelector);
+        if (!outer) return null;
+
+        const iframe = outer.querySelector("iframe");
+        if (iframe && iframe.contentDocument) {
+            const doc = iframe.contentDocument;
+            const editable =
+                (doc.body && doc.body.querySelector("[contenteditable='true']")) || doc.body;
+            return { iframe, doc, editable };
+        }
+
+        // Fallback when not using an iframe
+        const editable =
+            outer.querySelector('.rz-html-editor-content [contenteditable="true"]') ||
+            outer.querySelector('.rz-html-editor-content') ||
+            outer;
+        return { iframe: null, doc: document, editable };
     }
 
+    function getSelection(h) {
+        // Use the iframe's selection if available
+        if (!h || !h.doc) return null;
+        const sel = h.doc.getSelection ? h.doc.getSelection() : window.getSelection();
+        return sel && sel.rangeCount > 0 ? sel : null;
+    }
+
+    function getClosestElement(node) {
+        if (!node) return null;
+        if (node.nodeType === Node.ELEMENT_NODE) return node;
+        return node.parentElement || null;
+    }
+
+    function getClosestBlock(node, rootElement) {
+        let el = getClosestElement(node);
+        while (el && el !== rootElement) {
+            const name = el.nodeName && el.nodeName.toLowerCase();
+            if (name && (name === 'p' || name === 'div' || name === 'li' || name === 'blockquote' || name === 'pre')) {
+                return el;
+            }
+            el = el.parentElement;
+        }
+        return rootElement;
+    }
+
+    function getCaretRect(range) {
+        // Try the native rect first
+        const rects = range.getClientRects && range.getClientRects();
+        if (rects && rects.length) return rects[rects.length - 1];
+        const rect = range.getBoundingClientRect && range.getBoundingClientRect();
+        if (rect && rect.height !== 0 && rect.width !== 0) return rect;
+
+        // Fallback marker
+        const span = range.commonAncestorContainer.ownerDocument.createElement('span');
+        span.appendChild(range.commonAncestorContainer.ownerDocument.createTextNode('\u200b'));
+        range.insertNode(span);
+        const r = span.getBoundingClientRect();
+        span.parentNode.removeChild(span);
+        range.collapse(false);
+        return r;
+    }
+
+    // Mask @ signs inside nodes that are within .mention spans
     function isInsideMention(node) {
-        let el = node && node.parentNode;
-        while (el && el.nodeType === Node.ELEMENT_NODE) {
+        let el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
+        while (el) {
             if (el.classList && el.classList.contains('mention')) return true;
-            el = el.parentNode;
+            el = el.parentElement;
         }
         return false;
     }
 
-    // Build the text from block-start to caret, but mask '@' characters inside .mention
+    // Build text from block start to caret, masking @ inside .mention so it won't trigger
     function buildPreMasked(block, rangeToCaret) {
         const targetLen = rangeToCaret.toString().length; // exact chars up to caret
-        const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+        const doc = block.ownerDocument;
+        const walker = doc.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
         let out = '', remaining = targetLen, n;
         while ((n = walker.nextNode()) && remaining > 0) {
             let t = n.nodeValue || '';
             if (t.length > remaining) t = t.slice(0, remaining);
             if (isInsideMention(n)) {
-                // Mask @ so lastIndexOf('@') won't find triggers inside mentions
-                t = t.replace(/@/g, '\uFFFF');
+                t = t.replace(/@/g, '\uFFFF'); // mask @ so it isn't detected as a trigger
             }
             out += t;
             remaining -= t.length;
@@ -77,7 +132,6 @@ window.mentions = (function () {
         return out;
     }
 
-    // Private: Get the index of where the popup was last triggered
     function lastTriggerIndex(text, triggers) {
         let best = -1, trig = null;
         for (const t of triggers) {
@@ -85,8 +139,7 @@ window.mentions = (function () {
             if (i > best) { best = i; trig = t; }
         }
         if (best < 0) return null;
-
-        // Ensure it's a token start: either at string start or preceded by whitespace/punctuation
+        // Token start if preceded by whitespace or punctuation
         const prev = best === 0 ? " " : text[best - 1];
         if (/\s|[()[\]{}.,;:!?/"'\\-]/.test(prev)) {
             return { index: best, trigger: trig[0] };
@@ -94,87 +147,68 @@ window.mentions = (function () {
         return null;
     }
 
-    // Private: Get the block element closest to the node
-    function getClosestBlock(node, root) {
-        while (node && node !== root) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                const name = node.nodeName.toLowerCase();
-                if (["p", "div", "li", "blockquote", "pre"].includes(name)) return node;
-            }
-            node = node.parentNode;
-        }
-        return root;
-    }
+    // ---------- Public API ----------
 
-    // Private: Get rectangle coords of the caret
-    function getCaretRect(range) {
-        // Prefer a client rect; fallback to a zero-width marker trick
-        let rects = range.getClientRects();
-        if (rects && rects.length) return rects[rects.length - 1];
-        const span = document.createElement('span');
-        span.appendChild(document.createTextNode('\u200b'));
-        range.insertNode(span);
-        const rect = span.getBoundingClientRect();
-        span.parentNode.removeChild(span);
-        range.collapse(false);
-        return rect;
-    }
-
-    // ===== PUBLIC =====
-
-    // 1) Hook keydown to cancel Enter/Tab/Arrows only when popup is active
+    // Bind a keydown handler inside the editor (including iframe) to block Enter/Tab/Arrows when active
     function bindKeydown(hostSelector) {
-        const host = document.querySelector(hostSelector);
-        const editable = host && getEditable(host);
-        if (!editable) return;
-
-        // Use capture to beat the contenteditable default behavior
-        editable.addEventListener('keydown', (e) => {
-            if (!active) return;
-            const k = e.key;
-            if (k === 'Enter' || k === 'Tab' || k === 'ArrowDown' || k === 'ArrowUp' || k === 'Escape') {
-                // Prevent newline, caret movement, tab focus, etc.
-                e.preventDefault();
-                // NOTE: do NOT stopPropagation so Blazor still receives @onkeydown
+        const attemptBind = () => {
+            const h = getEditableHost(hostSelector);
+            if (!h || !h.doc || !h.editable) {
+                setTimeout(attemptBind, 50);
+                return;
             }
-        }, true);
+            // Capture phase to preempt contenteditable defaults
+            h.editable.addEventListener('keydown', (e) => {
+                if (!active) return;
+                if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Escape') {
+                    e.preventDefault(); // stop newline, tabbing, caret move
+                    // Intentionally not stopping propagation: Blazor still receives @onkeydown
+                }
+            }, true);
+        };
+        attemptBind();
     }
 
     function setActive(value) {
         active = !!value;
     }
 
-    // 2) Token info detection (ignores @ inside .mention)
+    // Returns token info near the caret, with caret rectangle (viewport coords)
     function getTokenInfo(hostSelector, triggerList) {
-        const host = document.querySelector(hostSelector);
-        const editable = host && getEditable(host);
-        if (!editable) return null;
+        const h = getEditableHost(hostSelector);
+        if (!h || !h.editable) return { hasTrigger: false };
 
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return { hasTrigger: false };
+        const sel = getSelection(h);
+        if (!sel) return { hasTrigger: false };
 
         const range = sel.getRangeAt(0);
-        if (!editable.contains(range.endContainer)) return { hasTrigger: false };
+        if (!h.editable.contains(range.endContainer)) return { hasTrigger: false };
+
+        const block = getClosestBlock(range.endContainer, h.editable);
 
         const probe = range.cloneRange();
-        const block = getClosestBlock(range.endContainer, editable);
         probe.setStart(block, 0);
 
+        // Masked pre so @ inside mentions isn't detected
         const preMasked = buildPreMasked(block, probe);
-
         const triggers = (triggerList || "@,#").split(",").map(s => s.trim()).filter(Boolean);
         const last = lastTriggerIndex(preMasked, triggers);
+
         const rect = getCaretRect(range);
 
         if (!last) {
-            return { hasTrigger: false, clientTop: rect.top, clientLeft: rect.left, clientHeight: rect.height };
+            return {
+                hasTrigger: false,
+                clientTop: rect.top,
+                clientLeft: rect.left,
+                clientHeight: rect.height
+            };
         }
 
-        const { index, trigger } = last;
-        // Compute text after trigger from the unmasked substring to caret:
-        // Get the real pre (unmasked) so user query isn't affected by masks
+        // Get real text for the query (not masked)
         const preReal = probe.toString();
-        const text = preReal.substring(index + 1);
+        const { index, trigger } = last;
+        const text = preReal.substring(index + 1); // chars after trigger up to caret
 
         return {
             hasTrigger: true,
@@ -186,50 +220,54 @@ window.mentions = (function () {
         };
     }
 
-    // 3) Select from last trigger to caret (also ignores @ inside .mention)
+    // Selects the range from the last trigger char to the caret (so Blazor can replace it)
     function selectFromTriggerToCaret(hostSelector, triggerChar) {
-        const host = document.querySelector(hostSelector);
-        const editable = host && getEditable(host);
-        if (!editable) return false;
+        const h = getEditableHost(hostSelector);
+        if (!h || !h.editable) return false;
 
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return false;
+        const sel = getSelection(h);
+        if (!sel) return false;
+
         const range = sel.getRangeAt(0);
-        if (!editable.contains(range.endContainer)) return false;
+        if (!h.editable.contains(range.endContainer)) return false;
+
+        const block = getClosestBlock(range.endContainer, h.editable);
 
         const probe = range.cloneRange();
-        const block = getClosestBlock(range.endContainer, editable);
         probe.setStart(block, 0);
 
+        // Use masked pre to find the correct trigger index (ignoring @ in mentions)
         const preMasked = buildPreMasked(block, probe);
-        const lastAt = preMasked.lastIndexOf((triggerChar || '@'));
+        const trig = (triggerChar || '@');
+        const lastAt = preMasked.lastIndexOf(trig);
         if (lastAt < 0) return false;
 
-        // Walk to the text node and offset matching lastAt over the REAL text flow
-        // (masked text is same length as real pre, so indices line up)
-        const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+        // Walk text nodes to lastAt over REAL text (lengths match masked)
+        const walker = h.doc.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
         let remaining = lastAt, startNode = null, startOffset = 0, n;
-        while (n = walker.nextNode()) {
+        while ((n = walker.nextNode())) {
             const len = (n.nodeValue || '').length;
-            if (remaining <= len) { startNode = n; startOffset = remaining; break; }
+            if (remaining <= len) {
+                startNode = n;
+                startOffset = remaining;
+                break;
+            }
             remaining -= len;
         }
         if (!startNode) return false;
 
-        const selRange = document.createRange();
-        selRange.setStart(startNode, startOffset);
-        selRange.setEnd(range.endContainer, range.endOffset);
+        const newRange = h.doc.createRange();
+        newRange.setStart(startNode, startOffset); // at the trigger char
+        newRange.setEnd(range.endContainer, range.endOffset); // caret
+
         sel.removeAllRanges();
-        sel.addRange(selRange);
+        sel.addRange(newRange);
         return true;
     }
 
     return {
-        // lifecycle / control
         bindKeydown,
         setActive,
-
-        // mention logic
         getTokenInfo,
         selectFromTriggerToCaret
     };
