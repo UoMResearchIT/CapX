@@ -36,53 +36,45 @@ function copyText(text) {
     });
 };
 
+
 // JS functions scoped to "mentions" namespace
 window.mentions = (function () {
 
-    // Private: Get the editor element
+    // ===== STATE =====
+    let active = false;
+
+    // ===== UTIL =====
     function getEditable(host) {
         // Radzen HtmlEditor wraps a contenteditable element under .rz-html-editor-content
         return host.querySelector('.rz-html-editor-content [contenteditable="true"]')
             || host.querySelector('.rz-html-editor-content');
     }
 
-    // Public: Returns token info near the caret and the caret rect (viewport coords)
-    function getTokenInfo(hostSelector, triggerList) {
-        const host = document.querySelector(hostSelector);
-        const editable = host && getEditable(host);
-        if (!editable) return null;
-
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return { hasTrigger: false };
-
-        const range = sel.getRangeAt(0);
-        if (!editable.contains(range.endContainer)) return { hasTrigger: false };
-
-        // Build the text from the start of the line/paragraph node to caret (simple heuristic)
-        const probe = range.cloneRange();
-        const block = getClosestBlock(range.endContainer, editable);
-        probe.setStart(block, 0);
-        const pre = probe.toString();
-
-        const triggers = (triggerList || "@,#").split(",").map(s => s.trim()).filter(Boolean);
-        const last = lastTriggerIndex(pre, triggers);
-        if (!last) {
-            const rect = getCaretRect(range);
-            return { hasTrigger: false, clientTop: rect.top, clientLeft: rect.left, clientHeight: rect.height };
+    function isInsideMention(node) {
+        let el = node && node.parentNode;
+        while (el && el.nodeType === Node.ELEMENT_NODE) {
+            if (el.classList && el.classList.contains('mention')) return true;
+            el = el.parentNode;
         }
+        return false;
+    }
 
-        const { index, trigger } = last;
-        const text = pre.substring(index + 1); // after the trigger up to caret
-        const rect = getCaretRect(range);
-
-        return {
-            hasTrigger: true,
-            trigger: trigger,
-            text: text,
-            clientTop: rect.top,
-            clientLeft: rect.left,
-            clientHeight: rect.height
-        };
+    // Build the text from block-start to caret, but mask '@' characters inside .mention
+    function buildPreMasked(block, rangeToCaret) {
+        const targetLen = rangeToCaret.toString().length; // exact chars up to caret
+        const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+        let out = '', remaining = targetLen, n;
+        while ((n = walker.nextNode()) && remaining > 0) {
+            let t = n.nodeValue || '';
+            if (t.length > remaining) t = t.slice(0, remaining);
+            if (isInsideMention(n)) {
+                // Mask @ so lastIndexOf('@') won't find triggers inside mentions
+                t = t.replace(/@/g, '\uFFFF');
+            }
+            out += t;
+            remaining -= t.length;
+        }
+        return out;
     }
 
     // Private: Get the index of where the popup was last triggered
@@ -128,7 +120,73 @@ window.mentions = (function () {
         return rect;
     }
 
-    // Public: Select from the last trigger to the caret so we can replace it from C#
+    // ===== PUBLIC =====
+
+    // 1) Hook keydown to cancel Enter/Tab/Arrows only when popup is active
+    function bindKeydown(hostSelector) {
+        const host = document.querySelector(hostSelector);
+        const editable = host && getEditable(host);
+        if (!editable) return;
+
+        // Use capture to beat the contenteditable default behavior
+        editable.addEventListener('keydown', (e) => {
+            if (!active) return;
+            const k = e.key;
+            if (k === 'Enter' || k === 'Tab' || k === 'ArrowDown' || k === 'ArrowUp' || k === 'Escape') {
+                // Prevent newline, caret movement, tab focus, etc.
+                e.preventDefault();
+                // NOTE: do NOT stopPropagation so Blazor still receives @onkeydown
+            }
+        }, true);
+    }
+
+    function setActive(value) {
+        active = !!value;
+    }
+
+    // 2) Token info detection (ignores @ inside .mention)
+    function getTokenInfo(hostSelector, triggerList) {
+        const host = document.querySelector(hostSelector);
+        const editable = host && getEditable(host);
+        if (!editable) return null;
+
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return { hasTrigger: false };
+
+        const range = sel.getRangeAt(0);
+        if (!editable.contains(range.endContainer)) return { hasTrigger: false };
+
+        const probe = range.cloneRange();
+        const block = getClosestBlock(range.endContainer, editable);
+        probe.setStart(block, 0);
+
+        const preMasked = buildPreMasked(block, probe);
+
+        const triggers = (triggerList || "@,#").split(",").map(s => s.trim()).filter(Boolean);
+        const last = lastTriggerIndex(preMasked, triggers);
+        const rect = getCaretRect(range);
+
+        if (!last) {
+            return { hasTrigger: false, clientTop: rect.top, clientLeft: rect.left, clientHeight: rect.height };
+        }
+
+        const { index, trigger } = last;
+        // Compute text after trigger from the unmasked substring to caret:
+        // Get the real pre (unmasked) so user query isn't affected by masks
+        const preReal = probe.toString();
+        const text = preReal.substring(index + 1);
+
+        return {
+            hasTrigger: true,
+            trigger: trigger,
+            text: text,
+            clientTop: rect.top,
+            clientLeft: rect.left,
+            clientHeight: rect.height
+        };
+    }
+
+    // 3) Select from last trigger to caret (also ignores @ inside .mention)
     function selectFromTriggerToCaret(hostSelector, triggerChar) {
         const host = document.querySelector(hostSelector);
         const editable = host && getEditable(host);
@@ -142,31 +200,36 @@ window.mentions = (function () {
         const probe = range.cloneRange();
         const block = getClosestBlock(range.endContainer, editable);
         probe.setStart(block, 0);
-        const pre = probe.toString();
 
-        const lastAt = pre.lastIndexOf(triggerChar || '@');
+        const preMasked = buildPreMasked(block, probe);
+        const lastAt = preMasked.lastIndexOf((triggerChar || '@'));
         if (lastAt < 0) return false;
 
-        // Walk to the text node and offset that match lastAt
+        // Walk to the text node and offset matching lastAt over the REAL text flow
+        // (masked text is same length as real pre, so indices line up)
         const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
         let remaining = lastAt, startNode = null, startOffset = 0, n;
         while (n = walker.nextNode()) {
-            const len = n.nodeValue.length;
+            const len = (n.nodeValue || '').length;
             if (remaining <= len) { startNode = n; startOffset = remaining; break; }
             remaining -= len;
         }
         if (!startNode) return false;
 
         const selRange = document.createRange();
-        selRange.setStart(startNode, startOffset); // at the trigger char
-        selRange.setEnd(range.endContainer, range.endOffset); // caret
+        selRange.setStart(startNode, startOffset);
+        selRange.setEnd(range.endContainer, range.endOffset);
         sel.removeAllRanges();
         sel.addRange(selRange);
         return true;
     }
 
-    // Return just the two functions we want to be accessible
     return {
+        // lifecycle / control
+        bindKeydown,
+        setActive,
+
+        // mention logic
         getTokenInfo,
         selectFromTriggerToCaret
     };

@@ -109,6 +109,8 @@ namespace PPMTool.Pages
         private IList<Person> mentionables;
         private IList<Person> cachedMentionables;
         private RadzenHtmlEditor htmlEditor;
+        private bool bound;
+        private bool suppressNextInput;
 
         // Loading parameter cache
         private int? lastRTP;
@@ -327,6 +329,13 @@ namespace PPMTool.Pages
 
                 // Create a reference to self in JS
                 await JS.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
+
+                // Bind keydown event
+                if (!bound)
+                {
+                    bound = true;
+                    await JS.InvokeVoidAsync("mentions.bindKeydown", "#editor-entry");
+                }
 
                 // Do the JS highlighting and scrolling if required
                 await FilterHighlightScrollNotesAsync();
@@ -701,6 +710,12 @@ namespace PPMTool.Pages
 
         private async Task OnEditorInput(string html)
         {
+            if (suppressNextInput)
+            {
+                suppressNextInput = false;
+                return; // ignore the input triggered by our InsertHtml
+            }
+
             // Ask JS for the current token and caret position
             var info = await JS.InvokeAsync<TokenInfo>("mentions.getTokenInfo", "#editor-entry", "@,#");
 
@@ -718,6 +733,10 @@ namespace PPMTool.Pages
 
                 mention.Visible = mention.FilteredPeople.Count > 0;
                 mention.HighlightedId = mention.FilteredPeople.FirstOrDefault()?.PersonId;
+
+                // Tell JS whether to suppress keys
+                await SetMentionActiveAsync(mention.Visible);
+
             }
             else
             {
@@ -764,6 +783,7 @@ namespace PPMTool.Pages
                     if (TryGetHighlighted(out var person))
                     {
                         await SelectMention(person);
+                        return;
                     }
                     break;
                 case "Escape":
@@ -781,19 +801,23 @@ namespace PPMTool.Pages
             var initials = p.ShortName ?? string.Empty;
             var markup = $"<span class=\"mention\" data-id=\"{p.PersonId}\">@{initials}</span>&nbsp;";
 
+            // Prevent the follow-up Input from re-triggering
+            suppressNextInput = true;
+
             await htmlEditor!.ExecuteCommandAsync(HtmlEditorCommands.InsertHtml, markup);
 
             HideMentionPanel();
             StateHasChanged();
         }
 
-        private void HideMentionPanel()
+        private async void HideMentionPanel()
         {
             mention.Visible = false;
             mention.Trigger = null;
             mention.Query = string.Empty;
             mention.HighlightedId = null;
             mention.FilteredPeople.Clear();
+            await SetMentionActiveAsync(false);
         }
 
         private List<Person> FilterPeople(string q)
@@ -824,6 +848,10 @@ namespace PPMTool.Pages
             p = mention.FilteredPeople.FirstOrDefault(x => x.PersonId == mention.HighlightedId) ?? mention.FilteredPeople.FirstOrDefault();
             return p is not null;
         }
+
+        private async Task SetMentionActiveAsync(bool isActive)
+            => await JS.InvokeVoidAsync("mentions.setActive", isActive);
+
 
         // ------------------------ End New Stuff ---------------------- //
 
