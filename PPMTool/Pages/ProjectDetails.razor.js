@@ -42,6 +42,15 @@ window.mentions = (function () {
     let active = false;
 
     // ---------- Helpers ----------
+    function getRelativePosition(rect, container) {
+        const cRect = container.getBoundingClientRect();
+        return {
+            top: rect.top - cRect.top,
+            left: rect.left - cRect.left,
+            height: rect.height
+        };
+    }
+
     function getEditableHost(hostSelector) {
         const outer = document.querySelector(hostSelector);
         if (!outer) return null;
@@ -174,6 +183,7 @@ window.mentions = (function () {
     }
 
     // Returns token info near the caret, with caret rectangle (viewport coords)
+
     function getTokenInfo(hostSelector, triggerList) {
         const h = getEditableHost(hostSelector);
         if (!h || !h.editable) return { hasTrigger: false };
@@ -194,18 +204,31 @@ window.mentions = (function () {
         const triggers = (triggerList || "@,#").split(",").map(s => s.trim()).filter(Boolean);
         const last = lastTriggerIndex(preMasked, triggers);
 
+        // --- compute caret rect in viewport coords ---
         const rect = getCaretRect(range);
+
+        // --- find the container we want to position relative to ---
+        // hostSelector should be the Radzen editor wrapper (e.g., "#editor-entry")
+        // We then look for the nearest .editor-wrapper; if not found, fall back to the host element.
+        const hostEl = document.querySelector(hostSelector);
+        const container = (hostEl && hostEl.closest('.editor-wrapper')) || hostEl || document.body;
+
+        // Convert viewport rect to container-relative coordinates
+        const containerRect = container.getBoundingClientRect();
+        const relTop = rect.top - containerRect.top;
+        const relLeft = rect.left - containerRect.left;
+        const relHeight = rect.height;
 
         if (!last) {
             return {
                 hasTrigger: false,
-                clientTop: rect.top,
-                clientLeft: rect.left,
-                clientHeight: rect.height
+                clientTop: relTop,
+                clientLeft: relLeft,
+                clientHeight: relHeight
             };
         }
 
-        // Get real text for the query (not masked)
+        // Get real (unmasked) text for the query
         const preReal = probe.toString();
         const { index, trigger } = last;
         const text = preReal.substring(index + 1); // chars after trigger up to caret
@@ -214,9 +237,9 @@ window.mentions = (function () {
             hasTrigger: true,
             trigger: trigger,
             text: text,
-            clientTop: rect.top,
-            clientLeft: rect.left,
-            clientHeight: rect.height
+            clientTop: relTop,
+            clientLeft: relLeft,
+            clientHeight: relHeight
         };
     }
 

@@ -387,33 +387,35 @@
                             <b>Currently there must be a space before and after the reference for the link to be detected.</b>
                         </RadzenText>
 
-                        <div class="grip">
-                            <RadzenHtmlEditor id="editor-entry"
-                                              @ref="htmlEditor"
-                                              @bind-Value="noteModel.HtmlContent"
-                                              Input="OnEditorInput"
-                                              @onkeydown="OnEditorKeyDown"
-                                              Style="height:100%; min-height:10rem;" />
-                        </div>
-
-                        @if (mention.Visible)
-                        {
-                            <div class="mention-panel"
-                                 style="position:absolute; top:@mention.TopPx; left:@mention.LeftPx; width:280px; max-height:300px; overflow:auto; z-index: 1000;"
-                                 @onmousedown:preventDefault
-                                 @onwheel:stopPropagation>
-
-                                @foreach (var p in mention.FilteredPeople)
-                                {
-                                    <div class="mention-item @(mention.HighlightedId == p.PersonId ? "is-active" : null)"
-                                         @onmousedown:preventDefault
-                                         @onmousedown="() => SelectMention(p)">
-                                        <span class="badge bg-light me-2">@p.ShortName</span>
-                                        @p.Name
-                                    </div>
-                                }
+                        <div class="editor-wrapper" style="position: relative;">
+                            <div class="grip">
+                                <RadzenHtmlEditor id="editor-entry"
+                                                  @ref="htmlEditor"
+                                                  @bind-Value="noteModel.HtmlContent"
+                                                  Input="OnEditorInput"
+                                                  @onkeydown="OnEditorKeyDown"
+                                                  Style="height:100%; min-height:10rem;" />
                             </div>
-                        }
+
+                            @if (mention.Visible)
+                            {
+                                <div class="mention-panel"
+                                     style="position:absolute; top:@mention.TopPx; left:@mention.LeftPx; width:280px; max-height:300px; overflow:auto; z-index: 1000;"
+                                     @onmousedown:preventDefault
+                                     @onwheel:stopPropagation>
+
+                                    @foreach (var p in mention.FilteredPeople)
+                                    {
+                                        <div class="mention-item @(mention.HighlightedId == p.PersonId ? "is-active" : null)"
+                                             @onmousedown:preventDefault
+                                             @onmousedown="() => SelectMention(p)">
+                                            <span class="badge badge-light me-2">@p.ShortName</span>
+                                            @p.Name
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
 
                         <div class="row">
                             <div class="col align-items-center" style="display: flex">
