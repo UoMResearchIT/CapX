@@ -386,36 +386,35 @@
                             Failed linking, if either the person or project does not exist, will leave the text unchanged.
                             <b>Currently there must be a space before and after the reference for the link to be detected.</b>
                         </RadzenText>
+
                         <div class="grip">
-                            <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />
+                            <RadzenHtmlEditor id="editor-entry"
+                                              @ref="htmlEditor"
+                                              @bind-Value="noteModel.HtmlContent"
+                                              Input="OnEditorInput"
+                                              @onkeydown="OnEditorKeyDown"
+                                              Style="height:100%; min-height:10rem;" />
                         </div>
-                        <Popup @ref=popup
-                                Lazy=false
-                                Open="@OnMentionPopupOpenAsync"
-                                Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
-                            <RadzenTextBox id="search"
-                                           Placeholder="Type to search..."
-                                           Style="width:100%;"
-                                           @onkeydown="@(args => ProcessMentionSearchInput(args))"
-                                           @oninput=@(args => MentionSearchString = $"{args.Value}")
-                                           Value="@MentionSearchString"
-                                           autocomplete="off" />
-                            <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
-                                @foreach (var person in mentionables)
+
+                        @if (mention.Visible)
+                        {
+                            <div class="mention-panel"
+                                 style="position:absolute; top:@mention.TopPx; left:@mention.LeftPx; width:280px; max-height:300px; overflow:auto; z-index: 1000;"
+                                 @onmousedown:preventDefault
+                                 @onwheel:stopPropagation>
+
+                                @foreach (var p in mention.FilteredPeople)
                                 {
-                                    <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))"
-                                                MouseLeave="@(args => UnHighlightMention(person))"
-                                                Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
-                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
-                                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
-                                                <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
-                                                <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
-                                            </RadzenStack>
-                                        </RadzenStack>
-                                    </RadzenCard>
+                                    <div class="mention-item @(mention.HighlightedId == p.PersonId ? "is-active" : null)"
+                                         @onmousedown:preventDefault
+                                         @onmousedown="() => SelectMention(p)">
+                                        <span class="badge bg-light me-2">@p.ShortName</span>
+                                        @p.Name
+                                    </div>
                                 }
-                            </RadzenStack>
-                        </Popup>
+                            </div>
+                        }
+
                         <div class="row">
                             <div class="col align-items-center" style="display: flex">
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1.5rem" Wrap="FlexWrap.Wrap">

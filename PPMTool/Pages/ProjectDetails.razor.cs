@@ -15,7 +15,6 @@ using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
-using Radzen.Blazor.Rendering;
 
 namespace PPMTool.Pages
 {
@@ -29,7 +28,7 @@ namespace PPMTool.Pages
         private NoteService NoteService { get; set; }
 
         [Inject]
-        private IJSRuntime JSRuntime { get; set; }
+        private IJSRuntime JS { get; set; }
 
         [Inject]
         private EmailService EmailService { get; set; }
@@ -70,20 +69,6 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "filterDueNotes")]
         public bool FilterDueNotes { get; set; }
 
-        private string mentionSearchString = string.Empty;
-        public string MentionSearchString
-        {
-            get => mentionSearchString;
-            private set
-            {
-                if (value != mentionSearchString)
-                {
-                    mentionSearchString = value;
-                    FilterMentionables();
-                }
-            }
-        }
-
         // Chart stuff
         private List<GanttBlock> confirmedBlocks;
         private List<GanttBlock> provisionalBlocks;
@@ -120,10 +105,9 @@ namespace PPMTool.Pages
         private bool showOnlyFinanceNotes;
         private bool showOnlyDueItems;
         private bool sortByDueDate;
-        private Popup popup;
+        private MentionState mention = new();
         private IList<Person> mentionables;
         private IList<Person> cachedMentionables;
-        private Person highlightedPerson;
         private RadzenHtmlEditor htmlEditor;
 
         // Loading parameter cache
@@ -132,6 +116,34 @@ namespace PPMTool.Pages
         private int? lastNote;
         private bool lastDue;
         private CancellationTokenSource loadCts;
+
+        /// <summary>
+        /// Mention state
+        /// </summary>
+        private class MentionState
+        {
+            public bool Visible { get; set; }
+            public char? Trigger { get; set; } = '@';
+            public string Query { get; set; } = string.Empty;
+            public string TopPx { get; set; } = "0px";
+            public string LeftPx { get; set; } = "0px";
+            public int? HighlightedId { get; set; }
+            public List<Person> FilteredPeople { get; set; } = new();
+        }
+
+
+        /// <summary>
+        ///  Container for JS interop result
+        /// </summary>
+        private class TokenInfo
+        {
+            public bool HasTrigger { get; set; }
+            public char Trigger { get; set; }
+            public string Text { get; set; }
+            public double ClientTop { get; set; }
+            public double ClientLeft { get; set; }
+            public double ClientHeight { get; set; }
+        }
 
 
         /// <summary>
@@ -314,7 +326,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine("** [Project Details] After Render - first render!");
 
                 // Create a reference to self in JS
-                await JSRuntime.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
+                await JS.InvokeVoidAsync("setDotNetReference", DotNetObjectReference.Create(this));
 
                 // Do the JS highlighting and scrolling if required
                 await FilterHighlightScrollNotesAsync();
@@ -356,7 +368,7 @@ namespace PPMTool.Pages
         private async Task FilterHighlightScrollNotesAsync()
         {
             // Clear any existing highlights
-            await JSRuntime.InvokeVoidAsync("clearHighlightInNotes");
+            await JS.InvokeVoidAsync("clearHighlightInNotes");
             await Task.Delay(500);
 
             // No search terms so show all
@@ -382,7 +394,7 @@ namespace PPMTool.Pages
                     await Task.Yield();
 
                     // Call JS function to scroll to the note based on what should now be displayed
-                    await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{noteId}");
+                    await JS.InvokeVoidAsync("scrollToElement", $"note_{noteId}");
                 }
                 else
                 {
@@ -400,7 +412,7 @@ namespace PPMTool.Pages
                     await Task.Yield();
 
                     // Call JS function to highlight the terms of what now will be displayed
-                    await JSRuntime.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
+                    await JS.InvokeVoidAsync("highlightInNotes", noteSearchTerms.Trim());
                     await Task.Delay(500);
                 }
             }
@@ -410,7 +422,7 @@ namespace PPMTool.Pages
             {
                 // Refresh then scroll last due note into view
                 await Task.Delay(300);
-                await JSRuntime.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
+                await JS.InvokeVoidAsync("scrollToElement", $"note_{filteredNotes.LastOrDefault()?.NoteId}");
             }
         }
 
@@ -684,127 +696,136 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-        /// <summary>
-        /// Stores a reference to the person associated with a current mention
-        /// </summary>
-        /// <param name="person"></param>
-        private void HighlightMention(Person person)
-        {
-            highlightedPerson = person;
-        }
 
-        /// <summary>
-        /// Resets the reference to the person associated with a current mention
-        /// </summary>
-        /// <param name="person"></param>
-        private void UnHighlightMention(Person person)
-        {
-            highlightedPerson = null;
-        }
+        // --------------------- New stuff ----------------------- //
 
-        /// <summary>
-        /// Filters the mentionables list based on the search string.
-        /// </summary>
-        private void FilterMentionables()
+        private async Task OnEditorInput(string html)
         {
-            if (string.IsNullOrWhiteSpace(mentionSearchString))
+            // Ask JS for the current token and caret position
+            var info = await JS.InvokeAsync<TokenInfo>("mentions.getTokenInfo", "#editor-entry", "@,#");
+
+            if (info?.HasTrigger == true)
             {
-                mentionables = cachedMentionables;
+                mention.Trigger = info.Trigger;
+                mention.Query = info.Text ?? string.Empty;
+
+                // Filter your people list (case-insensitive initials, name, etc.)
+                mention.FilteredPeople = FilterPeople(mention.Query);
+
+                // Position the panel
+                mention.TopPx = $"{info.ClientTop + info.ClientHeight}px";
+                mention.LeftPx = $"{info.ClientLeft}px";
+
+                mention.Visible = mention.FilteredPeople.Count > 0;
+                mention.HighlightedId = mention.FilteredPeople.FirstOrDefault()?.PersonId;
             }
             else
             {
-                mentionables = cachedMentionables
-                    .Where(x => x.Name.ToLower().Contains(mentionSearchString.ToLower()) || x.ShortName.ToLower().StartsWith(mentionSearchString.ToLower()))
-                    .ToList();
+                HideMentionPanel();
             }
-            highlightedPerson = mentionables.FirstOrDefault();
-            Debug.WriteLine($"** [Project Details] Filtered mentionables based on \"{mentionSearchString}\" giving {mentionables.Count} results.");
+
+            StateHasChanged();
         }
 
-        /// <summary>
-        /// Handle changes in the HTML editor
-        /// </summary>
-        /// <param name="args"></param>
-        private void ProcessEditorInput(KeyboardEventArgs args)
+        private async Task OnEditorKeyDown(KeyboardEventArgs e)
         {
-            Debug.WriteLine($"** Key pressed in the editor \"{args.Key}\"");
-
-            // If it is a mention trigger but not a mention insertion then open the popup
-            if (args.Key == "@")
+            if (!mention.Visible)
             {
-                Debug.WriteLine($"** Opening popup...");
-
-                // Save cursor position
-                htmlEditor.SaveSelectionAsync().ContinueWith(async t =>
+                // Start mention on '@' or '#'
+                if (e.Key is "@" or "#")
                 {
-                    // Open the popup if not already open
-                    await InvokeAsync(async () =>
+                    // Save caret so we can restore/replace safely if focus ever moves
+                    await htmlEditor!.SaveSelectionAsync();
+
+                    // Prime the popup at caret even before any query chars
+                    var info = await JS.InvokeAsync<TokenInfo>("mentions.getTokenInfo", "#editor-entry", "@,#");
+                    mention.Trigger = e.Key[0];
+                    mention.Query = string.Empty;
+                    mention.FilteredPeople = FilterPeople(""); // show top N
+                    mention.TopPx = $"{info.ClientTop + info.ClientHeight}px";
+                    mention.LeftPx = $"{info.ClientLeft}px";
+                    mention.Visible = mention.FilteredPeople.Count > 0;
+                    mention.HighlightedId = mention.FilteredPeople.FirstOrDefault()?.PersonId;
+
+                    StateHasChanged();
+                }
+                return;
+            }
+
+            // When popup is visible, handle navigation/selection
+            switch (e.Key)
+            {
+                case "ArrowDown":
+                    MoveHighlight(1); break;
+                case "ArrowUp":
+                    MoveHighlight(-1); break;
+                case "Enter":
+                case "Tab":
+                    if (TryGetHighlighted(out var person))
                     {
-                        await popup.ToggleAsync(htmlEditor.Element);
-                        StateHasChanged();
-                    });
-                });
+                        await SelectMention(person);
+                    }
+                    break;
+                case "Escape":
+                    HideMentionPanel();
+                    StateHasChanged();
+                    break;
             }
         }
 
-        /// <summary>
-        /// Handle key presses while the mention popup is visible
-        /// </summary>
-        /// <param name="args"></param>
-        private void ProcessMentionSearchInput(KeyboardEventArgs args)
+        private async Task SelectMention(Person p)
         {
-            if (args.Key == "Escape")
-            {
-                MentionPerson(null);
-            }
-            else if (args.Key == "Enter" || args.Key == "Tab")
-            {
-                MentionPerson(highlightedPerson);
-            }
-            else if (args.Key == "ArrowDown")
-            {
-                var currentIndex = mentionables.IndexOf(highlightedPerson);
-                if (currentIndex < mentionables.Count - 1)
-                {
-                    highlightedPerson = mentionables[currentIndex + 1];
-                }
-            }
-            else if (args.Key == "ArrowUp")
-            {
-                var currentIndex = mentionables.IndexOf(highlightedPerson);
-                if (currentIndex > 0)
-                {
-                    highlightedPerson = mentionables[currentIndex - 1];
-                }
-            }
+            // Replace from trigger to caret, then insert semantic markup via Radzen API
+            await JS.InvokeVoidAsync("mentions.selectFromTriggerToCaret", "#editor-entry", mention.Trigger?.ToString() ?? "@");
+
+            var initials = p.ShortName ?? string.Empty;
+            var markup = $"<span class=\"mention\" data-id=\"{p.PersonId}\">@{initials}</span>&nbsp;";
+
+            await htmlEditor!.ExecuteCommandAsync(HtmlEditorCommands.InsertHtml, markup);
+
+            HideMentionPanel();
+            StateHasChanged();
         }
 
-        /// <summary>
-        /// Open the mention popup via JS
-        /// </summary>
-        /// <returns></returns>
-        private async Task OnMentionPopupOpenAsync()
+        private void HideMentionPanel()
         {
-            // Focus on the search box
-            await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function(){ document.getElementById('search').focus(); }, 200)");
+            mention.Visible = false;
+            mention.Trigger = null;
+            mention.Query = string.Empty;
+            mention.HighlightedId = null;
+            mention.FilteredPeople.Clear();
         }
 
-        /// <summary>
-        /// Insert the initials of the selected person via JS
-        /// </summary>
-        /// <param name="person"></param>
-        private void MentionPerson(Person person)
+        private List<Person> FilterPeople(string q)
         {
-            htmlEditor.RestoreSelectionAsync().ContinueWith(async t =>
-            {
-                // Close the popup
-                MentionSearchString = string.Empty;
-                await popup.CloseAsync();
+            q ??= string.Empty;
+            var query = q.Trim();
 
-                // Insert text and move cursor
-                await JSRuntime.InvokeVoidAsync("insertTextAtCaret", $"{person?.ShortName ?? ""}");
-            });
+            // Filter based on the query being in the name or short name
+            return mentionables
+                .Where(p => string.IsNullOrEmpty(query)
+                         || p.ShortName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                         || p.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .Take(20)
+                .ToList();
         }
+
+        private void MoveHighlight(int delta)
+        {
+            if (mention.FilteredPeople.Count == 0) return;
+            var idx = mention.FilteredPeople.FindIndex(p => p.PersonId == mention.HighlightedId);
+            if (idx < 0) idx = 0;
+            idx = (idx + delta + mention.FilteredPeople.Count) % mention.FilteredPeople.Count;
+            mention.HighlightedId = mention.FilteredPeople[idx].PersonId;
+        }
+
+        private bool TryGetHighlighted(out Person p)
+        {
+            p = mention.FilteredPeople.FirstOrDefault(x => x.PersonId == mention.HighlightedId) ?? mention.FilteredPeople.FirstOrDefault();
+            return p is not null;
+        }
+
+        // ------------------------ End New Stuff ---------------------- //
 
         /// <summary>
         /// Invoked when the notes filter switch is toggled
@@ -850,7 +871,7 @@ namespace PPMTool.Pages
             {
                 // Scroll to the new editor window after a delay to allow the page to render
                 await Task.Delay(300);
-                await JSRuntime.InvokeVoidAsync("scrollToElement", "note-editor");
+                await JS.InvokeVoidAsync("scrollToElement", "note-editor");
 
             }
             StateHasChanged();
