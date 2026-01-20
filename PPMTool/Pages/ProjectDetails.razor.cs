@@ -1066,31 +1066,44 @@ namespace PPMTool.Pages
         {
             Debug.WriteLine($"** Content Resolve: {noteModel.HtmlContent}");
 
-            // Get list of all new mentions in the note content
-            var newMentions = new List<string>();
-            var matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)@\w+");
-            newMentions.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
+            // Match the special span capturing the person ID and the short name in two groups
+            var regex = new Regex(@"<span\s+class=""mention""\s+data-id=""(\d+)""\s*>@(\w+)</span>",
+                                  RegexOptions.IgnoreCase);
+            var matches = regex.Matches(noteModel.HtmlContent);
 
-            // Load in the list of managers
-            var managers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).ToList();
+            // Load managers
+            var managers = UserService.GetAll(Context)
+                .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                .Select(x => x.Person)
+                .ToList();
 
-            // For each mention, attempt to resolve it and replace in the HTMl content
+            // Go through the matches and find the people
             foreach (Match m in matches)
             {
-                var trimmedMatch = TrimMatch(m.Value.Trim(), '@');
-                var person = managers.FirstOrDefault(x => x.ShortName.Equals(trimmedMatch.Substring(1), StringComparison.OrdinalIgnoreCase));
+                var fullTag = m.Value;
+                var personIdAsString = m.Groups[1].Value;
+                var shortName = m.Groups[2].Value;
+
+                // Parse the ID as an int skipping those that fail
+                if (!int.TryParse(personIdAsString, out int personId)) continue;
+
+                // Lookup person by id
+                var person = managers.FirstOrDefault(x => x.PersonId == personId);
+
                 if (person != null)
                 {
-                    Debug.WriteLine($"** Replacing {trimmedMatch} with {person.Name}");
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<span class=\"badge badge-primary\">{person.Name}</span>&nbsp;");
+                    Debug.WriteLine($"** Replacing mention {shortName} (id={personId}) with {person.Name}");
+
+                    var replacement = $"<span class=\"badge badge-primary\">{person.Name}</span>";
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(fullTag, replacement);
                 }
                 else
                 {
-                    // Warning if the mention cannot be resolved
+                    // Person lookup failed
                     ShowNotification(new CapXNotificationMessage
                     {
                         Summary = "Mention Failure",
-                        Detail = $"The mention {trimmedMatch} could not be resolved! Please edit your note to correct."
+                        Detail = $"The mention @${shortName} (id={personId}) could not be resolved! Please edit your note to correct."
                     });
                 }
             }
