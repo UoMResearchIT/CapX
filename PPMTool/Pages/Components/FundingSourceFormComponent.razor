@@ -111,13 +111,20 @@
             PostNoteToProject(FinanceItemChangeType.Add, Source);
         }
 
+        UpdateProjectBudget();
+        CloseForm(true);
+        return true;
+    }
+
+    /// <summary>
+    /// Separate method to update the project budget after funding source changes
+    /// </summary>
+    private void UpdateProjectBudget()
+    {
         // Update the project budget and save the project
         var sources = FundingSourceService.GetFundingSources(Context, Project.ProjectId);
         Project.Budget = sources.Sum(x => x.AmountAvailable);
         ProjectService.Update(Context, Project);
-
-        CloseForm(true);
-        return true;
     }
 
     /// <summary>
@@ -133,6 +140,7 @@
 
             FundingSourceService.Delete(Context, Source);
             PostNoteToProject(FinanceItemChangeType.Delete, Source);
+            UpdateProjectBudget();
             CloseForm(true);
         }
     }

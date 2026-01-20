@@ -135,8 +135,8 @@ namespace PPMTool.Pages
                 statusMessages.Clear();
                 showTaskInvalidError = false;
 
-                // Initialise the components from the DB
-                await originalAddTaskComponent.InitialiseComponentAsync();
+                // Initialise the components from the DB (share the page context with the two add task components)
+                await originalAddTaskComponent.InitialiseComponentAsync(Context);
                 await newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
 
                 // Apply the logic to split the task and actuals
@@ -389,7 +389,6 @@ namespace PPMTool.Pages
                 owningProject.UpdateProjectMetaData(false, finrefs);
 
                 // Update the project in the database
-
                 LogInformation($"Saving project {owningProject?.GetFullName()}...");
                 ProjectService.Update(Context, owningProject);
 

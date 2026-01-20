@@ -3,17 +3,28 @@ services:
     build:
       context: .
       target: final
-      secrets:
-        - github_token
+      args:
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
     volumes:
       - state:/app/state
-    environment:    
-      - GITHUB_TOKEN=${GITHUB_TOKEN:?}
+    environment:
       - API_KEY_SECRET=${API_KEY_SECRET:?}
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - CONNECTION_STRING=${CONNECTION_STRING:?}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
+      - SEED_DUMMY_DATA=${SEED_DUMMY_DATA:-FALSE}
+      - SUPERUSER_NAME=${SUPERUSER_NAME:-}
+      - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:-}
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:-}
     ports:
-      - ${CAPX_HTTP_PORT:-3000}:8080
+      - ${CAPX_HTTP_PORT:?}:8080
     command: ["dotnet", "PPMTool.dll"]
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 5s
+      timeout: 5s
+      start_period: 1s
+      retries: 5
 
   api:
     depends_on:
@@ -21,20 +32,24 @@ services:
     build:
       context: .
       target: final
-      secrets:
-        - github_token
+      args:
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
     volumes:
       - state:/app/state
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - DB_CONNECTION_STRING="Data Source=PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;"
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
+      - CONNECTION_STRING=${CONNECTION_STRING:?}
+      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:?}
     ports:
-      - ${CAPX_API_PORT:-8080}:8080
+      - ${CAPX_API_PORT:?}:8080
     command: ["dotnet", "PPMTool.API.dll"]
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/swagger/index.html"]
+      interval: 5s
+      timeout: 5s
+      start_period: 1s
+      retries: 5
 
 volumes:
   state:
-
-secrets:
-  github_token:
-    environment: GITHUB_TOKEN
