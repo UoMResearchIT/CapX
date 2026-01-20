@@ -400,10 +400,16 @@
                             @if (mention.Visible)
                             {
                                 <div class="mention-panel"
-                                     style="position:absolute; top:@mention.TopPx; left:@mention.LeftPx; width:280px; max-height:300px; overflow:auto; z-index: 1000;"
+                                     style="
+                                        position:absolute;
+                                        top:@mention.TopPx;
+                                        left:@mention.LeftPx;
+                                        width:280px;
+                                        max-height:300px;
+                                        overflow:auto;
+                                        z-index: 1000;"
                                      @onmousedown:preventDefault
                                      @onwheel:stopPropagation>
-
                                     @foreach (var p in mention.FilteredPeople)
                                     {
                                         <div class="mention-item @(mention.HighlightedId == p.PersonId ? "is-active" : null)"

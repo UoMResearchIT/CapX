@@ -705,23 +705,29 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-
-        // --------------------- New stuff ----------------------- //
-
+        /// <summary>
+        /// Method fired when the HTML editor input changes
+        /// </summary>
+        /// <param name="html"></param>
+        /// <returns></returns>
         private async Task OnEditorInput(string html)
         {
+            // If the last input was ignored, then re-enable the next one and exit
             if (suppressNextInput)
             {
                 suppressNextInput = false;
-                return; // ignore the input triggered by our InsertHtml
+                return;
             }
 
             // Ask JS for the current token and caret position
             var info = await JS.InvokeAsync<TokenInfo>("mentions.getTokenInfo", "#editor-entry", "@,#");
 
+            // Check whether the token info has a trigger condition to show the popup
             if (info?.HasTrigger == true)
             {
                 mention.Trigger = info.Trigger;
+
+                // Set the search text to whatever is after the trigger if there is anything
                 mention.Query = info.Text ?? string.Empty;
 
                 // Filter your people list (case-insensitive initials, name, etc.)
@@ -731,33 +737,41 @@ namespace PPMTool.Pages
                 mention.TopPx = $"{info.ClientTop + info.ClientHeight}px";
                 mention.LeftPx = $"{info.ClientLeft}px";
 
+                // Show the popup is there are matches and highlight the first in the list
                 mention.Visible = mention.FilteredPeople.Count > 0;
                 mention.HighlightedId = mention.FilteredPeople.FirstOrDefault()?.PersonId;
 
-                // Tell JS whether to suppress keys
+                // Tell JS whether to suppress keys on the editor
                 await SetMentionActiveAsync(mention.Visible);
 
             }
             else
             {
+                // Hide the panel if no trigger present
                 await HideMentionPanelAsync();
             }
 
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Fired when a key is pressed while the HTML editor has focus
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async Task OnEditorKeyDown(KeyboardEventArgs e)
         {
+            // If the popup is not visible, check for trigger key
             if (!mention.Visible)
             {
-                // Start mention on '@' or '#'
-                if (e.Key is "@" or "#")
+                // Start mention on '@' (or '#' -- maybe in the future)
+                if (e.Key is "@")
                 {
                     // Save caret so we can restore/replace safely if focus ever moves
                     await htmlEditor!.SaveSelectionAsync();
 
                     // Prime the popup at caret even before any query chars
-                    var info = await JS.InvokeAsync<TokenInfo>("mentions.getTokenInfo", "#editor-entry", "@,#");
+                    var info = await JS.InvokeAsync<TokenInfo>("mentions.getTokenInfo", "#editor-entry", "@");
                     mention.Trigger = e.Key[0];
                     mention.Query = string.Empty;
                     mention.FilteredPeople = FilterPeople(""); // show top N
@@ -793,23 +807,35 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Fired when a person is selected from the mention popup
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
         private async Task SelectMention(Person p)
         {
             // Replace from trigger to caret, then insert semantic markup via Radzen API
             await JS.InvokeVoidAsync("mentions.selectFromTriggerToCaret", "#editor-entry", mention.Trigger?.ToString() ?? "@");
 
+            // Compose the HTML to be inserted
             var initials = p.ShortName ?? string.Empty;
             var markup = $"<span class=\"mention\" data-id=\"{p.PersonId}\">@{initials}</span>&nbsp;";
 
             // Prevent the follow-up Input from re-triggering
             suppressNextInput = true;
 
+            // Insert the HTML directly into the editor which will update the backing field properly
             await htmlEditor!.ExecuteCommandAsync(HtmlEditorCommands.InsertHtml, markup);
 
+            // Hide the popup
             await HideMentionPanelAsync();
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Hide and reset the mention popup panel
+        /// </summary>
+        /// <returns></returns>
         private async Task HideMentionPanelAsync()
         {
             mention.Visible = false;
@@ -820,6 +846,11 @@ namespace PPMTool.Pages
             await SetMentionActiveAsync(false);
         }
 
+        /// <summary>
+        /// FIlter the list of people to show in the mention panel
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
         private List<Person> FilterPeople(string q)
         {
             q ??= string.Empty;
@@ -834,26 +865,42 @@ namespace PPMTool.Pages
                 .ToList();
         }
 
+        /// <summary>
+        /// Move the highlighting up or down the list
+        /// </summary>
+        /// <param name="delta"></param>
         private void MoveHighlight(int delta)
         {
             if (mention.FilteredPeople.Count == 0) return;
             var idx = mention.FilteredPeople.FindIndex(p => p.PersonId == mention.HighlightedId);
             if (idx < 0) idx = 0;
+
+            // Wrap round
             idx = (idx + delta + mention.FilteredPeople.Count) % mention.FilteredPeople.Count;
+
+            // Update the highlighted person ID
             mention.HighlightedId = mention.FilteredPeople[idx].PersonId;
         }
 
+        /// <summary>
+        /// Try get the person who corresponds to the highlighted ID
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
         private bool TryGetHighlighted(out Person p)
         {
             p = mention.FilteredPeople.FirstOrDefault(x => x.PersonId == mention.HighlightedId) ?? mention.FilteredPeople.FirstOrDefault();
             return p is not null;
         }
 
+        /// <summary>
+        /// Change the active flag within the JS so it stays in sync with the state in C#
+        /// </summary>
+        /// <param name="isActive"></param>
+        /// <returns></returns>
         private async Task SetMentionActiveAsync(bool isActive)
             => await JS.InvokeVoidAsync("mentions.setActive", isActive);
 
-
-        // ------------------------ End New Stuff ---------------------- //
 
         /// <summary>
         /// Invoked when the notes filter switch is toggled
