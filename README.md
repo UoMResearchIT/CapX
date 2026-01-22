@@ -48,28 +48,62 @@ Furthermore, there are three _solution_ configurations: `Local`, `Debug` and `Re
 
 ### Running with Docker Compose
 
-To run with Docker Compose, provide your GitHub token as an environment variable:
+Docker Compose runs two containers: one for the web application and one for the API. Both share a database volume.
 
-```bash
-read -s GITHUB_TOKEN
-<type your github token with package read permission>
-export GITHUB_TOKEN
+#### Environment Variables
+
+Create a `.env` file in the repository root with the following required variables:
+
+| Variable | Description |
+|----------|-------------|
+| `ASPNETCORE_ENVIRONMENT` | ASP.NET Core runtime environment. Valid values: `Development` or `Production`. This determines which `appsettings.*.json` file is loaded at runtime. |
+| `BUILD_CONFIGURATION` | .NET build configuration (`-c` flag). Valid values: `Local`, `Debug`, or `Release`. See [Solution/Build and Launch Configurations](#solutionbuild-and-launch-configurations) for details. |
+| `CONNECTION_STRING` | SQLite connection string, e.g. `Data Source=state/PPMTool.db` |
+| `LEAVEBOOKINGS_CONNECTION_STRING` | Connection string for the leave bookings database |
+| `API_KEY_SECRET` | Secret for API key generation (minimum 16 characters). Use `openssl rand -hex 16` to generate a strong key. |
+| `CAPX_HTTP_PORT` | Port for the web application (e.g. `3000`) |
+| `CAPX_API_PORT` | Port for the API (e.g. `3001`) |
+
+Optional variables for seeding dummy data (see [Seeding the Database](#seeding-the-database)):
+
+| Variable | Description |
+|----------|-------------|
+| `SEED_DUMMY_DATA` | Set to `TRUE` to seed dummy data on startup |
+| `SUPERUSER_NAME` | Name of the superuser (required if seeding) |
+| `SUPERUSER_USERNAME` | Username of the superuser (required if seeding) |
+| `SUPERUSER_EMAIL` | Email of the superuser (required if seeding) |
+
+Example `.env` file:
+
+```env
+ASPNETCORE_ENVIRONMENT=Development
+BUILD_CONFIGURATION=Local
+CONNECTION_STRING=Data Source=state/PPMTool.db
+LEAVEBOOKINGS_CONNECTION_STRING=Data Source=state/LeaveBookings.db
+API_KEY_SECRET=your-generated-secret-here
+CAPX_HTTP_PORT=3000
+CAPX_API_PORT=3001
 ```
-and then build and bring up the container:
+
+#### Building and Running
+
+Build and bring up the containers:
+
 ```bash
 docker compose up --build
 ```
-You can then access the app via a web browser at `http://localhost:3000`. You can change the port by setting the environment variable CAPX_PORT, either in a .env file or in the environment.
 
-You will need to set an environment variable called `API_KEY_SECRET`, either in a .env file or directly in your environment. It must be at least 16 characters long. For security, it is recommended to use the output of `openssl rand -hex 16` to generate a strong key.
+You can then access:
+- The web application at `http://localhost:3000` (or your configured `CAPX_HTTP_PORT`)
+- The API at `http://localhost:3001` (or your configured `CAPX_API_PORT`)
 
-Use Ctrl-C to bring the container down. The database state will be maintained in a docker volume. To wipe the volume and start from the initial state, use
+Use Ctrl-C to bring the containers down. The database state is maintained in a Docker volume. To wipe the volume and start from the initial state, use:
+
 ```bash
 docker volume rm capx_state
 ```
-once the container has been brought down.
 
-Since the image is being built each time you run "docker compose up --build", any changes to source files will be picked up and included.
+Since the image is rebuilt each time you run `docker compose up --build`, any changes to source files will be picked up and included.
 
 ## Tests
 There are two test projects in the solution for testing the web app and the API. To run the tests, both the web application and the API application need to be running on the expected ports and the database needs to be accessible to the API test project so it can pull out an API key to use for authentication. As such, there needs to be a valid API key in the database for it to use otherwise the setup fixture will complain that it cannot run the tests.

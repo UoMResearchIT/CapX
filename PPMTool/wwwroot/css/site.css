@@ -318,3 +318,44 @@ th, tr, td {
 hr {
     border-top: 2px solid var(--rz-border-color);
 }
+
+.header-footer-text {
+    margin-bottom: 0;
+    color: var(--rz-on-primary);
+}
+
+.header-footer-text-dev {
+    color: var(--rz-on-danger);
+}
+
+.header-footer-icon {
+    color: var(--rz-on-primary) !important;
+}
+
+.header-footer-icon-dev {
+    color: var(--rz-on-danger) !important;
+}
+
+.mention-panel {
+    background: var(--rz-panel-background-color, #fff);
+    border: var(--rz-panel-border, 1px solid #ddd);
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    padding: .25rem;
+}
+
+.mention-item {
+    padding: .35rem .5rem;
+    cursor: pointer;
+}
+
+.mention-item.is-active,
+.mention-item:hover {
+    background: var(--rz-primary-lighter, #eef4ff);
+}
+
+span.mention {
+    background: rgba(0,123,255,.08);
+    border-radius: 4px;
+    padding: 0 .2rem;
+}

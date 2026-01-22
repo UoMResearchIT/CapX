@@ -1,6 +1,7 @@
 ﻿@inject ThemeService ThemeService
+@inject IWebHostEnvironment Environment
 
-<RadzenButton Icon="@(isInDarkMode ? "light_mode" : "dark_mode")" Click="@(args => ToggleThemeAction?.Invoke())" Variant="Variant.Text" Style="color: var(--rz-header-color)" />
+<RadzenButton Icon="@(isInDarkMode ? "light_mode" : "dark_mode")" Click="@(args => ToggleThemeAction?.Invoke())" Variant="Variant.Text" class="@($"{(Environment.IsDevelopment() ? "header-footer-icon-dev" : "header-footer-icon")}")" />
 
 @code {
     [Parameter]

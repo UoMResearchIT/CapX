@@ -377,7 +377,7 @@ namespace PPMTool.Pages
                             {
                                 var latestAssessment = competency.Assessments
                                     .Where(x => x.PersonId == SelectedPerson.PersonId)
-                                    .OrderByDescending(x => x.DateCreated)
+                                    .OrderByDescending(x => DateTime.Parse(x.DateCreated))
                                     .FirstOrDefault();
                                 assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
                             }
@@ -536,7 +536,7 @@ namespace PPMTool.Pages
                     var latestAssessments = competencies
                             .SelectMany(x => x.Assessments)
                             .Where(x => x.PersonId == selectedPerson.PersonId)
-                            .OrderByDescending(x => x.DateCreated)
+                            .OrderByDescending(x => DateTime.Parse(x.DateCreated))
                             .GroupBy(x => x.CompetencyId);
 
                     // Get a list of competency IDs for those where the latest assessment is fully met
