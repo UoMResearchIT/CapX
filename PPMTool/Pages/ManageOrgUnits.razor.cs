@@ -19,13 +19,13 @@ namespace PPMTool.Pages
             LogInformation($"Viewing skills tags");
         }
 
-        protected override async Task SaveRow(SkillTag entity)
+        protected override async Task SaveRow(BaseOrgUnit entity)
         {
             if (IsDuplicatedSkill(entity)) return;
             await base.SaveRow(entity);
         }
 
-        protected override async Task DeleteRow(SkillTag entity)
+        protected override async Task DeleteRow(BaseOrgUnit entity)
         {
             if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
             {

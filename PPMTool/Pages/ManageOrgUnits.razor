@@ -3,7 +3,7 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
-<PageTitle>Manage Skills - CapX</PageTitle>
+<PageTitle>Manage Org Units - CapX</PageTitle>
 
 <div class="container">
     <div class="row">
@@ -32,7 +32,7 @@
                         AllowSorting="true"
                         EditMode="DataGridEditMode.Single"
                         Data="@dataGridEntities"
-                        TItem="SkillTag"
+                        TItem="BaseOrgUnit"
                         RowUpdate="@OnUpdateRow"
                         RowCreate="@OnCreateRow"
                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
