@@ -69,7 +69,7 @@ namespace PPMTool.Data.Helpers
                 foreach (var project in projectsInWindow.Where(x => x.ProjectManager?.PersonId == person.PersonId))
                 {
                     if (generateLeadershipTasks == GenerateLeadershipTaskLogic.Always ||
-                        project.CostModel == CostModel.TechAndLeadership)
+                        project.CostModel.HasLeadership())
                     {
                         tempTasksInWindow.AddRange(project.GenerateLeadershipTasks()
                             .Where(x => x.IsWithin(startDate ?? default, endDate ?? default)));
@@ -139,10 +139,10 @@ namespace PPMTool.Data.Helpers
                 // Create a line representing the full, un-chunked task to start off with
                 var initialChunk = new AssignmentChunk(resKey)
                 {
-                    PostNumber = string.Empty,
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
-                    FTE = Math.Round(resource.AssignmentFTE, 3),
+                    FTE = resource.AssignmentFTE,
+                    BilledFTE = resource.BilledFTE,
                     ProjectName = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
@@ -313,7 +313,7 @@ namespace PPMTool.Data.Helpers
                 data.AddRange(taskChunks);
             }
 
-            // Add the mid-grade salary estimates and ovewrite the planned costs if necessary
+            // Add the mid-grade salary estimates and overwrite the planned costs if necessary
             foreach (var chunk in data)
             {
                 // Cost estimate based on mid-grade salaries
@@ -611,9 +611,9 @@ namespace PPMTool.Data.Helpers
                         // Get the sum of their assignments on the day with and without leadership
                         var projectAssignmentsFTE = chunks
                             .Where(x => !x.IsLeadershipAssignment)
-                            .Sum(x => x.FTE);
+                            .Sum(x => x.BilledFTE);
                         var projectAssignmentsFTEIncLeadership = chunks
-                            .Sum(x => x.FTE);
+                            .Sum(x => x.BilledFTE);
 
                         // Net value
                         var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
@@ -648,6 +648,18 @@ namespace PPMTool.Data.Helpers
             }
 
             return windowRecoveryData;
+        }
+
+        /// <summary>
+        /// Represents the summary of the financial state of a project over an export period
+        /// </summary>
+        internal class ProjectBudgetSummary
+        {
+            public string ProjectName { get; set; }
+
+            public double PlannedCosts { get; set; }
+
+            public double RecoveredCosts { get; set; }
         }
     }
 }

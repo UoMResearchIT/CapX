@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 
 namespace PPMTool.API.Endpoints
@@ -37,13 +38,13 @@ namespace PPMTool.API.Endpoints
             try
             {
                 // Try parse the datetimes
-                var success = Helpers.ParseDateTime(startDate, out DateTime start);
+                var success = GeneralHelpers.ParseDateTime(startDate, out DateTime start);
                 if (!success)
                 {
                     logger.LogWarning($"API: GetWorkloadAnalysisDataDateRange: Invalid start date {startDate}");
                     return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
                 }
-                success = Helpers.ParseDateTime(endDate, out DateTime end);
+                success = GeneralHelpers.ParseDateTime(endDate, out DateTime end);
                 if (!success)
                 {
                     logger.LogWarning($"API: GetWorkloadAnalysisDataDateRange: Invalid end date {endDate}");
@@ -62,15 +63,15 @@ namespace PPMTool.API.Endpoints
                 var selectedPeople = new List<Data.Entities.Person>();
                 foreach (var name in names)
                 {
-                    var person = await Helpers.FindPersonWithLineManagerByNameAsync(context, name);
+                    var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
                     if (person == null) return Results.NotFound($"Person '{name}' not found.");
 
-                    if (!Helpers.IsSuperUserOrLineManagerOrSelf(context, http, person)) return Results.Unauthorized();
+                    if (!GeneralHelpers.IsSuperUserOrLineManagerOrSelf(context, http, person)) return Results.Unauthorized();
 
                     selectedPeople.Add(person);
                 }
 
-                var results = await Helpers.GenerateWlmAnalysisDataAsync(
+                var results = await WorkloadModelHelpers.GenerateWlmAnalysisDataAsync(
                     context,
                     selectedPeople,
                     start,

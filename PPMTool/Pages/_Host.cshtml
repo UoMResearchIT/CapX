@@ -1,5 +1,6 @@
 ﻿@page "/"
 @namespace PPMTool.Pages
+@using Microsoft.AspNetCore.Components.Web
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     Layout = null;
@@ -12,8 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="~/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/standard-wcag.css">
+    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
     <link href="css/site.css" rel="stylesheet" />
     <link href="PPMTool.styles.css" rel="stylesheet" />
 </head>
@@ -32,7 +32,7 @@
     </div>
 
     <script src="_framework/blazor.server.js"></script>
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js"></script>
     <script src="~/Pages/Capacity.razor.js"></script>
     <script src="~/Pages/ProjectDetails.razor.js"></script>

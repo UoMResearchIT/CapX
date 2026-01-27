@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Web;
+using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -58,6 +59,7 @@ builder.Services.AddDbContextFactory<PPMToolContext>(options =>
 );
 
 builder.Services.AddBlazoredSessionStorage();
+builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
 builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
@@ -99,7 +101,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.None;
 
         // Set expiration to match CAS session timeout
-        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
+        options.ExpireTimeSpan = TimeSpan.FromHours(time);
         options.SlidingExpiration = false;
 
         options.Events = new CookieAuthenticationEvents
@@ -255,25 +258,37 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         // Map claims from assertion and sign in
         var assertion = context.Assertion;
 
-        // Map UoM user name to claim
+        // Map UoM user name to claim (could also be email depending on what they signed in with)
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
         identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
 
-        // Lookup the username in the DB and add role claim
+        // Lookup the username / email in the DB and add role claim
         // Has to be done manually since service provider not built yet?
         var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
         using (var dbContext = dbContextFactory.CreateDbContext())
         {
+            // Log the attempt
+            var claimName = assertion.PrincipalName?.Trim().ToLower();
+            logger?.LogInformation($"Signing in {claimName}");
+
+            // Find the matching user in the DB
             var user = dbContext.Users
                 .Include(x => x.Person)
                 .ToList()
-                .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
+                .FirstOrDefault(x => x.MatchesClaim(claimName));
+
+            // If found a user in the DB that matches, add their role claim
             if (user != null)
             {
                 identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
             }
+            else
+            {
+                logger?.LogError($"Cannot find a user in the access DB with UID: {claimName}");
+            }
 
+            // Sign in the user
             await context.HttpContext.SignInAsync(context.Principal);
 
             // Update last logged in and log

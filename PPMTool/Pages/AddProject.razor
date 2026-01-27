@@ -35,7 +35,7 @@ else
             </RadzenStack>
         }
         <hr />
-        <div class="card">
+        <RadzenCard>
             <EditForm EditContext="editContext">
                 <div class="row">
                     <div class="col-8">
@@ -125,7 +125,7 @@ else
                     </div>
                     <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
+                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
                         @if (projectModel.CostModel == CostModel.DayRate)
                         {
                             <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
@@ -137,7 +137,7 @@ else
                     </div>
                     <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
+                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
                     </div>
                 </div>
@@ -149,8 +149,8 @@ else
                     </div>
                     <div class="col-6">
                         <RadzenLabel class="radzen-form-label" Text="Leadership Funding Source" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="Current cost model chosen does not require a leadership funding source" Visible="@(projectModel.CostModel != CostModel.TechAndLeadership)" /><br />
-                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.FundingSourceId" ValueProperty="FundingSourceId" Data="@availableFundingSources" Disabled="@(projectModel.CostModel != CostModel.TechAndLeadership)" AllowClear="true">
+                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Current cost model chosen does not require a leadership funding source" Visible="@(!projectModel.CostModel.HasLeadership())" /><br />
+                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.FundingSourceId" ValueProperty="FundingSourceId" Data="@availableFundingSources" Disabled="@(!projectModel.CostModel.HasLeadership())" AllowClear="true">
                             <Template Context="source">
                                 @(source?.GetSensibleObjectName())
                             </Template>
@@ -161,6 +161,6 @@ else
                 <hr />
                 <DataAnnotationsValidator />
             </EditForm>
-        </div>
+        </RadzenCard>
     </div>
 }

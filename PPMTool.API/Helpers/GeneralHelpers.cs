@@ -1,18 +1,16 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 
-namespace PPMTool.API.Endpoints;
+namespace PPMTool.API.Helpers;
 
 /// <summary>
 /// Provides general helper methods for common repeatedable actions in minimal API endpoints.
 /// </summary>
-public static class Helpers
+public static class GeneralHelpers
 {
     /// <summary>
     /// Gets the authenticated user from the HttpContext. Should always be present if the authentication middleware is correctly set up.
@@ -39,6 +37,17 @@ public static class Helpers
     {
         if (user == null) return false;
         return user.RoleType == RoleType.Superuser;
+    }
+
+    /// <summary>
+    /// Checks to see if the user is a superuser or manager.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    internal static bool IsSuperUserOrManager(User? user)
+    {
+        if (user == null) return false;
+        return user.RoleType == RoleType.Superuser || user.RoleType == RoleType.Manager;
     }
 
     /// <summary>
@@ -80,6 +89,31 @@ public static class Helpers
     }
 
     /// <summary>
+    /// Determines if a caller can view sensitive timesheet data for a specific person.
+    /// Sensitive data can only be viewed by superusers, the person themselves, or their direct line manager.
+    /// </summary>
+    /// <param name="caller">The user making the request.</param>
+    /// <param name="timesheetOwner">The person who owns the timesheet being checked.</param>
+    /// <returns>True if the caller is authorized to view the sensitive data; otherwise, false.</returns>
+    internal static bool CanViewSensitiveData(User? caller, Person timesheetOwner)
+    {
+        if (caller == null) return false;
+
+        var callerPersonId = caller!.Person?.PersonId ?? 0;
+
+        // Superusers can see everything
+        if (IsSuperUser(caller)) return true;
+
+        // Can see own data
+        if (callerPersonId != 0 && callerPersonId == timesheetOwner.PersonId) return true;
+
+        // Direct line manager can see direct report's data
+        if (timesheetOwner.LineManager?.PersonId == callerPersonId) return true;
+
+        return false;
+    }
+
+    /// <summary>
     /// Try parse a date from a string to a DateTime object.
     /// </summary>
     /// <param name="dateAsString">The string to parse, expected format "yyyy-MM-dd".</param>
@@ -92,6 +126,38 @@ public static class Helpers
             return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Parse optional date range parameters. Returns nullable DateTimes and error message if parsing fails.
+    /// </summary>
+    /// <param name="startDate">Optional start date string in format yyyy-MM-dd.</param>
+    /// <param name="endDate">Optional end date string in format yyyy-MM-dd.</param>
+    /// <returns>Tuple containing nullable start date, nullable end date (exclusive), and error message if parsing fails.</returns>
+    internal static (DateTime? start, DateTime? endExclusive, string? error) ParseOptionalDateRange(string? startDate, string? endDate)
+    {
+        DateTime? start = null;
+        DateTime? endExclusive = null;
+
+        if (!string.IsNullOrWhiteSpace(startDate))
+        {
+            if (!ParseDateTime(startDate, out DateTime parsedStart))
+            {
+                return (null, null, $"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
+            }
+            start = parsedStart.Date;
+        }
+
+        if (!string.IsNullOrWhiteSpace(endDate))
+        {
+            if (!ParseDateTime(endDate, out DateTime parsedEnd))
+            {
+                return (null, null, $"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+            }
+            endExclusive = parsedEnd.Date.AddDays(1);
+        }
+
+        return (start, endExclusive, null);
     }
 
     /// <summary>
@@ -148,59 +214,5 @@ public static class Helpers
         }
 
         return Encoding.UTF8.GetBytes(csvBuilder.ToString());
-    }
-
-    /// <summary>
-    /// Generates WLM analysis data for a collection of people over a specified date range.
-    /// This is a helper method specific to the WorkLoadModel API.
-    /// </summary>
-    /// <param name="context">The database context for data retrieval.</param>
-    /// <param name="people">The collection of people for whom to generate the analysis.</param>
-    /// <param name="startDate">The start date of the analysis period.</param>
-    /// <param name="endDate">The end date of the analysis period.</param>
-    /// <param name="compareToWLM">A flag to determine if the data should be the difference against the WLM.</param>
-    /// <param name="normalisedByTotalHours">A flag to determine if the data should be normalised as a fraction of total hours.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a list of DTOs with the structured WLM analysis data.</returns>
-    internal static async Task<List<WLMAnalysisPersonDataDTO>> GenerateWlmAnalysisDataAsync(
-        PPMToolContext context,
-        IEnumerable<Person> people,
-        DateTime startDate,
-        DateTime endDate,
-        bool compareToWLM,
-        bool normalisedByTotalHours)
-    {
-        var results = new List<WLMAnalysisPersonDataDTO>();
-
-        string units = WorkloadModelChartHelper.GetChartYAxisTitle(compareToWLM, normalisedByTotalHours);
-
-        foreach (var person in people)
-        {
-            var personWeeklyData = new List<WLMWeeklyAnalysisDTO>();
-
-            var allTimesheets = await context.Timesheets
-                .Include(t => t.TimesheetEntries).ThenInclude(e => e.InnateCodeTask).ThenInclude(tk => tk.InnateCode)
-                .Where(t => t.Owner.PersonId == person.PersonId && t.StartDate >= startDate && t.StartDate <= endDate)
-                .ToListAsync();
-
-            var weekStart = startDate;
-            while (weekStart <= endDate)
-            {
-                var wlmDataItem = WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets);
-
-                if (normalisedByTotalHours)
-                {
-                    wlmDataItem.SwitchNormalisation(true);
-                }
-                wlmDataItem.UpdateWLMNetValues(normalisedByTotalHours);
-
-                var sourceData = compareToWLM ? wlmDataItem.WLMNetByDuty : wlmDataItem.WeeklyValuesByDuty;
-                var dutiesDict = sourceData.ToDictionary(kvp => kvp.Key.GetDescription(), kvp => kvp.Value);
-
-                personWeeklyData.Add(new WLMWeeklyAnalysisDTO(weekStart, units, dutiesDict));
-                weekStart = weekStart.AddDays(7);
-            }
-            results.Add(new WLMAnalysisPersonDataDTO(person.Name, personWeeklyData));
-        }
-        return results;
     }
 }

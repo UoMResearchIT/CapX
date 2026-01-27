@@ -47,8 +47,6 @@ namespace PPMTool.Services
         public void SendEmail(IEnumerable<string> to, string subject, string message)
         {
 
-            using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
-
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(Configuration["Email:From"]),
@@ -63,15 +61,22 @@ namespace PPMTool.Services
             }
 
             Logger.LogInformation($"Sending email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
+
 #if !LOCAL
-            try
+            // Launch a background task to do the sending
+            Task.Run(() =>
             {
-                client.SendAsync(mailMessage, null);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
-            }
+                try
+                {
+                    // Send
+                    using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
+                    client.Send(mailMessage);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
+                }
+            });
 #endif
         }
 
@@ -163,16 +168,6 @@ namespace PPMTool.Services
                     if (currentPMAbsences.Count() == 0)
                     {
                         managersToNotify = affectedPMs;
-                    }
-
-                    // Ensure superusers are in the list in any case
-                    var superusers = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
-                    foreach (var su in superusers)
-                    {
-                        if (!affectedPMs.Contains(su))
-                        {
-                            affectedPMs.Add(su);
-                        }
                     }
 
                     // For each manager to notify

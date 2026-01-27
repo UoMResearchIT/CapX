@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Diagnostics;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -41,6 +42,12 @@ namespace PPMTool.Shared
         [Inject]
         private SkillTagService SkillTagService { get; set; }
 
+        [Inject]
+        private ILocalStorageService LocalStorage { get; set; }
+
+        [Inject]
+        private ThemeService ThemeService { get; set; }
+
         /// <summary>
         /// Whether there are any buttons or error messages to show in the action bar.
         /// </summary>
@@ -56,6 +63,7 @@ namespace PPMTool.Shared
 
         private bool sidebarExpanded = true;
         private string versionString;
+        private string commitString;
         private string searchTerm;
         private List<MagicBarItem> sourceData = new();
         private DotNetObjectReference<MainLayout> razorComponentReference;
@@ -132,12 +140,22 @@ namespace PPMTool.Shared
         {
             base.OnInitialized();
             versionString = $"v{Configuration["VersionNumber"]}";
+            commitString = $"#{ThisAssembly.Git.Commit}";
             razorComponentReference = DotNetObjectReference.Create(this);
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
+
+            // Apply the theme
+            if (firstRender)
+            {
+                // Set the theme
+                var useDarkMode = await LocalStorage.GetItemAsync<bool>("useDarkMode");
+                Debug.WriteLine($"** Stored local value for darkmode = {useDarkMode}");
+                ThemeService.SetDarkLight(useDarkMode);
+            }
 
             // Set the user id to show the skills tab
             if (activeUserId == null)

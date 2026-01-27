@@ -13,7 +13,7 @@
         <h1>Edit Skills</h1>
         <RadzenText Text="@personModel?.Name" TextStyle="TextStyle.DisplayH5" />
         <hr />
-        <div class="card">
+        <RadzenCard>
             <EditForm Model="@personModel">
                 <DataAnnotationsValidator />
                 <div class="row">
@@ -106,6 +106,6 @@
                     </div>
                 </div>
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>
