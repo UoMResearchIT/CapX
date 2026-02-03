@@ -261,7 +261,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         using (var dbContext = dbContextFactory.CreateDbContext())
         {
             // Log the attempt
-            var claimName = assertion.PrincipalName?.Trim().ToLower();
+            var claimName = assertion.PrincipalName?.Clean();
             logger?.LogInformation($"Signing in {claimName}");
 
             // Find the matching user in the DB

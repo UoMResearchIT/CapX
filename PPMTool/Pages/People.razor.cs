@@ -122,7 +122,7 @@ namespace PPMTool.Pages
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
-                    query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
+                    query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Clean().Contains(filterValue.Clean())));
                 }
             }
 

@@ -37,7 +37,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Project projectModel)
         {
-            return context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim() && projectModel.ProjectId != p.ProjectId);
+            return context.Projects.Any(p => p.Name.Clean() == projectModel.Name.Clean() && projectModel.ProjectId != p.ProjectId);
         }
 
         /// <summary>

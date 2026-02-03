@@ -88,29 +88,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Faculty entity)
         {
-            return GetAll(context).Any(x => (Clean(x.Name) == Clean(entity.Name) || Clean(x.Code) == Clean(entity.Code)) && x.FacultyId != entity.FacultyId);
-        }
-
-        /// <summary>
-        /// Returns a Faculty entity where the name has been matched
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public Faculty GetFacultyByName(PPMToolContext context, string name)
-        {
-            return GetAll(context).Where(x => (Clean(x.Name) == Clean(name))).First();
-        }
-
-        /// <summary>
-        /// Returns a Faculty entity where the code has been matched
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public Faculty GetFacultyByCode(PPMToolContext context, string code)
-        {
-            return GetAll(context).Where(x => (Clean(x.Code) == Clean(code))).First();
+            return GetAll(context).Any(x => (x.Name.Clean() == entity.Name.Clean() || x.Code.Clean() == entity.Code.Clean()) && x.FacultyId != entity.FacultyId);
         }
     }
 }
