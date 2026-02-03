@@ -83,5 +83,20 @@ namespace PPMTool.Services
         {
             context.SaveChangesWithRetry();
         }
+
+        /// <summary>
+        /// Cleans a string with some basic formatting, generally
+        /// used to compare items to check for duplicates
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="lowercase"></param>
+        /// <returns></returns>
+        public string Clean(string item, bool lowercase = true)
+        {
+            string toReturn = item.Trim();
+            if (lowercase) { toReturn = toReturn.ToLower(); }
+
+            return toReturn;
+        }
     }
 }
