@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -22,9 +21,9 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<School> GetAll(PPMToolContext context, bool isActive)
+        public IEnumerable<School> GetAllActive(PPMToolContext context)
         {
-            return GetAll(context).Where(x => x.IsActive == isActive);
+            return context.Schools.Where(x => x.IsActive);
         }
 
         /// <summary>
