@@ -88,7 +88,23 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, School entity)
         {
-            return GetAll(context).Any(x => (Clean(x.Name) == Clean(entity.Name) || Clean(x.Code) == Clean(entity.Code)) && x.SchoolId != entity.SchoolId);
+            return GetAll(context).Any(x => (x.Name.Clean() == entity.Name.Clean() || x.Code.Clean() == entity.Code.Clean()) && x.SchoolId != entity.SchoolId);
+        }
+
+        /// <summary>
+        /// Get the schools for a given faculty
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="facultyId"></param>
+        /// <returns></returns>
+        internal IEnumerable<School> GetSchoolsForFaculty(PPMToolContext context, int facultyId, bool activeOnly = true)
+        {
+            var allSchools = GetAll(context).Where(x => x.Faculty != null && x.Faculty.FacultyId == facultyId);
+            if (activeOnly)
+            {
+                allSchools = allSchools.Where(x => x.IsActive);
+            }
+            return allSchools;
         }
     }
 }

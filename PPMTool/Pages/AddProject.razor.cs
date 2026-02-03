@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
@@ -42,6 +41,12 @@ namespace PPMTool.Pages
         [Inject]
         private FundingSourceService FundingSourceService { get; set; } = null!;
 
+        [Inject]
+        private FacultyService FacultyService { get; set; }
+
+        [Inject]
+        private SchoolService SchoolService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -76,7 +81,7 @@ namespace PPMTool.Pages
                 EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
 
                 // Populate school list
-                schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
+                schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.Faculty.FacultyId);
 
                 // Populate funding source list
                 availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);
@@ -101,7 +106,7 @@ namespace PPMTool.Pages
             // Initially load data
             innateActivityQuery = InnateCodeService.GetAll(Context).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
-            faculties = Enum.GetValues<Faculty>().ToList();
+            faculties = FacultyService.GetAllActive(Context).ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
             var users = UserService.GetAll(Context)
@@ -155,10 +160,10 @@ namespace PPMTool.Pages
         /// <param name="value"></param>
         private void OnFacultyChosen(object value)
         {
-            Faculty? faculty = value as Faculty?;
+            Faculty faculty = value as Faculty;
             if (faculty != null)
             {
-                schools = DropdownHelper.GetSchoolsForFaculty(faculty ?? Faculty.Internal);
+                schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
             }
         }
 
