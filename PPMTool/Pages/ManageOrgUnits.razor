@@ -1,5 +1,6 @@
 ﻿@page "/manageorgunits"
-@inherits DataGridPage<BaseOrgUnit>
+@inherits BasePage
+
 @using PPMTool.Data.Entities
 @using PPMTool.Enums
 @using PPMTool.Pages.Components
@@ -10,9 +11,11 @@
         <div class="col py-2">
             <h1>Manage Organisational Units</h1>
         </div>
+        <!--
         <div class="col-auto py-2 align-items-center">
             <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
         </div>
+        -->
     </div>
     @if (ErrorMessage != null)
     {
@@ -25,6 +28,7 @@
     }
     else
     {
+        /*
         <RadzenDataGrid @ref="dataGrid"
                         AllowFiltering="true"
                         AllowPaging="false"
@@ -32,7 +36,7 @@
                         AllowSorting="true"
                         EditMode="DataGridEditMode.Single"
                         Data="@dataGridEntities"
-                        TItem="BaseOrgUnit"
+                        TItem="Faculty"
                         RowUpdate="@OnUpdateRow"
                         RowCreate="@OnCreateRow"
                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -43,5 +47,6 @@
             </Columns>
         </RadzenDataGrid>
         <br />
+        */
     }
 </div>

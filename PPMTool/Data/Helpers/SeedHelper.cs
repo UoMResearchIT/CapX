@@ -1145,7 +1145,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        Faculty = Faculty.Internal,
+                        //Faculty = Faculty.Internal,
                         LeadershipFTE = 0.05f,
                         Name = "Create CoP for Research Software",
                         PI = "Dr. Waffle McSnort",

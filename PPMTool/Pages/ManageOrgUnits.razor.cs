@@ -7,8 +7,9 @@ using Radzen;
 
 namespace PPMTool.Pages
 {
+    /*
     [Authorize(Roles = "Superuser")]
-    public partial class ManageSkills : DataGridPage<BaseOrgUnit>
+    public partial class ManageSkills : DataGridPage<Faculty>
     {
         private int count;
 
@@ -19,13 +20,13 @@ namespace PPMTool.Pages
             LogInformation($"Viewing skills tags");
         }
 
-        protected override async Task SaveRow(BaseOrgUnit entity)
+        protected override async Task SaveRow(Faculty entity)
         {
             if (IsDuplicatedSkill(entity)) return;
             await base.SaveRow(entity);
         }
 
-        protected override async Task DeleteRow(BaseOrgUnit entity)
+        protected override async Task DeleteRow(Faculty entity)
         {
             if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
             {
@@ -97,4 +98,5 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {data.Count()} skills loaded. {dataGridEntities.Count()} displayed.");
         }
     }
+    */
 }
