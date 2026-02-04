@@ -7,6 +7,7 @@ using PPMTool.API.Endpoints;
 using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data.Context;
+using PPMTool.API.Helpers;
 using PPMTool.Services;
 #if RELEASE
 using Serilog;
@@ -19,14 +20,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.api.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+    .AddJsonFile($"appsettings.api.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables();
 
-// Access the configuration to get the connection string
-var configuration = builder.Configuration;
+// Add environment variables to the configuration
+EnvironmentHelper.LoadEnvironmentVariables(builder);
 
 #if RELEASE
 // Get the log path from the configuration file
-var logPath = configuration.GetValue<string>("LogPath");
+var logPath = builder.Configuration.GetValue<string>("LogPath");
 if (string.IsNullOrEmpty(logPath))
 {
     throw new Exception("LogPath configuration is missing or empty!");
@@ -47,34 +50,16 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 #endif
 
-// Use a different connection string in production
-string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-if (string.IsNullOrEmpty(connectionString))
-{
-    // Use the default connection string based on the environment
-    connectionString = configuration.GetConnectionString(
-#if LOCAL
-            "PPMToolContextConnection"
-#else
-            "PPMToolContextConnectionProduction"
-#endif
-        );
-}
-
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("Invalid connection string!");
-}
-
 builder.Services.AddDbContext<PPMToolContext>(options =>
-    options.UseSqlite(connectionString)
+    options.UseSqlite(builder.Configuration.GetConnectionString("PPMToolContextConnection"),
+        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
 );
 builder.Services.AddScoped<SkillTagService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 
-// Add services to the container.
+// Add services to the container
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(
@@ -90,7 +75,7 @@ builder.Services.AddSwaggerGen(
         opt.OperationFilter<SkillTagShallowOperationFilter>();
 
         string? docFilePath = Directory.GetFiles(
-            path: Directory.GetCurrentDirectory(),
+            path: AppContext.BaseDirectory,
             searchPattern: $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
             searchOption: SearchOption.AllDirectories)
         .FirstOrDefault();
@@ -138,6 +123,9 @@ builder.Services.AddSwaggerGen(
 
 var app = builder.Build();
 
+// Check the environment variables are configured correctly
+EnvironmentHelper.ValidateConfiguration(builder);
+
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
@@ -148,10 +136,12 @@ app.UseMiddleware<APIKeyAuthMiddleware>();
 
 // Map endpoints directly using top-level routing
 app.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
-app.MapGet($"/skills/getAllForPerson/{{name}}", Skills.GetAllSkillsTagsForPersonAsync);
+app.MapGet($"/skills/getAllForPerson/", Skills.GetAllSkillsTagsForPersonAsync);
 app.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-app.MapGet($"/timesheets/{{name}}/entries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-app.MapGet($"/timesheets/me/entries", Timesheets.GetMyTimesheetEntriesForDateRange);
+app.MapGet($"/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+app.MapGet($"/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
+app.MapGet($"/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
+app.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
 
 // Fallback for unmatched routes
 app.MapFallback(async context =>

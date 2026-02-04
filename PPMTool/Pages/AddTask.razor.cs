@@ -1,14 +1,16 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using FluentDateTime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
+using static PPMTool.Shared.MainLayout;
 
 namespace PPMTool.Pages
 {
@@ -125,6 +127,9 @@ namespace PPMTool.Pages
         private bool startDateDisabled;
         private bool workDisabled;
         private bool durationDisabled;
+        private bool endDateDisabled;
+        private bool specifyEndDateDisabled;
+        private bool defineByEndDate;
         private string error;
         private IEnumerable<TaskType> taskTypes = new List<TaskType>();
         private IList<SubTask> predecessorTasks = new List<SubTask>();
@@ -146,6 +151,31 @@ namespace PPMTool.Pages
             if (!IsSplit)
             {
                 await InitialiseComponentAsync();
+
+                // Set up the buttons for the action bar
+                Layout.SetButtons(
+                [
+                    new ActionButton
+                    {
+                        Icon = "refresh",
+                        Text = "Update",
+                        ButtonStyle = ButtonStyle.Light,
+                        OnClick = UpdateSubTaskModelFromResourceDataGrid
+                    },
+                    new ActionButton
+                    {
+                        Text = "Update & Save",
+                        OnClick = HandleSubmit,
+                        Disabled = !EditAuthorised
+                    },
+                    new ActionButton
+                    {
+                        Icon = "close",
+                        Text = "Discard",
+                        ButtonStyle = ButtonStyle.Danger,
+                        OnClick = DiscardChanges
+                    }
+                ]);
             }
         }
 
@@ -232,8 +262,14 @@ namespace PPMTool.Pages
             }
             else
             {
-                TaskModel = new SubTask();
+                TaskModel = new SubTask()
+                {
+                    OwningProject = ProjectModel
+                };
             }
+
+            // Initialise the defineByEndDate flag based on the fixed end date flag
+            defineByEndDate = TaskModel.HasFixedEndDate;
 
             // Populate predecessor dropdown source (exclude self)
             predecessorTasks = ProjectModel.SubTasks
@@ -252,7 +288,7 @@ namespace PPMTool.Pages
             editContext = new EditContext(TaskModel);
 
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            EditAuthorised = (ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager) && ProjectModel.ProjectManager == ActiveUser?.Person);
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
 
@@ -455,15 +491,53 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Handler for when the start date changes to ensure the end date is valid
+        /// </summary>
+        /// <param name="date"></param>
+        private void OnStartDateChange(DateTime? date)
+        {
+            if (date.HasValue)
+            {
+                // If the start date is moved past the end date, update the end date to be the day after
+                if (TaskModel.EndDate <= TaskModel.StartDate)
+                {
+                    // If there is a duration already then migth be convenient to use that to bump the end date?
+                    TaskModel.EndDate = TaskModel.DurationDays > 0 ? TaskModel.StartDate.AddDays(TaskModel.DurationDays) : TaskModel.StartDate.AddDays(1);
+                }
+                UpdateUIState(TaskModel, new EventArgs());
+            }
+        }
+
+        /// <summary>
         /// Handler for the events on the sub task to update various UI flags
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void UpdateUIState(object sender, EventArgs e)
         {
-            startDateDisabled = !TaskModel.HasFixedStart;
+            if (TaskModel.HasFixedStart)
+            {
+                selectedPredecessorId = null;
+            }
+
+            startDateDisabled = !TaskModel.HasFixedStart && selectedPredecessorId != null;
             workDisabled = TaskModel.TaskType == TaskType.FixedDuration;
-            durationDisabled = TaskModel.TaskType == TaskType.FixedWork || TaskModel.TaskType == TaskType.FixedDuration && TaskModel.HasFixedEndDate;
+
+            if (TaskModel.TaskType == TaskType.FixedWork)
+            {
+                specifyEndDateDisabled = true;
+                defineByEndDate = false;
+                endDateDisabled = true;
+                durationDisabled = true;
+            }
+            else
+            {
+                specifyEndDateDisabled = false;
+
+                // If define by end date is true then enable the end date picker and disable the duration picker
+                endDateDisabled = !defineByEndDate;
+                durationDisabled = defineByEndDate;
+            }
         }
 
         /// <summary>
@@ -538,9 +612,13 @@ namespace PPMTool.Pages
         protected override void CancelEdit(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Cancel edit row for {resource.GetSensibleObjectName()}");
+
+            // Reset the entity tracking
             Reset();
             SubTaskService.RestoreModel(Context, ref resource);
             dataGrid.CancelEditRow(resource);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -551,8 +629,17 @@ namespace PPMTool.Pages
         protected override void OnCreateRow(Resource resource)
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
+
+            // Add task explicitly as needed for cost calculation
+            resource.SubTask = taskModel;
+
+            // Add to the data grid
             dataGridEntities.Add(resource);
+
+            // Reset the entity tracking
             entityToInsert = null;
+
+            // Update UI elements
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -562,7 +649,10 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void OnUpdateRow(Resource entity)
         {
+            // Reset the entity tracking
             Reset();
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -574,7 +664,11 @@ namespace PPMTool.Pages
         protected override async Task DeleteRow(Resource entity)
         {
             await base.DeleteRow(entity);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
+
+            // Update task unmet demand
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -585,8 +679,16 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
+            // Update the billed FTE
+            entity.UpdateBilledFTE(projectModel.CostModel);
+
+            // Save the row to the DB
             await base.SaveRow(entity);
+
+            // Update UI elemnts
             UpdatePeopleDropdownSource(new LoadDataArgs());
+
+            // Update task unmet demand
             TaskModel.UpdateUnmetDemand(dataGridEntities);
         }
 
@@ -597,6 +699,8 @@ namespace PPMTool.Pages
         protected override async Task InsertRow()
         {
             await base.InsertRow();
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -608,6 +712,8 @@ namespace PPMTool.Pages
         protected override async Task EditRow(Resource entity)
         {
             await base.EditRow(entity);
+
+            // Update UI elements
             UpdatePeopleDropdownSource(new LoadDataArgs());
         }
 
@@ -626,14 +732,35 @@ namespace PPMTool.Pages
         public void UpdateSubTaskModelFromResourceDataGrid()
         {
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Validating the sub task model...");
-            editContext?.Validate();
 
-            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating sub task resources from data grid...");
+            // Reset validation state
+            error = null;
+            IsValid = true;
+            ClearErrorMessage();
+
+            // Validate the edit form and present errors if necessary
+            editContext?.Validate();
+            var messages = editContext?.GetValidationMessages();
+            if (messages?.Count() > 0)
+            {
+                error = messages.First();
+                IsValid = false;
+                SetErrorMessage(new StatusMessage(error, StatusMessage.MessageType.Error));
+                return;
+            }
+
+            Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Task validation OK. Updating sub task resources from data grid...");
 
             // Update the resources on the task model to match the data grid entities
             TaskModel.AssignedResources.Clear();
             foreach (var r in dataGridEntities)
             {
+                // Copies do not have a task model attached so attach here
+                if (r.SubTask == null)
+                {
+                    r.SubTask = TaskModel;
+                }
+
                 Debug.WriteLine($"** Active Resource: ResId: {r.ResourceId} | PersonId: {r.Person.PersonId} | FTE: {r.AssignmentFTE} | Rate: {r.DayRate}");
                 TaskModel.AssignedResources.Add(r);
             }
@@ -644,8 +771,18 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
+            // Before we schedule, we need to ensure the duration and end date are consistent with the input method
+            if (defineByEndDate)
+            {
+                TaskModel.RecalculateDurationFromDates();
+            }
+            else
+            {
+                TaskModel.RecalculateEndDateFromDuration();
+            }
+
             // Schedule (updates planned work, duration etc.)
-            error = TaskModel.Schedule(false);
+            error = TaskModel.Schedule();
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Updating actual hours from resources...");
 
@@ -660,8 +797,8 @@ namespace PPMTool.Pages
 
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
-            var finref = FinancialReferenceService.GetFinancialReferenceForDate(Context, TaskModel.StartDate);
-            TaskModel.UpdateSubTaskCosts(ProjectModel.CostModel, projectDayRate, finref);
+            var finrefs = FinancialReferenceService.GetAll(Context);
+            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs);
 
             // Set validity based on scheduler result
             IsValid = error == null;
@@ -679,7 +816,6 @@ namespace PPMTool.Pages
                 error = "Task name must be unique within the project";
                 IsValid = false;
             }
-            ;
 
             if (TaskModel.OriginalDemand <= 0)
             {
@@ -699,6 +835,12 @@ namespace PPMTool.Pages
                 IsValid = false;
             }
 
+            // Set the action bar error
+            if (!IsValid)
+            {
+                SetErrorMessage(new StatusMessage($"Task configuration is invalid: {error}", StatusMessage.MessageType.Error));
+            }
+
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: ...Validation complete!");
 
             // Update UI
@@ -713,6 +855,8 @@ namespace PPMTool.Pages
             if (ProjectModel != null)
             {
                 UpdateSubTaskModelFromResourceDataGrid();
+
+                // If valid from the schedule and resource update then carry on and try to save
                 if (IsValid)
                 {
                     // Warn of the fact that they are setting a zero demand
@@ -731,7 +875,7 @@ namespace PPMTool.Pages
                         confirmed = await DialogService.Confirm(message, "Zero Demand Task") ?? false;
                     }
 
-                    // Bail early if they do not want to continue
+                    // Set error if they do not want to continue
                     if (!confirmed)
                     {
                         if (TaskModel.AssignedResources.Count != 0)
@@ -739,7 +883,6 @@ namespace PPMTool.Pages
                             IsValid = false;
                             error = "Task has zero demand but has resources assigned!";
                         }
-                        return;
                     }
 
                     // Fail if demand, original demand or assigned resources are assigned less than 3 DP
@@ -747,18 +890,22 @@ namespace PPMTool.Pages
                     {
                         IsValid = false;
                         error = "Demand has digits after the third decimal place which is not allowed!";
-                        return;
                     }
                     if (HasDigitsAfterThirdDecimalPlace(TaskModel.OriginalDemand))
                     {
                         IsValid = false;
                         error = "Original Demand has digits after the third decimal place which is not allowed!";
-                        return;
                     }
                     if (TaskModel.AssignedResources.Any(x => HasDigitsAfterThirdDecimalPlace(x.AssignmentFTE)))
                     {
                         IsValid = false;
                         error = "One or more resources have Assignment FTE with digits after the third decimal place which is not allowed!";
+                    }
+
+                    // Set the error message and exit early
+                    if (!IsValid)
+                    {
+                        SetErrorMessage(new StatusMessage(error, StatusMessage.MessageType.Error));
                         return;
                     }
 

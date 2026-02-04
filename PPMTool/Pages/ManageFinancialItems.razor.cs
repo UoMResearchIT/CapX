@@ -294,39 +294,41 @@ namespace PPMTool.Pages
             exportRunning = true;
             Task.Run(async () =>
             {
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
+
+                try
                 {
-                    try
+                    var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
+
+                    var workbook = new XLWorkbook();
+                    var sheet1 = workbook.Worksheets.Add("Invoices");
+                    var sheet2 = workbook.Worksheets.Add("Payments");
+                    var sheet3 = workbook.Worksheets.Add("Funding Sources");
+
+                    // Write headers and data for Invoices sheet
+                    WriteDataToSheet(sheet1, invoices);
+
+                    // Write headers and data for Payments sheet
+                    WriteDataToSheet(sheet2, payments);
+
+                    // Write headers and data for Source sheet
+                    WriteDataToSheet(sheet3, sources);
+
+                    // Save the workbook
+                    workbook.SaveAs(path);
+
+                    // Run the file export on the render context
+                    await InvokeAsync(async () =>
                     {
-                        var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
-                        var workbook = new XLWorkbook();
-                        var sheet1 = workbook.Worksheets.Add("Invoices");
-                        var sheet2 = workbook.Worksheets.Add("Payments");
-                        var sheet3 = workbook.Worksheets.Add("Funding Sources");
-
-                        // Write headers and data for Invoices sheet
-                        WriteDataToSheet(sheet1, invoices);
-
-                        // Write headers and data for Payments sheet
-                        WriteDataToSheet(sheet2, payments);
-
-                        // Write headers and data for Source sheet
-                        WriteDataToSheet(sheet3, sources);
-
-                        var stream = new MemoryStream();
-                        workbook.SaveAs(stream);
-                        stream.Position = 0;
-
                         // Invoke JS on the client to download the file
-                        var streamRef = new DotNetStreamReference(stream);
+                        var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
                         await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
+                    });
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Could not download file: {ex}");
+                }
 
             }).ContinueWith(t =>
             {

@@ -11,7 +11,7 @@
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, #40045e 0%, #609 100%);
+    background-image: linear-gradient(180deg, #40045e 0%, var(--rz-primary) 100%);
     min-width: 250px;
 }
 
@@ -74,4 +74,23 @@
 
 .spaced-header {
     justify-content: space-between;
+}
+
+.body-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.content-area {
+    flex: 1; /* Take remaining space */
+    overflow-y: auto; /* Scroll only the content */
+}
+
+.action-footer {
+    flex-shrink: 0;
+    padding: 1rem 1rem;
+    background-color: var(--rz-background);
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
 }

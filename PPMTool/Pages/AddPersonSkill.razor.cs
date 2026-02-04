@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -25,11 +23,6 @@ namespace PPMTool.Pages
         private IList<OwnedSkill> ownedTags = new List<OwnedSkill>();
         private string autoCompleteText;
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-        }
-
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
@@ -46,12 +39,12 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Setting person ID to {PersonId}");
             }
 
-            // If a valid person then load
-            if (PersonId > 0)
+            // If a valid person then load if not the same person to avoid an infinite loop
+            if (PersonId > 0 && personModel?.PersonId != PersonId)
             {
                 personModel = PersonService.GetById(Context, PersonId);
 
-                // Update the chosen tags
+                // Update the chosen tags and permissions
                 if (personModel != null)
                 {
                     // Update chosen tags
@@ -59,6 +52,9 @@ namespace PPMTool.Pages
 
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOrPerson(personModel);
+
+                    // Update action bar button state
+                    SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
                 }
             }
 
@@ -129,7 +125,7 @@ namespace PPMTool.Pages
             if (personModel != null)
             {
                 // Reset error
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Add tags to person model
                 personModel.OwnedSkills = ownedTags.ToList();

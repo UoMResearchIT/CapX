@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Web;
+using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -19,57 +20,9 @@ using Radzen;
 using Serilog;
 #endif
 
-var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
-var builder = WebApplication.CreateBuilder(args);
-
 // Add environment variables to the configuration
-builder.Configuration.AddEnvironmentVariables();
-var overridingValues = new Dictionary<string, string>();
-
-// Get the API key from the environment
-var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-if (!string.IsNullOrEmpty(apiKeySecret))
-{
-    overridingValues.Add("Jwt:SecretKey", apiKeySecret);
-}
-
-// Get Sentry DSN from the environment
-var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
-if (!string.IsNullOrEmpty(sentryDsn))
-{
-    overridingValues.Add("Sentry:Dsn", sentryDsn);
-}
-
-// Seed dummy data if environment variable is set to true (case insensitive)
-var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
-if (seedDummyData?.ToLowerInvariant() == true.ToString().ToLowerInvariant())
-{
-    overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
-}
-
-// Get superuser name from the environment
-var suName = Environment.GetEnvironmentVariable("SUPERUSER_NAME");
-if (!string.IsNullOrWhiteSpace(suName))
-{
-    overridingValues.Add("DeveloperSettings:DefaultSuperUserName", suName);
-}
-
-// Get superuser username from the environment
-var suUserName = Environment.GetEnvironmentVariable("SUPERUSER_USERNAME");
-if (!string.IsNullOrWhiteSpace(suUserName))
-{
-    overridingValues.Add("DeveloperSettings:DefaultSuperUserUserName", suUserName);
-}
-
-// Get superuser email from the environment
-var suEmail = Environment.GetEnvironmentVariable("SUPERUSER_EMAIL");
-if (!string.IsNullOrWhiteSpace(suEmail))
-{
-    overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
-}
-
-// Override the configuration values with the environment variables
-builder.Configuration.AddInMemoryCollection(overridingValues);
+var builder = WebApplication.CreateBuilder(args);
+EnvironmentHelper.LoadEnvironmentVariables(builder);
 
 #if RELEASE
 // Configure logging
@@ -102,11 +55,13 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(connectionString)
+    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
 );
 
 builder.Services.AddBlazoredSessionStorage();
+builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
+builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();
@@ -122,7 +77,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
-builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
@@ -143,6 +98,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "CapXAuth";
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.None;
+
+        // Set expiration to match CAS session timeout
+        int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
+        options.ExpireTimeSpan = TimeSpan.FromHours(time);
+        options.SlidingExpiration = false;
+
         options.Events = new CookieAuthenticationEvents
         {
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
@@ -175,21 +136,13 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Check configuration is correct
-if (!isDesignTime && string.IsNullOrWhiteSpace(builder.Configuration["Jwt:SecretKey"]))
-{
-    throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
-}
-if (!isDesignTime && builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]))
-{
-    throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
-}
+EnvironmentHelper.ValidateConfiguration(builder);
 
 // Set up middleware
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    logger.LogInformation("DEVELOPMENT ENVIRONMENT");
     app.UseForwardedHeaders();
 }
 else
@@ -198,7 +151,6 @@ else
     app.UseForwardedHeaders();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
-    logger.LogInformation("PRODUCTION ENVIRONMENT");
 }
 
 app.UseCookiePolicy();
@@ -275,6 +227,10 @@ var cultureInfo = new CultureInfo("en-GB");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
+// Clean local application file path
+FileHelper.CleanLocalApplicationFilePath(logger);
+
+// Run the app
 app.Run();
 
 /// <summary>
@@ -292,25 +248,37 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         // Map claims from assertion and sign in
         var assertion = context.Assertion;
 
-        // Map UoM user name to claim
+        // Map UoM user name to claim (could also be email depending on what they signed in with)
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
         identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
 
-        // Lookup the username in the DB and add role claim
+        // Lookup the username / email in the DB and add role claim
         // Has to be done manually since service provider not built yet?
         var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
         using (var dbContext = dbContextFactory.CreateDbContext())
         {
+            // Log the attempt
+            var claimName = assertion.PrincipalName?.Trim().ToLower();
+            logger?.LogInformation($"Signing in {claimName}");
+
+            // Find the matching user in the DB
             var user = dbContext.Users
                 .Include(x => x.Person)
                 .ToList()
-                .FirstOrDefault(x => x.GetStandardisedUserName() == assertion.PrincipalName.Trim().ToLower());
+                .FirstOrDefault(x => x.MatchesClaim(claimName));
+
+            // If found a user in the DB that matches, add their role claim
             if (user != null)
             {
                 identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
             }
+            else
+            {
+                logger?.LogError($"Cannot find a user in the access DB with UID: {claimName}");
+            }
 
+            // Sign in the user
             await context.HttpContext.SignInAsync(context.Principal);
 
             // Update last logged in and log
@@ -335,7 +303,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
 /// <summary>
 /// What to do when the user signs out from a CAS session
 /// </summary>
-Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configuration)
+async Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configuration)
 {
     // Single Sign-Out
     var casUrl = new Uri(configuration["Authentication:CAS:ServerUrlBase"]);
@@ -355,23 +323,24 @@ Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configur
         redirectUri
     );
     context.Response.StatusCode = 204; // Prevent RedirectToReturnUrl
-    context.Options.Events.RedirectToLogout(logoutRedirectContext);
-    return Task.CompletedTask;
+    await context.Options.Events.RedirectToLogout(logoutRedirectContext);
 }
 
 /// <summary>
 /// What to do when there is a failure during login
 /// </summary>
-Task OnRemoteFailure(RemoteFailureContext context)
+async Task OnRemoteFailure(RemoteFailureContext context)
 {
     var failure = context.Failure;
     var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
     if (!string.IsNullOrWhiteSpace(failure?.Message))
     {
-        logger.LogError(failure, "{Exception}", failure.Message);
+        logger.LogError(failure, "CAS authentication failed: {Exception}", failure?.Message);
     }
+
+    // Clear local cookie
+    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
     context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
     context.HandleResponse();
-    return Task.CompletedTask;
 }

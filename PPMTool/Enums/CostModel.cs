@@ -9,10 +9,16 @@ namespace PPMTool.Enums
         [Description("Uses a specific day rate")]
         DayRate,
         [Display(Name = "Technical Only")]
-        [Description("Planned costs computed from resource rates; no leadership charge")]
+        [Description("Planned costs computed from resource mid-grades or rates; no leadership charge")]
         TechOnly,
         [Display(Name = "Technical and Leadership")]
-        [Description("Planned costs computed from resource rates; leadership charge added over duration")]
-        TechAndLeadership
+        [Description("Planned costs computed from resource mid-grades or rates; leadership charge added over duration")]
+        TechAndLeadership,
+        [Display(Name = "Technical Only with Indirects")]
+        [Description("Planned costs computed from resource mid-grades or rates; no leadership charge; indirects computed based on global rate")]
+        TechOnlyWithIndirects,
+        [Display(Name = "Technical and Leadership with Indirects")]
+        [Description("Planned costs computed from resource mid-grades or rates; leadership charge added over duration; indirects computed based on global rate")]
+        TechAndLeadershipWithIndirects
     }
 }

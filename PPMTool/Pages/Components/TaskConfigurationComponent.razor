@@ -1,0 +1,354 @@
+﻿@using PPMTool.Data
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Helpers
+@using PPMTool.Enums
+@using System.ComponentModel.DataAnnotations
+@using System.Diagnostics
+@using PPMTool.Services
+<div class="row">
+    <div class="col-3">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Start Date" />
+        <RadzenDatePicker class="radzen-datepicker"
+                          @bind-Value="Model.StartDate"
+                          ShowTime="false"
+                          DateFormat="dd/MM/yyyy"
+                          Disabled="@ReadOnly"
+                          Change="@(() => ValueChanged(nameof(Model.StartDate)))" />
+    </div>
+    <div class="col-3">
+        <RadzenLabel class="radzen-form-label"
+                     Text="End Date" />
+        <RadzenDatePicker class="radzen-datepicker"
+                          @bind-Value="Model.EndDate"
+                          ShowTime="false"
+                          DateFormat="dd/MM/yyyy"
+                          Disabled="@ReadOnly"
+                          Change="@(() => ValueChanged(nameof(Model.EndDate)))" />
+    </div>
+    @if (!ShowSummaryOnly)
+    {
+        <div class="col-3">
+            <RadzenLabel class="radzen-form-label"
+                         Text="Demand (FTE)"
+                         Component="Demand" />
+            <RadzenNumeric class="radzen-numeric"
+                           TValue="double"
+                           Min="@Convert.ToDecimal(0.001)"
+                           Step="0.001"
+                           Placeholder="0.00"
+                           @bind-Value="Model.Demand"
+                           Name="Demand"
+                           Disabled="@ReadOnly"
+                           Change="@(() => ValueChanged(nameof(Model.Demand)))" />
+        </div>
+        <div class="col-3">
+
+            @if (Model.CostModel == CostModel.DayRate)
+            {
+                <RadzenLabel class="radzen-form-label"
+                             Text="Day Rate"
+                             Component="DayRate" />
+                <RadzenNumeric class="radzen-numeric"
+                               TValue="double"
+                               Min="0"
+                               Step="0.01"
+                               Placeholder="0"
+                               @bind-Value="Model.DayRate"
+                               Name="DayRate"
+                               Format="C2"
+                               Disabled="@ReadOnly"
+                               Change="@(() => ValueChanged(nameof(Model.DayRate)))" />
+            }
+            else
+            {
+                <RadzenLabel class="radzen-form-label"
+                             Text="Resource Rate"
+                             Component="Rate" />
+                <RadzenDropDown class="radzen-dropdown"
+                                @bind-Value="Model.ResourceRate"
+                                Data="@(Enum.GetValues(typeof(Rate)))"
+                                Name="Rate"
+                                Disabled="@ReadOnly"
+                                Change="@(() => ValueChanged(nameof(Model.ResourceRate)))" />
+            }
+        </div>
+    }
+</div>
+<div class="row">
+    <div class="col-3">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Work (Hours)"
+                     Component="WorkHours" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="double"
+                       Min="0"
+                       Step="0.5"
+                       Placeholder="0"
+                       @bind-Value="Model.PlannedWorkHours"
+                       Name="WorkHours"
+                       Disabled="@ReadOnly"
+                       Change="@(() => ValueChanged(nameof(Model.PlannedWorkHours)))" />
+    </div>
+    <div class="col-3">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Duration (Days)"
+                     Component="Duration" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="int"
+                       Min="0"
+                       @bind-Value="Model.DurationDays"
+                       Name="Duration"
+                       Disabled="@ReadOnly"
+                       Change="@(() => ValueChanged(nameof(Model.DurationDays)))" />
+    </div>
+    <div class="col-3">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Duration (Billable Days)"
+                     Component="DurationBillable" />
+        <RadzenNumeric class="radzen-numeric"
+                       TValue="int"
+                       Min="0"
+                       @bind-Value="Model.DurationBillableDays"
+                       Name="DurationBillable"
+                       Disabled="@ReadOnly"
+                       Change="@(() => ValueChanged(nameof(Model.DurationBillableDays)))" />
+    </div>
+    <div class="col-3" style="justify-items: end">
+        <RadzenLabel class="radzen-form-label"
+                     Text="Cost" />
+        <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.End">
+            
+            @* Show the split between tec/leadership costs and the indirects if needed *@
+            @if (Model.CostModel.HasIndirects() && !IsLeadershipComponent)
+            {
+                <RadzenText Text="@($"{Model.PlannedIndirectCost.ToString("C2")} (Indirects) + {Model.GetPlannedTechnicalCost().ToString("C2")} ({((ShowSummaryOnly && Model.CostModel.HasLeadership()) ? "Tech + Leadership" : "Tech")}) = ")"
+                            Style="margin-bottom: 0; margin-top: 0.5rem; font-size: medium;" />
+            }
+            <RadzenText Text="@Model.PlannedCost.ToString("C2")"
+                        Style="margin-bottom: 0; margin-top: 0.5rem; font-size: x-large;" />
+        </RadzenStack>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool ReadOnly { get; set; } = false;
+
+    [Parameter]
+    public bool ShowSummaryOnly { get; set; } = false;
+
+    [Parameter]
+    public PPMToolContext Context { get; set; }
+
+    [Parameter]
+    public Action<string> ConfigModelUpdated { get; set; }
+
+    [Inject]
+    private FinancialReferenceService FinancialReferenceService { get; set; }
+
+    [Parameter]
+    public TaskConfigModel Model { get; set; }
+
+    [Parameter]
+    public bool IsLeadershipComponent { get; set; }
+
+    /// <summary>
+    /// Initialisation of the component
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Initialise the model
+        if (Model == null)
+        {
+            Model = new TaskConfigModel(FinancialReferenceService, Context, IsLeadershipComponent);
+        }
+        ValueChanged(nameof(Model.StartDate));
+    }
+
+    /// <summary>
+    /// Method invoked when any of the inputs are modified
+    /// </summary>
+    /// <param name="nameOfProperty"></param>
+    private void ValueChanged(string nameOfProperty)
+    {
+        Debug.WriteLine($"** TaskConfig: Value changed by {nameOfProperty}");
+
+        // Only fire if not read-only -- read-only means it doesn't do its own calculations
+        if (ReadOnly) return;
+
+        // Update the other properties on the model
+        Model.Update(nameOfProperty);
+
+        // If there is a listener, trigger it
+        ConfigModelUpdated?.Invoke(nameOfProperty);
+    }
+
+    /// <summary>
+    /// Model which represents the configuration of the task component
+    /// </summary>
+    public class TaskConfigModel : BaseScheduledTask
+    {
+        public double DayRate { get; set; } = GlobalDefaults.DayRateDefault;
+        public Rate ResourceRate { get; set; } = Rate.Standard;
+        public CostModel CostModel { get; private set; }
+
+        private FinancialReferenceService finRefService;
+        private PPMToolContext context;
+        private bool isLeadership;
+
+        public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context, bool isLeadership)
+        {
+            finRefService = financialReferenceService;
+            this.context = context;
+            this.isLeadership = isLeadership;
+            StartDate = DateTime.Today;
+            EndDate = StartDate.AddDays(7);
+        }
+
+        /// <summary>
+        /// Update the model parameters. Assumes fixed duration behaviour.
+        /// Need to know which one triggered the update to avoid a circular.
+        /// 1. Start Date
+        /// 2. End Date
+        /// 3. Demand
+        /// 4. Calendar Duration
+        /// 5. Billable Duration
+        /// 6. Work (Hours)
+        /// 7. DayRate
+        /// 8. Cost Model
+        /// 9. Resource Rate
+        /// </summary>
+        /// <param name="nameOfPropertyTrigger"></param>
+        public void Update(string nameOfPropertyTrigger)
+        {
+            Debug.WriteLine($"** TaskModel: Model updating triggered by {nameOfPropertyTrigger}");
+            switch(nameOfPropertyTrigger)
+            {
+                case nameof(StartDate):
+                case nameof(EndDate):
+
+                    // Start / end changed -> update duration, work and cost
+                    if (EndDate < StartDate) EndDate = StartDate.Date;
+                    UpdateDurationFromDates();
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(Demand):
+
+                    // Demand changed -> update work and cost
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(DurationDays):
+
+                    // Duration changed -> update end, billable days, work and cost
+                    UpdateEndDateFromDuration();
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(DurationBillableDays):
+
+                    // Billable Duration changed -> update duration, update end, work and cost
+                    DurationDays = (int)GetNumberOfCalendarDays(DurationBillableDays);
+                    UpdateEndDateFromDuration();
+                    UpdateWork(Demand);
+                    UpdateCost();
+                    break;
+
+                case nameof(PlannedWorkHours):
+
+                    // Work changed -> update duration and cost
+                    UpdateDuration(Demand);
+                    UpdateEndDateFromDuration();
+                    UpdateCost();
+                    break;
+
+                case nameof(DayRate):
+                case nameof(CostModel):
+                case nameof(ResourceRate):
+
+                    // Update the cost only
+                    UpdateCost();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Set the cost model property and optionally recompute the cost of the resource.
+        ///  Don't do this for summary components as they have their costs computed from dependent components.
+        /// </summary>
+        /// <param name="newCostModel"></param>
+        /// <param name="updateCosts"></param>
+        public void SetCostModel(CostModel newCostModel, bool updateCosts = true)
+        {
+            // Update the cost model property
+            CostModel = newCostModel;
+
+            // Run a calculation based on the current state of the properties
+            if (updateCosts)
+            {
+                UpdateCost();
+            }
+        }
+
+        /// <summary>
+        /// Do a cost update based on the current parameters of the model
+        /// </summary>
+        public void UpdateCost()
+        {
+            Debug.WriteLine("** Updating costs...");
+
+            // Reset
+            PlannedCost = 0;
+            PlannedIndirectCost = 0;
+
+            // If using day rate
+            if (CostModel == CostModel.DayRate)
+            {
+                // Use day rate
+                PlannedCost = (DayRate * Demand * DurationBillableDays);
+            }
+            else
+            {
+                // Break the task into chunks based on financial year boundaries
+                foreach (var fyChunk in FinanceHelper.GetFinancialYearDateRanges(StartDate, EndDate))
+                {
+                    // Find reference data for the financial year
+                    var finRef = finRefService.GetFinancialReferenceForDate(context, fyChunk.StartDate);
+
+                    // Days in chunk
+                    var daysInChunk = fyChunk.EndDate.Subtract(fyChunk.StartDate).TotalDays + 1;
+                    var dayScaled = daysInChunk * Demand / 365d;
+
+                    // Reset the local calculations
+                    double techCost = 0d;
+                    double indirectCost = 0d;
+
+                    // Use switch to select rate only
+                    double resourceRate = ResourceRate switch
+                    {
+                        Rate.Junior => finRef.Grade51Costs,
+                        Rate.Standard => finRef.Grade71Costs,
+                        Rate.Senior => finRef.Grade75Costs,
+                        _ => throw new ArgumentOutOfRangeException(nameof(ResourceRate), ResourceRate, "Unsupported Rate!")
+                    };
+
+                    // Calculate the costs
+                    techCost = resourceRate * dayScaled;
+                    indirectCost = (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
+                    PlannedIndirectCost += indirectCost;
+                    PlannedCost += techCost + indirectCost;
+                }
+            }
+
+            Debug.WriteLine($"** Planned Costs = {PlannedCost}");
+        }
+    }
+}

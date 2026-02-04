@@ -8,6 +8,7 @@ using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -91,6 +92,12 @@ namespace PPMTool.Pages
                 projectModel.ProjectManager = ActiveUser?.Person;
             }
 
+            // Add default buttons with handlers
+            SetDefaultActionBar(
+                () => { gotoDetails = true; discardChanges = false; HandleSubmit(); },
+                () => { gotoDetails = ProjectId > 0; discardChanges = true; HandleSubmit(); }
+            );
+
             // Initially load data
             innateActivityQuery = InnateCodeService.GetAll(Context).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
@@ -132,6 +139,11 @@ namespace PPMTool.Pages
             InvokeAsync(StateHasChanged);
         }
 
+        /// <summary>
+        /// Helper method to call the nice string method of the enum
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         private string GetNiceString(Enum x)
         {
             return x.ToNiceString();
@@ -150,6 +162,10 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Callback after a PM is chosen in the dropdown
+        /// </summary>
+        /// <param name="value"></param>
         private void OnProjectManagerChosen(object value)
         {
             Person pm = value as Person;
@@ -164,7 +180,7 @@ namespace PPMTool.Pages
         private void HandleSubmit()
         {
             // Form valid?
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 if (!discardChanges)
@@ -182,6 +198,7 @@ namespace PPMTool.Pages
                         // Leave resources on completed projects so we have a historical record.
                         if (projectModel.ProjectStatus.IsCancelled())
                         {
+                            Logger.LogInformation("Removing resources as cancelled!");
                             foreach (SubTask t in projectModel.SubTasks)
                             {
                                 t.AssignedResources.Clear();
@@ -191,7 +208,7 @@ namespace PPMTool.Pages
                         // If the project is marked as cancelled or finished then remove the followers
                         if (projectModel.ProjectStatus.IsFinishedOrCancelled())
                         {
-
+                            Logger.LogInformation("Removing followers as finished or cancelled!");
                             projectModel.Followers.Clear();
                         }
 
@@ -207,32 +224,22 @@ namespace PPMTool.Pages
                         }
 
                         LogInformation($"Saving project {projectModel?.GetFullName()}...");
-
                         var res = ProjectService.Update(Context, projectModel);
-                        if (!CheckResultOfAddOrUpdate(res)) return;
+                        CheckResultOfAddOrUpdate(res);
                     }
                     else
                     {
                         LogInformation("Adding new project...");
                         var res = ProjectService.Add(Context, projectModel);
-                        if (!CheckResultOfAddOrUpdate(res)) return;
-
-                        // Make sure that super users automatically follow the project
-                        var superusers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
-                        foreach (var s in superusers)
-                        {
-                            if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");
-
-                            if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
-                            {
-                                projectModel.Followers.Add(s);
-                            }
-                        }
-                        ProjectService.Update(Context, projectModel);
+                        CheckResultOfAddOrUpdate(res);
                     }
                 }
 
-                NavigatePostSubmit();
+                // Only navigate away if no validation failures at DB add/update
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    NavigatePostSubmit();
+                }
             }
 
             // Form invalid
@@ -242,10 +249,23 @@ namespace PPMTool.Pages
                 {
                     LogInformation($"Discarding project changes!");
                     NavigatePostSubmit();
+                    return;
                 }
+            }
+
+            // Set error messages based on the message store
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
             }
         }
 
+        /// <summary>
+        /// Checks the results of a DB add or update and adds message to message store
+        /// </summary>
+        /// <param name="res"></param>
+        /// <returns></returns>
         private bool CheckResultOfAddOrUpdate(int res)
         {
             if (res < 0)
@@ -265,6 +285,10 @@ namespace PPMTool.Pages
             return true;
         }
 
+        /// <summary>
+        /// Check the PM is set
+        /// </summary>
+        /// <returns></returns>
         private bool CheckProjectManagerSet()
         {
             if (projectModel.ProjectManager == null)
@@ -275,6 +299,9 @@ namespace PPMTool.Pages
             return true;
         }
 
+        /// <summary>
+        /// Perform navigation to the appropriate page depending on where the user cam from
+        /// </summary>
         private void NavigatePostSubmit()
         {
             if (gotoDetails)
@@ -287,6 +314,9 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Delete the project from the DB after confirmation dialog
+        /// </summary>
         private async void DeleteProject()
         {
             if (ProjectId > 0)

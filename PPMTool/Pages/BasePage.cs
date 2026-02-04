@@ -5,6 +5,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Shared;
 using Radzen;
+using static PPMTool.Shared.MainLayout;
 
 namespace PPMTool.Pages
 {
@@ -50,9 +51,12 @@ namespace PPMTool.Pages
             }
         }
 
+        [CascadingParameter]
+        public MainLayout Layout { get; set; }
+
         protected bool EditAuthorised { get; set; }
 
-        protected StatusMessage ErrorMessage { get; set; }
+        protected StatusMessage ErrorMessage { get; private set; }
 
         /// <summary>
         /// A queuing mechanism for background data loads on pages so they don't run at the same time
@@ -71,9 +75,73 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            Layout?.Reset();
+
+            // Not sure why this happens but worth noting
+            if (Layout == null)
+            {
+                LogWarning("Layout is null!");
+            }
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
+        }
+
+        /// <summary>
+        /// Sets the page error message -- if using action bar will set it there instead of using the page property
+        /// </summary>
+        /// <param name="message"></param>
+        protected void SetErrorMessage(StatusMessage message)
+        {
+            if (Layout?.ShowActionBar ?? false)
+            {
+                Layout?.SetErrorMessage(message);
+            }
+            else
+            {
+                ErrorMessage = message;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Clear the error messsage -- if using the action bar will clear it there instead of using the page property
+        /// </summary>
+        protected void ClearErrorMessage()
+        {
+            if (Layout?.ShowActionBar ?? false)
+            {
+                Layout?.ClearErrorMessage();
+            }
+            else
+            {
+                ErrorMessage = null;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Setup a default save / discard action bar
+        /// </summary>
+        /// <param name="submit"></param>
+        /// <param name="discard"></param>
+        protected void SetDefaultActionBar(Action submit, Action discard)
+        {
+            Layout?.SetButtons(
+            [
+                new ActionButton
+                {
+                    OnClick = submit,
+                    Disabled = !EditAuthorised
+                },
+                new ActionButton
+                {
+                    Icon = "close",
+                    Text = "Discard",
+                    ButtonStyle = ButtonStyle.Danger,
+                    OnClick = discard
+                }
+            ]);
         }
 
         /// <summary>

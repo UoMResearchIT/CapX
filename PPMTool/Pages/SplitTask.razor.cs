@@ -8,7 +8,7 @@ using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser,Developer")]
+    [Authorize(Roles = "Manager,Superuser")]
     public partial class SplitTask : BasePage
     {
         [Inject]
@@ -41,6 +41,7 @@ namespace PPMTool.Pages
         private bool showTaskComponents;
         private bool showTaskInvalidError;
         private bool splitPending = false;
+        private bool disableButtons = false;
 
         protected override void OnAfterRender(bool firstRender)
         {
@@ -134,8 +135,8 @@ namespace PPMTool.Pages
                 statusMessages.Clear();
                 showTaskInvalidError = false;
 
-                // Initialise the components from the DB
-                await originalAddTaskComponent.InitialiseComponentAsync();
+                // Initialise the components from the DB (share the page context with the two add task components)
+                await originalAddTaskComponent.InitialiseComponentAsync(Context);
                 await newAddTaskComponent.InitialiseComponentAsync(originalAddTaskComponent.GetContext());
 
                 // Apply the logic to split the task and actuals
@@ -301,7 +302,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Updates the components with apporpritae actuals
+        /// Updates the components with appropritae actuals
         /// </summary>
         private void UpdateActuals()
         {
@@ -336,11 +337,18 @@ namespace PPMTool.Pages
         /// <summary>
         /// Calls the update subtasks methods on the components
         /// </summary>
-        private void UpdateSubTasks()
+        private async Task UpdateSubTasks()
         {
+            disableButtons = true;
+            StateHasChanged();
+            await Task.Yield();
+
             // Call update subtasks on both panes to validate
             originalAddTaskComponent.UpdateSubTaskModelFromResourceDataGrid();
             newAddTaskComponent.UpdateSubTaskModelFromResourceDataGrid();
+
+            disableButtons = false;
+            StateHasChanged();
         }
 
         /// <summary>
@@ -355,12 +363,16 @@ namespace PPMTool.Pages
         /// <summary>
         /// Validates the components and saves to DB
         /// </summary>
-        private void UpdateAndSave()
+        private async Task UpdateAndSave()
         {
             showTaskInvalidError = false;
 
             // Validate the tasks first before trying to save anything as both have to pass
-            UpdateSubTasks();
+            await UpdateSubTasks();
+
+            disableButtons = true;
+            StateHasChanged();
+            await Task.Yield();
 
             if (originalAddTaskComponent.IsValid && newAddTaskComponent.IsValid)
             {
@@ -377,7 +389,6 @@ namespace PPMTool.Pages
                 owningProject.UpdateProjectMetaData(false, finrefs);
 
                 // Update the project in the database
-
                 LogInformation($"Saving project {owningProject?.GetFullName()}...");
                 ProjectService.Update(Context, owningProject);
 
@@ -387,8 +398,10 @@ namespace PPMTool.Pages
             else
             {
                 showTaskInvalidError = true;
-                StateHasChanged();
             }
+
+            disableButtons = false;
+            StateHasChanged();
         }
     }
 }

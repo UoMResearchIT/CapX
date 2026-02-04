@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +26,8 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = new List<Absence>();
             }
+            EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
 
             LogInformation($"Viewing absences for {personModel?.Name}");
         }
@@ -64,7 +62,7 @@ namespace PPMTool.Pages
                 }));
                 if (absence != null)
                 {
-                    ErrorMessage = new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence periods cannot overlap!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence periods cannot overlap!", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -72,19 +70,19 @@ namespace PPMTool.Pages
                 absence = dataGridEntities.FirstOrDefault(x => x.EndDate != null ? x.StartDate > x.EndDate : false);
                 if (absence != null)
                 {
-                    ErrorMessage = new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence period ends before it starts!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage($"Problem with absence beginning on {absence.StartDate.ToShortDateString()}. Absence period ends before it starts!", StatusMessage.MessageType.Error));
                     return;
                 }
 
                 // Check only one open-ended absence
                 if (dataGridEntities.Where(x => x.EndDate == null).Count() > 1)
                 {
-                    ErrorMessage = new StatusMessage("Only one open-ended absence permitted!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Only one open-ended absence permitted!", StatusMessage.MessageType.Error));
                     return;
                 }
 
                 // Reset error
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Get tracking information for the absences (added or deleted won't be tracked yet)
                 var newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
@@ -95,10 +93,6 @@ namespace PPMTool.Pages
                 // If there are no changes then just navigate back
                 if (newAbsences.Count > 0 || updatedAbsences.Count() > 0 || deletedAbsences.Count > 0)
                 {
-
-                    // Send emails based on diff information
-                    EmailService.SendAbsenceEmailNotifications(newAbsences, updatedAbsences, delAbsencesDictionary);
-
                     // Assign the absences from the data grid to the model
                     personModel.Absences.Clear();
                     foreach (var ab in dataGridEntities)
@@ -109,6 +103,9 @@ namespace PPMTool.Pages
                     // Write to the database
                     LogInformation($"Saving absences for {personModel.Name}.");
                     PersonService.Update(Context, personModel);
+
+                    // Send emails based on diff information (fire and forget)
+                    _ = EmailService.SendAbsenceEmailNotificationsAsync(newAbsences, updatedAbsences, delAbsencesDictionary);
                 }
                 else
                 {

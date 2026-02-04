@@ -1,38 +1,81 @@
 ﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.Data.Helpers
 {
     public abstract class ExportHelper
     {
-
         /// <summary>
-        /// Given a person, prepare data from database with a weekly granularity
+        /// Converts the subtasks of the projects provided, or the subtasks provided, into assingment chunk representation.
         /// </summary>
-        /// <param name="person">Person who is being exported</param>
-        /// <param name="projects">All projects as retrieved from the project service</param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="finrefs">All the financial references</param>
-        /// <returns>List of data items</returns>
-        public static IEnumerable<AssignmentChunk> GetExportDataForPerson(Person person, IEnumerable<Project> projects, DateTime startDate, DateTime endDate, IEnumerable<FinancialReference> finrefs)
+        /// <param name="person">The person whose assignments should be considered</param>
+        /// <param name="projectsInWindow">The projects in the window to be considered</param>
+        /// <param name="finrefs">Financial references to use</param>
+        /// <param name="startDate">Window start date. If not provided, uses earliest project start.</param>
+        /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
+        /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
+        /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
+        /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
+        /// <param name="generateLeadershipTasks">Should the process generate leadership tasks for projects</param>
+        /// <returns></returns>
+        internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
+            Person person,
+            IEnumerable<Project> projectsInWindow,
+            IEnumerable<FinancialReference> finrefs,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            IEnumerable<SubTask> tasksInWindow = null,
+            bool shouldCalculateCosts = false,
+            IDictionary<string, AssignmentBudgetDetail> budgetDetails = null,
+            GenerateLeadershipTaskLogic generateLeadershipTasks = GenerateLeadershipTaskLogic.CostModel)
         {
             // New list
             var data = new List<AssignmentChunk>();
 
-            Debug.WriteLine($"** Building data for {person.Name}...");
+            // Check dates and infer from projects if not specified
+            if (startDate == null)
+            {
+                startDate = projectsInWindow.Min(x => x.StartDate);
+            }
+            if (endDate == null)
+            {
+                endDate = projectsInWindow.Max(x => x.EndDate);
+            }
 
-            // Filter list of tasks to those running during the window
-            var projectsInWindow = projects
-                .Where(x => !x.ProjectStatus.IsCancelled())
-                .Where(x => x.IsWithin(startDate, endDate));
-            var tasksInWindow = projectsInWindow
-                .SelectMany(x => x.SubTasks)
-                .Where(x => x.AssignedResources
-                    .Any(x => x.Person.PersonId == person.PersonId)
-                ).ToList();
-            Debug.WriteLine($"** {projectsInWindow.Count()} projects and {tasksInWindow.Count()} tasks within window for {person.Name}");
+            // Check tasks and infer from projects if not specified
+            List<SubTask> tempTasksInWindow = null;
+            if (tasksInWindow == null)
+            {
+                // If there are no subtasks or resources then just replace with empty enumerables
+                tempTasksInWindow = projectsInWindow
+                    .SelectMany(x => x.SubTasks ?? Enumerable.Empty<SubTask>())
+                    .Where(x => (x.AssignedResources ?? Enumerable.Empty<Resource>())
+                        .Any(r => r.Person.PersonId == person.PersonId))
+                    .Where(x => x.IsWithin(startDate ?? default, endDate ?? default))
+                    .ToList();
+            }
+            else
+            {
+                tempTasksInWindow = tasksInWindow.ToList();
+            }
+
+            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later if required
+            if (generateLeadershipTasks != GenerateLeadershipTaskLogic.None)
+            {
+                foreach (var project in projectsInWindow.Where(x => x.ProjectManager?.PersonId == person.PersonId))
+                {
+                    if (generateLeadershipTasks == GenerateLeadershipTaskLogic.Always ||
+                        project.CostModel.HasLeadership())
+                    {
+                        tempTasksInWindow.AddRange(project.GenerateLeadershipTasks()
+                            .Where(x => x.IsWithin(startDate ?? default, endDate ?? default)));
+                    }
+                }
+            }
 
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges
@@ -40,9 +83,9 @@ namespace PPMTool.Data.Helpers
                 .OrderByDescending(x => x.ChangeDate).ToList();
 
             // Get WLM in force on the first day of the window or set to default G6
-            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate);
+            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate ?? default);
 
-            // If there isn't a WLM change on the first day of the window then add the default
+            // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
             {
                 // Add the start WLM to the list of WLMs active in the window
@@ -53,83 +96,77 @@ namespace PPMTool.Data.Helpers
             var changesInGrade = wlms.DistinctBy(x => x.Grade).Count() > 1;
 
             // Are there any changes in financial year in the window?
-            var startFY = FinancialReference.GetFinancialYear(startDate);
-            var endFY = FinancialReference.GetFinancialYear(endDate);
+            var startFY = FinancialReference.GetFinancialYear(startDate ?? default);
+            var endFY = FinancialReference.GetFinancialYear(endDate ?? default);
             var changesInFinancialYear = startFY != endFY;
 
-            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later
-            foreach (var project in projectsInWindow
-                .Where(x => x.CostModel == CostModel.TechAndLeadership && x.ProjectManager?.PersonId == person.PersonId))
-            {
-                // Find leadership tasks and convert to task
-                var dateRanges = project.GetLeadershipTaskRanges();
-                foreach (var dateRange in dateRanges)
-                {
-                    // Add leadership subtask based on the date range
-                    var daysOfLeadershipForChunk = (dateRange.EndDate - dateRange.StartDate).TotalDays + 1;
-                    var leadershipTask = new SubTask
-                    {
-                        AssignedResources = new List<Resource>
-                        {
-                            new Resource
-                            {
-                                Person = person,
-                                AssignmentFTE = project.LeadershipFTE,
-                                FundedFrom = project.LeadershipFundingSource,
-                                PlannedCost = project.PlannedLeadershipCosts
-                            }
-                        },
-                        Name = "Leadership",
-                        SubTaskId = -1,
-                        OwningProject = project,
-                        StartDate = dateRange.StartDate,
-                        EndDate = dateRange.EndDate,
-                        RequiresLeadership = false,
-                        TaskType = TaskType.FixedDuration,
-                        Demand = project.LeadershipFTE,
-                        OriginalDemand = project.LeadershipFTE
-                    };
-                    tasksInWindow.Add(leadershipTask);
-                }
-            }
-
             // Each assignment is at least one row of the report
-            foreach (var task in tasksInWindow)
+            foreach (var task in tempTasksInWindow)
             {
                 // Get project
-                var project = projects.First(x => x.ProjectId == task.OwningProject?.ProjectId);
+                var project = projectsInWindow.First(x => x.ProjectId == task.OwningProject?.ProjectId);
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
 
-                // Get funding source info
-                var fundingSource = task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).FundedFrom;
+                // Get resource that matches the person
+                var resource = task.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
 
-                // Create a line
-                var initialChunk = new AssignmentChunk
+                // Generate the resource key
+                var resKey = resource.GenerateUniqueResourceKey();
+
+                // Get funding source info
+                var fundingSource = resource.FundedFrom;
+
+                // Proportion the data for the task based on the window
+                var adjustedTaskStart = task.StartDate.Date < startDate ? startDate ?? default : task.StartDate;
+                var adjustedTaskEnd = task.EndDate.Date > endDate ? endDate ?? default : task.EndDate;
+                var daysOfTaskForChunk = adjustedTaskEnd.Subtract(adjustedTaskStart).TotalDays + 1;
+                var lengthOfTask = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
+                var proportionOfTask = lengthOfTask <= 0 ? 0 : daysOfTaskForChunk / lengthOfTask;
+
+                // If budget infomation provided then use to populate chunk
+                var amountCovered = 0d;
+                var budgetStatus = BudgetStatus.NotInBudget.GetDescription();
+                AssignmentBudgetDetail budgetLine = null;
+                if (budgetDetails != null)
+                {
+                    // Find the budget line associated with this chunk
+                    budgetLine = budgetDetails.ContainsKey(resKey) ? budgetDetails[resKey] : null;
+
+                    // Update the values to be assigned to the initial chunk
+                    budgetLine?.GetBudgetDetailsForWindow(adjustedTaskStart, adjustedTaskEnd, out budgetStatus, out amountCovered);
+                }
+
+                // Create a line representing the full, un-chunked task to start off with
+                var initialChunk = new AssignmentChunk(resKey)
                 {
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
-                    FTE = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).AssignmentFTE, 3),
-                    Project = project.GetFullName(),
+                    FTE = resource.AssignmentFTE,
+                    BilledFTE = resource.BilledFTE,
+                    ProjectName = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
                     Faculty = project.Faculty.GetDescription(),
                     School = project.School.GetDescription(),
                     PI = project.PI,
-                    Task = task.Name,
-                    StartDate = task.StartDate,
-                    EndDate = task.EndDate,
-                    FinancialYear = FinancialReference.GetFinancialYear(task.StartDate),
-                    PlannedCost = Math.Round(task.AssignedResources.FirstOrDefault(x => x.Person.PersonId == person.PersonId).PlannedCost, 2),
+                    TaskName = task.Name,
+                    StartDate = adjustedTaskStart,
+                    EndDate = adjustedTaskEnd,
+                    FinancialYear = FinancialReference.GetFinancialYear(adjustedTaskStart),
+                    PlannedCost = resource.PlannedCost * proportionOfTask,
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    FundingSourceAmount = Math.Round(fundingSource?.AmountAvailable ?? 0, 2)
+                    AmountCovered = amountCovered,
+                    BudgetStatus = budgetStatus,
+                    IsLeadershipAssignment = task.SubTaskId < 0
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {
                     initialChunk
                 };
 
-                // Are there any changes to grade for this person at all -- ignore grade changes for leadership task resources
+                // Are there any changes to grade for this person
+                // Ignore grade changes for leadership task resources
                 if (changesInGrade && task.SubTaskId > 0)
                 {
                     var tempChunks = new List<AssignmentChunk>();
@@ -159,11 +196,17 @@ namespace PPMTool.Data.Helpers
                                 proportionOfInitialChunk = 1;
                             }
 
+                            // Update the budget details
+                            budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
+
+                            // Add chunk
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
                                 StartDate = startDateOfNewChunk,
                                 EndDate = endDateOfNewChunk,
-                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk
+                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk,
+                                AmountCovered = amountCovered,
+                                BudgetStatus = budgetStatus
                             });
                         }
                     }
@@ -172,11 +215,22 @@ namespace PPMTool.Data.Helpers
                     var remainingCosts = initialChunk.PlannedCost - tempChunks.Sum(x => x.PlannedCost);
                     if (tempChunks.Count > 0)
                     {
+                        // Dates
+                        var finalChunkStart = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks).Date;
+                        var finalChunkEnd = new DateTime(initialChunk.EndDate.Ticks).Date;
+                        var lengthOfFinalChunk = finalChunkEnd.Subtract(finalChunkStart).TotalDays + 1;
+
+                        // Update the budget details
+                        budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, out budgetStatus, out amountCovered);
+
+                        // Add chunk
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
-                            StartDate = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks),
-                            EndDate = new DateTime(initialChunk.EndDate.Ticks),
-                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0
+                            StartDate = finalChunkStart,
+                            EndDate = finalChunkEnd,
+                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0,
+                            AmountCovered = amountCovered,
+                            BudgetStatus = budgetStatus
                         });
                     }
 
@@ -224,12 +278,17 @@ namespace PPMTool.Data.Helpers
                                     proportionOfInitialChunk = 1;
                                 }
 
+                                // Update the budget details
+                                budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
+
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
                                     StartDate = startDateOfNewChunk,
                                     EndDate = endDateOfNewChunk,
                                     FinancialYear = i,
-                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk
+                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk,
+                                    AmountCovered = amountCovered,
+                                    BudgetStatus = budgetStatus
                                 });
                             }
                         }
@@ -250,29 +309,357 @@ namespace PPMTool.Data.Helpers
 
                 Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks run during the window");
 
-                // Update the data for the filtered chunks
-                foreach (var chunk in taskChunks)
-                {
-                    // Truncate dates if extends beyond window
-                    if (chunk.StartDate < startDate)
-                    {
-                        chunk.StartDate = startDate;
-                    }
-                    if (chunk.EndDate > endDate)
-                    {
-                        chunk.EndDate = endDate;
-                    }
-
-                    // Cost estimate based on mid-grade salaries
-                    chunk.UpdateEstimatedSalaryCost(finrefs);
-                }
-
                 // Add task to master list
                 data.AddRange(taskChunks);
             }
 
-            Debug.WriteLine($"** Built {data.Count} rows for {person.Name}");
+            // Add the mid-grade salary estimates and overwrite the planned costs if necessary
+            foreach (var chunk in data)
+            {
+                // Cost estimate based on mid-grade salaries
+                chunk.UpdateEstimatedSalaryCost(finrefs, shouldCalculateCosts);
+            }
+
             return data;
+        }
+
+        /// <summary>
+        /// Represents the summary over the window of the target and recovery for a person
+        /// </summary>
+        internal class RecoveryDataOverWindow
+        {
+            public string Name { get; }
+
+            public float Target { get; private set; }
+
+            public float TargetCosts { get; private set; }
+
+            public float Recovered { get; private set; }
+
+            public float RecoveredCosts { get; private set; }
+
+            public float RecoveredIncLeadership { get; private set; }
+
+            public float RecoveredIncLeadershipCosts { get; private set; }
+
+            public float NetCapped { get; private set; }
+
+            public float NetCappedCosts { get; private set; }
+
+            public float NetCappedIncLead { get; private set; }
+
+            public float NetCappedIncLeadCosts { get; private set; }
+
+            public float PersonCosts { get; private set; }
+
+            public float InBudgetCosts { get; private set; }
+
+            public RecoveryDataOverWindow(string name)
+            {
+                Name = name;
+            }
+
+            /// <summary>
+            /// Update the values based on the FTE for the day
+            /// </summary>
+            /// <param name="targetFTE"></param>
+            /// <param name="assignedFTE"></param>
+            /// <param name="assignedIncLeadFTE"></param>
+            /// <param name="maxCap"></param>
+            /// <param name="actualCosts">Costs of the person on the day (zero if left or not start)</param>
+            /// <param name="costs">Annual cost / 365 (non-zero even if left or not started)</param>
+            /// <param name="inBudget">Amount considered in budget for recovery</param>
+            public void Update(
+                float targetFTE,
+                float assignedFTE,
+                float assignedIncLeadFTE,
+                float maxCap,
+                float actualCosts,
+                float costs,
+                float inBudget)
+            {
+                Target += targetFTE;
+                TargetCosts += targetFTE * costs;
+                Recovered += assignedFTE;
+                RecoveredCosts += assignedFTE * costs;
+                RecoveredIncLeadership += assignedIncLeadFTE;
+                RecoveredIncLeadershipCosts += assignedIncLeadFTE * costs;
+
+                var net = assignedFTE - targetFTE;
+                var netCapped = net > maxCap ? maxCap : net;
+                NetCapped += netCapped;
+                NetCappedCosts += netCapped * costs;
+
+                net = assignedIncLeadFTE - targetFTE;
+                netCapped = net > maxCap ? maxCap : net;
+                NetCappedIncLead += netCapped;
+                NetCappedIncLeadCosts += netCapped * costs;
+
+                PersonCosts += actualCosts;
+                InBudgetCosts += inBudget;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the target for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageTarget(int daysInWindow)
+            {
+                return Target / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the target FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageTargetCosts()
+            {
+                return TargetCosts;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the recovered for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageRecovered(int daysInWindow)
+            {
+                return Recovered / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the recovered FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageRecoveredCosts()
+            {
+                return RecoveredCosts;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the recovered including leadership for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageRecoveredIncLeadership(int daysInWindow)
+            {
+                return RecoveredIncLeadership / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the recovered including leadership FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageRecoveredIncLeadershipCosts()
+            {
+                return RecoveredIncLeadershipCosts;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the capped net for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageNetCapped(int daysInWindow)
+            {
+                return NetCapped / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the capped net FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageNetCappedCosts()
+            {
+                return NetCappedCosts;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the capped net including leadership for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageNetCappedIncLeadership(int daysInWindow)
+            {
+                return NetCappedIncLead / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the capped net including leadership FTE for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageNetCappedIncLeadershipCosts()
+            {
+                return NetCappedIncLeadCosts;
+            }
+
+            /// <summary>
+            /// Gets the costs over the window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetEstimatedCosts()
+            {
+                return PersonCosts;
+            }
+
+            /// <summary>
+            /// The total budget amounts as accumlated over the days of the window
+            /// </summary>
+            /// <returns></returns>
+            public float GetInBudgetTotals()
+            {
+                return InBudgetCosts;
+            }
+        }
+
+        /// <summary>
+        /// Method to generate the recovery information for the report
+        /// </summary>
+        /// <param name="peopleActive">List of people to be considered</param>
+        /// <param name="assignmentChunks">Set of assignment chunks for active people split by WLM change and FY change</param>
+        /// <param name="contextFactory"></param>
+        /// <param name="personService"></param>
+        /// <param name="projectService"></param>
+        /// <param name="financialReferenceService"></param>
+        /// <returns></returns>
+        internal static IEnumerable<RecoveryDataOverWindow> GetRecoveryData(
+            IEnumerable<Person> peopleActive,
+            IList<AssignmentChunk> assignmentChunks,
+            IDbContextFactory<PPMToolContext> contextFactory,
+            PersonService personService,
+            ProjectService projectService,
+            FinancialReferenceService financialReferenceService)
+        {
+            // Set the report length
+            var startDate = assignmentChunks.Min(x => x.StartDate.Date).Date;
+            var endDate = assignmentChunks.Max(x => x.EndDate.Date).Date;
+            var currentDate = startDate;
+            var windowRecoveryData = new List<RecoveryDataOverWindow>();
+
+            // Create a context to be accessed on this thread
+            using (var context = contextFactory.CreateDbContext())
+            {
+                // Get data for each person active in the window
+                // Get projects active in the window with their subtasks and resources
+                var projectsInWindow = projectService.GetAll(context)
+                    .Where(x => !x.ProjectStatus.IsCancelled())
+                    .Where(x => x.IsWithin(startDate, endDate));
+
+                // Get fin refs
+                var currentFY = FinancialReference.GetFinancialYear(startDate);
+                var finref = financialReferenceService.GetFinancialReferenceForDate(context, startDate);
+
+                // Initialise the totals
+                foreach (var person in peopleActive)
+                {
+                    windowRecoveryData.Add(new RecoveryDataOverWindow(person.Name));
+                }
+
+                // Loop over the days to get day by day data
+                while (currentDate <= endDate)
+                {
+                    // If the FY has changed then update the finref
+                    if (FinancialReference.GetFinancialYear(currentDate) != currentFY)
+                    {
+                        finref = financialReferenceService.GetFinancialReferenceForDate(context, currentDate);
+                    }
+
+                    // Loop over each person employed in the window
+                    foreach (var person in peopleActive)
+                    {
+                        // Get chunks belonging to this person and running on the day
+                        var chunks = assignmentChunks
+                            .Where(x => x.EmployeeName == person.Name && DateRange.IsWithin(currentDate, x.StartDate, x.EndDate));
+
+                        // Get the project work amount on the day
+                        var projectWorkTargetFTE = person.GetProjectWorkAvailabilityOnDate(currentDate);
+                        var wlmTotal = person.GetWorkloadModelTotalOnDate(currentDate);
+                        var gradeOnDay = person.GetGradeOnDate(currentDate);
+
+                        // Get day costs for person based on mid-grade and scaled by any part-time arrangement
+                        var actualCostsOnDay = gradeOnDay == null ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
+                        actualCostsOnDay /= 365.0;
+                        actualCostsOnDay *= wlmTotal;
+
+                        // If we don't have any costs for the day then need to compute them from first or last grade we know about
+                        var referenceCostsForADay = actualCostsOnDay;
+                        if (actualCostsOnDay == 0)
+                        {
+                            WorkloadModelChange wlm = null;
+                            // If the grade is null then find the last WLM before the date
+                            if (person.StartDate > currentDate)
+                            {
+                                // Get first WLM after the date
+                                wlm = person.GetFirstWorkloadModelAfter(currentDate);
+
+                            }
+                            else if (person.EndDate != null && person.EndDate < currentDate)
+                            {
+                                // Get last WLM before the date
+                                wlm = person.GetLastWorkloadModelBefore(currentDate);
+                            }
+                            referenceCostsForADay = finref.GetMidGradeCosts(wlm?.Grade ?? 6) / 365.0;
+                        }
+
+                        // Get the sum of their assignments on the day with and without leadership
+                        var projectAssignmentsFTE = chunks
+                            .Where(x => !x.IsLeadershipAssignment)
+                            .Sum(x => x.BilledFTE);
+                        var projectAssignmentsFTEIncLeadership = chunks
+                            .Sum(x => x.BilledFTE);
+
+                        // Net value
+                        var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
+                        var netValueIncLeadership = projectAssignmentsFTEIncLeadership - projectWorkTargetFTE;
+
+                        // Net value capped
+                        var maxOverAllocation = wlmTotal - projectWorkTargetFTE;
+                        if (maxOverAllocation < 0) maxOverAllocation = 0;
+                        var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
+                        var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
+
+                        // Amount in budget for the day across all chunks
+                        var inBudget = chunks.Sum(x => x.AmountCovered / (x.EndDate.Subtract(x.StartDate).TotalDays + 1));
+
+                        // Update the totals based on this day
+                        windowRecoveryData
+                            .First(x => x.Name == person.Name)
+                            .Update(
+                                (float)projectWorkTargetFTE,
+                                (float)projectAssignmentsFTE,
+                                (float)projectAssignmentsFTEIncLeadership,
+                                (float)maxOverAllocation,
+                                (float)actualCostsOnDay,
+                                (float)referenceCostsForADay,
+                                (float)inBudget
+                            );
+                    }
+
+                    // Advance the day
+                    currentDate = currentDate.AddDays(1);
+                }
+            }
+
+            return windowRecoveryData;
+        }
+
+        /// <summary>
+        /// Represents the summary of the financial state of a project over an export period
+        /// </summary>
+        internal class ProjectBudgetSummary
+        {
+            public string ProjectName { get; set; }
+
+            public double PlannedCosts { get; set; }
+
+            public double RecoveredCosts { get; set; }
         }
     }
 }

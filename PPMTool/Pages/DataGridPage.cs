@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Services;
 using Radzen;
@@ -32,7 +29,7 @@ namespace PPMTool.Pages
         {
             entityToInsert = null;
             entityToUpdate = null;
-            ErrorMessage = null;
+            ClearErrorMessage();
         }
 
         /// <summary>
@@ -40,7 +37,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        protected async virtual Task EditRow(T entity)
+        protected virtual async Task EditRow(T entity)
         {
             entityToUpdate = entity;
             LogInformation($"Edit row in view for <{entityToUpdate?.GetSensibleObjectName()}>");
@@ -52,7 +49,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        protected async virtual Task SaveRow(T entity)
+        protected virtual async Task SaveRow(T entity)
         {
             LogInformation($"Update row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
@@ -76,7 +73,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        protected async virtual Task DeleteRow(T entity)
+        protected virtual async Task DeleteRow(T entity)
         {
             Reset();
             if (dataGridEntities.Contains(entity))
@@ -96,7 +93,7 @@ namespace PPMTool.Pages
         /// Create an entity instance and add to datagrid
         /// </summary>
         /// <returns></returns>
-        protected async virtual Task InsertRow()
+        protected virtual async Task InsertRow()
         {
             entityToInsert = Activator.CreateInstance(typeof(T)) as T;
             LogInformation($"Add row in view for <{entityToInsert?.GetSensibleObjectName()}>");

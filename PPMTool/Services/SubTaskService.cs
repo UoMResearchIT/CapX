@@ -75,7 +75,7 @@ namespace PPMTool.Services
             foreach (var followerTask in followerTasks)
             {
                 // Call schedule and have it tracked in the context
-                error = followerTask.Schedule(true);
+                error = followerTask.Schedule();
 
                 // If error then abandon forward propagation
                 if (error != null) return new Tuple<string, string>(followerTask.Name, error);
@@ -126,8 +126,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal SubTask Clone(PPMToolContext context, SubTask taskToClone)
         {
+            // Get a copy of the task you want to clone from the DB without tracking
             var clone = context.SubTasks
                 .Include(s => s.AssignedResources)
+                .Include(s => s.SkillsRequired)
                 .AsNoTracking()
                 .FirstOrDefault(x => x.SubTaskId == taskToClone.SubTaskId);
 
@@ -136,6 +138,9 @@ namespace PPMTool.Services
             // Reset ID
             clone.SubTaskId = 0;
 
+            // Add the project
+            clone.OwningProject = taskToClone.OwningProject;
+
             // Create new resources
             clone.AssignedResources.Clear();
             foreach (var res in taskToClone.AssignedResources)
@@ -143,11 +148,20 @@ namespace PPMTool.Services
                 clone.AssignedResources.Add(new Resource
                 {
                     AssignmentFTE = res.AssignmentFTE,
+                    BilledFTE = res.BilledFTE,
                     DayRate = res.DayRate,
                     IsProvisional = res.IsProvisional,
                     Person = res.Person,
-                    UseProjectDayRate = res.UseProjectDayRate
+                    UseProjectDayRate = res.UseProjectDayRate,
+                    FundedFrom = res.FundedFrom
                 });
+            }
+
+            // Refresh the skill tags
+            clone.SkillsRequired.Clear();
+            foreach (var tag in taskToClone.SkillsRequired)
+            {
+                clone.SkillsRequired.Add(context.SkillTags.First(x => x.SkillTagId == tag.SkillTagId));
             }
 
             // Change name

@@ -11,7 +11,7 @@
     {
         <LoadingComponent />
     }
-    else if (!canView)
+    else if (!ViewAuthorised)
     {
         <StatusMessageComponent Message="@(new StatusMessage("You are not permitted to view this page!", StatusMessage.MessageType.Error))" />
     }
@@ -53,20 +53,20 @@
         </div>
         <hr />
 
-        <div class="card">
-            <EditForm EditContext="editContext" OnSubmit="@HandleSubmit">
+        <RadzenCard>
+            <EditForm EditContext="editContext">
                 <div class="row">
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Name" /><br>
-                        <RadzenTextBox TValue="string" @bind-Value="personModel.Name" Disabled=!EditAuthorised/>
+                        <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
+                        <RadzenTextBox Name="Name" TValue="string" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Initials" /><br>
-                        <RadzenTextBox TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
+                        <RadzenTextBox Name="Initials" TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Line Manager" /><br>
-                        <RadzenDropDown class="radzen-dropdown" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>
+                        <RadzenDropDown class="radzen-dropdown" Name="LM" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
                     </div>
                 </div>
                 <div class="row">
@@ -79,7 +79,7 @@
                         <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="This is the FTE of the post as agreed as part of the department budget. If someone is working less than 1.0 FTE i.e. part-time, this should be reflected as a WLM change." /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="This is the FTE of the post as agreed as part of the department budget. If someone is working less than 1.0 FTE i.e. part-time, this should be reflected as a WLM change." /><br />
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled="@(ActiveUserRoleType != RoleType.Superuser)" />
                     </div>
                 </div>
@@ -96,9 +96,9 @@
                         </div>
                         <hr />
                         <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
+                                        AllowPaging="true"
+                                        PageSize="3"
                                         WrapItems="false"
-                                        AllowPaging="false"
                                         Data="@personModel.WorkloadModelChanges.OrderByDescending(x => x.ChangeDate)"
                                         TItem="WorkloadModelChange">
                             <Template Context="d">
@@ -154,9 +154,9 @@
                         </div>
                         <hr />
                         <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
                                         WrapItems="false"
-                                        AllowPaging="false"
+                                        AllowPaging="true"
+                                        PageSize="9"
                                         Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
                                         TItem="Absence">
                             <Template Context="a">
@@ -177,14 +177,7 @@
                 </div>
                 <hr />
                 <DataAnnotationsValidator />
-                <ValidationSummary />
-                <div class="row float-right">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled=!EditAuthorised />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>

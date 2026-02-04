@@ -91,5 +91,15 @@ namespace PPMTool.Data.Entities
         {
             return Person?.Name ?? Name;
         }
+
+        /// <summary>
+        /// Checks whether this user matches the provided claim name (either by CAS username or email address)
+        /// </summary>
+        /// <param name="claimName"></param>
+        /// <returns></returns>
+        internal bool MatchesClaim(string claimName)
+        {
+            return GetStandardisedUserName() == claimName || EmailAddress?.Trim().ToLower() == claimName;
+        }
     }
 }

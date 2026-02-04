@@ -33,16 +33,16 @@
         </div>
     </div>
     <hr />
-    <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Vertical">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-            <RadzenButton Text="Download Data"
+            <RadzenButton Text="Download Assessments"
                           Icon="@(exportRunning ? "hourglass_empty" : "download")"
                           Click="@ExportDataAsync"
                           Disabled="@(Loading || exportRunning)" />
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" Style="margin-top: -0.3rem; width: 100%">
-            <RadzenIcon Icon="person" IconStyle="IconStyle.Dark" />
+            <RadzenIcon Icon="person" IconStyle="IconStyle.Primary" />
             <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelectedAsync" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
         </RadzenStack>
             
@@ -62,14 +62,23 @@
             </RadzenStack>
         }
     </RadzenStack>
-    <br />
+    <hr />
     <div class="row">
         <div class="col">
             <h2>Competencies Framework Assessment</h2>
         </div>
-        <div class="col-auto">
-            <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
-        </div>
+        @if (userIsSuperuser)
+        {
+            <div class="col-auto">
+                <RadzenButton Text="Download Framework"
+                          Icon="@(downloadFrameworkRunning ? "hourglass_empty" : "download")"
+                          Click="@ExportFrameworkAsync"
+                          Disabled="@(Loading || downloadFrameworkRunning)" />
+            </div>
+            <div class="col-auto">
+                <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" />
+            </div>
+        }
     </div>
     <div class="row">
         <div class="col">
@@ -81,7 +90,7 @@
     <div class="row">
         <div class="col">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
-                <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                <RadzenIcon Icon="search" IconStyle="IconStyle.Primary" />
                 <RadzenTextBox @bind-Value=@competencySearchTerms
                                Placeholder="Search Competencies"
                                Change=@FilterCompetencies
@@ -118,7 +127,7 @@
                                          JustifyContent="JustifyContent.SpaceBetween"
                                          AlignItems="AlignItems.Center"
                                          Style="width:100%">
-                                <h3 style="margin-bottom:0.2rem; color: #609">@comp.Description</h3>
+                                <h3 style="margin-bottom:0.1rem; color: var(--rz-primary)">@comp.Description</h3>
                                 <RadzenProgressBar Value="@comp.Met"
                                                    Max="@comp.Total"
                                                    Unit="@($" out of {comp.Total} complete")"
@@ -141,7 +150,7 @@
                                                              ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
                                                              Selected="@(comp.CompetencySelectionState[key])"
                                                              @onclick="@(() => comp.ToggleAccordion(key))"
-                                                             Style="background-color: var(--rz-base-50);">
+                                                             Style="border: var(--rz-card-border);">
                                             <Template>
                                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
                                                     <h4 style="margin-bottom:0.2rem; width:50%">@($"{group.FirstOrDefault()?.GetCategoryId()} {group.Key.GetDescription()}")</h4>

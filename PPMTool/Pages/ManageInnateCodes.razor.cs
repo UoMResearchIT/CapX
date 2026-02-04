@@ -29,10 +29,10 @@ namespace PPMTool.Pages
 
         private Task GetLoadTask()
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 dataGridEntities = InnateCodeService.GetAll(Context).ToList();
-                codesToDeactivate = InnateCodeService.GetCodesToDeactivate(Context).ToList() ?? new List<CodeToDeactivate>();
+                codesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(Context)).ToList() ?? new List<CodeToDeactivate>();
 
             }).ContinueWith(t =>
             {

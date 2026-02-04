@@ -113,7 +113,7 @@
             }
         </ApexChart>
         <hr />
-        <RadzenText Text="Average for the Period" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5" />
+        <RadzenText Text="@($"Average for the Weeks Beginning ({ChartItems.Min(x => x.WeekStart).ToString("dd/MM/yyyy")} - {ChartItems.Max(x => x.WeekStart).ToString("dd/MM/yyyy")})")" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5" />
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -129,7 +129,7 @@
                         @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
                         {
                             <td>
-                                <RadzenText Text="@GetTableValue(duty).ToString()" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(GetTableValue(duty)) > 0.1 ? "red" : "green")};")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@GetTableValue(duty).ToString()" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(GetTableValue(duty)) > 0.1 ? "var(--rz-danger)" : "var(--rz-success)")};")" TextStyle="TextStyle.Subtitle1" />
                             </td>
                         }
                     </tr>
@@ -188,7 +188,7 @@
                 item.SwitchNormalisation(normalisedByTotalHours);
 
                 // Recompute the net values
-                item.UpdateWLMNetValues();
+                item.UpdateWLMNetValues(normalisedByTotalHours);
             }
             updateMinMax = true;            
         }

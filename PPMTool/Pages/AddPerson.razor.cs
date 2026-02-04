@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -19,22 +21,20 @@ namespace PPMTool.Pages
         [Parameter]
         public int PersonId { get; set; }
 
+        public bool ViewAuthorised { get; set; }
+
         private Person personModel = new();
         private IList<Person> managers = new List<Person>();
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
-        private bool canView;
 
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
 
-            // Default view permission based on edit authorisation
-            canView = EditAuthorised;
-
             // Load the person model if necessary
-            if (PersonId > 0)
+            if (PersonId > 0 && personModel?.PersonId != PersonId)
             {
                 personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
@@ -43,8 +43,11 @@ namespace PPMTool.Pages
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
+                    // Setup the default action bar
+                    SetDefaultActionBar(HandleSubmit, DiscardChanges);
+
                     // Developers can view their own page; managers can view all people pages
-                    canView = EditAuthorised || ActiveUser?.Person?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
+                    ViewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == Enums.RoleType.Manager;
                 }
             }
 
@@ -52,7 +55,7 @@ namespace PPMTool.Pages
             editContext = new EditContext(personModel);
             messageStore = new ValidationMessageStore(editContext);
 
-            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+            LogInformation((personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person") + $" - ViewAuthorised = {ViewAuthorised}; EditAuthorised = {EditAuthorised}");
         }
 
         protected override void OnInitialized()
@@ -60,7 +63,7 @@ namespace PPMTool.Pages
             base.OnInitialized();
 
             // Find out if superuser for delete button
-            isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
+            isSuperUser = ActiveUserRoleType == Enums.RoleType.Superuser;
 
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
@@ -89,7 +92,7 @@ namespace PPMTool.Pages
         private void EditAvailability()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -101,6 +104,11 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"people/addavailabilitychange/{personModel.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
@@ -109,7 +117,7 @@ namespace PPMTool.Pages
         private void EditAbsence()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -121,6 +129,11 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"people/addabsence/{personModel.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
@@ -129,7 +142,7 @@ namespace PPMTool.Pages
         private void EditSkills()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -141,11 +154,16 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"skills/{personModel?.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         private void HandleSubmit()
         {
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 if (PersonId > 0)
@@ -166,9 +184,7 @@ namespace PPMTool.Pages
                         {
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
-                        return;
                     }
-                    ;
                 }
                 else
                 {
@@ -186,11 +202,18 @@ namespace PPMTool.Pages
                         {
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
-                        return;
                     }
                 }
 
-                Navigation.NavigateTo("people");
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    Navigation.NavigateTo("people");
+                }
+            }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
             }
         }
 

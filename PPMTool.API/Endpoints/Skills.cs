@@ -1,22 +1,27 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// Skill endpoint function mapping
+/// Skill endpoint function mapping.
 /// </summary>
 public static class Skills
 {
     /// <summary>
-    /// Get all skills tags from DB
+    /// Get all skills tags from DB.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllSkillTagsAsync(PPMToolContext context, ILogger logger)
+    public static async Task<IResult> GetAllSkillTagsAsync(
+        PPMToolContext context,
+        ILogger logger)
     {
         try
         {
@@ -46,17 +51,23 @@ public static class Skills
     }
 
     /// <summary>
-    /// Get all skills tags for a person
+    /// Get all skills tags for a person.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="name">The name of the person to query with spaces replaced with underscores.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(PPMToolContext context, ILogger logger, string name)
+    public static async Task<IResult> GetAllSkillsTagsForPersonAsync(
+        PPMToolContext context,
+        ILogger logger,
+        [FromQuery] string name)
     {
         try
         {
-            // Find the person by name
-            var person = await APIHelper.FindPersonWithLineManagerByNameAsync(context, name);
+            // Find the person by name.
+            var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {
                 logger.LogWarning("API: GetAllSkillsTagsForPerson: Person = {Name} not found!", name);
@@ -86,12 +97,18 @@ public static class Skills
     }
 
     /// <summary>
-    /// Get all skills tags grouped by person
+    /// Get all skills tags grouped by person.
     /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="includeLeavers">Whether to include former staff in the data</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<PersonSkillsDTO>))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(PPMToolContext context, ILogger logger)
+    public static async Task<IResult> GetAllPeopleWithSkillTagsAsync(
+        PPMToolContext context,
+        ILogger logger,
+        [FromQuery] bool includeLeavers = false)
     {
         try
         {
@@ -100,6 +117,14 @@ public static class Skills
                 .Include(x => x.Owner)
                 .Include(x => x.SkillTag)
                 .ToListAsync();
+
+            // Check for filter flag
+            if (!includeLeavers)
+            {
+                ownedSkills = ownedSkills
+                    .Where(x => x.Owner.IsCurrentStaff())
+                    .ToList();
+            }
 
             if (ownedSkills == null || !ownedSkills.Any())
             {

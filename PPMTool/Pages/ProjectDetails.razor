@@ -75,7 +75,7 @@
             <div class="row">
                 <div class="col" style="min-width: 500px">
                     <h2>Burn-Up Chart</h2>
-                    <div class="card">
+                    <RadzenCard>
                         @if (loadingBurnUpChart || burnUpChartSource == null)
                         {
                             <LoadingComponent />
@@ -132,7 +132,7 @@
 
                             </ApexChart>
                         }
-                    </div>
+                    </RadzenCard>
                     <div class="my-2">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical">
                             <RadzenText Text="Select Resources:" TextStyle="TextStyle.Subtitle1" />
@@ -143,8 +143,8 @@
                                             AllowSelectAll="false"
                                             Multiple="true"
                                             Placeholder="Show Individual Resources"
-                                            Change="ResourceSelectionChanged"
-                                            Style="width: 100%"
+                                            Change="ResourceSelectionChangedAsync"
+                   Async                         Style="width: 100%"
                                             TValue="Person" />
                         </RadzenStack>
                     </div>
@@ -152,8 +152,8 @@
 
                 <div class="col" style="min-width: 500px">
                     <h2>Schedule</h2>
-                    <div class="card">
-                        @if (loadingGanttChart || confirmedBlocks == null || provisionalBlocks == null)
+                    <RadzenCard>
+                        @if (confirmedBlocks == null || provisionalBlocks == null)
                         {
                             <LoadingComponent />
                         }
@@ -206,7 +206,7 @@
                                                         <h4 class="me-1 text-info">[Currently No Demand]</h4>
                                                     }
                                                 }
-                                                <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{x.AssignmentFTE}]"))</h4>
+                                                <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{Math.Round(x.AssignmentFTE, 3)}]"))</h4>
                                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                                 <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
                                                 @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
@@ -221,7 +221,7 @@
                                 </ApexPointTooltip>
                             </ApexChart>
                         }
-                    </div>
+                    </RadzenCard>
 
                     <div class="my-2">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
@@ -274,7 +274,7 @@
             }
             else
             {
-                <div class="card">
+                <RadzenCard>
                     <RadzenDataGrid AllowFiltering="@((gridTasks?.Count ?? 0) > 0)"
                                     AllowColumnResize="true"
                                     FilterMode="FilterMode.Simple"
@@ -332,7 +332,16 @@
                             <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
                             <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
                                 <Template Context="t">
-                                    @string.Join(',', t.AssignedResources?.Select(x => $"{x.Person.ShortName}[{x.AssignmentFTE}]"))
+                                    @string.Join(',', t.AssignedResources?.Select(x =>
+                                    {
+                                        var label = $"{x.Person.ShortName}[{x.AssignmentFTE}";
+                                        if (project.CostModel.HasIndirects())
+                                        {
+                                            label += $" ({Math.Round(x.BilledFTE, 3)})";
+                                        }
+                                        label += "]";
+                                        return label;
+                                    }))
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="SubTask" Property="Predecessor.Name" Title="Predecessor" Width="10rem" MinWidth="10px" />
@@ -345,7 +354,7 @@
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                </div>
+                </RadzenCard>
             }
             <hr />
         }
@@ -377,36 +386,43 @@
                             Failed linking, if either the person or project does not exist, will leave the text unchanged.
                             <b>Currently there must be a space before and after the reference for the link to be detected.</b>
                         </RadzenText>
-                        <div class="grip">
-                            <RadzenHtmlEditor id="editor-entry" @onkeydown="@(args => ProcessEditorInput(args))" @ref=htmlEditor @bind-Value=@noteModel.HtmlContent Style="height:100%; min-height:10rem;" />
+
+                        <div class="editor-wrapper" style="position: relative;">
+                            <div class="grip">
+                                <RadzenHtmlEditor id="editor-entry"
+                                                  @ref="htmlEditor"
+                                                  @bind-Value="noteModel.HtmlContent"
+                                                  Input="OnEditorInput"
+                                                  @onkeydown="OnEditorKeyDown"
+                                                  Style="height:100%; min-height:10rem;" />
+                            </div>
+
+                            @if (mention.Visible)
+                            {
+                                <div class="mention-panel"
+                                     style="
+                                        position:absolute;
+                                        top:@mention.TopPx;
+                                        left:@mention.LeftPx;
+                                        width:280px;
+                                        max-height:300px;
+                                        overflow:auto;
+                                        z-index: 1000;"
+                                     @onmousedown:preventDefault
+                                     @onwheel:stopPropagation>
+                                    @foreach (var p in mention.FilteredPeople)
+                                    {
+                                        <div class="mention-item @(mention.HighlightedId == p.PersonId ? "is-active" : null)"
+                                             @onmousedown:preventDefault
+                                             @onmousedown="() => SelectMention(p)">
+                                            <span class="badge badge-light me-2">@p.ShortName</span>
+                                            @p.Name
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
-                        <Popup @ref=popup
-                                Lazy=false
-                                Open="@OnMentionPopupOpenAsync"
-                                Style="display:none;position:absolute;height:300px;width:300px;padding:5px;border:var(--rz-panel-border);background-color:var(--rz-panel-background-color);">
-                            <RadzenTextBox id="search"
-                                           Placeholder="Type to search..."
-                                           Style="width:100%;"
-                                           @onkeydown="@(args => ProcessMentionSearchInput(args))"
-                                           @oninput=@(args => MentionSearchString = $"{args.Value}")
-                                           Value="@MentionSearchString"
-                                           autocomplete="off" />
-                            <RadzenStack Style="height:100%;overflow:auto;" Gap="0.2rem">
-                                @foreach (var person in mentionables)
-                                {
-                                    <RadzenCard class="mention-card" @onclick=@(args => MentionPerson(person)) MouseEnter="@(args => HighlightMention(person))"
-                                                MouseLeave="@(args => UnHighlightMention(person))"
-                                                Style="@(highlightedPerson == person ? "background-color: var(--rz-primary-lighter)" : "background-color: white")">
-                                        <RadzenStack Orientation="Radzen.Orientation.Vertical">
-                                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
-                                                <RadzenText Text="@person.ShortName" TextStyle=TextStyle.Subtitle1 TextAlign=TextAlign.Center class="rounded-circle bg-light" Style="width:2.5rem; height:2.5rem; align-content: center; margin:0rem" />
-                                                <RadzenText Text="@person.Name" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
-                                            </RadzenStack>
-                                        </RadzenStack>
-                                    </RadzenCard>
-                                }
-                            </RadzenStack>
-                        </Popup>
+
                         <div class="row">
                             <div class="col align-items-center" style="display: flex">
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1.5rem" Wrap="FlexWrap.Wrap">
@@ -447,11 +463,11 @@
                 <div class="row justify-content-center ml-1">
                     <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Center" Gap="0.1rem" AlignItems="AlignItems.Center">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
-                            <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
+                            <RadzenIcon Icon="search" IconStyle="IconStyle.Primary" />
                             <RadzenTextBox @bind-Value=@noteSearchTerms
-                                            Placeholder="Search Notes"
-                                            Change=@FilterAndHighlightNotes
-                                            Style="width:100%" />
+                                           Placeholder="Search Notes"
+                                           Change=@(args => InvokeAsync(async () => await FilterHighlightScrollNotesAsync()))
+                                           Style="width:100%" />
                             <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                         </RadzenStack>
                         <RadzenText TextStyle="TextStyle.Subtitle2">
