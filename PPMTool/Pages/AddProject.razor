@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data
+@using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Add Project - CapX</PageTitle>
@@ -60,7 +61,7 @@ else
                         <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
                         <RadzenDropDown class="radzen-dropdown" TValue="Faculty" @bind-Value="projectModel.Faculty" Data="@faculties" Change="OnFacultyChosen">
                             <Template Context="x">
-                                @GetNiceString(x)
+                                @x.GetSensibleObjectName()
                             </Template>
                         </RadzenDropDown>
                     </div>
@@ -68,7 +69,7 @@ else
                         <RadzenLabel class="radzen-form-label" Text="School" /><br />
                         <RadzenDropDown class="radzen-dropdown" TValue="School" @bind-Value="projectModel.School" Data="@schools">
                             <Template Context="x">
-                                @GetNiceString(x)
+                                @x.GetSensibleObjectName()
                             </Template>
                         </RadzenDropDown>
                     </div>
