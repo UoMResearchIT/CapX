@@ -1,4 +1,8 @@
-﻿using System.ComponentModel;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Enums

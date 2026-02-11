@@ -1,4 +1,8 @@
-﻿let showFinishedAsSeparate = false
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+let showFinishedAsSeparate = false
 
 setFinishedFlag = function (finished) {
     showFinishedAsSeparate = finished

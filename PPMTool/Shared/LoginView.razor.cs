@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;

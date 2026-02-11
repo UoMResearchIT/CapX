@@ -1,4 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using System.ComponentModel.DataAnnotations;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Data

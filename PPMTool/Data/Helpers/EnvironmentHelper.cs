@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Data.Helpers
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+namespace PPMTool.Data.Helpers
 {
     /// <summary>
     /// Helper class to manage environment variables for configuration overrides.

@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Enums
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+namespace PPMTool.Enums
 {
     public enum SkillRareness
     {

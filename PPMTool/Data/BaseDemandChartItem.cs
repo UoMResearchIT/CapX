@@ -1,4 +1,8 @@
-﻿using System;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using System;
 
 namespace PPMTool.Data
 {

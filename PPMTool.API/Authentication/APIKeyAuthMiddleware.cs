@@ -1,4 +1,8 @@
-﻿using PPMTool.API.Services;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using PPMTool.API.Services;
 using PPMTool.Data.Context;
 
 namespace PPMTool.API.Authentication

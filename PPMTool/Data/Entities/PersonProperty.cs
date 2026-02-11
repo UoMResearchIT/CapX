@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Data.Entities
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+namespace PPMTool.Data.Entities
 {
     public abstract class PersonProperty : ILoggableClass
     {

@@ -1,4 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 
 namespace PPMTool.Services
 {

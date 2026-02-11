@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #if LOCAL
 using Microsoft.AspNetCore.Authentication;
 #endif

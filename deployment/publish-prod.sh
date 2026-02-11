@@ -1,5 +1,10 @@
 #! /bin/bash
 
+# SPDX-FileCopyrightText: 2026 University of Manchester
+#
+# SPDX-License-Identifier: Apache-2.0
+
+
 ## Lives on the build/test system but executed on the production system via the deploy-prod script ##
 
 set -eu

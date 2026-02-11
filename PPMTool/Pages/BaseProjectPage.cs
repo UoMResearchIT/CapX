@@ -1,4 +1,8 @@
-﻿using Blazored.SessionStorage;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Services;

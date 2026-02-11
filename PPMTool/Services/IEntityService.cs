@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: Apache-2.0
+
+using System.Collections.Generic;
 using PPMTool.Data.Context;
 
 namespace PPMTool.Services
