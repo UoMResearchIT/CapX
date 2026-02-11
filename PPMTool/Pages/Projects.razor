@@ -66,12 +66,12 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px">
                         <Template Context="p">
-                            @p.Faculty.Description
+                            <span title="@p.Faculty.Name">@p.Faculty.Code</span>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px">
                         <Template Context="p">
-                            @p.School.Description
+                             <span title="@p.School.Name">@p.School.Code</span>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="LeadershipFTE" Title="Mgmt FTE" MinWidth="10px" />

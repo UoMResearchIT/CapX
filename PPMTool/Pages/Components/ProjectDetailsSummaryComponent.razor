@@ -37,7 +37,7 @@ else
                 <tr>
                     <td>@($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")</td>
                     <td>@FinanceSummaryItem.ProjectPI</td>
-                    <td>@($"{FinanceSummaryItem.School.Description} ({FinanceSummaryItem.Faculty.Description})")</td>
+                    <td>@($"{FinanceSummaryItem.School.Name} ({FinanceSummaryItem.Faculty.Name})")</td>
                     <td>@FinanceSummaryItem.ProjectPM</td>
                     <td>@(FinanceSummaryItem.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
                     @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
