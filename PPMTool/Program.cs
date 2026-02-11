@@ -78,6 +78,8 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
+builder.Services.AddScoped<FacultyService>();
+builder.Services.AddScoped<SchoolService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
