@@ -359,3 +359,51 @@ span.mention {
     border-radius: 4px;
     padding: 0 .2rem;
 }
+
+.rz-accordion .rz-accordion-header {
+    padding: 0px;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+}
+
+.rz-accordion .rz-accordion-header .rzi {
+    margin-inline: 0px;
+}
+
+.rz-accordion-header a[role="tab"] {
+    padding: 0px;
+    background-color: #eee;
+}
+
+.rz-accordion-content {
+    border: 1px solid #ccc;
+    padding: 0px;
+    background-color: #fff;
+    margin-top: -10px;
+    margin-bottom: 15px;
+}
+
+.accordion-orgsubunit {
+    border: 1px solid #ccc;
+    padding: 10px;
+    padding-left: 30px;
+    margin: 0px;
+}
+
+.rz-accordion-toggle-icon {
+    display: none !important;
+}
+
+.rz-text-display-h2 {
+    font-weight: normal;
+    font-size: 1rem;
+    margin: 0px;
+}
+
+.active {
+    background-color: lightgreen;
+}
+
+.inactive {
+    background-color: #FFD3D3;
+}
