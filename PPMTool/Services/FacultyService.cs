@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -13,7 +14,8 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override IEnumerable<Faculty> GetAll(PPMToolContext context)
         {
-            return context.Faculties;
+            return context.Faculties
+                .Include(x => x.Schools);
         }
 
         /// <summary>
