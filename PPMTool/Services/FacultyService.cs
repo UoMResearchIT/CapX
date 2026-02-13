@@ -15,7 +15,8 @@ namespace PPMTool.Services
         public override IEnumerable<Faculty> GetAll(PPMToolContext context)
         {
             return context.Faculties
-                .Include(x => x.Schools);
+                .Include(x => x.Schools.OrderBy(s => s.Order))
+                .OrderBy(f => f.Order);
         }
 
         /// <summary>
