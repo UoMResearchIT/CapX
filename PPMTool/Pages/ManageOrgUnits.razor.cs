@@ -20,6 +20,9 @@ namespace PPMTool.Pages
         [Inject]
         private SchoolService SchoolService { get; set; }
 
+        [Inject]
+        protected DialogService DialogService { get; set; }
+
         protected List<Faculty> Faculties = new();
 
         protected Faculty EditingFaculty;
@@ -32,7 +35,7 @@ namespace PPMTool.Pages
 
         private void LoadData()
         {
-            Faculties = FacultyService.GetAll(Context).OrderBy(x => x.Order).ThenBy(x => x.Name).ToList();
+            Faculties = FacultyService.GetAll(Context).ToList();
         }
 
         protected string GetFacultyCss(Faculty f) => f.IsActive ? "" : "inactive";
@@ -60,7 +63,6 @@ namespace PPMTool.Pages
             else
                 FacultyService.Update(Context, faculty);
 
-            await Context.SaveChangesAsync();
             EditingFaculty = null;
             LoadData();
         }
@@ -73,13 +75,52 @@ namespace PPMTool.Pages
             EditingFaculty = null;
         }
 
-        protected async Task DeactivateFaculty(Faculty faculty)
+        protected async Task ToggleFacultyActive(Faculty faculty, bool value)
         {
-            faculty.IsActive = false;
+            if (!value)
+            {
+                // Set default value
+                var confirmed = false;
+
+                // Show dialogue box if sub-units within this organisational unit
+                if (faculty.Schools.Count > 0)
+                {
+                    confirmed = (bool)await DialogService.Confirm(
+                                    $"Are you sure you want to deactivate '{faculty.Name}'? All linked items within it will be deactivated too!",
+                                    "Confirm Deactivation",
+                                    new ConfirmOptions()
+                                    {
+                                        OkButtonText = "Deactivate",
+                                        CancelButtonText = "Cancel"
+                                    });
+                }
+                else
+                {
+                    // No sub-units so just set confirmation to true
+                    confirmed = true;
+                }
+
+                if (confirmed != true)
+                {
+                    // Revert switch as not confirmed
+                    faculty.IsActive = true;
+                    return;
+                }
+                else
+                {
+                    faculty.IsActive = false;
+
+                    foreach (School s in faculty.Schools)
+                    {
+                        s.IsActive = false;
+                    }
+                }
+            }
+
+            faculty.IsActive = value;
             FacultyService.Update(Context, faculty);
-            await Context.SaveChangesAsync();
-            LoadData();
         }
+
 
         // ---------------- SCHOOL CRUD ----------------
 
@@ -102,7 +143,6 @@ namespace PPMTool.Pages
             else
                 SchoolService.Update(Context, school);
 
-            await Context.SaveChangesAsync();
             EditingSchool = null;
             LoadData();
         }
@@ -122,7 +162,6 @@ namespace PPMTool.Pages
         {
             school.IsActive = false;
             SchoolService.Update(Context, school);
-            await Context.SaveChangesAsync();
             LoadData();
         }
 
@@ -130,113 +169,7 @@ namespace PPMTool.Pages
         {
             school.IsActive = true;
             SchoolService.Update(Context, school);
-            await Context.SaveChangesAsync();
             LoadData();
         }
-
-        // ---------------- VISUAL STYLING ----------------
-
-        protected string GetFacultyIcon(Faculty f) =>
-            f.IsActive ? "check_circle" : "block";
-
-        protected string GetFacultyStyle(Faculty f) =>
-            f.IsActive ? "" : "opacity:0.5; text-decoration: line-through;";
-
-        protected string GetSchoolStyle(School s) =>
-            s.IsActive ? "" : "opacity:0.5; text-decoration: line-through;";
     }
-
-
 }
-    //public partial class ManageOrgUnits : DataGridPage<Faculty>
-    //{
-    //    [Inject]
-    //    private FacultyService FacultyService { get; set; }
-
-    //    private int count;
-
-    //    protected override void OnInitialized()
-    //    {
-    //        base.OnInitialized();
-    //        EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
-    //        dataGridEntityService = FacultyService;
-    //        Loading = true;
-    //        EnqueueLoadData(GetLoadTask);
-    //        LogInformation($"Viewing Organisational Units");
-    //    }
-
-    //    protected override async Task SaveRow(Faculty entity)
-    //    {
-    //        if (IsDuplicatedFaculty(entity)) return;
-    //        await base.SaveRow(entity);
-    //    }
-
-    //    protected override async Task DeleteRow(Faculty entity)
-    //    {
-    //        if (await DialogService.Confirm($"You are about to delete tag {entity.GetSensibleObjectName()}.", "Delete Tag") ?? false)
-    //        {
-    //            await base.DeleteRow(entity);
-
-    //            // Remove from data grid
-    //            dataGridEntityService.Delete(Context, entity);
-    //            LogInformation($"Deleted skills tag {entity.GetSensibleObjectName()}");
-    //            await dataGrid.Reload();
-    //        }
-    //    }
-
-    //    /// <summary>
-    //    /// Method to detect a duplicate on save or update and display error message
-    //    /// </summary>
-    //    /// <param name="entity"></param>
-    //    /// <returns></returns>
-    //    private bool IsDuplicatedFaculty(Faculty entity)
-    //    {
-    //        if (FacultyService.DuplicateDetected(Context, entity))
-    //        {
-    //            SetErrorMessage(new StatusMessage("An entry with the same name or controlled name already exists.", StatusMessage.MessageType.Error));
-    //            return true;
-    //        }
-    //        ClearErrorMessage();
-    //        return false;
-    //    }
-
-    //    /// <summary>
-    //    /// Method fired when a column is filtered or sorted to allow us to custom filter or sort
-    //    /// </summary>
-    //    /// <param name="args"></param>
-    //    private void LoadDataGrid(LoadDataArgs args)
-    //    {
-    //        // Order by name by default
-    //        IQueryable<Faculty> query = FacultyService.GetAll(Context).OrderBy(x => x.Name).AsQueryable();
-
-    //        // Assign to grid source
-    //        var data = query.ToList();
-    //        count = data.Count;
-    //        dataGridEntities = data;
-    //        Loading = false;
-
-    //        Debug.WriteLine($"** {data.Count()} faculties loaded. {dataGridEntities.Count()} displayed.");
-    //    }
-
-    //    /// <summary>
-    //    /// Returns a standard task to get the data for the grid
-    //    /// </summary>
-    //    /// <returns></returns>
-    //    private Task GetLoadTask()
-    //    {
-    //        return Task.Run(() =>
-    //        {
-    //            LoadDataGrid(new LoadDataArgs());
-    //        })
-    //            .ContinueWith(t =>
-    //            {
-    //                InvokeAsync(() =>
-    //                {
-    //                    Loading = false;
-    //                    StateHasChanged();
-    //                });
-    //            });
-    //    }
-
-    //}
-//}

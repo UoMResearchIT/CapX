@@ -9,11 +9,11 @@
 <div class="container">
     <div class="row">
         <div class="col py-2">
-            <h1>Manage Organisational Units</h1>
+            <h2>Manage Organisational Units</h2>
         </div>
     </div>
 
-    <div>
+    <div class="orgunits-accordion">
         <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
             <Items>
                 @foreach (var faculty in Faculties)
@@ -43,21 +43,20 @@
                                     }
                                     else
                                     {
-                                        <RadzenText Text="@faculty.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2"/>
-                                        <div>
-                                            <RadzenButton Icon="edit"
-                                                          Size="ButtonSize.Small"
-                                                          ButtonStyle=ButtonStyle.Primary 
-                                                          Click="@(() => EditFaculty(faculty))" 
-                                                          @onclick:stopPropagation="true" />
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                                <RadzenButton Icon="edit"
+                                                              Size="ButtonSize.Small"
+                                                              ButtonStyle=ButtonStyle.Primary
+                                                              Click="@(() => EditFaculty(faculty))" 
+                                                              Disabled="@(!faculty.IsActive)"/>
 
-                                            <RadzenButton Icon="block"
-                                                          Size="ButtonSize.Small"
-                                                          Style="margin-left:5px" 
-                                                          ButtonStyle=ButtonStyle.Warning 
-                                                          Click="@(() => DeactivateFaculty(faculty))" 
-                                                          @onclick:stopPropagation ="true" />
-                                        </div>
+                                                <RadzenText Text="@faculty.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
+                                            </RadzenStack>
+                                            <div>
+                                                <RadzenSwitch @bind-Value="faculty.IsActive" Name="IsActive" Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" />
+                                            </div>
+                                         </RadzenStack>
                                     }
                                 </RadzenRow>
                             </div>
@@ -82,7 +81,7 @@
                                             }
                                             else
                                             {
-                                                @school.Name
+                                                @school.GetSensibleObjectName()
                                                 <div>
                                                     <RadzenButton Icon="edit" Size=ButtonSize.Small
                                                     Click="@(() => EditSchool(school))" />
@@ -121,154 +120,3 @@
     </RadzenAccordion>
     </div>
 </div>
-
-@* <div class="container">
-    <div class="row">
-        <div class="col py-2">
-            <h1>Manage Organisational Units</h1>
-        </div>
-    </div>
-
-    @if (ErrorMessage != null)
-    {
-        <StatusMessageComponent Message="ErrorMessage" />
-    }
-    <hr />
-
-    
-    @foreach (var faculty in Faculties)
-    {
-        <div class="card">
-            <div class="card-header" style="background-color: lightblue;">
-                @if (EditingFaculty == faculty)
-                {
-                    <div>
-                        <RadzenTextBox @bind-Value="faculty.Name" Style="width:60%" />
-                        <RadzenRequiredValidator Component="Name" Text="Name is required" />
-
-                        <span style="float: right;">
-                            <RadzenButton Text="Save" Icon="save" ButtonStyle=ButtonStyle.Primary Click="@(() => SaveFaculty(faculty))" />
-                            <RadzenButton Text="Cancel" Icon="cancel" Click="@CancelFacultyEdit" />
-                        </span>
-                    </div>
-                }
-                else
-                {
-                    <div>
-                        <RadzenTextBox Style="width:60%">@faculty.Name</RadzenTextBox>
-                        <span style="float: right;">
-                            <RadzenButton Icon="edit" Click="@(() => EditFaculty(faculty))" />
-                            <RadzenButton Icon="block" ButtonStyle=ButtonStyle.Warning Click="@(() => DeactivateFaculty(faculty))" />
-                        </span>
-                    </div>
-                }
-            </div>
-
-
-            <!-- SCHOOLS LIST -->
-            <div class="card-body">
-                Faculty = @faculty.Code <br />
-                @foreach(var school in faculty.Schools)
-                {
-                    <div>
-                        @if (EditingSchool == school)
-                        {
-                            <RadzenTextBox @bind-Value="school.Name" Style="width:60%" />
-                            <div>
-                                <RadzenButton Icon="save" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Primary
-                                                Click="@(() => SaveSchool(faculty, school))" />
-                                <RadzenButton Icon="cancel" Size=ButtonSize.Small Style="margin-left:5px"
-                                                Click="@CancelSchoolEdit" />
-                            </div>
-                        }
-                        else
-                        {
-                            @school.Name
-                            <div>
-                                <RadzenButton Icon="edit" Size=ButtonSize.Small
-                                                Click="@(() => EditSchool(school))" />
-                                <RadzenButton Icon="block" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Warning
-                                                Style="margin-left:5px"
-                                                Click="@(() => DeactivateSchool(faculty, school))" />
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-            <div class="card-footer" style="text-align: right;">
-                <RadzenButton Icon="add" Text="Add School" Click="@(() => AddSchool(faculty))" />
-            </div>
-        </div>
-	}
-
-    <RadzenButton Icon="add" Text="Add Faculty" Style="margin-top:20px" Click="@AddFaculty" />
-
-</div> *@
-
-
-@*
-@page "/manageorgunits"
-@inherits DataGridPage<Faculty>
-
-@using PPMTool.Data.Entities
-@using PPMTool.Enums
-@using PPMTool.Pages.Components
-<PageTitle>Manage Org Units - CapX</PageTitle>
-
-<div class="container">
-    <div class="row">
-        <div class="col py-2">
-            <h1>Manage Organisational Units</h1>
-        </div>
-        <!--
-        <div class="col-auto py-2 align-items-center">
-            <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
-        </div>
-        -->
-    </div>
-    @if (ErrorMessage != null)
-    {
-        <StatusMessageComponent Message="ErrorMessage" />
-    }
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else
-    {
-        <RadzenDataGrid @ref="dataGrid"
-                        AllowFiltering="true"
-                        AllowPaging="false"
-                        Count="@count"
-                        AllowSorting="true"
-                        EditMode="DataGridEditMode.Single"
-                        Data="@dataGridEntities"
-                        TItem="Faculty"
-                        RowUpdate="@OnUpdateRow"
-                        RowCreate="@OnCreateRow"
-                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        FilterMode="FilterMode.Simple"
-                        LoadData="LoadDataGrid">
-            <Columns>
-                <RadzenDataGridColumn TItem="Faculty" Property="Name" Title="Name" Width="80%" MinWidth="10px" FilterOperator="FilterOperator.Contains">
-                    <EditTemplate Context="Faculty">
-                        <RadzenTextBox class="no-margin" @bind-Value="Faculty.Name" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Faculty" Filterable="false" Sortable="false" TextAlign="TextAlign.End" Width="10%" MinWidth="10px" Title="Actions">
-                    <Template Context="f">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(f))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(Loading || !EditAuthorised)" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(f))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(Loading || !EditAuthorised)" />
-                    </Template>
-                    <EditTemplate Context="f">
-                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(f))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
-                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(f))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-        <br />
-    }
-</div> *@
