@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
 using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -67,10 +68,11 @@ namespace PPMTool.Pages
             LoadData();
         }
 
-        protected void CancelFacultyEdit()
+        protected void CancelFacultyEdit(Faculty entity)
         {
             if (EditingFaculty?.FacultyId == 0)
                 Faculties.Remove(EditingFaculty);
+            FacultyService.RestoreModel(Context, ref entity);
 
             EditingFaculty = null;
         }
@@ -147,7 +149,7 @@ namespace PPMTool.Pages
             LoadData();
         }
 
-        protected void CancelSchoolEdit()
+        protected void CancelSchoolEdit(School entity)
         {
             if (EditingSchool?.SchoolId == 0)
             {
@@ -155,6 +157,7 @@ namespace PPMTool.Pages
                 parent.Schools.Remove(EditingSchool);
             }
 
+            SchoolService.RestoreModel(Context, ref entity);
             EditingSchool = null;
         }
 

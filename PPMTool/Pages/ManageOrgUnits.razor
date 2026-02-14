@@ -36,7 +36,7 @@
                                                 <RadzenButton Icon="cancel"
                                                               ButtonStyle=ButtonStyle.Danger
                                                               Style ="margin-left:5px"
-                                                              Click="@CancelFacultyEdit"
+                                                              Click="@(() => CancelFacultyEdit(faculty))"
                                                               @onclick:stopPropagation="true" />
                                             </div>
                                         </RadzenStack>
@@ -75,8 +75,11 @@
                                                 <div>
                                                     <RadzenButton Icon="save" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Success
                                                     Click="@(() => SaveSchool(faculty, school))" />
-                                                    <RadzenButton Icon="cancel" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Danger Style ="margin-left:5px"
-                                                    Click="@CancelSchoolEdit" />
+                                                    <RadzenButton Icon="cancel" 
+                                                                  Size=ButtonSize.Small 
+                                                                  ButtonStyle=ButtonStyle.Danger 
+                                                                  Style ="margin-left:5px"
+                                                                  Click="@(() => CancelSchoolEdit(school))" />
                                                 </div>
                                             }
                                             else
