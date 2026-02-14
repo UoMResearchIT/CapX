@@ -31,12 +31,14 @@
                                                 <RadzenButton Icon="save" 
                                                               ButtonStyle=ButtonStyle.Success
                                                               Click="@(() => SaveFaculty(faculty))"
+                                                              title="Save"
                                                               @onclick:stopPropagation="true" />
 
                                                 <RadzenButton Icon="cancel"
                                                               ButtonStyle=ButtonStyle.Danger
                                                               Style ="margin-left:5px"
                                                               Click="@(() => CancelFacultyEdit(faculty))"
+                                                              title="Cancel editing"
                                                               @onclick:stopPropagation="true" />
                                             </div>
                                         </RadzenStack>
@@ -49,12 +51,13 @@
                                                               Size="ButtonSize.Small"
                                                               ButtonStyle=ButtonStyle.Primary
                                                               Click="@(() => EditFaculty(faculty))" 
-                                                              Disabled="@(!faculty.IsActive)"/>
+                                                              Disabled="@(!faculty.IsActive)"
+                                                              title="Edit"/>
 
                                                 <RadzenText Text="@faculty.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                             </RadzenStack>
                                             <div>
-                                                ACTIVE <RadzenSwitch @bind-Value="faculty.IsActive" Name="IsActive" Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" />
+                                                ACTIVE <RadzenSwitch @bind-Value="faculty.IsActive" Name="IsActive" Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" title="Toggle active status"/>
                                             </div>
                                         </RadzenStack>
                                     }
@@ -78,13 +81,15 @@
                                                         <RadzenButton Icon="save" 
                                                                       Size=ButtonSize.Small 
                                                                       ButtonStyle=ButtonStyle.Success
-                                                                      Click="@(() => SaveSchool(faculty, school))" />
+                                                                      Click="@(() => SaveSchool(faculty, school))" 
+                                                                      title="Save"/>
 
                                                         <RadzenButton Icon="cancel" 
                                                                       Size=ButtonSize.Small 
                                                                       ButtonStyle=ButtonStyle.Danger 
                                                                       Style ="margin-left:5px"
-                                                                      Click="@(() => CancelSchoolEdit(school))" />
+                                                                      Click="@(() => CancelSchoolEdit(school))" 
+                                                                      title="Cancel editing"/>
                                                     </div>
                                                 </RadzenStack>
                                             }
@@ -96,33 +101,15 @@
                                                                       Size="ButtonSize.Small"
                                                                       ButtonStyle=ButtonStyle.Primary
                                                                       Click="@(() => EditSchool(school))"
-                                                                      Disabled="@(!school.IsActive)" />
+                                                                      Disabled="@(!school.IsActive)" 
+                                                                      title="Edit"/>
 
                                                         <RadzenText Text="@school.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                                     </RadzenStack>
                                                     <div>
-                                                        ACTIVE <RadzenSwitch @bind-Value="school.IsActive" Name="IsActive" Change="@((value) => ToggleSchoolActive(school, value))" />
+                                                        ACTIVE <RadzenSwitch @bind-Value="school.IsActive" Name="IsActive" Change="@((value) => ToggleSchoolActive(school, value))" title="Toggle active status" />
                                                     </div>
                                                 </RadzenStack>
-
-@*                                                 @school.GetSensibleObjectName()
-                                                <div>
-                                                    <RadzenButton Icon="edit" Size=ButtonSize.Small
-                                                    Click="@(() => EditSchool(school))" />
-
-                                                    @if(school.IsActive)
-                                                    {
-                                                        <RadzenButton Icon="block" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Warning
-                                                                      Style="margin-left:5px"
-                                                                      Click="@(() => DeactivateSchool(faculty, school))" />
-                                                    }
-                                                    else
-                                                    {
-                                                        <RadzenButton Icon="done" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Success
-                                                                      Style="margin-left:5px"
-                                                                      Click="@(() => ReactivateSchool(faculty, school))" />
-                                                    }
-                                                </div> *@
                                             }
                                         </RadzenRow>
                                     </div>
