@@ -158,18 +158,10 @@ namespace PPMTool.Pages
             EditingSchool = null;
         }
 
-        protected async Task DeactivateSchool(Faculty faculty, School school)
+        protected async Task ToggleSchoolActive(School school, bool value)
         {
-            school.IsActive = false;
-            SchoolService.Update(Context, school);
-            LoadData();
-        }
-
-        protected async Task ReactivateSchool(Faculty faculty, School school)
-        {
-            school.IsActive = true;
-            SchoolService.Update(Context, school);
-            LoadData();
+            school.IsActive = value;
+            FacultyService.Update(Context, school.Faculty);
         }
     }
 }

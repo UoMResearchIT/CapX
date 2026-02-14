@@ -54,9 +54,9 @@
                                                 <RadzenText Text="@faculty.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                             </RadzenStack>
                                             <div>
-                                                <RadzenSwitch @bind-Value="faculty.IsActive" Name="IsActive" Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" />
+                                                ACTIVE <RadzenSwitch @bind-Value="faculty.IsActive" Name="IsActive" Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" />
                                             </div>
-                                         </RadzenStack>
+                                        </RadzenStack>
                                     }
                                 </RadzenRow>
                             </div>
@@ -81,7 +81,22 @@
                                             }
                                             else
                                             {
-                                                @school.GetSensibleObjectName()
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                                        <RadzenButton Icon="edit"
+                                                                      Size="ButtonSize.Small"
+                                                                      ButtonStyle=ButtonStyle.Primary
+                                                                      Click="@(() => EditSchool(school))"
+                                                                      Disabled="@(!school.IsActive)" />
+
+                                                        <RadzenText Text="@school.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
+                                                    </RadzenStack>
+                                                    <div>
+                                                        ACTIVE <RadzenSwitch @bind-Value="school.IsActive" Name="IsActive" Change="@((value) => ToggleSchoolActive(school, value))" />
+                                                    </div>
+                                                </RadzenStack>
+
+@*                                                 @school.GetSensibleObjectName()
                                                 <div>
                                                     <RadzenButton Icon="edit" Size=ButtonSize.Small
                                                     Click="@(() => EditSchool(school))" />
@@ -98,7 +113,7 @@
                                                                       Style="margin-left:5px"
                                                                       Click="@(() => ReactivateSchool(faculty, school))" />
                                                     }
-                                                </div>
+                                                </div> *@
                                             }
                                         </RadzenRow>
                                     </div>
