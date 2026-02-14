@@ -71,16 +71,22 @@
                                         <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                             @if (EditingSchool == school)
                                             {
-                                                <RadzenTextBox @bind-Value="school.Name" Style="width:60%; padding: 7px;" />
-                                                <div>
-                                                    <RadzenButton Icon="save" Size=ButtonSize.Small ButtonStyle=ButtonStyle.Success
-                                                    Click="@(() => SaveSchool(faculty, school))" />
-                                                    <RadzenButton Icon="cancel" 
-                                                                  Size=ButtonSize.Small 
-                                                                  ButtonStyle=ButtonStyle.Danger 
-                                                                  Style ="margin-left:5px"
-                                                                  Click="@(() => CancelSchoolEdit(school))" />
-                                                </div>
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                                                    <span>Name <RadzenTextBox @bind-Value="school.Name" Style="padding: 10px;" /></span>
+                                                    <span>Code <RadzenTextBox @bind-Value="school.Code" Style="padding: 10px;" /></span>
+                                                    <div>
+                                                        <RadzenButton Icon="save" 
+                                                                      Size=ButtonSize.Small 
+                                                                      ButtonStyle=ButtonStyle.Success
+                                                                      Click="@(() => SaveSchool(faculty, school))" />
+
+                                                        <RadzenButton Icon="cancel" 
+                                                                      Size=ButtonSize.Small 
+                                                                      ButtonStyle=ButtonStyle.Danger 
+                                                                      Style ="margin-left:5px"
+                                                                      Click="@(() => CancelSchoolEdit(school))" />
+                                                    </div>
+                                                </RadzenStack>
                                             }
                                             else
                                             {
