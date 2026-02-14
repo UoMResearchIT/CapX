@@ -31,14 +31,14 @@
                                                 <RadzenButton Icon="save" 
                                                               ButtonStyle=ButtonStyle.Success
                                                               Click="@(() => SaveFaculty(faculty))"
-                                                              title="Save"
+                                                              MouseEnter="@(args => ShowTooltip(args, "Save"))"
                                                               @onclick:stopPropagation="true" />
 
                                                 <RadzenButton Icon="cancel"
                                                               ButtonStyle=ButtonStyle.Danger
                                                               Style ="margin-left:5px"
                                                               Click="@(() => CancelFacultyEdit(faculty))"
-                                                              title="Cancel editing"
+                                                              MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
                                                               @onclick:stopPropagation="true" />
                                             </div>
                                         </RadzenStack>
@@ -52,12 +52,15 @@
                                                               ButtonStyle=ButtonStyle.Primary
                                                               Click="@(() => EditFaculty(faculty))" 
                                                               Disabled="@(!faculty.IsActive)"
-                                                              title="Edit"/>
+                                                              MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
 
                                                 <RadzenText Text="@faculty.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                             </RadzenStack>
                                             <div>
-                                                ACTIVE <RadzenSwitch @bind-Value="faculty.IsActive" Name="IsActive" Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" title="Toggle active status"/>
+                                                ACTIVE <RadzenSwitch @bind-Value="faculty.IsActive" 
+                                                                     Name="IsActive" 
+                                                                     Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" 
+                                                                     MouseEnter="@(args => ShowTooltip(args, "Toggle Active Status"))" />
                                             </div>
                                         </RadzenStack>
                                     }
@@ -81,15 +84,15 @@
                                                         <RadzenButton Icon="save" 
                                                                       Size=ButtonSize.Small 
                                                                       ButtonStyle=ButtonStyle.Success
-                                                                      Click="@(() => SaveSchool(faculty, school))" 
-                                                                      title="Save"/>
+                                                                      Click="@(() => SaveSchool(faculty, school))"
+                                                                      MouseEnter="@(args => ShowTooltip(args, "Save"))" />
 
                                                         <RadzenButton Icon="cancel" 
                                                                       Size=ButtonSize.Small 
                                                                       ButtonStyle=ButtonStyle.Danger 
                                                                       Style ="margin-left:5px"
-                                                                      Click="@(() => CancelSchoolEdit(school))" 
-                                                                      title="Cancel editing"/>
+                                                                      Click="@(() => CancelSchoolEdit(school))"
+                                                                      MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))" />
                                                     </div>
                                                 </RadzenStack>
                                             }
@@ -101,13 +104,16 @@
                                                                       Size="ButtonSize.Small"
                                                                       ButtonStyle=ButtonStyle.Primary
                                                                       Click="@(() => EditSchool(school))"
-                                                                      Disabled="@(!school.IsActive)" 
-                                                                      title="Edit"/>
+                                                                      Disabled="@(!school.IsActive)"
+                                                                      MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
 
                                                         <RadzenText Text="@school.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                                     </RadzenStack>
                                                     <div>
-                                                        ACTIVE <RadzenSwitch @bind-Value="school.IsActive" Name="IsActive" Change="@((value) => ToggleSchoolActive(school, value))" title="Toggle active status" />
+                                                        ACTIVE <RadzenSwitch @bind-Value="school.IsActive" 
+                                                                             Name="IsActive" 
+                                                                             Change="@((value) => ToggleSchoolActive(school, value))"
+                                                                             MouseEnter="@(args => ShowTooltip(args, "Toggle Active Status"))" />
                                                     </div>
                                                 </RadzenStack>
                                             }
