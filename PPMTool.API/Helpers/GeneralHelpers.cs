@@ -61,7 +61,7 @@ public static class GeneralHelpers
         return await context.People
                 .Include(x => x.LineManager)
                 .Include(x => x.WorkloadModelChanges)
-                .FirstOrDefaultAsync(x => x.Name.Clean() == name.Clean().Replace("_", " "));
+                .FirstOrDefaultAsync(x => x.Name.Trim().ToLower() == name.Trim().ToLower().Replace("_", " "));
     }
 
     /// <summary>

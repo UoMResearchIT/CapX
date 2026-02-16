@@ -88,7 +88,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, School entity)
         {
-            return GetAll(context).Any(x => (x.Name.Clean() == entity.Name.Clean() || x.Code.Clean() == entity.Code.Clean()) && x.SchoolId != entity.SchoolId);
+            return GetAll(context).Any(x => (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower()) && x.SchoolId != entity.SchoolId);
         }
 
         /// <summary>

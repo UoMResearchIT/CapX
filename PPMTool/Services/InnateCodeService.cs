@@ -39,10 +39,10 @@ namespace PPMTool.Services
             var all = GetAll(context);
             var duplicatesNameOfAnother = all
                 .Any(x =>
-                (x.ActivityName.Clean() == entity.ActivityName.Clean() ||
-                x.ActivityCode.Clean() == entity.ActivityCode.Clean()) &&
+                (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() ||
+                x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower()) &&
                 x.InnateCodeId != entity.InnateCodeId);
-            var duplicatesTasks = entity.Tasks.DistinctBy(x => x.TaskName.Clean()).Count() != entity.Tasks.Count;
+            var duplicatesTasks = entity.Tasks.DistinctBy(x => x.TaskName.Trim().ToLower()).Count() != entity.Tasks.Count;
             return duplicatesNameOfAnother || duplicatesTasks;
         }
 
@@ -92,10 +92,10 @@ namespace PPMTool.Services
             var taskToMatch = task.Clean();
             var splitActivityParams = activityToMatch.Split(" - ", 2);
             if (splitActivityParams.Length < 2) return -1;
-            var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityCode.Clean() == splitActivityParams[0].Clean() && x.ActivityName.Clean() == splitActivityParams[1].Clean());
+            var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityCode.Trim().ToLower() == splitActivityParams[0].Trim().ToLower() && x.ActivityName.Trim().ToLower() == splitActivityParams[1].Trim().ToLower());
             if (matchAct != null)
             {
-                var matchTask = context.InnateCodeTasks.FirstOrDefault(x => x.InnateCode == matchAct && x.TaskName.Clean() == task.Clean());
+                var matchTask = context.InnateCodeTasks.FirstOrDefault(x => x.InnateCode == matchAct && x.TaskName.Trim().ToLower() == task.Trim().ToLower());
                 if (matchTask != null)
                 {
                     return (int)matchTask.Duty;

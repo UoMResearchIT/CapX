@@ -79,7 +79,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, SkillTag entity)
         {
-            return GetAll(context).Any(x => (x.Name.Clean() == entity.Name.Clean() || x.ControlledName.Clean() == entity.ControlledName.Clean()) && x.SkillTagId != entity.SkillTagId);
+            return GetAll(context).Any(x => (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.ControlledName.Trim().ToLower() == entity.ControlledName.Trim().ToLower()) && x.SkillTagId != entity.SkillTagId);
         }
 
         /// <summary>
