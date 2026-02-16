@@ -367,12 +367,12 @@ span.mention {
 }
 
 .orgunits-accordion .rz-accordion .rz-accordion-header .rzi {
-        margin-inline: 0px;
+    margin-inline: 0px;
     }
 
 .orgunits-accordion .rz-accordion-header a[role="tab"] {
     padding: 0px;
-    background-color: #eee;
+    background-color: #fff;
 }
 
 .orgunits-accordion .rz-accordion-content {
@@ -405,5 +405,5 @@ span.mention {
 }
 
 .inactive {
-    background-color: #ccc;
+    background-color: #ddd;
 }
