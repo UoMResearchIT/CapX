@@ -114,7 +114,6 @@ namespace PPMTool.Migrations
                     SET School = School + 1;
                 "
             );
-            
         }
 
         /// <inheritdoc />
