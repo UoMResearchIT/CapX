@@ -68,9 +68,13 @@ namespace PPMTool.Pages
         protected async Task SaveFaculty(Faculty faculty)
         {
             if (faculty.FacultyId == 0)
+            {
                 FacultyService.Add(Context, faculty);
+            }
             else
+            {
                 FacultyService.Update(Context, faculty);
+            }
 
             EditingFaculty = null;
             NewFaculty = null;

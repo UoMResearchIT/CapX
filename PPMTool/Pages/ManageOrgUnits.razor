@@ -33,6 +33,7 @@
                                             ButtonStyle=ButtonStyle.Success
                                             Click="@(() => SaveFaculty(NewFaculty))"
                                             MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                            Disabled="(String.IsNullOrEmpty(NewFaculty.Name) || String.IsNullOrEmpty(NewFaculty.Code))"
                                             @onclick:stopPropagation="true" />
 
                                             <RadzenButton Icon="cancel"
@@ -69,6 +70,7 @@
                                                               ButtonStyle=ButtonStyle.Success
                                                               Click="@(() => SaveFaculty(faculty))"
                                                               MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                                              Disabled="(String.IsNullOrEmpty(NewFaculty.Name) || String.IsNullOrEmpty(NewFaculty.Code))"
                                                               @onclick:stopPropagation="true" />
 
                                                 <RadzenButton Icon="cancel"
@@ -122,6 +124,7 @@
                                                                       Size=ButtonSize.Small 
                                                                       ButtonStyle=ButtonStyle.Success
                                                                       Click="@(() => SaveSchool(faculty, school))"
+                                                                      Disabled="(String.IsNullOrEmpty(school.Name) || String.IsNullOrEmpty(school.Code))"
                                                                       MouseEnter="@(args => ShowTooltip(args, "Save"))" />
 
                                                         <RadzenButton Icon="cancel" 
@@ -170,6 +173,7 @@
                                                           Size=ButtonSize.Small
                                                           ButtonStyle=ButtonStyle.Success
                                                           Click="@(() => SaveSchool(faculty, NewSchool))"
+                                                          Disabled="(String.IsNullOrEmpty(NewSchool.Name) || String.IsNullOrEmpty(NewSchool.Code))"
                                                           MouseEnter="@(args => ShowTooltip(args, "Save"))" />
 
                                             <RadzenButton Icon="cancel"
