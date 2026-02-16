@@ -28,6 +28,10 @@ namespace PPMTool.Pages
 
         protected Faculty EditingFaculty;
         protected School EditingSchool;
+        protected bool IsAddingSchool = false;
+        protected bool IsAddingFaculty = false;
+        protected School NewSchool;
+        protected Faculty NewFaculty;
 
         protected override async Task OnInitializedAsync()
         {
@@ -36,7 +40,7 @@ namespace PPMTool.Pages
 
         private void LoadData()
         {
-            Faculties = FacultyService.GetAll(Context).ToList();
+            Faculties = FacultyService.GetAll(Context).OrderBy(f => f.Name).ToList();
         }
 
         protected string GetFacultyCss(Faculty f) => f.IsActive ? "" : "inactive";
@@ -45,11 +49,15 @@ namespace PPMTool.Pages
 
         // ---------------- FACULTY CRUD ----------------
 
-        protected void AddFaculty()
+        protected void StartAddingFaculty()
         {
-            var f = new Faculty { IsActive = true };
-            Faculties.Insert(0, f);
-            EditingFaculty = f;
+            NewFaculty = new Faculty
+            {
+                IsActive = true,
+                Description = string.Empty
+            };
+
+            IsAddingFaculty = true;
         }
 
         protected void EditFaculty(Faculty faculty)
@@ -65,6 +73,8 @@ namespace PPMTool.Pages
                 FacultyService.Update(Context, faculty);
 
             EditingFaculty = null;
+            NewFaculty = null;
+            IsAddingFaculty = false;
             LoadData();
         }
 
@@ -75,6 +85,12 @@ namespace PPMTool.Pages
             FacultyService.RestoreModel(Context, ref entity);
 
             EditingFaculty = null;
+        }
+
+        protected void CancelNewFacultyAdd(Faculty entity)
+        {
+            IsAddingFaculty = false;
+            NewFaculty = null;
         }
 
         protected async Task ToggleFacultyActive(Faculty faculty, bool value)
@@ -126,11 +142,16 @@ namespace PPMTool.Pages
 
         // ---------------- SCHOOL CRUD ----------------
 
-        protected void AddSchool(Faculty faculty)
+        protected void StartAddingSchool(Faculty faculty)
         {
-            var s = new School { Faculty = faculty, IsActive = true };
-            faculty.Schools.Add(s);
-            EditingSchool = s;
+            NewSchool = new School
+            {
+                Faculty = faculty,
+                IsActive = true,
+                Description = string.Empty
+            };
+
+            IsAddingSchool = true;
         }
 
         protected void EditSchool(School school)
@@ -146,6 +167,8 @@ namespace PPMTool.Pages
                 SchoolService.Update(Context, school);
 
             EditingSchool = null;
+            NewSchool = null;
+            IsAddingSchool = false;
             LoadData();
         }
 
@@ -159,6 +182,12 @@ namespace PPMTool.Pages
 
             SchoolService.RestoreModel(Context, ref entity);
             EditingSchool = null;
+        }
+
+        protected void CancelNewSchoolAdd(School entity)
+        {
+            IsAddingSchool = false;
+            NewSchool = null;
         }
 
         protected async Task ToggleSchoolActive(School school, bool value)

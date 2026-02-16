@@ -11,9 +11,46 @@
         <div class="col py-2">
             <h2>Manage Organisational Units</h2>
         </div>
+        <div class="col py-2">
+            <RadzenButton Icon="add" Text="Add Faculty" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
+        </div>
     </div>
 
     <div class="orgunits-accordion">
+        @if (IsAddingFaculty)
+        {
+            <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
+                <Items>
+                    <RadzenAccordionItem Style = "border: 1px solid #bbb; padding: 0px;" >
+                        <Template>
+                            <div style="margin: 0px; padding: 0px; width: 100%;">
+                                <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%; padding: 10px">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                                        <span>Name <RadzenTextBox @bind-Value="NewFaculty.Name" Style="padding: 10px;" /></span>
+                                        <span>Code <RadzenTextBox @bind-Value="NewFaculty.Code" Style="padding: 10px;" /></span>
+                                        <div>
+                                            <RadzenButton Icon="save"
+                                            ButtonStyle=ButtonStyle.Success
+                                            Click="@(() => SaveFaculty(NewFaculty))"
+                                            MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                            @onclick:stopPropagation="true" />
+
+                                            <RadzenButton Icon="cancel"
+                                            ButtonStyle=ButtonStyle.Danger
+                                            Style="margin-left:5px"
+                                            Click="@(() => CancelNewFacultyAdd(NewFaculty))"
+                                            MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
+                                            @onclick:stopPropagation="true" />
+                                        </div>
+                                    </RadzenStack>
+                                </RadzenRow>
+                            </div>
+                        </Template>
+                    </RadzenAccordionItem>
+                </Items>
+            </RadzenAccordion>
+        }
+
         <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
             <Items>
                 @foreach (var faculty in Faculties)
@@ -120,16 +157,35 @@
                                         </RadzenRow>
                                     </div>
                                 }
-                                <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
-                                    <RadzenButton Icon="add" Text="Add School" Click="@(() => AddSchool(faculty))"/>
-                                </div>
                             }
-                            else
+
+                            @if (IsAddingSchool)
                             {
-                                <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
-                                    <RadzenButton Icon="add" Text="Add School" Click="@(() => AddSchool(faculty))"/>
+                                <div class="accordion-orgsubunit">
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                                        <span>Name <RadzenTextBox @bind-Value="NewSchool.Name" Style="padding: 10px;" /></span>
+                                        <span>Code <RadzenTextBox @bind-Value="NewSchool.Code" Style="padding: 10px;" /></span>
+                                        <div>
+                                            <RadzenButton Icon="save"
+                                                          Size=ButtonSize.Small
+                                                          ButtonStyle=ButtonStyle.Success
+                                                          Click="@(() => SaveSchool(faculty, NewSchool))"
+                                                          MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+
+                                            <RadzenButton Icon="cancel"
+                                                          Size=ButtonSize.Small
+                                                          ButtonStyle=ButtonStyle.Danger
+                                                          Style="margin-left:5px"
+                                                          Click="@(() => CancelNewSchoolAdd(NewSchool))"
+                                                          MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))" />
+                                        </div>
+                                    </RadzenStack>
                                 </div>
                             }
+
+                            <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
+                                <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
+                            </div>
                         </ChildContent>
                 </RadzenAccordionItem>
             }
